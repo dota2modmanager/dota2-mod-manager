@@ -78,6 +78,7 @@ the code, not in this page.
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
 | [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
 | [`src/hero-particle-styles.ts`](#srchero-particle-stylests) |  |
+| [`src/hero-preview-fx.ts`](#srchero-preview-fxts) | The particles of a hero's 3D preview (src/hero-preview.ts), out of the game's files alone: each |
 | [`src/hero-preview-picks.ts`](#srchero-preview-picksts) | Equipment metadata used to build the desktop preview. |
 | [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
 | [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
@@ -170,6 +171,7 @@ the code, not in this page.
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
+| [`src/png-strip.ts`](#srcpng-stripts) | A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
 | [`src/preset-install.ts`](#srcpreset-installts) | Putting a preset on: an own one whose mods may have gone, or a received one that is still a |
@@ -3942,6 +3944,52 @@ export function bladeSnapshots(def: ParticleDef, replacements?: Map<string, stri
 
 Use the wearable's native snapshot wherever its particle tree names the stock one.
 
+## src/hero-preview-fx.ts
+
+The particles of a hero's 3D preview (src/hero-preview.ts), out of the game's files alone: each
+worn part's, the body's and the hero's own. They need no exported model, so they are gathered
+before the models export and their resources (the models and pictures the particles name) fetch
+alongside; a cold Terrorblade waited 3.5 s for those after his models and then 1.8 s for their
+pictures. A part is named here by its place in the plan's parts; once the models are in,
+`forParts` moves each to its place among those that exported.
+
+### `FxPlan`
+
+```ts
+export interface FxPlan
+```
+
+What of the plan the particles read (src/hero-preview.ts plan).
+
+### `PlannedFx`
+
+```ts
+export interface PlannedFx { part: number; def: ParticleDef }
+```
+
+One particle: on a part by its place in the plan's parts, on the body (-1), or the hero's own (-2).
+
+### `previewParticles`
+
+```ts
+export function previewParticles(p: FxPlan, log?: (msg: string) => void): PlannedFx[]
+```
+
+Every particle the preview plays for the plan, at most 256 systems in all.
+
+### `forParts`
+
+```ts
+export function forParts(particles: PlannedFx[], placed: number[]): PlannedFx[]
+```
+
+The particles with each part's place among the parts that exported; a part whose model did not
+come takes its particles with it. The same list when every part came.
+
+```
+@param placed for each part of the plan, its place among the exported ones, or -1
+```
+
 ## src/hero-preview-picks.ts
 
 Equipment metadata used to build the desktop preview.
@@ -7198,10 +7246,10 @@ Channel layout is the native hero.vfx layout used by dota-loadout.
 ### `LOADOUT_MASKS`
 
 ```ts
-export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'}
+export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp',cube:'g_tCubeMap'}
 ```
 
-Texture roles the loadout shader reads from GLB extras instead of glTF's PBR channels.
+cube: the six faces as one strip (src/png-strip.ts); a metal without it came out black
 
 ## src/loadout-resources.ts
 
@@ -7246,6 +7294,16 @@ export async function loadoutModels( models: { file: string; model: string; skin
 ```
 
 Export all material masks together so VRF opens the game archive once per batch.
+
+### `loadoutTexturePaths`
+
+```ts
+export function loadoutTexturePaths(models: string[], read: (path: string) => Buffer | null): string[]
+```
+
+Every texture the preview's materials of these models sample, colour included, as the sprites
+export names them. Read off the game's own materials, before any model is exported, so the
+pictures can be fetched while the models are (src/hero-preview.ts): they waited behind them.
 
 ## src/loadout-sheet.ts
 
@@ -8318,6 +8376,15 @@ export function spriteAt(root: string, texture: string): string | null
 ```
 
 Where a texture's picture landed: the file itself, or the largest frame of its sheet.
+
+### `cubeAt`
+
+```ts
+export function cubeAt(root: string, texture: string): string | null
+```
+
+A cube texture's picture: the toolchain writes its six faces apart (name_rt.png…), and the preview
+reads them as one strip (src/png-strip.ts), made here once and kept beside them as name.png.
 
 ### `createModelGlb`
 
@@ -9795,6 +9862,51 @@ leftover from an earlier one. What goes back in place of the patched file is ver
 against that list rather than taken on faith: this is the moment the game becomes vanilla
 again, and a copy that is even one byte off leaves the client refusing to matchmake with
 no mod in sight to blame.
+
+## src/png-strip.ts
+
+A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a
+row of six square faces (vendor/dota-loadout/src/viewer.js cubeOf). ValveResourceFormat writes a
+cube texture as six PNGs, name_rt, _lf, _bk, _ft, _up and _dn: the cube's faces in their order,
++X, -X, +Y, -Y, +Z, -Z in the game's axes, which is the order the shader looks them up in once it
+has turned a direction into the game's axes (TO_SOURCE). Without them the preview had no
+reflection at all, and a metal the game shows by its cube map (Razor's Severing Crest, at five
+times its weight; Terrorblade's blades) came out black.
+
+The main process has no image codec of its own (Electron's is not there in the tests), so this is
+one for what the toolchain writes: 8-bit, not interlaced, grey, grey with alpha, RGB or RGBA.
+
+### `CUBE_FACES`
+
+```ts
+export const CUBE_FACES = ['rt', 'lf', 'bk', 'ft', 'up', 'dn'] as const
+```
+
+The faces' suffixes, in the order the strip lays them out.
+
+### `decodePng`
+
+```ts
+export function decodePng(png: Buffer): { width: number; height: number; rgba: Buffer } | null
+```
+
+A PNG's pixels as RGBA, or null for one this does not read.
+
+### `encodePng`
+
+```ts
+export function encodePng(width: number, height: number, rgba: Buffer): Buffer
+```
+
+RGBA pixels as a PNG.
+
+### `cubeStrip`
+
+```ts
+export function cubeStrip(faces: Buffer[]): Buffer | null
+```
+
+Six square faces of one size, in CUBE_FACES order, as one strip; null where they are not that.
 
 ## src/portable-update.ts
 

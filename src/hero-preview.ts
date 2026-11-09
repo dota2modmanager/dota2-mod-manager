@@ -10,10 +10,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { embedGlb } from './glb-embed.ts';
 import { crestActivities, goldenCrestModel, mergeCrestAttachments, normalCrestOnGoldenRig } from './razor-crest-preview.ts';
-import { loadoutModels, loadoutResources } from './loadout-resources.ts';
+import { loadoutModels, loadoutResources, loadoutTexturePaths } from './loadout-resources.ts';
+import { forParts, previewParticles } from './hero-preview-fx.ts';
 import { hidePreviewOnlyMeshes, selectStyleMeshes, styleFamily } from './model-style-meshes.ts';
 import { snapshotFromModel } from './model-snapshot-fallback.ts';
-import { bladeSnapshots, replaceTerrorbladeBladeFx, styleParticleRoots } from './hero-particle-styles.ts';
 import type { LoadoutResources } from '../renderer/api/preview3d.ts';
 import { findItem, itemFields } from './schema.ts';
 import { itemVisuals } from './item-builder.ts';
@@ -22,17 +22,16 @@ import { styleOf, withStyle } from './item-builder-styles.ts';
 import { sharedVpkIndex } from './vpk.ts';
 import { personaLayouts } from './item-builder-personas.ts';
 import { pickModels } from './item-builder-refits.ts';
-import { modelParticleEntries } from './model-particles.ts';
 import { hiddenMeshes } from './model-bodygroups.ts';
 import { ITEM_EFFECTS } from './item-builder-effects.ts';
 import { unusualItemEffect } from './item-builder-unusual.ts';
 import { idleSequence, itemModifiers, loadoutSequence, modelSequences, motionList, wearableClip, type Motion } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
 import { unusualEffects } from './unusual-effects.ts';
-import { bindItemParticle, particleReport, itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
+import { itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
-import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, previewEquipment, previewBladeReplacements, previewCrestParticles, previewHeroParticles, previewStockHead, previewParticleReader, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
+import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, previewEquipment, previewBladeReplacements, previewCrestParticles, previewHeroParticles, previewStockHead, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
 
 export { entityModel, wornExtras, wornSkin } from './hero-preview-picks.ts';
 /** A preview slot with its stock item and an optional unsaved selection. */
@@ -168,6 +167,13 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     try { p = plan(hero, slots); } catch (err) { log(`preview 3d: ${(err as Error)?.message || err}`); return { ok: false, reason: 'no-body' }; }
     if (!p) return { ok: false, reason: 'no-game' };
     const bodyClips = p.clip && p.clip !== p.idle ? [p.clip, p.idle] : [p.idle];
+    // out of the game's files alone, so they fetch while the models export: the materials' pictures,
+    // and the particles with the models and pictures they name (src/hero-preview-fx.ts)
+    if (glb.sprites) void glb.sprites(loadoutTexturePaths([p.body, ...p.parts.map((x) => x.model)], p.read)).catch(() => {});
+    const planned = previewParticles(p, log), early = resourcesOf(planned.map((x) => x.def));
+    if (glb.sprites) void glb.sprites([...new Set(planned.flatMap((x) => particleTextures(x.def)))]).catch(() => {});
+    const earlySprites = early.then((res) => spritesOf(planned.map((x) => x.def), res));
+    earlySprites.catch(() => {});
     const pedestal = p.stage.pedestal;
     const [bodyFiles, styledBodyFile, files, ...clipFiles] = await Promise.all([
       glb.glbs([p.body], bodyClips),
@@ -181,52 +187,25 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[] = [];
     const modelInputs = [{ file: styledBodyFile || bodyFile, model: p.body, skin: p.bodySkin }];
     const styles: number[] = [], crestRigs: { file: string; model: string }[] = [];
-    const particles: { part: number; def: ParticleDef }[] = [];
-    const budget = { left: 256 };
-    const suppressStockBlades = p.parts.some(part => part.slot.endsWith(':weapon') && replaceTerrorbladeBladeFx(p.body, part.model, part.fx.map(fx => part.replacements?.get(fx) ?? fx)));
-    const bodyRoots = new Set<string>(), readParticle = previewParticleReader(p.read, p.replacements, undefined, suppressStockBlades);
-    const fx = (part: number, paths: string[]) => {
-      for (const root of paths) {
-        const particle = p.replacements.get(root) ?? root;
-        if (bodyRoots.has(particle)) continue;
-        bodyRoots.add(particle);
-        const def = particleDef(readParticle, particle, budget);
-        if (def) particles.push({ part, def: bindItemParticle(def, p.bindings.get(particle) ?? p.bindings.get(root), 'preview') });
-      }
-    };
+    // each part of the plan's place among those that exported, -1 for one that did not
+    const placed: number[] = [];
     for (const [i, x] of p.parts.entries()) {
       const f = skinnedParts[i] || files[x.model] || clipFiles.find((got) => got[x.model])?.[x.model];
-      if (!f) { missing.push(x.name || x.model); continue; }
-      const model = p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c'));
-      const attachments = modelAttachments(model);
+      if (!f) { missing.push(x.name || x.model); placed.push(-1); continue; }
+      const attachments = modelAttachments(p.read(x.model.replace(/\.vmdl$/i, '.vmdl_c')));
       modelInputs.push({ file: f, model: x.model, skin: x.skin });
       styles.push(x.style ?? 0); if (x.crestRig && files[x.crestRig]) crestRigs[parts.length] = { file: files[x.crestRig]!, model: x.crestRig };
       parts.push({ slot: x.slot, name: x.name, glb: Buffer.alloc(0), attachments, hidden: x.hidden });
-      const index = parts.length - 1;
-      const roots = styleParticleRoots(modelParticleEntries(model), x.fx, x.style ?? 0);
-      const resolved = new Set<string>(), readPart = previewParticleReader(p.read, p.replacements, x.replacements, suppressStockBlades);
-      for (const [path, config] of roots) {
-        const replacement = x.replacements?.get(path) ?? p.replacements.get(path) ?? path;
-        if (resolved.has(replacement)) continue;
-        resolved.add(replacement);
-        const def = particleDef(readPart, replacement, budget);
-        if (def) particles.push({ part: index, def: bindItemParticle(bladeSnapshots(def, x.replacements), p.bindings.get(replacement) ?? p.bindings.get(path), config) });
-      }
-      if (process.env.MM_PREVIEW_FX) log(`preview fx: ${JSON.stringify({
-        slot: x.slot, model: x.model, attachments: attachments.map((a) => [a.name, a.bone]),
-        requested: [...resolved], loaded: particles.filter((entry) => entry.part === index).map(({ def }) => particleReport(def)),
-      })}`);
+      placed.push(parts.length - 1);
     }
-    fx(-1, modelParticleEntries(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))).map((entry) => entry.path));
-    fx(-2, [...p.bodyFx, ...p.heroFx]);
-    if (!particles.length && /\/wisp\/wisp\.vmdl$/i.test(p.body)) fx(-2, ['particles/units/heroes/hero_wisp/wisp_ambient.vpcf']);
+    const particles = forParts(planned, placed);
     const stand = pedestal ? files[pedestal] : null;
     const keyOf = ({ file, model, skin }: typeof modelInputs[number]) => JSON.stringify([file, model, skin]);
     const pending = new Map(modelInputs.map(input => [keyOf(input), input]));
     const cached = new Map([...pending.keys()].flatMap(key => { const bytes = preparedModels.get(key); return bytes ? [[key, bytes] as const] : []; }));
     for (const key of cached.keys()) pending.delete(key);
-    const definitions = particles.map(x => x.def);
-    const [fresh, resources] = await Promise.all([loadoutModels([...pending.values()], p.read, glb), resourcesOf(definitions)]);
+    // with every part in, the resources fetched early are these; else they are made again, from the cache, for those that came
+    const [fresh, resources] = await Promise.all([loadoutModels([...pending.values()], p.read, glb), particles === planned ? early : resourcesOf(particles.map((x) => x.def))]);
     [...pending.keys()].forEach((key, i) => cached.set(key, fresh[i]!));
     const [body, ...wearables] = modelInputs.map(input => {
       const key = keyOf(input), model = cached.get(key)!;
@@ -251,7 +230,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       }
       if (recovered.size) resources.missing = resources.missing.filter(path => !recovered.has(path));
     }
-    const sprites = await spritesOf(definitions, resources);
+    const sprites = particles === planned ? await earlySprites : await spritesOf(particles.map((x) => x.def), resources);
     return {
       ok: true, body: hidePreviewOnlyMeshes(body!), clip: p.clip ?? p.idle, model: p.body, motions: p.motions, stage: p.stage, pedestal: stand ? embedGlb(stand) : null, parts, missing, hidden: p.hidden,
       attachments: modelAttachments(p.read(p.body.replace(/\.vmdl$/i, '.vmdl_c'))), particles, sprites, resources,
@@ -296,5 +275,26 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     return got ? embedGlb(got) : null;
   }
 
-  return { plan, models, motions, effect, model, sprites: spritesOf, resources: resourcesOf };
+  /**
+   * A slot's options exported ahead as trying each on will ask for them (its model under the same clips,
+   * in one run, and its materials' pictures), so a try-on, which waited 3 to 5 s, finds them cached.
+   * @param items the options' item ids, at most 40
+   */
+  async function prefetch(hero: string, slots: PreviewSlot[], slot: string, items: string[]): Promise<number> {
+    const byClip = new Map<string, Set<string>>(), all = new Set<string>();
+    let read: ((path: string) => Buffer | null) | null = null;
+    for (const itemId of items.slice(0, 40)) {
+      let p: ReturnType<typeof plan> | null = null;
+      try { p = plan(hero, slots.map((s) => (s.slot === slot ? { ...s, tryOn: { itemId, effectId: '' } } : s))); } catch { continue; }
+      if (!p) return 0;
+      read = p.read;
+      for (const x of p.parts) if (x.slot === slot) { byClip.set(x.clip ?? '', (byClip.get(x.clip ?? '') ?? new Set()).add(x.model)); all.add(x.model); }
+    }
+    if (!read || !all.size) return 0;
+    await Promise.all([...[...byClip].map(([clip, models]) => glb.glbs([...models], clip ? [clip] : [])),
+      glb.sprites?.(loadoutTexturePaths([...all], read))]);
+    return all.size;
+  }
+
+  return { plan, models, motions, effect, model, prefetch, sprites: spritesOf, resources: resourcesOf };
 }

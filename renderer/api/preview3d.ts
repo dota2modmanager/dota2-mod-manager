@@ -44,6 +44,8 @@ export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: st
 export interface Preview3dApi {
   /** Prepare the disk cache for one hero without returning its large 3D data to the window. */
   warm: (hero: string, slots: PreviewSlot[]) => Promise<{ ok: boolean; missing?: number; error?: string }>;
+  /** a slot's options exported ahead, so trying one on finds its model cached; how many models it asked for */
+  prefetch: (hero: string, slots: PreviewSlot[], slot: string, items: string[]) => Promise<number>;
   /** an effect's particle system, for its picture; null where the game has none */
   effect: (id: string) => Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array>; resources?: LoadoutResources } | null>;
   /** a map prop's model alone (a tree set's) as GLB bytes, for its picture; null without the game or the toolchain */

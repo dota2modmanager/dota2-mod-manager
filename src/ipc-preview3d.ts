@@ -14,7 +14,11 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
   ipcMain.handle('preview3d:slice', (e, id, offset) => large.slice(id, offset));
   ipcMain.handle('preview3d:models', async (e, hero, slots) => {
     try {
-      return large.pack(await heroPreview.models(hero, slots, !!toolchain.pathOf('vrf')));
+      const started = Date.now();
+      const answer = await heroPreview.models(hero, slots, !!toolchain.pathOf('vrf'));
+      // how long the window waited on this side, against how long it waited in all (the 3D took 28 s to change a weapon)
+      diag(`preview 3d: ${hero} answered in ${Date.now() - started} ms`);
+      return large.pack(answer);
     } catch (err) {
       // the window says only that the model could not be had; the reason goes to the log
       diag(`preview 3d: ${errorText(err)}`);
@@ -34,6 +38,11 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
     } finally {
       warming = false;
     }
+  });
+  // a slot's options, exported while the person looks at them, so trying one on is quick
+  ipcMain.handle('preview3d:prefetch', async (_e, hero, slots, slot, items) => {
+    if (!toolchain.pathOf('vrf')) return 0;
+    try { return await heroPreview.prefetch(hero, slots, slot, items); } catch (err) { diag(`preview 3d prefetch: ${errorText(err)}`); return 0; }
   });
   // every clip of a body, the first time the window is asked for one beyond the loadout
   ipcMain.handle('preview3d:motions', async (e, body) => {

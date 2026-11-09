@@ -9,11 +9,13 @@ export function loadoutGem(path: string, gems: readonly PreviewGem[]) {
   if (own) return { color: own.color, bake: own.rules.bake, own: true };
   const shared = gems.find(row => matches(key, row.rules.shared));
   if (!shared) return;
-  // Many Terrorblade cosmetics bake their glow into the particle's colors.
-  // CP15/16 alone only reaches systems with a prismatic operator.
-  const wearable = !shared.stock && shared.set === 'terrorblade-arcana' && key.startsWith('particles/econ/items/terrorblade/') &&
-    !key.startsWith('particles/econ/items/terrorblade/terrorblade_horns_arcana/');
-  return { color: shared.color, bake: false, own: wearable };
+  // Many Terrorblade cosmetics bake their glow into the particle's colors, and so do his own blades
+  // (hero_terrorblade/terrorblade_ambient_sword*.vpcf): CP15/16 alone only reaches systems with a
+  // prismatic operator, so a gem picked on the arcana left the blades red until the build baked it
+  // in and the weapon was put on again. With a gem of its own the arcana colours them all, as the
+  // game does once it is built.
+  const baked = !shared.stock && shared.set === 'terrorblade-arcana';
+  return { color: shared.color, bake: false, own: baked };
 }
 
 export function loadoutMaterialGem(path: string, slot: string | undefined, gems: readonly PreviewGem[]) {

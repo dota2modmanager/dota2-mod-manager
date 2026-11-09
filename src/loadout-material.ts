@@ -78,6 +78,8 @@ export function readLoadoutMaterial(file:Buffer|null):NativeMaterial|null {
     // The workshop calls the separate cutout map transparency; some materials
     // expose it under that name instead of opacity.
     if (out.textures.g_tTransparency) out.textures.g_tOpacity ??= out.textures.g_tTransparency;
+    // a cube map the shader samples only where the switch is on; the others name one by default
+    if (!out.ints.F_SPECULAR_CUBE_MAP) delete out.textures.g_tCubeMap;
     // Malformed or unsupported expression data must not discard otherwise usable textures.
     try {
       const token = attributeToken('$GemColor');
@@ -98,4 +100,5 @@ export function loadoutDescriptor(m:NativeMaterial):Record<string,unknown>{
   return {workshopMasks:true,selfIllum:!!m.ints.F_SELF_ILLUM,...(detailGem ? {detailGem} : {}),...(specGem ? {specGem:v('g_vSpecularColor')} : {}),expectsReflectionCube:!!m.ints.F_SPECULAR_CUBE_MAP&&!!m.textures.g_tCubeMap,detailMode:m.ints.F_DETAIL??0,detailBlend:f('g_flDetailBlendFactor',1),detailScale:v('g_vDetailTexCoordScale',[1,1]),detailTint:v('g_vDetail1ColorTint'),rimColor:v('g_vRimLightColor'),rimScale:f('g_flRimLightScale'),specColor:v('g_vSpecularColor'),specScale:f('g_flSpecularScale',1),specExponent:f('g_flSpecularExponent',16),alphaTest:m.ints.F_ALPHA_TEST?f('g_flAlphaTestReference',.5):0,translucent:!!m.ints.F_TRANSLUCENT,additive:!!m.ints.F_ADDITIVE_BLEND,cloak:m.ints.F_ENABLE_CLOAK?f('g_flMaterialCloakFactor'):0};
 }
 /** Texture roles the loadout shader reads from GLB extras instead of glTF's PBR channels. */
-export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp'};
+// cube: the six faces as one strip (src/png-strip.ts); a metal without it came out black
+export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp',cube:'g_tCubeMap'};

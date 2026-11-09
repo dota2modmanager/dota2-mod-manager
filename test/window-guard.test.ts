@@ -166,7 +166,7 @@ const VALID: Record<string, unknown[][]> = {
   'pumpkin:redeem': [['K7QX-M2PA-9HRT-WZ4N']], 'pumpkin:prizeAgain': [[]], 'pumpkin:hasPrize': [[]],
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
   'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairApp': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
-  'schema:refresh': [[]], 'schema:cancel': [[]], 'cosmetics:slots': [[]], 'preview3d:slice': [[1, 0]], 'preview3d:warm': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]], 'preview3d:models': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]], 'preview3d:motions': [['models/heroes/axe/axe.vmdl']], 'preview3d:effect': [['unusual-4'], ['frostbloom']], 'preview3d:model': [['models/props_tree/tree_pine_01.vmdl']],
+  'schema:refresh': [[]], 'schema:cancel': [[]], 'cosmetics:slots': [[]], 'preview3d:slice': [[1, 0]], 'preview3d:warm': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]], 'preview3d:prefetch': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }], 'item:magnataur:head', ['9491', '9492']]], 'preview3d:models': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]], 'preview3d:motions': [['models/heroes/axe/axe.vmdl']], 'preview3d:effect': [['unusual-4'], ['frostbloom']], 'preview3d:model': [['models/props_tree/tree_pine_01.vmdl']],
   'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]], [['axe'], true]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
   'cosmetics:icons': [[['Shade of the Abyss']]],
   'cosmetics:pick': [['weather', '5810', 'Weather: Ash', ''], ['hero_axe_weapon', 4520, 'Axe', '1,2']],

@@ -154,3 +154,14 @@ export async function loadoutModels(
     return writeGlb(meta, bin);
   });
 }
+
+/**
+ * Every texture the preview's materials of these models sample, colour included, as the sprites
+ * export names them. Read off the game's own materials, before any model is exported, so the
+ * pictures can be fetched while the models are (src/hero-preview.ts): they waited behind them.
+ */
+export function loadoutTexturePaths(models: string[], read: (path: string) => Buffer | null): string[] {
+  const roles = Object.values({ ...LOADOUT_MASKS, color: 'g_tColor' });
+  return [...new Set(models.flatMap((model) => [...modelMaterials(model, read).values()]
+    .flatMap((m) => roles.flatMap((key) => (m.textures[key] ? [plain(m.textures[key])] : [])))))];
+}
