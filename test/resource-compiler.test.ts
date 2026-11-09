@@ -160,6 +160,19 @@ test('a compile that fails says what the compiler said, and still leaves nothing
   assert.deepEqual(addonsOf(root), []);
 });
 
+test('tools whose libraries are of two updates are named as that, with what to do in Steam', async (t) => {
+  // what a user's compiler said on 2026-11-09, for a Panorama script it never even read
+  const { root, game, userData } = install(t);
+  const run: RunProcess = async () => ({ code: 1, out: [
+    'Module 2 - modtools.dll:animdoclib',
+    'ERROR: Schema mismatches reported! Aborting to prevent data corruption.',
+    'ModelMeshBufferUsage_t | Mismatch - Member Count | Module 1 - resourcecompiler.dll:modellib | Module 2 - modtools.dll:modellib',
+  ].join('\n') });
+  const rc = createResourceCompiler({ userDataDir: userData, gamePath: () => game, chosen: () => null, platform: 'win32', run });
+  await assert.rejects(rc.compile(job), (err: Error) => /Workshop Tools/.test(err.message) && !/Schema/.test(err.message));
+  assert.deepEqual(addonsOf(root), []);
+});
+
 test('a compiler that answers 0 and makes nothing has failed too', async (t) => {
   const { game, userData } = install(t);
   const rc = createResourceCompiler({ userDataDir: userData, gamePath: () => game, chosen: () => null, platform: 'win32', run: fakeCompiler({ writes: false }) });

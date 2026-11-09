@@ -155,9 +155,9 @@ export function createSchemaService({ settings, library, installer, userDataDir,
       const list = settings.get('everyoneWearsMine') ? [...own, ...everyoneWears(base.text, own, beneath, (p) => pak().read(p))] : own;
       if (!list.length) return drop();
       const res = yield* schema.deploySteps({ gamePath: game, folder: patcher.FOLDER, patches: list, base, beneath });
-      settings.set('schemaStamp', stampOf(res.stamp));
-      settings.set('schemaPending', false);
-      onDeployed(new Set(list.flatMap((p) => (p.assets || []).map((e) => entryPath(e).toLowerCase()))));
+      settings.set('schemaStamp', stampOf(res.stamp)); settings.set('schemaPending', false);
+      // with the bases' files, which the arcana window covered with Valve's: a plain body
+      onDeployed(new Set([...list.flatMap((p) => p.assets || []), ...beneath].map((e) => entryPath(e).toLowerCase())));
       return { ok: true, deployed: true, patches: res.applied.length, missing: res.missing, conflicts: res.conflicts, bytes: res.bytes };
     } catch (err) {
       return { ok: false, error: String((err as Error)?.message || err) };
