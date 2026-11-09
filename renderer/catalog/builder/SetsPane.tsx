@@ -65,7 +65,7 @@ function SetsToolbar({ m, actions }: { m: SetsPaneModel; actions: SetsPaneAction
       )}
       {m.facets.events.length > 0 && (
         <Dropdown icon="celebration" id="setEvent" label={L`Событие`} value={f.event} first={L`Событие`}
-          options={m.facets.events.map((e) => ({ value: e, label: e }))} onPick={(event) => actions.filter({ event })} />
+          options={m.facets.events} onPick={(event) => actions.filter({ event })} />
       )}
       {m.facets.styled && (
         <button className={`fchip ${f.styled ? 'active' : ''}`} id="setStyled" onClick={() => actions.filter({ styled: !f.styled })}>

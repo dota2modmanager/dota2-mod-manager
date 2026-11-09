@@ -35,7 +35,32 @@ export function cosmeticNameTable(items: Pick<SchemaItem, 'name' | 'itemName'>[]
 
 const LANG_FILE: Record<string, string> = { ru: 'russian', en: 'english', 'zh-CN': 'schinese' };
 // by game, its table's stamp and language: the builder reads the player's language and English (effect names)
-const styleCache = new Map<string, Map<string, string>>();
+const tokenCache = new Map<string, Map<string, string>>();
+
+/**
+ * Every text token of the game in the app's language, dota_*.txt before items_*.txt, read once per
+ * game build and language; empty with no game to read. Style, rarity and event names are in
+ * dota_*.txt (DOTA_Style_Bracers_of_the_Cavern_Luminar_0, DOTA_EventName_Spring2021), and
+ * items_*.txt has a few more.
+ * @param lang  the app's language (src/i18n.ts getLang)
+ */
+export function gameTokens(game: string, lang: string): Map<string, string> {
+  try {
+    const key = `${game}|${gameSchemaStamp(game)}|${lang}`;
+    let found = tokenCache.get(key);
+    if (!found) {
+      const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+      found = new Map<string, string>();
+      for (const file of ['dota', 'items']) {
+        const data = index.read(`resource/localization/${file}_${LANG_FILE[lang] || 'english'}.txt`);
+        if (data) for (const [k, v] of localizationTokens(data)) if (!found.has(k)) found.set(k, v);
+      }
+      for (const k of tokenCache.keys()) if (!k.startsWith(`${game}|${gameSchemaStamp(game)}|`)) tokenCache.delete(k);
+      tokenCache.set(key, found);
+    }
+    return found;
+  } catch { return new Map(); }
+}
 
 /**
  * An item style's name in the app's language, from the game's own localization by the style's
@@ -43,23 +68,8 @@ const styleCache = new Map<string, Map<string, string>>();
  * @param lang  the app's language (src/i18n.ts getLang)
  */
 export function styleNamer(game: string, lang: string, fallback: (index: number) => string): (token: string, index: number) => string {
-  let tokens = new Map<string, string>();
-  try {
-    const key = `${game}|${gameSchemaStamp(game)}|${lang}`;
-    let found = styleCache.get(key);
-    if (!found) {
-      // style names are in dota_*.txt (DOTA_Style_Bracers_of_the_Cavern_Luminar_0), items_*.txt has a few more
-      const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
-      found = new Map<string, string>();
-      for (const file of ['dota', 'items']) {
-        const data = index.read(`resource/localization/${file}_${LANG_FILE[lang] || 'english'}.txt`);
-        if (data) for (const [k, v] of localizationTokens(data)) if (!found.has(k)) found.set(k, v);
-      }
-      for (const k of styleCache.keys()) if (!k.startsWith(`${game}|${gameSchemaStamp(game)}|`)) styleCache.delete(k);
-      styleCache.set(key, found);
-    }
-    tokens = found;
-  } catch { /* no game to read: every style by its number */ }
+  // with no game to read the table is empty, and every style is called by its number
+  const tokens = gameTokens(game, lang);
   return (token, index) => {
     const text = tokens.get(token.replace(/^#/, '').toLowerCase());
     return text && !text.startsWith('#') ? text : fallback(index);

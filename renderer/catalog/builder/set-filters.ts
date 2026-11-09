@@ -10,7 +10,7 @@ export interface SetFilters {
   /** release years, '' for open */
   from: string;
   to: string;
-  /** an event's name, '' for any */
+  /** an event's id, '' for any: its name is the game's in the player's language, and changes with it */
   event: string;
   /** only sets with more than one style */
   styled: boolean;
@@ -30,7 +30,7 @@ export function filterSets(sets: CosmeticSet[], f: SetFilters): CosmeticSet[] {
   const out = sets.filter((s) => (!f.rarity || s.rarity === f.rarity)
     && (!f.from || (year(s) && year(s) >= f.from))
     && (!f.to || (year(s) && year(s) <= f.to))
-    && (!f.event || s.eventName === f.event)
+    && (!f.event || s.event === f.event)
     && (!f.styled || (s.styles || 1) > 1));
   const byName = (a: CosmeticSet, b: CosmeticSet) => label(a).localeCompare(label(b));
   const byDate = (a: CosmeticSet, b: CosmeticSet) => (a.date || '').localeCompare(b.date || '');
@@ -40,14 +40,18 @@ export function filterSets(sets: CosmeticSet[], f: SetFilters): CosmeticSet[] {
   return out.sort(byName);
 }
 
-/** What the hero's sets have to choose from: the rarities in order, the years, the events by name. */
-export function setFacets(sets: CosmeticSet[]): { rarities: { value: string; label: string }[]; years: string[]; events: string[] } {
+/** What the hero's sets have to choose from: the rarities in order, the years, the events by id with their names, in the order of the names. */
+export function setFacets(sets: CosmeticSet[]): { rarities: { value: string; label: string }[]; years: string[]; events: { value: string; label: string }[] } {
   const rarities = new Map<string, string>();
-  for (const s of sets) if (s.rarity) rarities.set(s.rarity, s.rarityName || s.rarity);
+  const events = new Map<string, string>();
+  for (const s of sets) {
+    if (s.rarity) rarities.set(s.rarity, s.rarityName || s.rarity);
+    if (s.event && s.eventName) events.set(s.event, s.eventName);
+  }
   return {
     rarities: [...rarities].sort((a, b) => RARITIES.indexOf(a[0]) - RARITIES.indexOf(b[0])).map(([value, l]) => ({ value, label: l })),
     years: [...new Set(sets.map(year).filter(Boolean))].sort(),
-    events: [...new Set(sets.map((s) => s.eventName || '').filter(Boolean))].sort(),
+    events: [...events].map(([value, l]) => ({ value, label: l })).sort((a, b) => a.label.localeCompare(b.label)),
   };
 }
 
@@ -62,7 +66,9 @@ export function readSetFilters(store: Pick<Storage, 'getItem'> | null): SetFilte
     const got = JSON.parse(store?.getItem(KEY) || '{}');
     const f = { ...SET_FILTERS };
     if (['name', 'new', 'old', 'rare'].includes(got.sort)) f.sort = got.sort;
-    for (const k of ['rarity', 'from', 'to', 'event'] as const) if (typeof got[k] === 'string') f[k] = got[k];
+    for (const k of ['rarity', 'from', 'to'] as const) if (typeof got[k] === 'string') f[k] = got[k];
+    // an event kept by its name, as the window did while it spelled every id out, would match no set now
+    if (typeof got.event === 'string' && /^EVENT_ID_/.test(got.event)) f.event = got.event;
     f.styled = got.styled === true;
     return f;
   } catch {

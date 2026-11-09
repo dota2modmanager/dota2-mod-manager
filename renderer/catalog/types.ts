@@ -92,10 +92,12 @@ export interface CosmeticSet {
   fit: number;
   pieces: SetPiece[];
   /** what the game says about it (src/item-builder-details.ts): a rarity key ("mythical") and its
-   * name, "2021-08-18", the event, the description, and the names of its looks when it has several */
+   * name, "2021-08-18", the event's id ("EVENT_ID_SPRING_2021") and its name in the player's
+   * language, the description, and the names of its looks when it has several */
   rarity?: string;
   rarityName?: string;
   date?: string;
+  event?: string;
   eventName?: string;
   title?: string;
   description?: string;

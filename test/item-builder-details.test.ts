@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { eventName, heroAttributesSteps, itemFacts, setDetails } from '../src/item-builder-details.ts';
+import { eventName, eventNames, heroAttributesSteps, itemFacts, setDetails } from '../src/item-builder-details.ts';
 import { drain } from '../src/steps.ts';
 import { activeFilters, filterSets, readSetFilters, setFacets, SET_FILTERS, writeSetFilters } from '../renderer/catalog/builder/set-filters.ts';
 import type { ItemSet } from '../src/item-builder-sets.ts';
@@ -46,8 +46,31 @@ test('an event id reads as the event, and "none" or a bare number is no event', 
   assert.equal(eventName('EVENT_ID_FALL_2021'), 'Fall 2021');
   assert.equal(eventName('EVENT_ID_INTERNATIONAL_2019'), 'The International 2019');
   assert.equal(eventName('EVENT_ID_CROWNFALL'), 'Crownfall');
+  assert.equal(eventName('EVENT_ID_10TH_ANNIVERSARY'), '10th Anniversary', 'a word that starts with a number');
   assert.equal(eventName('EVENT_ID_NONE'), '');
   assert.equal(eventName('25'), '');
+});
+
+test("an event the game names is called by the game's name in the player's language, and spelled out only where it has none", () => {
+  // as dota_english.txt and dota_russian.txt of the game of 2026-11-09 have them
+  const tokens = new Map([
+    ['dota_eventname_international2019', 'The International 2019 Battle Pass'],
+    ['dota_eventnameshort_international2019', 'The International 2019'],
+    ['dota_eventname_spring2021', 'Враждостояние'],
+    ['dota_eventname_newbloom2019', 'New Bloom'],
+    ['dota_eventname_muertarelease_spring2023', 'Dead Reckoning'],
+    ['dota_eventname_international2022', 'The 2022 Battle Pass'],
+    ['dota_eventname_none', 'N/A'],
+  ]);
+  const names = eventNames(tokens);
+  assert.equal(eventNames(tokens), names, 'worked out once per table of tokens');
+  assert.equal(eventName('EVENT_ID_INTERNATIONAL_2019', names), 'The International 2019', 'the short name before the long one');
+  assert.equal(eventName('EVENT_ID_SPRING_2021', names), 'Враждостояние 2021', 'the year a name lacks comes from the id');
+  assert.equal(eventName('EVENT_ID_NEW_BLOOM_2019', names), 'New Bloom 2019');
+  assert.equal(eventName('EVENT_ID_MUERTA_RELEASE_SPRING2023', names), 'Dead Reckoning 2023', 'underscores in other places than the id');
+  assert.equal(eventName('EVENT_ID_INTERNATIONAL_2022', names), 'The 2022 Battle Pass', 'a name with its own number keeps it');
+  assert.equal(eventName('EVENT_ID_FALL_2025', names), 'Fall 2025', 'an event the game does not name');
+  assert.equal(eventName('EVENT_ID_NONE', names), '', 'the game\'s "N/A" is still no event');
 });
 
 const itemSet = (over: Partial<ItemSet>): ItemSet => ({
@@ -68,15 +91,22 @@ test("a set's name, rarity and styles come in the player's words, the set's own 
   assert.equal(s.rarityName, 'Мифический');
   assert.equal(s.eventName, 'Fall 2021');
   assert.deepEqual(s.styleNames, ['Синий', 'Красный'], 'the names of the piece with the most styles');
+  const [described] = setDetails([itemSet({ descToken: '#Desc', event: 'EVENT_ID_FALL_2021' })],
+    (token) => (token === '#Desc' ? 'Includes:<br><br>\t- <font color="#e4ae39">Head</font> &amp; Back &#8212; 2 items<BR/>' : ''), () => undefined,
+    eventNames(new Map([['dota_eventname_fall2021', "Aghanim's Labyrinth 2021"]])));
+  assert.equal(described.description, 'Includes:\n\n\t- Head & Back — 2 items', "the game's markup made plain text");
+  assert.equal(described.eventName, "Aghanim's Labyrinth 2021");
+  const [compared] = setDetails([itemSet({ descToken: '#Desc' })], () => 'Damage 2 < 3 > 1 &unknown;', () => undefined);
+  assert.equal(compared.description, 'Damage 2 < 3 > 1 &unknown;', 'only tags are taken out, and only entities it knows are read');
   const [plain] = setDetails([itemSet({ nameToken: '', rarity: 'immortal' })], named, () => undefined);
   assert.equal(plain.title, 'Blightfall');
   assert.equal(plain.rarityName, 'Immortal', 'a rarity the language file lacks keeps its key');
   assert.deepEqual(plain.styleNames, []);
 });
 
-const set = (name: string, rarity: string, date: string, eventName = '', styles = 1): CosmeticSet =>
-  ({ id: name, name, heroLabel: 'Abaddon', fit: 1, pieces: [], rarity, rarityName: rarity, date, eventName, styles });
-const SETS = [set('Bravo', 'rare', '2014-03-01'), set('Alpha', 'arcana', '2021-08-18', 'Fall 2021', 2), set('Charlie', 'mythical', '2019-01-02', 'Fall 2021'), set('Delta', 'rare', '')];
+const set = (name: string, rarity: string, date: string, event = '', styles = 1): CosmeticSet =>
+  ({ id: name, name, heroLabel: 'Abaddon', fit: 1, pieces: [], rarity, rarityName: rarity, date, event, eventName: eventName(event), styles });
+const SETS = [set('Bravo', 'rare', '2014-03-01'), set('Alpha', 'arcana', '2021-08-18', 'EVENT_ID_FALL_2021', 2), set('Charlie', 'mythical', '2019-01-02', 'EVENT_ID_FALL_2021'), set('Delta', 'rare', '')];
 
 test('the sets window sorts by name, date and rarity, and narrows by rarity, years, event and styles', () => {
   const names = (patch: Partial<typeof SET_FILTERS>) => filterSets(SETS, { ...SET_FILTERS, ...patch }).map((s) => s.name);
@@ -86,21 +116,23 @@ test('the sets window sorts by name, date and rarity, and narrows by rarity, yea
   assert.deepEqual(names({ sort: 'rare' }), ['Alpha', 'Charlie', 'Bravo', 'Delta']);
   assert.deepEqual(names({ rarity: 'rare' }), ['Bravo', 'Delta']);
   assert.deepEqual(names({ from: '2015', to: '2020' }), ['Charlie'], 'a set without a date is out once a year is asked for');
-  assert.deepEqual(names({ event: 'Fall 2021' }), ['Alpha', 'Charlie']);
+  assert.deepEqual(names({ event: 'EVENT_ID_FALL_2021' }), ['Alpha', 'Charlie'], 'by the id, which stays when the language changes the name');
   assert.deepEqual(names({ styled: true }), ['Alpha']);
   assert.equal(activeFilters({ ...SET_FILTERS, sort: 'rare', rarity: 'rare', styled: true }), 2, 'the sort is not a filter');
   assert.deepEqual(setFacets(SETS), {
     rarities: [{ value: 'rare', label: 'rare' }, { value: 'mythical', label: 'mythical' }, { value: 'arcana', label: 'arcana' }],
     years: ['2014', '2019', '2021'],
-    events: ['Fall 2021'],
+    events: [{ value: 'EVENT_ID_FALL_2021', label: 'Fall 2021' }],
   });
 });
 
 test('the sets toolbar comes back as it was left, and a stored value it cannot use is its default', () => {
   const kept = new Map<string, string>();
   const store = { getItem: (k: string) => kept.get(k) ?? null, setItem: (k: string, v: string) => { kept.set(k, v); } };
-  writeSetFilters(store, { ...SET_FILTERS, sort: 'rare', rarity: 'arcana', from: '2015', styled: true });
-  assert.deepEqual(readSetFilters(store), { ...SET_FILTERS, sort: 'rare', rarity: 'arcana', from: '2015', styled: true });
+  writeSetFilters(store, { ...SET_FILTERS, sort: 'rare', rarity: 'arcana', from: '2015', event: 'EVENT_ID_FALL_2021', styled: true });
+  assert.deepEqual(readSetFilters(store), { ...SET_FILTERS, sort: 'rare', rarity: 'arcana', from: '2015', event: 'EVENT_ID_FALL_2021', styled: true });
+  kept.set('mm-set-filters', '{"sort":"new","event":"Fall 2021"}');
+  assert.deepEqual(readSetFilters(store), { ...SET_FILTERS, sort: 'new' }, 'an event kept by its name, before names came from the game');
   kept.set('mm-set-filters', '{"sort":"loudest","rarity":7,"styled":"yes"}');
   assert.deepEqual(readSetFilters(store), SET_FILTERS);
   kept.set('mm-set-filters', 'not json');
