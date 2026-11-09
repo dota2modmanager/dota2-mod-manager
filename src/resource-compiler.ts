@@ -38,6 +38,8 @@ export const COMPILER = 'resourcecompiler.exe';
 /* A hero model with its animations is minutes, not seconds: ResourceCompilerTest gives one ten. */
 const COMPILE_TIMEOUT_MS = 10 * 60 * 1000;
 const ADDON = /^[a-z0-9_]{1,64}$/;
+/** What the compiler says when its libraries are of two different builds of the tools. */
+const SCHEMA_MISMATCH = /Schema mismatches reported/i;
 
 /* The check Settings runs: the smallest model there is, the empty one a persona's base puts at each
  * of the plain hero's slots. It goes through everything a real compile does (Wine, the addon, the
@@ -246,6 +248,9 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
           ? await run(w, [exe, ...args], { cwd: path.dirname(exe), env: wineEnv(prefix), timeoutMs: COMPILE_TIMEOUT_MS })
           : await run(exe, args, { cwd: path.dirname(exe), timeoutMs: COMPILE_TIMEOUT_MS });
         log(`resourcecompiler: ${rel} exited with ${code} after ${((Date.now() - started) / 1000).toFixed(1)} s`);
+        // the tools' own libraries out of step (resourcecompiler.dll and modtools.dll of two Dota
+        // updates): it refuses whatever the file, so the 450 schema lines say nothing to a person
+        if (code !== 0 && SCHEMA_MISMATCH.test(said)) throw new Error(t('Workshop Tools в игре от разных обновлений, и resourcecompiler.exe отказывается собирать. В Steam открой свойства Dota 2, «Установленные файлы», и проверь целостность файлов. Если не помогло, Valve ещё не обновили Workshop Tools под этот патч: подожди их обновления'));
         if (code !== 0 || !fs.existsSync(path.join(out, compiledOf(rel)))) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', rel, tail(said) || `exit ${code}`));
       }
       // the compiled files, and not the tools' own notes about the addon beside them

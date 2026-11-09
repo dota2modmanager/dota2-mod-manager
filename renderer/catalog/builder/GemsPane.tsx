@@ -14,11 +14,15 @@ export function GemsPane({ set, item, gems, art, color, equipped, unavailable, c
   const [hex, setHex] = useState<string | null>(null);
   const value = toHex(color);
   const valid = hex === null || fromHex(hex) !== null;
-  const install = async () => {
-    if (busy || !equipped || !item?.available || !valid) return;
+  /* Worn through the builder, the arcana's base comes with the pick and the record colours it
+   * (src/arcana-base-color.ts); `own`: the player has the item in the game, and only its effects
+   * are coloured, over the one Valve's files give them. Either way the record is the colour alone,
+   * unless the arcana window built the whole arcana before. */
+  const install = async (own = false) => {
+    if (busy || (!equipped && !own) || !item?.available || !valid) return;
     setBusy(true);
     try {
-      const mode = item.installed?.mode ?? 'recolor';
+      const mode = own ? 'recolor' : item.installed?.mode ?? 'recolor';
       const result = await window.api.arcana.install(set, color, mode);
       if (result.error) { toast(result.error, 'error'); return; }
       saved({ ...item, installed: { id: result.record.id, mode, color, enabled: result.record.enabled !== false } });
@@ -46,7 +50,7 @@ export function GemsPane({ set, item, gems, art, color, equipped, unavailable, c
     <div className="card-body"><div className="card-name">{name}</div></div>
   </>;
   return <section className="ward-shelf ward-gems">
-    {!equipped && <div className="ward-shelf-note">{L`Надень предмет, чтобы увидеть цвет в 3D и сохранить его.`}</div>}
+    {!equipped && <div className="ward-shelf-note">{L`Надень предмет, чтобы увидеть цвет в 3D и сохранить его. Если он уже есть у тебя в игре, можно покрасить только его эффекты.`}</div>}
     {unavailable && <p role="alert">{L`Не удалось загрузить самоцветы`}</p>}
     <fieldset className="item-pick-grid ward-grid fx-grid ward-gem-grid" disabled={busy}>
       <div className="ward-gem-custom" onKeyDown={e => {
@@ -80,6 +84,10 @@ export function GemsPane({ set, item, gems, art, color, equipped, unavailable, c
     </fieldset>
     <div className="ward-gem-actions">
       <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => { pick(null); setOpen(false); }}>{L`Сбросить изменения`}</button>
+      {!equipped && <button className="btn btn-sm btn-ghost" id="gemOwnBtn" disabled={busy || !valid || !item?.available} onClick={() => void install(true)}
+        title={L`Для предмета, который уже есть у тебя в игре: красятся только эффекты, модель остаётся игровой`}>
+        <span className="ms">auto_fix_high</span>{L`Только эффекты`}
+      </button>}
       <button className="btn btn-primary" disabled={busy || !valid || !equipped || !item?.available} onClick={() => void install()}>
         <span className="ms">{busy ? 'progress_activity' : 'palette'}</span>{busy ? L`Собираю…` : L`Сохранить цвет`}
       </button>

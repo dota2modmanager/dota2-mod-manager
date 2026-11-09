@@ -92,16 +92,16 @@ const NO_INSTALLER: SchemaInstaller = {
   installedSize: () => { throw new Error('the installer was not meant to be asked'); },
 };
 
-function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild, modsOff, pak } = {} as {
+function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild, onDeployed, modsOff, pak } = {} as {
   values?: Record<string, unknown>; installer?: SchemaInstaller; text?: string; bases?: Parameters<typeof createSchemaService>[0]['bases'];
-  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild']; modsOff?: () => boolean; pak?: Parameters<typeof createSchemaService>[0]['pak'];
+  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild']; onDeployed?: (filled: Set<string>) => void; modsOff?: () => boolean; pak?: Parameters<typeof createSchemaService>[0]['pak'];
 }) {
   const g = game(t, text);
   fs.mkdirSync(g.userData, { recursive: true });
   const library = new Library(g.userData);
   const settings = settingsIn({ dotaGamePath: g.game, schemaPatch: false, ...values });
   const said: string[] = [];
-  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild, pak, modsOff });
+  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild, onDeployed, pak, modsOff });
   return { ...g, library, settings, svc, said };
 }
 
@@ -547,6 +547,18 @@ test('an arcana picked puts its base on once it is here, its own part takes the 
   s.svc.refresh();
   assert.equal(built('models/heroes/juggernaut/juggernaut_body.vmdl_c'), null, 'the arcana off: its base goes with it');
   assert.equal(built('models/heroes/juggernaut/jugg_mask.vmdl_c'), "Valve's arcana mask", 'and the mask alone is Valve\'s again');
+});
+
+test('the paths the table hands the arcana window take in its arcana base, not only the files of the picks', (t) => {
+  // the window's Terrorblade loads ahead of the table and gives up what it is told the table fills:
+  // told only the picks' files, it kept Valve's materials over the base's, and the body was plain
+  const bases = { entries: (id: string) => (id === 'bladeform_legacy' ? Object.entries(BASE).map(([p, d]) => entryAt(p, Buffer.from(d))) : null), want: async () => true };
+  let filled = new Set<string>();
+  const s = service(t, { values: { schemaPatch: true }, text: ARCANA_TABLE, bases, onDeployed: (f) => { filled = f; } });
+  fs.writeFileSync(path.join(s.game, 'dota', 'pak01_dir.vpk'), schema.buildSchemaVpk(ARCANA_TABLE,
+    Object.entries(VALVE).map(([p, d]) => entryAt(p, Buffer.from(d)))));
+  s.svc.pickCosmetic('item:juggernaut:body', '9059', 'Bladeform Legacy', '');
+  for (const p of Object.keys(BASE)) assert.ok(filled.has(p), p);
 });
 
 // ---------- building in the background ----------
