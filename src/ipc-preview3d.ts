@@ -14,7 +14,11 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
   ipcMain.handle('preview3d:slice', (e, id, offset) => large.slice(id, offset));
   ipcMain.handle('preview3d:models', async (e, hero, slots) => {
     try {
-      return large.pack(await heroPreview.models(hero, slots, !!toolchain.pathOf('vrf')));
+      const started = Date.now();
+      const answer = await heroPreview.models(hero, slots, !!toolchain.pathOf('vrf'));
+      // how long the window waited on this side, against how long it waited in all (the 3D took 28 s to change a weapon)
+      diag(`preview 3d: ${hero} answered in ${Date.now() - started} ms`);
+      return large.pack(answer);
     } catch (err) {
       // the window says only that the model could not be had; the reason goes to the log
       diag(`preview 3d: ${errorText(err)}`);

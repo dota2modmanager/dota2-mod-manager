@@ -47,3 +47,12 @@ test('the item picker shows inherited arcana color until an item has a draft or 
   assert.deepEqual(gemColor(span, palette, { [arcana]: purple, [span]: green }, worn), { color: green, inherited: false, explicit: true });
   assert.deepEqual(gemColor(span, palette, { [arcana]: purple }, {}).color, RECOLOR_SETS[span].gem);
 });
+
+test("a gem picked on Terrorblade's arcana reaches his own blades too, which bake their red into their colours", () => {
+  const rules = { ...RECOLOR_SETS['terrorblade-arcana'], bake: false };
+  const blue: PreviewGem = { set: 'terrorblade-arcana', slot: 'tb:hero_base', color: [0, 151, 206], rules };
+  const sword = 'particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword_blade.vpcf';
+  assert.deepEqual(loadoutGem(sword, [blue]), { color: blue.color, bake: false, own: true }, 'repainted live, not left red until the weapon goes on again');
+  const stock: PreviewGem = { ...blue, color: RECOLOR_SETS['terrorblade-arcana'].gem as [number, number, number], stock: true };
+  assert.deepEqual(loadoutGem(sword, [stock]), { color: stock.color, bake: false, own: false }, 'the stock gem leaves the blades as they were made');
+});
