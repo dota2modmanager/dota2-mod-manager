@@ -9,6 +9,7 @@ import { allowItemTable, setItemTable } from '../ui/game-files.ts';
 import { confirmDialog } from '../ui/dialog.ts';
 import { Swap } from '../motion/Swap.tsx';
 import { Toggle } from './Toggle.tsx';
+import { ModFolderRow } from './ModFolderRow.tsx';
 
 /** The edit fell off or half-landed: a Dota update, Steam's file check, another patcher. */
 function trouble(): boolean {
@@ -22,6 +23,7 @@ export function GameFilesBlock({ i, everyone, onEveryone }: { i: number; everyon
   // read from the settings on every draw, not kept here: a screen drawn again (a language change
   // remounts it) from a copy taken mid-switch showed the table off while it was on (2026-11-04)
   const on = Boolean(state.settings?.schemaPatch);
+  const [, redraw] = useState(0);
   const [busy, setBusy] = useState(false);
 
   const flip = async () => {
@@ -52,6 +54,7 @@ export function GameFilesBlock({ i, everyone, onEveryone }: { i: number; everyon
         <Toggle id="everyoneToggle" on={everyone} label={L`Мой вид на всех, кто играет этим героем`} disabled={!on} onClick={onEveryone} />
       </div>
       <div className="settings-hint">{L`Кто бы ни играл героем, которого ты собрал в конструкторе, союзник или враг, у тебя на экране он будет в твоих предметах. Видишь это только ты.`}</div>
+      <ModFolderRow redraw={() => redraw((n) => n + 1)} />
     </div>
   );
 }

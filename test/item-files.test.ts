@@ -74,3 +74,34 @@ test('a body group goes onto the arcana base\'s body, not the game\'s plain one'
     assert.ok(body && resourceBlock(body.data, 'DATA').data.includes(Buffer.from('base')), "the base's body");
   } finally { fs.rmSync(game, { recursive: true, force: true }); }
 });
+
+test('without the table the shared files are the item picks\' own, not the copy a persona is in too', async () => {
+  // Invoker's Acolyte put its minimap icon in the one sprite sheet every pick shares; the picks' pak
+  // carries no persona, so its sheet is the one made of the items alone
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const { buildVpk, entryAt, entryPath } = await import('../src/vpk.ts');
+  const { itemFilesSteps } = await import('../src/item-files.ts');
+  const { drain } = await import('../src/steps.ts');
+  const SHEET = 'scripts/mod_textures.txt';
+  const game = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-files-'));
+  try {
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt('models/x.vmdl_c', Buffer.from('x'))]));
+    const table = entryAt(SHEET, Buffer.from('with the persona'));
+    const persona = { id: '1', block: block(''), assets: [entryAt('models/p.vmdl_c', Buffer.from('p'))], own: null };
+    const item = { id: '2', block: block(''), assets: [table, entryAt('models/i.vmdl_c', Buffer.from('i'))], item: true, own: null };
+    const run = (shared?: { paths: string[]; entries: ReturnType<typeof entryAt>[] }) =>
+      drain(itemFilesSteps([persona, item], [], game, shared)).entries.find((e) => entryPath(e) === SHEET)?.data.toString();
+    assert.equal(run(), 'with the persona', 'with nothing else to go by, the table\'s copy');
+    assert.equal(run({ paths: [SHEET], entries: [entryAt(SHEET, Buffer.from('items alone'))] }), 'items alone');
+    assert.equal(run({ paths: [SHEET], entries: [] }), undefined, 'a sheet only the persona changed stays the game\'s');
+  } finally { fs.rmSync(game, { recursive: true, force: true }); }
+});
+
+test("an effect the item's showcase alone has stays out of the model it is worn in", () => {
+  // the young Invoker's head has his three orbs for the loadout only; in the match they hung where he spawned
+  const p = pickParts({ block: block(`${mod('particle_create', 'particles/kid_orbs_loadout.vpcf', '"spawn_in_loadout_only"\t"1"')}${mod('particle_create', 'particles/ambient.vpcf')}`), own: 'm' });
+  assert.deepEqual(p.systems, ['particles/ambient.vpcf']);
+});

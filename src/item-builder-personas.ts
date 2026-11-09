@@ -31,8 +31,9 @@ import type { LibRecord } from './types.ts';
 export const SELECTOR = 'persona_selector';
 /** A persona's own slot: weapon_persona_1 is the first persona's weapon. */
 const OWN = /^(.+)_persona_(\d+)$/;
-/** Persona slots nothing is put under: a pet and a voice are no part of the body. */
-const UNWORN = new Set(['summon', 'voice']);
+/** Persona slots nothing is put under: a voice is no part of the body. A summon is a unit of its own,
+ *  and goes under the plain hero's summon (the Acolyte's Forge Spirits), never under a part of him. */
+const UNWORN = new Set(['voice']);
 /** Plain slots no persona item goes under: the persona's own, a pet, a voice, an arcana's and a costume's. */
 const NOT_HOSTS = new Set([SELECTOR, 'summon', 'voice', 'hero_base', 'costume']);
 /** The order a persona slot with no plain slot of its name takes what is left. */
@@ -81,6 +82,9 @@ function layoutOf(text: string, hero: string, items: SchemaItem[]): PersonaLayou
   const take = (fits: (host: SchemaItem) => boolean) => { const at = free.findIndex(fits); return at === -1 ? null : free.splice(at, 1)[0]; };
   const slots = [...own.keys()].sort((a, b) => rank(OWN.exec(a)![1]) - rank(OWN.exec(b)![1]));
   const hosts = new Map<string, SchemaItem>();
+  // the persona's summon under the plain one, when the hero has one: Crystal Maiden's is a pet, and has not
+  const summon = items.find((i) => i.prefab === 'default_item' && slotOf(i) === 'summon');
+  for (const slot of slots) if (OWN.exec(slot)![1] === 'summon' && summon) hosts.set(slot, summon);
   const passes: ((slot: string) => (host: SchemaItem) => boolean)[] = [
     (slot) => (host) => slotOf(host) === OWN.exec(slot)![1],
     (slot) => (host) => matchItemSlot(slotOf(host)) === matchItemSlot(OWN.exec(slot)![1]),
@@ -89,7 +93,7 @@ function layoutOf(text: string, hero: string, items: SchemaItem[]): PersonaLayou
   ];
   for (const pass of passes) {
     for (const slot of slots) {
-      if (hosts.has(slot)) continue;
+      if (hosts.has(slot) || OWN.exec(slot)![1] === 'summon') continue;
       const host = take(pass(slot));
       if (host) hosts.set(slot, host);
     }

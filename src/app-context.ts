@@ -153,6 +153,8 @@ export interface AppContext {
   /** the main window; every channel is called from it, so it is open whenever a handler runs */
   win: () => BrowserWindow;
   langFolder: () => string;
+  /** the mods put into the folder they belong in now (src/game-upkeep.ts): after the folder kept in Settings changes */
+  keepModFolder: () => Promise<void>;
   patchWatcher: () => ReturnType<typeof createPatchWatcher> | null;
   updater: () => ReturnType<typeof createUpdater> | null;
   portableUpdate: () => string | null;

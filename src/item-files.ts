@@ -106,7 +106,9 @@ function skinOf(block: string, mods: Map<string, string>[]): number {
 export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; groups: BodyGroup[]; extras: string[]; left: string[] } {
   const mods = modifiers(patch.block);
   const words = (type: string) => [...new Set(ofType(mods, type).map((f) => f.get('modifier') || '').filter(Boolean))];
-  const systems = words('particle_create');
+  // not an effect the item's showcase alone has (spawn_in_loadout_only, 101 in the game): written into
+  // the model it plays in the match too, and the young Invoker's three showcase orbs hung where he spawned
+  const systems = [...new Set(ofType(mods, 'particle_create').filter((f) => f.get('spawn_in_loadout_only') !== '1').map((f) => f.get('modifier') || '').filter(Boolean))];
   const left = [...new Set(mods.flatMap((f) => TABLE_ONLY[(f.get('type') || '').toLowerCase()] ?? []))];
   if (patch.unplaced) left.push('its model');
   if (systems.length && !patch.own) left.push('its effect');
@@ -145,7 +147,7 @@ export function wornModel(model: Buffer, skin: number, systems: string[]): Buffe
  * @param game  the game folder, for models the pick did not already copy
  * @param beneath  files that go in after the picks' (the arcana bases)
  */
-export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string): Generator<typeof PAUSE, ItemFiles> {
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string, shared?: { paths: string[]; entries: VpkEntry[] }): Generator<typeof PAUSE, ItemFiles> {
   const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
   const read = (p: string) => index.read(p);
   const entries = new Map<string, VpkEntry>();
@@ -153,12 +155,16 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
   const bodies = new Map<string, string[]>();
   const hidden = new Map<string, Map<string, number>>();
   let table: string | undefined;
+  // the sprite sheet, portraits and soundevents of the item picks alone, in place of the table's
+  // copy, which a persona's minimap icon and lines are in too (src/schema-build.ts sharedFiles)
+  const own = new Set(shared?.paths);
+  for (const e of shared?.entries ?? []) entries.set(entryPath(e).toLowerCase(), e);
   for (const patch of list) {
     const source = patch.source || String(patch.id);
     // a persona, worn through the table; what is not a pick at all, a mod's block, the caller counts itself
     if (!patch.item) { if (patch.own !== undefined) left.push({ source, what: ['its persona'] }); continue; }
     const { systems, skin, motions, groups, extras, left: what } = pickParts(patch);
-    for (const e of patch.assets || []) if (!entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
+    for (const e of patch.assets || []) if (!own.has(entryPath(e).toLowerCase()) && !entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
     if (patch.own && (systems.length || skin)) {
       const at = patch.own.toLowerCase();
       const entry = entries.get(at);

@@ -10,6 +10,8 @@ import type { ItemLook } from '../catalog/types.ts';
 export interface StoredSettings {
   dotaGamePath: string | null;
   langSuffix: string;
+  /** the mods folder kept whatever the game is set to, or null to follow the game (src/settings.ts) */
+  langFolderLock?: string | null;
   uiLang: 'en' | 'ru' | 'zh-CN';
   langPromptSeen: boolean;
   uiScale: number;

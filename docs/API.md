@@ -171,6 +171,7 @@ the code, not in this page.
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
+| [`src/persona-base-effects.ts`](#srcpersona-base-effectsts) | What of a persona's base the build takes: its persona's own effects, not another item's. |
 | [`src/png-strip.ts`](#srcpng-stripts) | A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
@@ -880,15 +881,18 @@ Files of a base to take from one commit rather than from the manifest's.
 ### `PINNED`
 
 ```ts
-export const PINNED: Pins =
+export const PINNED: Pins = {}
 ```
 
 Files of bases taken from an older commit of the repository than the manifest names. A hash
 here stands in for the signature: it is compiled into a signed app, and `bring` still checks it.
 
-The Acolyte's body: the commit after this one rebuilt it 1.351 times larger, and with the hero at
-Valve's ModelScale of 0.74 the young Invoker stood as tall as the grown one. This body is the
-size the game's own persona has. Take these out once the repository publishes a body that size.
+The Acolyte's body was here until 2026-11-09, at the size of Valve's model, on the reading that
+the repository's, 1.351 times larger, stood the young Invoker as tall as the grown one. It was the
+other way round: the server draws the persona at the plain hero's ModelScale, 0.74, where Valve
+draws its owner's at the persona's hero_scale, 1, and 1 / 0.74 is 1.351. Valve's size came out a
+head shorter than the persona the game shows its owner, with the orbs out of place around him.
+The repository's body is that size, and its items are made as big (src/model-scale.ts).
 
 ### `Listing`
 
@@ -3450,7 +3454,7 @@ src/minify.ts). Cross-checked against Minify's own enumeration of the same set.
 ### `modFolderFor`
 
 ```ts
-export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean }
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined, lock?: string | null): { suffix: string; followed: boolean; locked?: true }
 ```
 
 The folder the game is going to mount, which is where mods have to go.
@@ -3468,7 +3472,8 @@ is the ordinary path and the one this app sets itself.
 ```
 @param launched  a `-language` value, if one is set
 @param audio     the voice language from the game's own settings
-@returns the folder, and whether a parameter chose it
+@param lock      the folder the user keeps in Settings, if any (src/settings.ts langFolderLock)
+@returns the folder, and whether a parameter or the user chose it
 ```
 
 ### `folderFor`
@@ -4094,6 +4099,18 @@ export function previewCrestParticles(roots: string[], model: string, itemId: st
 ```
 
 Some builds ship the Crest glow separately from the wearable's particle list.
+
+### `personaPreviewSlots`
+
+```ts
+export function personaPreviewSlots<S extends { slot: string; stock: string }>(text: string, hero: string, slots: readonly S[], equipped: readonly { slot?: unknown; itemId?: unknown }[]): S[]
+```
+
+The slots the preview dresses, with a persona's counted: a persona on (worn, or tried on in its
+slot) is worn with its own items alone, so the plain slots go and each of its own is there; one
+off takes its own slots with it. The window sends the slots it shows, which are the plain ones
+while a persona is tried on or still going on, and Invoker's Acolyte stood in the adult's hat,
+shoulders and cape.
 
 ## src/hero-preview.ts
 
@@ -5518,10 +5535,10 @@ A sprite of the game's sprite sheets shown in place of another (the minimap's he
 ### `PortraitSwap`
 
 ```ts
-export interface PortraitSwap { model: string; hero: string }
+export interface PortraitSwap { model: string; hero: string; scale?: number }
 ```
 
-A hero model whose HUD portrait settings go under the hero's own model's path.
+scale: how much bigger the body under the plain path is than the model whose settings these are
 
 ### `ItemAssets`
 
@@ -6744,7 +6761,7 @@ A wearable as it goes in: in its material set, carrying its effects. Null: the f
 ### `itemFilesSteps`
 
 ```ts
-export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string): Generator<typeof PAUSE, ItemFiles>
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string, shared?: { paths: string[]; entries: VpkEntry[] }): Generator<typeof PAUSE, ItemFiles>
 ```
 
 The list a table build made, as one pak's files.
@@ -6768,10 +6785,20 @@ Both files are written whole, as the game's with those entries changed, and only
 changed. The approach is BetterSource2Viewer's character export (ExportPortraits,
 CharacterIcons.ReplaceSprites; MIT). The pictures themselves are plain copies (item-builder-assets.ts).
 
+### `scaledPortrait`
+
+```ts
+export function scaledPortrait(block: string, scale: number): string
+```
+
+A portrait block framed for a body `scale` times bigger: the camera and the light stand as much
+further from the origin, at the same angles and field of view. The young Invoker's body is 1.351
+times Valve's (src/arcana-base-store.ts), and the camera Valve set for its own was too close.
+
 ### `withPortraits`
 
 ```ts
-export function withPortraits(text: string, swaps: { from: string; to: string }[]): string
+export function withPortraits(text: string, swaps: { from: string; to: string; scale?: number }[]): string
 ```
 
 The portrait settings with each arcana's block written under the model it stands in for.
@@ -9863,6 +9890,24 @@ against that list rather than taken on faith: this is the moment the game become
 again, and a copy that is even one byte off leaves the client refusing to matchmake with
 no mod in sight to blame.
 
+## src/persona-base-effects.ts
+
+What of a persona's base the build takes: its persona's own effects, not another item's.
+Kept apart from src/item-builder-personas.ts, which says how a persona is worn.
+
+### `withoutOthersEffects`
+
+```ts
+export function withoutOthersEffects(text: string, ready: ReadyBase[]): ReadyBase[]
+```
+
+A persona's base without another item's effects: the Acolyte's carries Magus Apex's eyes as its
+orbs and its Sun Strike, at the plain hero's paths, and they won over the persona's own orbs. An
+effect folder under particles/econ/items/ that none of the persona's own items names is another
+item's: its files go, and so does a plain path's file that leads into it, where the persona's
+own copy or the game's then stands. The other bases' folders are their persona's own (axe_carnival,
+dk_persona, mirana_persona).
+
 ## src/png-strip.ts
 
 A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a
@@ -11904,6 +11949,14 @@ export const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (
 ```
 
 _No description in the source._
+
+### `FilesShared`
+
+```ts
+export interface FilesShared { paths: string[]; entries: VpkEntry[] }
+```
+
+The shared files as the picks' pak takes them: `paths` the ones the table's copy carries, `entries` the pak's own, made of the item picks alone.
 
 ### `createTableBuild`
 

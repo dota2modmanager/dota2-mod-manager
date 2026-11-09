@@ -53,19 +53,14 @@ export type Pins = Record<string, { commit: string; files: Record<string, string
  * Files of bases taken from an older commit of the repository than the manifest names. A hash
  * here stands in for the signature: it is compiled into a signed app, and `bring` still checks it.
  *
- * The Acolyte's body: the commit after this one rebuilt it 1.351 times larger, and with the hero at
- * Valve's ModelScale of 0.74 the young Invoker stood as tall as the grown one. This body is the
- * size the game's own persona has. Take these out once the repository publishes a body that size.
+ * The Acolyte's body was here until 2026-11-09, at the size of Valve's model, on the reading that
+ * the repository's, 1.351 times larger, stood the young Invoker as tall as the grown one. It was the
+ * other way round: the server draws the persona at the plain hero's ModelScale, 0.74, where Valve
+ * draws its owner's at the persona's hero_scale, 1, and 1 / 0.74 is 1.351. Valve's size came out a
+ * head shorter than the persona the game shows its owner, with the orbs out of place around him.
+ * The repository's body is that size, and its items are made as big (src/model-scale.ts).
  */
-export const PINNED: Pins = {
-  acolyte_of_the_lost_arts: {
-    commit: 'ec1eef2638edb95389c3e3314d6b3f02892b83bc',
-    files: {
-      'models/heroes/invoker/invoker.vmdl_c': 'd77cd4d619063848d24c65cfe6d4e9441a0f94b5',
-      'models/heroes/invoker/invoker/invoker_kid_vmorf.vtex_c': 'ca8c2e440d26e80c3b264df4e560fdbc303a0324',
-    },
-  },
-};
+export const PINNED: Pins = {};
 
 /** Each base's files: its path inside the base, as the repository spells it -> git's hash of it. */
 export type Listing = Record<string, Record<string, string>>;

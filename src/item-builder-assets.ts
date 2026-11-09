@@ -22,7 +22,8 @@ import type { SoundSwap, VoiceCue } from './item-sounds.ts';
 export interface SpriteSwap { sprite: string; as: string }
 
 /** A hero model whose HUD portrait settings go under the hero's own model's path. */
-export interface PortraitSwap { model: string; hero: string }
+/** scale: how much bigger the body under the plain path is than the model whose settings these are */
+export interface PortraitSwap { model: string; hero: string; scale?: number }
 
 /** What a pick asks of the game's files, beside its block. */
 export interface ItemAssets { assetCopies: AssetCopy[]; sounds: SoundSwap[]; voices: VoiceCue[]; portraits: PortraitSwap[]; sprites: SpriteSwap[] }
@@ -64,6 +65,15 @@ function stockModelsOf(text: string, heroes: string[]): Set<string> {
  * Rictus Ripper's demon came out as the plain one, or as whatever another mod put at demon.vmdl.
  */
 const FORM = /^models\/heroes\//;
+
+/**
+ * The attack a persona's owner sees, which nothing in items_game or the hero's script swaps: the
+ * game picks the Acolyte's by his orbs (invoker_kid_base_attack_quas, _wex, _exort, _all). Without
+ * the table his attack was the grown Invoker's; the one for all orbs stands in for the four.
+ */
+const PERSONA_ATTACKS: Record<string, [string, string][]> = {
+  npc_dota_hero_invoker: [['particles/units/heroes/hero_invoker_kid/invoker_kid_base_attack_all.vpcf', 'particles/units/heroes/hero_invoker/invoker_base_attack.vpcf']],
+};
 
 /**
  * The files an item's visuals swap, to stage under the plain paths: particles, models, and the
@@ -121,6 +131,8 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
   if (typed('persona').length && !typed('icon_replacement_hero', 'asset', 'modifier').length) {
     pictures.push(...swapped('icon_replacement_hero_minimap', PICTURES.icon_replacement_hero));
   }
+  // a persona's attack is chosen by the game's code, which no file names: under the plain one's path
+  if (typed('persona').length) for (const hero of heroes) pictures.push(...(PERSONA_ATTACKS[hero] ?? []).map(([from, to]) => ({ from, to, optional: true })));
   return {
     assetCopies: [
       ...models.map((f) => ({ from: f.get('modifier')!, hero: f.get('asset')!.toLowerCase(), activities, ...(skin ? { skin } : {}) })),

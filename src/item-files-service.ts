@@ -32,8 +32,8 @@ export function createItemFilesPak({ installer, library, log = () => {} }: {
     left: (): LeftBehind[] => ((mine()?.generated as ItemFilesGenerated | undefined)?.left ?? []),
 
     /** The picks' files, ready for `commit`: the paths they fill, lowercased. */
-    * buildSteps({ list, beneath }: { list: PickPatch[]; beneath: VpkEntry[] }, game: string, picks: number): Generator<typeof PAUSE, Set<string>> {
-      const { entries, left } = yield* itemFilesSteps(list, beneath, game);
+    * buildSteps({ list, beneath, filesShared }: { list: PickPatch[]; beneath: VpkEntry[]; filesShared?: { paths: string[]; entries: VpkEntry[] } }, game: string, picks: number): Generator<typeof PAUSE, Set<string>> {
+      const { entries, left } = yield* itemFilesSteps(list, beneath, game, filesShared);
       built = () => this.write(entries, picks, left);
       return new Set(entries.map((e) => entryPath(e).toLowerCase()));
     },

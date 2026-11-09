@@ -6,6 +6,7 @@ import { itemEffectPatch } from './item-builder.ts';
 import { isStockTerrorbladeBlade } from './hero-particle-styles.ts';
 import { heroLoadoutParticles } from './particle-spec.ts';
 import { normalizeAssetPath } from './item-builder-assets.ts';
+import { isSelectorSlot, personaLayouts } from './item-builder-personas.ts';
 export { wornSkin } from './item-builder-assets.ts';
 
 /**
@@ -166,4 +167,25 @@ export function previewCrestParticles(roots: string[], model: string, itemId: st
     }
   }
   return roots;
+}
+
+/**
+ * The slots the preview dresses, with a persona's counted: a persona on (worn, or tried on in its
+ * slot) is worn with its own items alone, so the plain slots go and each of its own is there; one
+ * off takes its own slots with it. The window sends the slots it shows, which are the plain ones
+ * while a persona is tried on or still going on, and Invoker's Acolyte stood in the adult's hat,
+ * shoulders and cape.
+ */
+export function personaPreviewSlots<S extends { slot: string; stock: string }>(text: string, hero: string,
+  slots: readonly S[], equipped: readonly { slot?: unknown; itemId?: unknown }[]): S[] {
+  const layout = personaLayouts(text).get(hero.replace(/^npc_dota_hero_/, ''));
+  const selector = slots.find((s) => isSelectorSlot(s.slot));
+  if (!layout || !selector) return [...slots];
+  const at = selector.slot.slice(0, selector.slot.lastIndexOf(':') + 1);
+  const part = (slot: string) => layout.parts.some((p) => slot === at + p.slot);
+  const on = equipped.some((r) => String(r.slot) === selector.slot && layout.personas.some((p) => p.id === String(r.itemId)));
+  if (!on) return slots.filter((s) => !part(s.slot));
+  const kept = slots.filter((s) => s === selector || part(s.slot));
+  for (const p of layout.parts) if (!kept.some((s) => s.slot === at + p.slot)) kept.push({ slot: at + p.slot, stock: p.host.id } as S);
+  return kept;
 }

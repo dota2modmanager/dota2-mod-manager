@@ -163,5 +163,10 @@ const EN = {
   "Героев со своими иконками: {0}": "Heroes with icons picked: {0}",
   "Надеваю скин…": "Equipping skin…",
   "Не удалось обновить 3D": "Could not update 3D preview",
+  "Папка модов": "Mods folder",
+  "Как у игры (сейчас dota_{0})": "Follow the game (now dota_{0})",
+  "Моды снова следуют за языком игры": "Mods follow the game’s language again",
+  "Моды остаются в dota_{0}": "Mods stay in dota_{0}",
+  "По умолчанию моды идут в папку языка, которую читает игра, и «-language» в параметрах запуска Steam переносит их туда при запуске приложения. Выбери папку, чтобы моды оставались в ней: пока в параметрах стоит другой язык, игра их не увидит, а когда уберёшь его, они на месте.": "By default mods go into the language folder the game reads, and a “-language” in Steam’s launch options moves them there when the app starts. Pick a folder to keep the mods in it: while the launch options name another language the game will not see them, and once you take it out they are where you left them.",
 };
 window.EN_MORE = EN;
