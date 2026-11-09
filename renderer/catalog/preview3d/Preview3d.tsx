@@ -12,6 +12,7 @@ import { motionLabels } from './motion-label.ts';
 import type { StudioView } from './studio-settings.ts';
 
 import type { PreviewGem } from '../builder/gems.ts';
+import { NO_PAINT, type PreviewPaint } from '../paint/preview-paint.ts';
 
 const noGems: readonly PreviewGem[] = [];
 
@@ -47,9 +48,12 @@ function motionWord(act: string, ability: string | null): string | null {
   }
 }
 
-/** @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it */
-export function Preview3d({ hero, slots, sig, gems = noGems, still = false, fallback, onSettled }: {
-  hero: string; slots: PreviewSlot[]; sig: string; gems?: readonly PreviewGem[]; still?: boolean; fallback?: ReactNode; onSettled?: (result: { sig: string; ok: boolean }) => void;
+/**
+ * @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it
+ * @param paint     the recolour window's colours (catalog/paint/preview-paint.ts), drawn as they change
+ */
+export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, still = false, fallback, onSettled }: {
+  hero: string; slots: PreviewSlot[]; sig: string; gems?: readonly PreviewGem[]; paint?: PreviewPaint; still?: boolean; fallback?: ReactNode; onSettled?: (result: { sig: string; ok: boolean }) => void;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const savedView = useRef<{ hero: string; view: StudioView } | null>(null);
@@ -65,6 +69,11 @@ export function Preview3d({ hero, slots, sig, gems = noGems, still = false, fall
     }, 100);
     return () => clearTimeout(timer);
   }, [gems]);
+  const latestPaint = useRef(paint);
+  useEffect(() => {
+    latestPaint.current = paint;
+    scene.current?.paint(paint);
+  }, [paint]);
   const viewport = useRef<SceneViewport | null>(null);
   const mountQueue = useRef(Promise.resolve());
   const lifetime = useRef<AbortController | null>(null);
@@ -120,7 +129,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, still = false, fall
           const previous = scene.current;
           const initialGems = latestGems.current;
           const options: SceneOptions = {
-            signal: session.signal, gems: initialGems, partSlots: r.parts.map(p => p.slot),
+            signal: session.signal, gems: initialGems, paint: latestPaint.current, partSlots: r.parts.map(p => p.slot),
             viewState: savedView.current?.hero === hero ? previous?.view() ?? savedView.current.view : undefined,
             still, label: L`Герой в 3D`, clip: r.clip, heroModel: r.model, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
             attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources,
@@ -140,6 +149,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, still = false, fall
             scene.current = shown;
           }
           if (initialGems !== latestGems.current) await shown.gems(latestGems.current);
+          shown.paint(latestPaint.current);
           savedView.current = { hero, view: shown.view() };
           if (gone) return;
           body.current = r.model;

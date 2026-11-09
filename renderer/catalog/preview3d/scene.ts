@@ -13,12 +13,15 @@ import { loadoutParticleBounds } from './loadout-bounds.ts';
 import { loadoutGem, loadoutMaterialGem } from './loadout-gems.ts';
 import type { PreviewGem } from '../builder/gems.ts';
 import { toHex } from '../arcana/tint.ts';
+import { effectPalette, NO_PAINT, scenePaints, type PreviewPaint } from '../paint/preview-paint.ts';
 
 export interface HeroScene {
   play:(name:string|null,load?:()=>Promise<Uint8Array|null>,onEnd?:()=>void)=>Promise<boolean>;
   resetView:()=>void; view:()=>StudioView; dispose:()=>void;
   effects:(defs:{part:number;def:ParticleDef}[])=>Promise<void>;
   gems:(gems:readonly PreviewGem[])=>Promise<void>;
+  /** the recolour window's colours, drawn at once */
+  paint:(paint:PreviewPaint)=>void;
   capture:()=>string;
   suspend:()=>Promise<void>;
   replace:(body:Uint8Array,parts:Uint8Array[],options:SceneOptions,current:()=>boolean)=>Promise<boolean>;
@@ -26,7 +29,7 @@ export interface HeroScene {
 export interface SceneOptions {
   signal?:AbortSignal;viewState?:StudioView;still?:boolean;label?:string;clip?:string|null;
   heroModel?:string; stage?:HeroStage;pedestal?:Uint8Array|null;attachments?:{body:Attachment[];parts:Attachment[][]};
-  gems?:readonly PreviewGem[];partSlots?:string[];
+  gems?:readonly PreviewGem[];partSlots?:string[];paint?:PreviewPaint;
   particles?:{part:number;def:ParticleDef}[];sprites?:Record<string,Uint8Array>;resources?:LoadoutResources;
   hidden?:{body:string[];parts:string[][]};isolated?:boolean;onWarnings?:(warnings:string[])=>void;
 }
@@ -76,6 +79,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
   const { canvas, viewer: live } = viewport;
   let disposed=false,loadedMotions=false,request=0,previous='',end:undefined|(()=>void),currentDefs=options.particles??[];
   let currentGems = options.gems ?? [];
+  let currentPaint = options.paint ?? NO_PAINT;
   let suspended = false, revision = 0;
   let look = options, wornParts = parts;
   const overrides = new Map<string, SceneSource | null>();
@@ -130,11 +134,12 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
         if (gem && (!gem.stock || descriptor?.detailGem || descriptor?.specGem)) colors[id] = toHex(gem.color);
       }
       hero?.studioGemMaterials(colors);
+      hero?.studioPaintMaterials(scenePaints([source, ...overrides.values()].flatMap(m => [...(m?.materialMetadata ?? [])]), look.partSlots ?? [], currentPaint));
       const palette = Object.fromEntries(Object.entries(sourcePaths).flatMap(([id, path]) => {
         const gem = loadoutGem(path, currentGems);
         return gem ? [[id, { rgb: gem.color.map(n => n / 255), own: gem.own, bake: !!gem.bake }]] : [];
       }));
-      hero?.studioGemEffects(palette);
+      hero?.studioGemEffects({ ...palette, ...effectPalette(sourcePaths, currentPaint) });
     };
     const applyEffects=async(defs:{part:number;def:ParticleDef}[],hero=live.hero,preserveHero=false)=>{
       check(); source.clearEffects();
@@ -234,6 +239,10 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
       dispose,view:()=>loadoutView(live),resetView:()=>restoreLoadoutView(live,initial),
       capture:()=>{live.frame();return canvas.toDataURL('image/webp',.9);},
       effects(defs){currentDefs=defs;const ticket=++request;queue=queue.catch(()=>{}).then(async()=>{if(ticket===request)await applyEffects(defs);});return queue;},
+      paint(paint) {
+        currentPaint = paint;
+        if (!disposed && !suspended) tintMaterials();
+      },
       gems(gems) {
         if (suspended) return Promise.resolve();
         currentGems = gems;

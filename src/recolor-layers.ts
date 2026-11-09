@@ -11,18 +11,21 @@
  * effect is every particle its visuals name, with the children those particles create (RERL).
  *
  * The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
- * *_color_*.vtex_c), the folder his script's "Model" is in.
+ * *_color_*.vtex_c), the folder his script's "Model" is in. An item's own colour is the colour
+ * textures its model's materials name (`itemModel:<id>`), apart from its effect.
  *
  * Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
  * hue); pictures and textures through `shadePixels` below, the same move pixel by pixel. */
 import { shade, type Rgb } from './recolor.ts';
+import { readLoadoutMaterial } from './loadout-material.ts';
+import { references } from './resource.ts';
 
 /** What a layer recolours. */
-export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item';
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item' | 'itemModel';
 
 /** One part of a hero that takes a colour of its own. */
 export interface RecolorLayer {
-  /** `ability:<name>`, `abilityIcon:<name>`, `effects`, `portrait`, `body`, `item:<id>` */
+  /** `ability:<name>`, `abilityIcon:<name>`, `effects`, `portrait`, `body`, `item:<id>`, `itemModel:<id>` */
   id: string;
   kind: LayerKind;
   /** the ability's or the item's name, for the window to word */
@@ -79,10 +82,10 @@ function claims(ability: string, hero: string, particle: string): boolean {
  * The layers a hero has, from the paths in pak01. A layer with no files is left out: a hero with no
  * picture for an ability, or an ability with no particle of its own, shows no row for it.
  * @param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
- * @param items the items picked for him, with the particles their visuals name
+ * @param items the items he wears, with the particles their visuals name and their model's colour textures
  * @param model the folder of his model (`heroModelFolder`), for the body's textures
  */
-export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[] }[] = [], model: string | null = null): RecolorLayer[] {
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[]; textures?: string[] }[] = [], model: string | null = null): RecolorLayer[] {
   const all = [...paths];
   const folder = heroParticleFolder(all, hero);
   const own = all.filter((p) => p.startsWith(folder) && p.endsWith('.vpcf_c'));
@@ -112,6 +115,9 @@ export function heroLayers(paths: Iterable<string>, hero: string, abilities: str
   for (const item of items) {
     const files = item.particles.map((p) => p.toLowerCase().replace(/\.vpcf$/, '.vpcf_c')).filter((p) => present.has(p));
     if (files.length) layers.push({ id: `item:${item.id}`, kind: 'item', name: item.name, files: [...new Set(files)] });
+    // after the body's: an item's own colour wins over the body's on a texture they share
+    const textures = (item.textures ?? []).filter((p) => present.has(p));
+    if (textures.length) layers.push({ id: `itemModel:${item.id}`, kind: 'itemModel', name: item.name, files: [...new Set(textures)] });
   }
   return layers;
 }
@@ -150,4 +156,81 @@ export function shadePixels(pixels: Buffer, target: Rgb, { bgra = false }: { bgr
     changed++;
   }
   return changed;
+}
+
+/**
+ * The colour textures a model's materials name, as compiled paths: a model names its meshes and
+ * materials (RERL), a material its textures, and the colour is g_tColor. An item's own colour.
+ */
+export function modelColorTextures(models: string[], read: (path: string) => Buffer | null): string[] {
+  const out = new Set<string>();
+  const seen = new Set<string>();
+  const queue = models.map((m) => m.toLowerCase().replace(/_c$/, ''));
+  for (let i = 0; i < queue.length && seen.size < 256; i++) {
+    const p = queue[i];
+    if (seen.has(p)) continue;
+    seen.add(p);
+    const file = read(`${p}_c`);
+    if (!file) continue;
+    if (p.endsWith('.vmat')) {
+      const color = readLoadoutMaterial(file)?.textures.g_tColor;
+      if (color) out.add(`${color.toLowerCase().replace(/_c$/, '')}_c`);
+      continue;
+    }
+    try {
+      queue.push(...references(file).map((r) => r.toLowerCase().replace(/_c$/, '')).filter((r) => /\.(vmat|vmesh)$/.test(r)));
+    } catch { /* a file that names nothing */ }
+  }
+  return [...out];
+}
+
+/**
+ * Each layer with the other items' colour layers it shares a texture with. Two worn items can be
+ * drawn from one texture (Troll Warlord's four axes, Alchemist's bottles): the game gives that
+ * texture one colour, so the window moves those layers together rather than show two colours the
+ * game will not.
+ */
+export function withShares(layers: RecolorLayer[]): { layer: RecolorLayer; shares: string[] }[] {
+  const owners = new Map<string, string[]>();
+  for (const l of layers) if (l.kind === 'itemModel') for (const f of l.files) owners.set(f, [...(owners.get(f) ?? []), l.id]);
+  return layers.map((layer) => ({
+    layer,
+    shares: layer.kind === 'itemModel' ? [...new Set(layer.files.flatMap((f) => owners.get(f) ?? []))].filter((id) => id !== layer.id) : [],
+  }));
+}
+
+// the asset_modifier types that put a model of the item's own on the hero or on a unit of his;
+// a pet (the item builder offers none, and a recoloured one went wrong in the game), a portrait's
+// background, a bodygroup switch and the stock model a style replaces are not
+const MODEL_FROM: Record<string, 'asset' | 'modifier' | 'both'> = {
+  entity_model: 'both', model: 'modifier', hero_model_change: 'modifier', hex_model: 'both', additional_wearable: 'asset',
+};
+
+/**
+ * Every model an item's block puts in the game, in its order, once each: its own (model_player,
+ * model_player1…), and those its visuals bring by asset_modifier - the unit it dresses (Juggernaut's
+ * Healing Ward, Lone Druid's bear, Witch Doctor's Death Ward), a style's model in place of the stock
+ * one, the hero's body an arcana swaps in, a hex, an extra wearable.
+ */
+export function itemModelPaths(block: string): string[] {
+  const out: string[] = [];
+  const add = (p: string | undefined) => { const m = p?.trim().toLowerCase(); if (m && /^models\/.+\.vmdl$/.test(m) && !out.includes(m)) out.push(m); };
+  for (const m of block.matchAll(/"model_player\d*"\s+"([^"]+)"/gi)) add(m[1]);
+  // each asset_modifier block whole, by its braces, its own fields only: one can carry blocks of its
+  // own inside (a pet's offsets), which an innermost-block match took for the modifier itself
+  for (const head of block.matchAll(/"asset_modifier\d*"\s*\{/gi)) {
+    let depth = 0, own = '';
+    for (let i = head.index! + head[0].length - 1; i < block.length; i++) {
+      const c = block[i];
+      if (c === '{') depth++;
+      else if (c === '}' && --depth === 0) break;
+      else if (depth === 1) own += c;
+    }
+    const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(own)?.[1];
+    const take = MODEL_FROM[(field('type') || '').toLowerCase()];
+    if (!take) continue;
+    if (take !== 'modifier') add(field('asset'));
+    if (take !== 'asset') add(field('modifier'));
+  }
+  return out;
 }

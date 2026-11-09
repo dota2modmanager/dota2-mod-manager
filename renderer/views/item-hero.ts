@@ -16,7 +16,7 @@ import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { confirmDialog, promptDialog } from '../ui/dialog.ts';
 import { toast } from '../ui/toast.ts';
-import { openPaint } from './hero-paint.ts';
+import { openPaint, type PaintPreview } from './hero-paint.ts';
 import { loadSetIcons, setsPane, type SetsState } from './item-sets.ts';
 import { afterPick, heroSets, isOpen, itemCosmeticSlots, openWindow, slotPane, slotState, takeOff, tryOnPick, type SlotState } from './item-builder.ts';
 import { deleteLook, heroKey, lookIsOn, looksOf, renameLook, saveLook, wornPicks } from './item-looks.ts';
@@ -98,6 +98,13 @@ function heroPreview(slots: CosmeticSlot[], active: SlotState | null) {
   };
 }
 
+/** What the recolour window shows the hero in: what each slot wears now, and that item's id. */
+function paintPreview(slots: CosmeticSlot[]): PaintPreview | null {
+  const p = heroPreview(slots, null);
+  if (!p) return null;
+  return { hero: p.hero, slots: p.slots, sig: p.sig, items: Object.fromEntries(p.slots.map((s) => [s.slot, String(pickedIn(s.slot)?.itemId || s.stock)])) };
+}
+
 /** The hero's npc name without its prefix (juggernaut), out of the slots' hero ids. */
 const heroNpc = (slots: CosmeticSlot[]): string | null => slots.find((s) => s.heroIds?.length)?.heroIds?.[0]?.replace(/^npc_dota_hero_/, '') || null;
 
@@ -174,7 +181,7 @@ function drawHero(key: number, st: HeroState): void {
       if (tab === 'sets' || tab === 'looks') { st.tab = tab; st.slot = null; again(); } else goSlot(tab);
     },
     togglePreview: () => { previewOpen = !previewOpen; again(); },
-    openPaint: () => { const npc = heroNpc(slots); if (npc) void openPaint(npc, heroName, () => openItemHeroModal(heroName, null)); },
+    openPaint: () => { const npc = heroNpc(slots); if (npc) void openPaint(npc, heroName, () => openItemHeroModal(heroName, null), paintPreview(slots)); },
     takeOff: (slot) => void busy(async () => {
       await takeOff(slot);
       // the slot's pane starts again from what is on now: the stock item

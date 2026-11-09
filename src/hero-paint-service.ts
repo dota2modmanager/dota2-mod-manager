@@ -16,8 +16,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { heroAbilities, heroLayers, heroModelFolder, withChildren, type RecolorLayer } from './recolor-layers.ts';
+import { heroAbilities, heroLayers, heroModelFolder, itemModelPaths, modelColorTextures, withChildren, withShares, type RecolorLayer } from './recolor-layers.ts';
 import { recolorResource, type Rgb } from './recolor.ts';
+import { parsePaint, rgbOfHex, type PaintMode } from './recolor-modes.ts';
 import { references } from './resource.ts';
 import { pngFromVtex } from './vtex.ts';
 import { localizationTokens } from './cosmetic-names.ts';
@@ -31,16 +32,17 @@ import { t } from './i18n.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
 
-/** What a hero's paint record was built from: the hero, and each layer's colour as #rrggbb. */
-export interface PaintGenerated { paint: string; label: string; layers: Record<string, string> }
+/** What a hero's paint record was built from: the hero, each layer's colour as '#rrggbb[:mode]', and the stock items he wore. */
+export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[]; left?: number }
 
-/** One layer as the window lists it. */
-export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number }
+/** One layer as the window lists it; an effect layer with its particles, for the 3D preview to tint. */
+export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[]; shares?: string[] }
 
-const HEX = /^#[0-9a-f]{6}$/i;
 const HERO = /^[a-z0-9_]{2,40}$/;
+const ITEM_ID = /^\d{1,9}$/;
 const LANG_FILE: Record<string, string> = { ru: 'russian', en: 'english', 'zh-CN': 'schinese' };
-const rgbOf = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as Rgb;
+/** The worn items as the window hands them: item ids, no more than a hero has slots for. */
+const wornOf = (items: unknown): string[] => (Array.isArray(items) ? [...new Set(items.filter((x): x is string => typeof x === 'string' && ITEM_ID.test(x)))].slice(0, 24) : []);
 // the item's own particles, as its visuals name them
 const PARTICLE = /"(?:modifier|asset)"\s+"(particles\/[^"]+\.vpcf)"/gi;
 
@@ -51,8 +53,8 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
   library: Pick<Library, 'list' | 'add' | 'update'>;
   /** the game's own item table */
   vanilla: () => string;
-  /** a PNG in the chosen colour; Electron's codec in the app, a fake in tests */
-  repaint: (png: Buffer, color: Rgb) => Buffer;
+  /** a PNG in the chosen colour and mode (src/recolor-modes.ts); Electron's codec in the app, a fake in tests */
+  repaint: (png: Buffer, color: Rgb, mode: PaintMode) => Buffer;
   /** ValveResourceFormat's CLI, when it is downloaded: it reads the compressed pictures */
   vrf?: () => string | null;
   /** Valve's compiler, which builds those pictures again */
@@ -70,27 +72,34 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
   };
   const mine = (hero: string): LibRecord | null => library.list().find((r) => (r.generated as PaintGenerated | undefined)?.paint === hero) ?? null;
 
-  /** The items picked for the hero in the item builder, with the particles they name. */
-  function picked(hero: string): { id: string; name: string; particles: string[] }[] {
-    const ids = [...new Set(library.list()
+  /**
+   * The items picked for the hero in the item builder, and the stock ones the window says he wears,
+   * with the particles they name and their model's colour textures.
+   */
+  function picked(hero: string, worn: string[]): { id: string; name: string; particles: string[]; textures: string[] }[] {
+    const ids = [...new Set([...library.list()
       .filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false && String(r.slot || '').startsWith(`item:${hero}:`) && r.itemId)
-      .map((r) => String(r.itemId)))];
+      .map((r) => String(r.itemId)), ...worn])];
     if (!ids.length) return [];
     const text = vanilla();
+    const index = pak01();
     return ids.flatMap((id) => {
       const block = findItem(text, id)?.text;
       const name = block && /"name"\s+"([^"]+)"/.exec(block)?.[1];
-      return block ? [{ id, name: name || id, particles: [...block.matchAll(PARTICLE)].map((m) => m[1]) }] : [];
+      if (!block) return [];
+      // its own model and the units it dresses: a mount, a ward, a bear, a hex (src/recolor-layers.ts)
+      const models = itemModelPaths(block);
+      return [{ id, name: name || id, particles: [...block.matchAll(PARTICLE)].map((m) => m[1]), textures: modelColorTextures(models, (p) => index.read(p) as Buffer | null) }];
     });
   }
 
-  function layers(hero: string): RecolorLayer[] {
+  function layers(hero: string, worn: string[] = []): RecolorLayer[] {
     if (!HERO.test(hero)) throw new Error(t('Нет такого героя: {0}', hero));
     const index = pak01();
     const script = index.read(`scripts/npc/heroes/npc_dota_hero_${hero}.txt`);
     if (!script) throw new Error(t('Нет такого героя: {0}', hero));
     const text = script.toString('utf8');
-    const all = heroLayers(index.paths(), hero, heroAbilities(text), picked(hero), heroModelFolder(text));
+    const all = heroLayers(index.paths(), hero, heroAbilities(text), picked(hero, worn), heroModelFolder(text));
     // an item's particles create others: those are its effect too
     const refs = (p: string) => { try { return references(index.read(p) as Buffer).map((r) => (r.toLowerCase().endsWith('_c') ? r.toLowerCase() : `${r.toLowerCase()}_c`)); } catch { return []; } };
     for (const l of all) if (l.kind === 'item') l.files = withChildren(l.files, refs).filter((p) => index.read(p));
@@ -105,16 +114,17 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
     } catch { return new Map(); }
   }
 
-  type Built = { entries: Map<string, VpkEntry>; compressed: { path: string; file: Buffer; color: Rgb }[] };
-  function* buildSteps(hero: string, colors: Record<string, string>): Generator<typeof PAUSE, Built> {
+  type Built = { entries: Map<string, VpkEntry>; compressed: { path: string; file: Buffer; color: Rgb; mode: PaintMode }[] };
+  function* buildSteps(hero: string, colors: Record<string, string>, worn: string[]): Generator<typeof PAUSE, Built> {
     const index = pak01();
     const entries = new Map<string, VpkEntry>();
     const compressed: Built['compressed'] = [];
     let since = Date.now();
-    for (const layer of layers(hero)) {
-      const hex = colors[layer.id];
-      if (!hex) continue;
-      const color = rgbOf(hex);
+    for (const layer of layers(hero, worn)) {
+      const paint = parsePaint(colors[layer.id]);
+      if (!paint) continue;
+      const color = rgbOfHex(paint.hex);
+      const { mode } = paint;
       for (const p of layer.files) {
         if (Date.now() - since > 40) { yield PAUSE; since = Date.now(); }
         const file = index.read(p) as Buffer | null;
@@ -125,8 +135,8 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
             if (r.changed) entries.set(p, entryAt(p, r.file));
           } else {
             const png = pngFromVtex(file);
-            if (png) entries.set(p, entryAt(p, Buffer.concat([file.subarray(0, file.length - png.length), repaint(png, color)])));
-            else compressed.push({ path: p, file, color });
+            if (png) entries.set(p, entryAt(p, Buffer.concat([file.subarray(0, file.length - png.length), repaint(png, color, mode)])));
+            else compressed.push({ path: p, file, color, mode });
           }
         } catch (e) {
           log(`hero paint: ${p} left as it is: ${(e as Error).message}`);
@@ -150,7 +160,7 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
       // a model's texture comes back under a name of the compiler's: put it under the game's
       const textures = new Map<string, string>();
       for (const p of list) {
-        const png = repaint(await decode(exe, p.file), p.color);
+        const png = repaint(await decode(exe, p.file), p.color, p.mode);
         if (p.path.startsWith('panorama/images/')) {
           const source = p.path.replace(/_png\.vtex_c$/, '.png');
           files.push({ path: source, data: png });
@@ -172,7 +182,10 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
         compileList.push(css);
       }
       const wanted = new Set(list.map((p) => p.path));
-      const out = await compile({ id: 'hero_paint', files, compile: compileList });
+      // Valve's compiler now and then dies of an access violation after it has written its output
+      // (seen on Batrider among twelve running at once): one more try before the pictures stay as they are
+      const job = { id: 'hero_paint', files, compile: compileList };
+      const out = await compile(job).catch((e: Error) => { log(`hero paint: compiling again after: ${e.message.slice(0, 200)}`); return compile(job); });
       return out.flatMap((e) => {
         const p = entryPath(e);
         const own = /^materials\/d2mm_paint\/(t\d+)_png_[0-9a-f]+\.vtex_c$/.exec(p);
@@ -186,13 +199,15 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
     }
   }
 
-  async function put(hero: string, label: string, colors: Record<string, string>, keepOff: boolean): Promise<LibRecord> {
-    const { entries, compressed } = await runSteps(buildSteps(hero, colors));
+  async function put(hero: string, label: string, colors: Record<string, string>, keepOff: boolean, worn: string[]): Promise<LibRecord> {
+    const { entries, compressed } = await runSteps(buildSteps(hero, colors, worn));
     for (const e of await pictures(compressed)) entries.set(entryPath(e), e);
     if (!entries.size) throw new Error(t('Ни один файл не взял цвет'));
     const vpk = buildVpk([...entries.values()]);
     const count = entries.size;
-    const g: PaintGenerated = { paint: hero, label, layers: colors };
+    // pictures the tools could not build again stay as the game has them; the window says how many
+    const left = compressed.filter((c) => !entries.has(c.path)).length;
+    const g: PaintGenerated = { paint: hero, label, layers: colors, ...(worn.length ? { items: worn } : {}), ...(left ? { left } : {}) };
     const name = t('Перекраска: {0}', label);
     const old = mine(hero);
     log(`hero paint: ${hero}, ${Object.keys(colors).length} layer(s), ${count} file(s)`);
@@ -207,14 +222,17 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
 
   return {
     /** The hero's layers and the colours on now. */
-    state(hero: string): { layers: PaintLayerView[]; installed: { id: string; layers: Record<string, string>; enabled: boolean } | null; vrf: boolean } {
+    state(hero: string, items?: unknown): { layers: PaintLayerView[]; installed: { id: string; layers: Record<string, string>; enabled: boolean } | null; vrf: boolean } {
       const names = abilityNames();
       const rec = mine(hero);
       const g = rec?.generated as PaintGenerated | undefined;
       return {
-        layers: layers(hero).map((l) => ({
+        layers: withShares(layers(hero, wornOf([...wornOf(items), ...(g?.items ?? [])]))).map(({ layer: l, shares }) => ({
           id: l.id, kind: l.kind, files: l.files.length,
-          name: l.kind === 'item' ? l.name! : l.name ? names.get(`dota_tooltip_ability_${l.name}`) || l.name : null,
+          ...(shares.length ? { shares } : {}),
+          name: l.kind === 'item' || l.kind === 'itemModel' ? l.name! : l.name ? names.get(`dota_tooltip_ability_${l.name}`) || l.name : null,
+          // what the 3D preview may play of an effect layer, to show it in its colour there
+          ...(l.kind === 'item' || l.kind === 'effects' ? { particles: l.files.slice(0, 400) } : {}),
         })),
         installed: rec && g ? { id: rec.id, layers: g.layers, enabled: rec.enabled !== false } : null,
         vrf: !!vrf(),
@@ -222,14 +240,15 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
     },
 
     /**
-     * The hero in the colours given, one #rrggbb per layer that is on, in place of the record before.
+     * The hero in the colours given, one '#rrggbb' or '#rrggbb:mode' per layer that is on, in place of the record before.
      * @param label the hero's name as the window shows it, for the record's
+     * @param items the items he wears, stock ones too: their own colours are layers
      */
-    async install(hero: unknown, colors: unknown, label?: unknown): Promise<LibRecord> {
+    async install(hero: unknown, colors: unknown, label?: unknown, items?: unknown): Promise<LibRecord> {
       if (typeof hero !== 'string' || !HERO.test(hero)) throw new Error(t('Нет такого героя: {0}', String(hero)));
-      const picked = Object.fromEntries(Object.entries((colors || {}) as Record<string, unknown>).filter((e): e is [string, string] => typeof e[1] === 'string' && HEX.test(e[1])));
+      const picked = Object.fromEntries(Object.entries((colors || {}) as Record<string, unknown>).filter((e): e is [string, string] => !!parsePaint(e[1])));
       if (!Object.keys(picked).length) throw new Error(t('Выбери цвет хотя бы для одного слоя'));
-      return put(hero, typeof label === 'string' && label.trim() ? label.trim().slice(0, 80) : hero, picked, false);
+      return put(hero, typeof label === 'string' && label.trim() ? label.trim().slice(0, 80) : hero, picked, false, wornOf(items));
     },
 
     /** After a Dota update: the records among `ids` built again with their colours, after this returns. */
@@ -237,7 +256,7 @@ export function createHeroPaint({ gamePath, installer, library, vanilla, repaint
       for (const rec of library.list().filter((r) => ids.includes(r.id) && (r.generated as PaintGenerated | undefined)?.paint)) {
         const g = rec.generated as PaintGenerated;
         setTimeout(() => {
-          put(g.paint, g.label || g.paint, g.layers, true).then(() => onRebuilt(rec.id), (err) => log(`hero paint: could not build again after the update: ${(err as Error).message}`));
+          put(g.paint, g.label || g.paint, g.layers, true, wornOf(g.items)).then(() => onRebuilt(rec.id), (err) => log(`hero paint: could not build again after the update: ${(err as Error).message}`));
         }, 0);
       }
       return [];

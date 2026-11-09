@@ -37,7 +37,7 @@ import { createMapDecor } from './map-decor.ts';
 import { createRankLook } from './rank-look-service.ts';
 import { createHeroPaint } from './hero-paint-service.ts';
 import { createAbilityIcons } from './ability-icons-service.ts';
-import { shadePixels } from './recolor-layers.ts';
+import { paintPixels, type PaintMode } from './recolor-modes.ts';
 import type { Rgb } from './recolor.ts';
 import { createAbilitySounds } from './ability-sounds-service.ts';
 import { createBuildUndo } from './build-undo.ts';
@@ -259,11 +259,11 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 }
 
 /** A PNG in the chosen colour through Electron's image codec, which hands its pixels over as BGRA. */
-export function electronRepaint(png: Buffer, color: Rgb): Buffer {
+export function electronRepaint(png: Buffer, color: Rgb, mode: PaintMode = 'tint'): Buffer {
   const { nativeImage } = electron();
   const img = nativeImage.createFromBuffer(png);
   const size = img.getSize();
   const pixels = Buffer.from(img.toBitmap());
-  shadePixels(pixels, color, { bgra: true });
+  paintPixels(pixels, size.width, color, mode, { bgra: true });
   return nativeImage.createFromBitmap(pixels, size).toPNG();
 }
