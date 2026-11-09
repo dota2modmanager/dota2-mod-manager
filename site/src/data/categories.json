@@ -2657,6 +2657,35 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "6 86 Arc Warden Background",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/6-86-arc-warden-background.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1794177576
+        },
+        {
+          "name": "7 40 Largo",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/7-40-largo.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1794177576
+        },
+        {"name":"Elaina Blade","styleLabel":null,"group":null,"image":{"src":"/mods/elaina-blade.webp","width":854,"height":480},"author":"qoofix","authorUrl":"https://qoofix.ru","date":1794177576},
+        {
+          "name": "Last Match Vidget",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/last-match-vidget.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1794177576
+        },
+        {"name":"Rainy Day","styleLabel":null,"group":null,"image":{"src":"/mods/rainy-day.webp","width":854,"height":480},"author":"qoofix","authorUrl":"https://qoofix.ru","date":1794177576},
+        {
           "name": "Beneath the Seventh",
           "styleLabel": null,
           "group": null,
@@ -3256,15 +3285,6 @@
           "author": "Swin-РукаBlood",
           "authorUrl": "https://discord.gg/SCnUSB4j6S",
           "date": 1793227820
-        },
-        {
-          "name": "Last Match Vidget",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/last-match-vidget.webp","width":854,"height":480},
-          "author": "Swin-РукаBlood",
-          "authorUrl": "https://discord.gg/SCnUSB4j6S",
-          "date": 1793062291
         },
         {
           "name": "Girl Resting Under Tree",
