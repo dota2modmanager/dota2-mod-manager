@@ -137,7 +137,7 @@ export function createGameUpkeep({
     if (!game) return;
     const lang = gamelang.detectLangSuffix(game);
     const launched = gamelang.launchLanguage(game);
-    const chosen = gamelang.modFolderFor(launched, lang.suffix);
+    const chosen = gamelang.modFolderFor(launched, lang.suffix, settings.get('langFolderLock'));
     langFolder = chosen.suffix;
 
     /* A launch option is not ours to overrule. While `-language X` is set the engine reads
@@ -147,6 +147,10 @@ export function createGameUpkeep({
      * of mods end up in the one folder the game reads. */
     if (chosen.followed) {
       diag(`launch option -language ${langFolder}: following it instead of setting the voice language`);
+    } else if (chosen.locked && launched) {
+      // kept by the user: the launch option mounts its own folder while it is there, and the mods
+      // wait in theirs for it to go, unmoved and in their order
+      diag(`mods kept in dota_${langFolder}; launch option -language ${launched} mounts dota_${launched} while it is set`);
     } else if (lang.suffix !== langFolder) {
       if (await isRunning()) {
         diag(`audio language is ${lang.suffix}, Dota is running - leaving boot.vcfg alone`);
@@ -159,7 +163,9 @@ export function createGameUpkeep({
     // whatever the mods were following before: our own last setting, and the folder the game was
     // mounting until a moment ago
     let moved = 0;
-    const from = new Set([settings.get('langSuffix'), lang.suffix].filter((s): s is string => !!s && s !== langFolder));
+    // a folder the user keeps takes back only our own last one: the launch option's may hold files
+    // of somebody else's, and it is the one the folder is kept from
+    const from = new Set([settings.get('langSuffix'), chosen.locked && launched ? null : lang.suffix].filter((s): s is string => !!s && s !== langFolder));
     for (const old of from) moved += gamelang.moveLangFolder(game, old, langFolder);
     if (moved) {
       langMigration = { from: [...from][0], to: langFolder, moved };

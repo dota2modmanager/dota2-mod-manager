@@ -97,6 +97,8 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   favorites: list(str(500), 20000),
   itemLooks: list(shape({ id: str(60, 1), hero: str(200, 1), name: str(80, 1), picks: list(LOOK_PICK, 40), at: num(0, 1e14) }), 2000),
   langPromptSeen: bool,
+  // the three folders the game mounts by its voice language (src/gamelang.ts MOD_FOLDERS)
+  langFolderLock: oneOf(null, 'koreana', 'russian', 'schinese'),
   modLabels: (v) => {
     if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
     const entries = Object.entries(v);

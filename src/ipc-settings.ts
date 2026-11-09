@@ -20,8 +20,8 @@ export function registerSettingsIpc({
   // writes one back. Passing values here would freeze them at registration time.
   applyPresenceSetting, catalog, previewStore, discordAuth, findDotaGamePath, moveLangFolder,
   refreshPresence, remoteConfig, schemaService, settings, settingsView, validateGamePath,
-  langFolder, patchWatcher, setPresenceView, updater, win,
-}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'previewStore' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
+  langFolder, keepModFolder, patchWatcher, setPresenceView, updater, win,
+}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'previewStore' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'keepModFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
@@ -77,6 +77,8 @@ export function registerSettingsIpc({
       return settingsView();
     }
     settings.set(key, value);
+    // the folder the mods are kept in, kept now rather than at the next start
+    if (key === 'langFolderLock') return keepModFolder().then(() => settingsView());
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
     // the table is what the switch changes; the bar at the bottom counts the build

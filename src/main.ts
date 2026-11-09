@@ -214,7 +214,7 @@ async function start(): Promise<void> {
     // every channel is called from the window, so it is open whenever one runs; if that ever
     // stops being true this says so by name
     win: () => { if (!win) throw new Error('the main window is not open yet'); return win; },
-    langFolder: () => upkeep.langFolder(),
+    langFolder: () => upkeep.langFolder(), keepModFolder: () => upkeep.keepModFolder(),
     patchWatcher: () => patchWatcher,
     updater: () => updater,
     portableUpdate: () => (updater ? updater.portableVersion() : null),

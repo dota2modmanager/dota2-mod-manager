@@ -8,6 +8,8 @@ import { writeFileAtomic } from './atomic-file.ts';
 export interface StoredSettings {
   dotaGamePath: string | null;
   langSuffix: string;
+  /** the mods folder the user keeps whatever the game is set to (koreana, russian, schinese), or null to follow the game */
+  langFolderLock: string | null;
   uiLang: 'en' | 'ru' | 'zh-CN' | string;
   langPromptSeen: boolean;
   uiScale: number;
@@ -71,6 +73,10 @@ const DEFAULTS: StoredSettings = {
   // (see keepModFolder in src/game-upkeep.ts). The value stays a setting because everything downstream
   // reads it, and because an upgrade has to be able to see what the folder used to be.
   langSuffix: 'russian',
+  // null: the mods follow the game, as above. A folder: they stay there, and a `-language` in
+  // Steam's launch options no longer moves them (keepModFolder): somebody who sets English there
+  // for the Workshop Tools and plays in Russian had every mod moved, renumbered, each time.
+  langFolderLock: null,
   // app UI language: "en" | "ru". English is the default until the user picks otherwise.
   uiLang: 'en',
   // one-time language picker: false for fresh installs AND for users updating from a

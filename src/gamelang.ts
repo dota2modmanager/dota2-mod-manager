@@ -111,9 +111,13 @@ export const DOTA_LANGUAGES: readonly string[] = [
  *
  * @param launched  a `-language` value, if one is set
  * @param audio     the voice language from the game's own settings
- * @returns the folder, and whether a parameter chose it
+ * @param lock      the folder the user keeps in Settings, if any (src/settings.ts langFolderLock)
+ * @returns the folder, and whether a parameter or the user chose it
  */
-export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean } {
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined, lock?: string | null): { suffix: string; followed: boolean; locked?: true } {
+  // the folder the user keeps in Settings comes first: a launch option set for something else
+  // (English for the Workshop Tools) no longer moves every mod out of it
+  if (lock && MOD_FOLDERS.includes(lock)) return { suffix: lock, followed: false, locked: true };
   const forced = launched ? String(launched).toLowerCase() : null;
   if (forced && DOTA_LANGUAGES.includes(forced)) return { suffix: forced, followed: true };
   return { suffix: folderFor(audio), followed: false };

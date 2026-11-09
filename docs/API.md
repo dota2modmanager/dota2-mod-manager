@@ -3454,7 +3454,7 @@ src/minify.ts). Cross-checked against Minify's own enumeration of the same set.
 ### `modFolderFor`
 
 ```ts
-export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean }
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined, lock?: string | null): { suffix: string; followed: boolean; locked?: true }
 ```
 
 The folder the game is going to mount, which is where mods have to go.
@@ -3472,7 +3472,8 @@ is the ordinary path and the one this app sets itself.
 ```
 @param launched  a `-language` value, if one is set
 @param audio     the voice language from the game's own settings
-@returns the folder, and whether a parameter chose it
+@param lock      the folder the user keeps in Settings, if any (src/settings.ts langFolderLock)
+@returns the folder, and whether a parameter or the user chose it
 ```
 
 ### `folderFor`
