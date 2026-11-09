@@ -157,6 +157,8 @@ export function createTableBuild({ library, bases, log }: {
     const sprites: SpriteSwap[] = [];
     // what the personas asked of the shared files, which the picks' pak leaves out with them
     const fromPersona = new Set<object>();
+    // a persona whose base is here is on without the table too: the base is its body, and its own items go as files
+    const worn = (rec: BuildRecord) => !rec.persona || ready.some((r) => r.base.persona && `item:${r.base.hero}:` === String(rec.slot).slice(0, r.base.hero.length + 6));
     const gems = new Map<string, Set<string>>();
     // a copy: a build in the background goes on while the user changes the library; with each
     // persona's own items in, and what cannot be worn with it out (src/item-builder-personas.ts)
@@ -192,7 +194,7 @@ export function createTableBuild({ library, bases, log }: {
             used.add(key);
             const assets = rec.persona && !isSelectorSlot(rec.slot)
               ? personaAssets(rec, pick.assets, ready) : withoutBaseFiles(String(rec.itemId), pick.assets, ready);
-            const patch = { id: pick.id, block: pick.block, assets, source: rec.name, own: pick.own, added: pick.added, unplaced: pick.unplaced, item: !rec.persona };
+            const patch = { id: pick.id, block: pick.block, assets, source: rec.name, own: pick.own, added: pick.added, unplaced: pick.unplaced, item: worn(rec) };
             out.push(patch);
             if (fxSlotOf(rec.slot)) fxPatches.add(patch);
             owned.push({ patch, own: pick.own });
@@ -200,7 +202,7 @@ export function createTableBuild({ library, bases, log }: {
             voices.push(...pick.voices);
             portraits.push(...pick.portraits);
             sprites.push(...pick.sprites);
-            if (rec.persona) for (const swap of [...pick.sounds, ...pick.voices, ...pick.portraits, ...pick.sprites]) fromPersona.add(swap);
+            if (!worn(rec)) for (const swap of [...pick.sounds, ...pick.voices, ...pick.portraits, ...pick.sprites]) fromPersona.add(swap);
             if (pick.kinetic?.length) for (const hero of pick.heroes ?? []) { const on = gems.get(hero) ?? new Set<string>(); gems.set(hero, on); for (const m of pick.kinetic) on.add(m); }
           } else {
             const patch = lookPatch(vanillaText, game, rec, log);
