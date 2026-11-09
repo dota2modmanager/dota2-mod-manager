@@ -99,3 +99,9 @@ test('without the table the shared files are the item picks\' own, not the copy 
     assert.equal(run({ paths: [SHEET], entries: [] }), undefined, 'a sheet only the persona changed stays the game\'s');
   } finally { fs.rmSync(game, { recursive: true, force: true }); }
 });
+
+test("an effect the item's showcase alone has stays out of the model it is worn in", () => {
+  // the young Invoker's head has his three orbs for the loadout only; in the match they hung where he spawned
+  const p = pickParts({ block: block(`${mod('particle_create', 'particles/kid_orbs_loadout.vpcf', '"spawn_in_loadout_only"\t"1"')}${mod('particle_create', 'particles/ambient.vpcf')}`), own: 'm' });
+  assert.deepEqual(p.systems, ['particles/ambient.vpcf']);
+});

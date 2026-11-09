@@ -106,7 +106,9 @@ function skinOf(block: string, mods: Map<string, string>[]): number {
 export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; groups: BodyGroup[]; extras: string[]; left: string[] } {
   const mods = modifiers(patch.block);
   const words = (type: string) => [...new Set(ofType(mods, type).map((f) => f.get('modifier') || '').filter(Boolean))];
-  const systems = words('particle_create');
+  // not an effect the item's showcase alone has (spawn_in_loadout_only, 101 in the game): written into
+  // the model it plays in the match too, and the young Invoker's three showcase orbs hung where he spawned
+  const systems = [...new Set(ofType(mods, 'particle_create').filter((f) => f.get('spawn_in_loadout_only') !== '1').map((f) => f.get('modifier') || '').filter(Boolean))];
   const left = [...new Set(mods.flatMap((f) => TABLE_ONLY[(f.get('type') || '').toLowerCase()] ?? []))];
   if (patch.unplaced) left.push('its model');
   if (systems.length && !patch.own) left.push('its effect');
