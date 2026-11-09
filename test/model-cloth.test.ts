@@ -1,32 +1,40 @@
-/* A wearable copied under a stock item's path without its cloth (src/model-cloth.ts): Centaur's
- * Rout of the Emerald Marauder axe and banner trailed along the ground behind him while he walked.
- * The copy keeps every other block and member as it was; the hero's other form keeps its cloth. */
+/* A wearable copied under Centaur's stock paths without its cloth (src/model-cloth.ts): his Rout of
+ * the Emerald Marauder axe, banner and tail trailed along the ground behind him while he walked, and
+ * his body's own cloth is the one of 129 heroes' with a local force other than 1. On every other
+ * hero the cloth keeps swinging: Earth Spirit's Jade Reckoning lost its beads' physics to the fix
+ * for Centaur's. The copy keeps every other block and member as it was; the hero's other form keeps
+ * its cloth. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { encodeKv3, resource } from './helpers/kv3-build.ts';
+import { encodeKv3, resource, type V } from './helpers/kv3-build.ts';
 import { readKv3 } from '../src/kv3.ts';
 import { resourceBlock, resourceBlocks } from '../src/resource.ts';
-import { hasCloth, withoutCloth } from '../src/model-cloth.ts';
+import { clothDragger, dragsCloth, hasCloth, withoutCloth } from '../src/model-cloth.ts';
 import { buildVpk, entryAt, entryPath } from '../src/vpk.ts';
 import { gameAssetEntries } from '../src/item-builder-assets.ts';
 
-/** A model as the game compiles a wearable with tassels: its meshes, a PHYS block with a cloth model in it, its DATA. */
-function wearable(cloth: boolean): Buffer {
+/** A model as the game compiles one with cloth: its meshes, a PHYS block with a cloth model in it, its DATA. */
+function model(cloth: boolean, localForce = 1): Buffer {
+  const fe: V = { obj: [['m_CtrlName', { arr: [{ str: 'LWeapon_1' }, { str: 'tassel_0' }] }], ['m_flLocalForce', { dbl: localForce }]] };
   const phys = encodeKv3({ obj: [
     ['m_nFlags', { int: 0 }],
     ['m_boneNames', { arr: [] }],
-    ['m_pFeModel', cloth ? { obj: [['m_CtrlName', { arr: [{ str: 'LWeapon_1' }, { str: 'tassel_0' }] }], ['m_flLocalForce', { dbl: 1 }]] } : { int: 0 }],
+    ['m_pFeModel', cloth ? fe : { int: 0 }],
     ['m_embeddedKeyvalues', { str: '' }],
   ] });
   return resource([['MDAT', Buffer.from('mesh bytes')], ['PHYS', phys], ['DATA', encodeKv3({ obj: [['m_name', { str: 'weapon' }]] })]]);
 }
 
+/** Centaur's body, whose cloth has a local force of 1.5, and Earth Spirit's, which has 1. */
+const CENTAUR = model(true, 1.5);
+const EARTH_SPIRIT = model(true, 1);
+
 test('a model with cloth loses it, and keeps every other block and member as it was', () => {
-  const before = wearable(true);
+  const before = model(true);
   assert.equal(hasCloth(before), true);
   const after = withoutCloth(before);
   assert.equal(hasCloth(after), false);
@@ -46,19 +54,39 @@ test('a model with no cloth, or none this can read, goes in as it is', () => {
   assert.equal(withoutCloth(broken), broken);
 });
 
-test("the item builder's copy under a stock path goes without cloth, the hero's other form keeps its own", (t) => {
+test("only a body whose cloth has a local force other than 1 drags its wearables' cloth", () => {
+  assert.equal(dragsCloth(CENTAUR), true);
+  assert.equal(dragsCloth(EARTH_SPIRIT), false);
+  assert.equal(dragsCloth(model(false)), false, 'a body with no cloth');
+  assert.equal(dragsCloth(null), false, 'a body not found');
+  assert.equal(dragsCloth(Buffer.from('not a resource')), false);
+  const drags = clothDragger((p) => (p === 'models/heroes/centaur/centaur.vmdl_c' ? CENTAUR : null));
+  assert.equal(drags('models/heroes/centaur/weapon.vmdl_c'), true);
+  assert.equal(drags('models/heroes/drow/drow_bow.vmdl_c'), false, 'a folder whose body has another name');
+  assert.equal(drags('models/items/centaur/weapon.vmdl_c'), false, 'not a stock path');
+});
+
+test("the item builder's copy goes without cloth under Centaur's stock paths only, the hero's other form keeps its own", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-cloth-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   fs.mkdirSync(path.join(dir, 'dota'), { recursive: true });
   fs.writeFileSync(path.join(dir, 'dota', 'pak01_dir.vpk'), buildVpk([
-    entryAt('models/items/centaur/corrupted_contender_weapon/corrupted_contender_weapon.vmdl_c', wearable(true)),
-    entryAt('models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl_c', wearable(true)),
+    entryAt('models/heroes/centaur/centaur.vmdl_c', CENTAUR),
+    entryAt('models/heroes/earth_spirit/earth_spirit.vmdl_c', EARTH_SPIRIT),
+    entryAt('models/items/centaur/corrupted_contender_weapon/corrupted_contender_weapon.vmdl_c', model(true)),
+    entryAt('models/items/centaur/corrupted_contender_tail/corrupted_contender_tail.vmdl_c', model(true)),
+    entryAt('models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl_c', model(true)),
+    entryAt('models/items/earth_spirit/jade_reckoning_v2/mesh/jade_reckoning_v2.vmdl_c', model(true)),
   ]));
   const entries = gameAssetEntries(dir, [
     { from: 'models/items/centaur/corrupted_contender_weapon/corrupted_contender_weapon.vmdl', to: 'models/heroes/centaur/weapon.vmdl' },
+    { from: 'models/items/centaur/corrupted_contender_tail/corrupted_contender_tail.vmdl', to: 'models/heroes/centaur/tail.vmdl' },
     { from: 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl', to: 'models/heroes/terrorblade/demon.vmdl', form: true },
+    { from: 'models/items/earth_spirit/jade_reckoning_v2/mesh/jade_reckoning_v2.vmdl', to: 'models/heroes/earth_spirit/earth_spirit_staff.vmdl' },
   ]);
   const by = Object.fromEntries(entries.map((e) => [entryPath(e), e.data]));
-  assert.equal(hasCloth(by['models/heroes/centaur/weapon.vmdl_c']), false, 'the wearable under the stock path');
+  assert.equal(hasCloth(by['models/heroes/centaur/weapon.vmdl_c']), false, "Centaur's axe");
+  assert.equal(hasCloth(by['models/heroes/centaur/tail.vmdl_c']), false, "Centaur's tail");
   assert.equal(hasCloth(by['models/heroes/terrorblade/demon.vmdl_c']), true, "the hero's other form is a body, cloth and all");
+  assert.equal(hasCloth(by['models/heroes/earth_spirit/earth_spirit_staff.vmdl_c']), true, "Earth Spirit's staff keeps its beads swinging");
 });
