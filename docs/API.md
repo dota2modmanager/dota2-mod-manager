@@ -4095,6 +4095,18 @@ export function previewCrestParticles(roots: string[], model: string, itemId: st
 
 Some builds ship the Crest glow separately from the wearable's particle list.
 
+### `personaPreviewSlots`
+
+```ts
+export function personaPreviewSlots<S extends { slot: string; stock: string }>(text: string, hero: string, slots: readonly S[], equipped: readonly { slot?: unknown; itemId?: unknown }[]): S[]
+```
+
+The slots the preview dresses, with a persona's counted: a persona on (worn, or tried on in its
+slot) is worn with its own items alone, so the plain slots go and each of its own is there; one
+off takes its own slots with it. The window sends the slots it shows, which are the plain ones
+while a persona is tried on or still going on, and Invoker's Acolyte stood in the adult's hat,
+shoulders and cape.
+
 ## src/hero-preview.ts
 
 The models of a hero as the item builder dresses it, for the 3D preview in the hero's window

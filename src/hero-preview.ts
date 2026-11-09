@@ -31,7 +31,7 @@ import { unusualEffects } from './unusual-effects.ts';
 import { itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
-import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, previewEquipment, previewBladeReplacements, previewCrestParticles, previewHeroParticles, previewStockHead, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
+import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, personaPreviewSlots, previewEquipment, previewBladeReplacements, previewCrestParticles, previewHeroParticles, previewStockHead, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
 
 export { entityModel, wornExtras, wornSkin } from './hero-preview-picks.ts';
 /** A preview slot with its stock item and an optional unsaved selection. */
@@ -85,7 +85,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const swaps = new Map<string, Map<string, string>>();
     const given = new Map((personaLayouts(text).get(hero.replace(/^npc_dota_hero_/, ''))?.parts || []).map((x) => [x.slot, x.given?.id]));
     const installed = library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false && r.itemId);
-    const equipped = previewEquipment(text, installed, slots);
+    const equipped = previewEquipment(text, installed, slots); slots = personaPreviewSlots(text, hero, slots, equipped);
     const crown = monkeyKingCrown(text, hero, equipped);
     const arcana = crown && equipped.find(row => String(row.itemId) === '9050');
     const rows = slots.map((s) => {
