@@ -247,8 +247,10 @@ export function itemEffectPatch(baseText: string, itemId: string | number, effec
   const sourceModel = styled.model || sourceFields.get('model_player') || '';
   const targetModel = targetFields.get('model_player') || '';
   const underStock = !!sourceModel && !!targetModel && normalizeAssetPath(sourceModel) !== normalizeAssetPath(targetModel);
-  // in its own material set: the stock item the server knows has none (Everglyph Goggles of the Crimson Witness, the plain goggles in set 1)
-  if (underStock) assets.assetCopies.unshift(...(refit ? [{ from: refit, to: targetModel, optional: true }] : []), { from: sourceModel, to: targetModel, ...(wornSkin(visuals) ? { skin: wornSkin(visuals) } : {}) });
+  // in its own material set: the stock item the server knows has none (Everglyph Goggles of the Crimson Witness, the plain goggles in set 1).
+  // The refit too: Queen of Pain's Bloodfeather Frock under her arcana went in its first style whatever style was picked (2026-11-10)
+  const skin = wornSkin(visuals) ? { skin: wornSkin(visuals) } : {};
+  if (underStock) assets.assetCopies.unshift(...(refit ? [{ from: refit, to: targetModel, optional: true, ...skin }] : []), { from: sourceModel, to: targetModel, ...skin });
 
   const copiedHeroes = new Set(assets.assetCopies.flatMap((c) => ('hero' in c ? [c.hero] : 'unit' in c ? [c.unit] : [])));
   const copiedStock = new Set(assets.assetCopies.flatMap((c) => ('to' in c ? [normalizeAssetPath(c.to)] : [])));

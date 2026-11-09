@@ -128,7 +128,7 @@ export function SetPane({ m, actions }: { m: SetPaneModel; actions: SetPaneActio
               : <div key={p.index} className={cls} {...tint} style={stagger(p.index)}>{body}</div>;
           })}
         </div>
-        <div className="ward-shelf-note">{L`Набор надевается без эффектов. Чтобы добавить эффект, открой деталь.`}</div>
+        <div className="ward-shelf-note">{L`Набор надевается без эффектов и занимает только свои слоты. Чтобы добавить эффект или сменить стиль одной детали, открой её.`}</div>
       </div>
       <div className="item-picker-foot">
         <BuilderFoot action={m.action} onApply={actions.apply} summary={<><b>{cosmeticName(m.name)}</b>{` · ${m.count}`}</>} />

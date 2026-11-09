@@ -665,8 +665,12 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
   service.pickCosmetic('item:sniper:head', '9457', 'No visuals here', 'fire,snow');
   service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape', 'ghost');
   // an arcana in a slot the set has no piece for, and another hero's pick
-  const arcana = service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
+  service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
   service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
+  // an arcana with a base (src/arcana-bases.ts: Juggernaut's), and a persona's piece, as the library keeps them
+  const kept = (slot: string, itemId: string) => { const r = library.add({ name: itemId, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] }); library.update(r.id, { slot, itemId }); return r.id; };
+  const based = kept('item:sniper:misc', '9059');
+  const persona = kept('item:sniper:weapon_persona_1', '9971');
   writes = 0;
   const res = service.pickSet('9960');
   assert.deepEqual(res, { applied: 2, pieces: 4 });
@@ -675,8 +679,10 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
     ['item:bloodseeker:weapon', '9953', ''], // another hero's: his own
     ['item:sniper:back', '9455', ''], // the set's cape in place of the spare one, and no effects with it
     ['item:sniper:head', '9457', 'fire,snow'], // already on: keeps what it had
-  ], 'the arcana went off: the set is the whole hero');
-  assert.equal(library.find(arcana!.id)?.enabled, false, 'kept in My mods, off');
+    ['item:sniper:hero_base', '9970', ''], // a slot the set has no piece for: as the game's loadout keeps it (issue #577)
+  ]);
+  assert.equal(library.find(based)?.enabled, false, 'an arcana whose base puts its body under the hero goes off, kept in My mods');
+  assert.equal(library.find(persona)?.enabled, false, 'a persona would be worn in the set\'s place');
   assert.throws(() => service.pickSet('404'), /Set not found/);
 });
 
