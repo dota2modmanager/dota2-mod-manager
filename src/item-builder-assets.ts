@@ -13,6 +13,7 @@ import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
 import { asModel } from './arcana.ts';
 import { numberedAs } from './model-sequences.ts';
 import { withSkin } from './model-skin.ts';
+import { withoutCloth } from './model-cloth.ts';
 import { firstStyleSkin } from './item-skin.ts';
 export { firstStyleSkin, wornSkin } from './item-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
@@ -127,7 +128,7 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
       ...typed('model', 'asset', 'modifier').filter((f) => stock.has(normalizeAssetPath(f.get('asset'))))
         .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
       ...typed('hero_model_change', 'asset', 'modifier').filter((f) => FORM.test(normalizeAssetPath(f.get('asset'))))
-        .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
+        .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')!, form: true })),
       ...typed('particle', 'asset', 'modifier').map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
       ...pictures,
     ],
@@ -271,7 +272,9 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
     const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : copy.skin ? withSkin(data, copy.skin) ?? data : data;
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
     const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
-      : 'hero' in copy ? heroModelBytes(worn!, copy.activities) : worn;
+      : 'hero' in copy ? heroModelBytes(worn!, copy.activities)
+        // a wearable under a stock item's path loses its cloth, which trailed behind the walking hero (src/model-cloth.ts)
+        : to.endsWith('.vmdl_c') && !('form' in copy && copy.form) ? withoutCloth(worn!) : worn;
     if (!bytes) continue;
     out.push(entryAt(to, bytes));
     seen.add(to);

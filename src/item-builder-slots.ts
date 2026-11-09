@@ -48,7 +48,8 @@ function visualsOf(text: string, item: { start: number }): string | null {
  * table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
  * A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
  */
-export type AssetCopy = { from: string; to: string; optional?: boolean; skin?: number } | { from: string; hero: string; activities: string[]; skin?: number } | { from: string; to: string; unit: string; skin?: number };
+/** form: a hero's other body an item swaps in (Terrorblade's demon), which keeps its own cloth */
+export type AssetCopy = { from: string; to: string; optional?: boolean; skin?: number; form?: boolean } | { from: string; hero: string; activities: string[]; skin?: number } | { from: string; to: string; unit: string; skin?: number };
 
 const ITEM_SLOT_MATCH_ALIAS: Record<string, string> = {
   offhand_weapon: 'offhand',

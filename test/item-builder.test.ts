@@ -1111,7 +1111,7 @@ test("a pick that changes the hero's other form puts the form's model under its 
   const pick = builder.itemEffectPatch(text, '31410', '');
   assert.equal(pick.id, '5960');
   assert.deepEqual(pick.assetCopies.filter((c) => 'to' in c && c.to.endsWith('.vmdl')),
-    [{ from: 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl', to: 'models/heroes/terrorblade/demon.vmdl' }]);
+    [{ from: 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl', to: 'models/heroes/terrorblade/demon.vmdl', form: true }]);
   assert.doesNotMatch(pick.block, /dreadhunt_demon\.vmdl/, 'the swap is the file now, not the table');
   assert.match(pick.block, /"type"\s+"ability_icon"/, 'the rest of the visuals stay');
   assert.match(pick.block, /n_creep_ogre_med/, 'only a form under models/heroes/ is staged; anything else stays for the game');
