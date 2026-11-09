@@ -2,6 +2,42 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.7.0
+
+### Recolour
+
+- The Recolour window now shows your hero in 3D, in the items you wear, and repaints him as you
+  pick colours. What you see there is what you get in the game.
+- Every item you wear can take its own colour, stock ones too. So can the units an item brings:
+  Healing Ward, Death Ward, Lone Druid's bear, wolves, hexes, an arcana's body.
+- A picture can take a colour in four ways: Tint (as before), Keep details (only the hue changes),
+  Whole (greys and metal too) and Rainbow (the hue runs across the texture).
+- Pick a part to colour it on its own, or colour everything that is on at once. Ready colours and
+  the game's prismatic gems sit next to the colour picker.
+- Items that share one texture, such as Troll Warlord's two axes, change colour together, since
+  the game can only give that texture one colour.
+- If some textures could not be built, the app now says how many instead of "Done".
+
+### Hero builder
+
+- New: a Prismatic Gems tab on items that have one, with the game's gems and a colour of your own.
+  The 3D preview changes as you pick. On Terrorblade, the Fractal Horns colour carries over to his
+  other items and his blades, and Scythes of Sorrow and Span of Sorrow can take their own.
+- Click an item to see it on the hero before you put it on. The camera and the animation stay.
+- Items no longer stretch behind a walking hero in the game. Centaur in the Rout of the Emerald
+  Marauder dragged his axe and banner along the ground. Their cloth now hangs still instead.
+- Putting on a set on Primal Beast no longer closes the app.
+
+### 3D preview
+
+- Many items looked washed out, see-through or black, Abaddon and Spirit Breaker among them. More
+  than half of the game's hero and item materials were being skipped; they all load now.
+- Metal that shines in the game now reflects light instead of looking flat black.
+- The first look at a hero is faster, about a third quicker for most. Opening a slot gets its
+  items ready in the background, so trying one on takes seconds.
+- A hero whose animation walks off, like Marci's debut, stays on the stand.
+- Settings can prepare the 3D preview ahead of time.
+
 ## 3.6.0
 
 ### Hero builder
