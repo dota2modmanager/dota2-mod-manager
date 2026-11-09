@@ -13,7 +13,7 @@ import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
 import { asModel } from './arcana.ts';
 import { numberedAs } from './model-sequences.ts';
 import { withSkin } from './model-skin.ts';
-import { withoutCloth } from './model-cloth.ts';
+import { clothDragger, withoutCloth } from './model-cloth.ts';
 import { firstStyleSkin } from './item-skin.ts';
 export { firstStyleSkin, wornSkin } from './item-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
@@ -271,6 +271,7 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
   const ix = sharedVpkIndex(pak);
   const out: VpkEntry[] = [];
   const seen = new Set<string>();
+  const drags = clothDragger((p) => ix.read(p));
   for (const copy of assetCopies || []) {
     const to = compiledAssetPath('hero' in copy ? heroModelPath(ix, copy.hero) : copy.to);
     // a hero's copy from nowhere is the hero's own model, with its modifiers off (src/item-builder-kinetic.ts)
@@ -285,8 +286,8 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
     const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
       : 'hero' in copy ? heroModelBytes(worn!, copy.activities)
-        // a wearable under a stock item's path loses its cloth, which trailed behind the walking hero (src/model-cloth.ts)
-        : to.endsWith('.vmdl_c') && !('form' in copy && copy.form) ? withoutCloth(worn!) : worn;
+        // a wearable under Centaur's stock paths loses its cloth, which trailed behind him (src/model-cloth.ts)
+        : to.endsWith('.vmdl_c') && !('form' in copy && copy.form) && drags(to) ? withoutCloth(worn!) : worn;
     if (!bytes) continue;
     out.push(entryAt(to, bytes));
     seen.add(to);
