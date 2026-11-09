@@ -880,15 +880,18 @@ Files of a base to take from one commit rather than from the manifest's.
 ### `PINNED`
 
 ```ts
-export const PINNED: Pins =
+export const PINNED: Pins = {}
 ```
 
 Files of bases taken from an older commit of the repository than the manifest names. A hash
 here stands in for the signature: it is compiled into a signed app, and `bring` still checks it.
 
-The Acolyte's body: the commit after this one rebuilt it 1.351 times larger, and with the hero at
-Valve's ModelScale of 0.74 the young Invoker stood as tall as the grown one. This body is the
-size the game's own persona has. Take these out once the repository publishes a body that size.
+The Acolyte's body was here until 2026-11-09, at the size of Valve's model, on the reading that
+the repository's, 1.351 times larger, stood the young Invoker as tall as the grown one. It was the
+other way round: the server draws the persona at the plain hero's ModelScale, 0.74, where Valve
+draws its owner's at the persona's hero_scale, 1, and 1 / 0.74 is 1.351. Valve's size came out a
+head shorter than the persona the game shows its owner, with the orbs out of place around him.
+The repository's body is that size, and its items are made as big (src/model-scale.ts).
 
 ### `Listing`
 

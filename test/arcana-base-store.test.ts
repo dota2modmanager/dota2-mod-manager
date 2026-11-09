@@ -112,10 +112,10 @@ test('a pinned file comes from its commit and takes the place of the one the man
   assert.equal(s.entries('bladeform_legacy')!.find((e) => e.name === 'juggernaut')!.data.toString(), OLD);
 });
 
-test('the young Invoker keeps the body the size of the game\'s', () => {
-  const pin = PINNED.acolyte_of_the_lost_arts;
-  assert.match(pin.commit, /^[0-9a-f]{40}$/, 'a commit, which cannot move');
-  assert.deepEqual(Object.keys(pin.files).sort(), ['models/heroes/invoker/invoker.vmdl_c', 'models/heroes/invoker/invoker/invoker_kid_vmorf.vtex_c']);
+test('the young Invoker takes the repository\'s body, the size the game shows the persona\'s owner', () => {
+  // the server draws him at Invoker's ModelScale, 0.74, and Valve its owner's at 1: Valve's own size,
+  // pinned here until 2026-11-09, stood a head shorter than the persona in the game
+  assert.equal(PINNED.acolyte_of_the_lost_arts, undefined);
 });
 
 test('a file that is not what the repository names is refused, and the base is not ready', async (t) => {
