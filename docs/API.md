@@ -6744,7 +6744,7 @@ A wearable as it goes in: in its material set, carrying its effects. Null: the f
 ### `itemFilesSteps`
 
 ```ts
-export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string): Generator<typeof PAUSE, ItemFiles>
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string, shared?: { paths: string[]; entries: VpkEntry[] }): Generator<typeof PAUSE, ItemFiles>
 ```
 
 The list a table build made, as one pak's files.
@@ -11904,6 +11904,14 @@ export const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (
 ```
 
 _No description in the source._
+
+### `FilesShared`
+
+```ts
+export interface FilesShared { paths: string[]; entries: VpkEntry[] }
+```
+
+The shared files as the picks' pak takes them: `paths` the ones the table's copy carries, `entries` the pak's own, made of the item picks alone.
 
 ### `createTableBuild`
 

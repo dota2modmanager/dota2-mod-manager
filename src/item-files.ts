@@ -145,7 +145,7 @@ export function wornModel(model: Buffer, skin: number, systems: string[]): Buffe
  * @param game  the game folder, for models the pick did not already copy
  * @param beneath  files that go in after the picks' (the arcana bases)
  */
-export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string): Generator<typeof PAUSE, ItemFiles> {
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string, shared?: { paths: string[]; entries: VpkEntry[] }): Generator<typeof PAUSE, ItemFiles> {
   const index = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
   const read = (p: string) => index.read(p);
   const entries = new Map<string, VpkEntry>();
@@ -153,12 +153,16 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
   const bodies = new Map<string, string[]>();
   const hidden = new Map<string, Map<string, number>>();
   let table: string | undefined;
+  // the sprite sheet, portraits and soundevents of the item picks alone, in place of the table's
+  // copy, which a persona's minimap icon and lines are in too (src/schema-build.ts sharedFiles)
+  const own = new Set(shared?.paths);
+  for (const e of shared?.entries ?? []) entries.set(entryPath(e).toLowerCase(), e);
   for (const patch of list) {
     const source = patch.source || String(patch.id);
     // a persona, worn through the table; what is not a pick at all, a mod's block, the caller counts itself
     if (!patch.item) { if (patch.own !== undefined) left.push({ source, what: ['its persona'] }); continue; }
     const { systems, skin, motions, groups, extras, left: what } = pickParts(patch);
-    for (const e of patch.assets || []) if (!entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
+    for (const e of patch.assets || []) if (!own.has(entryPath(e).toLowerCase()) && !entries.has(entryPath(e).toLowerCase())) entries.set(entryPath(e).toLowerCase(), e);
     if (patch.own && (systems.length || skin)) {
       const at = patch.own.toLowerCase();
       const entry = entries.get(at);

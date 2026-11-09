@@ -34,7 +34,7 @@ import { fxSlotOf, mergeFxPatches } from './item-builder-ability-fx.ts';
 import { abilityFxPatch } from './item-builder-fx-patch.ts';
 import { kineticEntries } from './item-builder-kinetic.ts';
 import type { BaseStore } from './arcana-base-store.ts';
-import { sharedVpkIndex, sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
+import { entryPath, sharedVpkIndex, sharedVpkIndexSteps, type VpkEntry } from './vpk.ts';
 import { PAUSE } from './steps.ts';
 import type { LibRecord } from './types.ts';
 import type { Library } from './library.ts';
@@ -79,6 +79,9 @@ function baseSignature(r: ReadyBase): string {
 }
 
 export const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (rec.slot === 'items' || String(rec.slot || '').startsWith('item:'));
+
+/** The shared files as the picks' pak takes them: `paths` the ones the table's copy carries, `entries` the pak's own, made of the item picks alone. */
+export interface FilesShared { paths: string[]; entries: VpkEntry[] }
 
 /** What goes into the table: every enabled record's patches, each item builder pick built once. */
 export function createTableBuild({ library, bases, log }: {
@@ -138,7 +141,7 @@ export function createTableBuild({ library, bases, log }: {
    * through the normal machinery. `beneath`: the arcana bases' files, which every pick's own win
    * over (schema.deploy).
    */
-  function* buildSteps(vanillaText: string, game: string): Generator<BuildYield, { list: schema.SchemaPatch[]; beneath: VpkEntry[] }> {
+  function* buildSteps(vanillaText: string, game: string): Generator<BuildYield, { list: schema.SchemaPatch[]; beneath: VpkEntry[]; filesShared: FilesShared }> {
     if (builtFrom !== vanillaText || builtGame !== game) { built.clear(); shared.clear(); builtFrom = vanillaText; builtGame = game; }
     const used = new Set<string>();
     // what the picks are built from, made a pause at a time before the first pick needs it: the
@@ -152,6 +155,8 @@ export function createTableBuild({ library, bases, log }: {
     const voices: VoiceCue[] = [];
     const portraits: PortraitSwap[] = [];
     const sprites: SpriteSwap[] = [];
+    // what the personas asked of the shared files, which the picks' pak leaves out with them
+    const fromPersona = new Set<object>();
     const gems = new Map<string, Set<string>>();
     // a copy: a build in the background goes on while the user changes the library; with each
     // persona's own items in, and what cannot be worn with it out (src/item-builder-personas.ts)
@@ -195,6 +200,7 @@ export function createTableBuild({ library, bases, log }: {
             voices.push(...pick.voices);
             portraits.push(...pick.portraits);
             sprites.push(...pick.sprites);
+            if (rec.persona) for (const swap of [...pick.sounds, ...pick.voices, ...pick.portraits, ...pick.sprites]) fromPersona.add(swap);
             if (pick.kinetic?.length) for (const hero of pick.heroes ?? []) { const on = gems.get(hero) ?? new Set<string>(); gems.set(hero, on); for (const m of pick.kinetic) on.add(m); }
           } else {
             const patch = lookPatch(vanillaText, game, rec, log);
@@ -216,24 +222,16 @@ export function createTableBuild({ library, bases, log }: {
     const list = mergeFxPatches(out, (p) => fxPatches.has(p));
     // Two picks rewrite the same soundevents file, portrait settings and sprite sheet, and the build
     // keeps the first file of a path it is given: so every pick's go into one copy of each, ahead
-    // of all other files.
-    const first = list.find((p) => p.assets);
-    if (first) {
-      try {
-        // eslint-disable-next-line require-yield
-        const made = yield* sharedEntries('portraits', [portraits, sprites], function* () { return portraitEntries(game, portraits, sprites); });
-        first.assets = [...made, ...first.assets!];
-      } catch (err) {
-        log(`schema: the heroes' portraits left out of the build: ${(err as Error)?.message || err}`);
-      }
-      try {
-        // the soundevents are 946 files to read and parse, 300 ms whatever the picks
-        const made = yield* sharedEntries('sounds', [sounds, voices], () => soundEntriesSteps(game, sounds, voices));
-        first.assets = [...made, ...first.assets!];
-      } catch (err) {
-        log(`schema: the items' sounds left out of the build: ${(err as Error)?.message || err}`);
-      }
-    }
+    // of all other files. On an item pick where there is one: without the table a persona's files stay
+    // out (src/item-files.ts), and every hero's minimap icon and sounds went with it
+    const first = list.find((p) => p.assets && p.item) ?? list.find((p) => p.assets);
+    const made = first ? yield* sharedFiles('', sounds, voices, portraits, sprites) : [];
+    if (first) first.assets = [...made, ...first.assets!];
+    // the picks' pak, without the table, carries no persona: its minimap icon, portrait and lines
+    // would have gone on the plain hero (Invoker's minimap icon was the Acolyte's)
+    const mine = <T extends object>(swaps: T[]) => swaps.filter((x) => !fromPersona.has(x));
+    const filesShared: FilesShared = { paths: made.map((e) => entryPath(e).toLowerCase()),
+      entries: fromPersona.size ? yield* sharedFiles('-items', mine(sounds), mine(voices), mine(portraits), mine(sprites)) : made };
     for (const key of built.keys()) if (!used.has(key)) built.delete(key); // a pick taken off lets its files go
     let moves: VpkEntry[] = [];
     try {
@@ -242,7 +240,25 @@ export function createTableBuild({ library, bases, log }: {
     } catch (err) {
       log(`schema: the kinetic gems' animations left out of the build: ${(err as Error)?.message || err}`);
     }
-    return { list, beneath: [...ready.flatMap((r) => r.entries), ...moves] };
+    return { list, beneath: [...ready.flatMap((r) => r.entries), ...moves], filesShared };
+  }
+
+  /** The soundevents, portrait settings and sprite sheet every pick rewrites, as one copy of each. */
+  function* sharedFiles(tag: string, sounds: SoundSwap[], voices: VoiceCue[], portraits: PortraitSwap[], sprites: SpriteSwap[]): Generator<typeof PAUSE, VpkEntry[]> {
+    const out: VpkEntry[] = [];
+    try {
+      // eslint-disable-next-line require-yield
+      out.push(...yield* sharedEntries(`portraits${tag}`, [portraits, sprites], function* () { return portraitEntries(builtGame!, portraits, sprites); }));
+    } catch (err) {
+      log(`schema: the heroes' portraits left out of the build: ${(err as Error)?.message || err}`);
+    }
+    try {
+      // the soundevents are 946 files to read and parse, 300 ms whatever the picks
+      out.push(...yield* sharedEntries(`sounds${tag}`, [sounds, voices], () => soundEntriesSteps(builtGame!, sounds, voices)));
+    } catch (err) {
+      log(`schema: the items' sounds left out of the build: ${(err as Error)?.message || err}`);
+    }
+    return out;
   }
 
   return {
