@@ -2,6 +2,35 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.7.1
+
+### Hero builder
+
+- Terrorblade's arcana picked in the builder now puts on his arcana body. In the game he wore its
+  effects on his plain body, and more so once a gem colour was saved.
+- New: "Effects only" next to the prismatic gems, on all five items that have them. It colours the
+  effects of an item you already own in the game, without wearing it in the builder.
+- Terrorblade's arcana colour now reaches his Aghanim's and shard effects too. They stayed blue.
+- Every hero's minimap icon from the builder now shows. A persona picked first could leave out
+  everybody else's.
+
+### Personas
+
+- A persona from the builder now works with the item table off. Invoker's Acolyte stood bald, with
+  none of his own items, and at the grown Invoker's minimap icon.
+- The young Invoker is his real size, with his own orbs, attack and portrait. He was a head
+  shorter, wore Magus Apex's eyes as orbs, and had three orbs hanging where he spawned.
+- A persona's summon has a slot of its own: the young Invoker gets his own Forge Spirits.
+- The 3D preview shows a persona in its own items only, also while you try one on.
+- Effects an item shows in the loadout alone no longer play in the match.
+
+### Settings
+
+- New: "Mods folder" under Game files. Keep your mods in dota_russian, dota_schinese or dota_koreana,
+  and a -language in Steam's launch options no longer moves and renumbers them on each start.
+- When resourcecompiler.exe refuses because the Workshop Tools come from two different updates,
+  the app now says so, and what to do in Steam, instead of a page of schema errors.
+
 ## 3.7.0
 
 ### Recolour
