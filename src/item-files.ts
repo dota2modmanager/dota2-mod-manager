@@ -213,9 +213,13 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
     }
     if (what.length) left.push({ source, what });
   }
+  // a body or a model the picks did not bring is the arcana base's where it has one, then the game's:
+  // read from the game first, Terrorblade's motions went onto his plain body, which then kept the base out
+  const under = new Map(beneath.map((e) => [entryPath(e).toLowerCase(), e.data]));
+  const current = (at: string) => entries.get(at)?.data ?? under.get(at) ?? read(at);
   for (const [hero, motions] of bodies) {
     const at = `${heroModelPath(index, hero)}_c`.toLowerCase().replace(/_c_c$/, '_c');
-    const body = entries.get(at)?.data ?? read(at);
+    const body = current(at);
     if (!body) continue;
     try {
       entries.set(at, entryAt(at, motions.reduce((model, modifier) => asModel(model, modifier), body)));
@@ -225,7 +229,7 @@ export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: st
     yield PAUSE;
   }
   for (const [at, groups] of hidden) {
-    const model = entries.get(at)?.data ?? read(at);
+    const model = current(at);
     const shown = model && withBodygroups(model, groups);
     if (shown) entries.set(at, entryAt(at, shown));
     else left.push({ source: at, what: ['the hero parts it hides'] });

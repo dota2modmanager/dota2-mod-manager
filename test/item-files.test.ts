@@ -49,3 +49,28 @@ test('the stock second model kept by a pick stays as it is', () => {
 test('a slot with no stock model loses the model', () => {
   assert.deepEqual(pickParts({ block: block(''), own: null, unplaced: true }).left, ['its model']);
 });
+
+test('a body group goes onto the arcana base\'s body, not the game\'s plain one', async () => {
+  // Terrorblade's arcana from the builder: his body read from the game first took the base's place
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const { buildVpk, entryAt, entryPath } = await import('../src/vpk.ts');
+  const { itemFilesSteps } = await import('../src/item-files.ts');
+  const { drain } = await import('../src/steps.ts');
+  const { resourceBlock } = await import('../src/resource.ts');
+  const { encodeKv3, resource, rerl } = await import('./helpers/kv3-build.ts');
+  const model = (tag: string) => resource([['RERL', rerl([])], ['DATA', encodeKv3({ obj: [
+    ['m_name', { str: tag }], ['m_meshGroups', { arr: [{ str: 'head_@0_#&0' }, { str: 'head_@1_#&1' }] }], ['m_nDefaultMeshGroupMask', { i64: 1 }],
+  ] })]]);
+  const BODY = 'models/heroes/x/x.vmdl_c';
+  const game = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-files-'));
+  try {
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt(BODY, model('plain'))]));
+    const patch = { id: '100', block: block(`"asset_modifier"\n{\n"type"\t"bodygroup_visibility"\n"asset"\t"models/heroes/x/x.vmdl"\n"modifier"\t"head"\n"value"\t"1"\n}\n`), assets: [], item: true, own: null };
+    const { entries } = drain(itemFilesSteps([patch], [entryAt(BODY, model('base'))], game));
+    const body = entries.find((e) => entryPath(e).toLowerCase() === BODY);
+    assert.ok(body && resourceBlock(body.data, 'DATA').data.includes(Buffer.from('base')), "the base's body");
+  } finally { fs.rmSync(game, { recursive: true, force: true }); }
+});
