@@ -104,7 +104,7 @@ test("items drawn from one texture are told of each other, so the window moves t
   ]);
 });
 
-test("an item's models: its own, and the units it dresses, not the stock model a style replaces nor its portrait", () => {
+test("an item's models: its own and the units it dresses, not a pet, the stock model a style replaces nor its portrait", () => {
   // trimmed from items_game: a Healing Ward, a style that swaps a stock model, an arcana's body, an extra wearable, a pet and a portrait
   const block = `"12770"
 {
@@ -113,11 +113,11 @@ test("an item's models: its own, and the units it dresses, not the stock model a
 	"portraits" { "models/items/juggernaut/ward/portrait_only.vmdl" { "PortraitFOV" "38" } }
 	"visuals"
 	{
-		"asset_modifier0" { "type" "entity_model" "asset" "npc_dota_juggernaut_healing_ward" "modifier" "models/items/juggernaut/ward/odocoeleus_ward.vmdl" }
+		"asset_modifier0" { "type" "entity_model" "asset" "npc_dota_juggernaut_healing_ward" "modifier" "models/items/juggernaut/ward/odocoeleus_ward.vmdl" "offsets" { "0" "0 0 0" } }
 		"asset_modifier1" { "type" "model" "asset" "models/heroes/juggernaut/jugg_sword.vmdl" "modifier" "models/items/juggernaut/sword_style2.vmdl" }
 		"asset_modifier2" { "type" "hero_model_change" "asset" "models/heroes/juggernaut/juggernaut.vmdl" "modifier" "models/heroes/juggernaut/juggernaut_arcana.vmdl" }
 		"asset_modifier3" { "type" "additional_wearable" "asset" "models/items/juggernaut/cape_extra.vmdl" }
-		"asset_modifier4" { "type" "pet" "asset" "models/items/courier/pet.vmdl" }
+		"asset_modifier4" { "type" "pet" "asset" "models/items/courier/pet.vmdl" "loadout_offsets" { "0" "0 100 0" } }
 		"asset_modifier5" { "type" "portrait_background_model" "asset" "models/ui/background.vmdl" }
 	}
 }`;

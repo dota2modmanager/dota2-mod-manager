@@ -200,7 +200,8 @@ export function withShares(layers: RecolorLayer[]): { layer: RecolorLayer; share
 }
 
 // the asset_modifier types that put a model of the item's own on the hero or on a unit of his;
-// a portrait's background, a pet, a bodygroup switch and the stock model a style replaces are not
+// a pet (the item builder offers none, and a recoloured one went wrong in the game), a portrait's
+// background, a bodygroup switch and the stock model a style replaces are not
 const MODEL_FROM: Record<string, 'asset' | 'modifier' | 'both'> = {
   entity_model: 'both', model: 'modifier', hero_model_change: 'modifier', hex_model: 'both', additional_wearable: 'asset',
 };
@@ -215,9 +216,17 @@ export function itemModelPaths(block: string): string[] {
   const out: string[] = [];
   const add = (p: string | undefined) => { const m = p?.trim().toLowerCase(); if (m && /^models\/.+\.vmdl$/.test(m) && !out.includes(m)) out.push(m); };
   for (const m of block.matchAll(/"model_player\d*"\s+"([^"]+)"/gi)) add(m[1]);
-  // an asset_modifier is an innermost block: no braces inside it
-  for (const b of block.matchAll(/\{([^{}]*)\}/g)) {
-    const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(b[1])?.[1];
+  // each asset_modifier block whole, by its braces, its own fields only: one can carry blocks of its
+  // own inside (a pet's offsets), which an innermost-block match took for the modifier itself
+  for (const head of block.matchAll(/"asset_modifier\d*"\s*\{/gi)) {
+    let depth = 0, own = '';
+    for (let i = head.index! + head[0].length - 1; i < block.length; i++) {
+      const c = block[i];
+      if (c === '{') depth++;
+      else if (c === '}' && --depth === 0) break;
+      else if (depth === 1) own += c;
+    }
+    const field = (k: string) => new RegExp(`"${k}"\\s+"([^"]*)"`, 'i').exec(own)?.[1];
     const take = MODEL_FROM[(field('type') || '').toLowerCase()];
     if (!take) continue;
     if (take !== 'modifier') add(field('asset'));
