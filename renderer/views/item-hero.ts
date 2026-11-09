@@ -73,6 +73,18 @@ export function openItemSlotModal(slot: string, from: Element | null, opts: { qu
  *  off from one hero to the next, for a machine it is slow on. */
 let previewOpen = true;
 
+/** The hero and slot whose options were exported ahead this run, once each. */
+const prefetched = new Set<string>();
+
+/** A slot's options exported in the background while the 3D view is on, so trying one on finds its model ready. */
+function prefetchSlot(slots: CosmeticSlot[], tab: string): void {
+  const preview = previewOpen ? heroPreview(slots, null) : null;
+  const slot = slots.find((s) => s.slot === tab);
+  if (!preview || !slot?.options.length || prefetched.has(`${preview.hero}|${tab}`)) return;
+  prefetched.add(`${preview.hero}|${tab}`);
+  void window.api.preview3d.prefetch(preview.hero, preview.slots, tab, slot.options.map((o) => o.id).filter(Boolean)).catch(() => 0);
+}
+
 /** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
 function heroPreview(slots: CosmeticSlot[], active: SlotState | null) {
   const hero = slots.find((s) => s.heroIds?.length)?.heroIds?.[0];
@@ -153,6 +165,7 @@ function drawHero(key: number, st: HeroState): void {
     pane = p ? { kind: 'slot', ...p } : { kind: 'looks', looks: [], canSave: false };
   }
   const worn = sets.find((s) => setIsOn(s, pickedIn));
+  prefetchSlot(slots, st.tab);
   showHeroModal(key, {
     hero: heroName,
     portrait: heroPortrait(heroName),

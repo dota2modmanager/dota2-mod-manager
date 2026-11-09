@@ -3,7 +3,7 @@
  * whole body among them) reached the preview as the exporter's see-through stand-in. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resource, rerl } from './helpers/kv3-build.ts';
+import { encodeKv3, resource, rerl } from './helpers/kv3-build.ts';
 import { resourceId } from '../src/resource.ts';
 import { readLoadoutMaterial, loadoutDescriptor } from '../src/loadout-material.ts';
 
@@ -75,4 +75,14 @@ test('an NTRO material names its textures through RERL, and keeps its shader and
   // the game's own masks, in the Workshop's layout, which the renderer reads in its own order unless told
   assert.equal(loadoutDescriptor(m).workshopMasks, true);
   assert.equal(loadoutDescriptor(m).selfIllum, false, 'self-illumination only where F_SELF_ILLUM is on');
+});
+
+test("a cube map reaches the preview only where the material switches it on", () => {
+  const material = (cube: boolean) => resource([['DATA', encodeKv3({ obj: [
+    ['m_shaderName', { str: 'hero.vfx' }],
+    ['m_intParams', { objs: [[['m_name', { str: 'F_SPECULAR_CUBE_MAP' }], ['m_nValue', { int: cube ? 1 : 0 }]]] }],
+    ['m_textureParams', { objs: [[['m_name', { str: 'g_tCubeMap' }], ['m_pValue', { str: 'materials/models/cubemaps/glossy_cube_tga_4cca90d9.vtex' }]]] }],
+  ] })]]);
+  assert.equal(readLoadoutMaterial(material(true))!.textures.g_tCubeMap, 'materials/models/cubemaps/glossy_cube_tga_4cca90d9.vtex');
+  assert.equal(readLoadoutMaterial(material(false))!.textures.g_tCubeMap, undefined, 'every material names a default one; only a switched-on one is sampled');
 });

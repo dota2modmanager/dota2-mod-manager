@@ -39,6 +39,11 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
       warming = false;
     }
   });
+  // a slot's options, exported while the person looks at them, so trying one on is quick
+  ipcMain.handle('preview3d:prefetch', async (_e, hero, slots, slot, items) => {
+    if (!toolchain.pathOf('vrf')) return 0;
+    try { return await heroPreview.prefetch(hero, slots, slot, items); } catch (err) { diag(`preview 3d prefetch: ${errorText(err)}`); return 0; }
+  });
   // every clip of a body, the first time the window is asked for one beyond the loadout
   ipcMain.handle('preview3d:motions', async (e, body) => {
     if (!toolchain.pathOf('vrf')) return null;

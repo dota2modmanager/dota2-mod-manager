@@ -9,12 +9,14 @@
 // The export runs as a child process, which keeps the main process free. The cache lives in
 // userData under the game's build: a new build can change any model, so the old cache goes.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { withSkin } from './model-skin.ts';
 import crypto from 'node:crypto';
 import { runTool } from './toolchain.ts';
 import { gameSchemaStamp } from './schema-items.ts';
 import { spriteFrames } from './sprite-frames.ts';
+import { CUBE_FACES, cubeStrip } from './png-strip.ts';
 
 type Run = (exe: string, args: string[]) => Promise<void>;
 
@@ -74,7 +76,27 @@ export function spriteAt(root: string, texture: string): string | null {
   return frames.sort((a, b) => fs.statSync(b).size - fs.statSync(a).size)[0] || null;
 }
 
-const MAX_EXPORTS = 2;
+/**
+ * A cube texture's picture: the toolchain writes its six faces apart (name_rt.png…), and the preview
+ * reads them as one strip (src/png-strip.ts), made here once and kept beside them as name.png.
+ */
+export function cubeAt(root: string, texture: string): string | null {
+  const base = path.join(root, texture.replace(/\.vtex$/, ''));
+  const faces = CUBE_FACES.map((f) => `${base}_${f}.png`);
+  if (!faces.every((f) => fs.existsSync(f))) return null;
+  const strip = cubeStrip(faces.map((f) => fs.readFileSync(f)));
+  if (!strip) return null;
+  fs.writeFileSync(`${base}.png`, strip);
+  return `${base}.png`;
+}
+
+/**
+ * How many exports run at once: half the machine's cores, two to six. Most of an export is the
+ * program opening the game's archive (about 3 s), which is work for a core, not the disk: with two,
+ * a hero's third model (a pedestal, an immortal with clips of its own) and its pictures waited in
+ * line, and a cold Terrorblade took 8.8 s where its slowest single export is 3.4 s.
+ */
+const MAX_EXPORTS = Math.max(2, Math.min(6, Math.floor(os.availableParallelism() / 2)));
 
 /** GLB files of the game's models, made on demand and kept per game build. */
 export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runTool, log = () => {} }: {
@@ -82,8 +104,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
   getGamePath: () => string | null; run?: Run; log?: (msg: string) => void;
 }) {
   const base = path.join(userDataDir, 'models3d');
-  // Two exports at once, no more: a third only fights the others for the disk. Most of an export
-  // is the program opening the game's archive, so a hero of five files waits half as long.
+  // a few exports at once (MAX_EXPORTS), the rest wait their turn
   let running = 0;
   const waiting: (() => void)[] = [];
   const limited = async (work: () => Promise<void>) => {
@@ -214,7 +235,7 @@ export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runT
       });
     }
     for (const t of valid) {
-      const at = spriteAt(root, t);
+      const at = spriteAt(root, t) ?? cubeAt(root, t);
       out[t] = at ? fs.readFileSync(at) : null;
       for (const frame of spriteFrames(root, t)) out[frame.key] = fs.readFileSync(frame.file);
     }
