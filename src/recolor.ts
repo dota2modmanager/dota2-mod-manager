@@ -274,7 +274,10 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
     if (!particle && !material) continue;
     try {
       const file = index.read(p) as Buffer;
-      const r = particle ? recolorResource(file, target, { gem: def.bake ? undefined : def.gem, own: under(p, def.own), bake }) : { skipped: 0, ...recolorMaterial(file, target, { bake }) };
+      // an ability's effect is baked: the game hands the gem to Sunder, not to Terror Wave or Demon Zeal,
+      // whose tint then never ran and left Valve's blue however the tint was pointed
+      const ability = under(p, def.abilities ?? []);
+      const r = particle ? recolorResource(file, target, { gem: def.bake ? undefined : def.gem, own: under(p, def.own) || ability, bake: bake || ability }) : { skipped: 0, ...recolorMaterial(file, target, { bake }) };
       changed += r.changed;
       skipped += r.skipped;
       if (r.changed) files.set(p, r.file);

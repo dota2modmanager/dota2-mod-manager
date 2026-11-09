@@ -84,10 +84,11 @@ export function GemsPane({ set, item, gems, art, color, equipped, unavailable, c
     </fieldset>
     <div className="ward-gem-actions">
       <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => { pick(null); setOpen(false); }}>{L`Сбросить изменения`}</button>
-      {!equipped && <button className="btn btn-sm btn-ghost" id="gemOwnBtn" disabled={busy || !valid || !item?.available} onClick={() => void install(true)}
+      {/* every one of the five: Terrorblade's and Techies' arcanas, Span, Scythes and Razor's crest */}
+      <button className="btn btn-sm btn-ghost" id="gemOwnBtn" disabled={busy || !valid || !item?.available} onClick={() => void install(true)}
         title={L`Для предмета, который уже есть у тебя в игре: красятся только эффекты, модель остаётся игровой`}>
         <span className="ms">auto_fix_high</span>{L`Только эффекты`}
-      </button>}
+      </button>
       <button className="btn btn-primary" disabled={busy || !valid || !equipped || !item?.available} onClick={() => void install()}>
         <span className="ms">{busy ? 'progress_activity' : 'palette'}</span>{busy ? L`Собираю…` : L`Сохранить цвет`}
       </button>

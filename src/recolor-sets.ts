@@ -16,6 +16,13 @@ export interface RecolorSet {
   /** materials that read the gem's colour */
   materials: string[];
   /**
+   * Of the shared particles, the hero's own abilities, whose written colours the built mod moves
+   * as well: Valve's Terrorblade arcana tints Sunder with the gem but not Terror Wave (Aghanim's)
+   * nor Demon Zeal (the shard), which stayed blue with the arcana in any colour. The 3D preview
+   * keeps them shared and colours them its own way (renderer/catalog/preview3d/loadout-gems.ts).
+   */
+  abilities?: string[];
+  /**
    * The item comes with no gem, so the game turns its tint off and draws the colours written in
    * the particles: those are written in the chosen colour (bake). `gem` is then the colour its
    * effects are drawn in, for the picture and the "as in the game" choice.
@@ -31,6 +38,7 @@ export const RECOLOR_SETS: Record<string, RecolorSet> = {
     gem: [255, 60, 40],
     own: ['particles/econ/items/terrorblade/terrorblade_horns_arcana/'],
     shared: ['particles/units/heroes/hero_terrorblade/', 'particles/models/heroes/terrorblade/', 'particles/econ/items/terrorblade/'],
+    abilities: ['particles/units/heroes/hero_terrorblade/', 'particles/models/heroes/terrorblade/'],
     materials: ['materials/models/heroes/terrorblade/', 'materials/models/items/terrorblade/'],
   },
   'techies-arcana': {

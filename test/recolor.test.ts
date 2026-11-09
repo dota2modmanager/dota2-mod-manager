@@ -297,7 +297,7 @@ test('a set becomes one VPK of the files that took the colour, from the game\'s 
     entryAt('particles/units/heroes/hero_axe/axe_attack.vpcf_c', particle(kv3Block())),
   ]));
   const out = buildRecolor({ pak01, set: 'terrorblade-arcana', target: PINK });
-  assert.equal(out.files, 3, 'the arcana\'s glow, the hero\'s gem tint and the armour; not the grey smoke, the hero\'s own colours or Axe');
+  assert.equal(out.files, 4, 'the arcana\'s glow, the hero\'s gem tint, an ability of his the gem does not tint, and the armour; not the grey smoke or Axe');
   assert.equal(out.failed.length, 1);
   assert.match(out.failed[0].path, /broken/);
   const mod = path.join(dir, 'mod_dir.vpk');
@@ -305,6 +305,9 @@ test('a set becomes one VPK of the files that took the colour, from the game\'s 
   const read = (p: string) => openVpkIndex(mod).read(p) as Buffer;
   const glow = readKv3(dataBlock(read(`${arcana}/glow.vpcf_c`)).data);
   assert.deepEqual(glow.arrays[0].cells.map((c) => readCell(glow, c!)), [...PINK, 255]);
+  // Terror Wave and Demon Zeal: Valve's arcana does not tint them, and they stayed blue in any colour
+  const plain = readKv3(dataBlock(read(`${hero}/plain.vpcf_c`)).data);
+  assert.deepEqual(plain.arrays[0].cells.map((c) => readCell(plain, c!)), [...PINK, 255]);
   const sword = readKv3(dataBlock(read(`${hero}/sword.vpcf_c`)).data);
   assert.deepEqual(range(sword, at(sword.root, 'm_Initializers', 0, 'm_vOutputMax')), [1, 3.217, 5.5]);
   assert.equal(materialExpressions(read('materials/models/heroes/terrorblade/armor.vmat_c'))[0].code.length, TINT.length + 13);
