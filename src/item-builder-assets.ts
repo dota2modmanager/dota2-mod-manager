@@ -8,8 +8,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { sharedVpkIndex, entryAt, type VpkEntry, type VpkIndex } from './vpk.ts';
 import { t } from './i18n.ts';
-import { listItems, eachChild, blockBounds } from './schema.ts';
-import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
+import { eachChild, blockBounds } from './schema.ts';
+import { stockModels, type AssetCopy } from './item-builder-slots.ts';
 import { asModel } from './arcana.ts';
 import { numberedAs } from './model-sequences.ts';
 import { withSkin } from './model-skin.ts';
@@ -52,9 +52,7 @@ function compiledAssetPath(p: unknown): string {
 
 /** The models of the stock items any of these heroes wears, as normalizeAssetPath writes them. */
 function stockModelsOf(text: string, heroes: string[]): Set<string> {
-  return new Set(listItems(text)
-    .filter((i) => i.prefab === 'default_item' && i.model && itemHeroes(text, i).some((h) => heroes.includes(h)))
-    .map((i) => normalizeAssetPath(i.model)));
+  return new Set(stockModels(text, heroes).map(normalizeAssetPath));
 }
 
 /*

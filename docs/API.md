@@ -164,6 +164,7 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/pak-stamp.ts`](#srcpak-stampts) | Whether the game's pak01 changed: a listing of its files' stats, which the app asks for before it |
 | [`src/particle-snapshot.ts`](#srcparticle-snapshotts) |  |
 | [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
 | [`src/particle-surface.ts`](#srcparticle-surfacets) | An effect made to spread over a wearable's surface. |
@@ -6375,6 +6376,14 @@ export function itemOptions(text: string): { id: string; name: string }[]
 
 Wearable items with visuals and a matching stock default_item, offered under cosmetics/items.
 
+### `stockModels`
+
+```ts
+export function stockModels(text: string, heroes: string[]): string[]
+```
+
+The model_player of each stock item any of these heroes wears, as the table writes it.
+
 ### `itemHeroes`
 
 ```ts
@@ -6479,6 +6488,14 @@ export interface OfferedEffect { id: string; nameToken: string }
 ```
 
 One game effect the picker offers: its token, and the game's own name for it to look up.
+
+### `effectsOf`
+
+```ts
+export const effectsOf = (text: string): UnusualEffect[]
+```
+
+Every effect in the table, read once per table: the 3D preview asks on each slot it is shown (2026-11-10).
 
 ### `offeredUnusual`
 
@@ -9430,6 +9447,37 @@ export class Overlays
 
 The font and cursor files of one install: writing them, keeping the originals, putting them back.
 
+## src/pak-stamp.ts
+
+Whether the game's pak01 changed: a listing of its files' stats, which the app asks for before it
+trusts anything it keeps of the game (the item table, the pictures, the 3D models).
+
+The game has 679 pak01 files, and a stat of each is 20 to 80 ms, seconds when the disk is busy.
+The item builder's 3D preview asked on every slot shown, and the window froze for 3.5 s of
+stats on a click (2026-11-10). An update rewrites pak01_dir.vpk, which indexes every other pak,
+so while it stands as it was the others do too, and the listing made with it is kept.
+
+### `pakFiles`
+
+```ts
+export function pakFiles(gamePath: string, kind: string, describe: (st: fs.Stats) => string): string
+```
+
+Each of the game's pak01 files, as `describe` puts its stat, in name order.
+
+```
+@param kind  which listing: each `describe` keeps its own
+@throws when pak01_dir.vpk or the folder cannot be read
+```
+
+### `gameSchemaStamp`
+
+```ts
+export function gameSchemaStamp(gamePath: string): string
+```
+
+Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
+
 ## src/particle-snapshot.ts
 
 ### `snapshotPoints`
@@ -12025,6 +12073,8 @@ Reading items_game.txt (src/schema.ts): the items section, one item's fields, th
 pickers show, the free item of a slot, and the game's own table out of its pak01. Text is latin1,
 byte for byte, so a block found here can be spliced back without re-encoding.
 
+Hands on from [`src/pak-stamp.ts`](#srcpak-stampts): `gameSchemaStamp`.
+
 ### `SchemaItem`
 
 ```ts
@@ -12190,14 +12240,6 @@ build starts from, so a game update simply means a rebuild, never a stale schema
 @param gamePath  ...\dota 2 beta\game
 @returns stamp = version marker of the base file
 ```
-
-### `gameSchemaStamp`
-
-```ts
-export function gameSchemaStamp(gamePath: string): string
-```
-
-Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
 
 ## src/schema-kv.ts
 

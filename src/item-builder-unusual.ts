@@ -22,7 +22,8 @@ export const UNUSUAL = /^unusual-(\d+)$/;
 export interface OfferedEffect { id: string; nameToken: string }
 
 let cache: { text: string; effects: UnusualEffect[] } | null = null;
-const effectsOf = (text: string): UnusualEffect[] => {
+/** Every effect in the table, read once per table: the 3D preview asks on each slot it is shown (2026-11-10). */
+export const effectsOf = (text: string): UnusualEffect[] => {
   if (cache?.text !== text) cache = { text, effects: unusualEffects(text) };
   return cache.effects;
 };

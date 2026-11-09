@@ -24,10 +24,10 @@ import { personaLayouts } from './item-builder-personas.ts';
 import { pickModels } from './item-builder-refits.ts';
 import { hiddenMeshes } from './model-bodygroups.ts';
 import { ITEM_EFFECTS } from './item-builder-effects.ts';
-import { unusualItemEffect } from './item-builder-unusual.ts';
+import { effectsOf, unusualItemEffect } from './item-builder-unusual.ts';
 import { idleSequence, itemModifiers, loadoutSequence, modelSequences, motionList, wearableClip, type Motion } from './model-loadout.ts';
 import { heroStage, type HeroStage } from './hero-showcase.ts';
-import { unusualEffects } from './unusual-effects.ts';
+import type { UnusualEffect } from './unusual-effects.ts';
 import { itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
@@ -66,7 +66,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
 }) {
   const preparedModels = new Map<string, Buffer>();
   function plan(name: string, slots: PreviewSlot[]): {
-    body: string; bodySkin: number; bodyFx: string[]; replacements: Map<string, string>; clip: string | null; idle: string; motions: Motion[]; stage: HeroStage; heroFx: string[]; bindings: Map<string, ReturnType<typeof unusualEffects>[number]>; read: (p: string) => Buffer | null;
+    body: string; bodySkin: number; bodyFx: string[]; replacements: Map<string, string>; clip: string | null; idle: string; motions: Motion[]; stage: HeroStage; heroFx: string[]; bindings: Map<string, UnusualEffect>; read: (p: string) => Buffer | null;
     parts: { slot: string; name: string; model: string; skin: number; style?: number; explicitBaseStyle?: boolean; crestRig?: string; fx: string[]; replacements?: Map<string, string>; clip: string | null; hidden: string[] }[];
     /** the body's meshes the items worn turn off */
     hidden: string[];
@@ -157,7 +157,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const idle = idleSequence(seqs) || IDLE;
     const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
     const stage = heroStage(ix.read('scripts/npc/portraits_showcase.txt')?.toString('utf8') ?? null, script, [body, hero]);
-    const bindings = new Map(unusualEffects(text).map((effect) => [effect.system.toLowerCase(), effect]));
+    const bindings = new Map(effectsOf(text).map((effect) => [effect.system.toLowerCase(), effect]));
     if (hero === 'npc_dota_hero_razor' && process.env.MM_PREVIEW_FX) log(`razor preview plan: ${JSON.stringify({ body, clip, idle, modifiers, head: parts.filter(part => part.slot.endsWith(':head')) })}`);
     return { body, bodySkin, bodyFx, replacements, clip, idle, bindings, motions: motionList(seqs, modifiers, itemModifiers(text)), stage, parts, hidden, heroFx: previewHeroParticles(script, hero, !rows.some(row => row.s.slot.endsWith(':weapon') && row.rec), ix), read: (f) => ix.read(f) };
   }
@@ -278,13 +278,13 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
   /**
    * A slot's options exported ahead as trying each on will ask for them (its model under the same clips,
    * in one run, and its materials' pictures), so a try-on, which waited 3 to 5 s, finds them cached.
-   * @param items the options' item ids, at most 40
+   * @param items the options' item ids, at most 40, planned one per turn of the window: forty in a row froze it (2026-11-10)
    */
   async function prefetch(hero: string, slots: PreviewSlot[], slot: string, items: string[]): Promise<number> {
     const byClip = new Map<string, Set<string>>(), all = new Set<string>();
     let read: ((path: string) => Buffer | null) | null = null;
     for (const itemId of items.slice(0, 40)) {
-      let p: ReturnType<typeof plan> | null = null;
+      let p: ReturnType<typeof plan> | null = await new Promise<null>((r) => setImmediate(() => r(null)));
       try { p = plan(hero, slots.map((s) => (s.slot === slot ? { ...s, tryOn: { itemId, effectId: '' } } : s))); } catch { continue; }
       if (!p) return 0;
       read = p.read;
