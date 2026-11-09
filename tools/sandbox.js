@@ -277,6 +277,27 @@ function builderAssets(real, schemaText) {
   return out;
 }
 
+/* The game's text in the three languages the app speaks (dota_ and items_ of english, russian and
+ * schinese): the names of styles, rarities and events, the sets' descriptions and the Chinese item
+ * names are read out of these (src/cosmetic-names.ts gameTokens). About 28 MB. */
+function textAssets(real) {
+  const { openVpkIndex } = require('../src/vpk.ts');
+  const out = [];
+  try {
+    const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
+    for (const file of ['dota', 'items']) {
+      for (const lang of ['english', 'russian', 'schinese']) {
+        const rel = `resource/localization/${file}_${lang}.txt`;
+        const data = ix.read(rel);
+        if (data) out.push(entry(rel, data));
+      }
+    }
+  } catch (e) {
+    log('  could not copy the game\'s text files:', e.message);
+  }
+  return out;
+}
+
 /* The chat file of every language the game ships, which src/notice-text.ts builds the
  * anti-cheat notice on. Under half a kilobyte each. */
 function noticeAssets(real) {
@@ -437,13 +458,13 @@ function buildGameTree() {
       log('  could not read the real schema, using the stub:', e.message);
     }
   }
-  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real), ...arcanaAssets(real)] : [];
+  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real), ...textAssets(real), ...arcanaAssets(real)] : [];
   fs.writeFileSync(
     path.join(GAME, 'dota', 'pak01_dir.vpk'),
     buildVpk([entry(SCHEMA_REL, Buffer.from(schema, 'latin1')), ...extras])
   );
   log(`  items_game.txt from ${origin}`);
-  if (extras.length) log(`  ${extras.length} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat files, Terrorblade)`);
+  if (extras.length) log(`  ${extras.length} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat and text files, Terrorblade)`);
 
   // dota_russian: Valve's gameinfo plus stand-ins for the voice paks. langFolders() decides
   // "this folder holds Valve content" by the presence of pak01_*, and the 2.0 feature
