@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1763,
+  "mods": 1765,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -733,6 +733,7 @@
         {"name":"DarkPoly & Trees","categoryId":"terrains","styleLabel":null,"slots":["misc"]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Huskar Bleeding Edge","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
+        {"name":"Huskar Bloodbath","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","arms","head"]},
         {"name":"Huskar Cthugha","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder","offhand","weapon"]},
         {"name":"Huskar Darkclaw Berserker","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder"]},
         {"name":"Huskar Flashpoint Proselyte","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","shoulder","head"]},
@@ -921,6 +922,7 @@
       "mods": [
         {"name":"Immortal Templar Assassin","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","misc"]},
         {"name":"Templar Assassin Black","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","misc","arms","weapon"]},
+        {"name":"Templar Assassin Headress","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","misc"]},
         {"name":"Templar Assassin PlayBoy","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head"]},
         {"name":"Templar Assassin Royal Squire","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head","weapon"]},
         {"name":"Templar Assassin Whisper Gates","categoryId":"heroes","styleLabel":null,"slots":["legs","shoulder","head"]}

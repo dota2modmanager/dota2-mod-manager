@@ -2952,6 +2952,288 @@
       ]
     },
     {
+      "id": "huskar",
+      "name": "Huskar",
+      "slug": "huskar",
+      "mods": [
+        {
+          "name": "Huskar Cthugha",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","misc","head","shoulder","offhand","weapon"],
+          "image": {"src":"/mods/huskar-cthugha.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1777751902
+        },
+        {
+          "name": "Black Huskar",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","misc","head","shoulder"],
+          "image": {"src":"/mods/black-huskar.webp","width":854,"height":480},
+          "author": "ibcsz",
+          "authorUrl": "http://t.me/nixwaretop",
+          "date": 1789184752
+        },
+        {
+          "name": "Huskar Bleeding Edge",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","misc","head","shoulder"],
+          "image": {"src":"/mods/huskar-bleeding-edge.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790809354
+        },
+        {
+          "name": "Huskar Bloodbath",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","shoulder","arms","head"],
+          "image": {"src":"/mods/huskar-bloodbath.webp","width":854,"height":480},
+          "author": "Something Awful",
+          "authorUrl": null,
+          "date": 1794250919
+        },
+        {
+          "name": "Huskar Darkclaw Berserker",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","misc","head","shoulder"],
+          "image": {"src":"/mods/huskar-darkclaw-berserker.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1793227820
+        },
+        {
+          "name": "Huskar Flashpoint Proselyte",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","arms","shoulder","head"],
+          "image": {"src":"/mods/huskar-flashpoint-proselyte.webp","width":854,"height":480},
+          "author": "apathydxd",
+          "authorUrl": "https://discord.com/users/538760177470668810",
+          "date": 1777911854
+        },
+        {
+          "name": "Bedrock",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/bedrock.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1794152898
+        },
+        {
+          "name": "Dark Terrain Minify",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/dark-terrain-minify.webp","width":854,"height":480},
+          "author": "Robbyz",
+          "authorUrl": "https://github.com/robbyz512",
+          "date": 1794152898
+        },
+        {
+          "name": "DarkPoly",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/darkpoly.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1794152898
+        },
+        {
+          "name": "DarkPoly & Trees",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/darkpoly-trees.webp","width":854,"height":480},
+          "author": "Darkness",
+          "authorUrl": "https://t.me/Darkness_Logovo",
+          "date": 1794152898
+        },
+        {
+          "name": "Mossy Cobblestone",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": {"src":"/mods/mossy-cobblestone.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1794152898
+        },
+        {
+          "name": "Simple Dark Terrain Minify",
+          "categoryId": "terrains",
+          "styleLabel": "Green",
+          "group": null,
+          "slots": ["misc"],
+          "image": null,
+          "author": "Robbyz",
+          "authorUrl": "https://github.com/robbyz512",
+          "date": 1794152898
+        },
+        {
+          "name": "Simple Dark Terrain Minify",
+          "categoryId": "terrains",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc"],
+          "image": null,
+          "author": "Robbyz",
+          "authorUrl": "https://github.com/robbyz512",
+          "date": 1794152898
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Black Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793953543
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Pink Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794145496
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "White Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794043573
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        }
+      ]
+    },
+    {
       "id": "lion",
       "name": "Lion",
       "slug": "lion",
@@ -3120,277 +3402,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1794152898
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Pink Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794145496
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "White Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794043573
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        }
-      ]
-    },
-    {
-      "id": "huskar",
-      "name": "Huskar",
-      "slug": "huskar",
-      "mods": [
-        {
-          "name": "Huskar Cthugha",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","misc","head","shoulder","offhand","weapon"],
-          "image": {"src":"/mods/huskar-cthugha.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1777751902
-        },
-        {
-          "name": "Black Huskar",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","misc","head","shoulder"],
-          "image": {"src":"/mods/black-huskar.webp","width":854,"height":480},
-          "author": "ibcsz",
-          "authorUrl": "http://t.me/nixwaretop",
-          "date": 1789184752
-        },
-        {
-          "name": "Huskar Bleeding Edge",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","misc","head","shoulder"],
-          "image": {"src":"/mods/huskar-bleeding-edge.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790809354
-        },
-        {
-          "name": "Huskar Darkclaw Berserker",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","misc","head","shoulder"],
-          "image": {"src":"/mods/huskar-darkclaw-berserker.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1793227820
-        },
-        {
-          "name": "Huskar Flashpoint Proselyte",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","arms","shoulder","head"],
-          "image": {"src":"/mods/huskar-flashpoint-proselyte.webp","width":854,"height":480},
-          "author": "apathydxd",
-          "authorUrl": "https://discord.com/users/538760177470668810",
-          "date": 1777911854
-        },
-        {
-          "name": "Bedrock",
-          "categoryId": "terrains",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/bedrock.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1794152898
-        },
-        {
-          "name": "Dark Terrain Minify",
-          "categoryId": "terrains",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/dark-terrain-minify.webp","width":854,"height":480},
-          "author": "Robbyz",
-          "authorUrl": "https://github.com/robbyz512",
-          "date": 1794152898
-        },
-        {
-          "name": "DarkPoly",
-          "categoryId": "terrains",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/darkpoly.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1794152898
-        },
-        {
-          "name": "DarkPoly & Trees",
-          "categoryId": "terrains",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/darkpoly-trees.webp","width":854,"height":480},
-          "author": "Darkness",
-          "authorUrl": "https://t.me/Darkness_Logovo",
-          "date": 1794152898
-        },
-        {
-          "name": "Mossy Cobblestone",
-          "categoryId": "terrains",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": {"src":"/mods/mossy-cobblestone.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1794152898
-        },
-        {
-          "name": "Simple Dark Terrain Minify",
-          "categoryId": "terrains",
-          "styleLabel": "Green",
-          "group": null,
-          "slots": ["misc"],
-          "image": null,
-          "author": "Robbyz",
-          "authorUrl": "https://github.com/robbyz512",
-          "date": 1794152898
-        },
-        {
-          "name": "Simple Dark Terrain Minify",
-          "categoryId": "terrains",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc"],
-          "image": null,
-          "author": "Robbyz",
-          "authorUrl": "https://github.com/robbyz512",
-          "date": 1794152898
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Black Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793953543
         },
         {
           "name": "Blue Diretide Ranged Attack",
@@ -8080,6 +8091,211 @@
       ]
     },
     {
+      "id": "lanaya",
+      "name": "Templar Assassin",
+      "slug": "templar-assassin",
+      "mods": [
+        {
+          "name": "Templar Assassin Black",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","shoulder","head","misc","arms","weapon"],
+          "image": {"src":"/mods/templar-assassin-black.webp","width":854,"height":480},
+          "author": "3atvorn1k",
+          "authorUrl": "https://discord.com/users/642254136053596200",
+          "date": 1792965567
+        },
+        {
+          "name": "Immortal Templar Assassin",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","shoulder","head","misc"],
+          "image": {"src":"/mods/immortal-templar-assassin.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779004575
+        },
+        {
+          "name": "Templar Assassin Headress",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","shoulder","head","misc"],
+          "image": {"src":"/mods/templar-assassin-headress.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1794250919
+        },
+        {
+          "name": "Templar Assassin Royal Squire",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","shoulder","head","weapon"],
+          "image": {"src":"/mods/templar-assassin-royal-squire.webp","width":854,"height":480},
+          "author": "Ромчик",
+          "authorUrl": "https://watchmy.bio/shidehara",
+          "date": 1783870835
+        },
+        {
+          "name": "Templar Assassin PlayBoy",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","shoulder","head"],
+          "image": {"src":"/mods/templar-assassin-playboy.webp","width":854,"height":480},
+          "author": "Defiree",
+          "authorUrl": "https://vk.com/defiree2mods",
+          "date": 1770175798
+        },
+        {
+          "name": "Templar Assassin Whisper Gates",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["legs","shoulder","head"],
+          "image": {"src":"/mods/templar-assassin-whisper-gates.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1770175798
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Black Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793953543
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Pink Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794145496
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "White Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794043573
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        }
+      ]
+    },
+    {
       "id": "ancient_apparition",
       "name": "Ancient Apparition",
       "slug": "ancient-apparition",
@@ -10294,200 +10510,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1794152898
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Pink Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794145496
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "White Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794043573
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        }
-      ]
-    },
-    {
-      "id": "lanaya",
-      "name": "Templar Assassin",
-      "slug": "templar-assassin",
-      "mods": [
-        {
-          "name": "Templar Assassin Black",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","shoulder","head","misc","arms","weapon"],
-          "image": {"src":"/mods/templar-assassin-black.webp","width":854,"height":480},
-          "author": "3atvorn1k",
-          "authorUrl": "https://discord.com/users/642254136053596200",
-          "date": 1792965567
-        },
-        {
-          "name": "Immortal Templar Assassin",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","shoulder","head","misc"],
-          "image": {"src":"/mods/immortal-templar-assassin.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779004575
-        },
-        {
-          "name": "Templar Assassin Royal Squire",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","shoulder","head","weapon"],
-          "image": {"src":"/mods/templar-assassin-royal-squire.webp","width":854,"height":480},
-          "author": "Ромчик",
-          "authorUrl": "https://watchmy.bio/shidehara",
-          "date": 1783870835
-        },
-        {
-          "name": "Templar Assassin PlayBoy",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","shoulder","head"],
-          "image": {"src":"/mods/templar-assassin-playboy.webp","width":854,"height":480},
-          "author": "Defiree",
-          "authorUrl": "https://vk.com/defiree2mods",
-          "date": 1770175798
-        },
-        {
-          "name": "Templar Assassin Whisper Gates",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["legs","shoulder","head"],
-          "image": {"src":"/mods/templar-assassin-whisper-gates.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1770175798
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Black Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793953543
         },
         {
           "name": "Blue Diretide Ranged Attack",

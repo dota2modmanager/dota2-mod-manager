@@ -1,5 +1,5 @@
 {
-  "count": 1904,
+  "count": 1908,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -61,6 +61,7 @@
     "081f8d4fc0cf5af89aa229c21e9f04ed89fae4ac": [{"name":"Ogre Arcana Egg Sound Fix","categoryId":"other","styleLabel":"Sound remove","type":"vpk"}],
     "08520657c0f8eeae7acac7dda52184d9f2b5dd36": [{"name":"Drow Ranger Silent Wake","categoryId":"hero-items","styleLabel":"Crimson","type":"vpk"}],
     "086fe5b61666485c1a176d1517da84ed46e99b08": [{"name":"Magnus White Tiger","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "08a09e0fec70a1318594464f8c853033f2cd95d4": [{"name":"Templar Assassin Headress","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "08ffd51b28cc10013ee0e4632ace79d46e0f7dd6": [{"name":"Anime","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "09042456dc3f0418dce75090beb90297ec5a90e4": [{"name":"Golden Doomling","categoryId":"couriers","styleLabel":null,"type":"vpk"}],
     "093fc7124f11f560f94dba1325d4178739116ede": [{"name":"TI7 Radiance","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
@@ -669,6 +670,7 @@
     "5cb652349f0770dc2ef099092e478b5ef2780d1f": [{"name":"Wraith King Grim Destiny","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "5cc83dc314809a6ec3396766cae2765c65826931": [{"name":"6 86 Arc Warden Background","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "5d3ce09da6166e6d64bfa7cebb576054129b7440": [{"name":"Pine Forest","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
+    "5d5589c2af4ce8e4ba22fc63b6be71e218c10b75": [{"name":"Deny Pupue Sound","categoryId":"sounds","styleLabel":null,"type":"vpk"}],
     "5d93c1e852dd7423dcfef6980c294e29c9a79c23": [{"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "5de5f841d59eff3e8de7850c5d62cc2cb03f5e5c": [{"name":"Terrorblade Foulfell Corruptor","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "5e01db4144d2a1bf55c8e8749a7c1441bdebcbde": [{"name":"Lycan Collector 2021","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -822,6 +824,7 @@
     "70ac44fd085b9258613192909b3c9855611cfb00": [{"name":"Cosmic Spirit Breaker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "70c5c34531ebf6e12e1bec8eed6374204f0bc0b7": [{"name":"Frostbloom Black Pool Watcher","categoryId":"wards","styleLabel":null,"type":"vpk"}],
     "70d0dbb160f4d07a4a2ef0171b6f3d3aacdd796a": [{"name":"Shadow Fiend Black White","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "7120a8a4a160c46403f5c7a5285187ac924e2546": [{"name":"7 28 Hoodwink","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "7122d78805b0415d8ce3e39fcfa069f22376ba94": [{"name":"Profile Graffiti & Phrases","categoryId":"other","styleLabel":null,"type":"vpk"}],
     "71576c651553a29176431b897541c333fd949945": [{"name":"Luna Twilight Schism","categoryId":"hero-items","styleLabel":"Golden","type":"vpk"}],
     "7185132cc1487e89ff5a8bbe0c44c154d68defc8": [{"name":"Floes Tower","categoryId":"wards","styleLabel":null,"type":"vpk"}],
@@ -1376,6 +1379,7 @@
     "bcf0e36f25b1936f218b734d7d598a3a06bbbdbd": [{"name":"Skywrath Mage Thanatos","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "bd105e06e28afe8cbbdc0f1732bb2263bd1509e2": [{"name":"Meepo","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
     "bd183ecc5e1bbdbc83c350b015178f622476a8a8": [{"name":"TI8 Mekanism","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "bd2b2791773a4909b0eb0c97beb72cd04158de14": [{"name":"Huskar Bloodbath","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "bd2e0139e9c2495ba9e8f2f34f87e83876109bb3": [{"name":"Win Lose Music Never","categoryId":"music","styleLabel":null,"type":"vpk"}],
     "bd4307c81fc458998c2a95f68a9595165ce4fd15": [{"name":"Snow Dagon","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "bd53016f3daa787748e2d0fa65f8683ce457bebe": [{"name":"Chen Lelouch","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
