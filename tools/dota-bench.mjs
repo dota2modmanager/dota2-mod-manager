@@ -4,7 +4,7 @@
  *
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
  *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
- *                          [--idle-seconds 12] [--spawn] [--death]
+ *                          [--idle-seconds 12] [--spawn] [--death] [--map small|full]
  *   npm run dota:bench -- --vpk towers_dir.vpk --towers     the demo's two towers, for tower looks
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
  *   npm run dota:bench -- --vpk pick.vpk --schema items_game.txt --hero juggernaut
@@ -58,7 +58,20 @@ import { SPOTS, readFps, readBusy, mean, fpsChange } from './dota-bench/fps.mjs'
 import { readBars, bodyOf, spawned, follow, frame, readSkills, bindOf, unknownCommands, SCAN, SKILLS, DEFAULT_SKILLS } from './dota-bench/scene.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const STEAM = 'C:/Program Files (x86)/Steam/steam.exe';
+/**
+ * Steam is wherever its installer put it, and it says where in the registry: a fixed C: path
+ * failed on a machine with Steam on E:, after the mod was already in the game folder.
+ */
+function findSteam() {
+  if (process.env.STEAM && fs.existsSync(process.env.STEAM)) return process.env.STEAM;
+  try {
+    const out = execFileSync('reg', ['query', 'HKCU\\Software\\Valve\\Steam', '/v', 'SteamExe'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const m = /SteamExe\s+REG_SZ\s+(.+)/i.exec(out);
+    if (m && fs.existsSync(m[1].trim())) return m[1].trim();
+  } catch { /* no key: the default below */ }
+  return 'C:/Program Files (x86)/Steam/steam.exe';
+}
+const STEAM = findSteam();
 const W = 1920;
 const H = 1080;
 /** The demo panel, the ability bar and the hero on screen, measured in a 1600x900 window: they scale with the height. */
@@ -164,6 +177,8 @@ async function main() {
   const game = settings.dotaGamePath;
   if (!game) throw new Error('bench: no game folder in the app settings');
   const log = path.join(game, 'dota', 'console.log');
+  // a failed spawn is an 'error' event the finally below never sees, so it left the mod installed
+  if (!fs.existsSync(STEAM)) throw new Error(`bench: no Steam at ${STEAM}; set STEAM to steam.exe`);
   const placed = vpk ? await install(path.resolve(vpk), game, settings.langSuffix || 'russian') : null;
   if (placed) console.log(`bench: mod in ${placed}`);
   const table = arg('--schema');
@@ -317,7 +332,12 @@ async function main() {
       fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify(result, null, 2));
       return;
     }
-    spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
+    // --map small: the demo's own small map instead of the whole one, where an effect is not lost
+    // against the lanes. The convar is the demo menu's map choice (context_menu_demo_mode: 0 the demo
+    // map, 1 the full map), kept between launches: without --map the demo opens on what the player
+    // last picked. A map's name is no value for it ("Error parsing string ... as int").
+    const demoMap = { small: '0', full: '1' }[arg('--map')] ?? arg('--map');
+    spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), ...(demoMap ? ['+dota_hero_demo_map', demoMap] : []), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
     await until(() => /OnAddNewHeroEntry/.test(logSince(log, started)), 240000, 'the demo to start');
     await sleep(4000);
     const centre = { x: AT.hero[0] + AT.hero[2] / 2, y: AT.hero[1] + AT.hero[3] / 3 };

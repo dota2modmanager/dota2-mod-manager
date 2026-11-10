@@ -139,6 +139,7 @@ after checking and repairing them:
 | Sequence names and numbers as Valve's | The decompile names the clip `@@cast_ghost_shroud` `cast_ghost_shroud`; every sequence from #30 was one number off online. Renamed back automatically. |
 | Morph channel | The decompile has no morphs; without the channel the hero drew as a flat glow. Copied from Valve. |
 | Blended sequences (`m_bMulti`) | The turns layer came out as a plain clip and the head spun round while running. Valve's fetch and flags copied. |
+| Weight lists from Valve | The decompile puts every sequence on the default list. An idle that adds a tail layer through a list with every bone at 0 then ran it at full weight: every few idles the whole body stood in the layer clip's bind pose for a second and a half. Valve's lists and each sequence's choice copied. |
 | Turn poses from Valve | The decompile hands over poses as differences from the bind pose; the compiler made whole poses of them, and the head turned backwards on the run. Valve's segments copied byte for byte. |
 | Clips Valve has not got | The compiler adds `turns` and `immosh_turns` (the layer's source); the walk played them. They get the middle pose. |
 
