@@ -144,7 +144,7 @@ the code, not in this page.
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
 | [`src/model-bodygroups.ts`](#srcmodel-bodygroupsts) | A model with some of its body groups shown differently by default. |
-| [`src/model-cloth.ts`](#srcmodel-clothts) | A wearable's model without its cloth, for the item builder's copy of it under a stock path. |
+| [`src/model-cloth.ts`](#srcmodel-clothts) | A wearable's model without its cloth, for the item builder's copy of it under a stock path of a |
 | [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
 | [`src/model-hitboxes.ts`](#srcmodel-hitboxests) | Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item. |
 | [`src/model-loadout.ts`](#srcmodel-loadoutts) | The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417). |
@@ -8325,21 +8325,26 @@ whatever its mask, so the 3D preview hides them by name.
 
 ## src/model-cloth.ts
 
-A wearable's model without its cloth, for the item builder's copy of it under a stock path.
+A wearable's model without its cloth, for the item builder's copy of it under a stock path of a
+hero whose own cloth would drag it behind him.
 
 2191 of the game's 12660 item models carry a cloth simulation (a finite-element model,
-m_pFeModel in their PHYS block) for their tassels, banners and capes. Worn as the item they
-are, the game drives it with the hero. Copied under the stock item's path, which is how the
-builder puts a wearable on (src/item-builder.ts), the cloth stays behind when the hero walks:
-Centaur in the Rout of the Emerald Marauder dragged his axe and his back banner along the
-ground behind him, and they crept back only once he stood still (2026-11-09); the parts that
-trailed are the ones the cloth moves. Why the game simulates it so under a stock path the files
-do not say. What they do show is a shape it loads: 404 of its item models have a PHYS block
-whose m_pFeModel is null, with the same flags as the ones with cloth.
+m_pFeModel in their PHYS block) for their tassels, banners, tails and capes. Copied under the
+stock item's path, which is how the builder puts a wearable on (src/item-builder.ts), it swings
+with the hero on Earth Spirit, Slark and Ember Spirit, and trails along the ground behind
+Centaur while he walks, creeping back once he stands still (2026-11-09, again 2026-11-10 on a
+build that kept the cloth of his Rout tail and head). So it is the hero, not the item.
 
-So the copy goes in with m_pFeModel null and the rest of PHYS as it was: the cloth parts hang
-still on their bones instead of swinging, and nothing trails. The model under its own path,
-the hero's body and the units an item dresses are not touched.
+Centaur's body is the one among the 129 heroes whose own cloth has an m_flLocalForce other than
+1: his is 1.5; 99 others have 1 and the rest have no cloth. That share of the hero's movement is
+what the cloth is carried along by, and under a stock path his wearables' cloth goes with his.
+3.7.0 took the cloth out of every copy on every hero, and a player found it gone from Earth
+Spirit's Jade Reckoning, Slark's Sea Rake's Bridle and Ember's ponytail.
+
+So on such a hero a copy goes in with m_pFeModel null and the rest of PHYS as it was, a shape
+the game loads: 404 of its item models have a PHYS block whose m_pFeModel is null, with the same
+flags as the ones with cloth. Those parts hang still on their bones instead of swinging, and
+nothing trails. On every other hero, and under an item's own path, the cloth stays.
 
 ### `withoutCloth`
 
@@ -8356,6 +8361,24 @@ export function hasCloth(model: Buffer): boolean
 ```
 
 Whether a model carries a cloth simulation.
+
+### `clothDragger`
+
+```ts
+export function clothDragger(read: (p: string) => Buffer | null): (to: string) => boolean
+```
+
+Whether a wearable copied to `to` would trail: a path in models/heroes/<folder>/ whose body,
+<folder>/<folder>.vmdl_c, drags cloth. Asked once per folder. A folder with its body under
+another name (Drow's drow_base) is not Centaur's, and its copies keep their cloth.
+
+### `dragsCloth`
+
+```ts
+export function dragsCloth(body: Buffer | null): boolean
+```
+
+Whether a hero's body drags the cloth of the wearables under his stock paths: its own cloth's local force is not 1.
 
 ## src/model-glb.ts
 
