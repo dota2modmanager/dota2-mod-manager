@@ -528,7 +528,9 @@ test('the game-update probe moves when the item table\'s paks change, and only t
   fs.writeFileSync(path.join(game, 'dota', 'readme.txt'), 'not a pak');
   assert.equal(schema.gameSchemaStamp(game), before, 'files that do not carry the table changed nothing');
 
+  // an update rewrites a volume and the index that holds its files' offsets and CRCs (src/pak-stamp.ts)
   fs.writeFileSync(path.join(game, 'dota', 'pak01_000.vpk'), 'a volume from the next update');
+  fs.appendFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), Buffer.alloc(16));
   assert.notEqual(schema.gameSchemaStamp(game), before);
 });
 

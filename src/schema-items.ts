@@ -7,6 +7,9 @@ import { readVpkEntryFile } from './vpk.ts';
 import { t } from './i18n.ts';
 import { blockBounds, eachChild, eachChildSteps, type Bounds } from './schema-kv.ts';
 import { drain, PAUSE } from './steps.ts';
+import { pakFiles } from './pak-stamp.ts';
+
+export { gameSchemaStamp } from './pak-stamp.ts';
 
 /** An item of items_game as the pickers read it; see listItems. */
 export interface SchemaItem {
@@ -264,7 +267,7 @@ export function readGameSchema(gamePath: string): GameSchema {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   let key: string | null = null;
-  try { key = `${gamePath}|${pakFiles(gamePath, (st) => `${st.size}:${st.mtimeMs}:${st.ino}`)}`; } catch { /* read it anew */ }
+  try { key = `${gamePath}|${pakFiles(gamePath, 'read', (st) => `${st.size}:${st.mtimeMs}:${st.ino}`)}`; } catch { /* read it anew */ }
   if (key && lastRead?.key === key) return lastRead.schema;
   const hit = readVpkEntryFile(pak, SCHEMA_REL);
   if (!hit) throw new Error(t('items_game.txt не найден в pak01 игры'));
@@ -283,18 +286,3 @@ export function readGameSchema(gamePath: string): GameSchema {
  * one string, and the comparison is the engine seeing the same string twice. */
 let lastRead: { key: string; schema: GameSchema } | null = null;
 
-/** Each of the game's pak01 files, as `describe` puts its stat, in name order. */
-function pakFiles(gamePath: string, describe: (st: fs.Stats) => string): string {
-  const dir = path.join(gamePath, 'dota');
-  const parts: string[] = [];
-  for (const f of fs.readdirSync(dir)) {
-    if (!/^pak01_(dir|\d{3})\.vpk$/i.test(f)) continue;
-    parts.push(`${f}:${describe(fs.statSync(path.join(dir, f)))}`);
-  }
-  return parts.sort().join('|');
-}
-
-/** Cheap "did the game update?" probe: size+mtime of the paks that carry the schema. */
-export function gameSchemaStamp(gamePath: string): string {
-  return pakFiles(gamePath, (st) => `${st.size}:${Math.floor(st.mtimeMs)}`);
-}

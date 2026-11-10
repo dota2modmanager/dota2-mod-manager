@@ -12,7 +12,7 @@
  */
 import { heroDisplayName } from './vpk.ts';
 import { t } from './i18n.ts';
-import { listItemsSteps, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
+import { listItems, listItemsSteps, toUtf8, eachChild, blockBounds, itemSearchText, inferredItemSlot, type SchemaItem } from './schema.ts';
 import { drain, PAUSE } from './steps.ts';
 import { styleTokens } from './item-builder-styles.ts';
 import { itemNote, untilReconnect, type ItemNote } from './arcana-notes.ts';
@@ -240,6 +240,24 @@ function slotFields(hero: string, equipSlot: string, targetId: string): ItemSlot
 /** Wearable items with visuals and a matching stock default_item, offered under cosmetics/items. */
 export function itemOptions(text: string): { id: string; name: string }[] {
   return itemSlots(text).flatMap((slot) => slot.options);
+}
+
+/* Each hero's stock models, read once per table: every pick asked for them, a walk over the
+ * table's thousands of stock items each time, and the 3D preview makes a pick of each of the
+ * hero's slots whenever one is shown: a second and more of a frozen window per click (2026-11-10). */
+let stockCache: { text: string; byHero: Map<string, string[]> } | null = null;
+
+/** The model_player of each stock item any of these heroes wears, as the table writes it. */
+export function stockModels(text: string, heroes: string[]): string[] {
+  if (stockCache?.text !== text) {
+    const byHero = new Map<string, string[]>();
+    for (const i of listItems(text)) {
+      if (i.prefab !== 'default_item' || !i.model) continue;
+      for (const h of itemHeroes(text, i)) byHero.set(h, [...(byHero.get(h) ?? []), i.model]);
+    }
+    stockCache = { text, byHero };
+  }
+  return heroes.flatMap((h) => stockCache!.byHero.get(h) ?? []);
 }
 
 /** The heroes an item block says it is used by, as npc_dota_hero_* ids. */
