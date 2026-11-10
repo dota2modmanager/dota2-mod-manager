@@ -16,6 +16,10 @@ before trying a fix.
 | Black squares around an effect | You switched an additive effect to alpha blending; its texture has no alpha | Keep additive, change colours instead |
 | A square on the ground under a projected effect | A texture compiled from PNG through your own vmat lost its alpha | Rebuild Valve's texture under its own name from a `.vtex` with DXT5 and all four channels ([recolor.md](recolor.md)) |
 | Aghanim's blue sparks on a red hero | Valve's shared Scepter effect, the same on every hero | Leave it: changing it changes every hero |
+| Your new effect never shows; `console.log` says "invalid particle definition" | It uses `C_INIT_CreateWithinSphere`, which compiles but the game no longer takes | `C_INIT_CreateWithinSphereTransform` with a transform input; copy operators from a recent Valve file ([recolor.md](recolor.md)) |
+| Particles stay round the hero after a cast | A continuous emitter in a child of a long-lived effect | An instantaneous burst with short lives |
+| An ability no longer reads as itself | Swapped-in models at the old size and number cover the hero and the effect | Fewer and smaller, and keep the plain effect's signature part (its dark cloud) as a child |
+| A model swapped into an effect wears the old one's skin | `m_hOverrideMaterial` on the renderer | Remove it |
 
 ## Models and materials
 
@@ -30,6 +34,11 @@ before trying a fix.
 | A cloak crumples when the arms move | Weights copied from the body gave arm bones thousands of cloak vertices | Upper arm weight to clavicle and spine, forearm and hand to the spine; only sleeves follow the arms |
 | A belt wraps around the hands | The belt was fitted to hip vertices with the arms' hands among them (bind pose) | Fit without the arm vertices |
 | An edited mesh tears when moved along normals | Decimated geometry | Rebuild the mesh, do not push vertices of a decimated one |
+| A vmat that names the game's compiled textures (`.vtex`) fails: "Error calling CompileImmediately" | The compiler wants the source image of every texture, and the game has only compiled ones | Decompile the textures to PNG into your addon, or use a different material; cube maps do not come back as one source |
+| A compiled material copied from an item and recoloured by its parameters stays the old colour | `TextureColor` and the like only seed a texture when a source vmat compiles; in a compiled one the colour is already in the texture | Recolour the textures, or build your own material |
+| Glass or water on a blade draws flat white in the game | `hero_fluid.vfx` is mostly refraction of bright cube maps; tint and colour barely reach it | Your own `hero.vfx` material: deep colour in the texture, glowing cracks through the self-illum mask, a tight highlight and a cold rim |
+| A part that reads in a front render is a blob of colour in the game | The game's camera looks down from high behind: a bag on the back is a ball of one colour, fur trims are stripes | Render at the game's angle (about 60 degrees down) before you call a look done; give the top and the back something that reads (a bright accent, a dark band across a large area of one colour) |
+| Hard dark strokes across a cloth | Faces in the folds given a darker material: the material edges follow the mesh, not the light | Fold with the shape alone; a darker material only where a whole region is in shadow (underneath) |
 | Item effects hang in the air | They are bound to attachment points of the item's own model, which your model lacks | Leave them out, or hang them on a particle the hero always has ([items-from-game.md](items-from-game.md)) |
 
 ## Animations
@@ -39,6 +48,7 @@ before trying a fix.
 | The hero stands in the bind pose | The game rejected the animation blocks: KV3 types 26/27 copied wrong, or a bad compile | Rebuild with `modkit clips` from a fresh compile; run the doctor |
 | Online the wrong animations play from some ability on | Sequence numbers differ from Valve's model (a clip added, or a clip renamed by the decompile) | `modkit clips` restores Valve's list; the doctor reports it |
 | Online in a lobby the hero idles or runs hunched at full health; demo mode looks right | The mod took the activity off a plain sequence (`idle_anim`) so an item's would win; the server picks by Valve's model, the client finds no idle under that number | Keep Valve's activities, make the plain sequence play the item's clips ([items-from-game.md](items-from-game.md)), a fix checked in a lobby; the doctor reports it |
+| Every few idles the hero stands up in the bind pose for a second, the weapon on the ground | One idle adds a layer through a weight list that gives every bone weight 0; the decompile loses the list and the layer runs at full weight | `modkit clips` puts Valve's weight lists back ("weight list(s) as Valve's") |
 | An item's clip plays at random without the item | The decompile dropped activity modifiers | `scripts/prepare_vmdl.py` puts them back from `modkit model` |
 | Fingers of one hand twitch with the weapon | Bones compiled in another order | `move_last` the bone `modkit clips` names, compile again |
 | The head turns backwards while running | The turns layer: missing `m_bMulti`, poses compiled whole, or the compiler's extra `turns` clip | `modkit clips` copies Valve's fetch, flags and poses, and stills the extra clip |

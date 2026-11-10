@@ -79,6 +79,27 @@ test('pack leaves out what the game already has', () => {
   assert.equal(isSharedTexture('a.vtex_c', index), true, 'a recompiled shared texture');
   assert.equal(isSharedTexture('a.vtex_c', index, new Set(['a.vtex_c'])), false, 'kept on purpose');
   assert.equal(isSharedTexture('m.vmat_c', index), false, 'a material is the mod itself');
+  const icons = { has: () => true };
+  assert.equal(isSharedTexture('panorama/images/spellicons/hero_spell_png.vtex_c', icons), false, 'an ability icon replaces the game\'s on purpose');
+  assert.equal(isSharedTexture('materials/vgui/hud/minimap_hero_sheet_psd_3529892a.vtex_c', icons), false, 'so does the minimap sheet');
+  assert.equal(isSharedTexture('materials/default/default_normal_tga_7652cb.vtex_c', icons), true, 'a default texture is still the compiler\'s copy');
+});
+
+test('each sequence plays through the weight list Valve gives it', async () => {
+  const { restoreWeightLists } = await import('../tools/modkit/clips.mjs');
+  const num = (v) => ({ kind: 'number', v });
+  const str = (value) => ({ kind: 'string', value });
+  const seq = (name, list) => ({ members: new Map([['m_sName', str(name)], ['m_nLocalWeightlist', num(list)]]) });
+  const block = (seqs, masks) => ({ root: { members: new Map([['m_localS1SeqDescArray', { items: seqs }], ['m_localBoneMaskArray', { items: masks.map(str) }]]) } });
+  // a tail layer plays through a list with every bone at 0; the decompile put it on the default list
+  const valve = block([seq('idle', 0), seq('tail_layer', 1)], ['default', 'tail_wl']);
+  const ours = block([seq('idle', 0), seq('tail_layer', 0)], ['default']);
+  const io = { numberOf: (_, n) => n.v, setNumber: (_, n, v) => { n.v = v; }, copy: (_, n) => n };
+  assert.equal(restoreWeightLists(valve, ours, io), 1);
+  const lists = ours.root.members.get('m_localS1SeqDescArray').items.map((s) => s.members.get('m_nLocalWeightlist').v);
+  assert.deepEqual(lists, [0, 1]);
+  assert.deepEqual(ours.root.members.get('m_localBoneMaskArray').items.map((m) => m.value), ['default', 'tail_wl'], 'Valve\'s lists, so index 1 exists');
+  assert.equal(restoreWeightLists(valve, ours, io), 0, 'nothing to do the second time');
 });
 
 test('a tool is found by its variable, on PATH, then in a version folder', () => {
