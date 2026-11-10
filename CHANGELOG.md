@@ -2,6 +2,20 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.7.2
+
+### Hero builder
+
+- Items from the builder have their physics again: tails, capes, tassels and beads swing as they do
+  in the game. Only Centaur's items go without it, since on him they dragged along the ground.
+- An item worn with an arcana that reshapes it now keeps the style you picked. Queen of Pain's
+  Bloodfeather Frock and Boots stayed in their first style under her arcana, and so did items under
+  Planetfall and Windranger's, Faceless Void's and Drow's arcanas.
+- "Equip the whole set" now changes only the set's own slots, as in the game. A set no longer takes
+  your arcana or other items off.
+- To change the style of one piece of a set, open that piece. The set's note now says so.
+- The builder no longer freezes for seconds when you switch slots with an arcana on.
+
 ## 3.7.1
 
 ### Hero builder
