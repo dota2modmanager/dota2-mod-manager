@@ -8302,9 +8302,8 @@
     {
       "id": "towers",
       "mods": [
-        {"name":"Holiday Radiant Tower","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1794152898},
-        {"name":"Crownfall Dire","styleLabel":null,"group":"dire-tower","image":{"src":"/mods/crownfall-dire.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794001215},
-        {"name":"Crownfall Radiant","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/crownfall-radiant.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794001215},
+        {"name":"Crownfall Dire","styleLabel":null,"group":"dire-tower","image":{"src":"/mods/crownfall-dire.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794310353},
+        {"name":"Crownfall Radiant","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/crownfall-radiant.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794310353},
         {
           "name": "Declaration of the Divine Light",
           "styleLabel": null,
@@ -8312,7 +8311,7 @@
           "image": {"src":"/mods/declaration-of-the-divine-light.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Declaration of the Divine Shadow",
@@ -8321,7 +8320,7 @@
           "image": {"src":"/mods/declaration-of-the-divine-shadow.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Grasp of the Elder Gods Dire",
@@ -8330,7 +8329,7 @@
           "image": {"src":"/mods/grasp-of-the-elder-gods-dire.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Grasp of the Elder Gods Radiant",
@@ -8339,7 +8338,7 @@
           "image": {"src":"/mods/grasp-of-the-elder-gods-radiant.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Guardians of the Lost Path Dire",
@@ -8348,7 +8347,7 @@
           "image": {"src":"/mods/guardians-of-the-lost-path-dire.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Guardians of the Lost Path Radiant",
@@ -8357,7 +8356,7 @@
           "image": {"src":"/mods/guardians-of-the-lost-path-radiant.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Stoneclaw Scavengers Dire",
@@ -8366,7 +8365,7 @@
           "image": {"src":"/mods/stoneclaw-scavengers-dire.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
         {
           "name": "Stoneclaw Scavengers Radiant",
@@ -8375,8 +8374,9 @@
           "image": {"src":"/mods/stoneclaw-scavengers-radiant.webp","width":854,"height":480},
           "author": "ZerdacK",
           "authorUrl": null,
-          "date": 1794001215
+          "date": 1794310353
         },
+        {"name":"Holiday Radiant Tower","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/holiday-radiant-tower.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1794152898},
         {
           "name": "Warcraft III Dire",
           "styleLabel": null,
