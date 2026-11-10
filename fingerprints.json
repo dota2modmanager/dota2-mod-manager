@@ -1,5 +1,5 @@
 {
-  "count": 1908,
+  "count": 1909,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -1349,6 +1349,7 @@
     "b76a3fc31dd3b10dc9a6dffe8c2add44800bb19c": [{"name":"Arc Warden Ancient Gaoler","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b78d290adac60a8c1cf690f68d3206cded03ced1": [{"name":"Anti-Mage Bloody Reaper","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b7a14d794e42ae4866e7dcd6f24ab6d2c4e47490": [{"name":"Shadow Fiend Souls Tyrant","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "b7b6cf8aabc49bd8f9cc68ff945cad2cf0be9d00": [{"name":"Declaration of the Divine Cyan","categoryId":"towers","styleLabel":null,"type":"vpk"}],
     "b7e08a210c6c08e061b32ea1c62c33755e95d168": [{"name":"Necrophos Eucliwood Halsace","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "b807c520de5913c9a25a00bd03a29471c14f9952": [{"name":"BP 2022 Shiva","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "b835f8454b973d18544cf82b825c4c885526deaf": [{"name":"Brewmaster Military Saint","categoryId":"heroes","styleLabel":null,"type":"vpk"}],

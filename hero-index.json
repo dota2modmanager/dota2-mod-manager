@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1765,
+  "mods": 1766,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -2389,7 +2389,11 @@
     },
     "world": {
       "name": "World",
-      "mods": [{"name":"Warcraft III Dire","categoryId":"towers","styleLabel":null,"slots":["misc","head"]},{"name":"Warcraft III Radiant","categoryId":"towers","styleLabel":null,"slots":["misc","head"]}]
+      "mods": [
+        {"name":"Declaration of the Divine Cyan","categoryId":"towers","styleLabel":null,"slots":[]},
+        {"name":"Warcraft III Dire","categoryId":"towers","styleLabel":null,"slots":["misc","head"]},
+        {"name":"Warcraft III Radiant","categoryId":"towers","styleLabel":null,"slots":["misc","head"]}
+      ]
     },
     "wraith_king": {
       "name": "Wraith King",

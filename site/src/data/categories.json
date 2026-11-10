@@ -8234,74 +8234,17 @@
       ]
     },
     {
-      "id": "ranks",
-      "mods": [
-        {"name":"Azur Lane Medals","styleLabel":null,"group":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1794152898},
-        {
-          "name": "Bear Medals",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/bear-medals.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1794152898
-        },
-        {"name":"Flaming Medals","styleLabel":null,"group":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1794152898},
-        {"name":"Imperial Medals","styleLabel":null,"group":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1794152898},
-        {
-          "name": "Normis Rank Icons",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/normis-rank-icons.webp","width":854,"height":480},
-          "author": "palekid666",
-          "authorUrl": "https://t.me/ubiycasmerty",
-          "date": 1794152898
-        },
-        {
-          "name": "Slates of the Damned",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
-          "author": "ya_lyosha",
-          "authorUrl": "https://www.twitch.tv/ya_lyosha",
-          "date": 1794152898
-        },
-        {"name":"Umbrella Medals","styleLabel":null,"group":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1794152898},
-        {
-          "name": "Void Medals",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/void-medals.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1794152898
-        },
-        {
-          "name": "Immortal Ranks Ii",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/immortal-ranks-ii.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1793701131
-        },
-        {"name":"Rose Chinese Medals","styleLabel":null,"group":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
-        {
-          "name": "Immortal Ranks",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/immortal-ranks.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1791908483
-        },
-        {"name":"Chess Ranks","styleLabel":null,"group":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
-        {"name":"Battle Icons","styleLabel":null,"group":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250}
-      ]
-    },
-    {
       "id": "towers",
       "mods": [
+        {
+          "name": "Declaration of the Divine Cyan",
+          "styleLabel": null,
+          "group": "dire-tower",
+          "image": {"src":"/mods/declaration-of-the-divine-cyan.webp","width":854,"height":480},
+          "author": "ZerdacK",
+          "authorUrl": null,
+          "date": 1794340312
+        },
         {"name":"Crownfall Dire","styleLabel":null,"group":"dire-tower","image":{"src":"/mods/crownfall-dire.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794310353},
         {"name":"Crownfall Radiant","styleLabel":null,"group":"radiant-tower","image":{"src":"/mods/crownfall-radiant.webp","width":854,"height":480},"author":"ZerdacK","authorUrl":null,"date":1794310353},
         {
@@ -8395,6 +8338,72 @@
           "authorUrl": "https://t.me/fr0dech_vpk",
           "date": 1794001215
         }
+      ]
+    },
+    {
+      "id": "ranks",
+      "mods": [
+        {"name":"Azur Lane Medals","styleLabel":null,"group":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1794152898},
+        {
+          "name": "Bear Medals",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/bear-medals.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1794152898
+        },
+        {"name":"Flaming Medals","styleLabel":null,"group":null,"image":{"src":"/mods/flaming-medals.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1794152898},
+        {"name":"Imperial Medals","styleLabel":null,"group":null,"image":{"src":"/mods/imperial-medals.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1794152898},
+        {
+          "name": "Normis Rank Icons",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/normis-rank-icons.webp","width":854,"height":480},
+          "author": "palekid666",
+          "authorUrl": "https://t.me/ubiycasmerty",
+          "date": 1794152898
+        },
+        {
+          "name": "Slates of the Damned",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/slates-of-the-damned.webp","width":854,"height":480},
+          "author": "ya_lyosha",
+          "authorUrl": "https://www.twitch.tv/ya_lyosha",
+          "date": 1794152898
+        },
+        {"name":"Umbrella Medals","styleLabel":null,"group":null,"image":{"src":"/mods/umbrella-medals.webp","width":854,"height":480},"author":"kebabmaker","authorUrl":null,"date":1794152898},
+        {
+          "name": "Void Medals",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/void-medals.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1794152898
+        },
+        {
+          "name": "Immortal Ranks Ii",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/immortal-ranks-ii.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1793701131
+        },
+        {"name":"Rose Chinese Medals","styleLabel":null,"group":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
+        {
+          "name": "Immortal Ranks",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/immortal-ranks.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsiblade",
+          "date": 1791908483
+        },
+        {"name":"Chess Ranks","styleLabel":null,"group":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
+        {"name":"Battle Icons","styleLabel":null,"group":null,"image":{"src":"/mods/battle-icons.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790263250}
       ]
     },
     {
