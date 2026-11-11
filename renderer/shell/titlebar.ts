@@ -1,7 +1,7 @@
 /* The title bar: the window's own buttons, the section tabs, help and the hotkeys, the mods folder,
  * and the Discord account chip. */
 import { state } from '../core/store.ts';
-import { switchView } from '../core/router.ts';
+import { goBack, goForward, switchView } from '../core/router.ts';
 import { esc } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 import { confirmDialog } from '../ui/dialog.ts';
@@ -34,6 +34,8 @@ bindHelp();
 bindHotkeys({
   onSection: (view: string) => { if (state.view !== view) switchView(view); },
   onRefresh: () => { toast(L`Обновляю каталог…`); loadCatalog(true); },
+  onBack: () => { goBack(); },
+  onForward: () => { goForward(); },
 });
 
 byId('openModsFolderBtn').addEventListener('click', async () => {
