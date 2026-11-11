@@ -46,6 +46,8 @@ export interface StoredSettings {
   slotZones?: number;
   /** the build of the game last seen on disk (src/patch-watch.ts gameStamp) */
   gameStamp?: string | null;
+  /** when Dota last ran a minute or more (src/crash-watch.ts) */
+  lastGoodGameAt?: number | null;
   /** the pumpkin in the title bar has come out (renderer/ui/pumpkin.ts) */
   pumpkin: boolean;
   /** the ninth theme is open (renderer/ui/pumpkin.ts) */

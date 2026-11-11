@@ -207,6 +207,8 @@ contextBridge.exposeInMainWorld('api', {
     steamProperties: () => ipcRenderer.invoke('game:steamProperties'),
     // Dota opened or closed: while it is open nothing is written to the game (src/game-watch.ts)
     onRunning: (cb) => ipcRenderer.on('game:running', (e, running) => cb(!!running)),
+    // Dota closed seconds after Play (src/crash-watch.ts)
+    onQuickExit: (cb) => ipcRenderer.on('game:quickExit', (e, exit) => cb(exit)),
   },
   packs: {
     combine: (name, modIds) => ipcRenderer.invoke('packs:combine', { name, modIds }),

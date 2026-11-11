@@ -11,6 +11,7 @@ import { registerWindowIpc } from './ipc-window.ts';
 import { registerMiscIpc } from './ipc-misc.ts';
 import { registerSettingsIpc } from './ipc-settings.ts';
 import { registerGameIpc } from './ipc-game.ts';
+import { registerLaunchIpc } from './ipc-launch.ts';
 import { registerCompilerIpc } from './ipc-compiler.ts';
 import { registerDiagnosticsIpc } from './ipc-diagnostics.ts';
 import { registerPumpkinIpc } from './ipc-pumpkin.ts';
@@ -33,6 +34,7 @@ export function registerIpc(ctx: AppContext): void {
   registerSettingsIpc(ctx);
   registerModsIpc(ctx);
   registerGameIpc(ctx);
+  registerLaunchIpc(ctx);
   registerCompilerIpc(ctx);
   registerLibraryIpc(ctx);
   registerForeignIpc(ctx);

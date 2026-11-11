@@ -344,7 +344,6 @@ test('the guard is in place before any channel is registered or any window opene
   const installed = at('guardTheApp({ app, ipcMain, session,');
   assert.ok(installed < at('uninstallFlow('), 'before the removal window registers its channels');
   assert.ok(installed < at('registerIpc(ctx)'));
-  assert.ok(installed < at("ipcMain.handle('game:launch'"));
   assert.ok(installed < at('createMainWindow('));
 });
 
