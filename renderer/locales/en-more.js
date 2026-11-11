@@ -173,5 +173,15 @@ const EN = {
   "Мод убран из каталога": "A mod is gone from the catalog",
   "Моды убраны из каталога": "Mods are gone from the catalog",
   ". Их сняли автор или каталог, обновлений не будет. Если в игре что-то не так (чёрный экран, вылет), начни с них: удали или выключи.": ". Their author or the catalog took them down, so they get no updates. If something is wrong in the game (a black screen, a crash), start with them: remove them or switch them off.",
+  "Надеть случайные предметы из того, что есть у героя": "Put on random items from the hero's own",
+  "Случайный образ": "Random look",
+  "Надет случайный образ": "Random look on",
+  "Дополнить пустые слоты": "Fill the empty slots",
+  "Пустых слотов нет": "No empty slots",
+  "Перетряхнуть весь образ": "Shuffle the whole look",
+  "Слотам нечего предложить": "The slots have nothing else to offer",
+  "Только арканы и имморталки": "Arcanas and immortals only",
+  "У героя нет аркан и имморталок": "This hero has no arcanas or immortals",
+  "Случайный набор": "Random set",
 };
 window.EN_MORE = EN;
