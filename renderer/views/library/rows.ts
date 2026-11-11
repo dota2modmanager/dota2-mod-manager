@@ -16,6 +16,7 @@ import type { ExternalRowModel, PackRowModel, RowModel, Tag } from '../../librar
 import type { Cover, ExternalFile, LibRecord } from '../../library/types.ts';
 import { fileLabelKey, labelFor, recLabelKey } from '../../library/labels.ts';
 import { lib } from './state.ts';
+import { isDelisted } from './delisted.ts';
 
 /* Mods that carry item-schema changes: their model installs like any other, but the effects and
  * icons only exist once the schema patch is on. Say which of the two it is. */
@@ -79,6 +80,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
       rec.staleMap ? { cls: 'stale', icon: 'history', text: L`старая карта`, title: staleTerrainWhy() } : null,
       prePatchTag(rec),
       rec.updateAvailable ? { cls: 'update', icon: 'upgrade', text: L`новая версия`, title: L`Автор выложил новую версию мода. Обнови его правой кнопкой: файл скачается заново, а место в порядке загрузки и включённость останутся.` } : null,
+      isDelisted(rec) ? { cls: 'stale', icon: 'block', text: L`убран из каталога`, title: L`Этого мода больше нет в каталоге: его сняли автор или каталог, обновлений не будет. Если в игре с ним что-то не так, удали его.` } : null,
     ]),
     meta: label ? `${catalogName(rec.name)} · ${kind}` : kind,
     pakFile: pakFileName(rec),

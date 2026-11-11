@@ -11,6 +11,7 @@ import type { BannersModel, LibraryModel } from '../../library/model.ts';
 import type { AppSettings } from '../../api/app.ts';
 import { externalRow, modRow, packRow } from './rows.ts';
 import { lib } from './state.ts';
+import { isDelisted } from './delisted.ts';
 
 function banners(): BannersModel {
   const s: Partial<AppSettings> = state.settings || {};
@@ -40,6 +41,7 @@ function banners(): BannersModel {
     prelaunch: Boolean(m?.prelaunch),
     stuck: lib.stuck.map((x) => x.name),
     updates: lib.records.filter((r) => r.updateAvailable).map((r) => r.name),
+    delisted: lib.records.filter(isDelisted).map((r) => r.name),
     repair: lib.repair,
   };
 }

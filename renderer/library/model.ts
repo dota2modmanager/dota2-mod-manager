@@ -121,6 +121,8 @@ export interface BannersModel {
   stuck: string[];
   /** catalog mods whose author published a new version, by name (src/mod-update.ts) */
   updates: string[];
+  /** catalog mods the catalog no longer lists, by name (catalog/mods.ts delistedFrom) */
+  delisted: string[];
   repair: RepairState;
 }
 
