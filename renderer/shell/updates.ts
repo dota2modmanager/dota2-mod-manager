@@ -61,7 +61,8 @@ window.api.patch.onRepair((st) => {
   if (state.view === 'library') { render(); return; }
   // a button started it (Settings' "Repair the app"), and that button shows what came of it
   if (st.reason === 'manual') return;
-  if (st.state === 'waiting') toast(L`Dota обновилась — вернём моды, как только закроешь игру`, 'warn', 8000);
+  if (st.state === 'waiting' && st.steam) toast(L`Steam проверяет файлы Dota: моды вернутся, когда он закончит`, 'ok', 8000);
+  else if (st.state === 'waiting') toast(L`Dota обновилась — вернём моды, как только закроешь игру`, 'warn', 8000);
   else if (st.state === 'failed') toast(L`Dota обновилась, вернуть моды не вышло — загляни в «Мои моды»`, 'error', 8000);
   else if (st.state === 'done') toast(L`Dota обновилась — моды на месте`, 'ok', 6000);
 });

@@ -97,6 +97,8 @@ export interface RepairState {
   touched?: { build: string | null; mods: string[] };
   /** the patch landed while the app was closed, and the game was put back only at start */
   whileClosed?: true;
+  /** waiting on Steam's file check or an update rather than on Dota */
+  steam?: 'validating' | 'updating';
   /** what started it: 'manual' is a button the user pressed, which answers for itself */
   reason?: unknown;
 }

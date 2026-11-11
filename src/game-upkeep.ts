@@ -20,6 +20,7 @@ import type { Library } from './library.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import { createGameRepair, REPAIR_RETRY_MS, type PatchRepair } from './game-repair.ts';
+import { readAppState, steamWork } from './steam-appstate.ts';
 
 /** Mods moved into the folder the game mounts, told to the user once in Settings. */
 type LangMigration = { from: string; to: string; moved: number };
@@ -95,7 +96,8 @@ export function createGameUpkeep({
   let langFolder = gamelang.FALLBACK_FOLDER;
   let langMigration: LangMigration | null = null;
   let slotMigration: { moved: number } | null = null;
-  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, rebuildGenerated, diag, send, isRunning, retryMs, now });
+  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, rebuildGenerated, diag, send, isRunning, retryMs, now,
+    steamBusy: () => steamWork(readAppState(settings.get('dotaGamePath'))) });
 
   /* Auto-detect on first run, and re-detect whenever the saved path stopped being a Dota install:
    * a library moved to another drive leaves the old tree behind, and writing mods into it looks

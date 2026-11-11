@@ -3270,7 +3270,7 @@ How long a repair waits for Dota to close before it looks again.
 ### `createGameRepair`
 
 ```ts
-export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null; /** builds again the mods the app built out of the game's files; returns the ids it built */
+export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, steamBusy = () => null, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null; /** builds again the mods the app built out of the game's files; returns the ids it built */
 ```
 
 The repair, over the services src/game-upkeep.ts already holds.
@@ -13095,6 +13095,17 @@ export function updatePending(state: AppState): boolean
 ```
 
 Whether Steam has an update for the game that it has not finished.
+
+### `steamWork`
+
+```ts
+export function steamWork(state: AppState | null): 'validating' | 'updating' | null
+```
+
+What Steam is doing to the game's files right now, if anything: its file check (which it can
+start on its own, and which puts Valve's originals back over the app's edit) or an update. A
+repair written in the middle of either is overwritten by the next file Steam writes, so the
+repair waits for it (src/game-repair.ts).
 
 ### `readAppState`
 
