@@ -2657,6 +2657,15 @@
       "id": "backgrounds",
       "mods": [
         {
+          "name": "Qwop Arcana",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/qwop-arcana.webp","width":854,"height":480},
+          "author": "Swin-РукаBlood",
+          "authorUrl": "https://discord.gg/SCnUSB4j6S",
+          "date": 1794347188
+        },
+        {
           "name": "7 28 Hoodwink",
           "styleLabel": null,
           "group": null,
@@ -4992,6 +5001,15 @@
     {
       "id": "mega-kill",
       "mods": [
+        {
+          "name": "Barboskiny X Naruto",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/barboskiny-x-naruto.webp","width":854,"height":480},
+          "author": "samoredoto",
+          "authorUrl": "https://t.me/samoredoto",
+          "date": 1794347188
+        },
         {
           "name": "Axe",
           "styleLabel": null,
@@ -8407,73 +8425,17 @@
       ]
     },
     {
-      "id": "ranged-attack",
-      "mods": [
-        {"name":"Aghanim Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {"name":"Nemestice Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
-        {"name":"Red Diretide Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
-        {"name":"TI10 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
-        {"name":"TI12 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
-        {"name":"TI9 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Pink Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794145496
-        },
-        {
-          "name": "White Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794043573
-        },
-        {
-          "name": "Black Diretide Ranged Attack",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793953543
-        }
-      ]
-    },
-    {
       "id": "roshan",
       "mods": [
+        {
+          "name": "Kaban Roshan Wow",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/kaban-roshan-wow.webp","width":854,"height":480},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1794347188
+        },
         {
           "name": "Aghanims Roshan",
           "styleLabel": null,
@@ -8581,6 +8543,71 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1791372524
+        }
+      ]
+    },
+    {
+      "id": "ranged-attack",
+      "mods": [
+        {"name":"Aghanim Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {"name":"Nemestice Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
+        {"name":"Red Diretide Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
+        {"name":"TI10 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
+        {"name":"TI12 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
+        {"name":"TI9 Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Pink Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794145496
+        },
+        {
+          "name": "White Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794043573
+        },
+        {
+          "name": "Black Diretide Ranged Attack",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793953543
         }
       ]
     },

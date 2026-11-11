@@ -11722,6 +11722,189 @@
       ]
     },
     {
+      "id": "puck",
+      "name": "Puck",
+      "slug": "puck",
+      "mods": [
+        {
+          "name": "Immortal Puck",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["head","tail","wings"],
+          "image": {"src":"/mods/immortal-puck.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1779035386
+        },
+        {
+          "name": "Puck Avice",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["head","tail","wings"],
+          "image": {"src":"/mods/puck-avice.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794347188
+        },
+        {
+          "name": "Fire Puck",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["head","tail"],
+          "image": {"src":"/mods/fire-puck.webp","width":854,"height":480},
+          "author": "frayserclick",
+          "authorUrl": "https://t.me/frayserclick",
+          "date": 1787119563
+        },
+        {
+          "name": "Puck Wanderers Brush Crimson",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "puck",
+          "slots": ["tail"],
+          "image": {"src":"/mods/puck-wanderers-brush-crimson.webp","width":854,"height":480},
+          "author": "depex",
+          "authorUrl": "https://t.me/depexfx",
+          "date": 1788205090
+        },
+        {
+          "name": "Aghanim Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Black Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1793953543
+        },
+        {
+          "name": "Blue Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Green Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Nemestice Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "Pink Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794145496
+        },
+        {
+          "name": "Red Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI10 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI12 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "TI9 Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        },
+        {
+          "name": "White Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
+          "author": "cursedseizures",
+          "authorUrl": "https://t.me/cvrsxdseizures",
+          "date": 1794043573
+        },
+        {
+          "name": "Yellow Diretide Ranged Attack",
+          "categoryId": "ranged-attack",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
+          "author": null,
+          "authorUrl": null,
+          "date": 1794152898
+        }
+      ]
+    },
+    {
       "id": "shadowshaman",
       "name": "Shadow Shaman",
       "slug": "shadow-shaman",
@@ -13222,178 +13405,6 @@
           "author": null,
           "authorUrl": null,
           "date": 1794152898
-        },
-        {
-          "name": "Blue Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/blue-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Green Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/green-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Nemestice Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/nemestice-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Pink Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/pink-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794145496
-        },
-        {
-          "name": "Red Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/red-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI10 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti10-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI12 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti12-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "TI9 Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/ti9-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "White Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/white-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1794043573
-        },
-        {
-          "name": "Yellow Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/yellow-diretide-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        }
-      ]
-    },
-    {
-      "id": "puck",
-      "name": "Puck",
-      "slug": "puck",
-      "mods": [
-        {
-          "name": "Immortal Puck",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["head","tail","wings"],
-          "image": {"src":"/mods/immortal-puck.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1779035386
-        },
-        {
-          "name": "Fire Puck",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["head","tail"],
-          "image": {"src":"/mods/fire-puck.webp","width":854,"height":480},
-          "author": "frayserclick",
-          "authorUrl": "https://t.me/frayserclick",
-          "date": 1787119563
-        },
-        {
-          "name": "Puck Wanderers Brush Crimson",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "puck",
-          "slots": ["tail"],
-          "image": {"src":"/mods/puck-wanderers-brush-crimson.webp","width":854,"height":480},
-          "author": "depex",
-          "authorUrl": "https://t.me/depexfx",
-          "date": 1788205090
-        },
-        {
-          "name": "Aghanim Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},
-          "author": null,
-          "authorUrl": null,
-          "date": 1794152898
-        },
-        {
-          "name": "Black Diretide Ranged Attack",
-          "categoryId": "ranged-attack",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/black-diretide-ranged-attack.webp","width":854,"height":480},
-          "author": "cursedseizures",
-          "authorUrl": "https://t.me/cvrsxdseizures",
-          "date": 1793953543
         },
         {
           "name": "Blue Diretide Ranged Attack",

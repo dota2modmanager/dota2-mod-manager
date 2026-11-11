@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1766,
+  "mods": 1767,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1502,6 +1502,7 @@
         {"name":"Immortal Puck","categoryId":"heroes","styleLabel":null,"slots":["head","tail","wings"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Puck Avice","categoryId":"heroes","styleLabel":null,"slots":["head","tail","wings"]},
         {"name":"Puck Wanderers Brush Crimson","categoryId":"hero-items","styleLabel":null,"slots":["tail"]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
