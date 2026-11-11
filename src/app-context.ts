@@ -128,6 +128,8 @@ export interface AppContext {
   diag: (msg: string) => void;
   sendProgress: (evt: AppProgress) => void;
   dotaIsRunning: () => Promise<boolean>;
+  /** Play was pressed (src/game-launch.ts): a close seconds later is named as a crash */
+  gameLaunched: () => void;
   refreshPresence: () => void;
   applyPresenceSetting: () => void;
   clampZoom: (v: unknown) => number;

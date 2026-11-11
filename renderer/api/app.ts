@@ -156,6 +156,8 @@ export interface AppApi {
     launch: () => Promise<Reply<{ warning?: string | null }>>; steamDownloads: () => Promise<Reply>; steamProperties: () => Promise<Reply>;
     /** Dota opened or closed; while it is open the channels that write the game answer with `gameOpen` */
     onRunning: (cb: (running: boolean) => void) => void;
+    /** Dota closed seconds after Play, with the enabled mods installed since it last ran normally (src/crash-watch.ts) */
+    onQuickExit: (cb: (exit: { seconds: number; suspects: { id: string; name: string }[] }) => void) => void;
   };
   account: { signIn: () => Promise<Reply<{ account: NonNullable<StoredSettings['account']> }>>; signOut: () => Promise<Reply> };
   /** the beta channel: shown only to an account the signed list names (src/beta.ts) */

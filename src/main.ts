@@ -43,11 +43,12 @@ import { releaseNotes } from './release-notes.ts';
 import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts';
 import { createMainWindow, clampZoom, workAreaFrom } from './main-window.ts';
 import { attachDevHarness } from './dev-harness.ts';
-import { createGameUpkeep, createGameWatch, dotaIsRunning, launchWarning } from './game-upkeep.ts';
+import { createGameUpkeep, dotaIsRunning } from './game-upkeep.ts';
+import { watchGame } from './game-launch.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
-const { app, ipcMain, shell, net, session, protocol } = electron();
+const { app, ipcMain, net, session, protocol } = electron();
 
 // a sandbox run (--write-jail=<folder>) writes nowhere else, from its first write on (src/write-jail.ts)
 jailThisRun(process.argv, process.env);
@@ -174,7 +175,8 @@ async function start(): Promise<void> {
   let patchWatcher: ReturnType<typeof createPatchWatcher> | null = null;
   // what the interface last said went wrong, for a report to list apart from the log (diag:rendererError)
   const rendererErrors: unknown[] = [];
-  const gameWatch = createGameWatch({ isRunning: () => dotaIsRunning(), send: (running) => win?.webContents.send('game:running', running) }); // Dota open or not: the status bar and the gate
+  // Play, Dota open or not (the status bar and the gate), and closing seconds after Play
+  const { gameWatch, launched: gameLaunched } = watchGame({ settings, library, diag, send: (ch, v) => win?.webContents.send(ch, v) });
 
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
@@ -192,7 +194,7 @@ async function start(): Promise<void> {
     }),
 
     diag, sendProgress, clampZoom, afterDeployMaster: services.afterDeployMaster, deployAndApply: services.deployAndApply,
-    dotaIsRunning: () => dotaIsRunning(),
+    dotaIsRunning: () => dotaIsRunning(), gameLaunched,
     refreshPresence: () => presenceStatus.refresh(),
     // follows the setting: turning it off tears the connection down, not just the updates
     applyPresenceSetting: () => presenceStatus.apply(),
@@ -227,17 +229,6 @@ async function start(): Promise<void> {
   };
 
   registerIpc(ctx);
-  // Launch Dota through Steam so the user's own launch options apply (-novid, -fps max, -language
-  // russian all differ per user). rungameid is what pressing Play in Steam does.
-  ipcMain.handle('game:launch', async () => {
-    // an item table still being built (a pick a moment ago, a base just come) goes in first
-    await schemaService.settled();
-    // a Dota update wipes the search-path patch and moves the item table underneath our build:
-    // the launch button is the last chance to notice before the game starts
-    schemaService.heal();
-    void shell.openExternal('steam://rungameid/570');
-    return { ok: true, warning: launchWarning(settings.get('dotaGamePath')) };
-  });
 
   // only the installed build claims the scheme: a dev run must not point the system's d2mm://
   // handler at a local electron binary

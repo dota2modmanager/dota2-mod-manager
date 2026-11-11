@@ -41,6 +41,7 @@ the code, not in this page.
 | [`src/cli.ts`](#srcclits) | The command line (issue #436): put a preset on, list the mods, or switch them all off, with no |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
 | [`src/courier-models.ts`](#srccourier-modelsts) | A courier look's models, under the Default Courier's paths. |
+| [`src/crash-watch.ts`](#srccrash-watchts) | Dota closing seconds after Play, told to the window with the mods that are new since it last |
 | [`src/creator-premod.ts`](#srccreator-premodts) | A draft as the catalog takes it: the archive h6rd/PreMod makes, and the rules the catalog's |
 | [`src/creator.ts`](#srccreatorts) | The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
@@ -65,6 +66,7 @@ the code, not in this page.
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/game-launch.ts`](#srcgame-launchts) | What the app sees of the game after Play: whether Dota is open (src/game-watch.ts, for the |
 | [`src/game-repair.ts`](#srcgame-repairts) | Putting the game back after something else changed it (src/game-upkeep.ts runs this at start |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
 | [`src/game-watch.ts`](#srcgame-watchts) | Is Dota open right now, asked every few seconds and told to the window when it changes. |
@@ -2038,6 +2040,57 @@ a lobby would miss, not the look.
 @param log  a model left out, and why
 ```
 
+## src/crash-watch.ts
+
+Dota closing seconds after Play, told to the window with the mods that are new since it last
+ran normally (plan item 10, Discord #support).
+
+People who hit a crash at load bring it to Discord as "the game closes", with nothing else to
+go on. The app knows two things that narrow it down: that the game ran for seconds rather than
+minutes, and which mods went in after the last session that lasted. Those are the first to
+switch off. Nothing is switched off on its own: a game closed on purpose looks the same.
+
+Only a launch from the app's Play button counts: the app knows then that the player meant to
+play. The game watch (src/game-watch.ts) asks every few seconds, so the times are rough, and a
+crash in the first five seconds can go unseen. A session of a minute or more is a normal one,
+whoever started it.
+
+### `QuickExit`
+
+```ts
+export type QuickExit =
+```
+
+What the window is told after a quick exit.
+
+### `QUICK_MS`
+
+```ts
+export const QUICK_MS = 60_000
+```
+
+A run shorter than this after Play is a crash, not a game.
+
+### `LAUNCH_WINDOW_MS`
+
+```ts
+export const LAUNCH_WINDOW_MS = 5 * 60_000
+```
+
+Steam can take this long to start the game after Play; a start later than that was not ours.
+
+### `createCrashWatch`
+
+```ts
+export function createCrashWatch({ lastGood, setLastGood, mods, now = Date.now, quickMs = QUICK_MS, launchWindowMs = LAUNCH_WINDOW_MS }: { lastGood: () => number | null; setLastGood: (at: number) => void; mods: () => { id: string; name: string; enabled?: boolean; installedAt?: number }[]; now?: () => number; quickMs?: number; launchWindowMs?: number; })
+```
+
+```
+@param lastGood  when a session last lasted, ms; null before the first one
+@param setLastGood  remembers it
+@param mods  the installed mods, for the suspects
+```
+
 ## src/creator-premod.ts
 
 A draft as the catalog takes it: the archive h6rd/PreMod makes, and the rules the catalog's
@@ -3142,6 +3195,26 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
 ```
 
 Item and hero pictures out of the installed game, cached in userData.
+
+## src/game-launch.ts
+
+What the app sees of the game after Play: whether Dota is open (src/game-watch.ts, for the
+status bar and the channels that write the game) and whether it closed seconds after Play
+(src/crash-watch.ts). The two share one answer from the system, asked by the game watch. Play
+itself is src/ipc-launch.ts.
+
+### `watchGame`
+
+```ts
+export function watchGame({ settings, library, diag, send, isRunning = () => dotaIsRunning() }: { settings: Pick<Settings, 'get' | 'set'>; library: Pick<Library, 'list'>; diag: (msg: string) => void; send: (channel: string, value: unknown) => void; isRunning?: () => Promise<boolean>; }): { gameWatch: GameWatch; launched: () => void }
+```
+
+Both watches over one process check.
+
+```
+@param send  to the window, when there is one
+@returns the game watch, which the gate asks, and `launched`, which Play calls
+```
 
 ## src/game-repair.ts
 

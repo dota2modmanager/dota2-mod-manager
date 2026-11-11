@@ -39,6 +39,7 @@ const ELECTRON_USERS = [
   'src/ipc-diagnostics.ts',
   'src/ipc-foreign.ts',
   'src/ipc-game.ts',
+  'src/ipc-launch.ts',
   'src/ipc-grid.ts',
   'src/ipc-sounds.ts',
   'src/ipc-background.ts',

@@ -4,6 +4,11 @@
  * size budget (tools/size-budget.mjs). tools/check-i18n.js reads both. */
 'use strict';
 const EN = {
+  "Dota закрылась через {0} с после запуска": "Dota closed {0} s after it started",
+  ". После последней нормальной игры поставлены {0}: начни с них.": ". Since your last normal game you installed {0}: start with them.",
+  ". Если так повторяется, выключи моды мастер-переключателем и включай по одному, чтобы найти виновника.": ". If it keeps happening, turn mods off with the master switch and back on one at a time to find the one to blame.",
+  "Выключить их": "Turn them off",
+  "Выключено: {0}. Запусти Dota ещё раз": "Turned off: {0}. Start Dota again",
   'Кэш 3D-превью': '3D preview cache',
   'Выгрузить модели и эффекты': 'Prepare models and effects',
   'Завершаем текущего героя…': 'Finishing the current hero…',
