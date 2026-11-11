@@ -179,6 +179,8 @@ export interface HeroModalActions {
   openPaint: () => void;
   takeOff: (slot: string) => void;
   resetAll: () => void;
+  /** the menu of random looks, opened under the button that asked */
+  random: (from: HTMLElement) => void;
   saveLook: () => void;
   wearLook: (id: string) => void;
   renameLook: (id: string) => void;

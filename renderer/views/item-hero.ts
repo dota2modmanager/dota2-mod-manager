@@ -22,6 +22,8 @@ import { afterPick, heroSets, isOpen, itemCosmeticSlots, openWindow, slotPane, s
 import { deleteLook, heroKey, lookIsOn, looksOf, renameLook, saveLook, wornPicks } from './item-looks.ts';
 import { heroPortrait } from './item-hub.ts';
 import { closeOverlay } from './catalog/overlay.ts';
+import { openMenu } from '../ui/menu.ts';
+import { randomPicks, randomSet, type RandomMode } from '../catalog/builder/random-look.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
 import type { HeroPane, HeroTab } from '../catalog/builder/model.ts';
 
@@ -218,6 +220,33 @@ function drawHero(key: number, st: HeroState): void {
       toast(L`Образ сохранён: ${name}`);
       again();
     })(),
+    random: (from) => {
+      const r = from.getBoundingClientRect();
+      const wearRandom = (mode: Exclude<RandomMode, 'set'>, none: string) => void busy(async () => {
+        const picks = randomPicks(slots, wornPicks(slots), mode);
+        if (!picks) { toast(none, 'warn'); return; }
+        const res = await window.api.cosmetics.wearLook(hero, picks);
+        if (res.error) { toast(res.error, 'error'); return; }
+        toast(L`Надет случайный образ`);
+        await afterPick();
+        if (st.slot) st.slot = slotState(st.slot.slot);
+      });
+      const set = randomSet(sets, worn?.id ?? null);
+      openMenu([
+        { label: L`Дополнить пустые слоты`, icon: 'add_circle', disabled: !slots.some((s) => !pickedIn(s.slot)), onPick: () => wearRandom('fill', L`Пустых слотов нет`) },
+        { label: L`Перетряхнуть весь образ`, icon: 'shuffle', onPick: () => wearRandom('all', L`Слотам нечего предложить`) },
+        { label: L`Только арканы и имморталки`, icon: 'auto_awesome', onPick: () => wearRandom('top', L`У героя нет аркан и имморталок`) },
+        { separator: true },
+        { label: L`Случайный набор`, icon: 'inventory_2', disabled: !set, onPick: () => void busy(async () => {
+          if (!set) return;
+          const res = await window.api.cosmetics.pickSet(set.id);
+          if (res.error) { toast(res.error, 'error'); return; }
+          toast(L`Надето: ${cosmeticName(set.name)}`);
+          await afterPick();
+          if (st.slot) st.slot = slotState(st.slot.slot);
+        }) },
+      ], r.left, r.bottom + 4);
+    },
     wearLook: (id) => void busy(async () => {
       const look = looks.find((l) => l.id === id);
       if (!look) return;

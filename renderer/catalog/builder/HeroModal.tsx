@@ -84,6 +84,10 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
               </button>
             )}
           </div>
+          <button className="btn btn-sm btn-ghost ward-reset" id="dressRandom" disabled={m.busy || !m.slots.length}
+            title={L`Надеть случайные предметы из того, что есть у героя`} onClick={(e) => actions.random(e.currentTarget)}>
+            <span className="ms">casino</span>{L`Случайный образ`}
+          </button>
           <button className="btn btn-sm btn-ghost ward-reset" id="dressReset" disabled={!m.changed || m.busy} onClick={actions.resetAll}>
             <span className="ms">restart_alt</span>{L`Вернуть всё стандартное`}
           </button>
