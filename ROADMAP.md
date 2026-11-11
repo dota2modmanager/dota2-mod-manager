@@ -67,10 +67,16 @@ it on. Saying "not supported" is more honest than shipping something nobody has 
 The mirror is a copy that keeps installing working when GitHub is not; it is not a store, and
 this project does not decide what is in the catalog.
 
-**Anything that changes how the game plays.** This app replaces models, effects, sounds and
-cursors on your own machine. It will not touch matchmaking, game logic, or anything that gives a
-player an advantage over another, and a feature request in that direction will be closed rather
-than queued.
+**Cheats, and anything that reaches into the running game.** This app does not inject a DLL, read
+or write the game's memory, or hook the client. It will not show you what the game hides from you,
+such as enemies in the fog or their cooldowns, and it will not press keys for you. A feature
+request in that direction gets closed.
+
+Public data is in scope. Win rates, matchups, item builds and timings are on OpenDota, Dotabuff,
+Dota2ProTracker and Stratz for anyone to read, and Dota hands your own match state to any program
+through Game State Integration. The hero grids work this way today: they sort heroes by
+OpenDota's win rate. A feature that puts the same numbers in front of you counts as quality of
+life.
 
 **Support for a game client that is not Valve's.** If Dota did not come from Steam, this app is
 not the reason it does not work.
