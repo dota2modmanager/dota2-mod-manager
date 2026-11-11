@@ -413,3 +413,12 @@ input:-webkit-autofill, input:-webkit-autofill:focus {
 .lib-check-gap { width: 18px; flex-shrink: 0; }
 /* Room under the last row so the floating bulk bar never covers it. */
 .bulk-bar-gap { height: 72px; }
+
+/* The "Check" window: what was looked at, one line each (views/library/check.ts). */
+.check-list { list-style: none; margin: 0 0 var(--space-4); padding: 0; display: grid; gap: var(--space-2); }
+.check-line { display: flex; gap: var(--space-2); align-items: flex-start; line-height: 1.45; }
+.check-line .ms { font-size: 18px; flex: none; }
+.check-line.ok .ms { color: var(--success); }
+.check-line.warn .ms { color: var(--warning); }
+.check-line.bad .ms { color: var(--danger); }
+.check-advice { margin-bottom: var(--space-4); }

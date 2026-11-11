@@ -19,6 +19,8 @@ export function LibToolbar({ m, actions }: { m: LibraryModel; actions: LibraryAc
       </div>
       <span className="lib-stats">{m.stats}</span>
       <div className="lib-toolbar-actions">
+        <button className="btn btn-sm" id="installCheckBtn" title={L`Почему моды не видны в игре: что приложение проверило и что в порядке`}
+          onClick={actions.check}><span className="ms">fact_check</span>{L`Проверить`}</button>
         <button className="btn btn-sm" id="importVpkBtn" onClick={actions.importFiles}><span className="ms">upload_file</span>{L`Импорт VPK`}</button>
         <button className="btn btn-sm" id="importFolderBtn" title={L`Импортировать все .vpk из папки — например из распакованного пака Dota 2 Skinchanger`}
           onClick={actions.importFolder}>
