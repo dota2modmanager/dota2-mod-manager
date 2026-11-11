@@ -540,6 +540,7 @@ that location is not writable.
 | `src/game-watch.ts` | Whether Dota is open, asked every few seconds and told to the window when it changes |
 | `src/crash-watch.ts` | Dota closing seconds after Play, told to the window with the mods installed since the last normal game |
 | `src/game-launch.ts` | The two watches on the game: open or not, and closed seconds after Play |
+| `src/tray.ts`, `src/background.ts` | Start with Windows and hide in the tray on close, so the app is there when a Dota update lands; the logic, then the Electron side |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
 | `src/app-repair.ts` | Settings' "Repair the app": the game patch, missing mod files and the rebuildable caches, a line per step |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |

@@ -48,6 +48,10 @@ export interface StoredSettings {
   gameStamp?: string | null;
   /** when Dota last ran a minute or more (src/crash-watch.ts) */
   lastGoodGameAt?: number | null;
+  /** start with Windows and hide in the tray on close (src/tray.ts) */
+  runInBackground: boolean;
+  /** the tray's one-time note that the app is still running has been shown */
+  trayHintSeen?: boolean;
   /** the pumpkin in the title bar has come out (renderer/ui/pumpkin.ts) */
   pumpkin: boolean;
   /** the ninth theme is open (renderer/ui/pumpkin.ts) */
@@ -105,6 +109,8 @@ const DEFAULTS: StoredSettings = {
   account: null,
   // show "Playing Dota 2 Mod Manager" in Discord while the app is open
   discordPresence: true,
+  // start with Windows and hide in the tray, to be there when a Dota update lands (src/tray.ts)
+  runInBackground: true,
   // tell the catalog's counter which catalog mod was installed: its name and nothing else
   countDownloads: true,
   // Item-schema support ("safe mode" off, in the status bar). The engine reads

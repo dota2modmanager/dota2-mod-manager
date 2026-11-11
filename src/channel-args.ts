@@ -113,6 +113,7 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   panels: either(oneOf(null), json(64 * 1024)),
   pumpkin: bool,
   pumpkinLit: bool,
+  runInBackground: bool,
   secret: bool,
   showAdult: bool,
   theme: str(40, 1),

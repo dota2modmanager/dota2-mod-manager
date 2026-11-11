@@ -291,6 +291,10 @@ const EN = {
   'Эффекты способности {0}': 'Ability effects {0}',
   'Эффекты: {0}': 'Effects: {0}',
   'У предмета {0} нет эффектов для этой способности': 'Item {0} has no effects for this ability',
+  'Открыть': 'Open',
+  'Играть': 'Play',
+  'Выйти': 'Quit',
+  'Приложение работает в трее и вернёт моды после обновления Доты. Выйти можно правым кликом по значку, отключить в Настройках.': 'The app keeps running in the tray and puts your mods back after a Dota update. Right-click the icon to quit, or turn this off in Settings.',
 } satisfies Record<string, string>;
 
 export default EN;
