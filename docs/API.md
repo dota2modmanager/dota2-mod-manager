@@ -197,6 +197,7 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog for the "What's new" window and Home. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/remove-everything.ts`](#srcremove-everythingts) | Taking out everything the app put into the game, in one go. |
 | [`src/repo-stars.ts`](#srcrepo-starsts) | How many stars the project has on GitHub, for the Home screen (renderer/home/). |
 | [`src/resource-compiler.ts`](#srcresource-compilerts) | resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
@@ -11483,7 +11484,8 @@ Shape:
                    "minVersion": "2.7.0", "maxVersion": "2.7.0", "until": "2026-09-27",
                    "ru": "…", "en": "…" } ],
     "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] },
-    "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01" } ]
+    "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01",
+                   "revoked": true } ]
   }
 
 `features` switches something off in every version. That is right when the cause is outside
@@ -11500,7 +11502,9 @@ checking; this only reads the block and refuses anything that is not shaped like
 
 `issues` are catalog mods known to misbehave, by category id and the name the catalog gives the
 mod. The catalog card carries a "!" and the mod's window says what is wrong. A mod a patch broke
-is marked the same day, without a release and without touching rotten's catalog.
+is marked the same day, without a release and without touching rotten's catalog. `revoked` says
+more: the mod does harm (a black screen in a match), so My mods marks the installed copy and offers
+to remove it. Copies that do not know the key show the "!" alone.
 
 ### `SWITCHABLE`
 
@@ -11568,7 +11572,7 @@ A feature switched off for a range of builds until a day.
 ### `RemoteIssue`
 
 ```ts
-export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null }
+export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null; revoked?: true }
 ```
 
 A catalog mod known to misbehave, and what to tell whoever looks at it.
@@ -11685,6 +11689,50 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
 @param opts.publicKey    whose signature to accept; the pinned one unless a test
 wants to sign its own fixture, which it cannot do with a private key that is not here
 @param opts.now          the clock a notice's until date is read against
+```
+
+## src/remove-everything.ts
+
+Taking out everything the app put into the game, in one go.
+
+Two places ask for it: the uninstaller (src/uninstall-window.ts), and the button in Settings
+for a person who wants their game back the way Steam gave it without removing the app. The
+Discord asks for the second one every week, usually after a Dota update, and until now the
+only answer was "uninstall and install again".
+
+Everything goes through the same code the app uses day to day rather than deleting paths by
+hand, so a mod comes out the way removing it from My mods would, and the patch comes out the
+way the safe-mode switch would.
+
+### `RemovingInstaller`
+
+```ts
+export interface RemovingInstaller
+```
+
+What of the installer the removal asks.
+
+### `RemoveEverythingDeps`
+
+```ts
+export interface RemoveEverythingDeps
+```
+
+The app's services the removal borrows, so it removes the way the app does.
+
+### `removeEverything`
+
+```ts
+export function removeEverything({ settings, library, installer, schemaService, removeOne }: RemoveEverythingDeps, { revert, mods, notice = true }: { revert: boolean; mods: boolean; notice?: boolean }): { errors: string[]; removed: number }
+```
+
+Take out what was asked for, carrying on past a mod that will not come out.
+
+```
+@param revert put gameinfo and the signatures back, when safe mode was turned off
+@param mods   take every mod out of the game folder and off the list
+@param notice take out the anti-cheat notice pak too (the uninstaller)
+@returns one line per thing that could not be removed; empty when all of it went
 ```
 
 ## src/repo-stars.ts

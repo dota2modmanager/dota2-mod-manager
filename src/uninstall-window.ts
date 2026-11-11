@@ -23,7 +23,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { removeNotice } from './notice-text.ts';
+import { removeEverything } from './remove-everything.ts';
 import { electron } from './electron.ts';
 import { folderSize } from './folder-size.ts';
 import type { Settings } from './settings.ts';
@@ -86,28 +86,7 @@ export function uninstallFlow({ settings, library, installer, schemaService, dia
    * has exited, and it already knows how - so the answer travels back as the exit code and
    * build/installer.nsh does the removing. */
   const run = async ({ revert, mods }: { revert: boolean; mods: boolean }): Promise<string[]> => {
-    const errors: string[] = [];
-    // Order matters. The patch goes first because reverting reads the backups in the app's own
-    // folder, and mods go before that folder is wiped for the same reason: the manifest is the
-    // only record of which files in the game folder were ours.
-    if (revert && settings.get('schemaPatch')) {
-      try { schemaService.setEnabled(false); } catch (err) { errors.push(`patch: ${(err as Error)?.message || err}`); }
-    }
-    if (mods) {
-      for (const rec of [...library.list()]) {
-        try {
-          if (rec.kind === 'pack') installer.removePackFully(rec);
-          else installer.remove(rec.files, { recId: rec.id, deployed: rec.enabled !== false });
-          library.removeRecord(rec.id);
-        } catch (err) {
-          errors.push(`${rec.name}: ${(err as Error)?.message || err}`);
-        }
-      }
-    }
-    // The notice text goes whatever the answer: it names this app's switch, and the app is going.
-    if (settings.get('dotaGamePath')) {
-      try { removeNotice(installer.langFolder()); } catch (err) { errors.push(`notice: ${(err as Error)?.message || err}`); }
-    }
+    const { errors } = removeEverything({ settings, library, installer, schemaService }, { revert, mods });
     diag(`uninstall: revert=${revert} mods=${mods} errors=${errors.length}`);
     return errors;
   };

@@ -112,11 +112,11 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
   const mirrors = () => read().mirrors;
 
   /** Catalog mods marked as misbehaving, still in date, with the text in one language. */
-  function issues(lang = 'en'): { cat: string; mod: string; text: string }[] {
+  function issues(lang = 'en'): { cat: string; mod: string; text: string; revoked?: true }[] {
     const day = today();
     return read().issues
       .filter((i) => !i.until || i.until >= day)
-      .map((i) => ({ cat: i.cat, mod: i.mod, text: (lang === 'ru' ? i.ru : i.en) || i.en || i.ru }));
+      .map((i) => ({ cat: i.cat, mod: i.mod, text: (lang === 'ru' ? i.ru : i.en) || i.en || i.ru, ...(i.revoked ? { revoked: true as const } : {}) }));
   }
 
   return { refresh, feature, notices, issues, beta, mirrors, url: CONFIG_URL, SWITCHABLE };

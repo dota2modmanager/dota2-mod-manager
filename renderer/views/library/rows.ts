@@ -16,7 +16,7 @@ import type { ExternalRowModel, PackRowModel, RowModel, Tag } from '../../librar
 import type { Cover, ExternalFile, LibRecord } from '../../library/types.ts';
 import { fileLabelKey, labelFor, recLabelKey } from '../../library/labels.ts';
 import { lib } from './state.ts';
-import { isDelisted } from './delisted.ts';
+import { configIssue, isDelisted } from './delisted.ts';
 
 /* Mods that carry item-schema changes: their model installs like any other, but the effects and
  * icons only exist once the schema patch is on. Say which of the two it is. */
@@ -52,6 +52,16 @@ function prePatchTag(rec: LibRecord): Tag | null {
 
 const known = <T>(list: (T | null)[]): T[] => list.filter((x): x is T => x !== null);
 
+/* What the maintainers marked about this mod after it shipped: known to misbehave, or revoked
+ * because it does harm (a black screen in a match). The words are the config's own. */
+function issueTag(rec: LibRecord): Tag | null {
+  const issue = configIssue(rec);
+  if (!issue) return null;
+  return issue.revoked
+    ? { cls: 'stale', icon: 'gpp_bad', text: L`отозван`, title: `${issue.text} ${L`Удали его: так советуют те, кто ведёт каталог.`}` }
+    : { cls: 'stale', icon: 'report', text: L`известная проблема`, title: issue.text };
+}
+
 export function modRow(rec: LibRecord, index: number): RowModel {
   const cosmetic = isCosmeticRec(rec);
   const place = lib.order.get(rec.id);
@@ -80,6 +90,7 @@ export function modRow(rec: LibRecord, index: number): RowModel {
       rec.staleMap ? { cls: 'stale', icon: 'history', text: L`старая карта`, title: staleTerrainWhy() } : null,
       prePatchTag(rec),
       rec.updateAvailable ? { cls: 'update', icon: 'upgrade', text: L`новая версия`, title: L`Автор выложил новую версию мода. Обнови его правой кнопкой: файл скачается заново, а место в порядке загрузки и включённость останутся.` } : null,
+      issueTag(rec),
       isDelisted(rec) ? { cls: 'stale', icon: 'block', text: L`убран из каталога`, title: L`Этого мода больше нет в каталоге: его сняли автор или каталог, обновлений не будет. Если в игре с ним что-то не так, удали его.` } : null,
     ]),
     meta: label ? `${catalogName(rec.name)} · ${kind}` : kind,

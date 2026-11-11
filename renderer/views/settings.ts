@@ -13,7 +13,8 @@ import { state } from '../core/store.ts';
 import { registerView, invalidateViews } from '../core/router.ts';
 import { fmtMB } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
-import { showWhatsNew } from '../ui/dialog.ts';
+import { confirmDialog, showWhatsNew } from '../ui/dialog.ts';
+import { refreshInstalledIndex } from '../core/installed.ts';
 import { showSupport } from '../ui/support.ts';
 import { refreshSidebarStatus } from '../ui/statusbar.ts';
 import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.ts';
@@ -225,6 +226,20 @@ const actions: SettingsActions = {
     if (r?.cancelled) return;
     if (r?.error) toast(r.error, 'error', 7000);
     else toast(L`Отчёт сохранён`);
+  },
+  /* The game back the way Steam gave it, the app kept: for "is it the mods?" and for the day after
+   * a Dota update. Asked twice in words, because nothing about it can be undone from here. */
+  removeEverything: async () => {
+    const n = (await window.api.mods.list()).installed.length;
+    const msg = L`Удалить все моды (${n}) из папки игры и вернуть файлы Dota, которые меняло приложение? Образы из конструктора тоже удалятся. Вернуть это можно только установкой заново.`;
+    if (!await confirmDialog(msg, { okLabel: L`Удалить всё` })) return;
+    const r = await window.api.mods.removeEverything();
+    if (r.error) { toast(r.error, 'error', 7000); return; }
+    if (r.errors?.length) toast(L`Удалено не всё: ${r.errors[0]}`, 'warn', 9000);
+    else toast(L`Готово: игра без модов, как после установки`);
+    await refreshInstalledIndex();
+    invalidateViews();
+    renderSettings();
   },
   repair: async () => {
     if (repair?.busy) return;

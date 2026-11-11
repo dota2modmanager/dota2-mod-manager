@@ -14,14 +14,15 @@ import { touchesSchema } from './presets-service.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import { FileTx } from './file-tx.ts';
+import { removeEverything } from './remove-everything.ts';
 import type { AppContext } from './app-context.ts';
 import type { LibRecord } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerLibraryIpc({
   applyMasterToCursors, blocked, disableOtherCosmetics, disableOtherCursors,
-  installer, isCursorRecord, library, refreshPresence, schemaService,
-}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
+  installer, isCursorRecord, library, refreshPresence, schemaService, settings,
+}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'settings'>): void {
   const { ipcMain } = electron();
   ipcMain.handle('mods:masterState', () => {
     try { return { off: installer.masterIsOff() }; } catch { return { off: false }; }
@@ -105,6 +106,20 @@ export function registerLibraryIpc({
       }
     }
     if (schemaTouched) await schemaService.refreshInBackground();
+    return { ok: true, removed, errors };
+  });
+
+  /* Settings → "Remove everything the app put into the game": every mod off the disk and the
+   * list, and gameinfo with the signatures back as Steam shipped them. The game the way it was
+   * before the app, without uninstalling the app (src/remove-everything.ts says why both ask). */
+  ipcMain.handle('mods:removeEverything', async () => {
+    const stop = blocked('toggle'); // Dota open: it holds the files, gameinfo included
+    if (stop) return stop;
+    const { errors, removed } = removeEverything(
+      { settings, library, installer, schemaService, removeOne },
+      { revert: true, mods: true, notice: false },
+    );
+    installer.log(`removeEverything: removed=${removed} errors=${errors.length}`);
     return { ok: true, removed, errors };
   });
 

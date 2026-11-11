@@ -18,11 +18,14 @@ import { showLibrary } from '../library/root.tsx';
 import { actions } from './library/actions.ts';
 import { libraryModel } from './library/build.ts';
 import { lib, screen } from './library/state.ts';
+import { bindRowSelect } from './library/row-select.ts';
 
 export { handleImportResult } from './library/import.ts';
 
 // a visit to the screen draws it fresh, the rows' entrance and all (router.js asks only when stale)
 registerView('library', () => renderLibrary(true));
+// Ctrl and Shift with a click, Ctrl+A, Escape and Delete over the rows
+bindRowSelect(() => actions.bulk('remove'));
 
 /** Read the mods, the folder and the patch state from main again, and draw. */
 async function renderLibrary(fresh = false): Promise<void> {

@@ -338,3 +338,12 @@ test('a mod marked as misbehaving is what the app reads, and comes off again by 
   assert.throws(() => clearIssue(config, 'heroes', 'Someone else'), /no issue here/);
   assert.equal('issues' in clearIssue(config, 'heroes', 'Pudge Arcana'), false);
 });
+
+test('--revoked marks the mod for removal, and the listing says so', async () => {
+  const { markIssue, describe } = await load();
+  const meta = { cat: 'heroes', mod: 'Gridstudio Hero Meta', en: 'Black screen in a match', ru: 'Чёрный экран в матче', revoked: true };
+  const config = markIssue(EMPTY, meta);
+  assert.equal(current.normalize(config).issues[0].revoked, true);
+  assert.deepEqual(describe(config, TODAY), ['revoked         heroes / Gridstudio Hero Meta: Black screen in a match']);
+  assert.equal('revoked' in current.normalize(markIssue(EMPTY, { ...meta, revoked: false })).issues[0], false);
+});

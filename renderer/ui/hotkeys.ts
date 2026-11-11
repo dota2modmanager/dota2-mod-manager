@@ -16,7 +16,7 @@ import { $ } from '../core/dom.ts';
 const SECTIONS = ['catalog', 'items', 'studio', 'library', 'presets', 'settings'];
 
 // .confirm-overlay covers the confirm, the prompt, the share sheet and the what's-new notes
-const overlayOpen = (): boolean => !!document.querySelector('.confirm-overlay, .lang-pick-overlay')
+export const overlayOpen = (): boolean => !!document.querySelector('.confirm-overlay, .lang-pick-overlay')
   || !$('#modalOverlay').classList.contains('hidden')
   || !$('#queueOverlay').classList.contains('hidden');
 

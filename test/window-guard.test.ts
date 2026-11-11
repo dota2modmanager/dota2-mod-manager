@@ -149,7 +149,7 @@ const VALID: Record<string, unknown[][]> = {
   'mods:importPaths': [[['C:\\Users\\me\\Downloads\\mod.zip', 'D:\\mods\\pak01_dir.vpk']]],
   'mods:importBuffers': [[[{ name: 'mod.vpk', data: BYTES }, { name: 'other.zip', data: BYTES.buffer }]]],
   'mods:exportSingle': [[ID]], 'mods:unpackToFolder': [[ID]], 'mods:masterState': [[]], 'mods:setMaster': [[false]],
-  'mods:setEnabled': [[ID, true]], 'mods:setEnabledMany': [[[ID, ID], false]], 'mods:remove': [[ID]], 'mods:removeMany': [[[ID]]],
+  'mods:setEnabled': [[ID, true]], 'mods:setEnabledMany': [[[ID, ID], false]], 'mods:remove': [[ID]], 'mods:removeMany': [[[ID]]], 'mods:removeEverything': [[]],
   'mods:move': [[ID, -1], [ID, 1]], 'mods:reorder': [[ID, 0], [ID, 41]], 'mods:mapsOwner': [[]],
   'mods:externalSetEnabled': [['pak90_dir.vpk', true]], 'mods:externalRemove': [['pak90_dir.vpk']],
   'mods:splitMod': [[ID]], 'mods:splitExternal': [['pak90_dir.vpk']],
