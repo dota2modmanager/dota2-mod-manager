@@ -201,5 +201,15 @@ const EN = {
   "Проверка установки": "Install check",
   "Что приложение проверило, чтобы моды попали в игру.": "What the app checked so the mods reach the game.",
   "Отчёт для поддержки": "Support report",
+  "Надеть случайные предметы из того, что есть у героя": "Put on random items from the hero's own",
+  "Случайный образ": "Random look",
+  "Надет случайный образ": "Random look on",
+  "Дополнить пустые слоты": "Fill the empty slots",
+  "Пустых слотов нет": "No empty slots",
+  "Перетряхнуть весь образ": "Shuffle the whole look",
+  "Слотам нечего предложить": "The slots have nothing else to offer",
+  "Только арканы и имморталки": "Arcanas and immortals only",
+  "У героя нет аркан и имморталок": "This hero has no arcanas or immortals",
+  "Случайный набор": "Random set",
 };
 window.EN_MORE = EN;
