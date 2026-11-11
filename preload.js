@@ -54,6 +54,8 @@ contextBridge.exposeInMainWorld('api', {
     remove: (id) => ipcRenderer.invoke('mods:remove', id),
     // a selection at once: one rebuild of the item schema for the batch, not one per mod
     removeMany: (ids) => ipcRenderer.invoke('mods:removeMany', ids),
+    // Settings: every mod out and the game's own files back, the app stays
+    removeEverything: () => ipcRenderer.invoke('mods:removeEverything'),
     // who owns the map archive a terrain is about to replace (maps/dota.vpk is one file)
     mapsOwner: () => ipcRenderer.invoke('mods:mapsOwner'),
     setEnabledMany: (ids, enabled) => ipcRenderer.invoke('mods:setEnabledMany', ids, enabled),

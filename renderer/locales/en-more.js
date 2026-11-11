@@ -211,5 +211,11 @@ const EN = {
   "Только арканы и имморталки": "Arcanas and immortals only",
   "У героя нет аркан и имморталок": "This hero has no arcanas or immortals",
   "Случайный набор": "Random set",
+  "Удалить всё, что поставило приложение": "Remove everything the app put in the game",
+  "Все моды и правки файлов игры уходят, приложение остаётся. Так проверяют, виноваты ли моды.": "Every mod and every change to the game's files goes; the app stays. This is how you check whether mods are the cause.",
+  "Удалить все моды ({0}) из папки игры и вернуть файлы Dota, которые меняло приложение? Образы из конструктора тоже удалятся. Вернуть это можно только установкой заново.": "Remove all mods ({0}) from the game folder and restore the Dota files the app changed? Looks from the item builder go too. The only way back is to install them again.",
+  "Удалить всё": "Remove everything",
+  "Удалено не всё: {0}": "Not everything was removed: {0}",
+  "Готово: игра без модов, как после установки": "Done: the game has no mods, as after a fresh install",
 };
 window.EN_MORE = EN;

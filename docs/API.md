@@ -197,6 +197,7 @@ the code, not in this page.
 | [`src/release-notes.ts`](#srcrelease-notests) | The changelog for the "What's new" window and Home. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/remove-everything.ts`](#srcremove-everythingts) | Taking out everything the app put into the game, in one go. |
 | [`src/repo-stars.ts`](#srcrepo-starsts) | How many stars the project has on GitHub, for the Home screen (renderer/home/). |
 | [`src/resource-compiler.ts`](#srcresource-compilerts) | resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
@@ -11639,6 +11640,50 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
 @param opts.publicKey    whose signature to accept; the pinned one unless a test
 wants to sign its own fixture, which it cannot do with a private key that is not here
 @param opts.now          the clock a notice's until date is read against
+```
+
+## src/remove-everything.ts
+
+Taking out everything the app put into the game, in one go.
+
+Two places ask for it: the uninstaller (src/uninstall-window.ts), and the button in Settings
+for a person who wants their game back the way Steam gave it without removing the app. The
+Discord asks for the second one every week, usually after a Dota update, and until now the
+only answer was "uninstall and install again".
+
+Everything goes through the same code the app uses day to day rather than deleting paths by
+hand, so a mod comes out the way removing it from My mods would, and the patch comes out the
+way the safe-mode switch would.
+
+### `RemovingInstaller`
+
+```ts
+export interface RemovingInstaller
+```
+
+What of the installer the removal asks.
+
+### `RemoveEverythingDeps`
+
+```ts
+export interface RemoveEverythingDeps
+```
+
+The app's services the removal borrows, so it removes the way the app does.
+
+### `removeEverything`
+
+```ts
+export function removeEverything({ settings, library, installer, schemaService, removeOne }: RemoveEverythingDeps, { revert, mods, notice = true }: { revert: boolean; mods: boolean; notice?: boolean }): { errors: string[]; removed: number }
+```
+
+Take out what was asked for, carrying on past a mod that will not come out.
+
+```
+@param revert put gameinfo and the signatures back, when safe mode was turned off
+@param mods   take every mod out of the game folder and off the list
+@param notice take out the anti-cheat notice pak too (the uninstaller)
+@returns one line per thing that could not be removed; empty when all of it went
 ```
 
 ## src/repo-stars.ts

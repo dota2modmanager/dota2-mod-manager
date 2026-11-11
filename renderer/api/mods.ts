@@ -34,6 +34,8 @@ export interface ModsApi {
   remove: (id: string) => Promise<Reply>;
   /** a selection at once: one rebuild of the item schema for the batch, not one per mod */
   removeMany: (ids: string[]) => Promise<Reply<{ removed: number; errors: string[] }>>;
+  /** Settings: every mod out of the game and the patch reverted; the app itself stays */
+  removeEverything: () => Promise<Reply<{ removed: number; errors: string[] }>>;
   /** who owns the map archive a terrain is about to replace (maps/dota.vpk is one file) */
   mapsOwner: () => Promise<{ present: boolean; owner?: string; file?: string }>;
   setEnabledMany: (ids: string[], enabled: boolean) => Promise<Reply<{ changed: number; errors: string[] }>>;

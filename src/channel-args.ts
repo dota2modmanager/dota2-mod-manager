@@ -162,7 +162,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'mods:exportSingle': [ID], 'mods:unpackToFolder': [ID],
   'mods:masterState': [], 'mods:setMaster': [bool],
   'mods:setEnabled': [ID, bool], 'mods:setEnabledMany': [IDS, bool],
-  'mods:remove': [ID], 'mods:removeMany': [IDS],
+  'mods:remove': [ID], 'mods:removeMany': [IDS], 'mods:removeEverything': [],
   'mods:move': [ID, num(-1, 1)], 'mods:reorder': [ID, num(0, 10000)],
   'mods:mapsOwner': [],
   'mods:externalSetEnabled': [PATH, bool], 'mods:externalRemove': [PATH],
