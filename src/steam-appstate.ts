@@ -12,6 +12,10 @@ const FULLY_INSTALLED = 4;
 const UPDATE_RUNNING = 256;
 const UPDATE_PAUSED = 512;
 const UPDATE_STARTED = 1024;
+const VALIDATING = 131072;
+const DOWNLOADING = 1048576;
+const STAGING = 2097152;
+const COMMITTING = 4194304;
 
 /** The game's state as Steam last wrote it: its flags, and the bytes of the download under way. */
 export interface AppState { flags: number; toDownload: number; downloaded: number }
@@ -31,6 +35,18 @@ export function parseAppManifest(text: string): AppState | null {
 export function updatePending(state: AppState): boolean {
   if (!(state.flags & FULLY_INSTALLED)) return true;
   return (state.flags & (UPDATE_REQUIRED | UPDATE_RUNNING | UPDATE_PAUSED | UPDATE_STARTED)) !== 0;
+}
+
+/**
+ * What Steam is doing to the game's files right now, if anything: its file check (which it can
+ * start on its own, and which puts Valve's originals back over the app's edit) or an update. A
+ * repair written in the middle of either is overwritten by the next file Steam writes, so the
+ * repair waits for it (src/game-repair.ts).
+ */
+export function steamWork(state: AppState | null): 'validating' | 'updating' | null {
+  if (!state) return null;
+  if (state.flags & VALIDATING) return 'validating';
+  return (state.flags & (UPDATE_RUNNING | UPDATE_STARTED | DOWNLOADING | STAGING | COMMITTING)) ? 'updating' : null;
 }
 
 /**

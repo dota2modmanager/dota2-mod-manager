@@ -152,6 +152,28 @@ test('a patch while Dota runs waits for it to close, then repairs and remembers 
   s.upkeep.stop();
 });
 
+test("Steam's file check after a crash is waited out: the mods go back once Steam is done", async (t) => {
+  const game = fakeGame(t, { build: '6001' });
+  const manifest = path.resolve(game, '..', '..', '..', 'appmanifest_570.acf');
+  const flags = (n: number) => fs.writeFileSync(manifest, `"AppState"
+{
+	"appid"		"570"
+	"StateFlags"		"${n}"
+}
+`);
+  flags(4 | 131072);
+  const s = stand({ game, heal: () => ({ healed: ['patch'], error: null }) });
+  await s.upkeep.repairAfterPatch('files-restored');
+  assert.deepEqual(s.sent, [{ state: 'waiting', reason: 'files-restored', steam: 'validating', at: 1000 }]);
+  assert.equal(s.asked.includes('heal'), false, 'nothing written while Steam writes the same files');
+
+  flags(4);
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(s.sent.at(-1)?.state, 'done');
+  assert.equal(s.asked.includes('heal'), true);
+  s.upkeep.stop();
+});
+
 test('a repair that fails says so, and a patch with no game set does nothing', async (t) => {
   const game = fakeGame(t);
   const s = stand({ game, heal: () => ({ healed: [], error: 'gameinfo is read-only' }) });

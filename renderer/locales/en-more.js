@@ -233,6 +233,10 @@ const EN = {
   "отозван": "revoked",
   "известная проблема": "known issue",
   "Удали его: так советуют те, кто ведёт каталог.": "Remove it: the people who run the catalog advise it.",
+  "Steam проверяет файлы Dota": "Steam is checking Dota's files",
+  "Steam обновляет Dota": "Steam is updating Dota",
+  ". Проверка и обновление возвращают оригинальные файлы игры. Как только Steam закончит, приложение само вернёт моды. Отменять проверку не нужно.": ". A file check or an update puts the game's original files back. As soon as Steam is done, the app puts your mods back on its own. There is no need to cancel the check.",
+  "Steam проверяет файлы Dota: моды вернутся, когда он закончит": "Steam is checking Dota's files: your mods come back when it is done",
   "Ctrl+клик по строке отмечает её, Shift+клик отмечает все строки до неё, Ctrl+A отмечает всё, Delete удаляет отмеченное": "Ctrl+click a row to tick it, Shift+click to tick every row up to it, Ctrl+A ticks everything, Delete removes what is ticked",
   "Обновление пришло, пока приложение было закрыто. Если Dota с тех пор запускалась из Steam с ошибкой, причина в этом, и теперь всё исправлено. После обновлений Доты открывай приложение до игры или запускай её кнопкой «Играть» здесь.": "The update came while the app was closed. If Dota has started from Steam with an error since then, this was why, and it is fixed now. After a Dota update, open the app before you play, or start the game with Play here.",
 };

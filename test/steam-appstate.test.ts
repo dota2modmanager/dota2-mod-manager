@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 
-import { launchWarning, parseAppManifest, readAppState, updatePending } from '../src/steam-appstate.ts';
+import { launchWarning, parseAppManifest, readAppState, steamWork, updatePending } from '../src/steam-appstate.ts';
 
 // the shape Steam writes, cut down from a real appmanifest_570.acf
 const manifest = (flags: number) => `"AppState"
@@ -49,4 +49,13 @@ test('the launch warns only while an update is due', () => {
   assert.equal(launchWarning(game, () => manifest(4)), null);
   assert.match(launchWarning(game, () => manifest(6)) ?? '', /Steam/);
   assert.equal(launchWarning(game, () => { throw new Error('ENOENT'); }), null);
+});
+
+test("Steam's file check and an update in progress are named; a finished game is nothing", () => {
+  const at = (flags: number) => steamWork({ flags, toDownload: 0, downloaded: 0 });
+  assert.equal(at(4), null);
+  assert.equal(at(4 | 131072), 'validating');
+  assert.equal(at(4 | 1048576), 'updating');
+  assert.equal(at(4 | 256), 'updating');
+  assert.equal(steamWork(null), null);
 });
