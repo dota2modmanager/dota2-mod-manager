@@ -170,6 +170,8 @@ export interface LibraryActions {
   disableCosmetics: () => void;
   importFiles: () => void;
   importFolder: () => void;
+  /** the window that says what was checked and whether it is fine (views/library/check.ts) */
+  check: () => void;
   bulk: (what: 'enable' | 'disable' | 'combine' | 'extract' | 'adopt' | 'remove') => void;
   external: (what: 'toggle' | 'adopt' | 'split' | 'remove' | 'label', key: string) => Promise<void>;
   noticeRead: () => void;

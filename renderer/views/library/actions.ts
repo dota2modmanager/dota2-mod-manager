@@ -1,6 +1,8 @@
 /* What My mods can ask for (library/model.ts, LibraryActions): the ticks, the search, the switches,
  * the bulk bar, the banners and the foreign files. What a single row's menu does is in
  * record-actions.ts. */
+import { showInstallCheck } from './check.ts';
+import { banners } from './build.ts';
 import { allowItemTable } from '../../ui/game-files.ts';
 import { isCursorRec, isCosmeticRec, isFontRec, isPackableRec } from '../../core/records.ts';
 import { toast } from '../../ui/toast.ts';
@@ -243,6 +245,7 @@ export const actions: LibraryActions = {
     await screen.reload();
   },
   importFiles: async () => { await handleImportResult(await window.api.mods.importDialog()); },
+  check: () => showInstallCheck(banners()),
   importFolder: async () => { await handleImportResult(await window.api.mods.importFolderDialog()); },
   bulk: (what) => {
     if (what === 'enable' || what === 'disable') setTicked(what === 'enable');

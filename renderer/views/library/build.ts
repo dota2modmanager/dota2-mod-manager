@@ -13,7 +13,7 @@ import { externalRow, modRow, packRow } from './rows.ts';
 import { lib } from './state.ts';
 import { isDelisted } from './delisted.ts';
 
-function banners(): BannersModel {
+export function banners(): BannersModel {
   const s: Partial<AppSettings> = state.settings || {};
   const gl: Partial<AppSettings['gameLang']> = s.gameLang || {};
   const patch = (state.patchState || {}) as { conflicts?: { mods: string[] }[]; foreign?: string; vanillaOk?: boolean; mods?: number; cosmeticsPicked?: number };
