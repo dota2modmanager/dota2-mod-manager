@@ -549,6 +549,24 @@ const en: Record<CoreSlug, Doc> = {
     lead: 'Most of these have the same cause. A Dota patch rewrote a file your mods depend on, and nothing told you.',
     card: 'Mods gone after a patch, one covering another, a game that will not start. Symptom by symptom.',
     blocks: [
+      { k: 'h2', t: 'Mods are installed, but the game shows none of them', id: 'not-in-game' },
+      {
+        k: 'p',
+        t: 'Open <b>My mods</b> first. The app checks the usual causes on every start and puts each one it finds above the list, with a button that fixes it. No banner means the app found nothing wrong.',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>The switch at the bottom right is off.</b> It takes every mod out of the game at once. Turn it back on.',
+          '<b>You changed your voice language.</b> The game now reads another <code>dota_</code> folder and your mods sit in the old one. Press <b>Move</b> on the banner. <a href="~/docs/language/">How the two languages work</a>.',
+          '<b>A <code>-language</code> launch option.</b> Dota stopped reading mods through it, and a folder it names may never load. Remove it from the launch options in Steam.',
+          '<b>Minify took the folder.</b> Minify and the app can share a game, but not when Minify rewrites the folder the game mounts. <a href="~/docs/minify/">How to run both</a>.',
+          '<b>Too many separate mods.</b> Dota loads about 99 pak files. Past that the rest are ignored without a word. Combine mods into one pack from the banner.',
+          '<b>The item table is off.</b> Looks from the item builder and some effect mods need it. The banner says how many wait for it.',
+          '<b>Steam verified the game files.</b> Verification puts the original files back over fonts and cursors. Reinstall them from the banner.',
+        ],
+      },
+
       { k: 'h2', t: 'Everything vanished after a game update', id: 'patch' },
       {
         k: 'p',
@@ -1066,6 +1084,24 @@ const ru: Record<CoreSlug, Doc> = {
     lead: 'У большинства из этого одна и та же причина. Патч Доты переписал файл, на котором держались твои моды, и никто тебе об этом не сказал.',
     card: 'Моды пропали после патча, один перекрывает другой, игра не стартует. По симптомам.',
     blocks: [
+      { k: 'h2', t: 'Моды стоят, а в игре их нет', id: 'not-in-game' },
+      {
+        k: 'p',
+        t: 'Сначала открой <b>Мои моды</b>. Приложение при каждом запуске проверяет частые причины и выводит каждую найденную над списком, с кнопкой, которая её чинит. Нет баннера, значит приложение ничего не нашло.',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>Выключен переключатель внизу справа.</b> Он разом убирает все моды из игры. Включи его обратно.',
+          '<b>Ты сменил язык озвучки.</b> Игра теперь читает другую папку <code>dota_</code>, а моды лежат в старой. Нажми <b>Перенести</b> на баннере. <a href="~/docs/language/">Как устроены два языка</a>.',
+          '<b>В параметрах запуска стоит <code>-language</code>.</b> Дота больше не читает моды через него, и названная папка может вообще не подгрузиться. Убери его из параметров запуска в Steam.',
+          '<b>Minify забрал папку.</b> Minify и приложение уживаются в одной игре, но не тогда, когда Minify переписывает папку, которую читает игра. <a href="~/docs/minify/">Как запускать оба</a>.',
+          '<b>Слишком много отдельных модов.</b> Дота грузит около 99 pak-файлов, остальные молча пропускает. Объедини моды в один пак кнопкой на баннере.',
+          '<b>Выключена таблица предметов.</b> Без неё не видны образы из конструктора и часть модов на эффекты. Баннер говорит, сколько модов её ждут.',
+          '<b>Steam проверил файлы игры.</b> Проверка возвращает оригиналы Valve поверх шрифтов и курсоров. Поставь их заново кнопкой на баннере.',
+        ],
+      },
+
       { k: 'h2', t: 'Моды пропали после патча Доты', id: 'patch' },
       {
         k: 'p',

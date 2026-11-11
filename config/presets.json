@@ -6,15 +6,13 @@
       "ru": "Минимализм",
       "en": "Minimal",
       "about": {
-        "ru": "Тёмная простая карта, маленькие деревья и меньше лишних эффектов: видно только то, что важно в драке.",
-        "en": "A plain dark map, small trees and fewer extra effects, so you only see what matters in a fight."
+        "ru": "Тёмная простая карта, маленькие деревья и простые шейдеры: видно только то, что важно в драке.",
+        "en": "A plain dark map, small trees and a plain shader, so you only see what matters in a fight."
       },
       "mods": [
         { "category": "terrains", "name": "Dark Terrain Minify" },
         { "category": "trees", "name": "Small Trees Minify" },
         { "category": "shaders", "name": "Simple Minify Shader" },
-        { "category": "optimization", "name": "No Unnecessary Map Effects" },
-        { "category": "optimization", "name": "No Unnecessary Models" },
         { "category": "huds", "name": "Default Lite Hud" }
       ]
     },
@@ -29,7 +27,6 @@
       "mods": [
         { "category": "terrains", "name": "Dota+ Winter" },
         { "category": "river", "name": "Frozen River" },
-        { "category": "shaders", "name": "Winter" },
         { "category": "backgrounds", "name": "Winter Forest" }
       ]
     },
