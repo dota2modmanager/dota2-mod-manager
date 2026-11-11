@@ -1947,6 +1947,21 @@ export function cosmeticNameTable(items: Pick<SchemaItem, 'name' | 'itemName'>[]
 
 Resolve by item_name token, never by guessing a translation from the English title.
 
+### `gameTokens`
+
+```ts
+export function gameTokens(game: string, lang: string): Map<string, string>
+```
+
+Every text token of the game in the app's language, dota_*.txt before items_*.txt, read once per
+game build and language; empty with no game to read. Style, rarity and event names are in
+dota_*.txt (DOTA_Style_Bracers_of_the_Cavern_Luminar_0, DOTA_EventName_Spring2021), and
+items_*.txt has a few more.
+
+```
+@param lang  the app's language (src/i18n.ts getLang)
+```
+
 ### `styleNamer`
 
 ```ts
@@ -5681,15 +5696,45 @@ export function itemFacts(block: string): { rarity?: string; date?: string }
 An item's rarity key ("mythical") and the day it came out ("2021-09-01"), out of its block, for
 the item builder's cards: each left out when the block does not say.
 
+### `EventNames`
+
+```ts
+export type EventNames = Map<string, string>
+```
+
+The game's names for its events, by the words of the id run together in lower case ("spring2021").
+
+### `eventNames`
+
+```ts
+export function eventNames(tokens: Map<string, string>): EventNames
+```
+
+The names the game gives its events, in the language of its text: DOTA_EventNameShort_* where
+there is one ("The International 2019"), DOTA_EventName_* otherwise ("Nemestice"). Keyed without
+underscores, because the ids and the tokens put them in different places: EVENT_ID_INTERNATIONAL_2019
+is named by DOTA_EventNameShort_International2019, EVENT_ID_MUERTA_RELEASE_SPRING2023 by
+DOTA_EventName_MuertaRelease_Spring2023.
+
+```
+@param tokens  the game's text in the app's language (src/cosmetic-names.ts gameTokens)
+```
+
 ### `eventName`
 
 ```ts
-export function eventName(id: string): string
+export function eventName(id: string, names: EventNames = new Map()): string
 ```
 
-An event id as a person reads it: "EVENT_ID_FALL_2021" is "Fall 2021", "EVENT_ID_INTERNATIONAL_2019"
-"The International 2019". The game names its events only in pictures and store banners, so the
-id is all there is to go on. A bare number and "EVENT_ID_NONE" are no event.
+An event id as a person reads it: the game's own name in the player's language where its text has
+one, with the id's year when the name has no number of its own ("EVENT_ID_SPRING_2021" is
+"Nemestice 2021", and "EVENT_ID_NEW_BLOOM_2019" "New Bloom 2019" beside "New Bloom 2020"); else the
+id spelled out: "EVENT_ID_FALL_2025" is "Fall 2025", "EVENT_ID_10TH_ANNIVERSARY" "10th Anniversary".
+A bare number and "EVENT_ID_NONE" are no event.
+
+```
+@param names  the game's event names (eventNames); without them every id is spelled out
+```
 
 ### `SetDetails`
 
@@ -5702,12 +5747,13 @@ A set as the window shows it: its name, rarity and description in the player's l
 ### `setDetails`
 
 ```ts
-export function setDetails(sets: ItemSet[], named: (token: string) => string, stylesOf: (itemId: string) => string[] | undefined): SetDetails[]
+export function setDetails(sets: ItemSet[], named: (token: string) => string, stylesOf: (itemId: string) => string[] | undefined, events: EventNames = new Map()): SetDetails[]
 ```
 
 ```
 @param named  the game's localization: a token's text, '' for one it lacks (cosmetic-names.ts styleNamer)
 @param stylesOf  an item's style names in the player's language, by its id, for the items that have more than one
+@param events  the game's event names in the player's language (eventNames)
 ```
 
 ## src/item-builder-donor.ts

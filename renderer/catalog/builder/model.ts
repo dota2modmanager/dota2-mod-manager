@@ -82,7 +82,7 @@ export interface SetsPaneModel {
   sets: SetCard[];
   /** the toolbar (catalog/builder/set-filters.ts): what is chosen and what there is to choose from */
   filters: SetFilters;
-  facets: { rarities: { value: string; label: string }[]; years: string[]; events: string[]; styled: boolean };
+  facets: { rarities: { value: string; label: string }[]; years: string[]; events: { value: string; label: string }[]; styled: boolean };
   active: number;
 }
 
