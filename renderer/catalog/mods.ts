@@ -50,6 +50,40 @@ export function canBeInstalled(mod: Mod): boolean {
   return Boolean(installTarget(mod)) || (mod.styles || []).some((s) => Boolean(s.file && ARCHIVE.test(s.file)));
 }
 
+/** Every archive and every name a category lists, its styles' files included. */
+export type CatalogListing = Map<string, { files: Set<string>; names: Set<string> }>;
+
+/** What each category of mods.json lists, to tell an installed mod the catalog has dropped. */
+export function catalogListing(modsData: Record<string, CategoryData | undefined> | null | undefined): CatalogListing {
+  const out: CatalogListing = new Map();
+  for (const [categoryId, data] of Object.entries(modsData || {})) {
+    if (!data) continue;
+    const entry = { files: new Set<string>(), names: new Set<string>() };
+    for (const m of modsOf(data, categoryId)) {
+      if (m.name) entry.names.add(m.name.toLowerCase());
+      if (m.file) entry.files.add(m.file);
+      for (const s of m.styles || []) if (s.file) entry.files.add(s.file);
+    }
+    out.set(categoryId, entry);
+  }
+  return out;
+}
+
+/**
+ * A mod installed from the catalog that the catalog no longer lists, by file or by name.
+ * People asked where a mod went once its author took it down (Darkness's skins), and one taken
+ * down for a black screen in matches stayed in the game folder of everybody who had it.
+ * Only a category the catalog still has can say a mod is gone from it: a category missing
+ * from a half-read catalog says nothing. A pack, a pick, an import or a link has no catalog file.
+ */
+export function delistedFrom(listing: CatalogListing, rec: { categoryId: string; name: string; fileRef?: string | null; kind?: string }): boolean {
+  const ref = rec.fileRef;
+  if (!ref || /^https?:\/\//i.test(ref) || rec.kind === 'pack') return false;
+  const cat = listing.get(rec.categoryId);
+  if (!cat || !cat.files.size) return false;
+  return !cat.files.has(ref) && !cat.names.has(String(rec.name || '').toLowerCase());
+}
+
 /** Name (lower case) -> where the mod is, across every category: what installed mods are matched by. */
 export function modIndexOf(categories: { id: string }[], modsIn: (categoryId: string) => Mod[]): Map<string, { categoryId: string; mod: Mod }> {
   const index = new Map<string, { categoryId: string; mod: Mod }>();

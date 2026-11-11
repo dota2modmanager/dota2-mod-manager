@@ -10,10 +10,15 @@ import { FolderBanners } from './FolderBanners.tsx';
 
 /* New versions in the catalog. Nothing is downloaded until the button is pressed: an update can be
  * hundreds of megabytes, and fetching it behind somebody's back at launch is not this app's call. */
+/* Three mods by name, the rest counted. */
+function nameList(names: string[]): string {
+  const shown = names.slice(0, 3).map((n) => `«${n}»`).join(', ');
+  return names.length > 3 ? `${shown} ${L`и ещё ${names.length - 3}`}` : shown;
+}
+
 function Updates({ names, actions }: { names: string[]; actions: LibraryActions }) {
   const [busy, setBusy] = useState(false);
-  const shown = names.slice(0, 3).map((n) => `«${n}»`).join(', ');
-  const list = names.length > 3 ? `${shown} ${L`и ещё ${names.length - 3}`}` : shown;
+  const list = nameList(names);
   return (
     <Banner kind="info" icon="upgrade"
       action={<BannerButton id="updateAllBtn" icon="upgrade" label={names.length === 1 ? L`Обновить` : L`Обновить все`} disabled={busy}
@@ -47,6 +52,12 @@ export function Banners({ b, actions }: { b: BannersModel; actions: LibraryActio
         </Banner>
       )}
       {b.updates.length > 0 && <Updates names={b.updates} actions={actions} />}
+      {b.delisted.length > 0 && (
+        <Banner kind="info" icon="block">
+          <b>{b.delisted.length === 1 ? L`Мод убран из каталога` : L`Моды убраны из каталога`}</b>
+          {`: ${nameList(b.delisted)}${L`. Их сняли автор или каталог, обновлений не будет. Если в игре что-то не так (чёрный экран, вылет), начни с них: удали или выключи.`}`}
+        </Banner>
+      )}
       {b.nearLimit && !b.masterOff && (
         <Banner kind="warn" icon="warning"
           action={<BannerButton id="combineHintBtn" icon="merge" label={L`Объединить`} onClick={() => actions.banner('combine')} />}>

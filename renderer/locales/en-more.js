@@ -168,5 +168,10 @@ const EN = {
   "Моды снова следуют за языком игры": "Mods follow the game’s language again",
   "Моды остаются в dota_{0}": "Mods stay in dota_{0}",
   "По умолчанию моды идут в папку языка, которую читает игра, и «-language» в параметрах запуска Steam переносит их туда при запуске приложения. Выбери папку, чтобы моды оставались в ней: пока в параметрах стоит другой язык, игра их не увидит, а когда уберёшь его, они на месте.": "By default mods go into the language folder the game reads, and a “-language” in Steam’s launch options moves them there when the app starts. Pick a folder to keep the mods in it: while the launch options name another language the game will not see them, and once you take it out they are where you left them.",
+  "убран из каталога": "gone from the catalog",
+  "Этого мода больше нет в каталоге: его сняли автор или каталог, обновлений не будет. Если в игре с ним что-то не так, удали его.": "The catalog no longer has this mod: its author or the catalog took it down, so it gets no updates. If something is wrong with it in the game, remove it.",
+  "Мод убран из каталога": "A mod is gone from the catalog",
+  "Моды убраны из каталога": "Mods are gone from the catalog",
+  ". Их сняли автор или каталог, обновлений не будет. Если в игре что-то не так (чёрный экран, вылет), начни с них: удали или выключи.": ". Their author or the catalog took them down, so they get no updates. If something is wrong in the game (a black screen, a crash), start with them: remove them or switch them off.",
 };
 window.EN_MORE = EN;
