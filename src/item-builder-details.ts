@@ -96,15 +96,21 @@ export function eventName(id: string, names: EventNames = new Map()): string {
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
 
+/* Tags out until none is left: one pass over "<<b>font>" leaves "<font>" behind, because taking the
+ * inner tag out joins the outer one's halves. */
+function withoutTags(text: string): string {
+  let out = text;
+  for (let before = ''; before !== out;) { before = out; out = out.replace(/<\/?[a-z][^>]*>/gi, ''); }
+  return out;
+}
+
 /**
  * A description as plain text. The game writes its texts for its own panels, with <br> for a new
  * line, font tags for colours and HTML entities, and the window shows text: 91 of the 1,102 set
  * descriptions of the game of 2026-11-09 showed their tags.
  */
 function plainText(text: string): string {
-  return text
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/?[a-z][^>]*>/gi, '')
+  return withoutTags(text.replace(/<br\s*\/?>/gi, '\n'))
     .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (all, e: string) => {
       if (e[0] !== '#') return ENTITIES[e.toLowerCase()] ?? all;
       const code = e[1] === 'x' || e[1] === 'X' ? parseInt(e.slice(2), 16) : Number(e.slice(1));

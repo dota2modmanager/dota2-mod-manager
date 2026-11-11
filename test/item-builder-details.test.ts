@@ -98,6 +98,8 @@ test("a set's name, rarity and styles come in the player's words, the set's own 
   assert.equal(described.eventName, "Aghanim's Labyrinth 2021");
   const [compared] = setDetails([itemSet({ descToken: '#Desc' })], () => 'Damage 2 < 3 > 1 &unknown;', () => undefined);
   assert.equal(compared.description, 'Damage 2 < 3 > 1 &unknown;', 'only tags are taken out, and only entities it knows are read');
+  const [nested] = setDetails([itemSet({ descToken: '#Desc' })], () => 'a<<b>script>b<<i>font color="red">c', () => undefined);
+  assert.equal(nested.description, 'abc', 'a tag the first pass puts together is taken out too');
   const [plain] = setDetails([itemSet({ nameToken: '', rarity: 'immortal' })], named, () => undefined);
   assert.equal(plain.title, 'Blightfall');
   assert.equal(plain.rarityName, 'Immortal', 'a rarity the language file lacks keeps its key');
