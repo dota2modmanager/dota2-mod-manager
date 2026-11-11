@@ -168,9 +168,14 @@ test('a game patched while the app was closed is repaired at start and reported 
   const game = fakeGame(t, { build: '6002' });
   const s = stand({ game, stored: { gameStamp: '6001:?' }, heal: () => ({ healed: ['schema'], error: null }) });
   await s.upkeep.atStart();
-  assert.deepEqual(s.upkeep.patchRepair(), { state: 'done', healed: ['schema'], error: null, at: 1000 });
+  assert.deepEqual(s.upkeep.patchRepair(), { state: 'done', healed: ['schema'], error: null, at: 1000, whileClosed: true },
+    'a launch from Steam before this start ran on the old table, and the banner says so');
   assert.equal(s.store.get('gameStamp'), gameStamp(game));
   assert.deepEqual(s.sent, [], 'no window yet: the state waits to be asked for');
+
+  const nothing = stand({ game, stored: { gameStamp: '6001:?' }, heal: () => ({ healed: ['files'], error: null }) });
+  await nothing.upkeep.atStart();
+  assert.equal('whileClosed' in nothing.upkeep.patchRepair(), false, 'only fonts put back: nothing a launch would have tripped on');
 
   const same = stand({ game, stored: { gameStamp: gameStamp(game) } });
   await same.upkeep.atStart();

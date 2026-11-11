@@ -226,5 +226,6 @@ const EN = {
   "известная проблема": "known issue",
   "Удали его: так советуют те, кто ведёт каталог.": "Remove it: the people who run the catalog advise it.",
   "Ctrl+клик по строке отмечает её, Shift+клик отмечает все строки до неё, Ctrl+A отмечает всё, Delete удаляет отмеченное": "Ctrl+click a row to tick it, Shift+click to tick every row up to it, Ctrl+A ticks everything, Delete removes what is ticked",
+  "Обновление пришло, пока приложение было закрыто. Если Dota с тех пор запускалась из Steam с ошибкой, причина в этом, и теперь всё исправлено. После обновлений Доты открывай приложение до игры или запускай её кнопкой «Играть» здесь.": "The update came while the app was closed. If Dota has started from Steam with an error since then, this was why, and it is fixed now. After a Dota update, open the app before you play, or start the game with Play here.",
 };
 window.EN_MORE = EN;

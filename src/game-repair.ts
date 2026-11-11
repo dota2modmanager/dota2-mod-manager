@@ -22,6 +22,9 @@ export type PatchRepair = {
   at?: number;
   /** the mods whose files this patch changed (src/update-impact.ts), by name */
   touched?: { build: string | null; mods: string[] };
+  /** the patch landed while the app was closed and the app had to put the game back at start: a
+   * launch from Steam in between ran on the old item table or a search path the patch undid */
+  whileClosed?: true;
 };
 
 /** A mod Steam's file check took away that the app could not put back from what it holds. */
@@ -167,7 +170,8 @@ export function createGameRepair({ settings, installer, library, schemaService, 
       const changed = Boolean(stamp && known && stamp !== known);
       if (changed || hit) {
         if (changed) diag(`Dota changed while the app was closed: ${known} -> ${stamp}`);
-        patchRepair = { state: error ? 'failed' : 'done', healed, error, at: now(), ...(hit ? { touched: hit } : {}) };
+        const mended = changed && healed.some((h) => h !== 'files');
+        patchRepair = { state: error ? 'failed' : 'done', healed, error, at: now(), ...(hit ? { touched: hit } : {}), ...(mended ? { whileClosed: true as const } : {}) };
       }
       if (stamp) settings.set('gameStamp', stamp);
     } catch (e) {
