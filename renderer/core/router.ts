@@ -23,6 +23,7 @@
 import { state } from './store.ts';
 import { $ } from './dom.ts';
 import { screenChanging, paint } from '../ui/transitions.ts';
+import { createViewHistory, type ViewHistory } from './view-history.ts';
 
 /** What a screen does to draw itself; some fetch first, and the switch waits for them. */
 type Draw = () => unknown;
@@ -90,7 +91,23 @@ export function render(): unknown {
   return draw ? draw() : undefined;
 }
 
-export function switchView(view: string): Promise<void> {
+let history: ViewHistory | null = null;
+
+/** Back to the section before this one, as the mouse's back button does. */
+export function goBack(): Promise<void> | null {
+  const view = history?.back();
+  return view && view !== state.view ? switchView(view, { fromHistory: true }) : null;
+}
+
+/** Forward again after going back. */
+export function goForward(): Promise<void> | null {
+  const view = history?.forward();
+  return view && view !== state.view ? switchView(view, { fromHistory: true }) : null;
+}
+
+export function switchView(view: string, { fromHistory = false }: { fromHistory?: boolean } = {}): Promise<void> {
+  if (!history) history = createViewHistory(state.view);
+  if (!fromHistory) history.visit(view);
   const main = $('#main');
   scrolls.set(state.view, main.scrollTop);
   document.querySelectorAll<HTMLElement>('.tb-tab').forEach((b) => {
