@@ -225,5 +225,6 @@ const EN = {
   "отозван": "revoked",
   "известная проблема": "known issue",
   "Удали его: так советуют те, кто ведёт каталог.": "Remove it: the people who run the catalog advise it.",
+  "Ctrl+клик по строке отмечает её, Shift+клик отмечает все строки до неё, Ctrl+A отмечает всё, Delete удаляет отмеченное": "Ctrl+click a row to tick it, Shift+click to tick every row up to it, Ctrl+A ticks everything, Delete removes what is ticked",
 };
 window.EN_MORE = EN;

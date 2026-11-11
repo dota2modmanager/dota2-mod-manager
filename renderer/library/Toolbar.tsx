@@ -42,7 +42,7 @@ export function ListHead({ m, actions }: { m: LibraryModel; actions: LibraryActi
   return (
     <div className="lib-listhead">
       <label className="lib-selectall" title={L`Выбрать всё`}><AllBox id="selAll" state={m.selectAll} onChange={actions.selectAll} />{L`Выбрать всё`}</label>
-      <span className="lib-listhead-hint">{L`Отметь моды галочками — объединить в пак или массово управлять`}</span>
+      <span className="lib-listhead-hint" title={L`Ctrl+клик по строке отмечает её, Shift+клик отмечает все строки до неё, Ctrl+A отмечает всё, Delete удаляет отмеченное`}>{L`Отметь моды галочками — объединить в пак или массово управлять`}</span>
       <button className="btn btn-ghost btn-xs" id="enableAllBtn" disabled={m.masterOff} onClick={() => actions.enableAll(true)}>{L`Включить все`}</button>
       <button className="btn btn-ghost btn-xs" id="disableAllBtn" disabled={m.masterOff} onClick={() => actions.enableAll(false)}>{L`Выключить все`}</button>
     </div>
