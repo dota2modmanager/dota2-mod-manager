@@ -95,6 +95,8 @@ export interface RepairState {
   healed?: unknown[];
   /** the mods whose files the patch changed, by name */
   touched?: { build: string | null; mods: string[] };
+  /** the patch landed while the app was closed, and the game was put back only at start */
+  whileClosed?: true;
   /** what started it: 'manual' is a button the user pressed, which answers for itself */
   reason?: unknown;
 }

@@ -101,6 +101,9 @@ function Repair({ b, actions }: { b: BannersModel; actions: LibraryActions }) {
     return (
       <Banner kind="info" icon="update" action={<BannerButton id="repairSeenBtn" label={L`Понятно`} ghost onClick={() => actions.banner('repairSeen')} />}>
         <b>{L`Dota обновилась`}</b>{`${what}${touchedText(r.touched?.mods) || L`. Можно играть.`}`}
+        {/* the patch came while the app was closed (src/game-repair.ts): a launch from Steam in
+            between ran on the old table, which is the error people bring to Discord */}
+        {r.whileClosed && ` ${L`Обновление пришло, пока приложение было закрыто. Если Dota с тех пор запускалась из Steam с ошибкой, причина в этом, и теперь всё исправлено. После обновлений Доты открывай приложение до игры или запускай её кнопкой «Играть» здесь.`}`}
       </Banner>
     );
   }
