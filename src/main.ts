@@ -31,6 +31,9 @@ import { createPatchWatcher } from './patch-watch.ts';
 import { moveLangFolder } from './gamelang.ts';
 import { uninstallFlow } from './uninstall-window.ts';
 import { isUninstallRun } from './uninstall-args.ts';
+import { lockOnceFreed, startedHidden } from './tray.ts';
+import { startBackground } from './background.ts';
+import { startDota } from './ipc-launch.ts';
 import { cliBusy, cliCommand, exitWithCli } from './cli.ts';
 import { createGate } from './feature-gate.ts';
 import { settingsViewFor } from './settings-view.ts';
@@ -98,6 +101,7 @@ process.on('uncaughtException', (err) => diag(`uncaughtException: ${err?.stack |
 process.on('unhandledRejection', (reason) => diag(`unhandledRejection: ${(reason as Error | null)?.stack || reason}`));
 
 let win: BrowserWindow | undefined;
+let applyBackground = () => {}; // the tray and the sign-in entry, once the window exists (src/background.ts)
 const windowOpen = () => (win && !win.isDestroyed() ? win : null);
 
 // Presets take a link that arrives before the rest of the app is up; until then there is nothing
@@ -113,10 +117,14 @@ const takeLink = (url: string | null | undefined) => handleDeepLink(url, {
 
 // One running copy only: two instances writing manifest.json would race each other, and a link
 // clicked while the app is open must reach the window that already exists.
-if (!app.requestSingleInstanceLock()) {
+// A copy in the tray (src/tray.ts) holding the lock gives way to the uninstaller's run, which waits for it.
+const firstLock = app.requestSingleInstanceLock();
+const locked = firstLock ? Promise.resolve(true) : IS_UNINSTALL ? lockOnceFreed(app) : Promise.resolve(false);
+if (!firstLock && !IS_UNINSTALL) {
   if (CLI) cliBusy(app); else app.quit();
 } else {
   app.on('second-instance', (e, argv) => {
+    if (isUninstallRun(argv)) { app.quit(); return; }
     const w = windowOpen();
     if (w) {
       if (w.isMinimized()) w.restore();
@@ -128,7 +136,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('open-url', (e, url) => { e.preventDefault(); takeLink(url); }); // macOS
 }
 
-app.whenReady().then(start).catch((e) => diag(`whenReady FAIL: ${(e as Error)?.stack || e}`));
+Promise.all([locked, app.whenReady()]).then(([ok]) => (ok ? start() : app.quit())).catch((e) => diag(`whenReady FAIL: ${(e as Error)?.stack || e}`));
 app.on('window-all-closed', () => app.quit());
 
 /** Build the services, put the game folder right, register the channels and open the window. */
@@ -197,7 +205,7 @@ async function start(): Promise<void> {
     dotaIsRunning: () => dotaIsRunning(), gameLaunched,
     refreshPresence: () => presenceStatus.refresh(),
     // follows the setting: turning it off tears the connection down, not just the updates
-    applyPresenceSetting: () => presenceStatus.apply(),
+    applyPresenceSetting: () => presenceStatus.apply(), applyBackground: () => applyBackground(),
     setPresenceView: (view) => presenceStatus.setView(view),
     // the "What's new" text for a version, out of the changelogs shipped with the build
     releaseNotes: (version, lang, seen) => releaseNotes(version, lang, appRoot, seen),
@@ -243,9 +251,10 @@ async function start(): Promise<void> {
     // dev: MM_WORKAREA=1366x728 stands in for a smaller screen (tools/sim profiles), and
     // MM_QUIET=1 keeps an automated run off the screen of whoever is using the machine
     workArea: workAreaFrom(process.env.MM_WORKAREA),
-    quiet: !!process.env.MM_QUIET, firstRun,
+    quiet: !!process.env.MM_QUIET || startedHidden(process.argv), firstRun, // Windows starting it at sign-in: the tray only
   });
   win = opened;
+  applyBackground = startBackground({ win: opened, settings, appRoot, portable: IS_PORTABLE, diag, play: () => { void startDota(ctx); } });
   attachDevHarness(opened, { diag, appRoot, quit: () => app.quit() });
   diag('createWindow done');
   opened.webContents.on('did-finish-load', () => { gameWatch.stop(); gameWatch.start(); });

@@ -132,6 +132,8 @@ export interface AppContext {
   gameLaunched: () => void;
   refreshPresence: () => void;
   applyPresenceSetting: () => void;
+  /** the tray and the sign-in entry as the setting says, menu in the current language (src/background.ts) */
+  applyBackground: () => void;
   clampZoom: (v: unknown) => number;
   releaseNotes: (version: string, lang: string, seen?: string | null) => string | null;
   afterDeployMaster: () => void;

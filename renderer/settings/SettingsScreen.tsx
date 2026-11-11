@@ -16,6 +16,7 @@ import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
 import { PreviewCacheBlock } from './PreviewCacheBlock.tsx';
 import { GridBlock } from './GridBlock.tsx';
 import { GameFilesBlock } from './GameFilesBlock.tsx';
+import { BackgroundBlock } from './BackgroundBlock.tsx';
 import { Toggle } from './Toggle.tsx';
 import type { CompilerState } from '../api/content.ts';
 
@@ -155,6 +156,8 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <div className="settings-hint">{L`Твой аккаунт в списке тестеров: приложение будет обновляться до сборок, которых ещё нет у остальных. Выйдешь из Discord, и оно вернётся на обычные.`}</div>
         </Reveal>
       </Block>
+
+      <BackgroundBlock i={1} />
 
       <Block i={2} title={L`Путь к Dota 2`}>
         <div className="settings-row">

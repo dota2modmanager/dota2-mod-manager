@@ -18,10 +18,10 @@ import type { AppContext } from './app-context.ts';
 export function registerSettingsIpc({
   // The four read late are main-process state that changes while the app runs; setPresenceView
   // writes one back. Passing values here would freeze them at registration time.
-  applyPresenceSetting, catalog, previewStore, discordAuth, findDotaGamePath, moveLangFolder,
+  applyPresenceSetting, applyBackground, catalog, previewStore, discordAuth, findDotaGamePath, moveLangFolder,
   refreshPresence, remoteConfig, schemaService, settings, settingsView, validateGamePath,
   langFolder, keepModFolder, patchWatcher, setPresenceView, updater, win,
-}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'previewStore' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'keepModFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
+}: Pick<AppContext, 'applyPresenceSetting' | 'applyBackground' | 'catalog' | 'previewStore' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'keepModFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
@@ -81,6 +81,8 @@ export function registerSettingsIpc({
     if (key === 'langFolderLock') return keepModFolder().then(() => settingsView());
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
+    // the tray's menu speaks the language too, and the switch is the tray itself
+    if (key === 'runInBackground' || key === 'uiLang') applyBackground();
     // the table is what the switch changes; the bar at the bottom counts the build
     if (key === 'everyoneWearsMine') void schemaService.refreshInBackground();
     return settingsView();

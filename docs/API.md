@@ -31,6 +31,7 @@ the code, not in this page.
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
 | [`src/atomic-file.ts`](#srcatomic-filets) | Replace a small file so that whoever reads it next - this process, or the next start after |
 | [`src/background-builds.ts`](#srcbackground-buildsts) | Builds of the item table in the background, one at a time (src/schema-service.ts runs them, |
+| [`src/background.ts`](#srcbackgroundts) | The tray icon and the sign-in entry over Electron, for src/tray.ts, which holds the logic. |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/build-bar.ts`](#srcbuild-barts) | The bar at the bottom of the window while the item table builds in the background |
 | [`src/build-undo.ts`](#srcbuild-undots) | Cancel on the item table's bar (issue #425): the build stops, and the change that started it goes |
@@ -225,6 +226,7 @@ the code, not in this page.
 | [`src/toolchain-bucket.ts`](#srctoolchain-bucketts) | The toolchain's copy in our bucket: where it is, what it is called, and when it is asked first. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
 | [`src/tower-looks.ts`](#srctower-looksts) | Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five |
+| [`src/tray.ts`](#srctrayts) | The app beside the game rather than in front of it (plan item 9, Misha's call on 2026-11-12). |
 | [`src/tree-sets.ts`](#srctree-setsts) | Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
@@ -1454,6 +1456,22 @@ wrote. A build run in place in between (heal, the patch switch) does the same, t
 ```
 @param steps    a build of the table, a step at a time
 @param onBuild  each step of a build in the background, and null when it ends
+```
+
+## src/background.ts
+
+The tray icon and the sign-in entry over Electron, for src/tray.ts, which holds the logic.
+
+### `startBackground`
+
+```ts
+export function startBackground({ win, settings, appRoot, portable, play, diag }: { win: BrowserWindow; settings: Pick<Settings, 'get' | 'set'>; appRoot: string; portable: boolean; play: () => void; diag: (msg: string) => void; }): () => void
+```
+
+Keep the window in the tray and register the app with Windows, as the setting says.
+
+```
+@returns what Settings calls after the switch moves or the language changes
 ```
 
 ## src/beta.ts
@@ -13582,6 +13600,84 @@ export function buildTowers({ pak01, text, radiant, dire }: { pak01: string; tex
 ```
 
 Each side's towers in a look of its own, or as they are where its id is null: one VPK out of pak01.
+
+## src/tray.ts
+
+The app beside the game rather than in front of it (plan item 9, Misha's call on 2026-11-12).
+
+The app puts the game back after a Dota patch (src/game-repair.ts), but only while it runs: a
+patch that lands with it closed leaves the old item table in the game, and a launch from Steam
+fails until the app is opened. So by default it starts with Windows, hidden, and closing the
+window hides it in the tray instead of quitting. The patch watcher and the game watch keep
+running in the main process. Settings has the switch (renderer/settings/BackgroundBlock.tsx);
+off, the app closes when its window does and Windows does not start it.
+
+Electron is handed in rather than imported, so the logic runs under plain node in the tests.
+
+### `BACKGROUND_ARG`
+
+```ts
+export const BACKGROUND_ARG = '--background'
+```
+
+The argument Windows starts the app with at sign-in: no window, only the tray.
+
+### `LOGIN_ITEM_NAME`
+
+```ts
+export const LOGIN_ITEM_NAME = 'Dota 2 Mod Manager'
+```
+
+The name of the app's line under HKCU\...\Run.
+
+### `startedHidden`
+
+```ts
+export const startedHidden = (argv: readonly string[]) => argv.includes(BACKGROUND_ARG)
+```
+
+Started by Windows at sign-in rather than by a person.
+
+### `inBackground`
+
+```ts
+export const inBackground = (settings: Pick<Settings, 'get'>) => settings.get('runInBackground') !== false
+```
+
+The setting, on unless turned off.
+
+### `setLoginItem`
+
+```ts
+export function setLoginItem(app: LoginApp, on: boolean, { allowed }: { allowed: boolean }): void
+```
+
+Ask Windows to start the app at sign-in, or stop asking. A dev run or a sandbox never registers itself.
+
+### `lockOnceFreed`
+
+```ts
+export function lockOnceFreed(app: LockApp, { tries = 40, everyMs = 250 } = {}): Promise<boolean>
+```
+
+The lock, for the run the uninstaller starts. A copy in the tray holds it, and hearing
+--uninstall it quits (keepInTray's caller), so this waits for that rather than giving up.
+Without it the removal window never showed while the app sat in the tray.
+
+### `keepInTray`
+
+```ts
+export function keepInTray({ app, win, settings, makeTray, menu, t, play, diag = () => {} }: { app: { on(ev: 'before-quit', fn: () => void): void; quit(): void }; win: WinLike; settings: Pick<Settings, 'get' | 'set'>; makeTray: () => TrayLike; menu: (items: { label?: string; type?: 'separator'; click?: () => void }[]) => unknown; t: (ru: string) => string; play: () => void
+```
+
+Hide the window in the tray instead of closing it, while the setting is on.
+
+```
+@param makeTray  builds the icon (Electron's Tray over build/icon.png)
+@param menu  builds the right-click menu from its items (Electron's Menu.buildFromTemplate)
+@param t  the main process's words, read each time the menu is built
+@param play  what the menu's Play does
+```
 
 ## src/tree-sets.ts
 

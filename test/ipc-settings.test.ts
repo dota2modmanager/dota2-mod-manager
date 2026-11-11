@@ -22,6 +22,7 @@ function stand({ picked = [] as string[], signIn = async () => ({ id: '1', usern
   const window = { isDestroyed: () => false, show: () => log.push('show'), focus: () => log.push('focus') };
   const channels = registerAgainst(() => registerSettingsIpc({
     applyPresenceSetting: () => log.push('presence setting'),
+    applyBackground: () => log.push('background'),
     catalog: { load: async () => ({ mods: { modsData: { heroes: [{ preview: 'a.webp' }] } }, constants: {} }) },
     previewStore: { warm: async (rels: string[]) => { log.push(`warm ${rels.length}`); throw new Error('a full disk'); } },
     discordAuth: { signIn },

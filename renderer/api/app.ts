@@ -24,6 +24,8 @@ export interface StoredSettings {
   panels: Partial<Panels> | null;
   account: { id: string; username: string; avatar?: string | null } | null;
   discordPresence: boolean;
+  /** start with Windows and hide in the tray on close (src/tray.ts); on unless false */
+  runInBackground?: boolean;
   /** installs of catalog mods are counted by the catalog's download counter (src/download-stats.ts) */
   countDownloads: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */

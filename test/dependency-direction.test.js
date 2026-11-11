@@ -40,6 +40,7 @@ const ELECTRON_USERS = [
   'src/ipc-foreign.ts',
   'src/ipc-game.ts',
   'src/ipc-launch.ts',
+  'src/background.ts',
   'src/ipc-grid.ts',
   'src/ipc-sounds.ts',
   'src/ipc-background.ts',
