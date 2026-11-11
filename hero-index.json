@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1767,
+  "mods": 1770,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -657,8 +657,10 @@
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Grimstroke Arong","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","legs","weapon","belt"]},
         {"name":"Grimstroke Gloom Shroud","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon"]},
+        {"name":"Grimstroke Old Effects","categoryId":"herofx","styleLabel":null,"slots":[]},
         {"name":"Grimstroke Purple","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","misc","belt"]},
         {"name":"Grimstroke The Chained Scribe","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon"]},
+        {"name":"Grimstroke Update Sovietmedci","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","belt","misc"]},
         {"name":"Immortal Grimstroke","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","misc","belt"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -952,6 +954,7 @@
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Immortal Leshrac","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","back","misc","weapon"]},
+        {"name":"Leshrac Do 5300 Ne Podbrosite","categoryId":"heroes","styleLabel":null,"slots":["arms","head","tail","back","misc","weapon"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
