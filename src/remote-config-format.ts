@@ -13,7 +13,8 @@
 //                    "minVersion": "2.7.0", "maxVersion": "2.7.0", "until": "2026-09-27",
 //                    "ru": "…", "en": "…" } ],
 //     "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] },
-//     "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01" } ]
+//     "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01",
+//                    "revoked": true } ]
 //   }
 //
 // `features` switches something off in every version. That is right when the cause is outside
@@ -30,7 +31,9 @@
 //
 // `issues` are catalog mods known to misbehave, by category id and the name the catalog gives the
 // mod. The catalog card carries a "!" and the mod's window says what is wrong. A mod a patch broke
-// is marked the same day, without a release and without touching rotten's catalog.
+// is marked the same day, without a release and without touching rotten's catalog. `revoked` says
+// more: the mod does harm (a black screen in a match), so My mods marks the installed copy and offers
+// to remove it. Copies that do not know the key show the "!" alone.
 
 // What the app is willing to be told to switch off. A name that is not on this list is
 // ignored: a typo in the config must not disable something at random, and this list is the
@@ -70,7 +73,7 @@ export interface RemoteBlock {
 }
 
 /** A catalog mod known to misbehave, and what to tell whoever looks at it. */
-export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null }
+export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null; revoked?: true }
 
 /** Another host the archives can be fetched from. */
 export interface RemoteMirror { id: string; base: string; host: string }
@@ -211,7 +214,7 @@ export function normalize(raw: unknown): RemoteConfig {
     const ru = str(i.ru);
     const en = str(i.en);
     if (!cat || !mod || !(ru || en)) continue;
-    out.issues.push({ cat, mod, ru, en, until: validDay(i.until) });
+    out.issues.push({ cat, mod, ru, en, until: validDay(i.until), ...(i.revoked === true ? { revoked: true as const } : {}) });
   }
 
   return out;

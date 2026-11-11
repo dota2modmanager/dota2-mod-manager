@@ -52,6 +52,13 @@ export function Banners({ b, actions }: { b: BannersModel; actions: LibraryActio
         </Banner>
       )}
       {b.updates.length > 0 && <Updates names={b.updates} actions={actions} />}
+      {b.revoked.length > 0 && (
+        <Banner kind="warn" icon="gpp_bad"
+          action={<BannerButton id="removeRevokedBtn" icon="delete" label={L`Удалить`} onClick={() => actions.banner('removeRevoked')} />}>
+          <b>{b.revoked.length === 1 ? L`Мод отозван` : L`Моды отозваны`}</b>
+          {`: ${b.revoked.map((r) => `${r.name} (${r.text})`).join('; ')}${b.revoked.length === 1 ? L`. Те, кто ведёт каталог, советуют его удалить.` : L`. Те, кто ведёт каталог, советуют их удалить.`}`}
+        </Banner>
+      )}
       {b.delisted.length > 0 && (
         <Banner kind="info" icon="block">
           <b>{b.delisted.length === 1 ? L`Мод убран из каталога` : L`Моды убраны из каталога`}</b>

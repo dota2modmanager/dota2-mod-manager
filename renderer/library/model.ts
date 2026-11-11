@@ -123,6 +123,8 @@ export interface BannersModel {
   updates: string[];
   /** catalog mods the catalog no longer lists, by name (catalog/mods.ts delistedFrom) */
   delisted: string[];
+  /** installed mods the signed config revokes, with its words (src/remote-config-format.ts) */
+  revoked: Array<{ id: string; name: string; text: string }>;
   repair: RepairState;
 }
 

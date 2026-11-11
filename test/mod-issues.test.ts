@@ -47,3 +47,16 @@ test('the window gets the issues still in date, in the language it reads', (t) =
   ]);
   assert.equal(cfg.issues('en')[0].text, 'Artifacts on the back');
 });
+
+test('a revoked mod says so, and only a true revoked counts', (t) => {
+  const out = normalize({
+    issues: [
+      { cat: 'heroes', mod: 'Gridstudio Hero Meta', en: 'Black screen in a match', revoked: true },
+      { cat: 'heroes', mod: 'Not really', en: 'x', revoked: 'yes' },
+    ],
+  });
+  assert.equal(out.issues[0].revoked, true);
+  assert.equal('revoked' in out.issues[1], false, 'a string is not a yes');
+  const cfg = config(t, { issues: [{ cat: 'heroes', mod: 'Gridstudio Hero Meta', ru: 'Чёрный экран', en: 'Black screen', revoked: true }] });
+  assert.deepEqual(cfg.issues('ru'), [{ cat: 'heroes', mod: 'Gridstudio Hero Meta', text: 'Чёрный экран', revoked: true }]);
+});

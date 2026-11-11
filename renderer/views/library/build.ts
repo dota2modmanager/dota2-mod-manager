@@ -11,7 +11,7 @@ import type { BannersModel, LibraryModel } from '../../library/model.ts';
 import type { AppSettings } from '../../api/app.ts';
 import { externalRow, modRow, packRow } from './rows.ts';
 import { lib } from './state.ts';
-import { isDelisted } from './delisted.ts';
+import { configIssue, isDelisted } from './delisted.ts';
 
 export function banners(): BannersModel {
   const s: Partial<AppSettings> = state.settings || {};
@@ -41,7 +41,9 @@ export function banners(): BannersModel {
     prelaunch: Boolean(m?.prelaunch),
     stuck: lib.stuck.map((x) => x.name),
     updates: lib.records.filter((r) => r.updateAvailable).map((r) => r.name),
-    delisted: lib.records.filter(isDelisted).map((r) => r.name),
+    // a revoked mod has its own, louder banner: one reason per mod is enough
+    delisted: lib.records.filter((r) => isDelisted(r) && !configIssue(r)?.revoked).map((r) => r.name),
+    revoked: lib.records.flatMap((r) => { const i = configIssue(r); return i?.revoked ? [{ id: r.id, name: r.name, text: i.text }] : []; }),
     repair: lib.repair,
   };
 }

@@ -19,7 +19,7 @@
  *   node tools/rollback.mjs uninvite 123456789012345678             take it back off the list
  *   node tools/rollback.mjs mirror https://host/path/              another copy of the archives
  *   node tools/rollback.mjs unmirror gitlab.com                    stop sending anybody there
- *   node tools/rollback.mjs issue heroes "Pudge Arcana" --en "…" --ru "…" [--until 2026-12-01]
+ *   node tools/rollback.mjs issue heroes "Pudge Arcana" --en "…" --ru "…" [--until 2026-12-01] [--revoked]
  *   node tools/rollback.mjs resolve heroes "Pudge Arcana"           the "!" comes off the card
  *   node tools/rollback.mjs sign                                      sign the file as it stands
  *
@@ -259,10 +259,13 @@ export function dropMirror(config, which) {
 
 /**
  * Mark a catalog mod as misbehaving: a "!" on its card and the words in its window. Marking it again
- * replaces what it said. The app's own rules decide what is taken, as for mirrors.
+ * replaces what it said. The app's own rules decide what is taken, as for mirrors. A revoked mod
+ * does harm: My mods offers to remove the installed copy.
+ * @param {object} config
+ * @param {{ cat: string, mod: string, en: string, ru: string, until?: string, revoked?: boolean }} issue
  */
-export function markIssue(config, { cat, mod, en, ru, until }) {
-  const entry = { cat: String(cat || ''), mod: String(mod || ''), en: String(en || ''), ru: String(ru || ''), ...(until ? { until: String(until) } : {}) };
+export function markIssue(config, { cat, mod, en, ru, until, revoked }) {
+  const entry = { cat: String(cat || ''), mod: String(mod || ''), en: String(en || ''), ru: String(ru || ''), ...(until ? { until: String(until) } : {}), ...(revoked ? { revoked: true } : {}) };
   if (until && !DAY.test(entry.until)) throw new Error(`--until has to be a day, YYYY-MM-DD, not "${until}"`);
   if (!entry.en || !entry.ru) throw new Error('an issue needs --en and --ru: the card is read in both');
   if (normalize({ issues: [entry] }).issues.length !== 1) throw new Error('an issue needs the category id and the mod’s name in the catalog');
@@ -301,7 +304,7 @@ export function describe(config, today) {
   }
   for (const m of config.mirrors || []) lines.push(`mirror          ${m.id}: ${m.base}`);
   for (const i of config.issues || []) {
-    lines.push(`${i.until && i.until < today ? 'expired ' : 'issue   '}        ${i.cat} / ${i.mod}: ${i.en}${i.until ? ` (until ${i.until})` : ''}`);
+    lines.push(`${i.until && i.until < today ? 'expired ' : i.revoked ? 'revoked ' : 'issue   '}        ${i.cat} / ${i.mod}: ${i.en}${i.until ? ` (until ${i.until})` : ''}`);
   }
   const testers = ((config.beta || {}).ids || []).length;
   if (testers) lines.push(`beta            ${testers} account(s) offered the unreleased build`);
@@ -395,7 +398,7 @@ if (invokedDirectly) {
       console.log(`mirror ${id}`);
       write(next, today);
     } else if (command === 'issue') {
-      write(markIssue(config, { cat: subject, mod: process.argv[4], en: flags.en, ru: flags.ru, until: flags.until }), today);
+      write(markIssue(config, { cat: subject, mod: process.argv[4], en: flags.en, ru: flags.ru, until: flags.until, revoked: flags.revoked === true }), today);
     } else if (command === 'resolve') {
       write(clearIssue(config, subject, process.argv[4]), today);
     } else if (command === 'unmirror') {

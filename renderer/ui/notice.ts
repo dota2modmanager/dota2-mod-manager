@@ -27,6 +27,11 @@ export function modIssue(cat: string, name: string): string | null {
   return (state.issues || []).find((i) => i.cat === cat && i.mod === name)?.text || null;
 }
 
+/** The whole mark, for My mods: the words and whether the mod is revoked. */
+export function issueOf(cat: string, name: string): ModIssue | null {
+  return (state.issues || []).find((i) => i.cat === cat && i.mod === name) || null;
+}
+
 /** The newest notice this user has not put away, or null. */
 function liveNotice(): Notice | null {
   const seen = new Set(state.seen || []);

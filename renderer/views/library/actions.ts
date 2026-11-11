@@ -17,6 +17,7 @@ import { combineSelection, deleteRecord, menuFor, standalonePackable, updateReco
 import { lib, recById, screen } from './state.ts';
 import { showCovers } from './covers.ts';
 import { showPrePatch } from './pre-patch.ts';
+import { configIssue } from './delisted.ts';
 
 const tick = (ids: string[], on: boolean) => { for (const id of ids) { if (on) lib.sel.add(id); else lib.sel.delete(id); } screen.draw(); };
 
@@ -147,6 +148,15 @@ async function banner(what: string, data?: string) {
   if (what === 'combine') {
     const ids = await pickModsDialog(standalonePackable(), { title: L`Выбери моды для объединения в пак`, okLabel: L`Далее` });
     if (ids) await combineSelection(ids);
+    return;
+  }
+  if (what === 'removeRevoked') {
+    const ids = lib.records.filter((r) => configIssue(r)?.revoked).map((r) => r.id);
+    if (!ids.length || !await confirmDialog(L`Удалить отозванные моды (${ids.length})?`)) return;
+    const r = await window.api.mods.removeMany(ids);
+    if (r.error || r.errors?.length) toast(r.error || r.errors[0], 'error', 6000);
+    else toast(L`Удалено`);
+    await screen.reload();
     return;
   }
   if (what === 'reinstallStuck') {

@@ -217,5 +217,13 @@ const EN = {
   "Удалить всё": "Remove everything",
   "Удалено не всё: {0}": "Not everything was removed: {0}",
   "Готово: игра без модов, как после установки": "Done: the game has no mods, as after a fresh install",
+  "Мод отозван": "Mod revoked",
+  "Моды отозваны": "Mods revoked",
+  ". Те, кто ведёт каталог, советуют их удалить.": ". The people who run the catalog advise removing them.",
+  ". Те, кто ведёт каталог, советуют его удалить.": ". The people who run the catalog advise removing it.",
+  "Удалить отозванные моды ({0})?": "Remove the revoked mods ({0})?",
+  "отозван": "revoked",
+  "известная проблема": "known issue",
+  "Удали его: так советуют те, кто ведёт каталог.": "Remove it: the people who run the catalog advise it.",
 };
 window.EN_MORE = EN;
