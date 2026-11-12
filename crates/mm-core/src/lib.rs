@@ -9,6 +9,8 @@ pub mod i18n;
 pub mod item_builder_donor;
 pub mod item_builder_effects;
 pub mod item_builder_styles;
+pub mod item_skin;
+pub mod item_sounds;
 pub mod item_visuals;
 pub mod js;
 pub mod kv;

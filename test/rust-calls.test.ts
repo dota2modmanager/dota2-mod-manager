@@ -218,3 +218,63 @@ test('model rewrites in Rust make the bytes the TypeScript ones make, on the gam
   ];
   assert.ok(compare(cases) > 1000);
 });
+
+test('item skins, voices and sound files in Rust answer as the TypeScript ones do', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { createHash } = await import('node:crypto');
+  const { firstStyleSkin, wornSkin } = await import('../src/item-skin.ts');
+  const { itemVisuals } = await import('../src/item-visuals.ts');
+  const { file, blocks, styled } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const some = [...styled, ...blocks];
+  const skinned = [...text.matchAll(/"asset_modifier\d*"\s*\{[^{}]*"model_skin"[^{}]*\}/gi)].slice(0, 60).map((m) => `"visuals" { ${m[0]} }`);
+  const models = some.slice(0, 60).map((b) => itemVisuals(text, b.id)?.models?.[0] ?? null);
+  const cases: Case[] = [
+    { name: 'item-skin.firstStyleSkin', ts: firstStyleSkin as never, inputs: [...some, ...skinned.map((v) => ({ visuals: v }))].map((b) => [b.visuals]) },
+    { name: 'item-skin.wornSkin', ts: wornSkin as never, inputs: [
+      ['', 3], ...some.flatMap((b) => [[b.visuals], [b.visuals, 2]]),
+      ...skinned.flatMap((v, k) => [[v], [v, 1, 'models/heroes/x/x.vmdl'], [v, 0, models[k % models.length] ?? undefined]]),
+    ] },
+  ];
+  if (fs.existsSync(GAME_PAK01)) {
+    const { openVpkIndex, entryPath } = await import('../src/vpk.ts');
+    const { voiceSwaps, soundEntries } = await import('../src/item-sounds.ts');
+    const { dataBlock } = await import('../src/resource.ts');
+    const { readKv3 } = await import('../src/kv3.ts');
+    const index = openVpkIndex(GAME_PAK01);
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-rules-'));
+    const voices: unknown[][] = [];
+    for (const p of [...index.paths()].filter((p) => /^scripts\/talker\/response_rules_.*\.vrr_c$/.test(p))) {
+      const data = index.read(p)!;
+      const at = path.join(tmp, `${voices.length}.vrr_c`);
+      fs.writeFileSync(at, data);
+      let criteria: { key: string; value: string }[] = [];
+      try {
+        const root = readKv3(dataBlock(data).data).root;
+        const req = root.kind === 'object' ? root.members.get('m_Requirements') : undefined;
+        const str = (n: unknown, k: string) => { const v = (n as { members?: Map<string, { kind: string; value: string }> }).members?.get(k); return v?.kind === 'string' ? v.value : ''; };
+        criteria = (req?.kind === 'array' ? req.items : []).map((c) => ({ key: str(c, 'm_matchKey'), value: str(c, 'm_matchExpr') }))
+          .filter((c) => /customresponse|persona/i.test(c.key) && !c.value.startsWith('!='));
+      } catch { /* a file TypeScript cannot read: Rust must fail on it too */ }
+      const seen = new Set<string>();
+      for (const c of criteria) {
+        if (seen.has(c.value) || seen.size >= 3) continue;
+        seen.add(c.value);
+        voices.push([{ $file: at }, { ...c, hero: '' }], [{ $file: at }, { key: c.key.toUpperCase(), value: c.value, hero: '', whole: true }]);
+      }
+      if (!criteria.length && voices.length < 400) voices.push([{ $file: at }, { key: 'customresponse', value: 'none', hero: '' }]);
+    }
+    cases.push({ name: 'item-sounds.voiceSwaps', ts: ((f: string, cue: { key: string; value: string; whole?: boolean }) => voiceSwaps(readKv3(dataBlock(Buffer.from(f, 'latin1')).data).root, cue)) as never, inputs: voices });
+    const swaps = [...text.matchAll(/"asset_modifier\d*"\s*\{([^{}]*"type"\s+"sound"[^{}]*)\}/gi)].map((m) => ({
+      sound: /"asset"\s+"([^"]+)"/i.exec(m[1])?.[1] ?? '', as: /"modifier"\s+"([^"]+)"/i.exec(m[1])?.[1] ?? '',
+    })).filter((s) => s.sound && s.as).slice(0, 40);
+    const game = path.dirname(path.dirname(GAME_PAK01));
+    const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+    cases.push({ name: 'item-sounds.soundEntries', ts: ((g: string, sw: never[], cues: never[]) => soundEntries(g, sw, cues).map((e) => [entryPath(e), sha(e.data)])) as never, inputs: [
+      [game, [], []], [game, swaps, []],
+      [game, swaps.slice(0, 5), [{ hero: 'npc_dota_hero_earthshaker', key: 'customresponse', value: 'eartharc_cosmos' }, { hero: 'npc_dota_hero_drow_ranger', key: 'customresponse', value: 'x' }]],
+    ] });
+    assert.ok(swaps.length > 10 && voices.length > 100);
+  }
+  assert.ok(compare(cases) > 300);
+});

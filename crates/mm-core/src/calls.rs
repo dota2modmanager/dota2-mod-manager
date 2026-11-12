@@ -10,8 +10,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use crate::kv::latin1;
 use crate::{
     cosmetic_names, hero_names, i18n, item_builder_donor as donor, item_builder_effects as effects,
-    item_builder_styles as styles, item_visuals, model_attachments, model_cloth, model_sequences, model_skin,
-    unusual_effects,
+    item_builder_styles as styles, item_skin, item_sounds, item_visuals, model_attachments, model_cloth,
+    model_sequences, model_skin, unusual_effects,
 };
 
 /// A text argument as items_game's latin1 bytes: a string one byte per char, or {"$file": path}
@@ -180,6 +180,34 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
         "model-attachments.attachmentNames" => json!(model_attachments::attachment_names(&b(args, 0)?)),
         "model-attachments.attachedAs" => sha(Some(model_attachments::attached_as(&b(args, 0)?, &b(args, 1)?))),
         "model-sequences.numberedAs" => sha(model_sequences::numbered_as(&b(args, 0)?, &b(args, 1)?)),
+        "item-skin.firstStyleSkin" => {
+            json!(item_skin::first_style_skin(&b(args, 0)?).map_err(kv_err)?.map(|v| latin1(&v)))
+        }
+        "item-skin.wornSkin" => {
+            let fallback = if args.get(1).is_some_and(|v| !v.is_null()) { n(args, 1) as u64 } else { 0 };
+            let model = args.get(2).and_then(Value::as_str);
+            json!(item_skin::worn_skin(&b(args, 0)?, fallback, model).map_err(kv_err)?)
+        }
+        "item-sounds.voiceSwaps" => {
+            let rules = crate::kv3::read(crate::resource::data_block(&b(args, 0)?).map_err(|e| e.to_string())?)
+                .map_err(|e| e.to_string())?;
+            let cue: item_sounds::VoiceCue =
+                serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(item_sounds::voice_swaps(&rules.root, &cue.key, &cue.value, cue.whole))
+        }
+        "item-sounds.soundEntries" => {
+            let ix =
+                crate::vpk::Index::open(std::path::Path::new(&s(args, 0)).join("dota").join("pak01_dir.vpk").as_path())
+                    .map_err(|e| e.to_string())?;
+            let swaps: Vec<item_sounds::SoundSwap> =
+                serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let cues: Vec<item_sounds::VoiceCue> =
+                serde_json::from_value(args.get(2).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(item_sounds::sound_entries(&ix, &swaps, &cues)
+                .into_iter()
+                .map(|(p, f)| json!([p, sha(Some(f))]))
+                .collect::<Vec<_>>())
+        }
         "item-visuals.itemVisuals" => json!(item_visuals::item_visuals(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?),
         "item-visuals.findItems" => json!(item_visuals::find_items(&b(args, 0)?, &s(args, 1))
             .map_err(kv_err)?
