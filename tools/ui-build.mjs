@@ -10,6 +10,7 @@
  *
  *   node tools/ui-build.mjs           build if stale
  *   node tools/ui-build.mjs --force   build anyway
+ *   node tools/ui-build.mjs --tauri   the Tauri shell's copy, out/renderer-tauri (vite.config.mjs)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -57,6 +58,11 @@ export async function ensureUi(opts) {
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   requireDeps();
+  if (process.argv.includes('--tauri')) {
+    process.env.MM_TARGET = 'tauri';
+    await buildUi({ quiet: false });
+    process.exit(0);
+  }
   const force = process.argv.includes('--force');
   const built = force ? (await buildUi({ quiet: false }), true) : await ensureUi({ quiet: false });
   if (!built) console.log('out/renderer is up to date');

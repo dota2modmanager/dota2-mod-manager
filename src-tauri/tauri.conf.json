@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Dota 2 Mod Manager",
+  "version": "../package.json",
+  "identifier": "com.dota2modmanager.app",
+  "build": {
+    "frontendDist": "../out/renderer-tauri",
+    "beforeBuildCommand": "node tools/ui-build.mjs --force --tauri"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [],
+    "security": {
+      "csp": null,
+      "capabilities": ["main"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["../build/icon.png", "../build/icon.ico"],
+    "resources": {
+      "../src": "app/src",
+      "../src-tauri/host": "app/src-tauri/host",
+      "../renderer/uninstall.html": "app/renderer/uninstall.html",
+      "../CHANGELOG.md": "app/CHANGELOG.md",
+      "../CHANGELOG.ru.md": "app/CHANGELOG.ru.md",
+      "../package.json": "app/package.json"
+    },
+    "windows": {
+      "nsis": { "installMode": "currentUser" }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+[package]
+name = "mm-core"
+version = "0.1.0"
+description = "The parts of Dota 2 Mod Manager that read and write the game's files, in Rust"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+crc32fast.workspace = true
+indexmap = "2"
+sha1 = "0.10"
+memchr = "2"
+rustc-hash = "2"
+rayon = "1"

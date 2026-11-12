@@ -47,3 +47,7 @@ test-output/
 # small copies of the mod pictures, kept between local builds (site/tools/thumbs.mjs)
 .thumb-cache/
 /work/
+
+# The Rust build (Cargo.toml) and what tauri-build generates beside the shell's sources.
+target/
+src-tauri/gen/
