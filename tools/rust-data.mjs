@@ -44,7 +44,8 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   fs.mkdirSync(out, { recursive: true });
   for (const [file, text] of Object.entries(want)) {
     const at = path.join(out, file);
-    const has = fs.existsSync(at) ? fs.readFileSync(at, 'utf8') : null;
+    let has = null;
+    try { has = fs.readFileSync(at, 'utf8'); } catch { /* not written yet */ }
     if (has === text) continue;
     stale.push(file);
     if (!check) fs.writeFileSync(at, text);
