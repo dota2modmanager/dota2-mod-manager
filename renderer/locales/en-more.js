@@ -244,5 +244,6 @@ const EN = {
   "«{0}»: убрано иконок предметов: {1}": "“{0}”: item icons removed: {1}",
   "Эмблема рисуется на кольце под выбранным героем. Пока она включена, приложение само держит в autoexec.cfg команду r_draw_selected_ring 1. Если стоит Minify, выключи в нём Misc Optimization: она прячет это кольцо.": "An emblem is drawn on the ring under the selected hero. While one is on, the app keeps the command r_draw_selected_ring 1 in autoexec.cfg for you. If you use Minify, turn off its Misc Optimization: it hides that ring.",
   "В этом моде нет иконок предметов": "This mod has no item icons",
+  "Это и есть «небезопасный режим» прошлых версий. Выключишь его, и приложение вернёт gameinfo и dota.signatures как у Valve, а VPK-моды продолжат работать.": "This is the “unsafe mode” of earlier versions. Turn it off and the app puts gameinfo and dota.signatures back the way Valve ships them, while VPK mods keep working.",
 };
 window.EN_MORE = EN;

@@ -233,6 +233,7 @@ the code, not in this page.
 | [`src/tray.ts`](#srctrayts) | The app beside the game rather than in front of it (plan item 9, Misha's call on 2026-11-12). |
 | [`src/tree-sets.ts`](#srctree-setsts) | Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
+| [`src/ui-lang.ts`](#srcui-langts) | The window's language on the very first start, before the person has picked one: the system's. |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
 | [`src/unusual-effects.ts`](#srcunusual-effectsts) | The game's unusual and ethereal effects, read out of items_game.txt (issue #393). An owned |
 | [`src/update-impact.ts`](#srcupdate-impactts) | Which installed mods a Dota update reached. |
@@ -13116,7 +13117,7 @@ the start to settle: on Linux, a copy of the Workshop Tools the game has (src/wo
 ### `createServices`
 
 ```ts
-export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons }: { userData: string; appVersion: () => string; /** the bar at the bottom of the window */ sendProgress: (evt: AppProgress) => void; diag: (msg: string) => void; /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */ fetchIcons: ConstructorParameters<typeof Icons>[1]
+export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons, systemLanguages = null }: { userData: string; appVersion: () => string; /** the bar at the bottom of the window */ sendProgress: (evt: AppProgress) => void; diag: (msg: string) => void; /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */ fetchIcons: ConstructorParameters<typeof Icons>[1]
 ```
 
 Build every service over this userData folder.
@@ -14068,6 +14069,25 @@ export interface Preset
 ```
 
 A saved build, or one received as a .d2mm and not installed yet (`wanted`).
+
+## src/ui-lang.ts
+
+The window's language on the very first start, before the person has picked one: the system's.
+It used to be English for everybody, and most of the people who install the app read Russian
+(plan item 21, 2026-11-12). Russian also covers the languages whose speakers usually read it
+here; anything the app has no translation for stays English. Settings keep the choice after.
+
+### `uiLangFor`
+
+```ts
+export function uiLangFor(locales: readonly string[]): 'ru' | 'zh-CN' | 'en'
+```
+
+The app's language for a system's list of preferred ones, first match wins.
+
+```
+@param locales  as Electron's app.getPreferredSystemLanguages() gives them ("ru-RU", "zh-Hans-CN")
+```
 
 ## src/uninstall-args.ts
 

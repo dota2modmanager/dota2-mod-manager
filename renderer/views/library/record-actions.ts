@@ -206,7 +206,7 @@ export function menuFor(id: string): MenuItem[] | null {
     },
     langDir(rec) && { label: L`Распаковать в папку`, icon: 'folder_open', onPick: () => unpackRecord(rec.id) },
     (rec.subjects || 0) >= 2 && { label: L`Разобрать по героям`, icon: 'call_split', onPick: () => splitRecord(rec.id) },
-    langDir(rec) && !rec.noItemIcons && rec.categoryId !== 'item-icons' && { label: L`Убрать иконки предметов`, icon: 'hide_image', onPick: () => dropItemIcons(rec.id) },
+    langDir(rec) && !rec.noItemIcons && (rec.categoryId === 'heroes' || rec.categoryId === 'imported') && { label: L`Убрать иконки предметов`, icon: 'hide_image', onPick: () => dropItemIcons(rec.id) },
     rec.prePatch && { label: L`Убрать метку «до патча»`, icon: 'done', onPick: () => clearPrePatch(rec.id) },
     ...naming,
     { separator: true },
