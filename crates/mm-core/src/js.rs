@@ -74,6 +74,133 @@ pub fn is_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
+/// Number(v): what JavaScript makes of a value asked for as a number.
+pub fn to_number(v: &Value) -> f64 {
+    match v {
+        Value::Null => 0.0,
+        Value::Bool(b) => *b as u8 as f64,
+        Value::Number(n) => n.as_f64().unwrap_or(f64::NAN),
+        Value::String(s) => str_number(s),
+        Value::Array(a) if a.is_empty() => 0.0,
+        Value::Array(a) if a.len() == 1 => str_number(&string(&a[0])),
+        _ => f64::NAN,
+    }
+}
+
+fn str_number(s: &str) -> f64 {
+    let t = s.trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}');
+    if t.is_empty() {
+        return 0.0;
+    }
+    let (sign, rest) = match t.as_bytes()[0] {
+        b'-' => (-1.0, &t[1..]),
+        b'+' => (1.0, &t[1..]),
+        _ => (1.0, t),
+    };
+    if rest == "Infinity" {
+        return sign * f64::INFINITY;
+    }
+    for (prefix, radix) in [("0x", 16), ("0X", 16), ("0o", 8), ("0O", 8), ("0b", 2), ("0B", 2)] {
+        if let Some(d) = t.strip_prefix(prefix) {
+            return u64::from_str_radix(d, radix).map_or(f64::NAN, |n| n as f64);
+        }
+    }
+    let ok =
+        !rest.is_empty() && rest.bytes().all(|c| c.is_ascii_digit() || matches!(c, b'.' | b'e' | b'E' | b'+' | b'-'));
+    if ok {
+        rest.parse::<f64>().map_or(f64::NAN, |n| sign * n)
+    } else {
+        f64::NAN
+    }
+}
+
+/// A number as JSON.stringify writes it: null for NaN and the infinities, 0 for -0, whole numbers
+/// without a fraction.
+pub fn json_number(n: f64) -> Value {
+    if !n.is_finite() {
+        return Value::Null;
+    }
+    if n == 0.0 {
+        return Value::from(0);
+    }
+    if n.fract() == 0.0 && n.abs() < 9_007_199_254_740_992.0 {
+        return Value::from(n as i64);
+    }
+    Value::from(n)
+}
+
+/// Math.hypot as V8 computes it: the values over the largest, their squares summed with Kahan's
+/// compensation, so that a port measures the same last bit.
+pub fn hypot(values: &[f64]) -> f64 {
+    let mut max = 0.0f64;
+    for v in values {
+        let a = v.abs();
+        if a.is_infinite() {
+            return f64::INFINITY;
+        }
+        if a.is_nan() {
+            return f64::NAN;
+        }
+        max = max.max(a);
+    }
+    if max == 0.0 {
+        return 0.0;
+    }
+    let (mut sum, mut compensation) = (0.0f64, 0.0f64);
+    for v in values {
+        let n = v.abs() / max;
+        let summand = n * n - compensation;
+        let preliminary = sum + summand;
+        compensation = (preliminary - sum) - summand;
+        sum = preliminary;
+    }
+    sum.sqrt() * max
+}
+
+/// What (x).toFixed(digits) gives: rounded on the exact value, a tie going away from zero.
+pub fn to_fixed(x: f64, digits: usize) -> String {
+    if !x.is_finite() || x.abs() >= 1e21 {
+        return number(x);
+    }
+    // a double's exact decimal ends within 1074 places, so this is the value itself
+    let exact = format!("{:.1100}", x.abs());
+    let (int, frac) = exact.split_once('.').unwrap_or((&exact, ""));
+    let mut d: Vec<u8> = int.bytes().chain(frac.bytes().take(digits)).collect();
+    if frac.as_bytes().get(digits).is_some_and(|c| *c >= b'5') {
+        let mut i = d.len();
+        loop {
+            if i == 0 {
+                d.insert(0, b'1');
+                break;
+            }
+            i -= 1;
+            if d[i] == b'9' {
+                d[i] = b'0';
+            } else {
+                d[i] += 1;
+                break;
+            }
+        }
+    }
+    let cut = d.len() - digits;
+    let mut out = String::from(if x < 0.0 { "-" } else { "" });
+    out += std::str::from_utf8(&d[..cut]).unwrap_or("0");
+    if digits > 0 {
+        out.push('.');
+        out += std::str::from_utf8(&d[cut..]).unwrap_or("");
+    }
+    out
+}
+
+/// What a.localeCompare(b) gives in Node with no locale named: ICU's root collation (the app's
+/// default locale, en, has no tailoring of its own).
+pub fn locale_compare(a: &str, b: &str) -> std::cmp::Ordering {
+    use icu_collator::{options::CollatorOptions, Collator, CollatorBorrowed};
+    static C: std::sync::OnceLock<CollatorBorrowed<'static>> = std::sync::OnceLock::new();
+    C.get_or_init(|| Collator::try_new(Default::default(), CollatorOptions::default()).expect("ICU's root collation"))
+        .compare(a, b)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

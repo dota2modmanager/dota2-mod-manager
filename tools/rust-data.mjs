@@ -22,6 +22,10 @@ export const TABLES = [
   ['hero-alias.json', 'src/hero-names.ts', 'HERO_ALIAS'],
   ['item-effects.json', 'src/item-builder-effects.ts', 'ITEM_EFFECTS'],
   ['recolor-sets.json', 'src/recolor-sets.ts', 'RECOLOR_SETS'],
+  ['arcana-bases.json', 'src/arcana-bases.ts', 'ARCANA_BASES'],
+  ['arcana-notes.json', 'src/arcana-notes.ts', 'ARCANA_NOTES'],
+  ['arcanas-that-work.json', 'src/arcana-notes.ts', 'ARCANAS_THAT_WORK'],
+  ['heroes-not-checked.json', 'src/arcana-notes.ts', 'HEROES_NOT_CHECKED'],
 ];
 
 /** Every table as the text its file should hold. */
@@ -31,8 +35,8 @@ export async function tables() {
     const m = await import(pathToFileURL(path.join(root, mod)).href);
     const value = m[name];
     if (!value || typeof value !== 'object') throw new Error(`${mod} has no table ${name}`);
-    // a list is written as it is, one element a line; a map or an object as its pairs
-    const rows = Array.isArray(value) ? value : value instanceof Map ? [...value] : Object.entries(value);
+    // a list or a set is written as it is, one element a line; a map or an object as its pairs
+    const rows = Array.isArray(value) || value instanceof Set ? [...value] : value instanceof Map ? [...value] : Object.entries(value);
     res[file] = `[\n${rows.map((p) => JSON.stringify(p)).join(',\n')}\n]\n`;
   }
   return res;

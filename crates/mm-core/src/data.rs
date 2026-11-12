@@ -43,6 +43,30 @@ pub fn item_effects() -> &'static [crate::item_builder_effects::ItemEffect] {
     T.get_or_init(|| list(include_str!("../data/item-effects.json")))
 }
 
+/// The arcana bases (src/arcana-bases.ts ARCANA_BASES), in their order.
+pub fn arcana_bases() -> &'static [crate::arcana_notes::ArcanaBase] {
+    static T: OnceLock<Vec<crate::arcana_notes::ArcanaBase>> = OnceLock::new();
+    T.get_or_init(|| list(include_str!("../data/arcana-bases.json")))
+}
+
+/// Arcanas played and found wanting, by hero (src/arcana-notes.ts ARCANA_NOTES).
+pub fn arcana_notes() -> &'static [(String, crate::arcana_notes::Noted)] {
+    static T: OnceLock<Vec<(String, crate::arcana_notes::Noted)>> = OnceLock::new();
+    T.get_or_init(|| list(include_str!("../data/arcana-notes.json")))
+}
+
+/// Arcanas played and found to work, by hero.
+pub fn arcanas_that_work() -> &'static [String] {
+    static T: OnceLock<Vec<String>> = OnceLock::new();
+    T.get_or_init(|| list(include_str!("../data/arcanas-that-work.json")))
+}
+
+/// Heroes none of whose items have been played through the builder yet.
+pub fn heroes_not_checked() -> &'static [String] {
+    static T: OnceLock<Vec<String>> = OnceLock::new();
+    T.get_or_init(|| list(include_str!("../data/heroes-not-checked.json")))
+}
+
 /// What src/recolor.ts can recolour (src/recolor-sets.ts RECOLOR_SETS), by name, in its order.
 pub fn recolor_sets() -> &'static [(String, crate::recolor::RecolorSet)] {
     static T: OnceLock<Vec<(String, crate::recolor::RecolorSet)>> = OnceLock::new();

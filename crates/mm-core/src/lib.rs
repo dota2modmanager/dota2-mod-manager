@@ -1,13 +1,20 @@
 //! The parts of Dota 2 Mod Manager that read and write the game's files, rewritten from src/*.ts.
 //! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
 
+pub mod ability_sounds;
+pub mod arcana_notes;
 pub mod calls;
 pub mod cosmetic_names;
 pub mod data;
+pub mod effect_edit;
 pub mod hero_names;
+pub mod hero_showcase;
 pub mod i18n;
+pub mod item_builder_ability_fx;
+pub mod item_builder_details;
 pub mod item_builder_donor;
 pub mod item_builder_effects;
+pub mod item_builder_slots;
 pub mod item_builder_styles;
 pub mod item_skin;
 pub mod item_sounds;
@@ -18,13 +25,19 @@ pub mod kv3;
 pub mod lz4;
 pub mod material;
 pub mod memo;
+pub mod meshopt;
 pub mod model_attachments;
 pub mod model_cloth;
+pub mod model_hitboxes;
 pub mod model_sequences;
 pub mod model_skin;
+pub mod particle_snapshot;
+pub mod particle_spec;
+pub mod particle_surface;
 pub mod recolor;
 pub mod resource;
 pub mod schema;
 pub mod schema_merge;
 pub mod unusual_effects;
 pub mod vpk;
+pub mod vpk_pack;
