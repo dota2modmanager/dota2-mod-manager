@@ -92,7 +92,11 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | compiled resources: blocks, RERL (`src/resource.ts`) | done | no | `crates/mm-core/src/resource.rs`; same parity test |
 | strings and data tables (`i18n.ts`, `hero-names.ts`, the item builder's effects) | done | no | `i18n.rs`, `hero_names.rs`, `data.rs`; the tables are JSON in `crates/mm-core/data/`, written from the TypeScript by `node tools/rust-data.mjs` and checked by `test/rust-data.test.ts` |
 | item builder: styles, donor effects, own and unusual effects, item visuals, localization tokens (`item-builder-styles.ts`, `-donor.ts`, `-effects.ts`, `-unusual.ts`, `unusual-effects.ts`, `item-visuals.ts`, `cosmetic-names.ts` pure part) | done | no | parity through `calls.rs`: `test/rust-calls.test.ts` runs every function on both sides over the sandbox's real items_game (and the game's localization when installed) |
-| the readers on top of KV3 (`material.ts`, `recolor.ts`, `model-*.ts`, `particle-*.ts`) and the rest of the item builder | - | - | next |
+| models: material set, cloth, attachments, sequence numbering (`model-skin.ts`, `model-cloth.ts`, `model-attachments.ts`, `model-sequences.ts`) | done | no | `model_*.rs`; parity: the same bytes (sha1) on ~200 of the game's item, courier and hero models, the courier numbering against all four donkeys |
+| an item's material set, sounds and voice (`item-skin.ts`, `item-sounds.ts`) | done | no | `item_skin.rs`, `item_sounds.rs`; parity: every hero's response rules, real sound swaps from items_game, the soundevents files written alike |
+| material expressions and recolouring (`material.ts`, `recolor.ts`, `recolor-sets.ts`) | done | no | `material.rs`, `recolor.rs`, sets in `data/recolor-sets.json`; parity: ~300 materials, ~400 particles in five modes, the whole VPK of each set |
+| `model-scale.ts` (persona items made bigger) | - | - | needs a meshopt vertex codec in Rust that encodes byte for byte as `meshoptimizer`'s WebAssembly does |
+| `particle-*.ts` and the rest of the item builder (assets, slots, personas, sets, kinetic, ability effects, the build itself), arcana | - | - | next |
 | settings, library/manifest, installer, patcher, gamelang | - | - | the `mods:*` channels |
 | catalog, network, previews (`mm-preview://`) | - | - | `reqwest`; the picture redirect (`src/preview-cache.ts`) has no Tauri twin yet |
 | item builder, arcana, Workshop editors | - | - | |
