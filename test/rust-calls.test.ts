@@ -665,3 +665,137 @@ test('the item builder offer in Rust is the one the TypeScript lists, slot for s
   assert.ok(heroes.length > 100);
   assert.ok(compare(cases) > 1000);
 });
+
+test('what an item builder pick takes out of the game files in Rust is what the TypeScript takes', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex, entryPath } = await import('../src/vpk.ts');
+  const as = await import('../src/item-builder-assets.ts');
+  const sl = await import('../src/item-builder-slots.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const index = openVpkIndex(GAME_PAK01);
+  const game = path.dirname(path.dirname(GAME_PAK01));
+  const sha = (b: Buffer | null) => (b ? createHash('sha1').update(b).digest('hex') : null);
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const visualsOf = (block: string) => { let v: string | null = null; eachChild(block, blockBounds(block, 0), (c) => { if (!v && c.isBlock && c.key.toLowerCase() === 'visuals') v = block.slice(c.start, c.end); }); return v as string | null; };
+  const picks = listItems(text).filter((i) => i.hasVisuals).map((i) => ({ visuals: visualsOf(text.slice(i.start, i.end)), heroes: sl.itemHeroes(text, i) }))
+    .filter((p): p is { visuals: string; heroes: string[] } => !!p.visuals && p.heroes.length > 0);
+  const entity = picks.filter((p) => /"entity_model"|"persona"|"hero_model_change"/i.test(p.visuals));
+  const chosen = [...entity, ...spread(picks.filter((p) => !entity.includes(p)), 200)];
+  const summon = as.summonModels(index);
+  const assets = (pak: string, tx: string, v: string, h: string[]) => as.itemAssets(tx, v, h, summon);
+  const copied = chosen.map((p) => assets(GAME_PAK01, text, p.visuals, p.heroes).assetCopies).filter((c) => c.length);
+  const heroes = [...new Set(picks.flatMap((p) => p.heroes))];
+  const cases: Case[] = [
+    { name: 'item-builder-assets.itemAssets', ts: assets as never, inputs: chosen.map((p) => [GAME_PAK01, { $file: file }, p.visuals, p.heroes]) },
+    { name: 'item-builder-assets.heroModelPath', ts: ((pak: string, h: string) => as.heroModelPath(index, h)) as never, inputs: [...heroes, 'npc_dota_hero_nobody'].map((h) => [GAME_PAK01, h]) },
+    { name: 'item-builder-assets.gameAssetEntries', ts: ((pak: string, copies: never[]) => as.gameAssetEntries(game, copies).map((e) => [entryPath(e), sha(e.data)])) as never, inputs: [
+      ...[...copied.filter((c) => c.some((x) => 'hero' in x || 'unit' in x || 'form' in x)), ...spread(copied, 40)].map((c) => [GAME_PAK01, c]),
+      [GAME_PAK01, [{ from: '', hero: 'npc_dota_hero_juggernaut', activities: [] }]],
+      [GAME_PAK01, [{ from: 'models/nowhere.vmdl', to: 'models/x.vmdl', optional: true }]],
+      [GAME_PAK01, [{ from: 'models/nowhere.vmdl', to: 'models/x.vmdl' }]],
+    ] },
+  ];
+  assert.ok(entity.length > 20);
+  assert.ok(compare(cases) > 300);
+});
+
+test('a pick the item builder writes in Rust is the block the TypeScript writes', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const ib = await import('../src/item-builder.ts');
+  const kin = await import('../src/item-builder-kinetic.ts');
+  const sl = await import('../src/item-builder-slots.ts');
+  const { ITEM_EFFECTS } = await import('../src/item-builder-effects.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const summon = ib.summonModels(openVpkIndex(GAME_PAK01));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const items = listItems(text);
+  const worn = items.filter((i) => i.hasVisuals && (i.prefab === 'wearable' || i.prefab === 'default_item') && sl.itemHeroes(text, i).length);
+  const special = worn.filter((i) => /"entity_model"|"persona"|"hero_model_change"|"styles"|"response_criteria"/i.test(text.slice(i.start, i.end)));
+  const picks = [...spread(special, 120), ...spread(worn.filter((i) => !special.includes(i)), 120)];
+  const lite = (i: { id: string; start: number }) => ({ id: i.id, start: i.start });
+  const gems = [...kin.kineticGems(text).keys()];
+  const own = ITEM_EFFECTS.map((e) => e.id);
+  const keys: unknown[] = [null, '', 'style-2', [own[0], 'style-1', own[1]], `${own[1]},${own[0]},${own[0]}`, 'unusual-12,unusual-3,FIRE ,zzz,aaa,from-123', ['a,b', ' X '], `kinetic-${gems[0]},${own[2]}`, 'style-0', 'from-1,from-2'];
+  const effectsFor = (k: number) => [[], [own[k % own.length]], [`kinetic-${gems[k % gems.length]}`], ['style-1'], [`from-${picks[(k + 7) % picks.length].id}`], ['unusual-9999999'], ['nope']][k % 7];
+  const patch = (pak: string, tx: string, id: string, effects: unknown, target?: string, refit?: string) => ib.itemEffectPatch(tx, id, effects as string[], target, summon, refit);
+  const heroes = [...new Set(worn.flatMap((i) => sl.itemHeroes(text, i)))];
+  const cases: Case[] = [
+    { name: 'item-builder.effectKey', ts: ib.effectKey as never, inputs: keys.map((k) => [k]) },
+    { name: 'item-builder.itemVisuals', ts: ((tx: string, i: { start: number }) => ib.itemVisuals(tx, i)) as never, inputs: spread(items, 80).map((i) => [{ $file: file }, lite(i)]) },
+    { name: 'item-builder.itemVoices', ts: ((tx: string, i: { start: number }) => ib.itemVoices(tx, i)) as never, inputs: picks.slice(0, 120).map((i) => [{ $file: file }, lite(i)]) },
+    { name: 'item-builder.defaultItemForWearable', ts: ((tx: string, id: string) => ib.defaultItemForWearable(tx, id)?.id ?? null) as never, inputs: [...picks.map((i) => [{ $file: file }, i.id]), [{ $file: file }, '999999999']] },
+    { name: 'item-builder.asItem', ts: ((bl: string, tx: string, i: { id: string; start: number }, m: string | null) => ib.asItem(bl, tx, i, m)) as never, inputs: picks.slice(0, 60).map((i, k) => [text.slice(i.start, i.end), { $file: file }, lite(picks[(k + 3) % picks.length]), k % 2 ? null : 'models/x/y.vmdl']) },
+    { name: 'item-builder.setVisualsBlock', ts: ib.setVisualsBlock as never, inputs: [...picks.slice(0, 40).map((i) => [text.slice(i.start, i.end), '  "visuals"\r\n{\r\n}\r\n ']), ['"1"\r\n{\r\n\t"name"\t"x"\r\n}', '"visuals" {}'], ['no block', 'x']] },
+    { name: 'item-builder.withoutFileSwaps', ts: ((v: string, u: string[], st: string[]) => ib.withoutFileSwaps(v, new Set(u), new Set(st))) as never, inputs: special.slice(0, 80).flatMap((i) => {
+      const v = ib.itemVisuals(text, i)!;
+      let a: { assetCopies: object[] } = { assetCopies: [] };
+      try { a = ib.itemEffectPatch(text, i.id, [], undefined, summon); } catch { /* no stock item */ }
+      return [[v, [], []], [v, a.assetCopies.flatMap((c) => ('hero' in c ? [(c as { hero: string }).hero] : 'unit' in c ? [(c as { unit: string }).unit] : [])), a.assetCopies.flatMap((c) => ('to' in c ? [String((c as { to: string }).to).toLowerCase()] : []))], [v, heroes, []]];
+    }) },
+    { name: 'item-builder.itemEffectPatch', ts: patch as never, inputs: [
+      ...picks.map((i, k) => [GAME_PAK01, { $file: file }, i.id, effectsFor(k), null, null]),
+      ...picks.slice(0, 20).map((i, k) => [GAME_PAK01, { $file: file }, i.id, [], picks[(k + 1) % picks.length].id, k % 2 ? 'models/heroes/x/refit.vmdl' : null]),
+      [GAME_PAK01, { $file: file }, '999999999', [], null, null],
+    ] },
+    { name: 'item-builder-kinetic.kineticGems', ts: ((tx: string) => [...kin.kineticGems(tx)]) as never, inputs: [[{ $file: file }], ['no table']] },
+    { name: 'item-builder-kinetic.offeredKinetic', ts: kin.offeredKinetic as never, inputs: [[{ $file: file }, heroes], ...heroes.slice(0, 60).map((h) => [{ $file: file }, [h]])] },
+    { name: 'item-builder-kinetic.picksGems', ts: kin.picksGems as never, inputs: [[{ $file: file }, gems.map((g) => `kinetic-${g}`).join(',')], [{ $file: file }, 'kinetic-nope'], [{ $file: file }, 'fire,style-2']] },
+    { name: 'item-builder-kinetic.withKinetics', ts: ((v: string, tx: string, k: string) => kin.withKinetics(v, kin.picksGems(tx, k))) as never, inputs: picks.slice(0, 20).map((i, k) => [ib.itemVisuals(text, i)!, { $file: file }, `kinetic-${gems[k % gems.length]},kinetic-${gems[(k + 5) % gems.length]}`]) },
+  ];
+  assert.ok(special.length > 50 && gems.length > 20);
+  assert.ok(compare(cases) > 900);
+});
+
+test('ability effects picks and refits in Rust are the ones the TypeScript makes', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { openVpkIndex, entryAt, entryPath } = await import('../src/vpk.ts');
+  const ib = await import('../src/item-builder.ts');
+  const fxp = await import('../src/item-builder-fx-patch.ts');
+  const rf = await import('../src/item-builder-refits.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const summon = ib.summonModels(openVpkIndex(GAME_PAK01));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const items = listItems(text);
+  const fits = items.filter((i) => text.slice(i.start, i.end).includes('can_equip_as_ability_effects'));
+  const swapping = items.filter((i) => /"type"\s+"model"/i.test(text.slice(i.start, i.end)));
+  const wearable = spread(items.filter((i) => i.hasVisuals), 150);
+  const models = [...swapping, ...wearable].map((i, k) => [i.id, rf.pickModels(text, i.id, k % 3 ? [] : ['style-1'])] as const).filter(([, p]) => p);
+  const asList = models.map(([id, p]) => [id, p!.model, [...p!.swaps]]);
+  const cases: Case[] = [
+    { name: 'item-builder-fx-patch.abilityFxPatch', ts: ((pak: string, tx: string, id: string, fx: string[], n: number) => fxp.abilityFxPatch(tx, id, fx, n, summon)) as never, inputs: [
+      ...spread(fits, 120).flatMap((i, k) => [1, 2, 3].map((n) => [GAME_PAK01, { $file: file }, i.id, k % 2 ? [] : ['style-1'], n])),
+      [GAME_PAK01, { $file: file }, '999999999', [], 1], [GAME_PAK01, { $file: file }, wearable[0].id, [], 1], [GAME_PAK01, { $file: file }, fits[0]?.id, [], 0],
+    ] },
+    { name: 'item-builder-refits.pickModels', ts: ((tx: string, id: string, fx: string[]) => { const p = rf.pickModels(tx, id, fx); return p && [p.model, [...p.swaps]]; }) as never, inputs: [...swapping, ...wearable].flatMap((i) => [[{ $file: file }, i.id, []], [{ $file: file }, i.id, ['style-1']], [{ $file: file }, i.id, ['style-2']]]).concat([[{ $file: file }, '999999999', []]]) },
+    { name: 'item-builder-refits.refitsOf', ts: ((list: [string, string, [string, string][]][]) => [...rf.refitsOf(new Map(list.map(([k, m, s]) => [k, { model: m, swaps: new Map(s) }])))]) as never, inputs: [[asList], [asList.slice(0, 30)], [[['a', 'x', [['y', 'r1']]], ['b', 'y', [['x', 'r2']]], ['c', '', [['', 'r3']]], ['d', 'x', []]]]] },
+    { name: 'item-builder-refits.ownModelsWin', ts: ((list: [string[] | null, string | null][]) => {
+      const picks = list.map(([a, own]) => ({ patch: { assets: a?.map((p) => entryAt(p, Buffer.alloc(0))) }, own }));
+      rf.ownModelsWin(picks);
+      return picks.map((p) => p.patch.assets?.map((e) => entryPath(e)) ?? null);
+    }) as never, inputs: [
+      [[[['models/a.vmdl_c', 'models/b.vmdl_c'], 'models/a.vmdl_c'], [['models/A.vmdl_c', 'models/c.vmdl_c'], null], [null, 'models/b.vmdl_c']]],
+      [[[['x'], null], [['y'], '']]],
+    ] },
+  ];
+  assert.ok(fits.length > 20 && swapping.length > 10);
+  assert.ok(compare(cases) > 400);
+});
+
+test('the item builder sets in Rust are the ones the TypeScript lists', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { itemSets } = await import('../src/item-builder-sets.ts');
+  const { file } = await realItems();
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  const cases: Case[] = [
+    { name: 'item-builder-sets.itemSets', ts: ((l: string, tx: string) => lang(l, () => itemSets(tx))) as never, inputs: [['ru', { $file: file }], ['en', { $file: file }]] },
+  ];
+  assert.equal(compare(cases), 2);
+});

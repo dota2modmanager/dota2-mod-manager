@@ -239,6 +239,11 @@ pub fn latin1(bytes: &[u8]) -> String {
     bytes.iter().map(|&b| b as char).collect()
 }
 
+/// A string back as latin1 bytes, as Buffer.from(s, 'latin1') writes it: each char's low byte.
+pub fn to_latin1(s: &str) -> Vec<u8> {
+    s.chars().map(|c| c as u32 as u8).collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
