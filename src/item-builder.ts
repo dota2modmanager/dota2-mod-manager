@@ -37,7 +37,7 @@ import { KINETIC, picksGems, withKinetics } from './item-builder-kinetic.ts';
 export { itemSlots, itemSlotsSteps, itemOptions } from './item-builder-slots.ts';
 export { itemSets } from './item-builder-sets.ts';
 export { itemEffects } from './item-builder-effects.ts';
-export { gameAssetEntries, summonModels } from './item-builder-assets.ts';
+export { gameAssetEntries, gameAssetEntriesSteps, summonModels } from './item-builder-assets.ts';
 export type { SummonModels } from './item-builder-assets.ts';
 export type { ItemSlot, AssetCopy } from './item-builder-slots.ts';
 export type { ItemSet } from './item-builder-sets.ts';

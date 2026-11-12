@@ -103,7 +103,8 @@ export function createTableBuild({ library, bases, log }: {
     const fx = fxSlotOf(rec.slot);
     return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${fx ? `#fx${fx}` : ''}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}${scale ? `*${scale}` : ''}`;
   };
-  function builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): ItemPick {
+  /** A pick built, or the one built before for the same key; its files are read a pause apart (gameAssetEntriesSteps). */
+  function* builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): Generator<typeof PAUSE, ItemPick> {
     let pick = built.get(key);
     if (!pick) {
       // a summon's plain model, from the game's unit scripts: read only for an item that swaps one
@@ -112,7 +113,7 @@ export function createTableBuild({ library, bases, log }: {
       const fx = fxSlotOf(rec.slot);
       const made = fx ? abilityFxPatch(vanillaText, String(rec.itemId), rec.effectId, fx, summon)
         : itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon, refit);
-      pick = { ...made, assets: scaledModels(itemBuilder.gameAssetEntries(game, made.assetCopies, own && ((p) => own.paths.has(p))), scale,
+      pick = { ...made, assets: scaledModels(yield* itemBuilder.gameAssetEntriesSteps(game, made.assetCopies, own && ((p) => own.paths.has(p))), scale,
         (p, why) => log(`schema: ${rec.name}: ${p} left at its own size: ${why}`)) };
       built.set(key, pick);
     }
@@ -192,7 +193,7 @@ export function createTableBuild({ library, bases, log }: {
         try {
           if (isItemPick(rec)) {
             const key = pickKey(rec, ready, refits.get(rec), scaleOf(rec));
-            const pick = builtPick(vanillaText, game, key, rec, ownBase(rec, ready), refits.get(rec), scaleOf(rec));
+            const pick = yield* builtPick(vanillaText, game, key, rec, ownBase(rec, ready), refits.get(rec), scaleOf(rec));
             used.add(key);
             const assets = rec.persona && !isSelectorSlot(rec.slot)
               ? personaAssets(rec, pick.assets, ready) : withoutBaseFiles(String(rec.itemId), pick.assets, ready);
