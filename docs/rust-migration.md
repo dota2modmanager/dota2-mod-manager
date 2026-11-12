@@ -72,7 +72,9 @@ been through the sandbox and the e2e run. Both build from the same `renderer/`.
 arguments as JSON (a string of items_game text is its latin1 bytes; `{"$file": path}` reads a
 file once). `mm-cli call list.json` answers a list of `[name, ...args]`, and
 `test/rust-calls.test.ts` runs each case on both sides and compares. A new port adds its name
-to `calls.rs` and its cases to the test: that is the whole parity check. The same entry point is
+to `calls.rs` and its cases to the test: that is the whole parity check. The workspace builds
+`serde_json` with `float_roundtrip`: without it a number like 93.33333333333333 is read a bit off,
+and every answer computed from it differs from the TypeScript in the last place. The same entry point is
 how the Tauri host can ask Rust for a function while its caller is still TypeScript.
 
 ## Status
@@ -95,8 +97,12 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | models: material set, cloth, attachments, sequence numbering (`model-skin.ts`, `model-cloth.ts`, `model-attachments.ts`, `model-sequences.ts`) | done | no | `model_*.rs`; parity: the same bytes (sha1) on ~200 of the game's item, courier and hero models, the courier numbering against all four donkeys |
 | an item's material set, sounds and voice (`item-skin.ts`, `item-sounds.ts`) | done | no | `item_skin.rs`, `item_sounds.rs`; parity: every hero's response rules, real sound swaps from items_game, the soundevents files written alike |
 | material expressions and recolouring (`material.ts`, `recolor.ts`, `recolor-sets.ts`) | done | no | `material.rs`, `recolor.rs`, sets in `data/recolor-sets.json`; parity: ~300 materials, ~400 particles in five modes, the whole VPK of each set |
-| `model-scale.ts` (persona items made bigger) | - | - | needs a meshopt vertex codec in Rust that encodes byte for byte as `meshoptimizer`'s WebAssembly does |
-| `particle-*.ts` and the rest of the item builder (assets, slots, personas, sets, kinetic, ability effects, the build itself), arcana | - | - | next |
+| particle systems: the tree of a system, snapshots, attachment points (`particle-spec.ts`, `particle-snapshot.ts`) | done | no | `particle_spec.rs`, `particle_snapshot.rs`; parity: ~180 systems bound four ways, every hero script, ~40 snapshots (~8 000 points) |
+| surface hitboxes and effects spread over them (`model-hitboxes.ts`, `particle-surface.ts`) | done | no | `model_hitboxes.rs`, `particle_surface.rs`, and `meshopt.rs`, meshoptimizer's vertex decoder (format versions 0 and 1); parity: 60 item models, 80 unusual effects, same bytes |
+| effect edits, hero sound events, the loadout stage, packing a folder (`effect-edit.ts`, `ability-sounds.ts`, `hero-showcase.ts`, `vpk-pack.ts`) | done | no | `effect_edit.rs`, `ability_sounds.rs`, `hero_showcase.rs`, `vpk_pack.rs`; parity: ~120 systems edited two ways, every hero's events file written back as text; the stage's directions are within 4 ulps (V8 takes sine and cosine from glibc, Rust from fdlibm) |
+| `model-scale.ts` (persona items made bigger) | - | - | the decoder is there (`meshopt.rs`); the encoder must give the bytes `meshoptimizer`'s WebAssembly gives |
+| the item builder's offer: slots, persona slots, ability effects slots, arcana notes, item facts (`item-builder-slots.ts`, the slot halves of `-personas.ts` and `-ability-fx.ts`, `arcana-notes.ts`, `item-builder-details.ts`) | done | no | `item_builder_slots.rs`, `item_builder_ability_fx.rs`, `arcana_notes.rs`, `item_builder_details.rs`, bases in `data/arcana-bases.json`; names sort with ICU's root collation (`icu_collator`), as `localeCompare` does in Node; parity: the whole offer in ru and en, equal |
+| the rest of the item builder (assets, sets, kinetic, everyone, refits, a persona's build records, the build itself), arcana | - | - | next |
 | settings, library/manifest, installer, patcher, gamelang | - | - | the `mods:*` channels |
 | catalog, network, previews (`mm-preview://`) | - | - | `reqwest`; the picture redirect (`src/preview-cache.ts`) has no Tauri twin yet |
 | item builder, arcana, Workshop editors | - | - | |

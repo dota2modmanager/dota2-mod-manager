@@ -11,10 +11,14 @@ serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 crc32fast.workspace = true
-indexmap = "2"
+indexmap = { version = "2", features = ["serde"] }
 sha1 = "0.10"
 memchr = "2"
 rustc-hash = "2"
 rayon = "1"
 regex = "1"
 ruzstd = "0.9.1"
+# sin and cos as fdlibm computes them, which is what V8 does: the 3D preview reads the same numbers
+libm = "0.2"
+# String.prototype.localeCompare: the root collation of ICU, which V8 sorts names by
+icu_collator = "2"

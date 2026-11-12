@@ -129,6 +129,78 @@ pub fn json_number(n: f64) -> Value {
     Value::from(n)
 }
 
+/// Math.hypot as V8 computes it: the values over the largest, their squares summed with Kahan's
+/// compensation, so that a port measures the same last bit.
+pub fn hypot(values: &[f64]) -> f64 {
+    let mut max = 0.0f64;
+    for v in values {
+        let a = v.abs();
+        if a.is_infinite() {
+            return f64::INFINITY;
+        }
+        if a.is_nan() {
+            return f64::NAN;
+        }
+        max = max.max(a);
+    }
+    if max == 0.0 {
+        return 0.0;
+    }
+    let (mut sum, mut compensation) = (0.0f64, 0.0f64);
+    for v in values {
+        let n = v.abs() / max;
+        let summand = n * n - compensation;
+        let preliminary = sum + summand;
+        compensation = (preliminary - sum) - summand;
+        sum = preliminary;
+    }
+    sum.sqrt() * max
+}
+
+/// What (x).toFixed(digits) gives: rounded on the exact value, a tie going away from zero.
+pub fn to_fixed(x: f64, digits: usize) -> String {
+    if !x.is_finite() || x.abs() >= 1e21 {
+        return number(x);
+    }
+    // a double's exact decimal ends within 1074 places, so this is the value itself
+    let exact = format!("{:.1100}", x.abs());
+    let (int, frac) = exact.split_once('.').unwrap_or((&exact, ""));
+    let mut d: Vec<u8> = int.bytes().chain(frac.bytes().take(digits)).collect();
+    if frac.as_bytes().get(digits).is_some_and(|c| *c >= b'5') {
+        let mut i = d.len();
+        loop {
+            if i == 0 {
+                d.insert(0, b'1');
+                break;
+            }
+            i -= 1;
+            if d[i] == b'9' {
+                d[i] = b'0';
+            } else {
+                d[i] += 1;
+                break;
+            }
+        }
+    }
+    let cut = d.len() - digits;
+    let mut out = String::from(if x < 0.0 { "-" } else { "" });
+    out += std::str::from_utf8(&d[..cut]).unwrap_or("0");
+    if digits > 0 {
+        out.push('.');
+        out += std::str::from_utf8(&d[cut..]).unwrap_or("");
+    }
+    out
+}
+
+/// What a.localeCompare(b) gives in Node with no locale named: ICU's root collation (the app's
+/// default locale, en, has no tailoring of its own).
+pub fn locale_compare(a: &str, b: &str) -> std::cmp::Ordering {
+    use icu_collator::{options::CollatorOptions, Collator, CollatorBorrowed};
+    static C: std::sync::OnceLock<CollatorBorrowed<'static>> = std::sync::OnceLock::new();
+    C.get_or_init(|| Collator::try_new(Default::default(), CollatorOptions::default()).expect("ICU's root collation"))
+        .compare(a, b)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

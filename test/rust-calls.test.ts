@@ -21,7 +21,17 @@ const root = path.resolve(import.meta.dirname, '..');
 const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
 const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
 
-type Case = { name: string; ts: (...a: never[]) => unknown; inputs: unknown[][] };
+/** `ulps`: numbers may differ by that many units in the last place (sines and cosines, which V8
+ * takes from glibc and Rust from fdlibm); every other answer must be the same. */
+type Case = { name: string; ts: (...a: never[]) => unknown; inputs: unknown[][]; ulps?: number };
+
+/** `a` with each number that is within `ulps` of the same place in `b` replaced by b's. */
+function near(a: unknown, b: unknown, ulps: number): unknown {
+  if (typeof a === 'number' && typeof b === 'number') return Math.abs(a - b) <= ulps * Number.EPSILON * Math.max(Math.abs(a), Math.abs(b), Number.MIN_VALUE) ? b : a;
+  if (Array.isArray(a) && Array.isArray(b)) return a.map((x, i) => near(x, b[i], ulps));
+  if (a && b && typeof a === 'object' && typeof b === 'object') return Object.fromEntries(Object.entries(a).map(([k, v]) => [k, near(v, (b as Record<string, unknown>)[k], ulps)]));
+  return a;
+}
 
 const heroIds = [...Object.keys(HERO_DISPLAY), ...Object.keys(HERO_ALIAS), ...Object.values(HERO_ALIAS)];
 const heroish = [...heroIds, ...Object.values(HERO_DISPLAY), 'pudge', 'crystalmaiden', 'CrystalMaiden', 'Queen of Pain', '  Nature\'s  Prophet ',
@@ -64,7 +74,7 @@ function compare(cases: Case[]) {
         let want: unknown;
         try { want = { ok: JSON.parse(JSON.stringify(c.ts(...(args.map(text) as never[])) ?? null)) }; } catch (e) { want = { error: (e as Error).message }; }
         if ('error' in (want as object)) assert.ok(got.error, `${c.name}(${shown}): TypeScript throws, Rust answers ${JSON.stringify(got.ok)?.slice(0, 200)}`);
-        else assert.deepEqual(got, want, `${c.name}(${shown})`);
+        else assert.deepEqual(c.ulps ? near(got, want, c.ulps) : got, want, `${c.name}(${shown})`);
       }
     }
   } finally { setLang('en'); }
@@ -395,4 +405,263 @@ test('particle trees, snapshots and attachment points in Rust answer as the Type
   ];
   assert.ok(fromItems.length > 50 && snaps.length > 10 && scripts.length > 100);
   assert.ok(compare(cases) > 800);
+});
+
+test('surface hitboxes and the effects that spread over them in Rust make what the TypeScript makes', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex, entryPath } = await import('../src/vpk.ts');
+  const h = await import('../src/model-hitboxes.ts');
+  const { surfaceSystem } = await import('../src/particle-surface.ts');
+  const { unusualEffects } = await import('../src/unusual-effects.ts');
+  const { modelScaleReady } = await import('../src/model-scale.ts');
+  await modelScaleReady();
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const index = openVpkIndex(GAME_PAK01);
+  const sha = (b: Buffer | null) => (b ? createHash('sha1').update(b).digest('hex') : null);
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const all = [...index.paths()];
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-boxes-'));
+  const models = spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 60).map((p, k) => {
+    const at = path.join(tmp, `${k}`); fs.writeFileSync(at, index.read(p)!); return { $file: at };
+  });
+  const systems = [...new Set(unusualEffects(text).map((e) => e.system))].slice(0, 80);
+  const cases: Case[] = [
+    { name: 'model-hitboxes.nameHash', ts: h.nameHash as never, inputs: ['mm_surface', 'Bip01_Head', '', 'a', 'abcde'].map((n) => [n]) },
+    { name: 'model-hitboxes.surfaceBoxes', ts: ((m: string) => h.surfaceBoxes(buf(m))) as never, inputs: models.map((m) => [m]) },
+    { name: 'model-hitboxes.withSurfaceHitboxes', ts: ((m: string, names?: string[]) => sha(h.withSurfaceHitboxes(buf(m), names))) as never, inputs: models.flatMap((m) => [[m], [m, ['mm_surface', 'Default', 'second']]]) },
+    { name: 'particle-surface.surfaceSystem', ts: ((pak: string, s: string) => {
+      const r = surfaceSystem((p) => index.read(p), s);
+      return r ? [r.root, r.entries.map((e) => [entryPath(e), sha(e.data)])] : null;
+    }) as never, inputs: systems.map((s) => [GAME_PAK01, s]) },
+  ];
+  assert.ok(systems.length > 20);
+  assert.ok(compare(cases) > 250);
+});
+
+test('hand-made effect changes in Rust make the files the TypeScript makes, on the game particles', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex, entryPath } = await import('../src/vpk.ts');
+  const fx = await import('../src/effect-edit.ts');
+  const { unusualEffects } = await import('../src/unusual-effects.ts');
+  const { file } = await realItems();
+  const index = openVpkIndex(GAME_PAK01);
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const read = (p: string) => index.read(p);
+  const all = [...index.paths()].filter((p) => p.endsWith('.vpcf_c'));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const systems = [...new Set(unusualEffects(fs.readFileSync(file).toString('latin1')).map((e) => e.system))].slice(0, 40)
+    .concat(spread(all, 80).map((p) => p.replace(/_c$/, '')));
+  const raws: unknown[] = [null, 5, [], {}, { '*': { size: 150 } }, { '*': { size: 100, count: '120', life: null, tint: '#FF8800' } },
+    { 'Particles\Units\X.vpcf_c': { speed: 1000, tint: 'red' }, bad: { size: 50 }, '*': [1], 'particles/a.vpcf': { size: Number.NaN, count: 7, life: 302 } },
+    { '*': { tint: '#00ff00', size: 'x' }, 'particles/b/c.vpcf': null, 'particles/.vpcf': { size: 50 } }];
+  const editsFor = (s: string, k: number): Record<string, unknown> => [
+    { '*': { size: 150, count: 50 } },
+    { '*': { life: 200, speed: 30 }, [s]: { size: 80, tint: '#3366ff' } },
+    { [s]: { count: 300, tint: '#ff0000' } },
+    { '*': { tint: '#ffffff', speed: 250 } },
+  ][k % 4];
+  const cases: Case[] = [
+    { name: 'effect-edit.cleanEdits', ts: fx.cleanEdits as never, inputs: raws.map((r) => [r]) },
+    { name: 'effect-edit.systemsOf', ts: ((pak: string, s: string) => fx.systemsOf(read, s)) as never, inputs: systems.map((s) => [GAME_PAK01, s]) },
+    { name: 'effect-edit.editedEntries', ts: ((pak: string, s: string, e: never) => fx.editedEntries(read, s, e).map((x) => [entryPath(x), sha(x.data)])) as never,
+      inputs: systems.flatMap((s, k) => [[GAME_PAK01, s, fx.cleanEdits(editsFor(s, k))], [GAME_PAK01, s, fx.cleanEdits(editsFor(s, k + 1))]]) },
+  ];
+  assert.ok(systems.length > 60);
+  assert.ok(compare(cases) > 250);
+});
+
+test('hero sound events in Rust read and write back as the TypeScript ones do', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game'); return; }
+  const as = await import('../src/ability-sounds.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { readKv3 } = await import('../src/kv3.ts');
+  const { resourceBlock } = await import('../src/resource.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const heroes = as.heroesWithSounds(index);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-snd-'));
+  const kvOf = (m: string) => readKv3(resourceBlock(Buffer.from(m, 'latin1'), 'DATA').data);
+  const files = heroes.map((h, k) => { const at = path.join(tmp, `${k}`); fs.writeFileSync(at, index.read(as.eventsFile(h))!); return { hero: h, file: { $file: at } }; });
+  const editsOf = (h: string) => {
+    const ev = as.heroEvents(readKv3(resourceBlock(index.read(as.eventsFile(h))!, 'DATA').data)).map((e) => e.name);
+    const sound = 'ab12cd34ef56ab78cd90ef12ab34cd56ef7890ab';
+    return [
+      { event: ev[0], mode: 'replace', volume: 0.8, sound, name: 'a' },
+      { event: ev[1] ?? 'x', mode: 'layer', volume: 1.234, sound, name: 'b' },
+      { event: ev[1] ?? 'x', mode: 'layer', volume: 0.005, sound: sound.replace('a', 'f'), name: 'c' },
+      { event: 'nope.event', mode: 'replace', volume: 1, sound, name: 'd' },
+      { event: ev[2] ?? 'y', mode: 'layer', volume: 0.125, sound, name: 'e' },
+      { event: ev[0], mode: 'layer', volume: 2, sound, name: 'f' },
+    ];
+  };
+  const wav = (fmt: number, rate: number, bits: number, junk = 0) => {
+    const b = Buffer.alloc(12 + junk + 8 + 24);
+    b.write('RIFF', 0); b.write('WAVE', 8);
+    if (junk) { b.write('LIST', 12); b.writeUInt32LE(junk - 8, 16); }
+    const at = 12 + junk; b.write('fmt ', at); b.writeUInt32LE(16, at + 4); b.writeUInt16LE(fmt, at + 8); b.writeUInt32LE(rate, at + 12); b.writeUInt16LE(bits, at + 22);
+    const p = path.join(tmp, `w${fmt}-${rate}-${bits}-${junk}`); fs.writeFileSync(p, b); return { $file: p };
+  };
+  const odd = path.join(tmp, 'odd'); fs.writeFileSync(odd, Buffer.from('RIFF\0\0\0\0WAVEdata\x05\0\0\0abcde'));
+  const cases: Case[] = [
+    { name: 'ability-sounds.eventsFile', ts: as.eventsFile as never, inputs: heroes.map((h) => [h]) },
+    { name: 'ability-sounds.soundPath', ts: as.soundPath as never, inputs: [['axe', 'ab12cd34ef56ab78cd90'], ['pudge', 'short'], ['x', '']] },
+    { name: 'ability-sounds.soundHero', ts: as.soundHero as never, inputs: [...heroes, 'nope', ''].map((h) => [h]) },
+    { name: 'ability-sounds.heroesWithSounds', ts: ((p: string) => as.heroesWithSounds(openVpkIndex(p))) as never, inputs: [[GAME_PAK01]] },
+    { name: 'ability-sounds.heroEvents', ts: ((m: string) => as.heroEvents(kvOf(m))) as never, inputs: files.map((f) => [f.file]) },
+    { name: 'ability-sounds.editedEvents', ts: ((m: string, h: string, e: never) => as.editedEvents(kvOf(m), h, e)) as never, inputs: files.map((f) => [f.file, f.hero, editsOf(f.hero)]) },
+    { name: 'ability-sounds.wavProblem', ts: ((m: string) => as.wavProblem(Buffer.from(m, 'latin1'))) as never, inputs: [
+      [wav(1, 44100, 16)], [wav(1, 48000, 16, 20)], [wav(3, 44100, 32)], [wav(1, 44100, 24)], [wav(1, 32000, 16)], [{ $file: odd }], [{ $file: files[0].file.$file }],
+    ] },
+    { name: 'js.toFixed', ts: ((x: number, d: number) => x.toFixed(d)) as never, inputs: [
+      [1 / 128, 6], [0.5, 0], [1.5, 0], [2.5, 0], [-2.5, 0], [-0.0001, 2], [1.005, 2], [0.125, 2], [123.456, 1], [1e20, 2], [1e21, 2], [-0, 2], [0.000001, 6], [99.995, 2], [9.9999999, 6], [0.8, 2],
+    ] },
+  ];
+  assert.ok(heroes.length > 100);
+  assert.ok(compare(cases) > 400);
+});
+
+test('hero stages in Rust are the ones the TypeScript reads out of the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game'); return; }
+  const hs = await import('../src/hero-showcase.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-stage-'));
+  const save = (p: string, b: Buffer) => { const at = path.join(tmp, p); fs.writeFileSync(at, b); return { $file: at }; };
+  const showcaseBuf = index.read('scripts/npc/portraits_showcase.txt');
+  if (!showcaseBuf) { t.skip('no portraits_showcase.txt'); return; }
+  const showcase = save('showcase', showcaseBuf);
+  const text = showcaseBuf.toString('latin1');
+  const entries = [...text.matchAll(/^\t"([^"]+)"\s*$/gm)].map((m) => m[1]);
+  const scripts = [...index.paths()].filter((p) => /^scripts\/npc\/heroes\/npc_dota_hero_\w+\.txt$/.test(p));
+  const inputs: unknown[][] = scripts.map((p, k) => {
+    const hero = /npc_dota_hero_(\w+)\.txt$/.exec(p)![1];
+    return [showcase, save(`h${k}`, index.read(p)!), [entries[k % entries.length].toUpperCase().replace(/\//g, '\\'), `npc_dota_hero_${hero}`, hero]];
+  });
+  inputs.push([null, null, ['x']], [save('bad', Buffer.from('"a" { "b" { ')), null, ['b']], [save('odd', Buffer.from('"x" { "k" { "PortraitLightPosition" "1 2" "PortraitBackgroundColor1" "  10\t20 30 40 " "PortraitBackgroundModel" "Models/Foo/Bar.VMDL" } }')), save('sc', Buffer.from('"LoadoutScale"  "0.5.1"  "loadoutscale" "0.7"')), ['K']]);
+  const buf = (m: string | null) => (m === null ? null : Buffer.from(m, 'latin1').toString('latin1'));
+  const cases: Case[] = [
+    { name: 'hero-showcase.heroStage', ts: ((s: string | null, sc: string | null, keys: string[]) => hs.heroStage(buf(s), buf(sc), keys)) as never, inputs , ulps: 4 },
+    { name: 'hero-showcase.showcaseEntry', ts: ((s: string, keys: string[]) => { const m = hs.showcaseEntry(s, keys); return m ? Object.fromEntries(m) : null; }) as never,
+      inputs: entries.slice(0, 40).map((e) => [showcase, ['nope', e]]) },
+    { name: 'hero-showcase.forward', ts: ((a: number, b: number, c: number) => hs.forward([a, b, c])) as never,
+      inputs: Array.from({ length: 200 }, (_, k) => [((k * 37) % 360) - 180 + k / 7, (k * 113) % 720 - 360 + k / 3, 0]) , ulps: 4 },
+  ];
+  assert.ok(entries.length > 50 && scripts.length > 100);
+  assert.ok(compare(cases) > 300);
+});
+
+test('packing a folder in Rust finds the root and makes the VPK the TypeScript makes', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game'); return; }
+  const { createHash } = await import('node:crypto');
+  const vp = await import('../src/vpk-pack.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const all = [...index.paths()];
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pack-'));
+  const put = (at: string, b: Buffer | string) => { fs.mkdirSync(path.dirname(at), { recursive: true }); fs.writeFileSync(at, b); };
+  const trees: string[] = [];
+  for (let k = 0; k < 6; k++) {
+    const top = path.join(tmp, `t${k}`);
+    const base = [top, path.join(top, 'Wrapper'), path.join(top, 'game', 'dota_russian'), path.join(top, 'a', 'b')][k % 4];
+    for (const p of all.filter((_, i) => i % (997 + k * 13) === k).slice(0, 25)) put(path.join(base, k === 3 ? p.replace(/^(\w)/, (c) => c.toUpperCase()) : p), index.read(p)!);
+    put(path.join(base, 'readme.txt'), 'hello');
+    put(path.join(base, 'Thumbs.db'), 'x');
+    put(path.join(base, 'author_stuff', 'note.txt'), 'n');
+    if (k === 4) put(path.join(top, '__MACOSX', 'models', 'x.txt'), 'junk');
+    trees.push(top);
+  }
+  fs.mkdirSync(path.join(tmp, 'empty', 'models'), { recursive: true });
+  put(path.join(tmp, 'flat', 'x.txt'), 'x');
+  const cases: Case[] = [
+    { name: 'vpk-pack.findContentRoot', ts: ((d: string) => vp.findContentRoot(d)) as never, inputs: [...trees, path.join(tmp, 'empty'), path.join(tmp, 'flat'), path.join(tmp, 'nope')].map((d) => [d]) },
+    { name: 'vpk-pack.packFolder', ts: ((d: string) => createHash('sha1').update(vp.packFolder(d)).digest('hex')) as never,
+      inputs: [...trees.map((d) => [vp.findContentRoot(d)]), [path.join(tmp, 'empty')]] },
+  ];
+  assert.ok(compare(cases) > 10);
+});
+
+test('arcana notes and the item builder details in Rust answer as the TypeScript ones do', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const notes = await import('../src/arcana-notes.ts');
+  const bases = await import('../src/arcana-bases.ts');
+  const det = await import('../src/item-builder-details.ts');
+  const { drain } = await import('../src/steps.ts');
+  const { gameTokens } = await import('../src/cosmetic-names.ts');
+  const { readGameSchema, listItems } = await import('../src/schema-items.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { text } = readGameSchema(sandboxGame);
+  const items = listItems(text);
+  const heroesOf = (block: string) => [...block.matchAll(/"npc_dota_hero_(\w+)"\s+"1"/gi)].map((m) => m[1].toLowerCase());
+  const arcanas = items.filter((i) => /"item_rarity"\s+"arcana"/i.test(text.slice(i.start, i.end)));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const some = [...arcanas, ...spread(items, 300)];
+  const game = path.dirname(path.dirname(GAME_PAK01));
+  const tokens = gameTokens(game, 'russian');
+  const tokenPairs = [...tokens];
+  const marked = tokenPairs.filter(([, v]) => /[<&]/.test(v)).map(([, v]) => v);
+  const events = [...new Set([...text.matchAll(/"(EVENT_ID_\w+)"/g)].map((m) => m[1]))];
+  const heroIds = [...new Set(items.flatMap((i) => heroesOf(text.slice(i.start, i.end))))];
+  const plain = (s: string) => det.setDetails([{ nameToken: '', name: '', rarity: '', event: '', descToken: 'd', pieces: [], styles: 1 } as never], () => s, () => undefined)[0].description;
+  const cases: Case[] = [
+    { name: 'arcana-notes.itemNote', ts: notes.itemNote as never, inputs: some.flatMap((i) => { const b = text.slice(i.start, i.end); return [[heroesOf(b), b, i.id], [heroesOf(b), b]]; }).concat([[[], '"item_rarity" "ARCANA"'], [['razor', 'pudge'], '"item_rarity"\t"arcana"'], [['nobody'], '"item_rarity" "arcana"']]) },
+    { name: 'arcana-notes.isArcanaBlock', ts: notes.isArcanaBlock as never, inputs: some.slice(0, 60).map((i) => [text.slice(i.start, i.end)]) },
+    { name: 'arcana-bases.hasBase', ts: bases.hasBase as never, inputs: [...arcanas.map((i) => [i.id]), ['1'], ['']] },
+    { name: 'item-builder-details.itemFacts', ts: det.itemFacts as never, inputs: some.map((i) => [text.slice(i.start, i.end)]).concat([['\n"item_rarity" "Mythical"\n"creation_date" "2021-09-01 10:00"'], ['"item_rarity" "x"']]) },
+    { name: 'item-builder-details.heroAttributes', ts: ((p: string, ids: string[]) => drain(det.heroAttributesSteps(openVpkIndex(p), ids))) as never, inputs: [[GAME_PAK01, [...heroIds, 'Bad Id', 'nobody', heroIds[0]]]] },
+    { name: 'item-builder-details.eventNames', ts: ((pairs: [string, string][]) => Object.fromEntries(det.eventNames(new Map(pairs)))) as never, inputs: [[tokenPairs], [[['dota_eventname_x_y', 'A'], ['dota_eventnameshort_xy', 'B'], ['dota_eventname_xy', 'C'], ['dota_eventname_z', '#tok'], ['dota_eventname_', 'n']]]] },
+    { name: 'item-builder-details.eventName', ts: ((id: string, pairs: [string, string][]) => det.eventName(id, det.eventNames(new Map(pairs)))) as never,
+      inputs: [...events, 'EVENT_ID_NONE', 'EVENT_ID_', '5', '', 'EVENT_ID_10TH_ANNIVERSARY', 'EVENT_ID_FALL_2025', 'EVENT_ID_THE_INTERNATIONAL_PLUS_TEAM__X'].flatMap((e) => [[e, tokenPairs], [e, []]]) },
+    { name: 'item-builder-details.plainText', ts: plain as never, inputs: [...spread(marked, 300), 'a<br>b<BR/>c<br />d', '<<b>font>x</font>', '&amp;&lt;&#65;&#x42;&#X43;&#0;&#99999999;&bogus;&NBSP;', 'a \t\r\nb\r\r\n\n\n\nc  ', '  \u00a0 x \ufeff'].map((s) => [s]) },
+  ];
+  assert.ok(arcanas.length > 20 && events.length > 10 && marked.length > 50);
+  assert.ok(compare(cases) > 800);
+});
+
+test('ability effects slots in Rust read and cut visuals as the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const fx = await import('../src/item-builder-ability-fx.ts');
+  const { readGameSchema, listItems } = await import('../src/schema-items.ts');
+  const { file } = await realItems();
+  const { text } = readGameSchema(sandboxGame);
+  const items = listItems(text);
+  const fits = items.filter((i) => text.slice(i.start, i.end).includes('can_equip_as_ability_effects'));
+  const visualsOf = (block: string) => { let v: string | null = null; eachChild(block, blockBounds(block, 0), (c) => { if (!v && c.isBlock && c.key.toLowerCase() === 'visuals') v = block.slice(c.start, c.end); }); return v as string | null; };
+  const cases: Case[] = [
+    { name: 'item-builder-ability-fx.fxSlotOf', ts: fx.fxSlotOf as never, inputs: ['ability_effects_2', 'item:earthshaker:ability_effects_12', 'ABILITY_EFFECTS_3', 'ability_effects_', 'ability_effects_1_persona_1', 'weapon', '', 'a:b:ability_effects_007'].map((s) => [s]) },
+    { name: 'item-builder-ability-fx.fxSlotsOf', ts: fx.fxSlotsOf as never, inputs: [...fits.map((i) => [text.slice(i.start, i.end)]), ['"can_equip_as_ability_effects" { "value" "3" } "can_equip_as_ability_effects" "1" "CAN_EQUIP_AS_ABILITY_EFFECTS""0"']] },
+    { name: 'item-builder-ability-fx.fxVisuals', ts: fx.fxVisuals as never, inputs: fits.flatMap((i) => { const v = visualsOf(text.slice(i.start, i.end)); return v ? [1, 2, 3, 4, 5].map((n) => [v, n]) : []; }) },
+    { name: 'item-builder-ability-fx.hasModifiers', ts: fx.hasModifiers as never, inputs: [['"visuals"{}'], ['"ASSET_MODIFIER3"'], ...fits.slice(0, 20).map((i) => [text.slice(i.start, i.end)])] },
+    { name: 'item-builder-ability-fx.fxTarget', ts: ((tx: string, n: number) => fx.fxTarget(listItems(tx), n)?.id ?? null) as never, inputs: [0, 1, 2, 5, 9, 10].map((n) => [{ $file: file }, n]) },
+  ];
+  assert.ok(fits.length > 20);
+  assert.ok(compare(cases) > 150);
+});
+
+test('the item builder offer in Rust is the one the TypeScript lists, slot for slot', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const sl = await import('../src/item-builder-slots.ts');
+  const { readGameSchema, listItems } = await import('../src/schema-items.ts');
+  const { file } = await realItems();
+  const { text } = readGameSchema(sandboxGame);
+  const items = listItems(text);
+  const names = items.map((i) => i.name).filter(Boolean);
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const words = [...spread(names, 400), 'Б', 'a', 'A', '-x', '_z', ' y', 'é', 'e', '1', 'Ä', 'ä', "Nature's Prophet", 'Anti-Mage', 'Pudge · Оружие', 'Pudge · Голова', 'Io', 'IO', 'ǅ', ''];
+  const slotNames = ['weapon', 'offhand_weapon', 'ability_effects_3', 'item:x:ability_effects_2', 'persona_selector', 'some_new_slot', 'WEAPON', 'ß_slot'];
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  const heroes = [...new Set(items.flatMap((i) => sl.itemHeroes(text, i)))];
+  const cases: Case[] = [
+    { name: 'js.localeCompare', ts: ((a: string, b: string) => Math.sign(a.localeCompare(b))) as never, inputs: words.flatMap((a, k) => [[a, words[(k * 7 + 3) % words.length]], [a, words[(k + 1) % words.length]], [a, a.toUpperCase()]]) },
+    { name: 'item-builder-slots.canonicalHeroId', ts: sl.canonicalHeroId as never, inputs: [...heroes, 'NPC_DOTA_HERO_IO', 'io', ''].map((h) => [h]) },
+    { name: 'item-builder-slots.matchItemSlot', ts: sl.matchItemSlot as never, inputs: slotNames.map((s) => [s]) },
+    { name: 'item-builder-slots.slotDisplayLabel', ts: ((l: string, s: string) => lang(l, () => sl.slotDisplayLabel(s))) as never, inputs: ['ru', 'en', 'zh-CN'].flatMap((l) => slotNames.map((s) => [l, s])) },
+    { name: 'item-builder-slots.itemSlotIcon', ts: sl.itemSlotIcon as never, inputs: slotNames.map((s) => [s]) },
+    { name: 'item-builder-slots.stockModels', ts: ((tx: string, h: string[]) => sl.stockModels(tx, h)) as never, inputs: [[{ $file: file }, heroes.slice(0, 40)], [{ $file: file }, ['npc_dota_hero_nobody']]] },
+    { name: 'item-builder-slots.itemSlots', ts: ((l: string, tx: string) => lang(l, () => sl.itemSlots(tx))) as never, inputs: [['ru', { $file: file }], ['en', { $file: file }]] },
+  ];
+  assert.ok(heroes.length > 100);
+  assert.ok(compare(cases) > 1000);
 });

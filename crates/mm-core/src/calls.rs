@@ -9,9 +9,10 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 use crate::kv::latin1;
 use crate::{
-    cosmetic_names, hero_names, i18n, item_builder_donor as donor, item_builder_effects as effects,
-    item_builder_styles as styles, item_skin, item_sounds, item_visuals, material, model_attachments, model_cloth,
-    model_sequences, model_skin, particle_snapshot, particle_spec, recolor, unusual_effects,
+    ability_sounds, cosmetic_names, effect_edit, hero_names, i18n, item_builder_donor as donor,
+    item_builder_effects as effects, item_builder_styles as styles, item_skin, item_sounds, item_visuals, material,
+    model_attachments, model_cloth, model_hitboxes, model_sequences, model_skin, particle_snapshot, particle_spec,
+    particle_surface, recolor, unusual_effects,
 };
 
 /// A text argument as items_game's latin1 bytes: a string one byte per char, or {"$file": path}
@@ -320,6 +321,121 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let file = b(args, 0)?;
             let data = particle_spec::data_tree(Some(&file)).ok_or("snapshot: no DATA tree")?;
             json!(particle_snapshot::snapshot_points(&file, &Value::Object(data))?)
+        }
+        "model-hitboxes.nameHash" => json!(model_hitboxes::name_hash(&s(args, 0))),
+        "model-hitboxes.surfaceBoxes" => json!(model_hitboxes::surface_boxes(&b(args, 0)?)?
+            .iter()
+            .map(|b| json!({ "bone": b.bone, "min": b.min.map(crate::js::json_number), "max": b.max.map(crate::js::json_number) }))
+            .collect::<Vec<_>>()),
+        "model-hitboxes.withSurfaceHitboxes" => {
+            let names: Vec<String> = match args.get(1).and_then(Value::as_array) {
+                Some(a) => a.iter().map(crate::js::string).collect(),
+                None => vec![model_hitboxes::SURFACE_SET.to_string()],
+            };
+            let names: Vec<&str> = names.iter().map(String::as_str).collect();
+            sha(model_hitboxes::with_surface_hitboxes(&b(args, 0)?, &names))
+        }
+        "particle-surface.surfaceSystem" => {
+            let ix = pak(&s(args, 0))?;
+            let mut read = |p: &str| ix.read(p).ok().flatten();
+            match particle_surface::surface_system(&mut read, &s(args, 1))? {
+                None => Value::Null,
+                Some((root, entries)) => json!([root, entries.into_iter().map(|(p, f)| json!([p, sha(Some(f))])).collect::<Vec<_>>()]),
+            }
+        }
+        "ability-sounds.eventsFile" => json!(ability_sounds::events_file(&s(args, 0))),
+        "ability-sounds.soundPath" => json!(ability_sounds::sound_path(&s(args, 0), &s(args, 1))),
+        "ability-sounds.soundHero" => json!(ability_sounds::sound_hero(&s(args, 0))),
+        "ability-sounds.heroesWithSounds" => json!(ability_sounds::heroes_with_sounds(pak(&s(args, 0))?.paths())),
+        "ability-sounds.heroEvents" => {
+            let kv = crate::kv3::read(crate::resource::data(&b(args, 0)?, "DATA", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+            json!(ability_sounds::hero_events(&kv))
+        }
+        "ability-sounds.editedEvents" => {
+            let kv = crate::kv3::read(crate::resource::data(&b(args, 0)?, "DATA", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+            let edits: Vec<ability_sounds::SoundEdit> = serde_json::from_value(args.get(2).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let (text, gone) = ability_sounds::edited_events(&kv, &s(args, 1), &edits)?;
+            json!({ "text": text, "gone": gone })
+        }
+        "ability-sounds.wavProblem" => json!(ability_sounds::wav_problem(&b(args, 0)?)),
+        "js.toFixed" => json!(crate::js::to_fixed(n(args, 0), n(args, 1) as usize)),
+        "hero-showcase.heroStage" => {
+            let keys: Vec<String> = serde_json::from_value(args.get(2).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let (sc, sp) = (opt_b(args, 0)?, opt_b(args, 1)?);
+            crate::hero_showcase::hero_stage(sc.as_ref().map(|v| v.as_slice()), sp.as_ref().map(|v| v.as_slice()), &keys)
+        }
+        "hero-showcase.showcaseEntry" => {
+            let keys: Vec<String> = serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::hero_showcase::showcase_entry(&b(args, 0)?, &keys).map(|m| m.into_iter().collect::<std::collections::BTreeMap<_, _>>()))
+        }
+        "hero-showcase.forward" => {
+            let f = crate::hero_showcase::forward([n(args, 0), n(args, 1), n(args, 2)]);
+            json!(f.iter().map(|x| crate::js::json_number(*x)).collect::<Vec<_>>())
+        }
+        "vpk-pack.findContentRoot" => json!(crate::vpk_pack::find_content_root(std::path::Path::new(&s(args, 0)), 0).map(|p| p.to_string_lossy().into_owned())),
+        "vpk-pack.packFolder" => json!(sha(Some(crate::vpk_pack::pack_folder(std::path::Path::new(&s(args, 0)))?))),
+        "arcana-notes.itemNote" => {
+            let heroes: Vec<String> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let id = args.get(2).and_then(Value::as_str);
+            json!(crate::arcana_notes::item_note(&heroes, &b(args, 1)?, id))
+        }
+        "arcana-notes.isArcanaBlock" => json!(crate::arcana_notes::is_arcana_block(&b(args, 0)?)),
+        "arcana-bases.hasBase" => json!(crate::arcana_notes::has_base(&s(args, 0))),
+        "item-builder-details.itemFacts" => json!(crate::item_builder_details::item_facts(&b(args, 0)?)),
+        "item-builder-details.heroAttributes" => {
+            let ix = pak(&s(args, 0))?;
+            let mut read = |p: &str| ix.read(p).ok().flatten();
+            let ids: Vec<String> = serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::item_builder_details::hero_attributes(&mut read, &ids))
+        }
+        "item-builder-details.eventNames" => {
+            let tokens: Vec<(String, String)> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let names = crate::item_builder_details::event_names(tokens.iter().map(|(k, v)| (k.as_str(), v.as_str())));
+            json!(names.into_iter().collect::<std::collections::BTreeMap<_, _>>())
+        }
+        "item-builder-details.eventName" => {
+            let tokens: Vec<(String, String)> = serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let names = crate::item_builder_details::event_names(tokens.iter().map(|(k, v)| (k.as_str(), v.as_str())));
+            json!(crate::item_builder_details::event_name(&s(args, 0), &names))
+        }
+        "item-builder-details.plainText" => json!(crate::item_builder_details::plain_text(&s(args, 0))),
+        "item-builder-ability-fx.fxSlotOf" => json!(crate::item_builder_ability_fx::fx_slot_of(&s(args, 0))),
+        "item-builder-ability-fx.fxSlotsOf" => json!(crate::item_builder_ability_fx::fx_slots_of(&b(args, 0)?)),
+        "item-builder-ability-fx.fxVisuals" => {
+            json!(latin1(&crate::item_builder_ability_fx::fx_visuals(&b(args, 0)?, n(args, 1) as u64).map_err(kv_err)?))
+        }
+        "item-builder-ability-fx.hasModifiers" => json!(crate::item_builder_ability_fx::has_modifiers(&b(args, 0)?)),
+        "item-builder-ability-fx.fxTarget" => {
+            let items = crate::schema::items_of(&b(args, 0)?).map_err(kv_err)?;
+            json!(crate::item_builder_ability_fx::fx_target(&items, n(args, 1) as u64).map(|i| i.id.clone()))
+        }
+        "js.localeCompare" => json!(crate::js::locale_compare(&s(args, 0), &s(args, 1)) as i8),
+        "item-builder-slots.itemSlots" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::item_builder_slots::item_slots(&b(args, 1)?).map_err(kv_err)?)
+        }
+        "item-builder-slots.stockModels" => {
+            let heroes: Vec<String> = serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::item_builder_slots::stock_models(&b(args, 0)?, &heroes).map_err(kv_err)?)
+        }
+        "item-builder-slots.canonicalHeroId" => json!(crate::item_builder_slots::canonical_hero_id(&s(args, 0))),
+        "item-builder-slots.matchItemSlot" => json!(crate::item_builder_slots::match_item_slot(&s(args, 0))),
+        "item-builder-slots.slotDisplayLabel" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::item_builder_slots::slot_display_label(&s(args, 1)))
+        }
+        "item-builder-slots.itemSlotIcon" => json!(crate::item_builder_slots::item_slot_icon(&s(args, 0))),
+        "effect-edit.cleanEdits" => json!(effect_edit::clean_edits(args.first().unwrap_or(&Value::Null))),
+        "effect-edit.systemsOf" => {
+            let ix = pak(&s(args, 0))?;
+            let mut read = |p: &str| ix.read(p).ok().flatten();
+            json!(effect_edit::systems_of(&mut read, &s(args, 1)).into_iter().map(|(path, depth)| json!({ "path": path, "depth": depth })).collect::<Vec<_>>())
+        }
+        "effect-edit.editedEntries" => {
+            let ix = pak(&s(args, 0))?;
+            let mut read = |p: &str| ix.read(p).ok().flatten();
+            let edits: effect_edit::EffectEdits = serde_json::from_value(args.get(2).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(effect_edit::edited_entries(&mut read, &s(args, 1), &edits)?.into_iter().map(|(p, f)| json!([p, sha(Some(f))])).collect::<Vec<_>>())
         }
         "item-visuals.itemVisuals" => json!(item_visuals::item_visuals(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?),
         "item-visuals.findItems" => json!(item_visuals::find_items(&b(args, 0)?, &s(args, 1))
