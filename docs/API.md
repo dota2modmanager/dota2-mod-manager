@@ -13689,6 +13689,20 @@ export function buildTowers({ pak01, text, radiant, dire }: { pak01: string; tex
 
 Each side's towers in a look of its own, or as they are where its id is null: one VPK out of pak01.
 
+### `asTower`
+
+```ts
+export function asTower(model: Buffer, plain: Buffer): Buffer
+```
+
+A look's tower model made to play as the plain tower (Discord, Stoneclaw Scavengers: the crab
+stood turned away and moved only its claws). The item's towers play activities of their own
+(ACT_DOTA_CUSTOM_TOWER_IDLE), which the tower asks for only while the item is on, and each of
+them is an aim matrix that turns the crab by a pose parameter the plain tower never sets. So the
+plain activity goes on the matrix's middle part (@idle_neutral, facing forward), the sequences are
+numbered as the plain tower's (the server sends the number), and so are the attachments its
+projectile leaves from. A model with none of those activities is only numbered.
+
 ## src/tray.ts
 
 The app beside the game rather than in front of it (plan item 9, Misha's call on 2026-11-12).

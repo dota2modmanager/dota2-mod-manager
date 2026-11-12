@@ -76,3 +76,51 @@ test('the pak holds the game\'s files under the tower\'s names, and says what th
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+/* Stoneclaw Scavengers, cut down: the crab plays its towers' own activities, each an aim matrix that
+ * turns it by a pose parameter the plain tower never sets. As the plain tower it stood turned away,
+ * moving only its claws (Discord). */
+test("a look's tower plays the plain tower's activities facing forward, numbered as the plain one", async () => {
+  const { asTower } = await import('../src/tower-looks.ts');
+  const { readKv3, numberOf } = await import('../src/kv3.ts');
+  const { resourceBlock } = await import('../src/resource.ts');
+  const { encodeKv3, resource } = await import('./helpers/kv3-build.ts');
+  type S = { name: string; act?: string; refs: number[] };
+  const model = (names: string[], seqs: S[]) => resource([
+    ['ASEQ', encodeKv3({ obj: [
+      ['m_localSequenceNameArray', { arr: names.map((n) => ({ str: n })) }],
+      ['m_localS1SeqDescArray', { objs: seqs.map((s) => [
+        ['m_sName', { str: s.name }],
+        ['m_fetch', { obj: [['m_localReferenceArray', { i32s: s.refs }]] }],
+        ['m_autoLayerArray', { objs: [] }],
+        ['m_activityArray', { objs: s.act ? [[['m_name', { str: s.act }], ['m_nWeight', { int: 1 }]]] : [] }],
+      ]) }],
+      ['m_localMultiSeqDescArray', { objs: [] }],
+    ] })],
+    ['DATA', encodeKv3({ obj: [['m_name', { str: 'a tower' }]] })],
+  ]);
+  const plain = model(['tower_attack', 'tower_idle'], [
+    { name: 'tower_attack', act: 'ACT_DOTA_ATTACK', refs: [0] },
+    { name: 'tower_idle', act: 'ACT_DOTA_IDLE', refs: [1] },
+  ]);
+  const crab = model(['bind_pose', 'idle_multi_aim', '@idle_left', '@idle_neutral', '@idle_right', 'attack_multi_aim', '@attack_left', '@attack_neutral', '@attack_right'], [
+    { name: 'bind_pose', refs: [] },
+    { name: 'idle_multi_aim', act: 'ACT_DOTA_CUSTOM_TOWER_IDLE', refs: [2, 3, 4] },
+    { name: '@idle_left', refs: [2] }, { name: '@idle_neutral', refs: [3] }, { name: '@idle_right', refs: [4] },
+    { name: 'attack_multi_aim', act: 'ACT_DOTA_CUSTOM_TOWER_ATTACK', refs: [6, 7, 8] },
+    { name: '@attack_left', refs: [6] }, { name: '@attack_neutral', refs: [7] }, { name: '@attack_right', refs: [8] },
+  ]);
+  const kv = readKv3(resourceBlock(asTower(crab, plain), 'ASEQ').data);
+  const get = (n: unknown, k: string) => ((n as { kind: string; members?: Map<string, unknown> }).members?.get(k)) as never;
+  const names = (get(kv.root, 'm_localSequenceNameArray') as { items: { value: string }[] }).items.map((x) => x.value);
+  const descs = (get(kv.root, 'm_localS1SeqDescArray') as { items: unknown[] }).items;
+  const at = (i: number) => {
+    const d = descs.find((x) => (get(x, 'm_sName') as { value: string }).value === names[i]);
+    const act = (get(d, 'm_activityArray') as { items: unknown[] }).items.map((a) => (get(a, 'm_name') as { value: string }).value);
+    const refs = (get(get(d, 'm_fetch'), 'm_localReferenceArray') as { items: never[] }).items.map((r) => names[numberOf(kv, r)]);
+    return `${names[i]} ${act.join('+')} <${refs.join(',')}>`;
+  };
+  assert.deepEqual([at(0), at(1)], ['@attack_neutral ACT_DOTA_ATTACK <@attack_neutral>', '@idle_neutral ACT_DOTA_IDLE <@idle_neutral>'],
+    'the numbers the server sends for attack and idle play the crab facing forward');
+  assert.equal(asTower(plain, plain), plain, 'a tower that is the plain one already comes back as it was');
+});
