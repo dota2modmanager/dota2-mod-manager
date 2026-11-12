@@ -172,6 +172,12 @@ fn read_item(text: &[u8], c: &Child<'_>, ends: Ends<'_>) -> kv::Result<SchemaIte
     })
 }
 
+/// Every item of a table, listed once per table (src/schema-items.ts keeps its list per text).
+pub fn items_of(text: &[u8]) -> kv::Result<std::sync::Arc<Vec<SchemaItem>>> {
+    static SLOT: crate::memo::Slot<Vec<SchemaItem>> = std::sync::Mutex::new(None);
+    crate::memo::per_text(&SLOT, text, list_items)
+}
+
 /// One item definition by id, with its exact byte range.
 pub fn find_item(text: &[u8], id: &str, section: Option<Bounds>) -> kv::Result<Option<(usize, usize)>> {
     let bounds = match section {

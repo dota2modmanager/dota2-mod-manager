@@ -69,6 +69,12 @@ fn run(args: &[String]) -> Result<Value, String> {
             let items = schema::list_items(&text).map_err(|x| x.to_string())?;
             Ok(json!({ "stamp": stamp, "items": items }))
         }
+        // list.json: [[name, ...args]]; each answered {ok} or {error} (test/rust-calls.test.ts)
+        "call" => {
+            let list: Vec<Value> = serde_json::from_str(&std::fs::read_to_string(arg(1)?).map_err(|x| x.to_string())?)
+                .map_err(|x| x.to_string())?;
+            Ok(json!(mm_core::calls::call_all(&list)))
+        }
         // list.json: block files (a resource's DATA block); each one's tree, and its bytes
         // encoded back and written anew, as SHA-1s
         "kv3-dump" => {

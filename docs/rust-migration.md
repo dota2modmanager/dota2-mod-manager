@@ -66,6 +66,15 @@ Tauri command mm_invoke(channel, args)
 The Electron build stays the one users get until the Tauri build covers everything and has
 been through the sandbox and the e2e run. Both build from the same `renderer/`.
 
+## Comparing a pure function
+
+`crates/mm-core/src/calls.rs` names every ported function as `module.export` and takes its
+arguments as JSON (a string of items_game text is its latin1 bytes; `{"$file": path}` reads a
+file once). `mm-cli call list.json` answers a list of `[name, ...args]`, and
+`test/rust-calls.test.ts` runs each case on both sides and compares. A new port adds its name
+to `calls.rs` and its cases to the test: that is the whole parity check. The same entry point is
+how the Tauri host can ask Rust for a function while its caller is still TypeScript.
+
 ## Status
 
 `node tools/rust-progress.mjs` prints the live count and the channels left by group.
@@ -81,7 +90,9 @@ been through the sandbox and the e2e run. Both build from the same `renderer/`.
 | items_game merge and check (`schema-merge.ts`) | done | no | `crates/mm-core/src/schema_merge.rs`; parity: real patches merge to the same bytes, conflicts and `validate` agree |
 | KV3 read, numbers in place, blobs, write anew (`src/kv3*.ts`, `lz4.ts`) | done | no | `crates/mm-core/src/kv3.rs`, `lz4.rs`; parity `test/rust-parity-kv3.test.ts`: built blocks of versions 1, 2, 5 and ~200 of the game's particles, materials, models, sounds and animations give the same tree, the same bytes encoded back and written anew (zstd blocks: the same tree read back, since `ruzstd` compresses differently from Node) |
 | compiled resources: blocks, RERL (`src/resource.ts`) | done | no | `crates/mm-core/src/resource.rs`; same parity test |
-| the readers on top of KV3 (`material.ts`, `recolor.ts`, `model-*.ts`, `particle-*.ts`) | - | - | next: they make the item builder's files |
+| strings and data tables (`i18n.ts`, `hero-names.ts`, the item builder's effects) | done | no | `i18n.rs`, `hero_names.rs`, `data.rs`; the tables are JSON in `crates/mm-core/data/`, written from the TypeScript by `node tools/rust-data.mjs` and checked by `test/rust-data.test.ts` |
+| item builder: styles, donor effects, own and unusual effects, item visuals, localization tokens (`item-builder-styles.ts`, `-donor.ts`, `-effects.ts`, `-unusual.ts`, `unusual-effects.ts`, `item-visuals.ts`, `cosmetic-names.ts` pure part) | done | no | parity through `calls.rs`: `test/rust-calls.test.ts` runs every function on both sides over the sandbox's real items_game (and the game's localization when installed) |
+| the readers on top of KV3 (`material.ts`, `recolor.ts`, `model-*.ts`, `particle-*.ts`) and the rest of the item builder | - | - | next |
 | settings, library/manifest, installer, patcher, gamelang | - | - | the `mods:*` channels |
 | catalog, network, previews (`mm-preview://`) | - | - | `reqwest`; the picture redirect (`src/preview-cache.ts`) has no Tauri twin yet |
 | item builder, arcana, Workshop editors | - | - | |
