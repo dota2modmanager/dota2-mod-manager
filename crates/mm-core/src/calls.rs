@@ -83,6 +83,17 @@ fn pak(path: &str) -> Result<Arc<crate::vpk::Index>, String> {
     Ok(ix)
 }
 
+/// The summons' plain models out of the pak at this path, one resolver per pak as the TypeScript keeps.
+fn summons_of(path: &str) -> Result<Arc<Mutex<crate::item_builder_assets::Summons>>, String> {
+    static OPEN: OnceLock<Mutex<HashMap<String, Arc<Mutex<crate::item_builder_assets::Summons>>>>> = OnceLock::new();
+    let ix = pak(path)?;
+    let mut open = OPEN.get_or_init(Default::default).lock().unwrap();
+    let held = open.entry(path.to_string()).or_insert_with(|| {
+        Arc::new(Mutex::new(crate::item_builder_assets::Summons::new(move |p: &str| ix.read(p).ok().flatten())))
+    });
+    Ok(held.clone())
+}
+
 fn particle_def_in(pak_path: &str, system: &str) -> Result<Value, String> {
     let ix = pak(pak_path)?;
     let mut read = |p: &str| ix.read(p).ok().flatten();
@@ -425,6 +436,129 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             json!(crate::item_builder_slots::slot_display_label(&s(args, 1)))
         }
         "item-builder-slots.itemSlotIcon" => json!(crate::item_builder_slots::item_slot_icon(&s(args, 0))),
+        "item-builder-assets.itemAssets" => {
+            // (pak, items_game, visuals, heroes): the summons resolved out of that pak
+            let heroes: Vec<String> = serde_json::from_value(args.get(3).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let held = summons_of(&s(args, 0))?;
+            let mut summons = held.lock().unwrap();
+            let mut resolve = |u: &str, h: &[String], m: &str| summons.resolve(u, h, m);
+            json!(crate::item_builder_assets::item_assets(&b(args, 1)?, &b(args, 2)?, &heroes, Some(&mut resolve)).map_err(kv_err)?)
+        }
+        "item-builder-assets.heroModelPath" => {
+            let ix = pak(&s(args, 0))?;
+            json!(crate::item_builder_assets::hero_model_path(&|p: &str| ix.read(p).ok().flatten(), &s(args, 1))?)
+        }
+        "item-builder-assets.gameAssetEntries" => {
+            let ix = pak(&s(args, 0))?;
+            let copies: Vec<crate::item_builder_assets::AssetCopy> =
+                serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let entries = crate::item_builder_assets::game_asset_entries(&|p: &str| ix.read(p).ok().flatten(), &copies, &|_| false)?;
+            json!(entries.into_iter().map(|(p, f)| json!([p, sha(Some(f))])).collect::<Vec<_>>())
+        }
+        "item-builder.setVisualsBlock" => json!(latin1(&crate::item_builder::set_visuals_block(&b(args, 0)?, &b(args, 1)?).map_err(kv_err)?)),
+        "item-builder.effectKey" => {
+            let ids: Vec<String> = match args.first() {
+                Some(Value::Array(a)) => a.iter().map(crate::js::string).collect(),
+                Some(Value::Null) | None => vec![],
+                Some(v) => crate::js::string(v).split(',').map(String::from).collect(),
+            };
+            json!(crate::item_builder::effect_key(&ids))
+        }
+        "item-builder.asItem" => {
+            let item = args.get(2).cloned().unwrap_or(Value::Null);
+            let (id, start) = (item["id"].as_str().unwrap_or("").to_string(), item["start"].as_u64().unwrap_or(0) as usize);
+            let model = args.get(3).and_then(Value::as_str);
+            json!(latin1(&crate::item_builder::as_item(&b(args, 0)?, &b(args, 1)?, &id, start, model).map_err(kv_err)?))
+        }
+        "item-builder.itemVisuals" => {
+            let start = args.get(1).and_then(|i| i["start"].as_u64()).unwrap_or(0) as usize;
+            json!(crate::item_builder::item_visuals(&b(args, 0)?, start).map_err(kv_err)?.map(|v| latin1(&v)))
+        }
+        "item-builder.itemVoices" => {
+            let start = args.get(1).and_then(|i| i["start"].as_u64()).unwrap_or(0) as usize;
+            json!(crate::item_builder::item_voices(&b(args, 0)?, start).map_err(kv_err)?)
+        }
+        "item-builder.defaultItemForWearable" => json!(crate::item_builder::default_item_for_wearable(&b(args, 0)?, &s(args, 1))?.map(|i| i.id)),
+        "item-builder.withoutFileSwaps" => {
+            let set = |i: usize| -> std::collections::HashSet<String> {
+                args.get(i).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default()
+            };
+            json!(latin1(&crate::item_builder::without_file_swaps(&b(args, 0)?, &set(1), &set(2)).map_err(kv_err)?))
+        }
+        "item-builder.itemEffectPatch" => {
+            // (pak, items_game, item, effect ids, target, refit): the summons resolved out of that pak
+            let ids: Vec<String> = match args.get(3) {
+                Some(Value::Array(a)) => a.iter().map(crate::js::string).collect(),
+                Some(Value::Null) | None => vec![],
+                Some(v) => crate::js::string(v).split(',').map(String::from).collect(),
+            };
+            let (target, refit) = (args.get(4).and_then(Value::as_str), args.get(5).and_then(Value::as_str));
+            let held = summons_of(&s(args, 0))?;
+            let mut summons = held.lock().unwrap();
+            let mut resolve = |u: &str, h: &[String], m: &str| summons.resolve(u, h, m);
+            json!(crate::item_builder::item_effect_patch(&b(args, 1)?, &s(args, 2), &ids, target, Some(&mut resolve), refit)?)
+        }
+        "item-builder-kinetic.kineticGems" => {
+            json!(crate::item_builder_kinetic::kinetic_gems(&b(args, 0)?).map_err(kv_err)?.iter().map(|(k, g)| json!([k, g])).collect::<Vec<_>>())
+        }
+        "item-builder-kinetic.offeredKinetic" => {
+            let heroes: Vec<String> = serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::item_builder_kinetic::offered_kinetic(&b(args, 0)?, &heroes).map_err(kv_err)?)
+        }
+        "item-builder-kinetic.picksGems" => json!(crate::item_builder_kinetic::picks_gems(&b(args, 0)?, &s(args, 1))?),
+        "item-builder-kinetic.withKinetics" => {
+            let gems = crate::item_builder_kinetic::picks_gems(&b(args, 1)?, &s(args, 2))?;
+            json!(latin1(&crate::item_builder_kinetic::with_kinetics(&b(args, 0)?, &gems)))
+        }
+        "item-builder-fx-patch.abilityFxPatch" => {
+            // (pak, items_game, item, effect ids, slot): the summons resolved out of that pak
+            let ids: Vec<String> = args.get(3).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            let held = summons_of(&s(args, 0))?;
+            let mut summons = held.lock().unwrap();
+            let mut resolve = |u: &str, h: &[String], m: &str| summons.resolve(u, h, m);
+            json!(crate::item_builder_fx_patch::ability_fx_patch(&b(args, 1)?, &s(args, 2), &ids, n(args, 4) as u64, Some(&mut resolve))?)
+        }
+        "item-builder-refits.pickModels" => {
+            let ids: Vec<String> = args.get(2).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::item_builder_refits::pick_models(&b(args, 0)?, &s(args, 1), &ids)
+                .map_err(kv_err)?
+                .map(|p| json!([p.model, p.swaps.into_iter().collect::<Vec<_>>()])))
+        }
+        "item-builder-refits.refitsOf" => {
+            // [[key, model, [[from, to]]]]
+            let mut picks = indexmap::IndexMap::new();
+            for p in args.first().and_then(Value::as_array).cloned().unwrap_or_default() {
+                let swaps = p[2].as_array().cloned().unwrap_or_default().iter().map(|x| (crate::js::string(&x[0]), crate::js::string(&x[1]))).collect();
+                picks.insert(crate::js::string(&p[0]), crate::item_builder_refits::PickModels { model: crate::js::string(&p[1]), swaps });
+            }
+            json!(crate::item_builder_refits::refits_of(&picks).into_iter().collect::<Vec<_>>())
+        }
+        "item-builder-refits.ownModelsWin" => {
+            // [[paths or null, own or null]]: the paths each keeps
+            let mut picks: Vec<crate::item_builder_refits::OwnedPick> = args
+                .first()
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|p| crate::item_builder_refits::OwnedPick {
+                    assets: p[0].as_array().map(|a| a.iter().map(|x| (crate::js::string(x), vec![])).collect()),
+                    own: p[1].as_str().map(String::from),
+                })
+                .collect();
+            crate::item_builder_refits::own_models_win(&mut picks);
+            json!(picks.iter().map(|p| p.assets.as_ref().map(|a| a.iter().map(|(x, _)| x.clone()).collect::<Vec<_>>())).collect::<Vec<_>>())
+        }
+        "item-builder-sets.itemSets" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let text = b(args, 1)?;
+            let slots = crate::item_builder_slots::item_slots(&text).map_err(kv_err)?;
+            json!(crate::item_builder_sets::item_sets(&text, &slots).map_err(kv_err)?)
+        }
+        "arcana.asModel" => {
+            let m = s(args, 1);
+            json!(sha(Some(crate::arcana::as_model(&b(args, 0)?, Some(&m))?)))
+        }
         "effect-edit.cleanEdits" => json!(effect_edit::clean_edits(args.first().unwrap_or(&Value::Null))),
         "effect-edit.systemsOf" => {
             let ix = pak(&s(args, 0))?;

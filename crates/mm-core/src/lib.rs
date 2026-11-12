@@ -2,6 +2,7 @@
 //! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
 
 pub mod ability_sounds;
+pub mod arcana;
 pub mod arcana_notes;
 pub mod calls;
 pub mod cosmetic_names;
@@ -10,10 +11,16 @@ pub mod effect_edit;
 pub mod hero_names;
 pub mod hero_showcase;
 pub mod i18n;
+pub mod item_builder;
 pub mod item_builder_ability_fx;
+pub mod item_builder_assets;
 pub mod item_builder_details;
 pub mod item_builder_donor;
 pub mod item_builder_effects;
+pub mod item_builder_fx_patch;
+pub mod item_builder_kinetic;
+pub mod item_builder_refits;
+pub mod item_builder_sets;
 pub mod item_builder_slots;
 pub mod item_builder_styles;
 pub mod item_skin;
