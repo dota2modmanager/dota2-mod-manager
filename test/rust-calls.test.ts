@@ -359,3 +359,40 @@ test('recolouring in Rust makes the files the TypeScript makes, on the game part
   ];
   assert.ok(compare(cases) > 1500);
 });
+
+test('particle trees, snapshots and attachment points in Rust answer as the TypeScript ones do', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const ps = await import('../src/particle-spec.ts');
+  const { snapshotPoints } = await import('../src/particle-snapshot.ts');
+  const { unusualEffects } = await import('../src/unusual-effects.ts');
+  const { file, blocks, effects } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const index = openVpkIndex(GAME_PAK01);
+  const read = (p: string) => index.read(p);
+  const all = [...index.paths()];
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-fx-'));
+  const save = (p: string, k: string) => { const at = path.join(tmp, k); fs.writeFileSync(at, index.read(p)!); return { $file: at }; };
+  const fromItems = [...new Set([...effects, ...blocks].flatMap((b) => ps.itemParticles(b.block)))];
+  const systems = [...spread(fromItems, 120), ...spread(all.filter((p) => p.endsWith('.vpcf_c')), 60).map((p) => p.replace(/_c$/, ''))];
+  const snaps = spread(all.filter((p) => p.endsWith('.vsnap_c')), 40);
+  const scripts = all.filter((p) => /^scripts\/npc\/heroes\/npc_dota_hero_\w+\.txt$/.test(p));
+  const models = spread(all.filter((p) => p.endsWith('.vmdl_c')), 120);
+  const unusual = unusualEffects(text).slice(0, 30);
+  const def = (pak: string, s: string) => ps.particleDef(read, s);
+  const cases: Case[] = [
+    { name: 'particle-spec.itemParticles', ts: ps.itemParticles as never, inputs: [...effects, ...blocks].map((b) => [b.block]) },
+    { name: 'particle-spec.particleDef', ts: def as never, inputs: systems.map((s) => [GAME_PAK01, s]).concat([[GAME_PAK01, 'particles/none.vpcf']]) },
+    { name: 'particle-spec.particleTextures', ts: ((pak: string, s: string) => { const d = def(pak, s); return d ? ps.particleTextures(d) : null; }) as never, inputs: systems.map((s) => [GAME_PAK01, s]) },
+    { name: 'particle-spec.bindItemParticle', ts: ((pak: string, s: string, e: never, c: string) => { const d = def(pak, s); return d ? ps.bindItemParticle(d, e ?? undefined, c) : null; }) as never, inputs: systems.slice(0, 60).flatMap((s, k) => [
+      [GAME_PAK01, s, unusual[k % unusual.length], ''], [GAME_PAK01, s, null, 'preview'], [GAME_PAK01, s, unusual[(k + 7) % unusual.length], 'loadout'], [GAME_PAK01, s, null, ''],
+    ]) },
+    { name: 'particle-spec.heroLoadoutParticles', ts: ps.heroLoadoutParticles as never, inputs: scripts.map((p, k) => [save(p, `h${k}.txt`)]) },
+    { name: 'particle-spec.modelAttachments', ts: ((m: string | null) => ps.modelAttachments(m === null ? null : Buffer.from(m, 'latin1'))) as never, inputs: [[null], ...models.map((p, k) => [save(p, `m${k}`)])] },
+    { name: 'particle-spec.dataTree', ts: ((m: string | null) => ps.dataTree(m === null ? null : Buffer.from(m, 'latin1'))) as never, inputs: [[null], ...snaps.map((p, k) => [save(p, `s${k}`)]), ...models.slice(0, 20).map((p, k) => [save(p, `d${k}`)])] },
+    { name: 'particle-snapshot.snapshotPoints', ts: ((m: string) => { const f = Buffer.from(m, 'latin1'); const d = ps.dataTree(f); if (!d) throw new Error('no tree'); return snapshotPoints(f, d); }) as never, inputs: snaps.map((p, k) => [save(p, `p${k}`)]) },
+  ];
+  assert.ok(fromItems.length > 50 && snaps.length > 10 && scripts.length > 100);
+  assert.ok(compare(cases) > 800);
+});

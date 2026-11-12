@@ -11,7 +11,7 @@ use crate::kv::latin1;
 use crate::{
     cosmetic_names, hero_names, i18n, item_builder_donor as donor, item_builder_effects as effects,
     item_builder_styles as styles, item_skin, item_sounds, item_visuals, material, model_attachments, model_cloth,
-    model_sequences, model_skin, recolor, unusual_effects,
+    model_sequences, model_skin, particle_snapshot, particle_spec, recolor, unusual_effects,
 };
 
 /// A text argument as items_game's latin1 bytes: a string one byte per char, or {"$file": path}
@@ -68,6 +68,25 @@ fn floats(args: &[Value], i: usize) -> Vec<f64> {
 fn rgb(args: &[Value], i: usize) -> recolor::Rgb {
     let f = floats(args, i);
     [0, 1, 2].map(|c| f.get(c).copied().unwrap_or(f64::NAN))
+}
+
+/// The game's pak01 index at this path, opened once.
+fn pak(path: &str) -> Result<Arc<crate::vpk::Index>, String> {
+    static OPEN: OnceLock<Mutex<HashMap<String, Arc<crate::vpk::Index>>>> = OnceLock::new();
+    let mut open = OPEN.get_or_init(Default::default).lock().unwrap();
+    if let Some(ix) = open.get(path) {
+        return Ok(ix.clone());
+    }
+    let ix = Arc::new(crate::vpk::Index::open(std::path::Path::new(path)).map_err(|e| e.to_string())?);
+    open.insert(path.to_string(), ix.clone());
+    Ok(ix)
+}
+
+fn particle_def_in(pak_path: &str, system: &str) -> Result<Value, String> {
+    let ix = pak(pak_path)?;
+    let mut read = |p: &str| ix.read(p).ok().flatten();
+    let mut budget = 128;
+    Ok(particle_spec::particle_def(&mut read, system, &mut budget, 0, &HashMap::new()).unwrap_or(Value::Null))
 }
 
 fn kv_err(e: crate::kv::KvError) -> String {
@@ -271,6 +290,36 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let (vpk, r) = recolor::build_recolor(&ix, &s(args, 1), rgb(args, 2), |_| false)?;
             let failed: Vec<&str> = r.failed.iter().map(|f| f.path.as_str()).collect();
             json!([sha(Some(vpk)), r.files.len(), r.changed, r.skipped, failed])
+        }
+        "particle-spec.dataTree" => json!(particle_spec::data_tree(opt_b(args, 0)?.as_deref().map(Vec::as_slice))),
+        "particle-spec.particleDef" => particle_def_in(&s(args, 0), &s(args, 1))?,
+        "particle-spec.particleTextures" => {
+            let def = particle_def_in(&s(args, 0), &s(args, 1))?;
+            if def.is_null() {
+                Value::Null
+            } else {
+                json!(particle_spec::particle_textures(&def))
+            }
+        }
+        "particle-spec.bindItemParticle" => {
+            let def = particle_def_in(&s(args, 0), &s(args, 1))?;
+            if def.is_null() {
+                Value::Null
+            } else {
+                particle_spec::bind_item_particle(&def, args.get(2), &s(args, 3))
+            }
+        }
+        "particle-spec.itemParticles" => json!(particle_spec::item_particles(&b(args, 0)?)),
+        "particle-spec.heroLoadoutParticles" => {
+            json!(particle_spec::hero_loadout_particles(&b(args, 0)?).map_err(kv_err)?)
+        }
+        "particle-spec.modelAttachments" => {
+            json!(particle_spec::model_attachments(opt_b(args, 0)?.as_deref().map(Vec::as_slice)))
+        }
+        "particle-snapshot.snapshotPoints" => {
+            let file = b(args, 0)?;
+            let data = particle_spec::data_tree(Some(&file)).ok_or("snapshot: no DATA tree")?;
+            json!(particle_snapshot::snapshot_points(&file, &Value::Object(data))?)
         }
         "item-visuals.itemVisuals" => json!(item_visuals::item_visuals(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?),
         "item-visuals.findItems" => json!(item_visuals::find_items(&b(args, 0)?, &s(args, 1))

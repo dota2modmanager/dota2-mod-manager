@@ -22,6 +22,8 @@ pub mod model_attachments;
 pub mod model_cloth;
 pub mod model_sequences;
 pub mod model_skin;
+pub mod particle_snapshot;
+pub mod particle_spec;
 pub mod recolor;
 pub mod resource;
 pub mod schema;

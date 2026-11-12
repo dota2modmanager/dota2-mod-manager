@@ -74,6 +74,61 @@ pub fn is_word(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '_'
 }
 
+/// Number(v): what JavaScript makes of a value asked for as a number.
+pub fn to_number(v: &Value) -> f64 {
+    match v {
+        Value::Null => 0.0,
+        Value::Bool(b) => *b as u8 as f64,
+        Value::Number(n) => n.as_f64().unwrap_or(f64::NAN),
+        Value::String(s) => str_number(s),
+        Value::Array(a) if a.is_empty() => 0.0,
+        Value::Array(a) if a.len() == 1 => str_number(&string(&a[0])),
+        _ => f64::NAN,
+    }
+}
+
+fn str_number(s: &str) -> f64 {
+    let t = s.trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}');
+    if t.is_empty() {
+        return 0.0;
+    }
+    let (sign, rest) = match t.as_bytes()[0] {
+        b'-' => (-1.0, &t[1..]),
+        b'+' => (1.0, &t[1..]),
+        _ => (1.0, t),
+    };
+    if rest == "Infinity" {
+        return sign * f64::INFINITY;
+    }
+    for (prefix, radix) in [("0x", 16), ("0X", 16), ("0o", 8), ("0O", 8), ("0b", 2), ("0B", 2)] {
+        if let Some(d) = t.strip_prefix(prefix) {
+            return u64::from_str_radix(d, radix).map_or(f64::NAN, |n| n as f64);
+        }
+    }
+    let ok =
+        !rest.is_empty() && rest.bytes().all(|c| c.is_ascii_digit() || matches!(c, b'.' | b'e' | b'E' | b'+' | b'-'));
+    if ok {
+        rest.parse::<f64>().map_or(f64::NAN, |n| sign * n)
+    } else {
+        f64::NAN
+    }
+}
+
+/// A number as JSON.stringify writes it: null for NaN and the infinities, 0 for -0, whole numbers
+/// without a fraction.
+pub fn json_number(n: f64) -> Value {
+    if !n.is_finite() {
+        return Value::Null;
+    }
+    if n == 0.0 {
+        return Value::from(0);
+    }
+    if n.fract() == 0.0 && n.abs() < 9_007_199_254_740_992.0 {
+        return Value::from(n as i64);
+    }
+    Value::from(n)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
