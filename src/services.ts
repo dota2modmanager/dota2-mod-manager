@@ -6,6 +6,7 @@
  * remote config. Both answer from their cached copies until the network does. A third waits for
  * the start to settle: on Linux, a copy of the Workshop Tools the game has (src/workshop-tools.ts).
  */
+import { uiLangFor } from './ui-lang.ts';
 import path from 'node:path';
 import { Settings } from './settings.ts';
 import { beginNightAgain } from './pumpkin.ts';
@@ -65,7 +66,7 @@ import type { AppContext, AppProgress } from './app-context.ts';
 import type { LibRecord } from './types.ts';
 
 /** Build every service over this userData folder. */
-export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons }: {
+export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons, systemLanguages = null }: {
   userData: string;
   appVersion: () => string;
   /** the bar at the bottom of the window */
@@ -73,6 +74,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   diag: (msg: string) => void;
   /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */
   fetchIcons: ConstructorParameters<typeof Icons>[1];
+  /** on the first start only, the system's languages: the window takes its language from them (src/ui-lang.ts) */
+  systemLanguages?: readonly string[] | null;
 }) {
   // Before anything reads the library or touches the game folder: a change the last process
   // died in the middle of is finished or undone first, so what loads next is one whole state.
@@ -83,6 +86,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // a new round of the bloody night starts everybody from the beginning, once (src/pumpkin.ts)
   if (beginNightAgain({ get: (k) => settings.get(k as never), set: (k, v) => settings.set(k as never, v as never) })) diag('the night starts again');
   setDownloadProxy(settings.get('downloadProxy'));
+  if (systemLanguages) settings.set('uiLang', uiLangFor(systemLanguages));
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);
   const previewStore = createPreviewStore({ dir: path.join(userData, 'preview-cache'), log: diag });

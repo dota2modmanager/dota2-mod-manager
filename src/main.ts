@@ -151,7 +151,7 @@ async function start(): Promise<void> {
   const sendProgress = (evt: AppProgress) => windowOpen()?.webContents.send('progress', evt);
 
   const firstRun = !fs.existsSync(path.join(userData, 'settings.json')); // before anything saves it: picks the scale
-  const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch });
+  const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch, systemLanguages: firstRun ? app.getPreferredSystemLanguages() : null });
   const {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
     remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana,

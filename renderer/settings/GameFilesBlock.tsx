@@ -48,6 +48,7 @@ export function GameFilesBlock({ i, everyone, onEveryone }: { i: number; everyon
         <Swap className="settings-state" value={on}>{on ? L`работает` : L`выключена, файлы игры как у Valve`}</Swap>
         <Toggle id="itemTableSwitch" on={on} label={L`Таблица предметов`} disabled={busy} onClick={() => { void flip(); }} />
       </div>
+      <div className="settings-hint">{L`Это и есть «небезопасный режим» прошлых версий. Выключишь его, и приложение вернёт gameinfo и dota.signatures как у Valve, а VPK-моды продолжат работать.`}</div>
       {trouble() && <div className="settings-hint warn">{L`Правку в файлах игры стёрло обновление Dota или проверка файлов Steam. Приложение впишет её заново при запуске игры кнопкой «Играть» или по кнопке «Починить приложение» ниже.`}</div>}
       <div className="settings-row spaced">
         <span className="settings-label">{L`Мой вид на всех, кто играет этим героем`}</span>
