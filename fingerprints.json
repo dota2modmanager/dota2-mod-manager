@@ -1,11 +1,13 @@
 {
-  "count": 1916,
+  "count": 1919,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
     "00c05c93db840fd59f08653b0c0c35fb483a6a07": [{"name":"Monkey King Arcana","categoryId":"heroes","styleLabel":"Fire","type":"vpk"}],
     "00ccb2ff2a180272167a4be0453d2d5c8f71b2a8": [{"name":"Earthshaker Burning Pedestal","categoryId":"pedestal","styleLabel":null,"type":"vpk"}],
     "00e363b6cc3a6e13de5685e0cef678645e796fcb": [{"name":"Lion Mulctant Pall","categoryId":"hero-items","styleLabel":"Crimson","type":"vpk"}],
+    "01044ddabd1009d356afc2c126d231235a5457c6": [{"name":"Radiant Creeps Kabanchiki Wow","categoryId":"creeps","styleLabel":null,"type":"vpk"}],
+    "01416807b55f7796aab76d5ec41531005a7c0268": [{"name":"Cloud Vs Sephiroth By Siriusz","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "01483d2750340e8b06bbf38d99343945dc6fbf00": [{"name":"Juggernaut Samurai of Wind","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "01aeed68946ef1febd7596d4573afde6f3648182": [{"name":"Cyrene Song","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "01d460000022d4ce39e105f4c18770b8ac646168": [{"name":"TI7 Maelstrom Mjollnir","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
@@ -1819,6 +1821,7 @@
     "f3e229d576e4a011689340343bb48811e4be9f22": [{"name":"Chess Ranks","categoryId":"ranks","styleLabel":null,"type":"vpk"}],
     "f400a8b57ae14b20248595c5b8dc1abb422de0c1": [{"name":"Wave Lite Pink","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "f40c1420d747b5a6a0b1a5e260ba48f5e149d31f": [{"name":"Sand King Black Sands","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "f428a2fc7cfa31ba8b654d70a8eb59678d55cd09": [{"name":"Dire Creeps Kabanchiki Wow","categoryId":"creeps","styleLabel":null,"type":"vpk"}],
     "f44a7aa786cc1c8d8c7ac53d488143801683acad": [{"name":"Dragon Knight Silverwurm Sacrifice","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "f453038046a7a532f2db5f387767000c70d340ac": [{"name":"Terrorblade Rictus Blade","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "f45312019de978d4274b76916e1626b8e85286a2": [{"name":"Weaver Ult Net Idi Nahui","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
