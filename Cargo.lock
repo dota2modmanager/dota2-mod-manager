@@ -2130,6 +2130,7 @@ dependencies = [
  "indexmap 2.14.2",
  "memchr",
  "rayon",
+ "regex",
  "rustc-hash",
  "serde",
  "serde_json",

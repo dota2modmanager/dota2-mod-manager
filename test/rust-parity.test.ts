@@ -76,3 +76,37 @@ test('items_game: every numbered item reads the same, byte ranges included', { s
   assert.equal(rs.items.length, want.length);
   for (let i = 0; i < want.length; i++) assert.deepEqual(rs.items[i], want[i], `item ${want[i].id}`);
 });
+
+test('items_game: a merge of real patches comes out byte for byte the same, and checks the same', { skip }, async (t) => {
+  const game = path.join(root, 'sandbox', 'steamapps', 'common', 'dota 2 beta', 'game');
+  if (!fs.existsSync(path.join(game, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { readGameSchema, listItems } = await import('../src/schema-items.ts');
+  const { mergeSchema, validateSchema, baseItemPatch } = await import('../src/schema-merge.ts');
+  const { text } = readGameSchema(game);
+  const items = listItems(text);
+  const slotOf = (i: { slot: string; prefab: string }) => i.slot || i.prefab;
+  const weather = items.filter((i) => slotOf(i) === 'weather' && !i.baseitem && i.hasVisuals).slice(0, 3);
+  const base = items.find((i) => i.baseitem && slotOf(i) === 'weather');
+  assert.ok(base && weather.length, 'the table has weather to dress');
+  // a free weather dressed as a paid one, the same block from two sources, a block on one
+  // line (reindented), and an id the table does not have
+  const dressed = baseItemPatch(text, base.id, weather[0].id);
+  assert.equal(rust('schema-base-patch', game, base.id, weather[0].id), dressed);
+  const oneLine = text.slice(weather[1].start, weather[1].end).replace(/\s+/g, ' ');
+  const patches = [
+    { id: base.id, block: dressed, source: 'a' },
+    { id: base.id, block: dressed.replace(/\t/g, '  '), source: 'b' },
+    { id: weather[1].id, block: oneLine, source: 'c' },
+    { id: weather[2].id, block: text.slice(weather[2].start, weather[2].end), source: 'd' },
+    { id: '99999999', block: '"99999999" { }', source: 'e' },
+  ];
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-merge-'));
+  fs.writeFileSync(path.join(tmp, 'p.json'), JSON.stringify(patches));
+  const rs = rust('schema-merge', game, path.join(tmp, 'p.json'), path.join(tmp, 'out.txt'));
+  const ts = mergeSchema(text, patches);
+  assert.ok(fs.readFileSync(path.join(tmp, 'out.txt')).equals(Buffer.from(ts.text, 'latin1')), 'merged text');
+  assert.deepEqual(rs.applied, ts.applied);
+  assert.deepEqual(rs.missing, ts.missing);
+  assert.deepEqual(rs.conflicts, ts.conflicts);
+  assert.deepEqual(rs.validate, validateSchema(ts.text, text));
+});

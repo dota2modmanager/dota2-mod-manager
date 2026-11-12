@@ -46,7 +46,7 @@ const child = spawn(exe, ['--user-data-dir=sandbox/userdata', '--write-jail=sand
   stdio: ['ignore', 'inherit', 'pipe'],
 });
 const hostLog = [];
-child.stderr.on('data', (d) => hostLog.push(String(d)));
+child.stderr.on('data', (d) => { hostLog.push(String(d)); if (process.env.MM_TRACE) process.stderr.write(d); });
 
 let browser;
 const finish = (code) => {

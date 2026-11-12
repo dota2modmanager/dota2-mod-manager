@@ -50,7 +50,15 @@ Tauri command mm_invoke(channel, args)
   Electron on each use, so the host answers that `require` with its own `app`, `ipcMain`,
   `BrowserWindow`, `dialog`, `shell`... Dialogs, links and the window itself are asked of Rust
   (`src-tauri/src/shell.rs`). Wire format: top of `host.ts`.
-- Bytes cross both boundaries as `{ "$b64": "..." }`.
+- Bytes cross both boundaries as `{ "$b64": "..." }`. An answer that is only bytes (a 3D
+  preview slice, a video) leaves Rust raw (`tauri::ipc::Response`), and the page gets it as a
+  `Uint8Array` without a second base64 pass.
+- The host writes an invoke's answer on a line of its own (`R <id> j|b|e <json>`, `writeResult` in
+  `host.ts`), and Rust hands the JSON text to the page without parsing it; only an answer with
+  bytes inside is decoded again in the page. For `cosmetics:slots` (3.8 MB, every start of the item
+  builder) that took the bridge from ~250 ms to ~50 ms on top of the host's own ~270 ms.
+  `MM_TRACE=1` prints each answer's work and send time on the host's stderr
+  (`tools/tauri-shot.mjs` passes it through).
 - So the Tauri build works in full from the first commit, and every channel moved to Rust is a
   channel the host no longer answers. When the count reaches all of them, the host, Node and
   `src/` go.
@@ -70,11 +78,12 @@ been through the sandbox and the e2e run. Both build from the same `renderer/`.
 | `win:*` channels | done | yes | `native.rs` |
 | VPK read/write/fingerprint (`src/vpk-read.ts`, `vpk-write.ts`, `vpk-fingerprint.ts`) | done | no | `crates/mm-core/src/vpk.rs`, parity test `test/rust-parity.test.js` |
 | items_game reader (`src/schema-kv.ts`, `schema-items.ts`) | done | no | `crates/mm-core/src/kv.rs`, `schema.rs`; parity: all ~26 000 items equal, byte ranges included |
-| items_game merge and check (`schema-merge.ts`), KV3 | - | - | next: the item builder's hot path |
+| items_game merge and check (`schema-merge.ts`) | done | no | `crates/mm-core/src/schema_merge.rs`; parity: real patches merge to the same bytes, conflicts and `validate` agree |
+| KV3 (`src/kv3*.ts`) | - | - | next: the item builder's hot path |
 | settings, library/manifest, installer, patcher, gamelang | - | - | the `mods:*` channels |
 | catalog, network, previews (`mm-preview://`) | - | - | `reqwest`; the picture redirect (`src/preview-cache.ts`) has no Tauri twin yet |
 | item builder, arcana, Workshop editors | - | - | |
-| 3D preview (`preview3d:*`) | - | - | binary answers: use `tauri::ipc::Response`, not JSON |
+| 3D preview (`preview3d:*`) | - | - | binary answers already go back raw (`answer` in `src-tauri/src/main.rs`) |
 | tray, autostart, updater, deep links, uninstall | - | - | Tauri plugins: tray-icon, autostart, updater, deep-link |
 
 ### Speed so far
@@ -94,7 +103,8 @@ each block again at every level, and from reading the items on every core (rayon
 
 Known gaps of the Tauri build today (all inside the host, so they close as channels move):
 
-- `nativeImage` has no stand-in: mod pictures decoded through it come back empty.
+- `nativeImage` (`src-tauri/host/images.ts`) reads and writes PNG only, through `src/png-strip.ts`:
+  a palette PNG or a JPEG comes back empty, where Electron would decode it.
 - Catalog pictures are not redirected to the local cache (`session.webRequest` has no Tauri twin):
   the page loads them straight from the network.
 - Dropped files: `webUtils.getPathForFile` maps a dropped file to the path Tauri reported for the

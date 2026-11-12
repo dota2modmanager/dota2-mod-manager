@@ -3,4 +3,5 @@
 
 pub mod kv;
 pub mod schema;
+pub mod schema_merge;
 pub mod vpk;

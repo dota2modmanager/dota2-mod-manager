@@ -6,7 +6,8 @@
  * Rust answers itself or hands to the TypeScript host; what the main process sends arrives as the
  * Tauri event "mm".
  *
- * Bytes travel as {$b64} both ways (src-tauri/host/wire.ts), and come out as Uint8Array here.
+ * Bytes travel as {$b64} both ways (src-tauri/host/wire.ts), and come out as Uint8Array here; an
+ * answer that is only bytes arrives raw, as an ArrayBuffer (answerOf).
  */
 (function () {
   if (window.__mmBridge) return;
@@ -40,6 +41,14 @@
     const out = {};
     for (const k of Object.keys(v)) out[k] = decode(v[k]);
     return out;
+  };
+
+  /* An invoke's answer (src-tauri/src/main.rs answer): bytes alone come raw, an answer with bytes
+     deeper in comes as {$mmb}, and any other is used as it came, without a walk over it. */
+  const answerOf = (v) => {
+    if (v instanceof ArrayBuffer) return new Uint8Array(v);
+    if (v && typeof v === 'object' && !Array.isArray(v) && '$mmb' in v && Object.keys(v).length === 1) return decode(v.$mmb);
+    return v;
   };
 
   const tauri = () => window.__TAURI_INTERNALS__;
@@ -81,7 +90,7 @@
   }, true);
 
   const ipcRenderer = {
-    invoke: (channel, ...args) => invoke('mm_invoke', { channel, args: encode(args) }).then(decode),
+    invoke: (channel, ...args) => invoke('mm_invoke', { channel, args: encode(args) }).then(answerOf),
     send: (channel, ...args) => { invoke('mm_send', { channel, args: encode(args) }).catch(() => {}); },
     on: (channel, cb) => {
       if (!subscribers.has(channel)) subscribers.set(channel, new Set());

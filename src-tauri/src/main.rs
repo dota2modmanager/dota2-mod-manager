@@ -20,7 +20,7 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
-use sidecar::{HostPaths, Sidecar};
+use sidecar::{Answer, HostPaths, Sidecar};
 
 struct Host(Arc<Sidecar>);
 
@@ -32,6 +32,27 @@ fn args_of(v: Value) -> Vec<Value> {
     }
 }
 
+/// An answer for the page. One that is only bytes (a 3D preview's slice, a video) goes back raw,
+/// as an ArrayBuffer instead of base64 inside JSON. Any other answer goes as the host wrote it,
+/// unparsed; one with bytes deeper inside is wrapped as {"$mmb": ...} so the bridge knows to
+/// decode it, and the rest is not walked again at all.
+fn answer(a: Answer) -> Result<tauri::ipc::Response, String> {
+    match a {
+        Answer::Json(s) => Ok(tauri::ipc::Response::new(s)),
+        Answer::Bytes(s) => {
+            // JSON.stringify writes base64 without escapes, so the whole answer {"$b64":"..."} is plain
+            if let Some(b64) = s.strip_prefix("{\"$b64\":\"").and_then(|r| r.strip_suffix("\"}")) {
+                if !b64.contains('"') {
+                    use base64::Engine;
+                    let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(|e| e.to_string())?;
+                    return Ok(tauri::ipc::Response::new(bytes));
+                }
+            }
+            Ok(tauri::ipc::Response::new(format!("{{\"$mmb\":{s}}}")))
+        }
+    }
+}
+
 /// ipcRenderer.invoke: Rust's answer when the channel is Rust's, the host's otherwise.
 #[tauri::command]
 async fn mm_invoke(
@@ -39,14 +60,15 @@ async fn mm_invoke(
     host: tauri::State<'_, Host>,
     channel: String,
     args: Value,
-) -> Result<Value, String> {
+) -> Result<tauri::ipc::Response, String> {
     let host = host.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let list = args_of(args);
-        if let Some(res) = native::handle(&app, &channel, &list) {
-            return res;
-        }
-        host.invoke(&channel, Value::Array(list))
+        let res = match native::handle(&app, &channel, &list) {
+            Some(res) => res.map(|v| Answer::Json(v.to_string())),
+            None => host.invoke(&channel, Value::Array(list)),
+        };
+        answer(res?)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -161,4 +183,27 @@ fn main() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tauri::ipc::{InvokeResponseBody, IpcResponse};
+
+    fn body(a: Answer) -> InvokeResponseBody {
+        answer(a).unwrap().body().unwrap()
+    }
+
+    #[test]
+    fn bytes_alone_go_back_raw_and_the_rest_as_written() {
+        assert!(
+            matches!(body(Answer::Bytes(r#"{"$b64":"AQID"}"#.into())), InvokeResponseBody::Raw(ref b) if b == &[1, 2, 3])
+        );
+        let nested = body(Answer::Bytes(r#"{"ok":true,"data":{"$b64":"AQID"}}"#.into()));
+        assert!(
+            matches!(nested, InvokeResponseBody::Json(ref s) if s == r#"{"$mmb":{"ok":true,"data":{"$b64":"AQID"}}}"#)
+        );
+        assert!(matches!(body(Answer::Json("[1,2]".into())), InvokeResponseBody::Json(ref s) if s == "[1,2]"));
+        assert!(answer(Answer::Bytes(r#"{"$b64":"not base64!"}"#.into())).is_err());
+    }
 }
