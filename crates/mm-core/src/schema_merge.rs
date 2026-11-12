@@ -277,6 +277,12 @@ impl ItemsById {
     }
 }
 
+/// The items by id of a table, kept for the last table asked about.
+pub fn items_by_id(text: &[u8]) -> kv::Result<std::sync::Arc<ItemsById>> {
+    static SLOT: crate::memo::Slot<ItemsById> = std::sync::Mutex::new(None);
+    crate::memo::per_text(&SLOT, text, ItemsById::new)
+}
+
 /// Which item blocks a mod changed: those naming a file it ships that differ from the game's.
 pub fn extract_deltas(mod_text: &[u8], vpk_paths: &[String], base_text: Option<&[u8]>) -> Result<Vec<Delta>> {
     let needles: Vec<Vec<u8>> = owned_asset_needles(vpk_paths, true).iter().map(|n| latin1_bytes(n)).collect();
