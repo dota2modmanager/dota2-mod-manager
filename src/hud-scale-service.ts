@@ -1,24 +1,20 @@
 /* The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is
  * src/hud-scale.ts). One record. The style it starts from is the one in force: a HUD mod's copy
  * when one is switched on (first in the load order wins, as in the game), else the game's own.
- * ValveResourceFormat reads it back as CSS, the layout goes at its end, and Valve's compiler builds
- * it again; the pak goes early in the load order, so it wins over the HUD mod it was made from.
+ * Its CSS is read out of it, the layout goes at its end, and the style is written again here
+ * (src/panorama-files.ts), without ValveResourceFormat or Valve's compiler; the pak goes early in
+ * the load order, so it wins over the HUD mod it was made from.
  *
- * A Dota update that reached the record builds it again from the new style. That takes the two
- * tools a few seconds, so it runs after the update's repair has answered, and the record's mark
- * from src/update-impact.ts is lifted when it is done. */
-import fs from 'node:fs';
-import os from 'node:os';
+ * A Dota update that reached the record builds it again from the new style, after the update's
+ * repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done. */
+import { cleanParts, partsOfScale, STYLE, withLayout, type HudPart } from './hud-scale.ts';
 import path from 'node:path';
-import { cleanParts, partsOfScale, SOURCE, STYLE, withLayout, type HudPart } from './hud-scale.ts';
-import { cssInForce, fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
-import { buildVpk, entryPath } from './vpk.ts';
-import { runTool } from './toolchain.ts';
+import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
+import { readStyle, writeStyle } from './panorama-files.ts';
+import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 import { t } from './i18n.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
-import type { CompileJob } from './resource-compiler.ts';
-import type { VpkEntry } from './vpk.ts';
 
 /** What a HUD record was built from. `hud` is the bottom bar's scale; a record from before the editor has nothing else. */
 export interface HudGenerated { hud: number; base: string; parts?: HudPart[] }
@@ -26,24 +22,18 @@ export interface HudGenerated { hud: number; base: string; parts?: HudPart[] }
 /** The layout a record holds. */
 const partsOf = (g: HudGenerated): HudPart[] => g.parts ?? partsOfScale(g.hud);
 
-/** What the window shows: the layout on now, if any, and whether the two tools are there. */
+/** What the window shows: the layout on now, if any. */
 export interface HudState {
   installed: { id: string; parts: HudPart[]; base: string; enabled: boolean } | null;
   /** the HUD mod whose style the layout would go on, or null for the game's own */
   hudMod: string | null;
-  vrf: boolean;
 }
 
 /** The service the hud:* channels call. */
-export function createHudScale({ gamePath, installer, library, vrf, compile, decompile = vrfCss, onRebuilt = () => {}, log = () => {} }: {
+export function createHudScale({ gamePath, installer, library, onRebuilt = () => {}, log = () => {} }: {
   gamePath: () => string | null | undefined;
   installer: PakInstaller;
   library: Pick<Library, 'list' | 'add' | 'update'>;
-  /** ValveResourceFormat's CLI, when it is downloaded */
-  vrf: () => string | null;
-  compile: (job: CompileJob) => Promise<VpkEntry[]>;
-  /** a compiled style read back as CSS; tests hand one in */
-  decompile?: (exe: string, style: Buffer) => Promise<string>;
   /** a record built again after an update, so its mark can go */
   onRebuilt?: (id: string) => void;
   log?: (msg: string) => void;
@@ -60,18 +50,18 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
   }
 
   async function build(parts: HudPart[]): Promise<{ vpk: Buffer; base: string }> {
-    const exe = vrf();
-    if (!exe) throw new Error(t('Нужен ValveResourceFormat: скачай его в окне'));
     const game = gamePath();
     if (!game) throw new Error(t('Не указана папка игры'));
-    const got = await cssInForce({ game, langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file: STYLE }, (style) => decompile(exe, style), log);
+    const readable = (data: Buffer) => { try { readStyle(data); return true; } catch { return false; } };
+    const got = fileInForce({
+      game, langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file: STYLE, usable: readable,
+      passedOver: (rec) => log(`hud layout: ${rec.name} carries ${STYLE} in a form the app cannot read, using the next copy`),
+    });
     if (!got) throw new Error(t('В игре нет файла {0}', STYLE));
-    const { from } = got;
-    const css = withLayout(got.css, parts);
-    const entries = await compile({ id: 'hud_scale', files: [{ path: SOURCE, data: Buffer.from(css) }], compile: [SOURCE] });
-    const style = entries.filter((e) => entryPath(e) === STYLE);
-    if (!style.length) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', SOURCE, STYLE));
-    return { vpk: buildVpk(style), base: from?.name || 'game' };
+    const pak01 = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk'));
+    if (!readable(got.data)) throw new Error(t('Не удалось прочитать стиль {0}', STYLE));
+    const style = writeStyle(got.data, withLayout(readStyle(got.data).css, parts), () => null, (p) => pak01.read(p));
+    return { vpk: buildVpk([entryAt(STYLE, style)]), base: got.from?.name || 'game' };
   }
 
   const nameOf = (parts: HudPart[]) => t('Интерфейс в игре: панелей изменено {0}', parts.length);
@@ -99,7 +89,6 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
       return {
         installed: rec && g ? { id: rec.id, parts: partsOf(g), base: g.base, enabled: rec.enabled !== false } : null,
         hudMod,
-        vrf: !!vrf(),
       };
     },
 
@@ -125,20 +114,4 @@ export function createHudScale({ gamePath, installer, library, vrf, compile, dec
       return [];
     },
   };
-}
-
-/** A compiled style read back as CSS by ValveResourceFormat, in a folder of its own that goes after. */
-export async function vrfCss(exe: string, style: Buffer): Promise<string> {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-hud-'));
-  try {
-    const src = path.join(dir, 'hud_reborn.vcss_c');
-    const out = path.join(dir, 'hud_reborn.css');
-    fs.writeFileSync(src, style);
-    await runTool(exe, ['-i', src, '-o', out, '-d']);
-    // it answers 0 for a file it could not read, and writes nothing
-    if (!fs.existsSync(out)) throw new Error(t('ValveResourceFormat не смог прочитать стиль интерфейса'));
-    return fs.readFileSync(out, 'utf8');
-  } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
-  }
 }

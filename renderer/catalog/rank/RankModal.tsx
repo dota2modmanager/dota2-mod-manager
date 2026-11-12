@@ -14,7 +14,7 @@ export interface RankModalModel {
   medals: Record<string, string>;
   badges: string[];
   filter: string;
-  /** ValveResourceFormat is downloaded */
+  /** ValveResourceFormat is downloaded: the medals' pictures, not the medal itself */
   vrf: boolean;
   busy: 'tool' | 'build' | null;
 }
@@ -128,15 +128,17 @@ export function RankModal({ m, actions }: { m: RankModalModel; actions: RankModa
       </div>
 
       <div className="modal-actions">
-        {!m.vrf
-          ? <button className="btn btn-primary" id="rankToolBtn" disabled={m.busy !== null} onClick={actions.getTool}>
-            <span className="ms">{m.busy === 'tool' ? 'progress_activity' : 'download'}</span>{L`Скачать ValveResourceFormat`}
+        {m.busy === 'build'
+          ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
+          : <button className="btn btn-primary" id="rankInstallBtn" onClick={actions.install}>
+            <span className="ms">download</span>{m.installed ? L`Обновить` : L`Поставить`}
+          </button>}
+        {/* the medals' pictures are compressed: ValveResourceFormat reads them, the medal goes on without it */}
+        {!m.vrf && (
+          <button className="btn btn-ghost" id="rankToolBtn" disabled={m.busy !== null} onClick={actions.getTool}>
+            <span className="ms">{m.busy === 'tool' ? 'progress_activity' : 'image'}</span>{L`Показать картинки медалей`}
           </button>
-          : m.busy === 'build'
-            ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
-            : <button className="btn btn-primary" id="rankInstallBtn" onClick={actions.install}>
-              <span className="ms">download</span>{m.installed ? L`Обновить` : L`Поставить`}
-            </button>}
+        )}
       </div>
 
       <div className="modal-note">

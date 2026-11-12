@@ -1,8 +1,8 @@
 /* The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
- * into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
- * when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
- * builds them again with the levels script; the layouts get the script's include. The pak
- * goes early in the load order, so it wins over the mod it was made from.
+ * into it is src/rank-look.ts). The two styles' CSS is read out of the copy in force (a mod's when
+ * one carries them, else the game's), the medal's rules go at its end, and the styles and the
+ * levels script are written here (src/panorama-files.ts), without Valve's compiler; the layouts get
+ * the script's include. The pak goes early in the load order, so it wins over the mod it was made from.
  *
  * A Dota update that reached the record builds it again from the new files, after the update's
  * repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
@@ -14,16 +14,15 @@ import os from 'node:os';
 import path from 'node:path';
 import { clampLook, LAYOUTS, lookIsEmpty, SCRIPT, STYLES, takesScript, withMedal, withScript, type RankLook } from './rank-look.ts';
 import { levelsScript } from './rank-look-script.ts';
-import { cssInForce, fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
-import { vrfCss } from './hud-scale-service.ts';
-import { buildVpk, entryAt, entryPath, sharedVpkIndex } from './vpk.ts';
+import { fileInForce, swapPak, writePak, type PakInstaller } from './generated-pak.ts';
+import { imagesOf, readStyle, writeScript, writeStyle } from './panorama-files.ts';
+import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 import { pngFromVtex } from './vtex.ts';
 import { runTool } from './toolchain.ts';
 import { heroDisplayName } from './hero-names.ts';
 import { t } from './i18n.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
-import type { CompileJob } from './resource-compiler.ts';
 import type { VpkEntry } from './vpk.ts';
 
 /** What a rank record was built from, and the script it carries (SCRIPT_MARK when it was built). */
@@ -43,19 +42,19 @@ export interface RankState {
   vrf: boolean;
 }
 
+/** The game's script the levels script takes the shape of; any other does where it is gone. */
+const SCRIPT_TEMPLATE = 'panorama/scripts/popups/popup_settings.vjs_c';
+
 /** The medals the window offers, by the name of their picture, and the six badge tiers. */
 export const MEDAL_PICTURES = [...Array.from({ length: 9 }, (_, i) => `rank${i}`), 'rank8a', 'rank8b', 'rank8c'];
 
 /** The service the rank:* channels call. */
-export function createRankLook({ gamePath, installer, library, vrf, compile, decompile = vrfCss, run = runTool, onRebuilt = () => {}, log = () => {} }: {
+export function createRankLook({ gamePath, installer, library, vrf, run = runTool, onRebuilt = () => {}, log = () => {} }: {
   gamePath: () => string | null | undefined;
   installer: PakInstaller;
   library: Pick<Library, 'list' | 'add' | 'update'>;
-  /** ValveResourceFormat's CLI, when it is downloaded */
+  /** ValveResourceFormat's CLI, when it is downloaded: the medals' pictures in the window */
   vrf: () => string | null;
-  compile: (job: CompileJob) => Promise<VpkEntry[]>;
-  /** a compiled style read back as CSS; tests hand one in */
-  decompile?: (exe: string, style: Buffer) => Promise<string>;
   /** how ValveResourceFormat is run for the pictures; tests hand one in */
   run?: (exe: string, args: string[]) => Promise<unknown>;
   /** a record built again after an update, so its mark can go */
@@ -90,23 +89,28 @@ export function createRankLook({ gamePath, installer, library, vrf, compile, dec
     return ids;
   };
 
+  /** One of the game's scripts, as the shape the levels script is written into (writeScript). */
+  const scriptTemplate = (): Buffer => {
+    const ix = pak01();
+    const own = ix.read(SCRIPT_TEMPLATE);
+    if (own) return own;
+    for (const p of ix.paths()) if (p.endsWith('.vjs_c')) return ix.read(p)!;
+    throw new Error(t('В игре нет файла {0}', SCRIPT_TEMPLATE));
+  };
+  const readable = (data: Buffer) => { try { readStyle(data); return true; } catch { return false; } };
+
   async function build(look: RankLook): Promise<Buffer> {
-    const files: { path: string; data: Buffer }[] = [];
+    const entries: VpkEntry[] = [];
     if (look.medal) {
-      const exe = vrf();
-      if (!exe) throw new Error(t('Нужен ValveResourceFormat: скачай его в окне'));
-      for (const s of STYLES) {
-        const got = await cssInForce({ game: game(), langFolder: installer.langFolder(), records: library.list(), own: mine()?.id, file: s.compiled }, (style) => decompile(exe, style), log);
-        if (!got) throw new Error(t('В игре нет файла {0}', s.compiled));
-        files.push({ path: s.source, data: Buffer.from(withMedal(got.css, look.medal)) });
+      const styles = STYLES.map((s) => ({ s, data: inForce(s.compiled, readable) }));
+      // a picture one style lacks is in the other, or in the game's own copy of it
+      const known = imagesOf([...styles.map((x) => x.data), ...STYLES.map((s) => pak01().read(s.compiled)).filter((b): b is Buffer => !!b)]);
+      for (const { s, data } of styles) {
+        entries.push(entryAt(s.compiled, writeStyle(data, withMedal(readStyle(data).css, look.medal), known, (p) => pak01().read(p))));
       }
     }
-    files.push({ path: SCRIPT.source, data: Buffer.from(levelsScript(look, heroIds(Object.keys(look.levels)))) });
-    const want = new Set([SCRIPT.compiled, ...(look.medal ? STYLES.map((s) => s.compiled) : [])]);
-    const built = (await compile({ id: 'rank_look', files, compile: files.map((f) => f.path) })).filter((e) => want.has(entryPath(e)));
-    const missing = [...want].filter((p) => !built.some((e) => entryPath(e) === p));
-    if (missing.length) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', SCRIPT.source, missing.join(', ')));
-    return buildVpk([...built, ...LAYOUTS.map((p) => entryAt(p, withScript(inForce(p, takesScript))))]);
+    entries.push(entryAt(SCRIPT.compiled, writeScript(scriptTemplate(), levelsScript(look, heroIds(Object.keys(look.levels))))));
+    return buildVpk([...entries, ...LAYOUTS.map((p) => entryAt(p, withScript(inForce(p, takesScript))))]);
   }
 
   /** The record built from `look`: in the old one's slot, or a new record. */

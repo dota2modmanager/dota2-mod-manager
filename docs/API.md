@@ -169,6 +169,7 @@ the code, not in this page.
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
 | [`src/pak-stamp.ts`](#srcpak-stampts) | Whether the game's pak01 changed: a listing of its files' stats, which the app asks for before it |
+| [`src/panorama-files.ts`](#srcpanorama-filests) | Panorama's compiled styles (vcss_c) and scripts (vjs_c), read and written here rather than by |
 | [`src/particle-snapshot.ts`](#srcparticle-snapshotts) |  |
 | [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
 | [`src/particle-surface.ts`](#srcparticle-surfacets) | An effect made to spread over a wearable's surface. |
@@ -4358,12 +4359,12 @@ The stage for a hero.
 The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is
 src/hud-scale.ts). One record. The style it starts from is the one in force: a HUD mod's copy
 when one is switched on (first in the load order wins, as in the game), else the game's own.
-ValveResourceFormat reads it back as CSS, the layout goes at its end, and Valve's compiler builds
-it again; the pak goes early in the load order, so it wins over the HUD mod it was made from.
+Its CSS is read out of it, the layout goes at its end, and the style is written again here
+(src/panorama-files.ts), without ValveResourceFormat or Valve's compiler; the pak goes early in
+the load order, so it wins over the HUD mod it was made from.
 
-A Dota update that reached the record builds it again from the new style. That takes the two
-tools a few seconds, so it runs after the update's repair has answered, and the record's mark
-from src/update-impact.ts is lifted when it is done.
+A Dota update that reached the record builds it again from the new style, after the update's
+repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
 
 ### `HudGenerated`
 
@@ -4379,23 +4380,15 @@ What a HUD record was built from. `hud` is the bottom bar's scale; a record from
 export interface HudState
 ```
 
-What the window shows: the layout on now, if any, and whether the two tools are there.
+What the window shows: the layout on now, if any.
 
 ### `createHudScale`
 
 ```ts
-export function createHudScale({ gamePath, installer, library, vrf, compile, decompile = vrfCss, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** ValveResourceFormat's CLI, when it is downloaded */ vrf: () => string | null; compile: (job: CompileJob) => Promise<VpkEntry[]>; /** a compiled style read back as CSS; tests hand one in */
+export function createHudScale({ gamePath, installer, library, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** a record built again after an update, so its mark can go */ onRebuilt?: (id: string) => void; log?: (msg: string) => void; })
 ```
 
 The service the hud:* channels call.
-
-### `vrfCss`
-
-```ts
-export async function vrfCss(exe: string, style: Buffer): Promise<string>
-```
-
-A compiled style read back as CSS by ValveResourceFormat, in a folder of its own that goes after.
 
 ## src/hud-scale.ts
 
@@ -9719,6 +9712,79 @@ export function gameSchemaStamp(gamePath: string): string
 
 Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
 
+## src/panorama-files.ts
+
+Panorama's compiled styles (vcss_c) and scripts (vjs_c), read and written here rather than by
+Valve's resourcecompiler (Discord, 2026-11-09: a rank medal refused with "Schema mismatches
+reported", the user's Workshop Tools of two Dota updates; most users have no tools at all).
+
+A script's DATA block is its JavaScript as it is (PanoramaScript from version 4), so a script is
+any of the game's scripts with its DATA in place of theirs. A style's DATA is a CRC, the pictures
+it names, each with its width and height (and a CRC from version 3), and then its CSS, minified,
+as text. The CRC of a style Valve ships does not match its text either (ValveResourceFormat
+stopped checking it for that), so nothing checks it. A picture the new CSS names that the style
+did not is added to the list, with its size, and to the style's references (RERL), as the
+compiler does, so the game loads it with the style.
+
+### `StyleImage`
+
+```ts
+export interface StyleImage { path: string; width: number; height: number; crc: number }
+```
+
+A picture a style names: its path (the compiled texture's, without _c), its size and its CRC.
+
+### `readStyle`
+
+```ts
+export function readStyle(file: Buffer): { images: StyleImage[]; css: string }
+```
+
+A compiled style's pictures and its CSS; throws when it is not one.
+
+### `cssImages`
+
+```ts
+export function cssImages(css: string): string[]
+```
+
+The pictures CSS names, as compiled textures: s2r://a/b.vtex, and a/b.png as the compiler turns it into a/b_png.vtex.
+
+### `textureSize`
+
+```ts
+export function textureSize(vtexC: Buffer): { width: number; height: number }
+```
+
+A texture's width and height, from its DATA block (VTEX: two shorts after the flags and reflectivity).
+
+### `writeStyle`
+
+```ts
+export function writeStyle(file: Buffer, css: string, known: (path: string) => StyleImage | null, texture: (path: string) => Buffer | null): Buffer
+```
+
+`file`, a compiled style, with `css` in place of its own. Each picture the CSS names that the
+style does not list is looked up: `known` from another style that lists it, else its size from
+`texture` (the compiled texture, from the game's pak). One neither has stays out of the list and
+is still named in the CSS, where the game loads it when a panel needs it.
+
+### `writeScript`
+
+```ts
+export function writeScript(template: Buffer, js: string): Buffer
+```
+
+A compiled script with `js` as its text: `template`, any of the game's scripts, with its DATA replaced.
+
+### `imagesOf`
+
+```ts
+export function imagesOf(styles: Buffer[]): (path: string) => StyleImage | null
+```
+
+The pictures of several styles by path, for writeStyle's `known`.
+
 ## src/particle-snapshot.ts
 
 ### `snapshotPoints`
@@ -10897,10 +10963,10 @@ gives them, for the panels that know a hero only by it.
 ## src/rank-look-service.ts
 
 The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
-into it is src/rank-look.ts). The two styles are read back as CSS from the copy in force (a mod's
-when one carries them, else the game's), the medal's rules go at their end, and Valve's compiler
-builds them again with the levels script; the layouts get the script's include. The pak
-goes early in the load order, so it wins over the mod it was made from.
+into it is src/rank-look.ts). The two styles' CSS is read out of the copy in force (a mod's when
+one carries them, else the game's), the medal's rules go at its end, and the styles and the
+levels script are written here (src/panorama-files.ts), without Valve's compiler; the layouts get
+the script's include. The pak goes early in the load order, so it wins over the mod it was made from.
 
 A Dota update that reached the record builds it again from the new files, after the update's
 repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
@@ -10944,7 +11010,7 @@ The medals the window offers, by the name of their picture, and the six badge ti
 ### `createRankLook`
 
 ```ts
-export function createRankLook({ gamePath, installer, library, vrf, compile, decompile = vrfCss, run = runTool, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** ValveResourceFormat's CLI, when it is downloaded */ vrf: () => string | null; compile: (job: CompileJob) => Promise<VpkEntry[]>; /** a compiled style read back as CSS; tests hand one in */
+export function createRankLook({ gamePath, installer, library, vrf, run = runTool, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** ValveResourceFormat's CLI, when it is downloaded: the medals' pictures in the window */ vrf: () => string | null; /** how ValveResourceFormat is run for the pictures; tests hand one in */ run?: (exe: string, args: string[]) => Promise<unknown>
 ```
 
 The service the rank:* channels call.

@@ -177,8 +177,8 @@ export interface MapLooksApi {
 
 /** The in-game HUD laid out by hand (src/hud-scale-service.ts). */
 export interface HudApi {
-  /** the layout on now, the HUD mod it would go on (null: the game's own), and whether ValveResourceFormat is downloaded */
-  state: () => Promise<Reply<{ installed: { id: string; parts: HudPart[]; base: string; enabled: boolean } | null; hudMod: string | null; vrf: boolean }>>;
+  /** the layout on now, and the HUD mod it would go on (null: the game's own) */
+  state: () => Promise<Reply<{ installed: { id: string; parts: HudPart[]; base: string; enabled: boolean } | null; hudMod: string | null }>>;
   /** the HUD with this layout, put in My mods */
   install: (parts: HudPart[]) => Promise<Reply<{ record: LibRecord }>>;
 }

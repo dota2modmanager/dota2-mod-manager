@@ -1,7 +1,7 @@
 /* The channels of the window for the rank medal and hero levels of the player's own screen: what
  * is on now and the heroes of this patch, the medal and badge pictures out of the game, and a look
- * put on. The thinking is in src/rank-look-service.ts; a build reads two styles back with
- * ValveResourceFormat and compiles them and the levels script with Valve's resourcecompiler. */
+ * put on. The thinking is in src/rank-look-service.ts; a build writes two styles and the levels
+ * script itself (src/panorama-files.ts), without Valve's compiler. */
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext } from './app-context.ts';

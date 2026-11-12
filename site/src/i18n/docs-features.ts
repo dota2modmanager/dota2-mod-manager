@@ -26,7 +26,7 @@ export const featureDocs: Record<'en' | 'ru', { features: Doc }> = {
           k: 'list',
           items: [
             '<b>ValveResourceFormat.</b> Reads the game\'s compressed files. One click in the window, about 50 MB, and it keeps itself up to date.',
-            '<b>Dota 2 Workshop Tools.</b> Valve\'s free DLC in Steam, with the compiler that sounds, the HUD and the rank tool need. Its state is in Settings, under the resource compiler.',
+            '<b>Dota 2 Workshop Tools.</b> Valve\'s free DLC in Steam, with the compiler that custom sounds need. Its state is in Settings, under the resource compiler.',
           ],
         },
 
@@ -239,7 +239,7 @@ export const featureDocs: Record<'en' | 'ru', { features: Doc }> = {
           k: 'list',
           items: [
             '<b>ValveResourceFormat.</b> Читает сжатые файлы игры. Один клик в окне, около 50 МБ, дальше обновляется сам.',
-            '<b>Dota 2 Workshop Tools.</b> Бесплатное DLC от Valve в Steam с компилятором, который нужен звукам, HUD и рангу. Его состояние видно в настройках, в блоке компилятора ресурсов.',
+            '<b>Dota 2 Workshop Tools.</b> Бесплатное DLC от Valve в Steam с компилятором, который нужен своим звукам. Его состояние видно в настройках, в блоке компилятора ресурсов.',
           ],
         },
 

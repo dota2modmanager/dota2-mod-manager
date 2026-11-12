@@ -184,9 +184,9 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the item builder's 3D preview: the game's models as GLB, out of the same toolchain (src/hero-preview.ts)
   const heroPreview = createHeroPreview({ library, gamePath: () => settings.get('dotaGamePath'), vanilla: () => schemaService.vanilla(), log: diag,
     glb: createModelGlb({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag }) });
-  // the in-game HUD smaller or larger, read back by ValveResourceFormat and compiled again (src/hud-scale-service.ts)
-  const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
-    compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // the in-game HUD smaller or larger, its style written again by the app (src/hud-scale-service.ts)
+  const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library,
+    onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // an effect of the game changed by hand (src/effect-edit-service.ts)
   const effectFinder = createEffectFinder({ index: () => sharedVpkIndex(path.join(settings.get('dotaGamePath') as string, 'dota', 'pak01_dir.vpk')), lang: getLang, heroes: () => abilitySounds.heroes(), table: () => schemaService.vanilla() });
   const effectEdit = createEffectEdit({ gamePath: () => settings.get('dotaGamePath'), installer, library, sprites: (defs) => heroPreview.sprites(defs), resources: (defs) => heroPreview.resources(defs), finder: effectFinder, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
@@ -194,7 +194,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   void schemaService.settled().then(() => rankLook.refreshScript());
   // the rank medal and hero levels of the player's own screen (src/rank-look-service.ts)
   const rankLook = createRankLook({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
-    compile: (job) => compiler.compile(job), onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+    onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // the map without its decor, from the map's own list of materials (src/map-decor.ts)
   const mapDecor = createMapDecor({ gamePath: () => settings.get('dotaGamePath'), installer, library, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // a hero recoloured part by part, out of the game's own files (src/hero-paint-service.ts)

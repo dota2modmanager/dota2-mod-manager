@@ -1,5 +1,6 @@
 /* What the mod window shows, worked out by views/catalog/mod-window.ts and drawn by ModModal.tsx. */
 import type { Mod, ModStyle } from '../types.ts';
+import type { ModState } from './status.ts';
 
 export interface PackMember {
   name: string;
@@ -38,6 +39,8 @@ export interface ModModalModel {
   note: string | null;
   /** what the signed config says is wrong with the mod */
   issue: string | null;
+  /** what keeps an installed mod out of the game, or changes it there (status.ts) */
+  states: ModState[];
 }
 
 export interface ModModalActions {
@@ -50,6 +53,10 @@ export interface ModModalActions {
   deletePack: () => void;
   install: () => void;
   uninstall: () => void;
+  /** switch the installed mod on */
+  enable: () => void;
+  /** to My mods, where the load order is */
+  showInLibrary: () => void;
   runTool: () => void;
   openToolFolder: () => void;
   openLink: () => void;

@@ -52,6 +52,14 @@ export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalAc
         )}
         {m.kind === 'pack' && <PackList m={m} actions={actions} />}
         <div className="modal-actions"><ModActions m={m} actions={actions} /></div>
+        {m.states.map((s) => (
+          <div key={s.key} className="modal-note warn mod-state" data-state={s.key} role="note">
+            <span className="ms">{s.icon}</span>
+            <span>{s.text}</span>
+            {s.act === 'enable' && <button className="btn btn-sm" id="modEnableBtn" onClick={actions.enable}>{L`Включить`}</button>}
+            {s.act === 'library' && <button className="btn btn-sm" data-to="library" onClick={actions.showInLibrary}>{L`Открыть «Мои моды»`}</button>}
+          </div>
+        ))}
         <LegacyHtml className="modal-layer" html={m.guidesHtml} bind={actions.bindGuides} />
         {m.links.length > 0 && (
           <div className="modal-links">
