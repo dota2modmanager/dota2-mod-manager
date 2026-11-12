@@ -88,7 +88,7 @@ module.exports = [
   {
     ignores: [
       'node_modules/**', 'dist/**', 'out/**', 'sandbox/**', 'site/**', 'coverage/**',
-      '.claude/**', 'assets/**',
+      '.claude/**', 'assets/**', 'target/**', 'src-tauri/gen/**',
     ],
   },
   {
@@ -123,6 +123,13 @@ module.exports = [
     // the preset bot runs in Cloudflare's runtime, which has the web's streams as globals
     files: ['tools/preset-bot/**/*.mjs'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { ...NODE, DecompressionStream: 'readonly' } },
+    rules,
+  },
+  {
+    /* The Tauri shell's bridge (docs/rust-migration.md): a classic script injected into the page
+       before anything else runs, so browser globals and no module syntax. */
+    files: ['src-tauri/src/**/*.js'],
+    languageOptions: { ecmaVersion: 2024, sourceType: 'script', globals: BROWSER },
     rules,
   },
   {

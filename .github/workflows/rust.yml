@@ -1,0 +1,53 @@
+# The Rust half of the app (docs/rust-migration.md): the crates' own tests, the parity tests that
+# hold them to the TypeScript they replace, and the Tauri shell built on Windows. Not a required
+# check yet: the shell is not what users install until it covers every channel.
+name: Rust
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crates:
+    name: Rust crates and parity
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci
+      # the runner image carries rustup; stable is whatever it names today
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal -c clippy -c rustfmt && rustup default stable
+      - name: Crate tests
+        run: cargo fmt --all -- --check && cargo test -p mm-core -p mm-cli
+      - name: Clippy
+        run: cargo clippy -p mm-core -p mm-cli -- -D warnings
+      - name: Parity with the TypeScript
+        run: cargo build -p mm-cli && node --test test/rust-parity.test.ts
+
+  shell:
+    name: Tauri shell on Windows
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci
+      - name: The page for the shell
+        run: node tools/ui-build.mjs --tauri
+      - name: Build the shell
+        run: cargo build -p dota2-mod-manager

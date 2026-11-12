@@ -30,13 +30,26 @@ function devOnlyInlineScript() {
   };
 }
 
+/* The Tauri shell (src-tauri/) loads the same page from out/renderer-tauri. Its IPC is a fetch to
+ * ipc.localhost, which the page's connect-src has to name; nothing else about the page differs. */
+const TAURI = process.env.MM_TARGET === 'tauri';
+function tauriPolicy() {
+  return {
+    name: 'mm-tauri-policy',
+    apply: () => TAURI,
+    transformIndexHtml(html) {
+      return html.replace("connect-src 'self'", "connect-src 'self' ipc: http://ipc.localhost");
+    },
+  };
+}
+
 export default defineConfig({
   root,
   base: './',
   publicDir: path.join(root, 'public'),
-  plugins: [react(), devOnlyInlineScript()],
+  plugins: [react(), devOnlyInlineScript(), tauriPolicy()],
   build: {
-    outDir: path.join(here, 'out', 'renderer'),
+    outDir: path.join(here, 'out', 'renderer') + (TAURI ? '-tauri' : ''),
     emptyOutDir: true,
     // the page only ever runs in Electron's own Chromium
     target: 'esnext',

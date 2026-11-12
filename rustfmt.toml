@@ -1,0 +1,3 @@
+# the TypeScript side reads at 120 columns too
+max_width = 120
+use_small_heuristics = "Max"

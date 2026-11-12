@@ -1,0 +1,11 @@
+[package]
+name = "mm-cli"
+version = "0.1.0"
+description = "mm-core on the command line: what the parity tests (test/rust-parity.test.js) run"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+mm-core.workspace = true
+serde_json.workspace = true
