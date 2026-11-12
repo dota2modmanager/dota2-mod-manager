@@ -2,6 +2,58 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.8.0
+
+### My mods
+
+- New "Check" button: it lists what the app looked at (the game, the folder the game reads, the
+  language, Minify, the slots) and says whether everything fits. Before, no banner left you guessing
+  whether the app had looked at all.
+- A mod's window now says why an installed mod is not in the game: it is switched off, another mod
+  covers its files, it waits for the item table, or a Dota update changed what it replaces. A button
+  next to it fixes what can be fixed.
+- Mods the catalog no longer lists get a "gone from the catalog" tag and a banner. Mods that do harm
+  in a match are marked "revoked", with a Remove button.
+- "Remove item icons" in a hero mod's menu takes out the Blink Dagger, BKB and other item pictures an
+  arcana brings to every hero. An update of that mod keeps them out.
+- Ctrl+click ticks a row, Shift+click ticks a range, Ctrl+A ticks everything shown, Delete removes
+  the ticked rows.
+- The mouse's side buttons (and Alt+Left, Alt+Right) go back and forward between sections.
+
+### Dota updates and Play
+
+- The app can start with Windows and keep running in the tray, so it puts the game right after a
+  Dota update even when its window is closed. You can turn this off in Settings.
+- When Dota updated while the app was closed, My mods says so and tells you what to do next time.
+- When Steam checks the game files, the app waits for the check to finish before it puts the mods
+  back, instead of racing it.
+- When Dota closes seconds after Play, the app names the mods installed since the last good start and
+  offers to switch them off.
+
+### Hero builder
+
+- Item styles that only change colour, like the Crimson Witness goggles on Meepo, now show in the
+  match too. Online they came out in the plain colour.
+- Personas stand at their real size in the hero screen, in Try out and with bots. The young Invoker
+  was a third taller there than in the match.
+- The young Invoker's orbs float around him online, not at his feet. Six arcana bodies had the same
+  fault and got the same fix.
+- A persona speaks with its own voice, and its items' styles show in the builder.
+- New "Random look" under the hero: fill the empty slots, shuffle everything, arcanas and immortals
+  only, or one whole set.
+- Sets show the game's own event names in your language, and their descriptions without markup.
+- Arcanas are read in small steps, so the window no longer stalls on a slow disk.
+
+### Everything else
+
+- Emblems work without the console: while an emblem is on, the app keeps r_draw_selected_ring 1 in
+  autoexec.cfg for you, and removes it when no emblem is left.
+- Ranks and the HUD size no longer need the Dota 2 Workshop Tools.
+- The Stoneclaw crab tower look faces forward and moves like a tower.
+- Settings can remove everything the app put in the game, without uninstalling it.
+- On the very first start the app opens in your system's language.
+- Ready presets no longer name mods the catalog dropped.
+
 ## 3.7.2
 
 ### Hero builder
