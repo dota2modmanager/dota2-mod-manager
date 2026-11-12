@@ -171,3 +171,191 @@ test('item effects, unusual effects, item visuals and localization in Rust answe
   }
   assert.ok(compare(cases) > 300);
 });
+
+test('model rewrites in Rust make the bytes the TypeScript ones make, on the game models', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { modelSkinMaterials, withSkin } = await import('../src/model-skin.ts');
+  const { withoutCloth, hasCloth, dragsCloth } = await import('../src/model-cloth.ts');
+  const { attachmentNames, attachedAs } = await import('../src/model-attachments.ts');
+  const { numberedAs } = await import('../src/model-sequences.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const models = [...index.paths()].filter((p) => p.endsWith('.vmdl_c'));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-models-'));
+  const saved = new Map<string, { $file: string }>();
+  const file = (p: string) => {
+    if (!saved.has(p)) {
+      const at = path.join(tmp, `${saved.size}.vmdl_c`);
+      fs.writeFileSync(at, index.read(p) ?? Buffer.alloc(0));
+      saved.set(p, { $file: at });
+    }
+    return saved.get(p)!;
+  };
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const sha = (b: Buffer | null) => (b ? createHash('sha1').update(b).digest('hex') : null);
+  const bodies = models.filter((p) => /^models\/heroes\/([^/]+)\/\1\.vmdl_c$/.test(p));
+  const items = spread(models.filter((p) => p.startsWith('models/items/')), 160);
+  const couriers = spread(models.filter((p) => p.startsWith('models/courier/')), 60);
+  const spirits = models.filter((p) => /forge_spirit/.test(p));
+  const plainCouriers = ['donkey', 'donkey_wings', 'donkey_dire', 'donkey_dire_wings'].map((n) => `models/props_gameplay/${n}.vmdl_c`);
+  const bodyOf = (p: string) => bodies.find((b) => p.startsWith(`models/items/${b.split('/')[2]}/`)) ?? bodies[0];
+  const some = [...items, ...couriers, ...spread(bodies, 40)];
+  const cases: Case[] = [
+    { name: 'model-skin.modelSkinMaterials', ts: ((m: string | null, s: number) => [...modelSkinMaterials(m === null ? null : buf(m), s)]) as never, inputs: [[null, 1], ...some.flatMap((p) => [0, 1, 2].map((s) => [file(p), s]))] },
+    { name: 'model-skin.withSkin', ts: ((m: string, s: number) => sha(withSkin(buf(m), s))) as never, inputs: some.flatMap((p) => [0, 1, 3].map((s) => [file(p), s])) },
+    { name: 'model-cloth.withoutCloth', ts: ((m: string) => sha(withoutCloth(buf(m)))) as never, inputs: some.map((p) => [file(p)]) },
+    { name: 'model-cloth.hasCloth', ts: ((m: string) => hasCloth(buf(m))) as never, inputs: some.map((p) => [file(p)]) },
+    { name: 'model-cloth.dragsCloth', ts: ((m: string | null) => dragsCloth(m === null ? null : buf(m))) as never, inputs: [[null], ...bodies.map((p) => [file(p)])] },
+    { name: 'model-attachments.attachmentNames', ts: ((m: string) => attachmentNames(buf(m))) as never, inputs: some.map((p) => [file(p)]) },
+    { name: 'model-attachments.attachedAs', ts: ((m: string, p: string) => sha(attachedAs(buf(m), buf(p)))) as never, inputs: items.map((p) => [file(p), file(bodyOf(p))]) },
+    { name: 'model-sequences.numberedAs', ts: ((m: string, p: string) => sha(numberedAs(buf(m), buf(p)))) as never, inputs: [
+      ...couriers.flatMap((p) => plainCouriers.map((c) => [file(p), file(c)])),
+      ...spirits.map((p) => [file(p), file('models/heroes/invoker/forge_spirit.vmdl_c')]),
+      ...items.slice(0, 40).map((p) => [file(p), file(bodyOf(p))]),
+    ] },
+  ];
+  assert.ok(compare(cases) > 1000);
+});
+
+test('item skins, voices and sound files in Rust answer as the TypeScript ones do', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { createHash } = await import('node:crypto');
+  const { firstStyleSkin, wornSkin } = await import('../src/item-skin.ts');
+  const { itemVisuals } = await import('../src/item-visuals.ts');
+  const { file, blocks, styled } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const some = [...styled, ...blocks];
+  const skinned = [...text.matchAll(/"asset_modifier\d*"\s*\{[^{}]*"model_skin"[^{}]*\}/gi)].slice(0, 60).map((m) => `"visuals" { ${m[0]} }`);
+  const models = some.slice(0, 60).map((b) => itemVisuals(text, b.id)?.model ?? null);
+  const cases: Case[] = [
+    { name: 'item-skin.firstStyleSkin', ts: firstStyleSkin as never, inputs: [...some, ...skinned.map((v) => ({ visuals: v }))].map((b) => [b.visuals]) },
+    { name: 'item-skin.wornSkin', ts: wornSkin as never, inputs: [
+      ['', 3], ...some.flatMap((b) => [[b.visuals], [b.visuals, 2]]),
+      ...skinned.flatMap((v, k) => [[v], [v, 1, 'models/heroes/x/x.vmdl'], [v, 0, models[k % models.length] ?? undefined]]),
+    ] },
+  ];
+  if (fs.existsSync(GAME_PAK01)) {
+    const { openVpkIndex, entryPath } = await import('../src/vpk.ts');
+    const { voiceSwaps, soundEntries } = await import('../src/item-sounds.ts');
+    const { dataBlock } = await import('../src/resource.ts');
+    const { readKv3 } = await import('../src/kv3.ts');
+    const index = openVpkIndex(GAME_PAK01);
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-rules-'));
+    const voices: unknown[][] = [];
+    for (const p of [...index.paths()].filter((p) => /^scripts\/talker\/response_rules_.*\.vrr_c$/.test(p))) {
+      const data = index.read(p)!;
+      const at = path.join(tmp, `${voices.length}.vrr_c`);
+      fs.writeFileSync(at, data);
+      let criteria: { key: string; value: string }[] = [];
+      try {
+        const root = readKv3(dataBlock(data).data).root;
+        const req = root.kind === 'object' ? root.members.get('m_Requirements') : undefined;
+        const str = (n: unknown, k: string) => { const v = (n as { members?: Map<string, { kind: string; value: string }> }).members?.get(k); return v?.kind === 'string' ? v.value : ''; };
+        criteria = (req?.kind === 'array' ? req.items : []).map((c) => ({ key: str(c, 'm_matchKey'), value: str(c, 'm_matchExpr') }))
+          .filter((c) => /customresponse|persona/i.test(c.key) && !c.value.startsWith('!='));
+      } catch { /* a file TypeScript cannot read: Rust must fail on it too */ }
+      const seen = new Set<string>();
+      for (const c of criteria) {
+        if (seen.has(c.value) || seen.size >= 3) continue;
+        seen.add(c.value);
+        voices.push([{ $file: at }, { ...c, hero: '' }], [{ $file: at }, { key: c.key.toUpperCase(), value: c.value, hero: '', whole: true }]);
+      }
+      if (!criteria.length && voices.length < 400) voices.push([{ $file: at }, { key: 'customresponse', value: 'none', hero: '' }]);
+    }
+    cases.push({ name: 'item-sounds.voiceSwaps', ts: ((f: string, cue: { key: string; value: string; whole?: boolean }) => voiceSwaps(readKv3(dataBlock(Buffer.from(f, 'latin1')).data).root, cue)) as never, inputs: voices });
+    const swaps = [...text.matchAll(/"asset_modifier\d*"\s*\{([^{}]*"type"\s+"sound"[^{}]*)\}/gi)].map((m) => ({
+      sound: /"asset"\s+"([^"]+)"/i.exec(m[1])?.[1] ?? '', as: /"modifier"\s+"([^"]+)"/i.exec(m[1])?.[1] ?? '',
+    })).filter((s) => s.sound && s.as).slice(0, 40);
+    const game = path.dirname(path.dirname(GAME_PAK01));
+    const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+    cases.push({ name: 'item-sounds.soundEntries', ts: ((g: string, sw: never[], cues: never[]) => soundEntries(g, sw, cues).map((e) => [entryPath(e), sha(e.data)])) as never, inputs: [
+      [game, [], []], [game, swaps, []],
+      [game, swaps.slice(0, 5), [{ hero: 'npc_dota_hero_earthshaker', key: 'customresponse', value: 'eartharc_cosmos' }, { hero: 'npc_dota_hero_drow_ranger', key: 'customresponse', value: 'x' }]],
+    ] });
+    assert.ok(swaps.length > 10 && voices.length > 100);
+  }
+  assert.ok(compare(cases) > 300);
+});
+
+test('material expressions in Rust read and rewrite as the TypeScript ones do, on the game materials', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const m = await import('../src/material.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const all = [...index.paths()].filter((p) => p.endsWith('.vmat_c'));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-vmat-'));
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const hex = (b: Buffer | null) => (b ? b.toString('hex') : null);
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  // the materials that have expressions, those that read the gem first, and a spread of the rest
+  const gem = m.attributeToken('$GemColor').toString(16).padStart(8, '0').match(/../g)!.reverse().join('');
+  const gems: string[] = [];
+  const plain: string[] = [];
+  for (const p of spread(all, 6000)) {
+    let codes: string[] = [];
+    try { codes = m.materialExpressions(index.read(p)!).map((e) => e.code.toString('hex')); } catch { /* compared as it is below */ }
+    if (codes.some((c) => c.includes(`19${gem}`))) gems.push(p);
+    else if (codes.length) plain.push(p);
+  }
+  const files = [...spread(gems, 200), ...spread(plain, 60), ...spread(all, 60)].map((p, k) => {
+    const at = path.join(tmp, `${k}.vmat_c`);
+    fs.writeFileSync(at, index.read(p)!);
+    return { $file: at };
+  });
+  const codes = files.flatMap((f) => { try { return m.materialExpressions(fs.readFileSync(f.$file)).map((e) => e.code.toString('hex')); } catch { return []; } }).slice(0, 400);
+  const colours = [[1, 0, 0], [0.35, 0.74, 1], [0.1, 0.2, 0.3, 0.4], [1e-7, 123.456, -2]];
+  const cases: Case[] = [
+    { name: 'material.attributeToken', ts: m.attributeToken as never, inputs: ['$GemColor', '$gemcolor', '', 'a', 'ab', 'abc', 'abcd', 'abcde', '$Time', 'Привет', 'ÉCLAT'].map((n) => [n]) },
+    { name: 'material.constantExpression', ts: ((v: number[]) => hex(m.constantExpression(v))) as never, inputs: colours.map((c) => [c]) },
+    { name: 'material.constantOf', ts: ((c: string) => m.constantOf(Buffer.from(c, 'hex'))) as never, inputs: [...colours.map((c) => [m.constantExpression(c).toString('hex')]), ...codes.map((c) => [c]), ['']] },
+    { name: 'material.withConstant', ts: ((c: string, tok: number, v: number[]) => hex(m.withConstant(Buffer.from(c, 'hex'), tok, v))) as never, inputs: codes.flatMap((c, k) => [[c, m.attributeToken('$GemColor'), colours[k % 4]], [c, m.attributeToken('$Time'), colours[1]]]) },
+    { name: 'material.materialExpressions', ts: ((f: string) => m.materialExpressions(buf(f)).map((e) => ({ name: e.name, code: e.code.toString('hex') }))) as never, inputs: files.map((f) => [f]) },
+    { name: 'material.rewriteWithConstant', ts: ((f: string, a: string, v: number[]) => {
+      const { file, changed } = m.rewriteExpressions(buf(f), (e) => m.withConstant(e.code, m.attributeToken(a), v));
+      return [sha(file), changed];
+    }) as never, inputs: files.flatMap((f, k) => [[f, '$GemColor', colours[k % 4]], [f, '$Time', colours[0]]]) },
+  ];
+  assert.ok(gems.length > 5 && codes.length > 100, `${gems.length} gems, ${codes.length} expressions`);
+  assert.ok(compare(cases) > 500);
+});
+
+test('recolouring in Rust makes the files the TypeScript makes, on the game particles', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const r = await import('../src/recolor.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const sets = Object.values(r.RECOLOR_SETS);
+  const under = (p: string, f: string[]) => f.some((x) => p.startsWith(x));
+  const all = [...index.paths()];
+  const particles = spread(all.filter((p) => p.endsWith('.vpcf_c') && sets.some((s) => under(p, [...s.own, ...s.shared]))), 300)
+    .concat(spread(all.filter((p) => p.endsWith('.vpcf_c')), 100));
+  const materials = all.filter((p) => p.endsWith('.vmat_c') && sets.some((s) => under(p, s.materials)));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-recolor-'));
+  const file = (p: string, k: number) => { const at = path.join(tmp, `${k}`); fs.writeFileSync(at, index.read(p)!); return { $file: at }; };
+  const pf = particles.map(file);
+  const mf = materials.map((p, k) => file(p, 10000 + k));
+  const colours: [number, number, number][] = [[255, 0, 0], [0, 128, 255], [30, 200, 90], [255, 255, 255], [8, 8, 8], [255, 60, 40]];
+  const grid = [0, 3, 64, 128, 200, 255].flatMap((a) => [0, 90, 255].flatMap((b) => [0, 170].map((c) => [a, b, c])));
+  const cases: Case[] = [
+    { name: 'recolor.shade', ts: r.shade as never, inputs: grid.flatMap((g, k) => [[g, colours[k % 6]], [g, colours[k % 6], colours[(k + 1) % 6]], [g, colours[k % 6], [0, 0, 0]]]) },
+    { name: 'recolor.recolorResource', ts: ((f: string, c: [number, number, number], o: object) => { const x = r.recolorResource(buf(f), c, o); return [sha(x.file), x.changed, x.skipped]; }) as never, inputs: pf.flatMap((f, k) => [
+      [f, colours[k % 6], {}], [f, colours[(k + 1) % 6], { gem: [255, 60, 40] }], [f, colours[(k + 2) % 6], { bake: true }],
+      [f, colours[(k + 3) % 6], { gem: [255, 175, 0], own: false }], [f, colours[k % 6], { bake: true, own: false, from: [64, 192, 255] }],
+    ]) },
+    { name: 'recolor.recolorMaterial', ts: ((f: string, c: [number, number, number], o: object) => { const x = r.recolorMaterial(buf(f), c, o); return [sha(x.file), x.changed]; }) as never, inputs: mf.flatMap((f, k) => [[f, colours[k % 6], {}], [f, colours[k % 6], { bake: true }]]) },
+    { name: 'recolor.liftForMod2x', ts: ((f: string, share?: number) => { const x = r.liftForMod2x(buf(f), share); return [sha(x.file), x.changed]; }) as never, inputs: pf.flatMap((f) => [[f], [f, 0.6]]) },
+    { name: 'recolor.buildRecolor', ts: ((pak01: string, set: string, target: [number, number, number]) => {
+      const x = r.buildRecolor({ pak01, set, target });
+      return [sha(x.vpk), x.files, x.changed, x.skipped, x.failed.map((f) => f.path)];
+    }) as never, inputs: Object.keys(r.RECOLOR_SETS).flatMap((s, k) => [[GAME_PAK01, s, colours[k % 6]], [GAME_PAK01, s, [255, 255, 255]]]).concat([[GAME_PAK01, 'no-such-set', [1, 2, 3]]]) },
+  ];
+  assert.ok(compare(cases) > 1500);
+});

@@ -21,6 +21,7 @@ export const TABLES = [
   ['hero-display.json', 'src/hero-names.ts', 'HERO_DISPLAY'],
   ['hero-alias.json', 'src/hero-names.ts', 'HERO_ALIAS'],
   ['item-effects.json', 'src/item-builder-effects.ts', 'ITEM_EFFECTS'],
+  ['recolor-sets.json', 'src/recolor-sets.ts', 'RECOLOR_SETS'],
 ];
 
 /** Every table as the text its file should hold. */

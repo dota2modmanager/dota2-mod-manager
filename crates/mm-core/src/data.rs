@@ -42,3 +42,9 @@ pub fn item_effects() -> &'static [crate::item_builder_effects::ItemEffect] {
     static T: OnceLock<Vec<crate::item_builder_effects::ItemEffect>> = OnceLock::new();
     T.get_or_init(|| list(include_str!("../data/item-effects.json")))
 }
+
+/// What src/recolor.ts can recolour (src/recolor-sets.ts RECOLOR_SETS), by name, in its order.
+pub fn recolor_sets() -> &'static [(String, crate::recolor::RecolorSet)] {
+    static T: OnceLock<Vec<(String, crate::recolor::RecolorSet)>> = OnceLock::new();
+    T.get_or_init(|| list(include_str!("../data/recolor-sets.json")))
+}
