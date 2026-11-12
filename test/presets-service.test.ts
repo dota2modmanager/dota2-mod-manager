@@ -11,7 +11,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Library } from '../src/library.ts';
-import { presetsService, packableRecord, touchesSchema, type PresetInstaller } from '../src/presets-service.ts';
+import { presetIsOn, presetsService, packableRecord, touchesSchema, type PresetInstaller } from '../src/presets-service.ts';
 import { encodePresetLink } from '../src/preset-link.ts';
 import { writePresetFile } from '../src/preset-share.ts';
 import { withElectron } from './helpers/fake-electron.ts';
@@ -58,7 +58,9 @@ function stand(t: TestContext, { failOn = '' } = {}) {
       return library.find(rec.id);
     },
   };
-  const svc = presetsService({ catalog: { load: async () => CATALOG } as never, installer, library, schemaService, deployAndApply: () => [] });
+  const values: Record<string, unknown> = {};
+  const settings = { get: (k: string) => values[k], set: (k: string, v: unknown) => { values[k] = v; } } as never;
+  const svc = presetsService({ catalog: { load: async () => CATALOG } as never, installer, library, schemaService, deployAndApply: () => [], settings });
   /** a look picked the way the window picks one */
   const pick = (slot: string, itemId: string, name: string, effectId = '') => schemaService.pickCosmetic(slot, itemId, name, effectId);
   return { library, svc, calls, nyx, trees, mine, pick };
@@ -301,7 +303,7 @@ test('a received file parks as a preset, keeping the archive only when it carrie
 
 // ---------- the looks in a preset (issue #284) ----------
 
-test('a preset keeps the looks that were on, and applying it puts each back in its slot while leaving the slots it does not name alone', async (t) => {
+test('a preset keeps the looks that were on, and applying it puts each back in its slot and switches every other look off', async (t) => {
   const s = stand(t);
   s.pick('item:juggernaut:body', '9059', 'Bladeform Legacy', 'style-1');
   s.pick('weather', '4000', 'Weather Snow');
@@ -321,8 +323,17 @@ test('a preset keeps the looks that were on, and applying it puts each back in i
   const on = (slot: string) => s.library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false);
   assert.equal(on('weather')?.itemId, '4000', 'its weather back');
   assert.equal(on('item:juggernaut:body')?.effectId, 'style-1');
-  assert.equal(on('courier')?.itemId, '700', 'the courier it does not name stays on');
+  assert.equal(on('courier'), undefined, 'a preset of 20 is 20: the courier it does not name goes off');
+  assert.ok(s.library.list().some((r) => r.slot === 'courier' && r.itemId === '700'), 'switched off, not deleted: My mods still has it');
   assert.equal(s.calls.at(-1), 'refresh', 'and the table built once, at the end');
+
+  // a preset saved with no looks on at all puts every look off
+  s.library.savePreset('Bare');
+  s.pick('courier', '700', 'Golden Courier');
+  const bare = s.library.listPresets().find((p) => p.name === 'Bare')!;
+  bare.picks = [];
+  await s.svc.applyPreset(bare);
+  assert.equal(s.library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false).length, 0);
 });
 
 test('a preset saved before it kept looks leaves every look as it is, and the remote switch keeps them off', async (t) => {
@@ -370,4 +381,40 @@ test('a look the game no longer has is named, and the rest of the preset still g
     deployAndApply: () => [],
   });
   assert.deepEqual(await gone.applyPreset(preset), ['A Courier Valve Removed: items_game: the item is not there']);
+});
+
+// ---------- which preset you are in ----------
+
+test('the preset you are in is the one whose mods and looks are exactly what is on; the one applied last says it changed', async (t) => {
+  const s = stand(t);
+  s.pick('weather', '4000', 'Weather Snow');
+  s.library.savePreset('All three');
+  s.library.setEnabled(s.trees.id, false);
+  s.library.savePreset('No trees');
+  const [all, noTrees] = s.library.listPresets();
+  assert.deepEqual([s.svc.presetState(all), s.svc.presetState(noTrees)], [null, 'active'], 'the state as it is: no trees');
+
+  await s.svc.applyPreset(all);
+  assert.deepEqual([s.svc.presetState(all), s.svc.presetState(noTrees)], ['active', null]);
+
+  s.library.setEnabled(s.nyx.id, false);
+  assert.equal(s.svc.presetState(all), 'changed', 'applied last, a mod switched off since');
+  s.library.setEnabled(s.nyx.id, true);
+  s.pick('weather', '4001', 'Weather Rain');
+  assert.equal(s.svc.presetState(all), 'changed', 'another look is a change too');
+
+  // a preset that kept no looks says nothing about them, and a member not installed is not asked
+  const old = { ...all, picks: undefined };
+  assert.equal(presetIsOn(s.library, old), true);
+  s.library.removeRecord(s.mine.id);
+  s.pick('weather', '4000', 'Weather Snow');
+  assert.equal(presetIsOn(s.library, all), true, 'My Own Import is gone: what is here of the preset is all on');
+  await s.svc.applyPreset(noTrees);
+  s.library.removeRecord(s.trees.id);
+  s.library.setEnabled(s.nyx.id, false);
+  const gone = { ...noTrees, id: 'gone', picks: [] };
+  gone.mods = (noTrees.mods || []).filter((m) => m.name !== 'Alien Nyx Assassin');
+  s.pick('weather', '4000', 'Weather Snow');
+  s.library.setEnabled(s.library.list().find((r) => r.slot === 'weather')!.id, false);
+  assert.equal(s.svc.presetState(gone), null, 'none of it installed and never applied: not the one you are in');
 });

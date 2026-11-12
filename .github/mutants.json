@@ -515,10 +515,10 @@
       "test": "test/net.test.ts"
     },
     {
-      "name": "a missing file is held against the mirror",
+      "name": "a file missing from the origin is looked for on every mirror",
       "file": "src/net-fetch.ts",
       "anchor": "export async function fetchMirrored(url: string, {",
-      "from": "if (res.status === 404) { onMirror(candidate); return res; }",
+      "from": "if (candidate.origin) { onMirror(candidate); return res; }",
       "to": ";",
       "test": "test/net.test.ts"
     },
@@ -740,8 +740,8 @@
     },
     {
       "name": "a resolved preset folds the cosmetic picks into the build",
-      "file": "src/ipc-presets.ts",
-      "anchor": "ipcMain.handle('presets:resolve', async (e, id) => {",
+      "file": "src/preset-install.ts",
+      "anchor": "async function resolve(",
       "from": ".filter((r): r is LibRecord => Library.inPreset(r));",
       "to": ".filter((r): r is LibRecord => !!r);",
       "test": "test/ipc-presets.test.ts"
@@ -806,8 +806,8 @@
       "name": "the window is as tall as it was designed, whatever the screen",
       "file": "src/main-window.ts",
       "anchor": "export function windowFit(",
-      "from": "height: Math.min(DESIGNED.height, ah),",
-      "to": "height: DESIGNED.height,",
+      "from": "height: Math.min(Math.round(DESIGNED.height * grow), ah),",
+      "to": "height: Math.round(DESIGNED.height * grow),",
       "test": "test/main-window.test.ts"
     },
     {
@@ -998,8 +998,16 @@
       "name": "the item table is written into the game with the patch switched off",
       "file": "src/schema-service.ts",
       "anchor": "  function refresh() {",
-      "from": "if (!settings.get('schemaPatch')) return drop();",
-      "to": "if (false) return drop();",
+      "from": "if (!settings.get('schemaPatch')) {",
+      "to": "if (settings.get('schemaPatch') === null) {",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "the item table stays in the game with every mod switched off",
+      "file": "src/schema-service.ts",
+      "anchor": "  function refresh() {",
+      "from": "if (modsOff()) return drop();",
+      "to": "if (modsOff() && !settings.get('schemaPatch')) return drop();",
       "test": "test/schema-service.test.ts"
     },
     {
@@ -1014,9 +1022,25 @@
       "name": "a game update leaves the built table on the old one",
       "file": "src/schema-service.ts",
       "anchor": "  function heal({ background = false } = {}) {",
-      "from": "if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER)) {",
-      "to": "if (!schema.isDeployed(game, patcher.FOLDER)) {",
+      "from": "if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER) || settings.get('schemaPending')) {",
+      "to": "if (!schema.isDeployed(game, patcher.FOLDER) || settings.get('schemaPending')) {",
       "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "a build the last run never wrote is not built at the next start",
+      "file": "src/schema-service.ts",
+      "anchor": "  function heal({ background = false } = {}) {",
+      "from": "if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER) || settings.get('schemaPending')) {",
+      "to": "if (stamp !== settings.get('schemaStamp') || !schema.isDeployed(game, patcher.FOLDER)) {",
+      "test": "test/schema-service.test.ts"
+    },
+    {
+      "name": "a look's switch waits for the whole item table to be written",
+      "file": "src/ipc-library.ts",
+      "anchor": "  ipcMain.handle('mods:setEnabled', async (e, id, enabled) => {",
+      "from": "if (touchesSchema(rec)) void schemaService.refreshInBackground();",
+      "to": "if (touchesSchema(rec)) await schemaService.refreshInBackground();",
+      "test": "test/library-channels.test.ts"
     },
     {
       "name": "two packs carrying the same block are reported as a conflict",

@@ -24,6 +24,32 @@ function detached(kv, n) {
 const int32 = (n) => { const raw = Buffer.alloc(4); raw.writeInt32LE(n); return { kind: 'number', type: 11, cell: null, typeAt: null, raw }; };
 
 /**
+ * A sequence plays through a weight list (a bone mask), and the decompile loses which one: every
+ * sequence comes back on the default list, every bone at full weight. A layer meant to move almost
+ * nothing then moves everything. Seen on a hero whose idle adds a tail layer through a list that
+ * gives every bone weight 0 (it drives only a morph): at full weight it put the whole body into the
+ * layer clip's bind pose for a second and a half every few idles, the weapons on the ground. Valve's
+ * lists go back in, and each sequence takes Valve's choice by name. `copy(kv, node)` detaches a node
+ * of Valve's block for ours.
+ * @returns how many sequences changed list
+ */
+export function restoreWeightLists(valveSeq, aseq, { numberOf, setNumber, copy }) {
+  const masks = (kv) => kv.root.members.get('m_localBoneMaskArray');
+  if (!masks(valveSeq) || !masks(aseq)) return 0;
+  aseq.root.members.set('m_localBoneMaskArray', copy(valveSeq, masks(valveSeq)));
+  const ours = new Map(aseq.root.members.get('m_localS1SeqDescArray').items.map((s) => [memberValue(s, 'm_sName'), s]));
+  let changed = 0;
+  for (const s of valveSeq.root.members.get('m_localS1SeqDescArray').items) {
+    const node = ours.get(memberValue(s, 'm_sName'))?.members.get('m_nLocalWeightlist');
+    const want = numberOf(valveSeq, s.members.get('m_nLocalWeightlist'));
+    if (!node || numberOf(aseq, node) === want) continue;
+    setNumber(aseq, node, want);
+    changed++;
+  }
+  return changed;
+}
+
+/**
  * Valve's model can keep a clip apart from the sequence that plays it, under the sequence's name with
  * @@ in front (necrolyte: cast_ghost_shroud plays @@cast_ghost_shroud). The decompile drops the @@,
  * the compile then has one name for both, and every sequence after it moves up a number: online the
@@ -170,6 +196,9 @@ export async function clips(opts) {
     fetched++;
   }
 
+  // 3b. each sequence plays through Valve's weight list (restoreWeightLists says why)
+  const weighted = restoreWeightLists(valveSeq, aseq, { numberOf, setNumber, copy: detached });
+
   // 4. the poses such a layer blends are Valve's own, segment for segment: the decompile hands them
   //    over as differences from the bind pose and the compiler makes whole poses of them
   const segs = anim.root.members.get('m_segmentArray').items;
@@ -226,7 +255,7 @@ export async function clips(opts) {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, file);
   if (restored.length) console.log(`clips renamed back to Valve's names: ${restored.join(', ')}`);
-  console.log(`${rel}: ${valveNames.length} sequences in Valve's order, ${fetched} blends fetched as Valve's, ${poses} pose clips from Valve's${morph ? ', morph channel restored' : ''}`);
+  console.log(`${rel}: ${valveNames.length} sequences in Valve's order, ${fetched} blends fetched as Valve's, ${poses} pose clips from Valve's${weighted ? `, ${weighted} weight list(s) as Valve's` : ''}${morph ? ', morph channel restored' : ''}`);
   if (extra.length) console.log(`clips Valve's model has not got (unused by the game): ${extra.join(', ')}`);
   console.log(`written to ${out}. Run npm run doctor on the packed mod, then watch the run and the idle in the bench.`);
 }

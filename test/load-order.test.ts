@@ -35,7 +35,7 @@ function stand(t: TestContext) {
   const noop = () => {};
   const schemaService = { harvest: () => null, refresh: noop, state: () => ({ enabled: false }) };
   const lib = registerAgainst(() => registerLibraryIpc({
-    applyMasterToCursors: noop, disableOtherCosmetics: () => [], disableOtherCursors: () => [],
+    applyMasterToCursors: noop, blocked: () => null, disableOtherCosmetics: () => [], disableOtherCursors: () => [],
     installer, isCursorRecord: () => false, library, refreshPresence: noop, schemaService,
   } as never));
   const foreign = registerAgainst(() => registerForeignIpc({ fingerprints, installer, library, schemaService } as never));

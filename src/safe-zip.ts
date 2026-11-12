@@ -38,13 +38,16 @@ const MB = 1024 * 1024;
 // not guessed: the heaviest zip is 64 MB, the largest single entry unpacks to 301 MB, the
 // fullest archive holds 111 files, and the tightest compression is 80x (cursor bitmaps).
 // Every limit sits several times above that, so a legitimate archive never meets one.
+// The size limits were raised on 2026-11-05: a voice pack on Hugging Face is a 1.02 GB zip holding
+// one 1.21 GB pak, and it was refused as too large. They stop just short of 2 GiB, which
+// fs.readFile refuses outright.
 // The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
 // 500x is not a threat, and small assets compress hard all the time.
-const LIMITS = {
-  archiveBytes: 1024 * MB,   // adm-zip reads the whole file into memory before parsing
+export const LIMITS = {
+  archiveBytes: 2040 * MB,   // adm-zip reads the whole file into memory before parsing
   entries: 20000,
-  entryBytes: 768 * MB,
-  totalBytes: 2048 * MB,
+  entryBytes: 2040 * MB,
+  totalBytes: 4096 * MB,
   ratio: 200,
   ratioFloor: 1 * MB,
 };

@@ -8,6 +8,7 @@ import { openZip, safeJoin } from './safe-zip.ts';
 import { FileTx, type Writer } from './file-tx.ts';
 import * as zones from './slot-zones.ts';
 import { MASTER_OFF } from './installer-files.ts';
+import { ensureSpace } from './disk-space.ts';
 import type { Installer } from './installer.ts';
 import type { LibFile } from './types.ts';
 
@@ -22,6 +23,8 @@ export function installInto(inst: Installer, tx: Writer, { categoryId, modName, 
   inst.ensureLangFolder();
   const used = inst.usedPakNames();
   const records: LibFile[] = [];
+
+  if (!local.toLowerCase().endsWith('.zip')) ensureSpace(lang, fs.statSync(local).size);
 
   if (local.toLowerCase().endsWith('.vpk')) {
     const pakName = inst.allocatePak(used, isPriority);
@@ -45,6 +48,7 @@ export function installInto(inst: Installer, tx: Writer, { categoryId, modName, 
     return !!baseName && !lower.includes('!guide')
       && !/(^|\/)(guide\.txt|install\.bat|uninstall\.bat|readme[^/]*)$/i.test(lower);
   });
+  ensureSpace(lang, kept.reduce((sum, f) => sum + f.size, 0));
   // slots for the archive's VPKs, decided before a byte is written (see planPakNames).
   // A "maps/..." payload is not a pak: terrains and the mods that come with them replace
   // the map file itself, which only works from maps\dota.vpk (the same rule the importer

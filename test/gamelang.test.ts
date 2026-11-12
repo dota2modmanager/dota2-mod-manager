@@ -364,6 +364,9 @@ test('a launch option naming a real language decides the folder, and the app fol
 test('without a launch option the voice language decides, as before', () => {
   assert.deepEqual(gamelang.modFolderFor(null, 'russian'), { suffix: 'russian', followed: false });
   assert.deepEqual(gamelang.modFolderFor(null, 'koreana'), { suffix: 'koreana', followed: false });
+  // a folder kept in Settings wins over the launch option; one the game cannot mount by voice is no folder to keep
+  assert.deepEqual(gamelang.modFolderFor('english', 'russian', 'russian'), { suffix: 'russian', followed: false, locked: true });
+  assert.deepEqual(gamelang.modFolderFor('english', 'russian', 'dutch'), { suffix: 'english', followed: true });
   // English has no folder of its own and borrows the Russian one
   assert.deepEqual(gamelang.modFolderFor(null, 'english'), { suffix: 'russian', followed: false });
 });
@@ -491,4 +494,20 @@ test('a gameinfo that cannot be written is still an error, not taken for one alr
     return realWrite(file, data, opts);
   });
   assert.throws(() => gamelang.ensureLangFolder(game, 'russian'), /access denied/);
+});
+
+test('the account folder for hero grids is the logged-in account, or the one that has played Dota', (t) => {
+  const game = fakeGame(t, { boot: bootFile('russian', 'russian') });
+  const root = fakeSteam(game, [{ id32: 111, timestamp: 900 }, { id32: 222, timestamp: 100 }]);
+  assert.equal(gamelang.steamAccountDir(game), path.join(root, 'userdata', '111'));
+
+  fs.rmSync(path.join(root, 'config', 'loginusers.vdf'), { force: true });
+  assert.equal(gamelang.steamAccountDir(game), null, 'two accounts and nobody logged in is not an answer');
+  fs.mkdirSync(path.join(root, 'userdata', '222', '570'), { recursive: true });
+  assert.equal(gamelang.steamAccountDir(game), path.join(root, 'userdata', '222'), 'the one that has a Dota folder');
+
+  const bare = fakeGame(t, { boot: bootFile('russian', 'russian') });
+  assert.equal(gamelang.steamAccountDir(bare), null, 'no userdata folder at all');
+  fs.mkdirSync(path.resolve(bare, '..', '..', '..', '..', 'userdata', '0'), { recursive: true });
+  assert.equal(gamelang.steamAccountDir(bare), null, 'userdata/0 is Steam signed out, not an account');
 });

@@ -3,12 +3,14 @@
  * Both settings handlers answer with the whole view rather than the bare store, because the
  * renderer caches whatever it is handed - see src/settings-view.ts for what that cost once.
  */
+import { picturesIn } from './preview-cache.ts';
 import path from 'node:path';
 
 import { setLang, t } from './i18n.ts';
 import { betaState } from './beta.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
+import { choose, counted, due, readPrompt } from './support-prompt.ts';
 import { setDownloadProxy, testDownloadProxy, validateDownloadProxy } from './download-proxy.ts';
 import type { AppContext } from './app-context.ts';
 
@@ -16,10 +18,10 @@ import type { AppContext } from './app-context.ts';
 export function registerSettingsIpc({
   // The four read late are main-process state that changes while the app runs; setPresenceView
   // writes one back. Passing values here would freeze them at registration time.
-  applyPresenceSetting, catalog, discordAuth, findDotaGamePath, moveLangFolder,
-  refreshPresence, remoteConfig, settings, settingsView, validateGamePath,
-  langFolder, patchWatcher, setPresenceView, updater, win,
-}: Pick<AppContext, 'applyPresenceSetting' | 'catalog' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
+  applyPresenceSetting, applyBackground, catalog, previewStore, discordAuth, findDotaGamePath, moveLangFolder,
+  refreshPresence, remoteConfig, schemaService, settings, settingsView, validateGamePath,
+  langFolder, keepModFolder, patchWatcher, setPresenceView, updater, win,
+}: Pick<AppContext, 'applyPresenceSetting' | 'applyBackground' | 'catalog' | 'previewStore' | 'discordAuth' | 'findDotaGamePath' | 'moveLangFolder' | 'refreshPresence' | 'remoteConfig' | 'schemaService' | 'settings' | 'settingsView' | 'validateGamePath' | 'langFolder' | 'keepModFolder' | 'patchWatcher' | 'setPresenceView' | 'updater' | 'win'>): void {
   const { dialog, ipcMain } = electron();
   /* The beta channel, from the switch in settings and the list in the signed config.
    *
@@ -43,6 +45,25 @@ export function registerSettingsIpc({
     return state;
   });
 
+  /* The window asking for support. The launch is counted on the first question of the run rather
+   * than at start, so a launch that never got as far as the window does not count, and a reload of
+   * the window does not count twice. */
+  let launchCounted = false;
+  ipcMain.handle('support:state', () => {
+    let p = readPrompt(settings.get('supportPrompt'));
+    if (!launchCounted) {
+      launchCounted = true;
+      p = counted(p);
+      settings.set('supportPrompt', p);
+    }
+    return { due: due(p, Date.now()) };
+  });
+
+  ipcMain.handle('support:choose', (e, choice) => {
+    settings.set('supportPrompt', choose(readPrompt(settings.get('supportPrompt')), choice, Date.now()));
+    return { ok: true };
+  });
+
   ipcMain.handle('settings:get', () => settingsView({ consumeMigration: true }));
 
   ipcMain.handle('settings:set', (e, key, value) => {
@@ -56,8 +77,14 @@ export function registerSettingsIpc({
       return settingsView();
     }
     settings.set(key, value);
+    // the folder the mods are kept in, kept now rather than at the next start
+    if (key === 'langFolderLock') return keepModFolder().then(() => settingsView());
     // the status text is localized, so a language change has to redraw it too
     if (key === 'discordPresence' || key === 'uiLang') applyPresenceSetting();
+    // the tray's menu speaks the language too, and the switch is the tray itself
+    if (key === 'runInBackground' || key === 'uiLang') applyBackground();
+    // the table is what the switch changes; the bar at the bottom counts the build
+    if (key === 'everyoneWearsMine') void schemaService.refreshInBackground();
     return settingsView();
   });
 
@@ -127,7 +154,10 @@ export function registerSettingsIpc({
   // ----- catalog -----
   ipcMain.handle('catalog:load', async (e, force) => {
     try {
-      return await catalog.load({ forceRefresh: !!force });
+      const data = await catalog.load({ forceRefresh: !!force });
+      // the catalog just answered, so the network is up: the rest of its pictures come in behind it
+      void previewStore.warm(picturesIn(data.mods, data.constants)).catch(() => {});
+      return data;
     } catch (err) {
       /* The kind of failure travels with the words. "fetch failed" is Node's way of saying it
          could not open a socket, and printing that at somebody who turned their wifi off is

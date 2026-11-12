@@ -60,15 +60,17 @@ function whatsNewDialog(version: string, md: string, notices: Notice[] = []): Pr
 }
 
 // Show it once per version, and only for a version the user did not install by hand.
-export async function showWhatsNew({ force = false } = {}): Promise<void> {
+// Answers whether it was shown.
+export async function showWhatsNew({ force = false } = {}): Promise<boolean> {
   let r: { version: string; notes: string; unseen: boolean } | null = null;
-  try { r = await window.api.update.notes(window.I18N_LANG); } catch { return; }
-  if (!r || !r.notes) { if (force) toast(L`Для этой версии заметок нет`, 'warn'); return; }
-  if (!force && !r.unseen) { window.api.update.notesSeen(); return; }
+  try { r = await window.api.update.notes(window.I18N_LANG); } catch { return false; }
+  if (!r || !r.notes) { if (force) toast(L`Для этой версии заметок нет`, 'warn'); return false; }
+  if (!force && !r.unseen) { window.api.update.notesSeen(); return false; }
   let notices: Notice[] = [];
   try { notices = (await window.api.config.state()).notices || []; } catch { /* offline: the release notes alone */ }
   await whatsNewDialog(r.version, r.notes, notices);
   window.api.update.notesSeen();
+  return true;
 }
 
 // ---------- custom confirm dialog ----------
@@ -97,7 +99,7 @@ export function confirmDialog(message: string, { okLabel = L`Удалить`, da
 }
 
 // text-input dialog (returns the entered string, or null if cancelled)
-export function promptDialog(message: string, { placeholder = '', value = '', okLabel = L`ОК` } = {}): Promise<string | null> {
+export function promptDialog(message: string, { placeholder = '', value = '', okLabel = L`ОК`, allowEmpty = false } = {}): Promise<string | null> {
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
     overlay.className = 'confirm-overlay';
@@ -115,87 +117,14 @@ export function promptDialog(message: string, { placeholder = '', value = '', ok
     const done = (v: string | null) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) done(null); });
     part(overlay, '[data-c="no"]').addEventListener('click', () => done(null));
-    part(overlay, '[data-c="yes"]').addEventListener('click', () => done(input.value.trim() || null));
+    part(overlay, '[data-c="yes"]').addEventListener('click', () => done((allowEmpty ? input.value.trim() : input.value.trim() || null)));
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') done(null);
-      if (e.key === 'Enter') done(input.value.trim() || null);
+      if (e.key === 'Enter') done((allowEmpty ? input.value.trim() : input.value.trim() || null));
     };
     document.addEventListener('keydown', onKey);
     input.focus();
     input.select();
-  });
-}
-
-// ---------- turning safe mode off ----------
-
-/* The one switch that lets the app write into the game install, so the question gets asked
- * in full instead of in a line of jargon nobody read: what the app does today, what it will
- * do instead, which two files it edits, and the part nobody can promise. One yes here is a
- * standing one - heal() rewrites those files after every Dota update until safe mode comes
- * back - so the window says that too.
- *
- * Built as a move from one state to the next rather than a comparison - the top card is
- * dimmed, the bottom one is lit, and a short rule runs between them. The two shields are the
- * status bar's own icons for these states, so the dialog also teaches the switch it is about.
- *
- * Resolves true when the user turns it off. Cancel, Escape and a click outside all mean no,
- * and the safe answer is what holds focus.
- */
-export function safeModeDialog(): Promise<boolean> {
-  return new Promise((resolve) => {
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.innerHTML = `
-      <div class="confirm-box safe-box" role="dialog" aria-modal="true" aria-labelledby="safeDlgTitle">
-        <div class="safe-title" id="safeDlgTitle">${L`Выключить безопасный режим`}</div>
-        <div class="safe-body">
-          <div class="safe-step from">
-            <span class="ms safe-step-icon">shield</span>
-            <div class="safe-step-text">
-              <span class="safe-eyebrow">${L`Сейчас`}</span>
-              <b>${L`Безопасный режим`}</b>
-              <p>${L`Приложение кладёт свои .vpk в папку, которую Dota и так читает. Файлы игры оно не открывает и не меняет.`}</p>
-            </div>
-          </div>
-          <div class="safe-step to">
-            <span class="ms safe-step-icon">shield_moon</span>
-            <div class="safe-step-text">
-              <span class="safe-eyebrow">${L`После`}</span>
-              <b>${L`Приложение начнёт менять файлы игры`}</b>
-              <p>${L`Оно впишет свою папку с модами в два файла Dota:`}</p>
-              <dl class="safe-files">
-                <dt><code>gameinfo_branchspecific.gi</code></dt>
-                <dd>${L`+ строка с папкой модов`}</dd>
-                <dt><code>dota.signatures</code></dt>
-                <dd>${L`+ подпись изменённого файла`}</dd>
-              </dl>
-              <p class="safe-undo">${L`Оригиналы приложение сохраняет до первой правки. Вернёшь безопасный режим, и они встанут на место байт в байт, без следов.`}</p>
-              <p class="safe-undo">${L`Дота стирает эту правку каждым обновлением. Приложение впишет её заново само, пока безопасный режим выключен.`}</p>
-            </div>
-          </div>
-        </div>
-        <p class="safe-gain">
-          <span class="ms">auto_awesome</span>
-          <span>${L`Взамен заработают моды с эффектами, а в каталоге откроются виды для стандартных предметов: погода, ландшафт, курьеры, варды и ещё десяток слотов. Стандартный предмет начинает выглядеть как любой другой из игры, и видно это только тебе.`}</span>
-        </p>
-        <div class="safe-risk">
-          <span class="ms">warning</span>
-          <div>${L`Правку файлов игры в моддинге Dota считают небезопасной. За 8+ лет мы не знаем ни одного бана за это. Гарантий всё равно не даём.`}</div>
-        </div>
-        <div class="confirm-actions">
-          <button class="btn" data-c="no">${L`Оставить безопасный режим`}</button>
-          <button class="btn btn-primary" data-c="yes">${L`Выключить безопасный режим`}</button>
-        </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    const done = (v: boolean) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) done(false); });
-    part(overlay, '[data-c="no"]').addEventListener('click', () => done(false));
-    part(overlay, '[data-c="yes"]').addEventListener('click', () => done(true));
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') done(false); };
-    document.addEventListener('keydown', onKey);
-    // staying safe is the answer a stray Enter should give
-    part(overlay, '[data-c="no"]').focus();
   });
 }
 

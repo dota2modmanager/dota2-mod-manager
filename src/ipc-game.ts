@@ -11,16 +11,23 @@ import { heroIdFromName } from './hero-names.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import { runSteps } from './steps.ts';
+import { repairApp } from './app-repair.ts';
 import type { AppContext } from './app-context.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerGameIpc({
   // patchRepair() is read late and written through setPatchRepair: it changes while the app
   // runs, and a value captured at registration would answer for the wrong moment forever.
-  afterDeployMaster, arcana, blocked, diag, dotaIsRunning, gameIcons, icons, modPreviews, remoteConfig,
+  afterDeployMaster, arcana, blocked, buildUndo, mapLooks, diag, dotaIsRunning, gameIcons, icons, installer, library, modPreviews, remoteConfig,
   repairAfterPatch, schemaService, settings, toolchain, patchRepair, setPatchRepair,
-}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
-  const { ipcMain } = electron();
+}: Pick<AppContext, 'afterDeployMaster' | 'arcana' | 'blocked' | 'buildUndo' | 'mapLooks' | 'diag' | 'dotaIsRunning' | 'gameIcons' | 'icons' | 'installer' | 'library' | 'modPreviews' | 'remoteConfig' | 'repairAfterPatch' | 'schemaService' | 'settings' | 'toolchain' | 'patchRepair' | 'setPatchRepair'>): void {
+  const { ipcMain, shell } = electron();
+
+  // the action on Play's "Steam is still updating Dota" (src/steam-appstate.ts): Steam's own downloads
+  // page, the one address outside http(s) the window can ask for, and it takes nothing from the window
+  ipcMain.handle('game:steamDownloads', () => { void shell.openExternal('steam://open/downloads'); return { ok: true }; });
+  // Dota's properties, where the DLC tab installs the Workshop Tools
+  ipcMain.handle('game:steamProperties', () => { void shell.openExternal('steam://gameproperties/570'); return { ok: true }; });
 
   // A switch is honoured here rather than in the renderer: this is the boundary an old
   // window, a stale screen or a replayed click all have to come through. `blocked` arrives
@@ -31,6 +38,7 @@ export function registerGameIpc({
   ipcMain.handle('config:state', () => ({
     features: Object.fromEntries(remoteConfig.SWITCHABLE.map((n) => [n, remoteConfig.feature(n, uiLang())])),
     notices: remoteConfig.notices(uiLang()),
+    issues: remoteConfig.issues(uiLang()),
     seen: settings.get('seenNotices') || [],
   }));
 
@@ -51,6 +59,18 @@ export function registerGameIpc({
   ipcMain.handle('patch:repairNow', async () => {
     await repairAfterPatch('manual');
     return patchRepair();
+  });
+  // Settings' "Repair the app": the patch, the mod files, the pictures, a line each (src/app-repair.ts)
+  ipcMain.handle('patch:repairApp', async () => {
+    const steps = await repairApp({
+      repairAfterPatch, patchRepair,
+      records: () => library.list(),
+      onDisk: (rel) => installer.langFileOnDisk(rel),
+      clearCaches: () => { icons.clear(); gameIcons.clear(); modPreviews.clear(); },
+    });
+    // its lines are the news: a banner in My mods saying it again would be about a patch that did not happen
+    if (patchRepair().state === 'done') setPatchRepair({ state: 'idle' });
+    return steps;
   });
   // the banner is news, not a state of the game: once it has been read it goes away
   ipcMain.handle('patch:repairSeen', () => {
@@ -75,6 +95,8 @@ export function registerGameIpc({
   });
 
   ipcMain.handle('schema:refresh', () => schemaService.refresh());
+  // Cancel on the bar: the build stops and the change that started it goes back (src/build-undo.ts)
+  ipcMain.handle('schema:cancel', () => buildUndo.cancel());
 
   // Free cosmetics are generated from the installed game's own schema, so a weather or
   // courier Valve ships later appears in the list without an app update.
@@ -92,9 +114,9 @@ export function registerGameIpc({
   // Sources: the mod's own files and the game's own pictures when the toolchain is here
   // (exact, offline, no rate limit), the wiki for whatever is left.
   // the item builder's hub: every hero's portrait, out of the installed game
-  ipcMain.handle('cosmetics:heroPortraits', async (e, ids) => {
+  ipcMain.handle('cosmetics:heroPortraits', async (e, ids, tall) => {
     try {
-      return await gameIcons.heroPortraits((Array.isArray(ids) ? ids : []).slice(0, 300));
+      return await gameIcons.heroPortraits((Array.isArray(ids) ? ids : []).slice(0, 300), tall === true);
     } catch (err) {
       diag('hero portraits failed: ' + errorText(err));
       return {};
@@ -216,11 +238,11 @@ export function registerGameIpc({
   });
 
   // A whole set, one write to the game for all its pieces (schema-service pickSet).
-  ipcMain.handle('cosmetics:pickSet', async (e, setId) => {
+  ipcMain.handle('cosmetics:pickSet', async (e, setId, style) => {
     const stop = blocked('cosmetics');
     if (stop) return stop;
     try {
-      const picked = schemaService.pickSet(setId, { write: false });
+      const picked = schemaService.pickSet(setId, { write: false, style: Number(style) || 0 });
       await schemaService.refreshInBackground();
       return { ok: true, ...picked };
     } catch (err) {
@@ -228,7 +250,8 @@ export function registerGameIpc({
     }
   });
 
-  // The arcana window (src/arcana-service.ts): its picture and what is installed, and building it.
+  // The arcana window (src/arcana-service.ts): each arcana's picture and what is installed, the
+  // game's gems, and building one.
   // The built mod is a library record like any other; switching it off or removing it goes
   // through mods:setEnabled and mods:remove.
   ipcMain.handle('arcana:state', () => {
@@ -239,15 +262,31 @@ export function registerGameIpc({
     }
   });
 
-  ipcMain.handle('arcana:install', (e, color, mode) => {
+  ipcMain.handle('arcana:install', (e, set, color, mode) => {
     const stop = blocked('install');
     if (stop) return stop;
     try {
-      const record = arcana.install(color, mode);
+      const record = arcana.install(set, color, mode);
       afterDeployMaster();
       // the builder's copy of Terrorblade's base takes the new colour (src/arcana-base-color.ts);
       // the window does not wait on the table, the bar at the bottom counts it
       void schemaService.refreshInBackground();
+      return { ok: true, record };
+    } catch (err) {
+      return { error: errorText(err) };
+    }
+  });
+
+  // towers and trees from the game's own looks, per side (src/map-looks-service.ts)
+  ipcMain.handle('map:state', () => {
+    try { return { ok: true, ...mapLooks.state() }; } catch (err) { return { error: errorText(err) }; }
+  });
+  ipcMain.handle('map:install', (e, kind, radiant, dire) => {
+    const stop = blocked('install');
+    if (stop) return stop;
+    try {
+      const record = mapLooks.install(kind, radiant, dire);
+      afterDeployMaster();
       return { ok: true, record };
     } catch (err) {
       return { error: errorText(err) };

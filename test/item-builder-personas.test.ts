@@ -8,10 +8,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  displaced, isSelectorSlot, leftOut, personaAssets, personaLayouts, personaRecords, personasOn, personaSlots,
+  displaced, isSelectorSlot, leftOut, personaAssets, personaLayouts, personaRecords, personasOn, personaSlots, personaScales, personaScaleOf,
 } from '../src/item-builder-personas.ts';
 import { ARCANA_BASES, readyBase } from '../src/arcana-bases.ts';
-import { itemEffectPatch } from '../src/item-builder.ts';
+import { encodeKv3, resource } from './helpers/kv3-build.ts';
+import { itemEffectPatch, itemVoices } from '../src/item-builder.ts';
+import { itemSlots } from '../src/item-builder-slots.ts';
 import { entryAt, entryPath } from '../src/vpk.ts';
 import type { LibRecord } from '../src/types.ts';
 
@@ -37,6 +39,7 @@ const TABLE = ['"items_game"', '{', '\t"items"', '\t{',
   item('13786', 'The Toy Butcher', 'wearable', 'persona_selector', '', [
     modifier({ type: 'persona', persona: '1' }),
     modifier({ type: 'entity_model', asset: 'npc_dota_hero_pudge', modifier: 'models/heroes/pudge_cute/pudge_cute.vmdl' }),
+    modifier({ type: 'hero_scale', asset: 'npc_dota_hero_pudge', ModelScale: '1' }),
     modifier({ type: 'particle', asset: 'particles/units/heroes/hero_pudge/pudge_meathook.vpcf', modifier: 'particles/units/heroes/hero_pudge_cute/pudge_cute_meathook.vpcf' }),
     modifier({ type: 'icon_replacement_hero_minimap', asset: 'npc_dota_hero_pudge', modifier: 'npc_dota_hero_pudge_persona1' }),
     modifier({ type: 'ability_icon', asset: 'pudge_rot', modifier: 'pudge/persona_toy_butcher/pudge_rot_persona1' }),
@@ -73,6 +76,22 @@ test('the builder offers a slot to pick the persona in, and one for each of its 
   ]);
   assert.deepEqual(slots[0].options, [{ id: '13786', name: 'The Toy Butcher' }]);
   assert.ok(isSelectorSlot(slots[0].slot) && !isSelectorSlot(slots[2].slot));
+  // a persona has a rarity as any item does, and its card says it
+  const rare = personaSlots(TABLE.replace('"The Toy Butcher"', '"The Toy Butcher"\n\t\t\t"item_rarity"\t\t"Immortal"'));
+  assert.equal(rare[0].options[0].rarity, 'immortal');
+});
+
+test("a persona's voice is its voice slot's item, and its styled items offer their styles", () => {
+  const styles = ['"styles"', '{', '"0" { "name" "#Toy_Hair_0" }', '"1" { "name" "#Toy_Hair_1" }', '}'].join('\n');
+  const table = TABLE.replace('\t}\n}\n', [
+    item('766', "Pudge Persona's Voice", 'default_item', 'voice_persona_1', '', modifier({ type: 'response_criteria', asset: 'toy_pug' })),
+    item('50003', 'Toy Hair', 'wearable', 'head_persona_1', 'models/items/pudge_cute/toy_hair.vmdl', styles),
+    '\t}', '}', ''].join('\n'));
+  const pudge = personaLayouts(table).get('pudge')!;
+  assert.equal(pudge.voice?.id, '766');
+  assert.deepEqual(itemVoices(table, pudge.voice!), [{ hero: 'npc_dota_hero_pudge', key: 'customresponse', value: 'toy_pug' }]);
+  const head = itemSlots(table).find((x) => x.slot === 'item:pudge:head_persona_1')!;
+  assert.deepEqual(head.options.find((o) => o.id === '50003')?.styles, ['#Toy_Hair_0', '#Toy_Hair_1']);
 });
 
 test("with the persona on the hero wears its items alone, the game's own where nothing is picked", () => {
@@ -141,6 +160,14 @@ test("a persona's pick is written over the plain hero's stock item, and the pers
   assert.doesNotMatch(persona.block, /"type"\s+"persona"/, 'switched, the game would put on the persona\'s own stock items');
   assert.doesNotMatch(persona.block, /entity_model/, 'the body is the base, under the plain path');
   assert.match(persona.block, /pudge_cute_meathook/, 'its particles stay');
+  // online the server draws the plain hero's size, and the base's body is compiled to stand at
+  // Valve's there; the item's size on top made the young Invoker a third taller in "Try out"
+  assert.doesNotMatch(persona.block, /hero_scale/, 'the persona stands at the size it has online');
+  const back = item('258', "Pudge's Back Rings and Apron", 'default_item', 'back', 'models/heroes/pudge/back.vmdl');
+  const sized = TABLE.replace(back, item('258', "Pudge's Back Rings and Apron", 'default_item', 'back', 'models/heroes/pudge/back.vmdl',
+    modifier({ type: 'hero_scale', asset: 'npc_dota_hero_pudge', ModelScale: '1.03' })));
+  assert.notEqual(sized, TABLE);
+  assert.match(itemEffectPatch(sized, '258', '', '258').block, /hero_scale/, 'an item that is no persona keeps its size: no body makes up for it');
 });
 
 test("a persona's pictures: its portrait in the top bar and the hero picker as well as the minimap, and its ability icons", () => {
@@ -152,4 +179,108 @@ test("a persona's pictures: its portrait in the top bar and the hero picker as w
     'panorama/images/heroes/selection/npc_dota_hero_pudge_persona1_png.vtex_c -> panorama/images/heroes/selection/npc_dota_hero_pudge_png.vtex_c',
     'panorama/images/spellicons/pudge/persona_toy_butcher/pudge_rot_persona1_png.vtex_c -> panorama/images/spellicons/pudge_rot_png.vtex_c',
   ], 'the persona names only the minimap one; the game has the same name for the other two');
+});
+
+test("a persona's items are made as big as its body is against Valve's, measured, and only in its own slots", () => {
+  const body = (s: number) => resource([['DATA', encodeKv3({ obj: [['m_modelSkeleton', { obj: [
+    ['m_boneName', { arr: [{ str: 'pelvis' }, { str: 'head' }] }],
+    ['m_bonePosParent', { arr: [{ f64s: [0, 0, 55 * s] }, { f64s: [0, 3 * s, 20 * s] }] }],
+  ] }]] })]]);
+  const game: Record<string, Buffer> = {
+    'scripts/npc/heroes/npc_dota_hero_invoker.txt': Buffer.from('"DOTAHeroes"\n{\n\t"npc_dota_hero_invoker"\n\t{\n\t\t"Model"\t\t"models/heroes/invoker/invoker.vmdl"\n'
+      + '\t\t"Persona"\n\t\t{\n\t\t\t"1"\n\t\t\t{\n\t\t\t\t"Model"\t\t"models/heroes/invoker_kid/invoker_kid.vmdl"\t// For tools only\n\t\t\t}\n\t\t}\n\t}\n}'),
+    'models/heroes/invoker_kid/invoker_kid.vmdl_c': body(1),
+  };
+  const read = (p: string) => game[p] ?? null;
+  const acolyte = ARCANA_BASES.find((b) => b.persona && b.hero === 'invoker')!;
+  const on = new Map([['invoker', acolyte.item]]);
+  const based = (s: number) => [readyBase(acolyte, [entryAt('models/heroes/invoker/invoker.vmdl_c', body(s))])];
+  assert.deepEqual([...personaScales(on, based(1.351), read)], [['invoker', 1.351]], 'the body compiled at 1/0.74');
+  assert.deepEqual([...personaScales(on, based(1), read)], [], "one compiled as Valve's: nothing to scale");
+  assert.deepEqual([...personaScales(new Map(), based(1.351), read)], [], 'the persona not on');
+  assert.deepEqual([...personaScales(on, [], read)], [], 'its base not here');
+
+  const scales = new Map([['invoker', 1.351]]);
+  const persona = { target: '1', host: null, given: false };
+  const own = { id: 'a', name: 'Hair', categoryId: 'cosmetic', files: [], slot: 'item:invoker:head_persona_1', itemId: '9', persona };
+  assert.equal(personaScaleOf(own, scales), 1.351);
+  assert.equal(personaScaleOf({ ...own, slot: 'item:invoker:persona_selector' }, scales), undefined, 'not the persona itself');
+  assert.equal(personaScaleOf({ ...own, persona: undefined }, scales), undefined, 'not a plain pick');
+  assert.equal(personaScaleOf({ ...own, slot: 'item:pudge:weapon_persona_1' }, scales), undefined, "not another hero's");
+});
+
+test('the 3D preview dresses a persona on in its own slots alone, and one off in the plain ones', async () => {
+  // the window sends its plain slots while the persona is tried on or still going on, and Invoker's
+  // Acolyte stood in the adult's hat, shoulders and cape
+  const { personaPreviewSlots } = await import('../src/hero-preview-picks.ts');
+  const plain = [{ slot: 'item:pudge:head', stock: '262' }, { slot: 'item:pudge:back', stock: '258' }];
+  const selector = { slot: 'item:pudge:persona_selector', stock: '709' };
+  const on = [{ slot: selector.slot, itemId: '13786' }];
+  const slots = (list: { slot: string }[]) => list.map((s) => s.slot);
+  const worn = personaPreviewSlots(TABLE, 'npc_dota_hero_pudge', [...plain, selector], on);
+  assert.ok(!worn.some((s) => plain.some((p) => p.slot === s.slot)), 'no plain slot with the persona on');
+  assert.ok(worn.includes(selector));
+  assert.deepEqual(slots(worn.filter((s) => s !== selector)).sort(), personaLayouts(TABLE).get('pudge')!.parts.map((p) => `item:pudge:${p.slot}`).sort(), 'each of its own, with its host as the stock');
+  const own = [selector, { slot: 'item:pudge:head_persona_1', stock: '262' }];
+  assert.deepEqual(slots(personaPreviewSlots(TABLE, 'npc_dota_hero_pudge', [...plain, ...own], [])), [...slots(plain), selector.slot], 'taken off: its own slots go');
+  assert.deepEqual(slots(personaPreviewSlots(TABLE, 'npc_dota_hero_axe', plain, on)), slots(plain), 'a hero with no persona as sent');
+});
+
+test('without the table a persona whose base is here wears its own items, not the empty models of its base', async () => {
+  // Invoker's Acolyte from the builder: the base made him the kid, and put an empty model at each plain
+  // slot; the picks' pak left the persona's own items out, and the kid stood bald in the game
+  const fs = await import('node:fs');
+  const os = await import('node:os');
+  const path = await import('node:path');
+  const { buildSchemaVpk } = await import('../src/schema.ts');
+  const { createTableBuild } = await import('../src/schema-build.ts');
+  const { itemFilesSteps } = await import('../src/item-files.ts');
+  const { drain } = await import('../src/steps.ts');
+  const game = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-persona-'));
+  try {
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    const hair = 'models/heroes/pudge_cute/pudge_cute_hair.vmdl_c';
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildSchemaVpk(TABLE, [
+      entryAt('scripts/npc/heroes/npc_dota_hero_pudge.txt', Buffer.from('"DOTAHeroes"\n{\n\t"Model"\t\t"models/heroes/pudge/pudge.vmdl"\n}\n')),
+      entryAt(hair, REAL), entryAt('models/heroes/pudge/hair.vmdl_c', Buffer.from('the plain toupee')),
+    ]));
+    const base = ARCANA_BASES.find((b) => b.id === 'the_toy_butcher')!;
+    const bases = { entries: (id: string) => (id === base.id ? [entryAt('models/heroes/pudge/pudge.vmdl_c', Buffer.from('the toy body')), entryAt('models/heroes/pudge/hair.vmdl_c', EMPTY)] : null), want: async () => true };
+    const recs = [pick('p', 'persona_selector', '13786')];
+    const table = createTableBuild({ library: { list: () => recs }, bases, log: () => {} });
+    const res = drain(table.buildSteps(TABLE, game));
+    const pak = drain(itemFilesSteps(res.list, res.beneath, game, res.filesShared)).entries;
+    const at = pak.find((e) => entryPath(e) === 'models/heroes/pudge/hair.vmdl_c');
+    assert.ok(at && at.data.equals(REAL), "the persona's own head under the plain one's path");
+    assert.equal(pak.find((e) => entryPath(e) === 'models/heroes/pudge/pudge.vmdl_c')?.data.toString(), 'the toy body');
+  } finally { fs.rmSync(game, { recursive: true, force: true }); }
+});
+
+test("a persona's base keeps its persona's own effects and loses another item's", async () => {
+  // the Acolyte's base carried Magus Apex's eyes as Invoker's orbs, over the persona's own
+  const { withoutOthersEffects } = await import('../src/persona-base-effects.ts');
+  const base = ARCANA_BASES.find((b) => b.id === 'the_toy_butcher')!;
+  const ready = [readyBase(base, [
+    entryAt('models/heroes/pudge/pudge.vmdl_c', Buffer.from('body')),
+    entryAt('particles/econ/items/pudge/pudge_immortal/hook_glow.vpcf_c', Buffer.from('an immortal\'s')),
+    entryAt('particles/units/heroes/hero_pudge/pudge_meathook.vpcf_c', Buffer.from('child particles/econ/items/pudge/pudge_immortal/hook_glow.vpcf')),
+    entryAt('particles/units/heroes/hero_pudge/pudge_rot.vpcf_c', Buffer.from('its own rot')),
+  ])];
+  const kept = withoutOthersEffects(TABLE, ready)[0];
+  assert.deepEqual(kept.entries.map((e) => entryPath(e)).sort(), ['models/heroes/pudge/pudge.vmdl_c', 'particles/units/heroes/hero_pudge/pudge_rot.vpcf_c']);
+  assert.equal(kept.paths.has('particles/units/heroes/hero_pudge/pudge_meathook.vpcf_c'), false, 'the plain path is the persona\'s copy again');
+  const own = [readyBase(base, [entryAt('particles/econ/items/pudge_cute/toy/glow.vpcf_c', Buffer.from('its own'))])];
+  assert.equal(withoutOthersEffects(TABLE.replace('"particles/units/heroes/hero_pudge_cute/pudge_cute_meathook.vpcf"', '"particles/econ/items/pudge_cute/toy/glow.vpcf"'), own)[0].entries.length, 1, 'a folder the persona names stays');
+});
+
+test("a persona's summon has a slot of its own, under the plain hero's summon", () => {
+  const extra = [
+    item('8001', "Pudge's Pet", 'default_item', 'summon'),
+    item('8002', "Pudge Persona Pet", 'default_item', 'summon_persona_1'),
+    item('8003', 'Toy Pet', 'wearable', 'summon_persona_1'),
+  ].join('\n');
+  const table = TABLE.replace(/\n\t\}\n\}\n$/, `\n${extra}\n\t}\n}\n`);
+  const part = personaLayouts(table).get('pudge')!.parts.find((p) => p.slot === 'summon_persona_1');
+  assert.deepEqual([part?.host.id, part?.given?.id, part?.options.map((o) => o.id)], ['8001', '8002', ['8003']]);
+  assert.ok(!personaLayouts(TABLE).get('pudge')!.parts.some((p) => p.slot.startsWith('summon')), 'none where the hero has no summon');
 });

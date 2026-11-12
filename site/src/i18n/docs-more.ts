@@ -1,5 +1,5 @@
 /**
- * Ten more guides, in both languages.
+ * Eleven more guides, in both languages.
  *
  * A separate file from docs.ts for length alone: the two together are one table of pages, and
  * merging happens there. The rule is the same one that file states - both languages side by
@@ -26,7 +26,7 @@
  */
 import type { Doc } from './docs.ts';
 
-type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'ai-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
+type Slug = 'uninstall' | 'terrain' | 'announcer' | 'language' | 'own-mods' | 'ai-mods' | 'item-mods' | 'catalog' | 'minify' | 'compare' | 'copies';
 
 /*
  * The ai-mods page (October 2026) describes skills/dota2-modding in the repo: the skill an AI
@@ -38,6 +38,12 @@ const SETUP_PROMPT = 'Set up Dota 2 modding for me: https://dota2modmanager.com/
 const SETUP_PROMPT_RU = 'Настрой мне моддинг Доты 2: https://dota2modmanager.com/ai/setup.md';
 const PLUGIN_ADD = '/plugin marketplace add dota2modmanager/dota2-mod-manager';
 const PLUGIN_INSTALL = '/plugin install dota2-modding@dota2modmanager';
+
+/* The item-mods page (November 2026) is docs/item-mods.md for mod authors: the commands of
+ * tools/modkit and the item plan, with output copied from a run against the game of 2026-11-03. */
+const SETUP = "git clone https://github.com/dota2modmanager/dota2-mod-manager\ncd dota2-mod-manager\nnpm ci\nnpm run modkit -- check";
+const RECOLOR = "$ npm run modkit -- recolor terrorblade 40,120,255 --out work/mod\nterrorblade: 97 of 155 particle(s) recoloured (166 colours) into work/mod\n$ npm run modkit -- pack work/mod --out tb_blue.vpk\n97 file(s) from work/mod into tb_blue.vpk (0.4 MB); 0 left out as the game's own\n$ npm run doctor -- tb_blue.vpk\nnothing found";
+const PLAN = "$ npm run item-plan -- 5957\n5957 Fractal Horns of Inner Abysm: slot hero_base, for npc_dota_hero_terrorblade\n  built    the hero's own model\n  built    activity modifier \"abysm\"\n  built    a picture (ability_icon)\n  by hand  a sound\n  by hand  a particle the item creates\n  by hand  a model swap\n  cannot   custom_kill_effect\n  cannot   chatwheel x9";
 
 // ---------------------------------------------------------------------------
 // English
@@ -100,7 +106,7 @@ const en: Record<Slug, Doc> = {
       {
         k: 'list',
         items: [
-          'Switch safe mode back on, which takes the looks off the default items. The app restores <code>gameinfo_branchspecific.gi</code> and <code>dota.signatures</code> from the copies it made before the first write.',
+          'In <b>Settings → Game files</b>, turn the item table off, which takes the looks off the default items. The app restores <code>gameinfo_branchspecific.gi</code> and <code>dota.signatures</code> from the copies it made before the first write.',
           'Delete everything in My mods.',
           'If you ever installed anything by hand, look in the language folder for pakNN_dir.vpk files still sitting there.',
           'In Steam, open the game properties, then Installed Files, then verify integrity. That returns everything that belongs to Valve.',
@@ -461,7 +467,7 @@ const en: Record<Slug, Doc> = {
       },
       {
         k: 'p',
-        t: 'Or describe the mod to an AI assistant and let it run those tools for you: <a href="~/docs/ai-mods/">making mods with AI</a>.',
+        t: 'The app does much of this for you: the <a href="~/docs/workshop/">Workshop</a> edits effects, the HUD, colours and the map, and the <a href="~/docs/builder/">item builder</a> dresses any hero in any item from the game. Or describe the mod to an AI assistant and let it run those tools for you: <a href="~/docs/ai-mods/">making mods with AI</a>.',
       },
 
       { k: 'h2', t: 'Questions', id: 'faq' },
@@ -563,6 +569,98 @@ const en: Record<Slug, Doc> = {
           ['Will it touch my game?', 'It works in its own folder and builds the VPK there. Only the app writes into the game, when you install the mod.'],
           ['Can I share what it made?', 'Yes, with the catalog\'s community. Mind what you put in: a model or sound from somewhere else carries its author\'s licence.'],
         ],
+      },
+    ],
+  },
+
+  'item-mods': {
+    slug: 'item-mods',
+    title: 'Build a Dota 2 item mod from the game files: recolors, arcanas, icons, sounds',
+    h1: 'Build an item mod from the game files',
+    description:
+      'Recolor a hero, bring back an arcana you do not own, swap an icon or a sound, using the scripts we build our own mods with. Real commands and real output, checked against the game before you install.',
+    lead: 'Everything an item needs is already in your game: the arcana\'s model, its particles, its icons. A mod puts them under the names the plain hero uses. These are the commands we build our own mods with, in the order we run them, with the output they print.',
+    card: 'Recolor a hero, rebuild an arcana from the game files, swap icons and sounds. The scripts and their real output.',
+    updated: '2026-11-03',
+    blocks: [
+      { k: 'h2', t: 'What you need', id: 'setup' },
+      {
+        k: 'p',
+        t: 'Dota 2, <a href="https://nodejs.org/">Node.js 24</a> and git. The scripts live in our repository; clone it and let <code>modkit check</code> tell you which optional tools the mod you have in mind needs. Recolors and items rebuilt from the game need nothing else.',
+      },
+      { k: 'code', t: SETUP },
+      {
+        k: 'p',
+        t: 'None of the commands write into the folders the game mounts. They build a VPK in a work folder, and you install it by dragging it into the app\'s My mods, where it switches off in one click like any other mod.',
+      },
+
+      { k: 'h2', t: 'Recolor a hero\'s effects', id: 'recolor' },
+      {
+        k: 'p',
+        t: '<code>modkit recolor</code> takes a hero and a colour, finds every particle of that hero in the game\'s pak01 and rewrites its colours. <code>pack</code> turns the folder into a VPK, and the doctor reads the result against the game before anything starts.',
+      },
+      { k: 'code', t: RECOLOR },
+      {
+        k: 'note',
+        t: 'Colours painted into textures (projected rings, colour warps) stay as they are. The script tells you so, and the skill\'s recolor reference explains how to edit those by hand.',
+      },
+
+      { k: 'h2', t: 'Bring back an item you do not own', id: 'item' },
+      {
+        k: 'p',
+        t: 'Start with the plan. <code>item-plan</code> reads the item\'s visuals from the item table and prints one line per change it makes, with how a mod can give it. Here is Terrorblade\'s arcana, cut to one line of each kind:',
+      },
+      { k: 'code', t: PLAN },
+      {
+        k: 'cards',
+        items: [
+          ['built', 'The app\'s builder already does this: the swapped hero model, the pictures, an activity modifier taken off the animations.'],
+          ['by hand', 'A mod can do it, and the line says how: a particle the item creates hangs off one the hero always has, a model goes under the stock path.'],
+          ['cannot', 'Game logic that comes with the item itself: the kill effect, chat wheel lines, voice responses. No file carries it.'],
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Name the stock path, not the paid one. A match loads the models the server\'s item table names, so a mod that puts the arcana\'s model under its own path looks right until a reconnect and then shows the ERROR model. The builder puts every file under the plain hero\'s path for that reason.',
+      },
+
+      { k: 'h2', t: 'Swap an icon or a portrait', id: 'pictures' },
+      {
+        k: 'p',
+        t: '<code>modkit pictures terrorblade --out work/pics</code> writes the hero\'s ability icons, portrait and minimap icon as PNG files. Edit them in any image editor, then <code>--from work/pics</code> compiles them back under the same names. The minimap icon also sits in a sprite sheet, and the script fills both.',
+      },
+
+      { k: 'h2', t: 'Change a sound', id: 'sound' },
+      {
+        k: 'p',
+        t: '<code>modkit sounds terrorblade</code> lists the hero\'s sound events. With <code>--addon my_sounds --out work/mod</code>, <code>--layer Hero_Terrorblade.Sunder=my.wav</code> plays your file on top of the stock one and <code>--replace</code> plays it instead. Sounds go through Valve\'s compiler, so this one needs the Dota 2 Workshop Tools (Steam, Dota 2, Properties, DLC) and Windows.',
+      },
+
+      { k: 'h2', t: 'Check it before the game, then in the game', id: 'check' },
+      {
+        k: 'steps',
+        items: [
+          ['The doctor, in seconds', '<code>npm run doctor -- my_mod.vpk</code> reads the mod against pak01: animations that still need an item\'s modifier, sequence numbers that differ from the game\'s, a child particle on the wrong attachment. "nothing found" is the answer you want.'],
+          ['The bench, in three minutes', '<code>npm run dota:bench -- --vpk my_mod.vpk --short</code> starts Dota in hero demo with the mod in a free slot, films the hero close, attacking and walking, and writes <code>verdict.json</code>. Windows, Steam running, Dota closed.'],
+          ['Compare with a mod that works', 'Bench the plain hero and a catalog mod of the same item. When yours differs, swap one resource block at a time between the two: the block that carries the bug shows up in two or three runs.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Traps that cost us a day each', id: 'traps' },
+      {
+        k: 'list',
+        items: [
+          '<b>The game picks animations by the clips, not the sequences.</b> Fixing only the sequences changed nothing for a day of builds. The doctor reads both now.',
+          '<b>A child particle past its parent\'s control points</b> lands on the first one: a glow meant for the chest sat on the right eye.',
+          '<b>A recompiled model renumbers its sequences.</b> Online the server sends sequence numbers, so one missing clip shifts every animation after it. <code>modkit clips</code> puts Valve\'s names and numbers back.',
+          '<b>One picture a second hides the attack.</b> A fidget at rest looked like a swing; the bench takes 16 pictures 80 ms apart for that reason.',
+        ],
+      },
+
+      { k: 'h2', t: 'Rather tell an assistant?', id: 'ai' },
+      {
+        k: 'p',
+        t: 'The same scripts are a skill an AI assistant follows, with everything past this page: new models in Blender, animations, voice lines. <a href="/docs/ai-mods/">Make Dota 2 mods with AI</a> sets it up in one line. The full notes this page comes from are <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/docs/item-mods.md">docs/item-mods.md</a>.',
       },
     ],
   },
@@ -797,7 +895,7 @@ const en: Record<Slug, Doc> = {
       'Dota 2 Mod Manager is free, open source and has no paid version. Four signs of a copy you should not run, and the only addresses that are ours.',
     lead: 'We keep finding this app under other names: renamed, closed, sometimes for money. Some of them run our code with our name taken off. You cannot check what else they do, and you do not need them, because the original costs nothing.',
     card: 'Paid launchers, renamed copies, apps that want a login. Four signs, and the addresses that are really ours.',
-    updated: '2026-10-19',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'What is going around', id: 'what' },
       {
@@ -835,6 +933,24 @@ const en: Record<Slug, Doc> = {
         t: 'The D2PFX catalog, where the mods come from, lists the app in its own Tools section and links here. Anything else that looks like this app did not come from us.',
       },
 
+      { k: 'h2', t: 'Dota 2 Changer PRO is not this app', id: 'dota2changer' },
+      {
+        k: 'p',
+        t: 'Since November 2026 the launcher of Dota 2 Changer (dota2changer.com) calls itself Dota 2 Mod Manager. Its download page is titled "Dota 2 Mod Manager — Dota 2 Changer PRO". It is a different program from a different team. We share no code with it, have no deal with it and never agreed to the name.',
+      },
+      {
+        k: 'p',
+        t: 'Dota 2 Mod Manager has carried this name since its first release on 20 July 2026. Their page with that title says it was published on 4 November 2026. A search for the name now finds both, and here is how to tell which one you have:',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>Ours</b> needs no account, has every mod free and keeps its whole source on <a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">GitHub</a>. It downloads only from this site and from GitHub releases.',
+          '<b>Theirs</b> asks you to sign in to a Dota 2 Changer account, locks part of its mods behind PREMIUM or VIP and does not publish its code. It downloads from dota2changer.com.',
+        ],
+      },
+      { k: 'p', t: 'Both are free to install. If you meant this one, the download button on <a href="~/">dota2modmanager.com</a> is the right one. <a href="~/docs/compare/#table">The two side by side</a>.' },
+
       { k: 'h2', t: 'Forks that say so', id: 'forks' },
       {
         k: 'p',
@@ -856,6 +972,7 @@ const en: Record<Slug, Doc> = {
       {
         k: 'faq',
         items: [
+          ['Is Dota 2 Changer PRO the same as Dota 2 Mod Manager?', 'No. Dota 2 Changer named its launcher Dota 2 Mod Manager in November 2026, but it is a separate, closed program that needs an account. This app has had the name since July 2026 and has nothing to do with it. <a href="~/docs/copies/#dota2changer">How to tell them apart</a>.'],
           ['Is there a paid or Pro version of Dota 2 Mod Manager?', 'No. There is one version, it is free, and every feature is in it. A Pro, Premium or VIP Dota 2 Mod Manager is not ours.'],
           ['A launcher does the same thing under another name. Is it safe?', 'Ask it for its source code and for what it is built on. If it shows you neither, you cannot know what else it does on your computer, and the original does the same job for free.'],
           ['Can someone sell this app?', 'The licence allows charging for a copy, as long as the buyer gets the full source under GPL-3.0 and the original notices stay in. You never have to buy it: the same program is free here.'],
@@ -872,6 +989,7 @@ const en: Record<Slug, Doc> = {
       'What to check before running any Dota 2 mod installer: source, who built the file, what it asks for, whether its catalog is live. With honest answers for this one and the alternatives.',
     lead: 'You are about to let a program write into your game folder. Five questions decide whether that is a reasonable thing to do, and they are the same five whatever you end up installing.',
     card: 'Five questions to ask any mod installer, answered for this one and for the alternatives.',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'The five questions', id: 'questions' },
       {
@@ -884,6 +1002,18 @@ const en: Record<Slug, Doc> = {
           ['What happens when two mods collide?', 'Two mods carrying the same file cannot both apply. A manager that does not mention this is leaving you to work it out from the map.'],
         ],
       },
+
+      { k: 'h2', t: 'Side by side', id: 'table' },
+      { k: 'table', head: ["","Dota 2 Mod Manager","Dota 2 Changer PRO","DOTA Mods Installer","Ulibka Launcher"], rows: [["Price","Free, every mod","Free app, part of the mods need PREMIUM or VIP","Free, a donation removes ads","Free after you join their Telegram channels"],
+        ["Account","None. Discord is optional and only signs a setup you share","Required, a Dota 2 Changer account","Not stated on its site","Required: Telegram, tied to your hardware ID"],
+        ["Source code","Open, GPL-3.0, built by public CI","Closed","Closed","Closed and obfuscated"],
+        ["How it changes the game","Files next to the game, removed in one click","A VPK pack it builds and connects","A VPK pack you place yourself","A DLL injected into the running game"],
+        ["Mods","{mods} from the D2PFX catalog, read live","19,000+ by its own count","3,400+ by its own count","The D2PFX catalog, 737 hero mods when we looked"],
+        ["Builds mods from your game files","Item builder with a 3D preview, effect, HUD and map editors, your own sounds","Not on its page","A texture and particle editor","No"],
+        ["Load order and collisions","Shown, and you change the order","Not on its page","No","No"],
+        ["Systems","Windows, Linux","Windows, macOS, Linux","Windows","Windows"],
+        ["Risk for your account","Cosmetic files only","Cosmetic packs","Cosmetic packs","Its own FAQ says it breaks Valve's rules. <a href=\"~/docs/ulibka-launcher/\">What it does</a>"]] },
+      { k: 'note', t: "Their columns say what their own sites say, checked on 7 November 2026. Where a site says nothing, the cell says so." },
 
       { k: 'h2', t: 'This one, answered', id: 'here' },
       {
@@ -923,12 +1053,16 @@ const en: Record<Slug, Doc> = {
             'Not an alternative and not a rival. It builds mods by patching the game where this installs finished ones from a catalog, and the two are made to run together: this app installs into whichever folder the game will really mount, including the one Minify picked, keeps pak65 to pak67 free for it, and leaves its files alone. Install both and you get the catalog from here and the game changes from there. <a href="~/docs/minify/">What Minify is, and running the two together</a>.',
           ],
           [
-            'Dota 2 SkinChanger (dota2changer.com)',
-            'A website rather than a program: you pick mods in a browser, it generates a VPK pack, and you place that pack in the game folder yourself. Part of its collection is behind a paid tier. Nothing updates itself afterwards, and a pack built last month is the pack you keep.',
+            'Dota 2 Changer PRO (dota2changer.com)',
+            'A website and, since November 2026, a launcher. You pick mods in your Dota 2 Changer account, it builds a VPK pack and connects it to the game. You need an account, part of the mods need PREMIUM or VIP, and the code is closed. Its launcher page is titled "Dota 2 Mod Manager". It is not this app and not connected to it. <a href="~/docs/copies/#dota2changer">More on that</a>.',
           ],
           [
             'Skin changers and inventory changers (Overplus, MetaSkins and the like)',
             'A different category of thing. They advertise unlocking items you do not own, they are closed source, with no public build anybody can check. Where this app adds a file next to the game and can take it back, these change the files of the game itself, and you have their word for what else they touch.',
+          ],
+          [
+            'Ulibka Launcher (ulibkalauncher.ru)',
+            'Sold as a skin changer, built as a cheat: it injects a library into the running game, fakes your medal and MMR, and ships a spoofer that changes your MAC address and MachineGuid. Its own FAQ says it breaks Valve\'s rules. Its mods are the D2PFX catalog. <a href="~/docs/ulibka-launcher/">What it does, with hashes to check</a>.',
           ],
           [
             'Renamed copies of this app',
@@ -1026,7 +1160,7 @@ const ru: Record<Slug, Doc> = {
       {
         k: 'list',
         items: [
-          'Включи безопасный режим обратно: виды со стандартных предметов снимутся. Программа вернёт <code>gameinfo_branchspecific.gi</code> и <code>dota.signatures</code> из копий, снятых до первой записи.',
+          'В <b>Настройках → Файлы игры</b> выключи таблицу предметов: виды со стандартных предметов снимутся. Программа вернёт <code>gameinfo_branchspecific.gi</code> и <code>dota.signatures</code> из копий, снятых до первой записи.',
           'Удали всё в «Моих модах».',
           'Если что-то ставил руками, загляни в языковую папку: там могли остаться pakNN_dir.vpk.',
           'В Steam: свойства игры, «Установленные файлы», проверить целостность. Это вернёт всё, что принадлежит Valve.',
@@ -1387,7 +1521,7 @@ const ru: Record<Slug, Doc> = {
       },
       {
         k: 'p',
-        t: 'Или опиши мод ИИ-ассистенту, и он сам прогонит эти инструменты: <a href="~/docs/ai-mods/">моды с помощью ИИ</a>.',
+        t: 'Многое приложение сделает само: <a href="~/docs/workshop/">Мастерская</a> правит эффекты, HUD, цвета и карту, а <a href="~/docs/builder/">конструктор предметов</a> одевает любого героя в любой предмет из игры. Или опиши мод ИИ-ассистенту, и он сам прогонит эти инструменты: <a href="~/docs/ai-mods/">моды с помощью ИИ</a>.',
       },
 
       { k: 'h2', t: 'Вопросы', id: 'faq' },
@@ -1489,6 +1623,98 @@ const ru: Record<Slug, Doc> = {
           ['Он полезет в мою игру?', 'Он работает в своей папке и там же собирает VPK. В игру пишет только программа, когда ты ставишь мод.'],
           ['Можно поделиться тем, что он сделал?', 'Да, с сообществом каталога. Смотри, что кладёшь внутрь: модель или звук из чужого источника несут лицензию своего автора.'],
         ],
+      },
+    ],
+  },
+
+  'item-mods': {
+    slug: 'item-mods',
+    title: 'Мод предмета для Доты 2 из файлов игры: перекраска, арканы, иконки, звуки',
+    h1: 'Мод предмета из файлов игры',
+    description:
+      'Перекрась героя, верни аркану, которой у тебя нет, замени иконку или звук. Скрипты, которыми мы собираем свои моды, с настоящим выводом и проверкой до установки.',
+    lead: 'Всё, что нужно предмету, уже лежит в твоей игре: модель арканы, её эффекты, иконки. Мод кладёт их под имена обычного героя. Ниже команды, которыми мы собираем свои моды, в том порядке, в каком мы их запускаем, и то, что они печатают.',
+    card: 'Перекраска героя, аркана из файлов игры, иконки и звуки. Скрипты и их настоящий вывод.',
+    updated: '2026-11-03',
+    blocks: [
+      { k: 'h2', t: 'Что понадобится', id: 'setup' },
+      {
+        k: 'p',
+        t: 'Dota 2, <a href="https://nodejs.org/">Node.js 24</a> и git. Скрипты лежат в нашем репозитории: склонируй его, и <code>modkit check</code> скажет, каких необязательных программ не хватает для твоей задумки. Перекраске и предметам из файлов игры больше ничего не нужно.',
+      },
+      { k: 'code', t: SETUP },
+      {
+        k: 'p',
+        t: 'Ни одна команда не пишет в папки, которые монтирует игра. Они собирают VPK в рабочей папке, а ставишь ты его перетаскиванием в «Мои моды»: там он выключается в один клик, как любой другой мод.',
+      },
+
+      { k: 'h2', t: 'Перекрасить эффекты героя', id: 'recolor' },
+      {
+        k: 'p',
+        t: '<code>modkit recolor</code> берёт героя и цвет, находит все его эффекты в pak01 игры и переписывает их цвета. <code>pack</code> собирает папку в VPK, а доктор сверяет результат с игрой ещё до запуска.',
+      },
+      { k: 'code', t: RECOLOR },
+      {
+        k: 'note',
+        t: 'Цвет, нарисованный в текстурах (кольца на земле, цветовые искажения), остаётся прежним. Скрипт об этом предупредит, а справка навыка по перекраске объясняет, как поправить такие места руками.',
+      },
+
+      { k: 'h2', t: 'Вернуть предмет, которого у тебя нет', id: 'item' },
+      {
+        k: 'p',
+        t: 'Начни с плана. <code>item-plan</code> читает визуал предмета из таблицы предметов и печатает по строке на каждое изменение, с тем, как мод может его дать. Вот аркана Terrorblade, по одной строке каждого вида:',
+      },
+      { k: 'code', t: PLAN },
+      {
+        k: 'cards',
+        items: [
+          ['built', 'Сборщик приложения уже это умеет: подменённая модель героя, картинки, модификатор активности, снятый с анимаций.'],
+          ['by hand', 'Мод это может, и строка говорит как: эффект, который создаёт предмет, вешается на эффект, который у героя есть всегда, модель кладётся под стоковый путь.'],
+          ['cannot', 'Логика игры, которая приходит с самим предметом: эффект убийства, фразы колеса, реплики. Её не несёт ни один файл.'],
+        ],
+      },
+      {
+        k: 'p',
+        t: 'Клади под стоковый путь, а не под платный. Матч загружает модели, которые называет таблица предметов сервера, поэтому мод с моделью арканы под её собственным путём выглядит нормально до переподключения, а потом показывает модель ERROR. Поэтому сборщик кладёт каждый файл под путь обычного героя.',
+      },
+
+      { k: 'h2', t: 'Заменить иконку или портрет', id: 'pictures' },
+      {
+        k: 'p',
+        t: '<code>modkit pictures terrorblade --out work/pics</code> выкладывает иконки способностей, портрет и иконку миникарты героя в PNG. Поправь их в любом редакторе, и <code>--from work/pics</code> соберёт их обратно под теми же именами. Иконка миникарты лежит ещё и в общем спрайте, скрипт заполняет оба места.',
+      },
+
+      { k: 'h2', t: 'Поменять звук', id: 'sound' },
+      {
+        k: 'p',
+        t: '<code>modkit sounds terrorblade</code> перечисляет звуковые события героя. С <code>--addon my_sounds --out work/mod</code> ключ <code>--layer Hero_Terrorblade.Sunder=my.wav</code> играет твой файл поверх стокового, а <code>--replace</code> вместо него. Звуки проходят через компилятор Valve, поэтому тут нужны Dota 2 Workshop Tools (Steam, Dota 2, Свойства, DLC) и Windows.',
+      },
+
+      { k: 'h2', t: 'Проверить до игры, потом в игре', id: 'check' },
+      {
+        k: 'steps',
+        items: [
+          ['Доктор, за секунды', '<code>npm run doctor -- my_mod.vpk</code> сверяет мод с pak01: анимации, которым всё ещё нужен модификатор предмета, номера секвенций не как в игре, дочерний эффект не на той точке. Ответ, который ты ждёшь: «nothing found».'],
+          ['Стенд, за три минуты', '<code>npm run dota:bench -- --vpk my_mod.vpk --short</code> запускает Доту в демо героя с модом в свободном слоте, снимает героя крупно, в атаке и на ходу, и пишет <code>verdict.json</code>. Windows, Steam запущен, Дота закрыта.'],
+          ['Сравнить с рабочим модом', 'Прогони стенд на обычном герое и на моде того же предмета из каталога. Если твой ведёт себя иначе, меняй между ними по одному блоку ресурса: блок с ошибкой находится за два-три прогона.'],
+        ],
+      },
+
+      { k: 'h2', t: 'Ловушки, на каждую из которых ушёл день', id: 'traps' },
+      {
+        k: 'list',
+        items: [
+          '<b>Игра выбирает анимацию по клипам, а не по секвенциям.</b> Правки одних секвенций день ничего не меняли. Теперь доктор читает и то, и другое.',
+          '<b>Дочерний эффект за пределами контрольных точек родителя</b> садится на первую из них: свечение для груди оказалось на правом глазу.',
+          '<b>Пересобранная модель перенумеровывает секвенции.</b> В онлайне сервер шлёт номера, и один потерянный клип сдвигает все анимации после него. <code>modkit clips</code> возвращает имена и номера Valve.',
+          '<b>Один кадр в секунду прячет атаку.</b> Движение в покое выглядело как замах, поэтому стенд снимает 16 кадров через 80 мс.',
+        ],
+      },
+
+      { k: 'h2', t: 'Проще рассказать ассистенту?', id: 'ai' },
+      {
+        k: 'p',
+        t: 'Те же скрипты оформлены как навык для ИИ-ассистента, и в нём есть всё, что дальше этой страницы: новые модели в Blender, анимации, реплики. <a href="/ru/docs/ai-mods/">Моды для Доты 2 с ИИ</a> настраивают его одной строкой. Полные заметки, из которых сделана эта страница, лежат в <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/docs/item-mods.md">docs/item-mods.md</a>.',
       },
     ],
   },
@@ -1723,7 +1949,7 @@ const ru: Record<Slug, Doc> = {
       'Dota 2 Mod Manager бесплатный, с открытым кодом и без платной версии. Четыре признака копии, которую не стоит запускать, и единственные адреса, которые наши.',
     lead: 'Мы всё чаще находим это приложение под чужими названиями: переименованное, с закрытым кодом, иногда за деньги. Часть таких копий работает на нашем коде, только наше имя из них убрано. Что ещё они делают, проверить нельзя, и они тебе не нужны: оригинал бесплатный.',
     card: 'Платные лаунчеры, переименованные копии, программы с обязательным входом. Четыре признака и адреса, которые правда наши.',
-    updated: '2026-10-19',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'Что гуляет по сети', id: 'what' },
       {
@@ -1761,6 +1987,24 @@ const ru: Record<Slug, Doc> = {
         t: 'Каталог D2PFX, откуда берутся моды, держит приложение в своём разделе Tools со ссылкой сюда. Всё остальное, что похоже на это приложение, пришло не от нас.',
       },
 
+      { k: 'h2', t: 'Dota 2 Changer PRO это не мы', id: 'dota2changer' },
+      {
+        k: 'p',
+        t: 'С ноября 2026 года лаунчер Dota 2 Changer (dota2changer.com) называет себя Dota 2 Mod Manager. Его страница скачивания озаглавлена «Dota 2 Mod Manager — Dota 2 Changer PRO». Это другая программа от другой команды. Общего кода у нас нет, договорённостей нет, и на это название мы не соглашались.',
+      },
+      {
+        k: 'p',
+        t: 'Dota 2 Mod Manager носит это имя с первого релиза 20 июля 2026 года. Их страница с таким заголовком, по её же данным, опубликована 4 ноября 2026 года. Теперь по этому имени поиск находит обе программы, и вот как понять, какая у тебя:',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>Наша</b> работает без аккаунта, все моды в ней бесплатные, весь код открыт на <a href="https://github.com/dota2modmanager/dota2-mod-manager" rel="noopener">GitHub</a>. Скачивается только с этого сайта и со страницы релизов на GitHub.',
+          '<b>Их</b> просит войти в аккаунт Dota 2 Changer, часть модов закрывает за PREMIUM или VIP и не публикует код. Скачивается с dota2changer.com.',
+        ],
+      },
+      { k: 'p', t: 'Ставятся обе бесплатно. Если ты искал эту, правильная кнопка скачивания на <a href="~/">dota2modmanager.com</a>. <a href="~/docs/compare/#table">Обе рядом в таблице</a>.' },
+
       { k: 'h2', t: 'Форки, которые этого не скрывают', id: 'forks' },
       {
         k: 'p',
@@ -1782,6 +2026,7 @@ const ru: Record<Slug, Doc> = {
       {
         k: 'faq',
         items: [
+          ['Dota 2 Changer PRO и Dota 2 Mod Manager это одно и то же?', 'Нет. Dota 2 Changer назвал свой лаунчер Dota 2 Mod Manager в ноябре 2026 года, но это отдельная закрытая программа, которой нужен аккаунт. У этого приложения такое имя с июля 2026 года, и с ней оно никак не связано. <a href="~/docs/copies/#dota2changer">Как их отличить</a>.'],
           ['Есть платная или Pro-версия Dota 2 Mod Manager?', 'Нет. Версия одна, бесплатная, и в ней есть всё. Dota 2 Mod Manager Pro, Premium или VIP - не наш.'],
           ['Лаунчер делает то же самое, но называется иначе. Ему можно верить?', 'Спроси у него исходный код и на чём он сделан. Если он не показывает ни того, ни другого, узнать, что ещё он делает на твоём компьютере, нельзя, а оригинал делает ту же работу бесплатно.'],
           ['Это приложение вообще можно продавать?', 'Лицензия разрешает брать деньги за копию, если покупатель получает все исходники под GPL-3.0 и в копии остаются имена авторов оригинала. Покупать его тебе не нужно: здесь та же программа бесплатно.'],
@@ -1798,6 +2043,7 @@ const ru: Record<Slug, Doc> = {
       'Что проверить до запуска любой программы для модов Дота 2: исходники, кто собрал файл, что она просит, живой ли у неё каталог. С честными ответами про эту программу и про остальные.',
     lead: 'Ты собираешься пустить программу писать в папку с игрой. Пять вопросов решают, разумно ли это, и они одни и те же, что бы ты в итоге ни поставил.',
     card: 'Пять вопросов к любой программе для модов, с ответами про эту и про остальные.',
+    updated: '2026-11-07',
     blocks: [
       { k: 'h2', t: 'Пять вопросов', id: 'questions' },
       {
@@ -1810,6 +2056,18 @@ const ru: Record<Slug, Doc> = {
           ['Что будет, если два мода столкнутся?', 'Два мода с одним файлом не могут примениться оба. Менеджер, который об этом молчит, оставляет тебя выяснять это по карте.'],
         ],
       },
+
+      { k: 'h2', t: 'Таблица сравнения', id: 'table' },
+      { k: 'table', head: ["","Dota 2 Mod Manager","Dota 2 Changer PRO","DOTA Mods Installer","Ulibka Launcher"], rows: [["Цена","Бесплатно, все моды","Приложение бесплатное, часть модов только с PREMIUM или VIP","Бесплатно, донат убирает рекламу","Бесплатно после подписки на их Telegram-каналы"],
+        ["Аккаунт","Не нужен. Discord по желанию, только чтобы подписать набор, которым делишься","Нужен аккаунт Dota 2 Changer","На сайте не сказано","Нужен Telegram, вход привязан к железу"],
+        ["Исходный код","Открыт, GPL-3.0, сборка в публичном CI","Закрыт","Закрыт","Закрыт и обфусцирован"],
+        ["Как меняет игру","Файлы рядом с игрой, снимаются одним кликом","VPK-пак, который он собирает и подключает","VPK-пак, который ты кладёшь сам","DLL, внедрённая в запущенную игру"],
+        ["Моды","{mods} из каталога D2PFX, читаются вживую","19 000+ по их счёту","3 400+ по их счёту","Каталог D2PFX, 737 модов героев, когда мы смотрели"],
+        ["Собирает моды из файлов твоей игры","Конструктор предметов с 3D, редакторы эффектов, HUD и карты, свои звуки","На их странице нет","Редактор текстур и частиц","Нет"],
+        ["Порядок загрузки и конфликты","Показывает, порядок меняешь ты","На их странице нет","Нет","Нет"],
+        ["Системы","Windows, Linux","Windows, macOS, Linux","Windows","Windows"],
+        ["Риск для аккаунта","Только косметические файлы","Косметические паки","Косметические паки","В своём FAQ сами пишут, что нарушают правила Valve. <a href=\"~/docs/ulibka-launcher/\">Что он делает</a>"]] },
+      { k: 'note', t: "Колонки других программ написаны по их собственным сайтам на 7 ноября 2026 года. Если сайт молчит, в клетке так и написано." },
 
       { k: 'h2', t: 'Ответы про эту', id: 'here' },
       {
@@ -1849,12 +2107,16 @@ const ru: Record<Slug, Doc> = {
             'Не альтернатива и не конкурент. Он собирает моды, патча саму игру, а это приложение ставит готовые из каталога, и вместе они работать умеют: приложение ставит моды в ту папку, которую игра смонтирует на самом деле, включая выбранную Minify, держит для него свободными pak65-pak67 и не трогает его файлы. Поставишь обе - каталог берёшь отсюда, изменения игры оттуда. <a href="~/docs/minify/">Что такое Minify и как держать обе</a>.',
           ],
           [
-            'Dota 2 SkinChanger (dota2changer.com)',
-            'Не программа, а сайт: моды выбираются в браузере, он собирает VPK-пак, а класть его в папку игры ты идёшь сам. Часть коллекции платная. Дальше ничего не обновляется: собранный месяц назад пак таким у тебя и остаётся.',
+            'Dota 2 Changer PRO (dota2changer.com)',
+            'Сайт и с ноября 2026 года ещё и лаунчер. Моды выбираются в аккаунте Dota 2 Changer, он собирает VPK-пак и подключает его к игре. Нужен аккаунт, часть модов только с PREMIUM или VIP, код закрыт. Страница их лаунчера называется «Dota 2 Mod Manager». Это не наше приложение и не связано с ним. <a href="~/docs/copies/#dota2changer">Подробнее</a>.',
           ],
           [
             'Скинченджеры и инвентарь-ченджеры (Overplus, MetaSkins и подобные)',
             'Другая категория вещей. Они обещают открыть предметы, которыми ты не владеешь, у них закрытый код и нет публичной сборки, которую можно проверить. Разница простая: эта программа кладёт файл рядом с игрой и умеет его забрать, а они меняют файлы самой игры, и что там ещё затронуто, известно только с их слов.',
+          ],
+          [
+            'Ulibka Launcher (ulibkalauncher.ru)',
+            'Продаётся как скинченджер, устроен как чит: внедряет библиотеку в запущенную игру, подменяет медаль и MMR, и в нём есть спуфер, который меняет MAC-адрес и MachineGuid. В своём FAQ сами пишут, что нарушают правила Valve. Моды в нём из каталога D2PFX. <a href="~/docs/ulibka-launcher/">Что он делает, с хешами для проверки</a>.',
           ],
           [
             'Переименованные копии этого приложения',

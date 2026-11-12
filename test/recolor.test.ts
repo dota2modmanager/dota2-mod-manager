@@ -19,7 +19,7 @@ import { writeKv3 } from '../src/kv3-write.ts';
 import { at, encodeKv3, kv3Block, particle, range, remap, resource } from './helpers/kv3-build.ts';
 import { attributeToken, materialExpressions, withConstant } from '../src/material.ts';
 import { dataBlock, resourceBlocks } from '../src/resource.ts';
-import { buildRecolor, recolorMaterial, recolorResource, shade, type Rgb } from '../src/recolor.ts';
+import { buildRecolor, liftForMod2x, recolorMaterial, recolorResource, shade, type Rgb } from '../src/recolor.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 
 const PINK: Rgb = [255, 193, 220];
@@ -266,6 +266,20 @@ test('a colour is read as three numbers or a hex code, and nothing else', async 
   for (const bad of ['256,0,0', '1,2', 'pink', '', null]) assert.equal(parseColor(bad), null, String(bad));
 });
 
+test('a gem is asked for by its name and comes out of the table in the game (issue #392)', async (t) => {
+  const { gemTarget } = await import('../tools/recolor.mjs');
+  const game = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-gem-'));
+  t.after(() => fs.rmSync(game, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(game, 'dota'));
+  const table = '"items_game"\n{\n\t"colors"\n\t{\n\t\t"unusual_rubiline"\n\t\t{\n\t\t\t"color_name"\t\t"UnusualRubiline"\n\t\t\t"hex_color"\t\t"#D11FA1"\n\t\t}\n\t}\n}\n';
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt('scripts/items/items_game.txt', Buffer.from(table, 'latin1'))]));
+  const said: string[] = [];
+  t.mock.method(console, 'log', (m: string) => { said.push(m); });
+  assert.deepEqual(await gemTarget(game, 'rubiline'), [209, 31, 161]);
+  assert.deepEqual(said, ['Rubiline: #d11fa1']);
+  await assert.rejects(gemTarget(game, 'Midas Gold'), /no gem "Midas Gold"; the game has: Rubiline/);
+});
+
 test('a set becomes one VPK of the files that took the colour, from the game\'s own pak01', (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-recolor-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -283,7 +297,7 @@ test('a set becomes one VPK of the files that took the colour, from the game\'s 
     entryAt('particles/units/heroes/hero_axe/axe_attack.vpcf_c', particle(kv3Block())),
   ]));
   const out = buildRecolor({ pak01, set: 'terrorblade-arcana', target: PINK });
-  assert.equal(out.files, 3, 'the arcana\'s glow, the hero\'s gem tint and the armour; not the grey smoke, the hero\'s own colours or Axe');
+  assert.equal(out.files, 4, 'the arcana\'s glow, the hero\'s gem tint, an ability of his the gem does not tint, and the armour; not the grey smoke or Axe');
   assert.equal(out.failed.length, 1);
   assert.match(out.failed[0].path, /broken/);
   const mod = path.join(dir, 'mod_dir.vpk');
@@ -291,8 +305,44 @@ test('a set becomes one VPK of the files that took the colour, from the game\'s 
   const read = (p: string) => openVpkIndex(mod).read(p) as Buffer;
   const glow = readKv3(dataBlock(read(`${arcana}/glow.vpcf_c`)).data);
   assert.deepEqual(glow.arrays[0].cells.map((c) => readCell(glow, c!)), [...PINK, 255]);
+  // Terror Wave and Demon Zeal: Valve's arcana does not tint them, and they stayed blue in any colour
+  const plain = readKv3(dataBlock(read(`${hero}/plain.vpcf_c`)).data);
+  assert.deepEqual(plain.arrays[0].cells.map((c) => readCell(plain, c!)), [...PINK, 255]);
   const sword = readKv3(dataBlock(read(`${hero}/sword.vpcf_c`)).data);
   assert.deepEqual(range(sword, at(sword.root, 'm_Initializers', 0, 'm_vOutputMax')), [1, 3.217, 5.5]);
   assert.equal(materialExpressions(read('materials/models/heroes/terrorblade/armor.vmat_c'))[0].code.length, TINT.length + 13);
   assert.throws(() => buildRecolor({ pak01, set: 'nobody', target: PINK }), /no set/);
+});
+
+test('an immortal with no gem has its colour written in: the game turns its tint off for it (issue #392)', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-recolor-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const pak01 = path.join(dir, 'pak01_dir.vpk');
+  const wings = 'particles/econ/items/terrorblade/terrorblade_back_ti8';
+  const tinted = encodeKv3({ obj: [['m_ConstantColor', { i32s: [0, 210, 255, 255] }], ['m_Initializers', { arr: [remap(15)] }]] });
+  fs.writeFileSync(pak01, buildVpk([
+    entryAt(`${wings}/glow.vpcf_c`, particle(tinted)),
+    entryAt('particles/econ/items/terrorblade/terrorblade_horns_arcana/glow.vpcf_c', particle(kv3Block())),
+  ]));
+  const out = buildRecolor({ pak01, set: 'terrorblade-span', target: PINK });
+  assert.equal(out.files, 1, 'the wings only, not the arcana beside them');
+  const mod = path.join(dir, 'mod_dir.vpk');
+  fs.writeFileSync(mod, out.vpk);
+  const kv = readKv3(dataBlock(openVpkIndex(mod).read(`${wings}/glow.vpcf_c`) as Buffer).data);
+  assert.deepEqual(kv.arrays.find((a) => a.key === 'm_ConstantColor')!.cells.map((c) => readCell(kv, c!)).slice(0, 3), PINK, 'baked: the colour the tint would give');
+  assert.deepEqual(range(kv, at(kv.root, 'm_Initializers', 0, 'm_vOutputMax')), [1, 1, 1], 'the tint itself is left: with no gem it is off');
+});
+
+test('a MOD2X layer keeps some of every channel, so pure red does not fill the ground with red fog', () => {
+  const mod2x = (color: number[]) => particle(encodeKv3({ obj: [
+    ['m_ColorMin', { i32s: color }],
+    ['m_Renderers', { arr: [{ obj: [['m_nOutputBlendMode', { str: 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X' }]] }] }],
+  ] }));
+  const color = (file: Buffer) => { const kv = readKv3(dataBlock(file).data); return kv.arrays.find((a) => a.key === 'm_ColorMin')!.cells.map((c) => readCell(kv, c!)); };
+  const r = liftForMod2x(mod2x([180, 1, 2, 255]));
+  assert.equal(r.changed, 1);
+  assert.deepEqual(color(r.file), [180, 54, 54, 255], 'every channel at least 30% of the strongest, alpha as it was');
+  assert.equal(liftForMod2x(mod2x([180, 90, 60, 255])).changed, 0, 'a colour that has them already is left');
+  const plain = particle(encodeKv3({ obj: [['m_ColorMin', { i32s: [180, 1, 2, 255] }]] }));
+  assert.equal(liftForMod2x(plain).file, plain, 'a particle drawn another way comes back as it was');
 });

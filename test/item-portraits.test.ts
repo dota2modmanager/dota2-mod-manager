@@ -92,3 +92,15 @@ test('portrait settings and sprites go in under names the game has not got as we
   assert.equal(added, '"Portraits"\r\n{\r\n\t"models/a.vmdl"\r\n\t{\r\n\t\t"x"\t\t"1"\r\n\t}\r\n\t"models/b.vmdl"\r\n\t{\r\n\t\t"x"\t\t"1"\r\n\t}\r\n}\r\n');
   assert.equal(withSprites(SPRITES, [{ sprite: 'minimap_heroicon_x', as: 'minimap_heroicon_npc_dota_hero_drow_ranger_alt1' }]), SPRITES, 'a sprite it has not got');
 });
+
+test("a persona's portrait is framed as much further off as its body is bigger than Valve's", async () => {
+  // the young Invoker's body is 1.351 times Valve's, and the camera Valve set for its own was too close
+  const { scaledPortrait } = await import('../src/item-portraits.ts');
+  const block = '\n\t{\n\t\t"cameras"\n\t\t{\n\t\t\t"Default"\n\t\t\t{\n\t\t\t\t"PortraitPosition"\t\t"100 -50 20"\n\t\t\t\t"PortraitAngles"\t\t"4 149 0"\n\t\t\t\t"PortraitFOV"\t\t"16"\n\t\t\t}\n\t\t}\n\t\t"PortraitLightPosition"\t\t"10 0 -10"\n\t\t"PortraitLightDistance"\t\t"300"\n\t}';
+  const out = scaledPortrait(block, 1.5);
+  assert.match(out, /"PortraitPosition"\t\t"150 -75 30"/);
+  assert.match(out, /"PortraitLightPosition"\t\t"15 0 -15"/);
+  assert.match(out, /"PortraitLightDistance"\t\t"450"/);
+  assert.match(out, /"PortraitAngles"\t\t"4 149 0"/, 'the angles and the field of view as they were');
+  assert.match(out, /"PortraitFOV"\t\t"16"/);
+});

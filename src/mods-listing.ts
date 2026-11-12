@@ -9,6 +9,7 @@
  * follows every change.
  */
 import { errorText } from './error-text.ts';
+import { RING_CATEGORIES, keepRing } from './emblem-ring.ts';
 import * as zones from './slot-zones.ts';
 import type { AppContext } from './app-context.ts';
 import type { ForeignItem } from './installer-folder.ts';
@@ -37,6 +38,10 @@ type ListingDeps = Pick<AppContext, 'installer' | 'library' | 'fingerprints' | '
   /** switches off a copy of the pumpkin's mod nobody earned here (src/scream-guard.ts) */
   guard?: () => unknown;
 };
+
+/** The paths of each kind a pre-patch mark carries to the window; the counts say how many in all. */
+const PATHS_SHOWN = 100;
+type PrePatch = { since: string | null; changed: number; removed: number; changedPaths: string[]; removedPaths: string[] };
 
 /** The mods:list answer, built over the services src/ipc-mods.ts hands it. */
 export function createModsListing({ installer, library, fingerprints, schemaService, updateImpact = null, terrainAges, notice, diag, refreshPresence, verifyStuck, guard }: ListingDeps) {
@@ -138,9 +143,14 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
     } catch { /* no game path */ }
 
     // a mod whose copies of Valve's files a Dota update changed since: it brings the old ones back
-    let prePatch = new Map<string, { since: string | null; changed: number; removed: number }>();
+    // and which files, a hundred of each at most, for the window its pill opens (issue #416)
+    let prePatch = new Map<string, PrePatch>();
     try {
-      if (updateImpact) for (const [id, m] of updateImpact.marked()) prePatch.set(id, { since: m.since, changed: m.changed.length, removed: m.removed.length });
+      if (updateImpact) {
+        for (const [id, m] of updateImpact.marked()) {
+          prePatch.set(id, { since: m.since, changed: m.changed.length, removed: m.removed.length, changedPaths: m.changed.slice(0, PATHS_SHOWN), removedPaths: m.removed.slice(0, PATHS_SHOWN) });
+        }
+      }
     } catch (err) { diag(`update impact not read: ${errorText(err)}`); prePatch = new Map(); }
 
     let slots = 0;
@@ -161,6 +171,17 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
     // the renderer re-lists after every install, toggle, preset and bulk action, so this is
     // the one place that keeps the Discord status honest without hooking a dozen handlers
     refreshPresence();
+    // an emblem shows only on the selection ring: the line that turns it on stays in autoexec
+    // while one is on (src/emblem-ring.ts), kept from here for the same reason as above
+    setImmediate(() => {
+      try {
+        const game = installer.getGamePath?.();
+        if (!game) return;
+        const on = !installer.masterIsOff() && installed.some((r) => RING_CATEGORIES.has(r.categoryId) && r.enabled !== false);
+        const did = keepRing(game, on);
+        if (did) diag(`autoexec: selection ring line ${did}`);
+      } catch (err) { diag(`autoexec not written: ${errorText(err)}`); }
+    });
     // The lifted item blocks are only ever needed in the main process; the renderer just
     // shows that a mod has them, and whether the patch that makes them work is on. Copies,
     // never the stored records — dropping the field off those would erase it on save.

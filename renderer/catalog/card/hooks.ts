@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from 'react';
 import { isQueued, onQueueChange } from '../../ui/queue.ts';
 import { terrainMark, onTerrainAges } from '../../core/terrain-age.ts';
+import { downloadsOf, onDownloadCounts } from '../../core/download-counts.ts';
 import type { Mod } from '../types.ts';
 
 const subscribeQueue = (fn: () => void) => {
@@ -14,6 +15,13 @@ const subscribeTerrain = (fn: () => void) => {
   const off = onTerrainAges(fn);
   return () => { off(); };
 };
+
+const subscribeCounts = (fn: () => void) => onDownloadCounts(fn);
+
+/** How many times this mod was downloaded, 0 until the counter answers (core/download-counts.ts). */
+export function useDownloads(cat: string, mod: Mod): number {
+  return useSyncExternalStore(subscribeCounts, () => downloadsOf(cat, mod));
+}
 
 /** Whether the look with this key is in the install list, kept current. */
 export function useQueued(key: string | null): boolean {

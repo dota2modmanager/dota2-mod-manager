@@ -17,10 +17,13 @@
  * string serves both languages. Counts written as {mods} are filled by the layout too, because
  * a number typed into a guide is a number that will be wrong in a month.
  *
- * Ten more pages live in docs-more.ts and merge in at the bottom of this file. They were
+ * Eleven more pages live in docs-more.ts and merge in at the bottom of this file. They were
  * split off for length alone.
  */
 import { moreDocs } from './docs-more.ts';
+import { toolDocs } from './docs-tools.ts';
+import { featureDocs } from './docs-features.ts';
+import { rivalDocs } from './docs-rivals.ts';
 
 export type Block =
   | { k: 'p'; t: string }
@@ -29,6 +32,8 @@ export type Block =
   | { k: 'steps'; items: Array<[string, string]> }
   | { k: 'list'; items: string[] }
   | { k: 'cards'; items: Array<[string, string]> }
+  /** A table: the first column names the row. Cells may carry links and <code>. */
+  | { k: 'table'; head: string[]; rows: string[][] }
   | { k: 'code'; t: string }
   /** One line for the reader to paste somewhere else: it wraps on a phone and has a Copy button. */
   | { k: 'prompt'; t: string }
@@ -67,8 +72,12 @@ export interface DocsIndex {
  */
 export const docSlugs = [
   'install',
+  'features',
   'uninstall',
+  'builder',
+  'workshop',
   'ai-mods',
+  'item-mods',
   'terrain',
   'announcer',
   'cosmetics',
@@ -78,13 +87,14 @@ export const docSlugs = [
   'own-mods',
   'safe',
   'copies',
+  'ulibka-launcher',
   'catalog',
   'minify',
   'compare',
 ] as const;
 export type DocSlug = (typeof docSlugs)[number];
 
-/** The five this file holds. The other ten live in docs-more.ts and are merged in below. */
+/** The five this file holds. The rest live in docs-more.ts and docs-tools.ts and are merged in below. */
 type CoreSlug = 'install' | 'vpk' | 'safe' | 'cosmetics' | 'troubleshooting';
 
 export const docsIndex: Record<'en' | 'ru', DocsIndex> = {
@@ -370,7 +380,7 @@ const en: Record<CoreSlug, Doc> = {
       },
       {
         k: 'p',
-        t: 'Where this app sits: skins never need the second mechanism, and the app installs them without it. The schema patch runs only for putting a look on a default item, it copies both Valve files before its first write and puts them back byte for byte when you undo it, and the code that does it is <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/src/patcher.ts" rel="noopener">one file of four hundred lines</a> that you can read end to end, rather than something you have to take on faith. Whether that is enough is your call to make, and the rest of the app works with it switched off.',
+        t: 'Where this app sits: skins never need the second mechanism, and the app installs them without it. The schema patch runs only for putting a look on a default item, it copies both Valve files before its first write and puts them back byte for byte when you undo it, and the code that does it is <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/src/patcher.ts" rel="noopener">one file of four hundred lines</a> that you can read end to end, rather than something you have to take on faith. Whether that is enough is your call to make. The app asks the first time something needs the item table, a look, a set or a preset with looks in it, and says which two files it will change. If you say no, nothing changes and the rest of the app works as before. If you say yes and change your mind, <b>Settings → Game files</b> puts both files back.',
       },
 
       { k: 'h2', t: 'Will you get banned', id: 'ban' },
@@ -539,6 +549,24 @@ const en: Record<CoreSlug, Doc> = {
     lead: 'Most of these have the same cause. A Dota patch rewrote a file your mods depend on, and nothing told you.',
     card: 'Mods gone after a patch, one covering another, a game that will not start. Symptom by symptom.',
     blocks: [
+      { k: 'h2', t: 'Mods are installed, but the game shows none of them', id: 'not-in-game' },
+      {
+        k: 'p',
+        t: 'Open <b>My mods</b> first. The app checks the usual causes on every start and puts each one it finds above the list, with a button that fixes it. No banner means the app found nothing wrong.',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>The switch at the bottom right is off.</b> It takes every mod out of the game at once. Turn it back on.',
+          '<b>You changed your voice language.</b> The game now reads another <code>dota_</code> folder and your mods sit in the old one. Press <b>Move</b> on the banner. <a href="~/docs/language/">How the two languages work</a>.',
+          '<b>A <code>-language</code> launch option.</b> Dota stopped reading mods through it, and a folder it names may never load. Remove it from the launch options in Steam.',
+          '<b>Minify took the folder.</b> Minify and the app can share a game, but not when Minify rewrites the folder the game mounts. <a href="~/docs/minify/">How to run both</a>.',
+          '<b>Too many separate mods.</b> Dota loads about 99 pak files. Past that the rest are ignored without a word. Combine mods into one pack from the banner.',
+          '<b>The item table is off.</b> Looks from the item builder and some effect mods need it. The banner says how many wait for it.',
+          '<b>Steam verified the game files.</b> Verification puts the original files back over fonts and cursors. Reinstall them from the banner.',
+        ],
+      },
+
       { k: 'h2', t: 'Everything vanished after a game update', id: 'patch' },
       {
         k: 'p',
@@ -574,6 +602,18 @@ const en: Record<CoreSlug, Doc> = {
           'No <code>dota_</code> folder anywhere? Your audio is English, and Valve ships no folder for it. <a href="~/docs/install/#english">What to do instead</a>.',
           'A file named <code>!pak51_dir.vpk</code> or <code>mymod.vpk</code> is never mounted. It has to be <code>pakNN_dir.vpk</code>.',
           'If the mod replaces a hero set you do not own, it needs the item schema patch as well as the archive. <a href="~/docs/cosmetics/">Why</a>.',
+        ],
+      },
+
+      { k: 'h2', t: 'It asks for the Dota 2 Workshop Tools', id: 'workshop-tools' },
+      { k: 'p', t: 'Custom sounds and some arcanas compile files with Valve\'s compiler. It comes with the Dota 2 Workshop Tools, a free add-on to the game in Steam. You install it once.' },
+      {
+        k: 'steps',
+        items: [
+          ['Open the properties', 'In your Steam library, right-click Dota 2 and pick <b>Properties</b>. The <b>Open in Steam</b> button on the error does this for you.'],
+          ['Go to the DLC tab', 'Tick <b>Dota 2 Workshop Tools</b>. It costs nothing.'],
+          ['Wait for the download', 'Steam downloads it like a game update, in its Downloads page. It takes a few gigabytes.'],
+          ['Try again', 'Repeat what you were doing in the app. No restart, and no file to move or pick by hand.'],
         ],
       },
 
@@ -875,7 +915,7 @@ const ru: Record<CoreSlug, Doc> = {
       },
       {
         k: 'p',
-        t: 'Где в этой картине приложение: скинам второй механизм не нужен вообще, и оно ставит их без него. Патч схемы работает только ради видов для стандартных предметов, оба валвовских файла копируются до первой записи и возвращаются побайтово при откате, а код, который это делает, - <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/src/patcher.ts" rel="noopener">один файл на четыреста строк</a>, который читается целиком, а не то, что приходится принимать на веру. Достаточно этого или нет, решаешь ты, и всё остальное работает с выключенным патчем.',
+        t: 'Где в этой картине приложение: скинам второй механизм не нужен вообще, и оно ставит их без него. Патч схемы работает только ради видов для стандартных предметов, оба валвовских файла копируются до первой записи и возвращаются побайтово при откате, а код, который это делает, - <a href="https://github.com/dota2modmanager/dota2-mod-manager/blob/main/src/patcher.ts" rel="noopener">один файл на четыреста строк</a>, который читается целиком, а не то, что приходится принимать на веру. Достаточно этого или нет, решаешь ты. Приложение спрашивает в первый раз, когда таблица предметов правда нужна: вид из игры, сет или пресет с видами, и называет оба файла, которые поменяет. Откажешься - ничего не изменится, остальное работает как раньше. Согласишься и передумаешь - <b>Настройки → Файлы игры</b> вернут оба файла.',
       },
 
       { k: 'h2', t: 'Забанят ли за моды в Доте 2', id: 'ban' },
@@ -1044,6 +1084,24 @@ const ru: Record<CoreSlug, Doc> = {
     lead: 'У большинства из этого одна и та же причина. Патч Доты переписал файл, на котором держались твои моды, и никто тебе об этом не сказал.',
     card: 'Моды пропали после патча, один перекрывает другой, игра не стартует. По симптомам.',
     blocks: [
+      { k: 'h2', t: 'Моды стоят, а в игре их нет', id: 'not-in-game' },
+      {
+        k: 'p',
+        t: 'Сначала открой <b>Мои моды</b>. Приложение при каждом запуске проверяет частые причины и выводит каждую найденную над списком, с кнопкой, которая её чинит. Нет баннера, значит приложение ничего не нашло.',
+      },
+      {
+        k: 'list',
+        items: [
+          '<b>Выключен переключатель внизу справа.</b> Он разом убирает все моды из игры. Включи его обратно.',
+          '<b>Ты сменил язык озвучки.</b> Игра теперь читает другую папку <code>dota_</code>, а моды лежат в старой. Нажми <b>Перенести</b> на баннере. <a href="~/docs/language/">Как устроены два языка</a>.',
+          '<b>В параметрах запуска стоит <code>-language</code>.</b> Дота больше не читает моды через него, и названная папка может вообще не подгрузиться. Убери его из параметров запуска в Steam.',
+          '<b>Minify забрал папку.</b> Minify и приложение уживаются в одной игре, но не тогда, когда Minify переписывает папку, которую читает игра. <a href="~/docs/minify/">Как запускать оба</a>.',
+          '<b>Слишком много отдельных модов.</b> Дота грузит около 99 pak-файлов, остальные молча пропускает. Объедини моды в один пак кнопкой на баннере.',
+          '<b>Выключена таблица предметов.</b> Без неё не видны образы из конструктора и часть модов на эффекты. Баннер говорит, сколько модов её ждут.',
+          '<b>Steam проверил файлы игры.</b> Проверка возвращает оригиналы Valve поверх шрифтов и курсоров. Поставь их заново кнопкой на баннере.',
+        ],
+      },
+
       { k: 'h2', t: 'Моды пропали после патча Доты', id: 'patch' },
       {
         k: 'p',
@@ -1082,6 +1140,18 @@ const ru: Record<CoreSlug, Doc> = {
         ],
       },
 
+      { k: 'h2', t: 'Просит Dota 2 Workshop Tools', id: 'workshop-tools' },
+      { k: 'p', t: 'Свои звуки и часть аркан собирает компилятор Valve. Он входит в Dota 2 Workshop Tools, бесплатное дополнение к игре в Steam. Ставится один раз.' },
+      {
+        k: 'steps',
+        items: [
+          ['Открой свойства', 'В библиотеке Steam нажми правой кнопкой по Dota 2 и выбери <b>Свойства</b>. Кнопка <b>Открыть в Steam</b> на ошибке делает это за тебя.'],
+          ['Перейди на вкладку «Доп. контент»', 'Отметь <b>Dota 2 Workshop Tools</b>. Это бесплатно.'],
+          ['Дождись загрузки', 'Steam скачает дополнение как обновление игры, ход виден в его разделе «Загрузки». Весит несколько гигабайт.'],
+          ['Попробуй ещё раз', 'Повтори действие в приложении. Перезапускать ничего не нужно, переносить и указывать файлы тоже.'],
+        ],
+      },
+
       { k: 'h2', t: 'Начать с чистого листа', id: 'reset' },
       {
         k: 'p',
@@ -1111,6 +1181,6 @@ const ru: Record<CoreSlug, Doc> = {
 };
 
 export const docs: Record<'en' | 'ru', Record<DocSlug, Doc>> = {
-  en: { ...en, ...moreDocs.en },
-  ru: { ...ru, ...moreDocs.ru },
+  en: { ...en, ...moreDocs.en, ...toolDocs.en, ...featureDocs.en, ...rivalDocs.en },
+  ru: { ...ru, ...moreDocs.ru, ...toolDocs.ru, ...featureDocs.ru, ...rivalDocs.ru },
 };

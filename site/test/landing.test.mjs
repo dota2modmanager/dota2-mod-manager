@@ -218,15 +218,17 @@ test('the tabs of the app switch by click and by keyboard', async () => {
   const { context, page } = await open('desktop');
   const visible = () => page.locator('.show-panel').evaluateAll((ps) => ps.map((p) => !p.hidden));
   const tabs = page.locator('.show-tab');
+  const last = (await tabs.count()) - 1;
+  const only = (n) => Array.from({ length: last + 1 }, (_, i) => i === n);
   await tabs.nth(1).click();
-  assert.deepEqual(await visible(), [false, true, false, false]);
+  assert.deepEqual(await visible(), only(1));
   await page.keyboard.press('End');
-  assert.deepEqual(await visible(), [false, false, false, true]);
+  assert.deepEqual(await visible(), only(last));
   await page.keyboard.press('ArrowRight');
-  assert.deepEqual(await visible(), [true, false, false, false], 'ArrowRight from the last wraps to the first');
+  assert.deepEqual(await visible(), only(0), 'ArrowRight from the last wraps to the first');
   await page.keyboard.press('ArrowLeft');
-  assert.deepEqual(await visible(), [false, false, false, true]);
-  assert.equal(await tabs.nth(3).evaluate((t) => t === document.activeElement && t.tabIndex === 0), true);
+  assert.deepEqual(await visible(), only(last));
+  assert.equal(await tabs.nth(last).evaluate((t) => t === document.activeElement && t.tabIndex === 0), true);
   // leaving the clip's tab stops the clip
   await page.keyboard.press('Home');
   assert.equal(await page.locator('#film').evaluate((v) => v.paused), true);
@@ -350,6 +352,42 @@ test('the order is written across the site while Halloween is in season, a line 
   await context.close();
 });
 
+// #386: a visitor with animations off followed the riddles for an hour on a page that would never
+// place a hero for them. A riddle shows only where the hunt it invites can start.
+test('a riddle never shows without heroes to find', async () => {
+  const cases = [
+    { name: 'a wide desktop', screen: 'desktop', motion: 'no-preference', heroes: true },
+    { name: 'less motion asked for', screen: 'desktop', motion: 'reduce', heroes: false },
+    { name: 'a phone', screen: 'mobile', motion: 'no-preference', heroes: false },
+    { name: 'a 1280 px window, too narrow for the margins', screen: 'desktop', motion: 'no-preference', width: 1280, heroes: false },
+  ];
+  for (const c of cases) {
+    const { context, page } = await openPage(browser, server.url, c.screen, { motion: c.motion });
+    if (c.width) await page.setViewportSize({ width: c.width, height: 900 });
+    await page.addInitScript(() => localStorage.setItem('mm-look', 'halloween'));
+    await page.goto(`${server.url}/`, { waitUntil: 'load' });
+    const heroes = await page.locator('.hunt-hero').count();
+    const riddles = await page.locator('.hunt-note:visible').count();
+    assert.equal(heroes > 0, c.heroes, `${c.name}: ${heroes} heroes placed`);
+    assert.equal(riddles > 0, c.heroes, `${c.name}: ${riddles} riddles shown`);
+    await context.close();
+  }
+
+  // the margins go with a resize and come back with one, and the riddles with them
+  const { context, page } = await openPage(browser, server.url, 'desktop');
+  await page.addInitScript(() => localStorage.setItem('mm-look', 'halloween'));
+  await page.goto(`${server.url}/`, { waitUntil: 'load' });
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.waitForTimeout(200);
+  assert.equal(await page.locator('.hunt-hero').count(), 0, 'narrowed: the heroes go');
+  assert.equal(await page.locator('.hunt-note:visible').count(), 0, 'narrowed: the riddles go with them');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(200);
+  assert.ok(await page.locator('.hunt-hero').count() > 0, 'widened: the heroes are back');
+  assert.ok(await page.locator('.hunt-note:visible').count() > 0, 'widened: and the riddles');
+  await context.close();
+});
+
 /** Chase the one that runs (src/scripts/chase.ts) the way a hand would, until it is caught. */
 async function runDown(page, limit = 200_000) {
   const t0 = Date.now();
@@ -469,7 +507,8 @@ test('Axe runs, and only a long chase catches him: the site turns, and a key of 
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('halloween')), true, 'the page did not put on the look of the day');
   // the footer offers the key again, for whoever closed it before writing it down
   await prize.locator('.hunt-close').click();
-  await page.waitForTimeout(300);
+  // it fades for 260 ms before it goes (chase.ts, shut); a fixed 300 ms wait lost that race on a busy runner
+  await prize.waitFor({ state: 'detached', timeout: 3000 });
   assert.equal(await prize.count(), 0);
   const again = page.locator('#keyAgain');
   await again.scrollIntoViewIfNeeded();
@@ -533,7 +572,7 @@ test('Halloween dresses the page: webs, blood, spiders that come down with the s
   // middle of the screen, the second all the way to the bottom of it once the page is read through
   const read = () => page.evaluate(() => [...document.querySelectorAll('.hw-hanger')].map((h) => h.getBoundingClientRect().bottom));
   const before = await read();
-  for (const y of [800, 1600, 2400, 3200]) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(120); }
+  for (const y of [800, 1600, 2400, 3200, 4000, 4800, 5600]) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(120); }
   await page.waitForTimeout(300);
   const after = await read();
   assert.ok(after.every((v, i) => v > before[i] + 60), `the spiders did not come down: ${before} -> ${after}`);

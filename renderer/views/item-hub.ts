@@ -14,14 +14,15 @@ import { COSMETIC_PREFIX } from '../core/constants.ts';
 import { catName, catIcon } from '../core/categories.ts';
 import { pickedIn, firstCosmeticSlots } from '../core/installed.ts';
 import { showScreen } from '../catalog/screen/root.tsx';
-import { heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
+import { ATTRIBUTES, attributeRank, heroCardMeta, heroesOf } from '../catalog/builder/logic.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
 import type { ScreenActions, ScreenModel } from '../catalog/screen/model.ts';
 import { plural } from '../ui/format.ts';
 import { heroMatchesSearch } from '../ui/hero-name.ts';
 import { paint } from '../ui/transitions.ts';
-import { view } from './catalog/state.ts';
+import { remember, view } from './catalog/state.ts';
 import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
+import { catalogOnShow } from '../core/router.ts';
 
 const HUB = COSMETIC_PREFIX + 'items';
 
@@ -30,32 +31,45 @@ const hubActions = (): ScreenActions => ({
   ...catalogActions(),
   cosmeticFilter: ({ search, installedOnly }) => {
     if (search !== undefined) view.cosSearch = search;
-    if (installedOnly !== undefined) view.filters.installedOnly = installedOnly;
+    if (installedOnly !== undefined) { view.filters.installedOnly = installedOnly; remember({ installedOnly }); }
     drawHub();
   },
 });
 
+/** The groups' names, as the game's hero grid heads them. */
+const GROUP_NAMES = (): string[] => [L`Сила`, L`Ловкость`, L`Интеллект`, L`Универсальные`, L`Другие`];
+
 function hubModel(): ScreenModel {
   const f = view.filters;
   const q = view.cosSearch.trim().toLowerCase();
-  const shown = heroesOf(itemCosmeticSlots()).filter(([hero, slots]) =>
+  const shown = heroesOf(itemCosmeticSlots(), state.heroAttrs).filter(([hero, slots]) =>
     heroMatchesSearch(hero, q) && (!f.installedOnly || slots.some((s) => pickedIn(s.slot))));
-  return {
-    kind: 'builder' as const,
-    title: catName(HUB),
-    search: view.cosSearch,
-    installedOnly: f.installedOnly,
-    count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
-    heroes: shown.map(([hero, slots]) => ({
+  const names = GROUP_NAMES();
+  const groups = [...ATTRIBUTES, 'other'].map((attr, i) => ({
+    attr,
+    name: names[i],
+    heroes: shown.filter(([, slots]) => attributeRank(slots, state.heroAttrs) === i).map(([hero, slots]) => ({
       hero,
       icon: heroPortraits.get(hero) || null,
       installed: slots.some((s) => pickedIn(s.slot)),
       meta: heroCardMeta(slots, heroSets(hero), pickedIn),
     })),
+  })).filter((g) => g.heroes.length);
+  return {
+    kind: 'builder' as const,
+    title: L`Конструктор героев`,
+    search: view.cosSearch,
+    installedOnly: f.installedOnly,
+    count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
+    groups,
   };
 }
 
 const drawHub = () => showScreen(hubModel(), hubActions());
+
+/** The hub's first hero by name (Abaddon), once the item table is read; null until then. */
+export const firstHubHero = (): string | null =>
+  heroesOf(itemCosmeticSlots(), state.heroAttrs).map(([hero]) => hero).sort((a, b) => a.localeCompare(b))[0] || null;
 
 const hubNote = (note: string) => paint(() => showScreen(
   { kind: 'list', key: 'cos:items:note', title: catName(HUB), toolbar: null, note, mods: null, cosmetics: null }, hubActions()));
@@ -73,10 +87,14 @@ export async function renderItemCosmeticHub(): Promise<void> {
   await paint(drawHub);
 }
 
-// A hero's portrait, read out of the installed game (src/game-icons.ts heroPortraits): the game
-// keeps them as plain PNG, so this needs no toolchain and no network. Keyed by the label the hub
-// shows. They used to ship inside the app, 132 of Valve's pictures in a GPL repository.
+// A hero's portrait from hero selection, upright as the game's own grid shows them, read out of the
+// installed game (src/game-icons.ts heroPortraits): the game keeps them as plain PNG, so this
+// needs no toolchain and no network. Keyed by the label the hub shows. They used to ship inside
+// the app, 132 of Valve's pictures in a GPL repository.
 const heroPortraits = new Map<string, string | null>();
+
+/** A hero's portrait by the label the hub shows, for its window's stage; null before the hub read it or when the game has none. */
+export const heroPortrait = (label: string): string | null => heroPortraits.get(label) || null;
 
 async function loadHeroPortraits(heroes: [string, CosmeticSlot[]][]): Promise<void> {
   const want = new Map<string, string[]>(); // hero id -> the labels that show it
@@ -86,7 +104,7 @@ async function loadHeroPortraits(heroes: [string, CosmeticSlot[]][]): Promise<vo
   }
   if (!want.size) return;
   let got: Record<string, string> = {};
-  try { got = await window.api.cosmetics.heroPortraits([...want.keys()]); } catch { /* no game: glyphs */ }
+  try { got = await window.api.cosmetics.heroPortraits([...want.keys()], true); } catch { /* no game: glyphs */ }
   for (const [id, labels] of want) for (const label of labels) heroPortraits.set(label, got[id] || null);
 }
 
@@ -99,6 +117,6 @@ export function itemRailEntry() {
 
 /** Draw the hub again after a pick, when it is the screen on show; it stays where it was scrolled. */
 export async function refreshItemHub(): Promise<void> {
-  if (state.view !== 'catalog' || state.activeCategory !== HUB || !state.cosmeticSlots) return;
+  if (!catalogOnShow() || state.activeCategory !== HUB || !state.cosmeticSlots) return;
   drawHub();
 }

@@ -7,17 +7,28 @@ import * as schema from './schema.ts';
 import * as itemBuilder from './item-builder.ts';
 import { t } from './i18n.ts';
 import { getLang } from './i18n.ts';
-import { chineseCosmeticNamesSteps, styleNamer } from './cosmetic-names.ts';
+import { chineseCosmeticNamesSteps, gameTokens, styleNamer } from './cosmetic-names.ts';
 import { sharedVpkIndexSteps } from './vpk.ts';
+import { eventNames, heroAttributesSteps, setDetails, type HeroAttribute, type SetDetails } from './item-builder-details.ts';
 import { drain, PAUSE } from './steps.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
 import type { ItemSet } from './item-builder.ts';
 import { displaced, isSelectorSlot } from './item-builder-personas.ts';
+import { offeredUnusual } from './item-builder-unusual.ts';
+import { offeredKinetic } from './item-builder-kinetic.ts';
+import { namedFxSlots } from './item-builder-ability-fx.ts';
+import { hasBase } from './arcana-bases.ts';
+
+/** A persona's own piece: weapon_persona_1 (src/item-builder-personas.ts). */
+const PERSONA_PIECE = /_persona_\d+$/;
 
 /** What the window is told about the free looks and the item builder (cosmeticSlots). */
-export type CosmeticSlots = { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string };
+/** `heroAttrs`: each hero's main attribute by its id without the prefix, for the order of the game's hero grid. */
+export type CosmeticSlots = {
+  slots: CosmeticSlot[]; sets: (ItemSet | SetDetails)[]; heroAttrs?: Record<string, HeroAttribute>; names?: Record<string, string>; error?: string;
+};
 
 /** A slot the free-cosmetics picker offers: its base item, what is on it, and what could be. */
 export type CosmeticSlot = {
@@ -69,17 +80,36 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
         const rec = cosmeticRecordFor(slot);
         slots.push({ slot, base: base.id, picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
       }
+      // the banner and the Tormentor have no free item: the picked one becomes it (schema.OWNERLESS_SLOTS)
+      for (const slot of schema.OWNERLESS_SLOTS) {
+        if (seen.has(slot)) continue;
+        const options = schema.cosmeticOptions(text, slot);
+        if (!options.length) continue;
+        const rec = cosmeticRecordFor(slot);
+        slots.push({ slot, base: '', picked: rec ? rec.itemId : null, recordId: rec ? rec.id : null, options });
+      }
       yield PAUSE;
-      const itemSlots = yield* itemBuilder.itemSlotsSteps(text);
+      // the style and ability names are read out of the game's index: opened here a pause at a time
+      const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+      const ix = fs.existsSync(pak) ? yield* sharedVpkIndexSteps(pak) : null;
+      // an ability effects slot by its ability's name, and none the hero has not got (src/item-builder-ability-fx.ts)
+      const listed = yield* itemBuilder.itemSlotsSteps(text);
+      const itemSlots = ix ? namedFxSlots(listed, (p) => ix.read(p), getLang()) : listed;
       yield PAUSE;
-      const sets = itemBuilder.itemSets(text, itemSlots);
+      let sets: (ItemSet | SetDetails)[] = itemBuilder.itemSets(text, itemSlots);
+      let heroAttrs: Record<string, HeroAttribute> = {};
       yield PAUSE;
       const effects = itemBuilder.itemEffects();
       if (itemSlots.length && effects.length) {
-        // the style names are read out of the game's index: opened here a pause at a time
-        const pak = path.join(game, 'dota', 'pak01_dir.vpk');
-        if (fs.existsSync(pak)) yield* sharedVpkIndexSteps(pak);
+        if (ix) heroAttrs = yield* heroAttributesSteps(ix, itemSlots.flatMap((it) => it.heroIds));
         const styleName = styleNamer(game, getLang(), (i) => t('Стиль {0}', i + 1));
+        yield PAUSE;
+        // the game's own unusual effects after the builder's, by the names the game gives them (issue #393)
+        const gameName = styleNamer(game, getLang(), () => '');
+        // effects by their English names in every language: players look them up as "Ethereal Flame"
+        const english = styleNamer(game, 'en', () => '');
+        const offered = [...effects, ...offeredUnusual(text, (id) => !!english(`#Attrib_Particle${id}`, 0))
+          .map((e) => ({ id: e.id, name: english(e.nameToken, 0) }))];
         const entries = itemSlots.map((it) => {
           const rec = cosmeticRecordFor(it.slot);
           return {
@@ -88,17 +118,19 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
             picked: rec ? rec.itemId : null,
             pickedEffect: rec ? (rec.effectId || '') : '',
             recordId: rec ? rec.id : null,
-            // a persona has no model for an effect to sit on
-            effects: it.persona && !it.persona.part ? [] : effects,
+            // a persona has no model for an effect to sit on, and an ability effects slot no model at all
+            effects: (it.persona && !it.persona.part) || it.abilityFx ? [] : [...offered, ...offeredKinetic(text, it.heroIds).map((g) => ({ id: g.id, name: english(g.nameToken, 0) || g.fallback }))],
           };
         });
+        const named = new Map(entries.flatMap((it) => it.options.map((o) => [o.id, o.styles] as const)));
+        sets = setDetails(sets as ItemSet[], (token) => gameName(token, 0), (id) => named.get(id), eventNames(gameTokens(game, getLang())));
         const at = slots.findIndex((s) => s.slot === 'weather');
         if (at === -1) slots.unshift(...entries);
         else slots.splice(at + 1, 0, ...entries);
       }
-      if (getLang() !== 'zh-CN') return { slots, sets };
+      if (getLang() !== 'zh-CN') return { slots, sets, heroAttrs };
       yield PAUSE;
-      return { slots, sets, names: yield* chineseCosmeticNamesSteps(game, text) };
+      return { slots, sets, heroAttrs, names: yield* chineseCosmeticNamesSteps(game, text) };
     } catch (err) {
       return { slots: [], sets: [], error: String((err as Error)?.message || err) };
     }
@@ -150,19 +182,57 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * in My mods, and the game is written once. A set brings no effects, and a piece that is on
    * already keeps the ones it has. With write false the writing is the caller's, which builds in
    * the background (src/ipc-game.ts).
+   *
+   * The set takes its own slots, as the game's loadout does, and the hero's other picks stay on:
+   * the set going on as the whole hero took Queen of Pain's arcana off her back with the Bloodfeather
+   * Finery, which is a shoulder and legs (issue #577). Two kinds still go off, kept in My mods to be
+   * put back on. An arcana with a base (src/arcana-bases.ts) puts its body under the hero's own path,
+   * so Earthshaker wore the Gar Beast on Planetfall's body (J0nathan550, 2026-10-31). A persona and
+   * its pieces would be worn in the set's place.
+   *
+   * `style` is the look chosen in the set's window (issue #526): a piece that has it wears it, one
+   * with fewer looks wears its first.
    */
-  function pickSet(setId: string | number, { write = true } = {}): { applied: number; pieces: number } {
+  function pickSet(setId: string | number, { write = true, style = 0 } = {}): { applied: number; pieces: number } {
     const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
-    let applied = 0;
-    for (const p of set.pieces) {
-      if (!p.fits || !p.slot) continue;
+    const fits = set.pieces.flatMap((p) => (p.fits && p.slot ? [p] : []));
+    const hero = `item:${set.heroIds.join('+')}:`;
+    for (const r of library.list()) {
+      if (r.categoryId !== 'cosmetic' || r.enabled === false || !r.slot?.startsWith(hero)) continue;
+      const persona = isSelectorSlot(r.slot) || PERSONA_PIECE.test(r.slot);
+      if (persona || (r.itemId && hasBase(String(r.itemId)))) library.setEnabled(r.id, false);
+    }
+    const n = Math.max(0, Math.floor(Number(style) || 0));
+    for (const p of fits) {
       const live = cosmeticRecordFor(p.slot);
-      pickCosmetic(p.slot, p.itemId, p.name, live && live.itemId === p.itemId ? live.effectId : '', { write: false });
-      applied++;
+      const kept = live && live.itemId === p.itemId ? String(live.effectId || '').split(',').filter((id) => id && !/^style-\d+$/.test(id)) : [];
+      pickCosmetic(p.slot, p.itemId, p.name, [...kept, ...(n > 0 && n < (p.styles || 1) ? [`style-${n}`] : [])], { write: false });
     }
     if (write) refresh();
-    return { applied, pieces: set.pieces.length };
+    return { applied: fits.length, pieces: set.pieces.length };
+  }
+
+  /** The hero's picks off but those on the slots named: kept in My mods, to be put back on. */
+  function offTheHero(hero: string, keep: Set<string>): void {
+    for (const r of library.list()) {
+      if (r.categoryId === 'cosmetic' && r.enabled !== false && r.slot?.startsWith(hero) && !keep.has(r.slot)) library.setEnabled(r.id, false);
+    }
+  }
+
+  /**
+   * Put a saved look on (issue #527): each of its picks goes on as the player left it, the hero's
+   * other picks go off, kept in My mods, and the game is written once. A pick that is not one of
+   * this hero's is skipped and counted.
+   * @param hero  the prefix of the hero's slots, "item:axe:"
+   */
+  function wearLook(hero: string, picks: { slot: string; itemId: string; name?: string; effectId?: string }[], { write = true } = {}): { applied: number; picks: number } {
+    if (!/^item:[a-z0-9_+]+:$/.test(String(hero || '')) || !Array.isArray(picks)) throw new Error(t('Образ не найден'));
+    const wear = picks.filter((p) => p && typeof p.slot === 'string' && p.slot.startsWith(hero) && /^[a-z0-9_]+$/.test(p.slot.slice(hero.length)) && /^\d+$/.test(String(p.itemId)));
+    offTheHero(hero, new Set(wear.map((p) => p.slot)));
+    for (const p of wear) pickCosmetic(p.slot, p.itemId, p.name || p.itemId, p.effectId || '', { write: false });
+    if (write) refresh();
+    return { applied: wear.length, picks: picks.length };
   }
 
   // One-time move of picks that used to live in settings.json into library records, from
@@ -183,5 +253,5 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     settings.set('cosmetics', {});
   }
 
-  return { cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, migrateCosmeticSettings };
+  return { cosmeticSlots, cosmeticSlotsSteps, pickCosmetic, pickSet, wearLook, migrateCosmeticSettings };
 }

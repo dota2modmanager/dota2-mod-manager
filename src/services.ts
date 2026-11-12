@@ -6,10 +6,12 @@
  * remote config. Both answer from their cached copies until the network does. A third waits for
  * the start to settle: on Linux, a copy of the Workshop Tools the game has (src/workshop-tools.ts).
  */
+import { uiLangFor } from './ui-lang.ts';
 import path from 'node:path';
 import { Settings } from './settings.ts';
 import { beginNightAgain } from './pumpkin.ts';
 import { Catalog } from './catalog.ts';
+import { createPreviewStore } from './preview-cache.ts';
 import { Installer } from './installer.ts';
 import * as importer from './import.ts';
 import { createCursors } from './cursors.ts';
@@ -21,12 +23,31 @@ import { Fingerprints } from './fingerprints.ts';
 import * as discordAuth from './discord-auth.ts';
 import { DiscordPresence } from './discord-presence.ts';
 import { buildBar, builderStamp, createSchemaService } from './schema-service.ts';
+import { quitAfterBuild } from './quit-after-build.ts';
+import { electron } from './electron.ts';
 import { createUpdateImpact, impactMods } from './update-impact.ts';
 import { createArcanaService, type Generated } from './arcana-service.ts';
 import { createBaseStore } from './arcana-base-store.ts';
+import { createMapLooks } from './map-looks-service.ts';
+import { createMenuBackground } from './menu-background-service.ts';
+import { createHudScale } from './hud-scale-service.ts';
+import { createEffectEdit } from './effect-edit-service.ts';
+import { createEffectFinder } from './effect-finder.ts';
+import { sharedVpkIndex } from './vpk.ts';
+import { createMapDecor } from './map-decor.ts';
+import { createRankLook } from './rank-look-service.ts';
+import { createHeroPaint } from './hero-paint-service.ts';
+import { createAbilityIcons } from './ability-icons-service.ts';
+import { paintPixels, type PaintMode } from './recolor-modes.ts';
+import type { Rgb } from './recolor.ts';
+import { createAbilitySounds } from './ability-sounds-service.ts';
+import { createBuildUndo } from './build-undo.ts';
+import { createModelGlb } from './model-glb.ts';
+import { createHeroPreview } from './hero-preview.ts';
 import { TERRORBLADE_BASE } from './arcana-bases.ts';
 import { clientVersion } from './patch-watch.ts';
 import { createRemoteConfig } from './remote-config.ts';
+import { createReadyPresets } from './ready-presets.ts';
 // the download chain, so a mirror named in that signed file joins it
 import { applyMirrors, setDownloadProxy } from './net.ts';
 import { createToolchain } from './toolchain.ts';
@@ -38,13 +59,14 @@ import { createModIdentity } from './mod-id.ts';
 import { Icons } from './icons.ts';
 import { presetsService } from './presets-service.ts';
 import { createPresenceStatus } from './presence-status.ts';
-import { setLang, t } from './i18n.ts';
+import { catalogModsReader, createDownloadStats, statKeysFor } from './download-stats.ts';
+import { getLang, setLang, t } from './i18n.ts';
 import { errorText } from './error-text.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { LibRecord } from './types.ts';
 
 /** Build every service over this userData folder. */
-export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons }: {
+export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons, systemLanguages = null }: {
   userData: string;
   appVersion: () => string;
   /** the bar at the bottom of the window */
@@ -52,6 +74,8 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   diag: (msg: string) => void;
   /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */
   fetchIcons: ConstructorParameters<typeof Icons>[1];
+  /** on the first start only, the system's languages: the window takes its language from them (src/ui-lang.ts) */
+  systemLanguages?: readonly string[] | null;
 }) {
   // Before anything reads the library or touches the game folder: a change the last process
   // died in the middle of is finished or undone first, so what loads next is one whole state.
@@ -62,9 +86,21 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // a new round of the bloody night starts everybody from the beginning, once (src/pumpkin.ts)
   if (beginNightAgain({ get: (k) => settings.get(k as never), set: (k, v) => settings.set(k as never, v as never) })) diag('the night starts again');
   setDownloadProxy(settings.get('downloadProxy'));
+  if (systemLanguages) settings.set('uiLang', uiLangFor(systemLanguages));
   setLang(settings.get('uiLang'));
   const catalog = new Catalog(userData);
+  const previewStore = createPreviewStore({ dir: path.join(userData, 'preview-cache'), log: diag });
   const library = new Library(userData);
+  const downloadStats = createDownloadStats({
+    cacheFile: path.join(userData, 'download-counts.json'),
+    enabled: () => settings.get('countDownloads') !== false,
+    log: diag,
+  });
+  const catalogMods = catalogModsReader(catalog.cachePath('mods.json'));
+  /** one install of a catalog mod, for the counter; never throws */
+  const countInstall = (categoryId: string, name: string, styleLabel?: string | null) => {
+    try { downloadStats.track(statKeysFor(catalogMods(), categoryId, name, styleLabel)); } catch { /* counting is never worth an install */ }
+  };
   const fingerprints = new Fingerprints(userData);
   void fingerprints.refresh(); // fire-and-forget: pull the latest fp -> mod map
   const modId = createModIdentity({ getGamePath: () => settings.get('dotaGamePath'), log: diag });
@@ -95,8 +131,13 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the item table built in the background says how far it is on the bar at the bottom
   const onBuild = buildBar(sendProgress, () => t('Сборка предметов'));
   // the arcana window's Terrorblade leaves the paths the builder's picks fill to them
-  const schemaService = createSchemaService({ settings, library, installer, userDataDir: userData, log: diag, bases, onBuild,
-    onDeployed: (filled) => arcana.giveWay(filled) });
+  const schemaService = createSchemaService({ settings, library, installer, pak: installer, userDataDir: userData, log: diag, bases, onBuild,
+    onDeployed: (filled) => { arcana.giveWay(filled); buildUndo.mark(); }, modsOff: () => installer.masterIsOff() });
+  // Cancel on the bar puts the library back to the table the game has (issue #425)
+  const buildUndo = createBuildUndo({ library, installer, settings, schema: schemaService, log: diag });
+  if (!settings.get('schemaPending')) buildUndo.mark();
+  // the window closed while the table was written left the game a change behind (src/quit-after-build.ts)
+  quitAfterBuild(electron().app, { busy: schemaService.busy, settled: schemaService.settled, log: diag });
   // which installed mods a Dota update reached (src/update-impact.ts)
   const updateImpact = createUpdateImpact({
     file: path.join(userData, 'update-impact.json'),
@@ -107,6 +148,10 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   });
   // the arcana built out of the game's own files, in a colour of the user's (src/arcana.ts)
   const arcana = createArcanaService({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag, bases, code: builderStamp });
+  // towers and trees from the game's own looks, per side (src/map-looks-service.ts)
+  const mapLooks = createMapLooks({ gamePath: () => settings.get('dotaGamePath'), installer, library, log: diag });
+  // a movie of the user's own behind the main menu (src/menu-background-service.ts)
+  const menuBackground = createMenuBackground({ gamePath: () => settings.get('dotaGamePath'), userDataDir: userData, installer, library, log: diag });
   const cursors = createCursors({ installer, library, settings });
   const adopt = createAdopt({ installer, library, schemaService });
   // what the app can be told after it shipped: a feature switched off with a reason, and dated
@@ -116,10 +161,14 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
      after this build shipped is in the chain from the first download rather than the second run. */
   applyMirrors(remoteConfig.mirrors());
   void remoteConfig.refresh().then(() => applyMirrors(remoteConfig.mirrors()));
+  // the ready-made presets the Presets screen offers (config/presets.json, src/ready-presets.ts)
+  const readyPresets = createReadyPresets({ userDataDir: userData, log: diag });
+  void readyPresets.refresh();
   // pictures for the cosmetics picker come through Electron's network stack (see src/icons.ts)
   const icons = new Icons(userData, fetchIcons);
   // ...unless the Source 2 toolchain is here, in which case they come out of the game itself
   const toolchain = createToolchain({ userDataDir: userData, onProgress: sendProgress, log: diag });
+  setTimeout(() => { toolchain.catchUp().catch((e) => diag(`toolchain: could not update: ${(e as Error)?.message || e}`)); }, 15000).unref();
   const gameIcons = createGameIcons({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag });
   // ...and the same toolchain gives a mod that came with no picture one out of itself
   const modPreviews = createModPreviews({ userDataDir: userData, toolchain, langFileOf: (relPath) => installer.langFileOnDisk(relPath), log: diag });
@@ -133,6 +182,32 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   });
   const compiler = createResourceCompiler({ userDataDir: userData, gamePath: () => settings.get('dotaGamePath'),
     chosen: () => settings.get('resourceCompilerPath'), keeper: toolsKeeper || undefined, log: diag });
+  // sounds of the user's own on a hero's events, compiled by the compiler above (src/ability-sounds-service.ts)
+  const abilitySounds = createAbilitySounds({ gamePath: () => settings.get('dotaGamePath'), userDataDir: userData, installer, library,
+    compile: (job) => compiler.compile(job), log: diag });
+  // the item builder's 3D preview: the game's models as GLB, out of the same toolchain (src/hero-preview.ts)
+  const heroPreview = createHeroPreview({ library, gamePath: () => settings.get('dotaGamePath'), vanilla: () => schemaService.vanilla(), log: diag,
+    glb: createModelGlb({ userDataDir: userData, toolchain, getGamePath: () => settings.get('dotaGamePath'), log: diag }) });
+  // the in-game HUD smaller or larger, its style written again by the app (src/hud-scale-service.ts)
+  const hudScale = createHudScale({ gamePath: () => settings.get('dotaGamePath'), installer, library,
+    onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // an effect of the game changed by hand (src/effect-edit-service.ts)
+  const effectFinder = createEffectFinder({ index: () => sharedVpkIndex(path.join(settings.get('dotaGamePath') as string, 'dota', 'pak01_dir.vpk')), lang: getLang, heroes: () => abilitySounds.heroes(), table: () => schemaService.vanilla() });
+  const effectEdit = createEffectEdit({ gamePath: () => settings.get('dotaGamePath'), installer, library, sprites: (defs) => heroPreview.sprites(defs), resources: (defs) => heroPreview.resources(defs), finder: effectFinder, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // a look built by an older app carries its script: built again once the item table is done
+  void schemaService.settled().then(() => rankLook.refreshScript());
+  // the rank medal and hero levels of the player's own screen (src/rank-look-service.ts)
+  const rankLook = createRankLook({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
+    onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // the map without its decor, from the map's own list of materials (src/map-decor.ts)
+  const mapDecor = createMapDecor({ gamePath: () => settings.get('dotaGamePath'), installer, library, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // a hero recoloured part by part, out of the game's own files (src/hero-paint-service.ts)
+  const heroPaint = createHeroPaint({ gamePath: () => settings.get('dotaGamePath'), installer, library, vanilla: () => schemaService.vanilla(), repaint: electronRepaint,
+    vrf: () => toolchain.pathOf('vrf'), compile: (job) => compiler.compile(job),
+    lang: getLang, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
+  // a hero's ability icons picked from his own cosmetics' (src/ability-icons-service.ts)
+  const abilityIcons = createAbilityIcons({ gamePath: () => settings.get('dotaGamePath'), installer, library, vanilla: () => schemaService.vanilla(),
+    vrf: () => toolchain.pathOf('vrf'), lang: getLang, log: diag });
   const keepTools: AppContext['keepTools'] = async ({ force = false } = {}) => {
     if (!toolsKeeper) return false;
     try {
@@ -160,7 +235,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
     afterDeployMaster();
     return conflicts;
   };
-  const presets = presetsService({ catalog, installer, library, schemaService, deployAndApply });
+  const presets = presetsService({ catalog, installer, library, schemaService, deployAndApply, settings });
 
   // Two counted passes over the same batch: the files land, then each one is read. Both are shown
   // on the one bar, so a long import says which mod it is on instead of nothing at all. The two
@@ -181,8 +256,18 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   const importVpkBuffers: AppContext['importVpkBuffers'] = (items) => runImport((onStep) => importer.importVpkBuffers(installer, Array.isArray(items) ? items : [], onStep));
 
   return {
-    settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana,
-    afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers,
+    previewStore, settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
+    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, mapDecor, heroPaint, abilityIcons, abilitySounds, buildUndo, heroPreview,
+    afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
+}
+
+/** A PNG in the chosen colour through Electron's image codec, which hands its pixels over as BGRA. */
+export function electronRepaint(png: Buffer, color: Rgb, mode: PaintMode = 'tint'): Buffer {
+  const { nativeImage } = electron();
+  const img = nativeImage.createFromBuffer(png);
+  const size = img.getSize();
+  const pixels = Buffer.from(img.toBitmap());
+  paintPixels(pixels, size.width, color, mode, { bgra: true });
+  return nativeImage.createFromBitmap(pixels, size).toPNG();
 }

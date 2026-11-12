@@ -133,6 +133,24 @@ Several materials in one FBX: list several vmats; each maps the material of the 
 A new part with the whole hero's skeleton but none of the hero's hitboxes (a cloak in the
 shoulders slot): `scripts/make_vmdl.py --skeleton-from <hero>.vmdl`.
 
+### A part that sways: jiggle bones on an item
+
+An item can bring bones of its own that the game moves by physics, a soft hat's tip or a tassel:
+give the part a chain of bones in Blender (each weighted to the bone it hangs from), drop the slot's
+`Skeleton` node from the vmdl (it lists only the slot's own bones, so yours would be left out), and
+append a `JiggleBoneList` to the root's children with one `JiggleBone` per bone that should move
+(`jiggle_root_bone`, `jiggle_type = 1`, `length`, `has_angle_constraint = true`, `angle_limit`,
+`yaw_stiffness`/`pitch_stiffness`, `yaw_damping`/`pitch_damping`). What was learned tuning one:
+
+- **Jiggle only the last bone.** With the middle bone jiggling too the whole part swung, base and all.
+- **Weight the base to the hero's bone, not to yours.** A part that must sit still where it meets
+  the body takes the head's (or the spine's) weight there and fades into the jiggle bone only
+  near the tip.
+- **Small and stiff.** At 7 degrees and stiffness 160 a hero's idle head flick threw the tip out and
+  back every few seconds; 4 degrees, 280 and damping 16 kept it to a sway on turns.
+- **Build an A/B pair**, the same part with and without the list: it tells whether a tilt in the game
+  is the physics or the model.
+
 ## 6. Materials
 
 Write a `.vmat` per material with `hero.vfx` ([recolor.md](recolor.md) lists the keys). Starting

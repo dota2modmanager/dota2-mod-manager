@@ -281,6 +281,13 @@ test('every required check is a job that exists, under the name GitHub will show
   assert.deepEqual(missing, [], `required but no job is called that: ${missing.join(', ')}`);
 });
 
+test('a WebKit install tried again waits for the dpkg lock the last try left held', () => {
+  const step = read('site.yml').split('- name: Install WebKit')[1].split('- name:')[0];
+  const wait = step.indexOf('fuser /var/lib/dpkg/lock-frontend');
+  assert.ok(wait >= 0, 'the retry loop does not wait for the dpkg lock');
+  assert.ok(wait < step.indexOf('playwright-core install'), 'the lock is waited for after the install, not before it');
+});
+
 test('CI runs the same gate as a person and the commit hook', () => {
   const pkg = json('package.json');
   assert.ok(pkg.scripts.verify, 'package.json has no verify script');

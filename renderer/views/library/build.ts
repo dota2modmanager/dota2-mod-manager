@@ -11,11 +11,12 @@ import type { BannersModel, LibraryModel } from '../../library/model.ts';
 import type { AppSettings } from '../../api/app.ts';
 import { externalRow, modRow, packRow } from './rows.ts';
 import { lib } from './state.ts';
+import { configIssue, isDelisted } from './delisted.ts';
 
-function banners(): BannersModel {
+export function banners(): BannersModel {
   const s: Partial<AppSettings> = state.settings || {};
   const gl: Partial<AppSettings['gameLang']> = s.gameLang || {};
-  const patch = (state.patchState || {}) as { conflicts?: { mods: string[] }[]; foreign?: string; vanillaOk?: boolean };
+  const patch = (state.patchState || {}) as { conflicts?: { mods: string[] }[]; foreign?: string; vanillaOk?: boolean; mods?: number; cosmeticsPicked?: number };
   const conflicts = patch.conflicts || [];
   const ourMods = lib.records.length;
   const m = s.minify;
@@ -23,6 +24,7 @@ function banners(): BannersModel {
   const lang = gl.launchLang;
   return {
     masterOff: state.masterOff,
+    tableOff: s.schemaPatch || state.masterOff ? 0 : (patch.mods || 0) + (patch.cosmeticsPicked || 0),
     matched: lib.records.filter((r) => r.match).length + lib.external.filter((f) => f.match && !f.duplicateOf).length,
     nearLimit: lib.slots >= 90 ? { slots: lib.slots, ceil: lib.slotCeil } : null,
     conflicts: conflicts.length ? { lists: conflicts.slice(0, 3).map((c) => c.mods), more: Math.max(0, conflicts.length - 3) } : null,
@@ -39,6 +41,9 @@ function banners(): BannersModel {
     prelaunch: Boolean(m?.prelaunch),
     stuck: lib.stuck.map((x) => x.name),
     updates: lib.records.filter((r) => r.updateAvailable).map((r) => r.name),
+    // a revoked mod has its own, louder banner: one reason per mod is enough
+    delisted: lib.records.filter((r) => isDelisted(r) && !configIssue(r)?.revoked).map((r) => r.name),
+    revoked: lib.records.flatMap((r) => { const i = configIssue(r); return i?.revoked ? [{ id: r.id, name: r.name, text: i.text }] : []; }),
     repair: lib.repair,
   };
 }
@@ -46,7 +51,8 @@ function banners(): BannersModel {
 export function libraryModel(): LibraryModel {
   const all = lib.records;
   const { mods, cosmetics } = listParts(all, lib.search, lib.order);
-  const enabled = all.filter((m) => m.enabled).length;
+  // the master switch off: nothing is on, whatever each one will come back as
+  const enabled = state.masterOff ? 0 : all.filter((m) => m.enabled).length;
   const dupes = lib.external.filter((f) => f.duplicateOf).length;
   return {
     key: lib.key,
@@ -63,7 +69,7 @@ export function libraryModel(): LibraryModel {
     cosmetics: cosmetics.length ? {
       rows: cosmetics.map((rec, i) => modRow(rec, i)),
       count: cosmetics.length,
-      on: cosmetics.filter((r) => r.enabled !== false).length,
+      on: state.masterOff ? 0 : cosmetics.filter((r) => r.enabled !== false).length,
     } : null,
     selectAll: tristate(selectableMods(all, lib.search), lib.sel),
     selectAllCosmetics: tristate(selectableCosmetics(all, lib.search), lib.sel),

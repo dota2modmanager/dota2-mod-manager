@@ -131,16 +131,17 @@ const BYTES = new Uint8Array([1, 2, 3]);
 const ID = '3b241101-e2bb-4255-8caf-4136c566a962';
 const VALID: Record<string, unknown[][]> = {
   'win:minimize': [[]], 'win:maximize': [[]], 'win:close': [[]], 'win:isMaximized': [[]],
-  'app:version': [[]], 'app:notes': [['ru'], ['en']], 'app:notesSeen': [[]],
+  'app:version': [[]], 'app:notes': [['ru'], ['en']], 'app:notesSeen': [[]], 'app:stars': [[]],
   'update:install': [[]], 'update:fetchPortable': [[]], 'update:revealPortable': [['C:\\Games\\Dota-2-Mod-Manager-Portable.exe']],
-  'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'ui:setZoom': [[1.25]],
+  'beta:state': [[]], 'beta:set': [[true]], 'game:launch': [[]], 'game:steamDownloads': [[]], 'game:steamProperties': [[]], 'grid:state': [[]], 'grid:apply': [[['winrate']]], 'grid:remove': [[]], 'ui:setZoom': [[1.25]],
   'settings:get': [[]], 'settings:testProxy': [['']], 'settings:detectDota': [[]], 'settings:browseDota': [[]],
   'settings:set': [['discordPresence', false], ['favorites', ['heroes|Arcana|']], ['langPromptSeen', true],
+    ['modLabels', { 'rec:3b241101': 'Pudge, the red one', 'file:pak33_dir.vpk': 'Old Ursa' }], ['modLabels', {}],
     ['panels', { library: { width: 320 } }], ['panels', null], ['showAdult', true], ['theme', 'ursa'],
     ['toolsPromptSeen', true], ['downloadProxy', 'http://127.0.0.1:8080'], ['uiLang', 'en'], ['uiLang', 'ru']],
   'settings:moveLangFiles': [['russian'], [undefined], []],
-  'presence:view': [['catalog']], 'account:signIn': [[]], 'account:signOut': [[]],
-  'catalog:load': [[false], [true], [undefined], []], 'catalog:terrainAges': [[]],
+  'presence:view': [['catalog']], 'support:state': [[]], 'support:choose': [['later'], ['done']], 'account:signIn': [[]], 'account:signOut': [[]],
+  'catalog:load': [[false], [true], [undefined], []], 'catalog:terrainAges': [[]], 'catalog:downloadCounts': [[]],
   'mods:install': [[{ categoryId: 'heroes', name: 'Arcana', styleLabel: null, fileRef: 'heroes/arcana.zip', preview: 'https://example.org/a.jpg' }],
     [{ categoryId: 'heroes', name: 'Arcana', styleLabel: undefined, fileRef: undefined, preview: undefined }]],
   'mods:list': [[]], 'mods:update': [[ID]], 'mods:switchOffStaleTerrains': [[]], 'mods:clearPrePatch': [[ID]],
@@ -148,10 +149,10 @@ const VALID: Record<string, unknown[][]> = {
   'mods:importPaths': [[['C:\\Users\\me\\Downloads\\mod.zip', 'D:\\mods\\pak01_dir.vpk']]],
   'mods:importBuffers': [[[{ name: 'mod.vpk', data: BYTES }, { name: 'other.zip', data: BYTES.buffer }]]],
   'mods:exportSingle': [[ID]], 'mods:unpackToFolder': [[ID]], 'mods:masterState': [[]], 'mods:setMaster': [[false]],
-  'mods:setEnabled': [[ID, true]], 'mods:setEnabledMany': [[[ID, ID], false]], 'mods:remove': [[ID]], 'mods:removeMany': [[[ID]]],
+  'mods:setEnabled': [[ID, true]], 'mods:setEnabledMany': [[[ID, ID], false]], 'mods:remove': [[ID]], 'mods:removeMany': [[[ID]]], 'mods:removeEverything': [[]],
   'mods:move': [[ID, -1], [ID, 1]], 'mods:reorder': [[ID, 0], [ID, 41]], 'mods:mapsOwner': [[]],
   'mods:externalSetEnabled': [['pak90_dir.vpk', true]], 'mods:externalRemove': [['pak90_dir.vpk']],
-  'mods:splitMod': [[ID]], 'mods:splitExternal': [['pak90_dir.vpk']],
+  'mods:splitMod': [[ID]], 'mods:dropItemIcons': [[ID]], 'mods:splitExternal': [['pak90_dir.vpk']],
   'mods:adoptMod': [[ID, null], [ID, 'data:image/png;base64,AAAA']], 'mods:adoptExternal': [['pak90_dir.vpk', null]],
   'mods:adoptFont': [['Radiance', null]], 'mods:adoptCursor': [[null]],
   'packs:combine': [[{ name: 'My pack', modIds: [ID, ID] }]], 'packs:addMembers': [[ID, [ID]]],
@@ -160,21 +161,35 @@ const VALID: Record<string, unknown[][]> = {
   'presets:delete': [[ID]], 'presets:apply': [[ID]], 'presets:resolve': [[ID]], 'presets:exportPlan': [[ID]], 'presets:shareLink': [[ID]],
   'presets:export': [[ID, { skip: [ID], author: 'me', note: 'gg' }]], 'presets:importDialog': [[]],
   'presets:importFile': [['C:\\Users\\me\\Downloads\\build.d2mm']],
+  'presets:ready': [[]], 'presets:takeReady': [['the-international']],
+  'creator:list': [[]], 'creator:save': [[null, { name: 'Glow' }]], 'creator:attach': [['00000000-0000-0000-0000-000000000000', 0, 'vpk']], 'creator:remove': [['00000000-0000-0000-0000-000000000000']], 'creator:export': [['00000000-0000-0000-0000-000000000000']],
   'pumpkin:redeem': [['K7QX-M2PA-9HRT-WZ4N']], 'pumpkin:prizeAgain': [[]], 'pumpkin:hasPrize': [[]],
   'config:state': [[]], 'config:noticeSeen': [['notice-2026-10']],
-  'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
-  'schema:refresh': [[]], 'cosmetics:slots': [[]],
-  'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
+  'patch:state': [[]], 'patch:repairState': [[]], 'patch:repairNow': [[]], 'patch:repairApp': [[]], 'patch:repairSeen': [[]], 'patch:setEnabled': [[true]],
+  'schema:refresh': [[]], 'schema:cancel': [[]], 'cosmetics:slots': [[]], 'preview3d:slice': [[1, 0]], 'preview3d:warm': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]], 'preview3d:prefetch': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }], 'item:magnataur:head', ['9491', '9492']]], 'preview3d:models': [['magnataur', [{ slot: 'item:magnataur:head', stock: '9490' }]]], 'preview3d:motions': [['models/heroes/axe/axe.vmdl']], 'preview3d:effect': [['unusual-4'], ['frostbloom']], 'preview3d:model': [['models/props_tree/tree_pine_01.vmdl']],
+  'cosmetics:heroPortraits': [[['1', '2']], [[1, 2]], [['axe'], true]], 'cosmetics:heroPortraitsByName': [[['npc_dota_hero_axe']]],
   'cosmetics:icons': [[['Shade of the Abyss']]],
   'cosmetics:pick': [['weather', '5810', 'Weather: Ash', ''], ['hero_axe_weapon', 4520, 'Axe', '1,2']],
-  'cosmetics:pickSet': [['20510'], [20510]],
+  'cosmetics:pickSet': [['20510'], [20510], ['20510', 1]],
+  'cosmetics:wearLook': [['item:axe:', [{ slot: 'item:axe:head', itemId: '7365', name: 'Helm', effectId: 'fire' }]], ['item:axe:', []]],
   'preview:video': [['heroes|Arcana']], 'preview:frame': [['heroes|Arcana', BYTES]],
   'tools:state': [[]], 'tools:install': [['Source2Viewer']], 'tools:remove': [['Source2Viewer']],
   'compiler:state': [[]], 'compiler:browse': [[]], 'compiler:forget': [[]], 'compiler:prepare': [[]], 'compiler:check': [[]], 'compiler:keep': [[]], 'compiler:removeKept': [[]],
-  'arcana:state': [[]], 'arcana:install': [[[255, 0, 128], 'mod'], [[1, 2, 3], 'recolor']],
-  'misc:openLangFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],
+  'sounds:heroes': [[]], 'sounds:hero': [['lion']], 'sounds:remove': [['lion', 'Hero_Lion.Voodoo']],
+  'sounds:add': [['lion', 'Hero_Lion.Voodoo', 'layer', 0.8, new Uint8Array(44), 'ring.mp3']],
+  'fx:search': [['axe']], 'fx:heroes': [[]], 'fx:hero': [['axe']], 'fx:load': [['particles/a.vpcf']], 'fx:preview': [['particles/a.vpcf', {}]], 'fx:install': [['particles/a.vpcf', {}], ['particles/a.vpcf', {}, true]],
+  'hud:state': [[]], 'hud:install': [[[{ id: 'lower_hud', scale: 85 }]]],
+  'decor:state': [[]], 'decor:install': [[['plants', 'debris']]],
+  'rank:state': [[]], 'rank:pictures': [[]], 'rank:install': [[{ medal: null, levels: { axe: 30 }, every: null }]],
+  'background:state': [[]], 'background:install': [[new Uint8Array(64), 'sunset.mp4', 0.2, 4], [null, null, 0.5, 0]],
+  'paint:state': [['juggernaut'], ['juggernaut', ['4242', '4243']]], 'paint:icons': [[['juggernaut_blade_fury']], [[]]], 'paint:install': [['juggernaut', { 'ability:juggernaut_blade_fury': '#00ff00' }, 'Juggernaut'], ['axe', {}, null], ['axe', { 'itemModel:4242': '#00ff00:keep' }, 'Axe', ['4242']]],
+  'icons:heroes': [[]], 'icons:hero': [['earthshaker']], 'icons:pictures': [[['earthshaker_fissure', 'earthshaker/earthshaker_arcana/earthshaker_fissure']], [[]]],
+  'icons:set': [['earthshaker', 'earthshaker_fissure', 'earthshaker_fissure_alt_gold'], ['earthshaker', 'earthshaker_fissure', null]], 'icons:clear': [['earthshaker']],
+  'map:state': [[]], 'map:install': [['towers', '17538', null], ['trees', null, 'winter']],
+  'arcana:state': [[]], 'arcana:install': [['terrorblade-arcana', [255, 0, 128], 'mod'], ['techies-arcana', [1, 2, 3], 'recolor']],
+  'misc:openLangFolder': [[]], 'misc:openCacheFolder': [[]], 'misc:openToolsFolder': [[], ['Compiler']],
   'misc:openExternal': [['https://dota2modmanager.com/docs/'], ['http://example.org'], [undefined]],
-  'misc:cacheSize': [[]], 'misc:clearCache': [[]], 'misc:runTool': [['Compiler']],
+  'misc:cacheSize': [[]], 'misc:clearCache': [[]], 'misc:cacheList': [[]], 'misc:cacheRemove': [['huds/Big HUD.zip']], 'misc:runTool': [['Compiler']],
   'diag:export': [[]], 'diag:rendererError': [['TypeError: x is undefined']],
   'uninstall:plan': [[]], 'uninstall:run': [[{ revert: true, mods: false, data: false }], [{ revert: true, mods: true, data: true }], [null]], 'uninstall:done': [[true]], 'uninstall:cancel': [[]],
 };
@@ -188,12 +203,16 @@ test('a call of every channel, as the window makes it, gets through', () => {
 
 /* What a script in the page could try, and the gate refuses. */
 const HOSTILE: [string, unknown[], RegExp][] = [
+  ['grid:apply', [['winrate', '../../etc']], /one of/],
   ['settings:set', ['dotaGamePath', 'C:\\Windows'], /may not set dotaGamePath/],
   ['settings:set', ['account', { id: '1', username: 'beta tester' }], /may not set account/],
   ['settings:set', ['schemaStamp', null], /may not set/],
   ['settings:set', ['__proto__', {}], /may not set/],
   ['settings:set', ['constructor', {}], /may not set/],
   ['settings:set', ['showAdult', 'yes'], /showAdult/],
+  ['settings:set', ['modLabels', { 'path:C:\Windows': 'x' }], /label key/],
+  ['settings:set', ['modLabels', { 'rec:1': 'x'.repeat(81) }], /label rec:1/],
+  ['settings:set', ['modLabels', ['rec:1']], /an object/],
   ['settings:set', ['downloadProxy', 'ftp://proxy.example:21'], /адрес/],
   ['settings:testProxy', ['http://user:pass@proxy.example:8080'], /формате/],
   ['settings:set', ['uiLang', '../../etc'], /language code/],
@@ -204,6 +223,7 @@ const HOSTILE: [string, unknown[], RegExp][] = [
   ['misc:openExternal', ['\\\\server\\share\\run.exe'], /address/],
   ['misc:openToolsFolder', [{ toString: () => '../..' }], /string/],
   ['misc:runTool', [''], /string/],
+  ['misc:cacheRemove', [{ key: '../x' }], /string/],
   ['mods:install', [{ categoryId: 'heroes', name: 'x', styleLabel: null, fileRef: 'a', preview: null, dest: 'C:\\' }], /unexpected key dest/],
   ['mods:install', [{ categoryId: 42, name: 'x' }], /categoryId/],
   ['mods:install', ['heroes'], /object/],
@@ -217,8 +237,13 @@ const HOSTILE: [string, unknown[], RegExp][] = [
   ['mods:move', [ID, 7], /number from -1 to 1/],
   ['mods:reorder', [ID, Number.NaN], /number/],
   ['ui:setZoom', [Infinity], /number/],
-  ['arcana:install', [[255, 0, 0], 'everything'], /one of/],
-  ['arcana:install', [[255, 0, 0, 9], 'mod'], /at most 3/],
+  ['arcana:install', ['techies-arcana', [255, 0, 0], 'everything'], /one of/],
+  ['arcana:install', ['pudge-arcana', [255, 0, 0], 'mod'], /one of/],
+  ['sounds:add', ['lion', 'Hero_Lion.Voodoo', 'loud', 1, new Uint8Array(4), ''], /one of/],
+  ['sounds:add', ['lion', 'Hero_Lion.Voodoo', 'replace', 1, new Uint8Array(9 * 1024 * 1024), ''], /bytes/],
+  ['map:install', ['roshan', 'a', 'b'], /one of/],
+  ['map:install', ['trees', 'x'.repeat(41), null], /characters/],
+  ['arcana:install', ['techies-arcana', [255, 0, 0, 9], 'mod'], /at most 3/],
   ['preview:frame', ['k', 'not bytes'], /bytes/],
   ['presets:export', [ID, { skip: [], author: 'me', note: '', path: 'C:\\' }], /unexpected key path/],
   ['uninstall:run', [{ revert: 'yes' }], /revert/],
@@ -251,6 +276,8 @@ test('no check throws, whatever it is handed', () => {
   const loop: Record<string, unknown> = {};
   loop.self = loop;
   assert.match(String(checkArgs('settings:set', ['panels', loop])), /JSON/);
+  assert.match(String(checkArgs('fx:install', [' ', { a: 0n }])), /JSON/, 'a value JSON cannot write is refused, not thrown');
+  assert.match(String(checkArgs('fx:install', [' ', loop])), /JSON/);
 });
 
 test('the browser is asked for two permissions at most, and only by the app\'s pages', () => {
@@ -317,7 +344,6 @@ test('the guard is in place before any channel is registered or any window opene
   const installed = at('guardTheApp({ app, ipcMain, session,');
   assert.ok(installed < at('uninstallFlow('), 'before the removal window registers its channels');
   assert.ok(installed < at('registerIpc(ctx)'));
-  assert.ok(installed < at("ipcMain.handle('game:launch'"));
   assert.ok(installed < at('createMainWindow('));
 });
 

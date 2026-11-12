@@ -20,7 +20,7 @@ when there is a check behind it, and the last section says what no automated che
 | 10 | Text over the translucent panels, gradients and pictures has the contrast WCAG asks for: 4.5:1, or 3:1 for large text | Measured on the pixels for every node axe cannot judge (`tools/sim/contrast.js`), on the same screens as promise 1 |
 | 11 | What happens without the focus moving is said out loud: a mod installed, a pack finished, an error (WCAG 4.1.3) | Every toast is also announced through a live region, inside the open window when there is one, since `aria-modal` hides everything outside it (`renderer/ui/a11y.ts`, `announce`). The scenario installs a mod from its window and checks the words reach a region the reader can see |
 
-The scenario runs in the simulator on every pull request, on Windows and on Linux
+The scenario runs in the simulator every night, on Windows and on Linux
 (`.github/workflows/sim.yml`), next to the other scenarios.
 
 ## What was wrong when this list was first checked (2026-10-11)

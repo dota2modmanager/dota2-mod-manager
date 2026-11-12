@@ -101,7 +101,7 @@ export function softwareNode(lang: 'en' | 'ru', origin = 'https://dota2modmanage
       height: SHOT_SIZE.height,
       encodingFormat: 'image/webp',
     })),
-    featureList: t.cards.map(([title]) => title),
+    featureList: [...t.make, ...t.cards].map(([title]) => title),
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
     author: { '@id': author['@id'] },
     about: {

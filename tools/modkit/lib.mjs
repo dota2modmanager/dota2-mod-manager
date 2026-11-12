@@ -126,8 +126,15 @@ export function isUnchanged(rel, data, gameRead) {
   return !!theirs && theirs.length === data.length && theirs.equals(data);
 }
 
-/** A compiled texture at a path the game has, not named in `keep`: the compiler's copy of a shared picture. */
+/**
+ * A compiled texture at a path the game has, not named in `keep`: the compiler's copy of a shared
+ * picture. Interface pictures (panorama's, and the minimap sheet) are never such a copy: no material
+ * names them, so one is in a mod only because `modkit pictures` made it to replace the game's. Left
+ * out as shared, a mod's new ability icons were dropped from the pack without a word and the game
+ * showed Valve's.
+ */
 export function isSharedTexture(rel, index, keep = new Set()) {
+  if (/^(panorama\/|materials\/vgui\/)/.test(rel)) return false;
   return rel.endsWith('.vtex_c') && index.has(rel) && !keep.has(rel);
 }
 

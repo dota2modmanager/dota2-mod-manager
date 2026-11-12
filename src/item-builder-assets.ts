@@ -8,17 +8,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { sharedVpkIndex, entryAt, type VpkEntry, type VpkIndex } from './vpk.ts';
 import { t } from './i18n.ts';
-import { listItems, eachChild, blockBounds } from './schema.ts';
-import { itemHeroes, type AssetCopy } from './item-builder-slots.ts';
+import { eachChild, blockBounds } from './schema.ts';
+import { stockModels, type AssetCopy } from './item-builder-slots.ts';
 import { asModel } from './arcana.ts';
 import { numberedAs } from './model-sequences.ts';
+import { withSkin } from './model-skin.ts';
+import { clothDragger, withoutCloth } from './model-cloth.ts';
+import { firstStyleSkin } from './item-skin.ts';
+import { drain, PAUSE } from './steps.ts';
+import { attachedAs } from './model-attachments.ts';
+export { firstStyleSkin, wornSkin } from './item-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
 
 /** A sprite of the game's sprite sheets shown in place of another (the minimap's hero icons are). */
 export interface SpriteSwap { sprite: string; as: string }
 
 /** A hero model whose HUD portrait settings go under the hero's own model's path. */
-export interface PortraitSwap { model: string; hero: string }
+/** scale: how much bigger the body under the plain path is than the model whose settings these are */
+export interface PortraitSwap { model: string; hero: string; scale?: number }
 
 /** What a pick asks of the game's files, beside its block. */
 export interface ItemAssets { assetCopies: AssetCopy[]; sounds: SoundSwap[]; voices: VoiceCue[]; portraits: PortraitSwap[]; sprites: SpriteSwap[] }
@@ -47,9 +54,7 @@ function compiledAssetPath(p: unknown): string {
 
 /** The models of the stock items any of these heroes wears, as normalizeAssetPath writes them. */
 function stockModelsOf(text: string, heroes: string[]): Set<string> {
-  return new Set(listItems(text)
-    .filter((i) => i.prefab === 'default_item' && i.model && itemHeroes(text, i).some((h) => heroes.includes(h)))
-    .map((i) => normalizeAssetPath(i.model)));
+  return new Set(stockModels(text, heroes).map(normalizeAssetPath));
 }
 
 /*
@@ -60,6 +65,15 @@ function stockModelsOf(text: string, heroes: string[]): Set<string> {
  * Rictus Ripper's demon came out as the plain one, or as whatever another mod put at demon.vmdl.
  */
 const FORM = /^models\/heroes\//;
+
+/**
+ * The attack a persona's owner sees, which nothing in items_game or the hero's script swaps: the
+ * game picks the Acolyte's by his orbs (invoker_kid_base_attack_quas, _wex, _exort, _all). Without
+ * the table his attack was the grown Invoker's; the one for all orbs stands in for the four.
+ */
+const PERSONA_ATTACKS: Record<string, [string, string][]> = {
+  npc_dota_hero_invoker: [['particles/units/heroes/hero_invoker_kid/invoker_kid_base_attack_all.vpcf', 'particles/units/heroes/hero_invoker/invoker_base_attack.vpcf']],
+};
 
 /**
  * The files an item's visuals swap, to stage under the plain paths: particles, models, and the
@@ -101,6 +115,8 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
   });
   const typed = (type: string, ...keys: string[]) => mods.filter((f) => (f.get('type') || '').toLowerCase() === type && keys.every((k) => f.get(k)));
   const activities = [...new Set(typed('activity', 'modifier').map((f) => f.get('modifier')!))];
+  // the material set the item wears its hero's body in, which the server leaves at the first (#401)
+  const skin = Number(typed('model_skin', 'skin')[0]?.get('skin') ?? firstStyleSkin(visuals)) || 0;
   const stock = stockModelsOf(text, heroes);
   const models = typed('entity_model', 'asset', 'modifier').filter((f) => heroes.includes(f.get('asset')!.toLowerCase()));
   const summons = summonCopies(typed('entity_model', 'asset', 'modifier')
@@ -115,14 +131,16 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
   if (typed('persona').length && !typed('icon_replacement_hero', 'asset', 'modifier').length) {
     pictures.push(...swapped('icon_replacement_hero_minimap', PICTURES.icon_replacement_hero));
   }
+  // a persona's attack is chosen by the game's code, which no file names: under the plain one's path
+  if (typed('persona').length) for (const hero of heroes) pictures.push(...(PERSONA_ATTACKS[hero] ?? []).map(([from, to]) => ({ from, to, optional: true })));
   return {
     assetCopies: [
-      ...models.map((f) => ({ from: f.get('modifier')!, hero: f.get('asset')!.toLowerCase(), activities })),
+      ...models.map((f) => ({ from: f.get('modifier')!, hero: f.get('asset')!.toLowerCase(), activities, ...(skin ? { skin } : {}) })),
       ...summons,
       ...typed('model', 'asset', 'modifier').filter((f) => stock.has(normalizeAssetPath(f.get('asset'))))
         .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
       ...typed('hero_model_change', 'asset', 'modifier').filter((f) => FORM.test(normalizeAssetPath(f.get('asset'))))
-        .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
+        .map((f) => ({ from: f.get('modifier')!, to: f.get('asset')!, form: true })),
       ...typed('particle', 'asset', 'modifier').map((f) => ({ from: f.get('modifier')!, to: f.get('asset')! })),
       ...pictures,
     ],
@@ -141,7 +159,7 @@ export function itemAssets(text: string, visuals: string, heroes: string[], summ
  * after it are its summons'). Shadow Fiend is npc_dota_hero_nevermore in models/heroes/shadow_fiend,
  * so the path cannot be made from the name.
  */
-export function heroModelPath(ix: VpkIndex, hero: string): string {
+export function heroModelPath(ix: Pick<VpkIndex, 'read'>, hero: string): string {
   const script = ix.read(`scripts/npc/heroes/${hero}.txt`);
   const model = script?.toString('latin1').match(/^\s*"Model"\s+"([^"]+)"/mi)?.[1];
   if (!model) throw new Error(t('Не найдена модель героя {0}', hero));
@@ -237,9 +255,7 @@ const summonsByIndex = new WeakMap<VpkIndex, SummonModels>();
 function heroModelBytes(data: Buffer, activities: string[]): Buffer {
   try {
     return activities.reduce((model, modifier) => asModel(model, modifier), data);
-  } catch {
-    return data;
-  }
+  } catch { return data; }
 }
 
 /**
@@ -248,21 +264,33 @@ function heroModelBytes(data: Buffer, activities: string[]): Buffer {
  *   Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
  */
 export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): VpkEntry[] {
+  return drain(gameAssetEntriesSteps(gamePath, assetCopies, skip));
+}
+/** gameAssetEntries, a pause before each file: an arcana is up to 20 MB, seconds on a cold hard disk after a Dota update. */
+export function* gameAssetEntriesSteps(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): Generator<typeof PAUSE, VpkEntry[]> {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   const ix = sharedVpkIndex(pak);
   const out: VpkEntry[] = [];
   const seen = new Set<string>();
+  const drags = clothDragger((p) => ix.read(p));
   for (const copy of assetCopies || []) {
-    const from = compiledAssetPath(copy.from);
     const to = compiledAssetPath('hero' in copy ? heroModelPath(ix, copy.hero) : copy.to);
+    // a hero's copy from nowhere is the hero's own model, with its modifiers off (src/item-builder-kinetic.ts)
+    const from = 'hero' in copy && !copy.from ? to : compiledAssetPath(copy.from);
     if (!from || !to || seen.has(to) || skip?.(to.toLowerCase())) continue;
+    yield PAUSE;
     const data = ix.read(from);
     if (!data && 'optional' in copy && copy.optional) continue;
     if (!data) throw new Error(t('Не найден {0}', from));
+    // in the item's material set first (src/model-skin.ts): a unit is left out if it has not got it,
+    // a hero's body or an item goes in as it is, since the wrong colours beat the plain model
+    const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : copy.skin ? withSkin(data, copy.skin) ?? data : data;
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
-    const bytes = 'unit' in copy ? numberedAs(data, ix.read(to) ?? Buffer.alloc(0))
-      : 'hero' in copy ? heroModelBytes(data, copy.activities) : data;
+    const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
+      : 'hero' in copy ? attachedAs(heroModelBytes(worn!, copy.activities), ix.read(to) ?? Buffer.alloc(0))
+        // a wearable under Centaur's stock paths loses its cloth, which trailed behind him (src/model-cloth.ts)
+        : to.endsWith('.vmdl_c') && !('form' in copy && copy.form) && drags(to) ? withoutCloth(worn!) : worn;
     if (!bytes) continue;
     out.push(entryAt(to, bytes));
     seen.add(to);

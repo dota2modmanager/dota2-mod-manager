@@ -21,15 +21,19 @@ import {
   canonicalItemSlot, itemHeroes, matchItemSlot, itemSlotId, itemSlotIcon, itemSlotLabel, slotDisplayLabel, type ItemSlot,
 } from './item-builder-slots.ts';
 import { heroDisplayName } from './hero-names.ts';
+import { itemFacts } from './item-builder-details.ts';
 import { entryPath, type VpkEntry } from './vpk.ts';
+import { heroModelPath } from './item-builder-assets.ts';
+import { modelScaleAgainst } from './model-scale.ts';
 import type { LibRecord } from './types.ts';
 
 /** The slot a persona is picked in. */
 export const SELECTOR = 'persona_selector';
 /** A persona's own slot: weapon_persona_1 is the first persona's weapon. */
 const OWN = /^(.+)_persona_(\d+)$/;
-/** Persona slots nothing is put under: a pet and a voice are no part of the body. */
-const UNWORN = new Set(['summon', 'voice']);
+/** Persona slots nothing is put under: a voice is no part of the body. A summon is a unit of its own,
+ *  and goes under the plain hero's summon (the Acolyte's Forge Spirits), never under a part of him. */
+const UNWORN = new Set(['voice']);
 /** Plain slots no persona item goes under: the persona's own, a pet, a voice, an arcana's and a costume's. */
 const NOT_HOSTS = new Set([SELECTOR, 'summon', 'voice', 'hero_base', 'costume']);
 /** The order a persona slot with no plain slot of its name takes what is left. */
@@ -42,7 +46,11 @@ export const PERSONA_BASES = ARCANA_BASES.filter((b) => b.persona);
 export interface PersonaPart { slot: string; host: SchemaItem; given: SchemaItem | null; options: SchemaItem[] }
 
 /** A hero's persona as the builder puts it on. */
-export interface PersonaLayout { hero: string; selector: SchemaItem; personas: SchemaItem[]; parts: PersonaPart[] }
+export interface PersonaLayout {
+  hero: string; selector: SchemaItem; personas: SchemaItem[]; parts: PersonaPart[];
+  /** the persona's voice, an item of the voice slot no part of the body takes: its response criterion is the persona's lines */
+  voice: SchemaItem | null;
+}
 
 const slotOf = (item: SchemaItem) => canonicalItemSlot(inferredItemSlot(item));
 const rank = (slot: string) => { const at = HOST_ORDER.indexOf(slot); return at === -1 ? HOST_ORDER.length : at; };
@@ -78,6 +86,9 @@ function layoutOf(text: string, hero: string, items: SchemaItem[]): PersonaLayou
   const take = (fits: (host: SchemaItem) => boolean) => { const at = free.findIndex(fits); return at === -1 ? null : free.splice(at, 1)[0]; };
   const slots = [...own.keys()].sort((a, b) => rank(OWN.exec(a)![1]) - rank(OWN.exec(b)![1]));
   const hosts = new Map<string, SchemaItem>();
+  // the persona's summon under the plain one, when the hero has one: Crystal Maiden's is a pet, and has not
+  const summon = items.find((i) => i.prefab === 'default_item' && slotOf(i) === 'summon');
+  for (const slot of slots) if (OWN.exec(slot)![1] === 'summon' && summon) hosts.set(slot, summon);
   const passes: ((slot: string) => (host: SchemaItem) => boolean)[] = [
     (slot) => (host) => slotOf(host) === OWN.exec(slot)![1],
     (slot) => (host) => matchItemSlot(slotOf(host)) === matchItemSlot(OWN.exec(slot)![1]),
@@ -86,13 +97,14 @@ function layoutOf(text: string, hero: string, items: SchemaItem[]): PersonaLayou
   ];
   for (const pass of passes) {
     for (const slot of slots) {
-      if (hosts.has(slot)) continue;
+      if (hosts.has(slot) || OWN.exec(slot)![1] === 'summon') continue;
       const host = take(pass(slot));
       if (host) hosts.set(slot, host);
     }
   }
   const parts = slots.filter((s) => hosts.has(s)).map((slot) => ({ slot, host: hosts.get(slot)!, ...own.get(slot)! }));
-  return { hero, selector, personas, parts };
+  const voice = items.find((i) => i.prefab === 'default_item' && slotOf(i) === `voice_persona_${n}`) ?? null;
+  return { hero, selector, personas, parts, voice };
 }
 
 const modelled = (part: { given: SchemaItem | null; options: SchemaItem[] }) => !!part.given?.model || part.options.some((o) => o.model);
@@ -129,7 +141,7 @@ export function personaSlots(text: string): ItemSlot[] {
     return {
       slot: itemSlotId([hero], slot), kind: 'item-effect' as const, base: target.id, targetId: target.id, equipSlot: slot, heroIds: [hero],
       heroLabel: heroDisplayName(hero), slotLabel: slotDisplayLabel(plain), label: itemSlotLabel([hero], plain), icon: itemSlotIcon(plain),
-      options: options.map((o) => ({ id: o.id, name: toUtf8(o.name) })), persona: { hero, part },
+      options: options.map((o) => ({ id: o.id, name: toUtf8(o.name), ...itemFacts(text.slice(o.start, o.end)) })), persona: { hero, part },
     };
   }));
 }
@@ -239,4 +251,39 @@ export function personaAssets(rec: BuildRecord, assets: VpkEntry[], ready: Ready
     const p = entryPath(e).toLowerCase();
     return !base.paths.has(p) || (p === host && (!given || emptyAt(base, p)));
   });
+}
+
+/** A hero script's persona model: the "Model" of its Persona block, which the game keeps for its tools. */
+const PERSONA_MODEL = /"Persona"[\s\S]*?"Model"\s+"([^"]+)"/;
+
+/**
+ * How much bigger each persona's base body is than Valve's persona model, for each hero with a
+ * persona on whose base is here: what its items are made bigger by (src/model-scale.ts). The
+ * server draws the persona at the plain hero's scale, and a body compiled bigger to make up for it
+ * needs its items as big. Measured, not written down, so the items follow whatever the bases'
+ * repository publishes: a body compiled as Valve's measures 1, and nothing is scaled.
+ * @param read  a file of the game's pak01: the hero's script and Valve's persona model
+ */
+export function personaScales(on: Map<string, string>, ready: ReadyBase[], read: (path: string) => Buffer | null): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const hero of on.keys()) {
+    const base = ready.find((r) => r.base.persona && r.base.hero === hero);
+    const script = read(`scripts/npc/heroes/npc_dota_hero_${hero}.txt`)?.toString('latin1');
+    const valve = script && PERSONA_MODEL.exec(script)?.[1];
+    if (!base || !script || !valve) continue;
+    try {
+      const body = base.entries.find((e) => entryPath(e).toLowerCase() === compiled(heroModelPath({ read }, `npc_dota_hero_${hero}`)));
+      const reference = read(compiled(valve));
+      const scale = body && reference ? modelScaleAgainst(body.data, reference) : null;
+      // a body compiled as Valve's measures 1 to within a thousandth
+      if (scale && Math.abs(scale - 1) > 0.01) out.set(hero, Math.round(scale * 1000) / 1000);
+    } catch { /* a body or a script that does not read: its items as they are */ }
+  }
+  return out;
+}
+
+/** What a pick's models are made bigger by: a persona's own slot's, while its body is bigger (personaScales). */
+export function personaScaleOf(rec: BuildRecord, scales: Map<string, number>): number | undefined {
+  const at = pickSlot(rec);
+  return rec.persona && at && at.slot !== SELECTOR ? at.heroes.map((h) => scales.get(h)).find(Boolean) : undefined;
 }

@@ -59,7 +59,36 @@ window.api.patch.onRepair((st) => {
   // an update can change the map under a whole-map terrain (core/terrain-age.ts)
   if (st.state === 'done') switchOffStaleTerrains().then((off: unknown[]) => { if (off.length && state.view === 'library') render(); });
   if (state.view === 'library') { render(); return; }
-  if (st.state === 'waiting') toast(L`Dota обновилась — вернём моды, как только закроешь игру`, 'warn', 8000);
+  // a button started it (Settings' "Repair the app"), and that button shows what came of it
+  if (st.reason === 'manual') return;
+  if (st.state === 'waiting' && st.steam) toast(L`Steam проверяет файлы Dota: моды вернутся, когда он закончит`, 'ok', 8000);
+  else if (st.state === 'waiting') toast(L`Dota обновилась — вернём моды, как только закроешь игру`, 'warn', 8000);
   else if (st.state === 'failed') toast(L`Dota обновилась, вернуть моды не вышло — загляни в «Мои моды»`, 'error', 8000);
   else if (st.state === 'done') toast(L`Dota обновилась — моды на месте`, 'ok', 6000);
+});
+
+// Dota closed seconds after Play (src/crash-watch.ts). The mods put in since the game last ran
+// normally are the first suspects; switching them off waits for a press, since a game closed on
+// purpose looks the same from here.
+window.api.game.onQuickExit((exit) => {
+  document.querySelector('.update-bar.quick-exit')?.remove();
+  const names = exit.suspects.slice(0, 3).map((s) => `«${esc(s.name)}»`).join(', ')
+    + (exit.suspects.length > 3 ? ` ${L`и ещё ${exit.suspects.length - 3}`}` : '');
+  const bar = updateBar(`
+    <span class="ms">report</span>
+    <span><b>${L`Dota закрылась через ${exit.seconds} с после запуска`}</b>${exit.suspects.length
+    ? L`. После последней нормальной игры поставлены ${names}: начни с них.`
+    : L`. Если так повторяется, выключи моды мастер-переключателем и включай по одному, чтобы найти виновника.`}</span>
+    ${exit.suspects.length ? `<button class="btn btn-sm btn-primary" id="quickExitOffBtn">${L`Выключить их`}</button>` : ''}
+    <button class="btn btn-sm btn-ghost" id="quickExitCloseBtn">${L`Понятно`}</button>`);
+  bar.classList.add('quick-exit');
+  on(bar, 'quickExitOffBtn', async (btn) => {
+    btn.disabled = true;
+    const res = await window.api.mods.setEnabledMany(exit.suspects.map((s) => s.id), false);
+    bar.remove();
+    if (res.error) { toast(res.error, 'error', 6000); return; }
+    toast(L`Выключено: ${res.changed ?? 0}. Запусти Dota ещё раз`, 'ok', 6000);
+    if (state.view === 'library') render();
+  });
+  on(bar, 'quickExitCloseBtn', () => bar.remove());
 });

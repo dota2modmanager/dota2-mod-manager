@@ -244,6 +244,19 @@ const updatedHuman = new Intl.DateTimeFormat(lang === 'ru' ? 'ru-RU' : 'en-GB', 
               ))}
             </ul>
           );
+        if (b.k === 'table')
+          return (
+            <table tabindex="0">
+              <thead>
+                <tr>{b.head.map((h) => <th scope="col" set:html={link(h)} />)}</tr>
+              </thead>
+              <tbody>
+                {b.rows.map((row) => (
+                  <tr>{row.map((cell, i) => (i === 0 ? <th scope="row" set:html={link(cell)} /> : <td set:html={link(cell)} />))}</tr>
+                ))}
+              </tbody>
+            </table>
+          );
         if (b.k === 'list')
           return (
             <ul class="doc-list">

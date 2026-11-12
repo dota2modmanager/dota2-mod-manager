@@ -55,9 +55,9 @@ export async function recolor(opts) {
     const near = heroesWithParticles(all).filter((h) => h.includes(hero.slice(0, 4)));
     throw new Error(`no particles for "${hero}"${near.length ? `; did you mean ${near.join(', ')}?` : ' (use the game\'s name: necrolyte, nevermore, zuus...)'}`);
   }
-  const { recolorResource } = await src('recolor.ts');
+  const { recolorResource, liftForMod2x } = await src('recolor.ts');
   const { first, from } = twoPass(target);
-  let n = 0, colours = 0;
+  let n = 0, colours = 0, lifted = 0;
   const failed = [];
   for (const p of files) {
     try {
@@ -65,13 +65,49 @@ export async function recolor(opts) {
       const a = opts['one-pass'] ? recolorResource(raw, target, { own: true }) : recolorResource(raw, first, { own: true });
       const r = !opts['one-pass'] && a.changed ? recolorResource(a.file, target, { own: true, from }) : a;
       if (!r.changed) continue;
+      // a MOD2X layer keeps some of every channel, or the ground under it takes the colour whole
+      const m = liftForMod2x(r.file);
+      if (m.changed) lifted++;
       fs.mkdirSync(path.dirname(path.join(out, p)), { recursive: true });
-      fs.writeFileSync(path.join(out, p), r.file); n++; colours += r.changed;
+      fs.writeFileSync(path.join(out, p), m.file); n++; colours += r.changed;
     } catch (e) { failed.push(`${p}: ${e.message}`); }
   }
   console.log(`${hero}: ${n} of ${files.length} particle(s) recoloured (${colours} colours) into ${out}`);
+  if (lifted) console.log(`${lifted} MOD2X particle(s) keep 30% of every channel, so the ground under them is not tinted whole`);
   if (failed.length) console.log(`left as Valve's (could not read):\n  ${failed.join('\n  ')}`);
   console.log('Colours drawn in textures (projected rings, colour warps) do not move: see references/recolor.md.');
+}
+
+/**
+ * modkit warp <status effect .vpcf_c> <colour warp .vtex> --out <dir>
+ * A status effect pointed at another of the game's colour warps, in the compiled file, so the
+ * recipe in references/recolor.md needs neither the Workshop Tools nor a compile into the game.
+ */
+export async function warp(opts) {
+  const { index } = await pak01(opts);
+  const [effectText, warpText] = opts._;
+  const effect = need(effectText, 'a status effect (particles/status_fx/<name>.vpcf_c)').toLowerCase().replace(/\\/g, '/').replace(/(\.vpcf)?(_c)?$/, '.vpcf_c');
+  const to = need(warpText, 'a colour warp (materials/.../colorwarp_rupture.vtex)').toLowerCase().replace(/\\/g, '/').replace(/(\.vtex)?(_c)?$/, '.vtex');
+  const out = need(opts.out, '--out <folder>');
+  const raw = index.read(effect);
+  if (!raw) throw new Error(`no ${effect} in the game: try modkit find status_effect <hero>`);
+  if (!index.read(`${to}_c`)) throw new Error(`no ${to}_c in the game: try modkit find colorwarp`);
+  const { readKv3 } = await src('kv3.ts');
+  const { writeKv3 } = await src('kv3-write.ts');
+  const { dataBlock, withReferences } = await src('resource.ts');
+  const block = dataBlock(raw);
+  const kv = readKv3(block.data);
+  const from = new Set();
+  const walk = (n) => {
+    if (n.kind === 'string' && /colorwarp[^/]*\.vtex$/i.test(n.value)) { from.add(n.value); n.value = to; }
+    else if (n.kind === 'object') for (const v of n.members.values()) walk(v);
+    else if (n.kind === 'array') n.items.forEach(walk);
+  };
+  walk(kv.root);
+  if (!from.size) throw new Error(`${effect} names no colour warp`);
+  fs.mkdirSync(path.dirname(path.join(out, effect)), { recursive: true });
+  fs.writeFileSync(path.join(out, effect), withReferences(block.replace(writeKv3(kv)), [to]));
+  console.log(`${effect}: ${[...from].join(', ')} -> ${to}, into ${out}`);
 }
 
 /**

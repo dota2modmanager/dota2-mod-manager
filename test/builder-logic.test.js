@@ -54,6 +54,18 @@ test("a style rides last in the pick, is read back apart from the effects, and c
   assert.equal(stagedItemAction(effects, live, { ...staged('42', []), style: 2 }).label, 'Сохранить эффекты', 'both changed: one button saves both');
 });
 
+test("another item's effect rides between the effects and the style, and changing it is the button's to save (issue #383)", async () => {
+  const { effectKey, liveDonor, liveEffects, liveStyle, stagedItemAction } = await load();
+  assert.equal(effectKey(effects, ['fire'], 2, '9002'), 'fire,from-9002,style-2');
+  const live = { itemId: '42', name: 'Hat', effectId: 'fire,from-9002,style-1' };
+  assert.equal(liveDonor(live), '9002');
+  assert.deepEqual(liveEffects(live), ['fire'], 'the donor is not an effect');
+  assert.equal(liveStyle(live), 1);
+  assert.equal(liveDonor({ effectId: 'fire' }), '');
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), style: 1, donor: '9002' }).off, true, 'what is on already');
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), style: 1, donor: '' }).label, 'Сохранить эффекты');
+});
+
 test('a set is found by its own name or by a piece, and says only what tells something', async () => {
   const { matchingSets, setCardMeta, setCount, setIsOn } = await load();
   const piece = (slot, itemId, name, fits = true) => ({ slot, itemId, name, fits });
@@ -106,4 +118,15 @@ test('a hero with a persona on shows its persona\'s slots alone, and one without
   assert.deepEqual(shown(['item:pudge:persona_selector']), ['item:pudge:persona_selector', 'item:pudge:weapon_persona_1', 'item:axe:weapon', 'weather'],
     "the Toy Butcher on: Pudge's plain weapon goes, the persona's comes, other heroes stay");
   assert.deepEqual(shown(['item:pudge:weapon']), shown([]), 'a plain pick is no persona');
+});
+
+test("an effect sits on its shelf: the courier unusuals, the game's seasonal ones from 800 up, a courier's own ambient", async () => {
+  const { effectGroup, rarityName } = await load();
+  assert.equal(effectGroup('unusual-15'), 'unusual', 'Ethereal Flame');
+  assert.equal(effectGroup('unusual-826'), 'seasonal', 'Frostbloom');
+  assert.equal(effectGroup('frostbloom'), 'seasonal', "the builder's own, drawn with the same particle");
+  assert.equal(effectGroup('fire'), 'unusual');
+  assert.equal(effectGroup('sand-storm'), 'courier');
+  assert.equal(rarityName('mythical'), 'Mythical', 'as the game prints it in every language');
+  assert.equal(rarityName(undefined), '');
 });

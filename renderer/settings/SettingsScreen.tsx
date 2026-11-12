@@ -10,7 +10,14 @@ import { Reveal } from '../motion/Reveal.tsx';
 import { Swap } from '../motion/Swap.tsx';
 import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
+import type { RepairRun } from './RepairSteps.tsx';
+import { Diagnostics } from './Diagnostics.tsx';
 import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
+import { PreviewCacheBlock } from './PreviewCacheBlock.tsx';
+import { GridBlock } from './GridBlock.tsx';
+import { GameFilesBlock } from './GameFilesBlock.tsx';
+import { BackgroundBlock } from './BackgroundBlock.tsx';
+import { Toggle } from './Toggle.tsx';
 import type { CompilerState } from '../api/content.ts';
 
 export interface SettingsModel {
@@ -18,10 +25,16 @@ export interface SettingsModel {
   uiLang: string;
   scalePct: number;
   presence: boolean;
+  /** installs of catalog mods are counted by the catalog's download counter */
+  countDownloads: boolean;
+  /** the item builder's look on everybody playing the hero */
+  everyone: boolean;
   beta: { eligible: boolean; on: boolean };
   dotaPath: string;
   dotaValid: boolean;
   cache: string;
+  /** each archive in the download cache, largest first, so one can go without the rest */
+  cacheFiles: Array<{ key: string; name: string; category: string; size: string }>;
   proxy: string;
   /** the Source 2 toolchain: a size and a button, never downloaded on its own */
   vrf: { ready: boolean; size: string } | null;
@@ -31,6 +44,8 @@ export interface SettingsModel {
   adult: boolean;
   adultHint: string;
   version: string;
+  /** the last run of "Repair the app": running, or its lines */
+  repair: RepairRun | null;
 }
 
 export interface SettingsActions extends CompilerActions {
@@ -38,10 +53,13 @@ export interface SettingsActions extends CompilerActions {
   scale: (pct: number, live: boolean) => void;
   scaleStep: (delta: number | null) => void;
   presence: () => void;
+  countDownloads: () => void;
+  everyone: () => void;
   beta: () => void;
   detect: () => void;
   browse: () => void;
-  clearCache: () => void;
+  clearCache: () => void; openCache: () => void;
+  removeCached: (key: string) => void;
   proxySave: (value: string) => Promise<void>;
   proxyTest: (value: string) => Promise<void>;
   proxyClear: () => Promise<void>;
@@ -49,7 +67,11 @@ export interface SettingsActions extends CompilerActions {
   refreshCatalog: () => void;
   adult: () => void;
   exportReport: () => void;
+  repair: () => void;
+  removeEverything: () => void;
   whatsNew: () => void;
+  /** the window asking for support (ui/support.ts) */
+  support: () => void;
   open: (url: string) => void;
 }
 
@@ -59,10 +81,6 @@ const Block = ({ i, title, children }: { i?: number; title: ReactNode; children:
     {children}
   </div>
 );
-
-function Toggle({ id, on, label, onClick }: { id: string; on: boolean; label: string; onClick: () => void }) {
-  return <button className={`toggle ${on ? 'on' : ''}`} id={id} role="switch" aria-checked={on} aria-label={label} onClick={onClick} />;
-}
 
 /* The number moves while the slider is dragged and the window resizes on release: scaling on every
  * input event fights the drag, since the slider moves under the pointer. ui/chrome.ts paints the
@@ -87,7 +105,7 @@ function Scale({ pct, actions }: { pct: number; actions: SettingsActions }) {
   return (
     <div className="scale-ctl">
       <button className="btn btn-sm scale-step" id="masterDown" aria-label={L`Мельче`} onClick={() => actions.scaleStep(-5)}><span className="ms">remove</span></button>
-      <input type="range" className="scale-range" id="masterRange" min="70" max="160" step="5" ref={range} aria-label={L`Масштаб`} />
+      <input type="range" className="scale-range" id="masterRange" min="70" max="250" step="5" ref={range} aria-label={L`Масштаб`} />
       <span className="scale-val" id="masterRangeVal" ref={val} />
       <button className="btn btn-sm scale-step" id="masterUp" aria-label={L`Крупнее`} onClick={() => actions.scaleStep(5)}><span className="ms">add</span></button>
       <button className="btn btn-sm" id="masterReset" onClick={() => actions.scaleStep(null)}>{L`Сбросить`}</button>
@@ -139,6 +157,8 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         </Reveal>
       </Block>
 
+      <BackgroundBlock i={1} />
+
       <Block i={2} title={L`Путь к Dota 2`}>
         <div className="settings-row">
           <Swap className="mono grow" value={m.dotaPath || L`не найден`} />
@@ -149,14 +169,28 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <button className="btn btn-sm" id="browseBtn" onClick={actions.browse}>{L`Указать вручную`}</button>
         </div>
       </Block>
+      <GameFilesBlock i={2} everyone={m.everyone} onEveryone={actions.everyone} />
 
       <Block i={3} title={L`Кэш загрузок`}>
         <div className="settings-row">
           <span className="settings-label">{L`Размер`}</span>
           <Swap className="num" value={m.cache} />
+          <button className="btn btn-sm" id="openCacheBtn" onClick={actions.openCache}>{L`Показать в папке`}</button>
           <button className="btn btn-sm" id="clearCacheBtn" onClick={actions.clearCache}>{L`Очистить`}</button>
         </div>
         <div className="settings-hint">{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</div>
+        {m.cacheFiles.length > 0 && (
+          <details className="settings-adv cache-files" id="cacheFiles">
+            <summary>{L`Архивы по одному`} ({m.cacheFiles.length})</summary>
+            {m.cacheFiles.map((f) => (
+              <div className="settings-row cache-file" key={f.key}>
+                <span className="grow cache-file-name" title={f.key}>{f.name}<span className="cache-file-cat">{f.category}</span></span>
+                <span className="num">{f.size}</span>
+                <button className="btn btn-sm" aria-label={L`Удалить ${f.name}`} onClick={() => actions.removeCached(f.key)}>{L`Удалить`}</button>
+              </div>
+            ))}
+          </details>
+        )}
         <div className="settings-row spaced">
           <span className="settings-label">{L`Прокси загрузок`}</span>
           <ProxyControl value={m.proxy} onSave={actions.proxySave} onTest={actions.proxyTest} onClear={actions.proxyClear} />
@@ -182,7 +216,9 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
         </Block>
       )}
 
+      <PreviewCacheBlock ready={!!m.vrf?.ready} game={m.dotaValid} />
       {m.compiler && <CompilerBlock i={4} c={m.compiler} actions={actions} />}
+      <GridBlock i={4} />
 
       <Block i={4} title={L`Каталог`}>
         <div className="settings-row">
@@ -199,43 +235,54 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
           <Toggle id="adultToggle" on={m.adult} label={L`Моды 18+`} onClick={actions.adult} />
         </div>
         <div className="settings-hint">{m.adultHint}</div>
+        <div className="settings-row spaced">
+          <span className="settings-label">{L`Считать мои скачивания`}</span>
+          <Toggle id="countDownloadsToggle" on={m.countDownloads} label={L`Считать мои скачивания`} onClick={actions.countDownloads} />
+        </div>
+        <div className="settings-hint">{L`Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.`}</div>
       </Block>
 
       <Block i={5} title={L`Диагностика`}>
-        <div className="settings-row spaced">
-          <button className="btn btn-sm" id="diagExportBtn" onClick={actions.exportReport}><span className="ms">bug_report</span>{L`Экспортировать отчёт`}</button>
-        </div>
-        <div className="settings-hint">{L`Путь к игре, список модов и последние записи журнала в одном файле. Пришли его, если что-то не работает.`}</div>
+        <Diagnostics repair={m.repair} actions={actions} />
       </Block>
 
+      {/* Four kinds of thing, in the order somebody looks for them: what they can do for the
+          project, which build this is, who made it, and the licence. The support strip is the one
+          tinted thing on the page, because it is the only row here that asks something. */}
       <Block i={6} title={L`О программе`}>
-        <div className="settings-row">
-          <span className="settings-label">{L`Версия`}</span>
-          <span className="num">{`v${m.version}`}</span>
-          <a className="settings-link" id="repoLink" onClick={() => actions.open('https://github.com/dota2modmanager/dota2-mod-manager')}>github.com/dota2modmanager/dota2-mod-manager</a>
+        <div className="about-support">
+          <span className="ms">favorite</span>
+          <div className="about-support-text">
+            <div className="about-support-title">{L`Поддержи проект`}</div>
+            <div className="settings-hint">{L`Звезда на GitHub и пара слов о нас в интернете. Бесплатно и занимает минуту.`}</div>
+          </div>
+          <button className="btn btn-primary" id="supportBtn" onClick={actions.support}>{L`Как поддержать проект`}</button>
         </div>
-        <div className="settings-row">
+        <div className="about-app">
+          <span className="about-name">{L`Менеджер модов`}</span>
+          <span className="about-ver num">{`v${m.version}`}</span>
+          <span className="about-gap" />
           <button className="btn btn-sm" id="whatsNewBtn" onClick={actions.whatsNew}><span className="ms">auto_awesome</span>{L`Что нового`}</button>
+          <button className="btn btn-sm" id="repoLink" onClick={() => actions.open('https://github.com/dota2modmanager/dota2-mod-manager')}><span className="ms">code</span>{L`Исходный код`}</button>
         </div>
-        {/* The people the app owes something to and cannot pay. The catalog is credited in its own
-            block above; this row is for whoever else did the work. */}
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Спасибо`}</span>
-          <span>{L`hanta снял видео о менеджере`}</span>
-          <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>
-        </div>
-        {/* Credit NOTICE requires for the item builder (section 7(b)): both names, here. */}
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Конструктор предметов`}</span>
+        {/* The people the app owes something to. Credit NOTICE requires for the item builder
+            (section 7(b)): both names, here. The catalog is credited in its own block above. */}
+        <div className="about-sub">{L`Авторы и благодарности`}</div>
+        <div className="about-credits">
+          <span className="about-role">{L`Конструктор предметов`}</span>
           <span>h6rd, TheFleece</span>
           <a className="settings-link" id="builderLink" onClick={() => actions.open('https://github.com/h6rd')}>github.com/h6rd</a>
-        </div>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Арканы в конструкторе`}</span>
+          <span className="about-role">{L`Арканы в конструкторе`}</span>
           <span>J0nathan550</span>
           <a className="settings-link" id="arcanaCreditLink" onClick={() => actions.open('https://github.com/J0nathan550')}>github.com/J0nathan550</a>
+          <span className="about-role">{L`Идеи 3D-просмотра и сборки файлами`}</span>
+          <span>Harlord</span>
+          <a className="settings-link" id="harlordLink" onClick={() => actions.open('https://dota-studio.lol/')}>dota-studio.lol</a>
+          <span className="about-role">{L`Видео о менеджере`}</span>
+          <span>hanta</span>
+          <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>
         </div>
-        <div className="settings-hint">
+        <div className="about-legal">
           {`© 2026 TheFleece · ${L`конструктор предметов`} © 2026 h6rd, TheFleece · GPL-3.0 · ${L`свободная программа без каких-либо гарантий`}`}
         </div>
       </Block>

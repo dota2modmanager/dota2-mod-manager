@@ -22,13 +22,15 @@ SignPath Foundation».
 
 | Роль | Кто | Что делает |
 |---|---|---|
-| Авторы изменений | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Пишут изменения. В `main` изменение попадает только через pull request, в том числе от самих мейнтейнеров |
-| Ревьюеры | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Одобряют pull request. Одобрение автора не считается, а новый пуш снимает одобрение, данное до него. Изменение со стороны проверяет мейнтейнер |
-| Утверждающие | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Ставят тег релиза на коммит `main`, а когда подпись заработает, утверждают каждый запрос на подпись |
+| Авторы изменений | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd), [@HarlordLeg](https://github.com/HarlordLeg) | Пишут изменения. В `main` изменение попадает только через pull request, в том числе от самих мейнтейнеров |
+| Ревьюеры | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd), [@HarlordLeg](https://github.com/HarlordLeg) | Проверяют pull request со стороны перед слиянием: слить его можно только с правом записи, так что такое изменение всегда проходит через мейнтейнера. Изменения самих мейнтейнеров сливаются, когда пройдены обязательные проверки |
+| Утверждающие | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd), [@HarlordLeg](https://github.com/HarlordLeg) | Ставят тег релиза на коммит `main`, а когда подпись заработает, утверждают каждый запрос на подпись |
 
-Оба владеют организацией [dota2modmanager](https://github.com/dota2modmanager), и она требует
-двухфакторную аутентификацию от каждого участника. Оба включили её на всех сервисах, через которые
-можно что-то опубликовать. Кто что решает, написано в [GOVERNANCE.md](../GOVERNANCE.md).
+[@TheFleece](https://github.com/TheFleece) и [@Nersaa](https://github.com/Nersaa) владеют
+организацией [dota2modmanager](https://github.com/dota2modmanager), у трёх других роль Maintain на
+репозитории, которая не даёт доступа к настройкам и секретам. Организация требует двухфакторную
+аутентификацию от каждого участника, и все пятеро включили её на всех сервисах, через которые можно
+что-то опубликовать. Кто что решает, написано в [GOVERNANCE.md](../GOVERNANCE.md).
 
 ## Как собирается релиз
 
@@ -63,9 +65,11 @@ gh attestation verify Dota-2-Mod-Manager-Setup.exe --repo dota2modmanager/dota2-
 
 ## Приватность
 
-Программа не отправляет никаких сведений о тебе, твоём компьютере или твоих играх. Телеметрии и
-аккаунта нет. Она обращается к каталогу модов и к ленте обновлений; каждый адрес, к которому она
-может обратиться, зачем и когда, перечислен в [PRIVACY.ru.md](../PRIVACY.ru.md).
+Программа не отправляет никаких сведений о тебе или твоём компьютере, и аккаунта в ней нет.
+Единственное, о чём она сообщает, это счёт скачиваний: установка мода из каталога отправляет его
+название счётчику каталога, без идентификатора, и в настройках это выключается. Она обращается к
+каталогу модов, к этому счётчику и к ленте обновлений; каждый адрес, к которому она может
+обратиться, зачем и когда, перечислен в [PRIVACY.ru.md](../PRIVACY.ru.md).
 
 ## Что программа делает на компьютере
 

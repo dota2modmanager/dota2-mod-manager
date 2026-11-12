@@ -11,6 +11,7 @@
  *   POST /claim   {ticket}       the runner is caught; a fresh key, if the chase was real enough
  *   POST /redeem  {key, install} the app spends the key; tied to that install from then on
  *   GET  /mod?key=&install=      the prize itself, only to the install that spent the key
+ *        &voice=russian          the prize with that voice-over, where the bucket has one
  *   GET  /mod/preview            its picture, for the window that offers it
  *
  * What it can and cannot stop. The hunt runs in the visitor's browser, so nothing here can prove
@@ -140,13 +141,19 @@ export async function redeem(env, req, now) {
   return json(req, row ? 409 : 404, { error: row ? 'used' : 'wrong' });
 }
 
+/** Voice-overs the prize comes with: a game that speaks Russian gets necrophos-scream.russian.vpk. */
+const VOICES = ['russian'];
+
 async function prize(env, req, url, name) {
   const k = plainKey(url.searchParams.get('key'));
   const install = url.searchParams.get('install');
   if (!validInstall(install)) return json(req, 400, { error: 'wrong' });
   const row = await env.DB.prepare('SELECT install FROM keys WHERE key = ?').bind(k).first();
   if (!row || row.install !== install) return json(req, 403, { error: 'not-yours' });
-  const obj = await env.PRIZE.get(name);
+  const voice = url.searchParams.get('voice');
+  // an app too old to say its voice, or a voice with no pack yet, gets the plain prize
+  const voiced = VOICES.includes(voice) ? await env.PRIZE.get(name.replace(/\.vpk$/, `.${voice}.vpk`)) : null;
+  const obj = voiced || await env.PRIZE.get(name);
   if (!obj) return json(req, 404, { error: 'missing' });
   return new Response(obj.body, {
     headers: {

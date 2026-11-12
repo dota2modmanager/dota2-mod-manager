@@ -1,5 +1,24 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
+// The big pieces of a 3D preview answer come in slices (src/large-answer.ts), and go back in their places.
+async function wholeAnswer(value) {
+  if (Array.isArray(value)) return Promise.all(value.map(wholeAnswer));
+  if (!value || typeof value !== 'object' || ArrayBuffer.isView(value)) return value;
+  if (value.$large === undefined) {
+    const out = {};
+    for (const key of Object.keys(value)) out[key] = await wholeAnswer(value[key]);
+    return out;
+  }
+  const bytes = new Uint8Array(value.size);
+  for (let at = 0; at < value.size;) {
+    const slice = await ipcRenderer.invoke('preview3d:slice', value.$large, at);
+    if (!slice?.byteLength) throw new Error('3D preview: a piece of the answer was lost');
+    bytes.set(slice, at);
+    at += slice.byteLength;
+  }
+  return value.text ? new TextDecoder().decode(bytes) : bytes;
+}
+
 contextBridge.exposeInMainWorld('api', {
   win: {
     minimize: () => ipcRenderer.invoke('win:minimize'),
@@ -23,6 +42,7 @@ contextBridge.exposeInMainWorld('api', {
   catalog: {
     load: (force) => ipcRenderer.invoke('catalog:load', force),
     terrainAges: () => ipcRenderer.invoke('catalog:terrainAges'),
+    downloadCounts: () => ipcRenderer.invoke('catalog:downloadCounts'),
     // a d2mm://mod/ link clicked outside the app (src/deep-links.ts)
     onModLink: (cb) => ipcRenderer.on('mod-link', (e, link) => cb(link)),
   },
@@ -34,6 +54,8 @@ contextBridge.exposeInMainWorld('api', {
     remove: (id) => ipcRenderer.invoke('mods:remove', id),
     // a selection at once: one rebuild of the item schema for the batch, not one per mod
     removeMany: (ids) => ipcRenderer.invoke('mods:removeMany', ids),
+    // Settings: every mod out and the game's own files back, the app stays
+    removeEverything: () => ipcRenderer.invoke('mods:removeEverything'),
     // who owns the map archive a terrain is about to replace (maps/dota.vpk is one file)
     mapsOwner: () => ipcRenderer.invoke('mods:mapsOwner'),
     setEnabledMany: (ids, enabled) => ipcRenderer.invoke('mods:setEnabledMany', ids, enabled),
@@ -54,6 +76,7 @@ contextBridge.exposeInMainWorld('api', {
     masterState: () => ipcRenderer.invoke('mods:masterState'),
     setMaster: (enabled) => ipcRenderer.invoke('mods:setMaster', enabled),
     splitMod: (id) => ipcRenderer.invoke('mods:splitMod', id),
+    dropItemIcons: (id) => ipcRenderer.invoke('mods:dropItemIcons', id),
     splitExternal: (fileName) => ipcRenderer.invoke('mods:splitExternal', fileName),
     adoptMod: (id, preview) => ipcRenderer.invoke('mods:adoptMod', id, preview),
     adoptExternal: (fileName, preview) => ipcRenderer.invoke('mods:adoptExternal', fileName, preview),
@@ -66,9 +89,11 @@ contextBridge.exposeInMainWorld('api', {
     state: () => ipcRenderer.invoke('patch:state'),
     setEnabled: (on) => ipcRenderer.invoke('patch:setEnabled', on),
     refreshSchema: () => ipcRenderer.invoke('schema:refresh'),
+    cancelBuild: () => ipcRenderer.invoke('schema:cancel'),
     // what was done about the last Dota patch, and the two things the banner can ask for
     repairState: () => ipcRenderer.invoke('patch:repairState'),
     repairNow: () => ipcRenderer.invoke('patch:repairNow'),
+    repairApp: () => ipcRenderer.invoke('patch:repairApp'),
     repairSeen: () => ipcRenderer.invoke('patch:repairSeen'),
     onRepair: (cb) => ipcRenderer.on('patch-repair', (e, st) => cb(st)),
   },
@@ -96,15 +121,81 @@ contextBridge.exposeInMainWorld('api', {
   cosmetics: {
     slots: () => ipcRenderer.invoke('cosmetics:slots'),
     icons: (names) => ipcRenderer.invoke('cosmetics:icons', names),
-    heroPortraits: (ids) => ipcRenderer.invoke('cosmetics:heroPortraits', ids),
+    heroPortraits: (ids, tall) => ipcRenderer.invoke('cosmetics:heroPortraits', ids, tall),
     heroPortraitsByName: (names) => ipcRenderer.invoke('cosmetics:heroPortraitsByName', names),
     pick: (slot, itemId, itemName, effectId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId),
-    pickSet: (setId) => ipcRenderer.invoke('cosmetics:pickSet', setId),
+    pickSet: (setId, style) => ipcRenderer.invoke('cosmetics:pickSet', setId, style),
+    wearLook: (hero, picks) => ipcRenderer.invoke('cosmetics:wearLook', hero, picks),
   },
   // the arcana built out of the game's own files, in a colour of the user's
+  // towers and trees from the game's own looks, per side
+  // the item builder's 3D preview: the hero's models out of the game
+  preview3d: {
+    warm: (hero, slots) => ipcRenderer.invoke('preview3d:warm', hero, slots),
+    prefetch: (hero, slots, slot, items) => ipcRenderer.invoke('preview3d:prefetch', hero, slots, slot, items),
+    models: (hero, slots) => ipcRenderer.invoke('preview3d:models', hero, slots).then(wholeAnswer),
+    motions: (body) => ipcRenderer.invoke('preview3d:motions', body).then(wholeAnswer),
+    effect: (id) => ipcRenderer.invoke('preview3d:effect', id).then(wholeAnswer),
+    model: (file) => ipcRenderer.invoke('preview3d:model', file).then(wholeAnswer),
+  },
+  sounds: {
+    heroes: () => ipcRenderer.invoke('sounds:heroes'),
+    hero: (hero) => ipcRenderer.invoke('sounds:hero', hero),
+    add: (hero, event, mode, volume, wav, label) => ipcRenderer.invoke('sounds:add', hero, event, mode, volume, wav, label),
+    remove: (hero, event) => ipcRenderer.invoke('sounds:remove', hero, event),
+  },
+  creator: {
+    list: () => ipcRenderer.invoke('creator:list'),
+    save: (id, fields) => ipcRenderer.invoke('creator:save', id, fields),
+    attach: (id, style, kind) => ipcRenderer.invoke('creator:attach', id, style, kind),
+    remove: (id) => ipcRenderer.invoke('creator:remove', id),
+    export: (id, previews) => ipcRenderer.invoke('creator:export', id, previews),
+  },
+  hud: {
+    state: () => ipcRenderer.invoke('hud:state'),
+    install: (parts) => ipcRenderer.invoke('hud:install', parts),
+  },
+  fx: {
+    search: (query) => ipcRenderer.invoke('fx:search', query),
+    heroes: () => ipcRenderer.invoke('fx:heroes'),
+    hero: (hero) => ipcRenderer.invoke('fx:hero', hero),
+    load: (path) => ipcRenderer.invoke('fx:load', path),
+    preview: (path, edits) => ipcRenderer.invoke('fx:preview', path, edits),
+    install: (path, edits, items) => ipcRenderer.invoke('fx:install', path, edits, items),
+  },
+  rank: {
+    state: () => ipcRenderer.invoke('rank:state'),
+    pictures: () => ipcRenderer.invoke('rank:pictures'),
+    install: (look) => ipcRenderer.invoke('rank:install', look),
+  },
+  decor: {
+    state: () => ipcRenderer.invoke('decor:state'),
+    install: (groups) => ipcRenderer.invoke('decor:install', groups),
+  },
+  background: {
+    state: () => ipcRenderer.invoke('background:state'),
+    install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
+  },
+  // a hero's ability icons picked from his own cosmetics'
+  icons: {
+    heroes: () => ipcRenderer.invoke('icons:heroes'),
+    hero: (hero) => ipcRenderer.invoke('icons:hero', hero),
+    pictures: (icons) => ipcRenderer.invoke('icons:pictures', icons),
+    set: (hero, ability, icon) => ipcRenderer.invoke('icons:set', hero, ability, icon),
+    clear: (hero) => ipcRenderer.invoke('icons:clear', hero),
+  },
+  paint: {
+    state: (hero, items) => ipcRenderer.invoke('paint:state', hero, items),
+    icons: (abilities) => ipcRenderer.invoke('paint:icons', abilities),
+    install: (hero, colors, label, items) => ipcRenderer.invoke('paint:install', hero, colors, label, items),
+  },
+  map: {
+    state: () => ipcRenderer.invoke('map:state'),
+    install: (kind, radiant, dire) => ipcRenderer.invoke('map:install', kind, radiant, dire),
+  },
   arcana: {
     state: () => ipcRenderer.invoke('arcana:state'),
-    install: (color, mode) => ipcRenderer.invoke('arcana:install', color, mode),
+    install: (set, color, mode) => ipcRenderer.invoke('arcana:install', set, color, mode),
   },
   // a mod's own video, and the still the window decodes out of it
   preview: {
@@ -113,6 +204,12 @@ contextBridge.exposeInMainWorld('api', {
   },
   game: {
     launch: () => ipcRenderer.invoke('game:launch'),
+    steamDownloads: () => ipcRenderer.invoke('game:steamDownloads'),
+    steamProperties: () => ipcRenderer.invoke('game:steamProperties'),
+    // Dota opened or closed: while it is open nothing is written to the game (src/game-watch.ts)
+    onRunning: (cb) => ipcRenderer.on('game:running', (e, running) => cb(!!running)),
+    // Dota closed seconds after Play (src/crash-watch.ts)
+    onQuickExit: (cb) => ipcRenderer.on('game:quickExit', (e, exit) => cb(exit)),
   },
   packs: {
     combine: (name, modIds) => ipcRenderer.invoke('packs:combine', { name, modIds }),
@@ -135,6 +232,8 @@ contextBridge.exposeInMainWorld('api', {
     importDialog: () => ipcRenderer.invoke('presets:importDialog'),
     importFile: (filePath) => ipcRenderer.invoke('presets:importFile', filePath),
     resolve: (id) => ipcRenderer.invoke('presets:resolve', id),
+    ready: () => ipcRenderer.invoke('presets:ready'),
+    takeReady: (id) => ipcRenderer.invoke('presets:takeReady', id),
     onLink: (cb) => ipcRenderer.on('preset-link', (e, res) => cb(res)),
   },
   account: {
@@ -149,12 +248,20 @@ contextBridge.exposeInMainWorld('api', {
   presence: {
     view: (name) => ipcRenderer.invoke('presence:view', name),
   },
+  // the window asking for support (src/support-prompt.ts)
+  support: {
+    state: () => ipcRenderer.invoke('support:state'),
+    choose: (choice) => ipcRenderer.invoke('support:choose', choice),
+  },
   misc: {
     openLangFolder: () => ipcRenderer.invoke('misc:openLangFolder'),
+    openCacheFolder: () => ipcRenderer.invoke('misc:openCacheFolder'),
     openToolsFolder: (sub) => ipcRenderer.invoke('misc:openToolsFolder', sub),
     openExternal: (url) => ipcRenderer.invoke('misc:openExternal', url),
     cacheSize: () => ipcRenderer.invoke('misc:cacheSize'),
     clearCache: () => ipcRenderer.invoke('misc:clearCache'),
+    cacheList: () => ipcRenderer.invoke('misc:cacheList'),
+    cacheRemove: (key) => ipcRenderer.invoke('misc:cacheRemove', key),
     runTool: (dirName) => ipcRenderer.invoke('misc:runTool', dirName),
   },
   // the pumpkin's key and the mod it opens (src/ipc-pumpkin.ts)
@@ -162,6 +269,11 @@ contextBridge.exposeInMainWorld('api', {
     redeem: (key) => ipcRenderer.invoke('pumpkin:redeem', key),
     prizeAgain: () => ipcRenderer.invoke('pumpkin:prizeAgain'),
     hasPrize: () => ipcRenderer.invoke('pumpkin:hasPrize'),
+  },
+  grids: {
+    state: () => ipcRenderer.invoke('grid:state'),
+    apply: (kinds) => ipcRenderer.invoke('grid:apply', kinds),
+    remove: () => ipcRenderer.invoke('grid:remove'),
   },
   diag: {
     export: () => ipcRenderer.invoke('diag:export'),
@@ -177,6 +289,7 @@ contextBridge.exposeInMainWorld('api', {
     version: () => ipcRenderer.invoke('app:version'),
     notes: (lang) => ipcRenderer.invoke('app:notes', lang),
     notesSeen: () => ipcRenderer.invoke('app:notesSeen'),
+    stars: () => ipcRenderer.invoke('app:stars'),
     onUpdate: (cb) => ipcRenderer.on('update', (e, evt) => cb(evt)),
   },
 });

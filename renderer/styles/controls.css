@@ -70,9 +70,12 @@
 /* Two lines that are not equals. The first is the same on every category - order, whose
    heroes, and the two questions about your own library - and it reads as one row. Tags
    belong to this category alone and sit under a rule, quieter, so the eye can skip them. */
+/* Its level is above the cards it floats over and below the title bar: at 25 it painted over the
+   help menu that drops out of the bar, and a tall bar (a big --top-zoom) puts that menu right on
+   top of it, unclickable (issue #357). An open dropdown still lifts it, below. */
 .toolbar {
   position: relative;
-  z-index: 25;
+  z-index: calc(var(--z-bar) - 1);
   margin-bottom: var(--space-4);
   padding: 11px 14px;
   background: var(--surface);
@@ -407,3 +410,16 @@
 .ctx-item.danger .ms { color: var(--danger); }
 .ctx-item.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
 .ctx-sep { height: 1px; margin: var(--space-1) var(--space-2); background: var(--border); }
+
+/* where a Workshop tile sent the person (ui/spotlight.ts): the thing rings twice in the accent and lets go */
+/* body: above a block's own entrance animation (.settings-block), which is drawn from a later file */
+body .spotlit { position: relative; animation: spotlit 3s var(--ease-out) both; border-radius: var(--radius-md); }
+/* held long enough to be seen once the scroll has stopped, then let go */
+@keyframes spotlit {
+  0%, 12% { outline: 2px solid transparent; outline-offset: 6px; background-color: transparent; }
+  22%, 78% { outline: 2px solid var(--primary); outline-offset: 2px; background-color: color-mix(in srgb, var(--primary) 12%, transparent); }
+  100% { outline: 2px solid transparent; outline-offset: 2px; background-color: transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body .spotlit { animation: none; box-shadow: var(--focus-ring); }
+}

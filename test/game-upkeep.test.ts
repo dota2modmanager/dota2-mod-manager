@@ -152,6 +152,28 @@ test('a patch while Dota runs waits for it to close, then repairs and remembers 
   s.upkeep.stop();
 });
 
+test("Steam's file check after a crash is waited out: the mods go back once Steam is done", async (t) => {
+  const game = fakeGame(t, { build: '6001' });
+  const manifest = path.resolve(game, '..', '..', '..', 'appmanifest_570.acf');
+  const flags = (n: number) => fs.writeFileSync(manifest, `"AppState"
+{
+	"appid"		"570"
+	"StateFlags"		"${n}"
+}
+`);
+  flags(4 | 131072);
+  const s = stand({ game, heal: () => ({ healed: ['patch'], error: null }) });
+  await s.upkeep.repairAfterPatch('files-restored');
+  assert.deepEqual(s.sent, [{ state: 'waiting', reason: 'files-restored', steam: 'validating', at: 1000 }]);
+  assert.equal(s.asked.includes('heal'), false, 'nothing written while Steam writes the same files');
+
+  flags(4);
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(s.sent.at(-1)?.state, 'done');
+  assert.equal(s.asked.includes('heal'), true);
+  s.upkeep.stop();
+});
+
 test('a repair that fails says so, and a patch with no game set does nothing', async (t) => {
   const game = fakeGame(t);
   const s = stand({ game, heal: () => ({ healed: [], error: 'gameinfo is read-only' }) });
@@ -168,9 +190,14 @@ test('a game patched while the app was closed is repaired at start and reported 
   const game = fakeGame(t, { build: '6002' });
   const s = stand({ game, stored: { gameStamp: '6001:?' }, heal: () => ({ healed: ['schema'], error: null }) });
   await s.upkeep.atStart();
-  assert.deepEqual(s.upkeep.patchRepair(), { state: 'done', healed: ['schema'], error: null, at: 1000 });
+  assert.deepEqual(s.upkeep.patchRepair(), { state: 'done', healed: ['schema'], error: null, at: 1000, whileClosed: true },
+    'a launch from Steam before this start ran on the old table, and the banner says so');
   assert.equal(s.store.get('gameStamp'), gameStamp(game));
   assert.deepEqual(s.sent, [], 'no window yet: the state waits to be asked for');
+
+  const nothing = stand({ game, stored: { gameStamp: '6001:?' }, heal: () => ({ healed: ['files'], error: null }) });
+  await nothing.upkeep.atStart();
+  assert.equal('whileClosed' in nothing.upkeep.patchRepair(), false, 'only fonts put back: nothing a launch would have tripped on');
 
   const same = stand({ game, stored: { gameStamp: gameStamp(game) } });
   await same.upkeep.atStart();
@@ -264,4 +291,45 @@ test('runSteps goes on past a step that throws and awaits one that is slow', asy
   ], (m) => said.push(m));
   assert.deepEqual(order, ['first', 'third']);
   assert.deepEqual(said, ['second skipped: no']);
+});
+
+/* Steam beside the fake game, one account signed in with these launch options (as test/gamelang.test.ts). */
+function launchWith(game: string, options: string) {
+  const root = path.resolve(game, '..', '..', '..', '..');
+  fs.mkdirSync(path.join(root, 'config'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'config', 'loginusers.vdf'), `"users"\n{\n\t"76561197960265729"\n\t{\n\t\t"Timestamp"\t\t"1"\n\t\t"MostRecent"\t\t"1"\n\t}\n}\n`);
+  const dir = path.join(root, 'userdata', '1', 'config');
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'localconfig.vdf'),
+    `"UserLocalConfigStore"\n{\n\t"Software"\n\t{\n\t\t"Valve"\n\t\t{\n\t\t\t"Steam"\n\t\t\t{\n\t\t\t\t"apps"\n\t\t\t\t{\n\t\t\t\t\t"570"\n\t\t\t\t\t{\n\t\t\t\t\t\t"LaunchOptions"\t\t"${options}"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n}\n`);
+}
+
+test('a mods folder kept in Settings stays put under a -language launch option, which moves them otherwise', async (t) => {
+  // somebody who sets English there for the Workshop Tools and plays in Russian had every mod moved
+  // into dota_english, renumbered, on each start
+  const kept = fakeGame(t, { folders: { dota_russian: ['pak30_dir.vpk'], dota_english: ['their_own.txt'] } });
+  launchWith(kept, '-language english -novid');
+  const boot = fs.readFileSync(path.join(kept, 'dota', 'cfg', 'boot.vcfg'), 'utf8');
+  const s = stand({ game: kept, stored: { langSuffix: 'russian', langFolderLock: 'russian' } });
+  await s.upkeep.keepModFolder();
+  assert.ok(fs.existsSync(path.join(kept, 'dota_russian', 'pak30_dir.vpk')), 'the mod where it was');
+  assert.ok(!fs.existsSync(path.join(kept, 'dota_russian', 'their_own.txt')), "the launch option's folder is not ours to empty");
+  assert.equal(s.store.get('langSuffix'), 'russian');
+  assert.equal(s.upkeep.takeLangMigration(), null);
+  assert.equal(fs.readFileSync(path.join(kept, 'dota', 'cfg', 'boot.vcfg'), 'utf8'), boot, "the game's settings as they were");
+
+  const followed = fakeGame(t, { folders: { dota_russian: ['pak30_dir.vpk'] } });
+  launchWith(followed, '-language english');
+  const f = stand({ game: followed, stored: { langSuffix: 'russian' } });
+  await f.upkeep.keepModFolder();
+  assert.ok(fs.existsSync(path.join(followed, 'dota_english', 'pak30_dir.vpk')), 'without one the mods follow the launch option, as before');
+});
+
+test('a mods folder kept takes back the mods an earlier start moved to the launch option', async (t) => {
+  const game = fakeGame(t, { folders: { dota_english: ['pak30_dir.vpk'] } });
+  launchWith(game, '-language english');
+  const s = stand({ game, stored: { langSuffix: 'english', langFolderLock: 'russian' } });
+  await s.upkeep.keepModFolder();
+  assert.ok(fs.existsSync(path.join(game, 'dota_russian', 'pak30_dir.vpk')));
+  assert.equal(s.store.get('langSuffix'), 'russian');
 });

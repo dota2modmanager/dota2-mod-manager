@@ -5,7 +5,11 @@
  * from its handler in src/ipc-*.js; a change to what a handler answers changes the type beside
  * the others of its group here. */
 import type { AppApi } from './app.ts';
-import type { ArcanaApi, CatalogApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, DecorApi, PaintApi, MapLooksApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';
+import type { FxApi } from './fx.ts';
+import type { IconsApi } from './icons.ts';
+import type { Preview3dApi } from './preview3d.ts';
+import type { CreatorApi } from './creator.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 
 export interface Api extends AppApi {
@@ -22,6 +26,24 @@ export interface Api extends AppApi {
   cosmetics: CosmeticsApi;
   /** the arcana built out of the game's own files */
   arcana: ArcanaApi;
+  /** the in-game HUD smaller or larger */
+  hud: HudApi;
+  fx: FxApi;
+  rank: RankApi;
+  decor: DecorApi;
+  /** a movie of the user's own behind the main menu */
+  background: BackgroundApi;
+  paint: PaintApi;
+  /** a hero's ability icons picked from his own cosmetics' */
+  icons: IconsApi;
+  /** towers and trees from the game's own looks */
+  map: MapLooksApi;
+  /** sounds of the user's own on a hero's events */
+  sounds: SoundsApi;
+  /** an author's drafts of mods for the catalog */
+  creator: CreatorApi;
+  /** the item builder's 3D preview */
+  preview3d: Preview3dApi;
   preview: PreviewApi;
   packs: PacksApi;
   presets: PresetsApi;

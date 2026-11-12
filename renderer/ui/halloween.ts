@@ -81,7 +81,9 @@ function dress(): () => void {
   const webBottom = div('hwa-web bottom');
   webBottom.appendChild(web(96));
   layer.append(blood, hang, webTop, webBottom);
-  document.body.appendChild(layer);
+  // inside #app, which is a layer of its own (shell.css): on <body> the dressing sat over the
+  // mod window and every other dialog, sharp above their dimming
+  (document.getElementById('app') ?? document.body).appendChild(layer);
 
   const place = () => {
     const top = document.getElementById('titlebar')?.getBoundingClientRect().bottom ?? 46;

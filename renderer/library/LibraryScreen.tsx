@@ -14,6 +14,7 @@ import { BulkBar, CosmeticsHead, LibToolbar, ListHead } from './Toolbar.tsx';
 import { ExternalRow, ModRow, PackRow } from './Rows.tsx';
 import { useOrderDrag } from './drag.ts';
 import { plural } from '../ui/format.ts';
+import { GrowMarker, useGrowing } from '../ui/growing.ts';
 
 export function LibraryScreen({ m, actions }: { m: LibraryModel; actions: LibraryActions }) {
   const bindBanner = useCallback((el: HTMLElement) => bindNotice(el, actions.noticeRead), [actions]);
@@ -53,6 +54,8 @@ function LibList({ m, actions }: { m: LibraryModel; actions: LibraryActions }) {
   // what a row does beyond its switch and its delete is a right-click away (views/library/menus.ts)
   const menu = useRef(actions.menu);
   menu.current = actions.menu;
+  // a page of rows at a time (ui/growing.ts, issue #358); the cosmetics below them wait for the last
+  const { limit, marker, more } = useGrowing(m.rows.length, 'library');
   useEffect(() => {
     if (ref.current) bindContextMenu(ref.current, '.lib-row[data-row]', (row: HTMLElement) => menu.current(row.dataset.row || ''));
   }, []);
@@ -62,14 +65,18 @@ function LibList({ m, actions }: { m: LibraryModel; actions: LibraryActions }) {
         <>
           {/* a row that goes folds away before it leaves the page (row-motion.ts) */}
           <AnimatePresence initial={false}>
-            {m.rows.map((r) => (r.kind === 'pack'
+            {m.rows.slice(0, limit).map((r) => (r.kind === 'pack'
               ? <PackRow key={r.id} p={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />
               : <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />))}
           </AnimatePresence>
-          <CosmeticsHead m={m} actions={actions} />
-          <AnimatePresence initial={false}>
-            {m.cosmetics?.rows.map((r) => <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />)}
-          </AnimatePresence>
+          {more ? <GrowMarker marker={marker} total={m.rows.length} className="lib-more" /> : (
+            <>
+              <CosmeticsHead m={m} actions={actions} />
+              <AnimatePresence initial={false}>
+                {m.cosmetics?.rows.map((r) => <ModRow key={r.id} r={r} masterOff={m.masterOff} actions={actions} motionKey={m.motion} />)}
+              </AnimatePresence>
+            </>
+          )}
         </>
       )}
     </div>

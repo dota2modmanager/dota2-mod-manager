@@ -82,6 +82,16 @@ test('a refit goes under the stock path ahead of the plain model, which stays fo
   ]);
 });
 
+test("a refit goes in the pick's style, as its plain model does (Queen of Pain's Bloodfeather Frock under her arcana)", () => {
+  const styles = `\t\t\t\t"styles"\n\t\t\t\t{\n\t\t\t\t\t"0"\n\t\t\t\t\t{\n\t\t\t\t\t\t"skin"\t\t"0"\n\t\t\t\t\t}\n\t\t\t\t\t"1"\n\t\t\t\t\t{\n\t\t\t\t\t\t"skin"\t\t"1"\n\t\t\t\t\t}\n\t\t\t\t}\n`;
+  const text = voidTable().replace(`\t\t\t"model_player"\t\t"${PAID}"\n`, `\t\t\t"model_player"\t\t"${PAID}"\n\t\t\t"visuals"\n\t\t\t{\n${styles}\t\t\t}\n`);
+  const refit = 'models/items/faceless_void/bracers_of_aeons/bracers_of_aeons_refit.vmdl';
+  const second = builder.itemEffectPatch(text, '7816', 'style-1', undefined, undefined, refit);
+  assert.deepEqual(second.assetCopies.slice(0, 2), [{ from: refit, to: STOCK, optional: true, skin: 1 }, { from: PAID, to: STOCK, skin: 1 }]);
+  const first = builder.itemEffectPatch(text, '7816', null, undefined, undefined, refit);
+  assert.deepEqual(first.assetCopies.slice(0, 2), [{ from: refit, to: STOCK, optional: true }, { from: PAID, to: STOCK }], 'the first style is the model as it is');
+});
+
 test("the picked bracers are worn refitted under the arcana, whichever was picked first, and plain without it", (t) => {
   const text = voidTable();
   const game = gameWithModels(t);

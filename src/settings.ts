@@ -8,17 +8,31 @@ import { writeFileAtomic } from './atomic-file.ts';
 export interface StoredSettings {
   dotaGamePath: string | null;
   langSuffix: string;
+  /** the mods folder the user keeps whatever the game is set to (koreana, russian, schinese), or null to follow the game */
+  langFolderLock: string | null;
   uiLang: 'en' | 'ru' | 'zh-CN' | string;
   langPromptSeen: boolean;
   uiScale: number;
   theme: string;
   favorites: string[];
+  /** the user's own names for rows in My mods, by "rec:<id>" or "file:<name>" (renderer/library/labels.ts) */
+  modLabels: Record<string, string>;
   panels: Record<string, unknown> | null;
   account: { id: string; username: string; avatar?: string | null } | null;
   discordPresence: boolean;
+  /** whether installs of catalog mods are counted by the catalog's download counter (src/download-stats.ts) */
+  countDownloads: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
+  /** the item builder's saved looks per hero (issue #527), apart from presets */
+  itemLooks: { id: string; hero: string; name: string; picks: { slot: string; itemId: string; name: string; effectId?: string }[]; at: number }[];
   schemaStamp: string | null;
+  /** a build of the item table was asked for and has not written yet: the next start builds it */
+  schemaPending: boolean;
+  /** the preset applied last, which the Presets screen marks as changed once the state leaves it */
+  lastPreset: string | null;
+  /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
+  everyoneWearsMine: boolean;
   toolsPromptSeen: boolean;
   showAdult: boolean | null;
   lastSeenVersion: string | null;
@@ -32,6 +46,12 @@ export interface StoredSettings {
   slotZones?: number;
   /** the build of the game last seen on disk (src/patch-watch.ts gameStamp) */
   gameStamp?: string | null;
+  /** when Dota last ran a minute or more (src/crash-watch.ts) */
+  lastGoodGameAt?: number | null;
+  /** start with Windows and hide in the tray on close (src/tray.ts) */
+  runInBackground: boolean;
+  /** the tray's one-time note that the app is still running has been shown */
+  trayHintSeen?: boolean;
   /** the pumpkin in the title bar has come out (renderer/ui/pumpkin.ts) */
   pumpkin: boolean;
   /** the ninth theme is open (renderer/ui/pumpkin.ts) */
@@ -47,6 +67,8 @@ export interface StoredSettings {
   nightRound?: number;
   /** the resourcecompiler.exe picked in Settings, over the game's own (src/resource-compiler.ts) */
   resourceCompilerPath?: string | null;
+  /** when the window asking for support last came up and what the user answered (src/support-prompt.ts) */
+  supportPrompt?: unknown;
 }
 
 const DEFAULTS: StoredSettings = {
@@ -57,6 +79,10 @@ const DEFAULTS: StoredSettings = {
   // (see keepModFolder in src/game-upkeep.ts). The value stays a setting because everything downstream
   // reads it, and because an upgrade has to be able to see what the folder used to be.
   langSuffix: 'russian',
+  // null: the mods follow the game, as above. A folder: they stay there, and a `-language` in
+  // Steam's launch options no longer moves them (keepModFolder): somebody who sets English there
+  // for the Workshop Tools and plays in Russian had every mod moved, renumbered, each time.
+  langFolderLock: null,
   // app UI language: "en" | "ru". English is the default until the user picks otherwise.
   uiLang: 'en',
   // one-time language picker: false for fresh installs AND for users updating from a
@@ -74,6 +100,8 @@ const DEFAULTS: StoredSettings = {
   pumpkinLit: false,
   // catalog mods the user starred: "<categoryId>|<mod name>" keys
   favorites: [],
+  // the user's own names for rows in My mods; the files keep theirs (renderer/library/labels.ts)
+  modLabels: {},
   // sizes and folded state of the title bar, status bar and category rail
   panels: null,
   // Discord identity, when signed in: { id, username, avatar }. No token is ever kept —
@@ -81,6 +109,10 @@ const DEFAULTS: StoredSettings = {
   account: null,
   // show "Playing Dota 2 Mod Manager" in Discord while the app is open
   discordPresence: true,
+  // start with Windows and hide in the tray, to be there when a Dota update lands (src/tray.ts)
+  runInBackground: true,
+  // tell the catalog's counter which catalog mod was installed: its name and nothing else
+  countDownloads: true,
   // Item-schema support ("safe mode" off, in the status bar). The engine reads
   // scripts/items/items_game.txt through the MOD path only (game/dota), so mods that
   // change it - skinchanger-style sets with their own ambient effects, free cosmetics -
@@ -94,8 +126,14 @@ const DEFAULTS: StoredSettings = {
   // they can be toggled/deleted/shared like any other mod. Kept only so an old settings
   // file has something to migrate from.
   cosmetics: {},
+  // the item builder's saved looks: a hero's picks under a name, put back on in one click
+  itemLooks: [],
   // items_game.txt build the deployed schema was made from, to spot a game update
   schemaStamp: null,
+  lastPreset: null,
+  // tried on one hero first, so off until the user asks for it
+  everyoneWearsMine: false,
+  schemaPending: false,
   // One-time offer of the Source 2 toolchain, asked once on first run. False for fresh
   // installs and for anybody updating from before it was offered, so everyone gets the
   // question once; the Settings row is the way in afterwards either way.

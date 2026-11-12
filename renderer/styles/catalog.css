@@ -97,6 +97,8 @@
   content-visibility: auto;
   contain-intrinsic-size: auto 250px;
 }
+/* where the next page of a long list joins (ui/growing.ts): a whole row, and nothing to see */
+.grid-more { grid-column: 1 / -1; height: 1px; margin-top: -1px; }
 .group-title {
   grid-column: 1 / -1;
   font-family: var(--font-head);
@@ -169,8 +171,84 @@
 /* the catalog's own search field, sized by itself rather than by the column it sits in */
 .item-picker-search { align-self: flex-start; }
 .item-hero-slots { margin-top: var(--space-4); }
+/* The hero in 3D (catalog/preview3d): a stage as wide as the window, the note over its middle. */
+.preview3d-toggle { margin-left: auto; margin-right: var(--space-6); flex-shrink: 0; }
+.preview3d-toggle.on { background: var(--md-primary-container); color: var(--md-on-primary-container, var(--text)); }
+.preview3d {
+  position: relative;
+  height: 360px;
+  margin-top: var(--space-4);
+  border-radius: var(--radius-md);
+  background: radial-gradient(ellipse at 50% 85%, var(--surface-hover), var(--bg-deep) 70%);
+  overflow: hidden;
+}
+.preview3d-stage, .preview3d-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* the hero's own colour behind it, as its showcase in the game has it (scene.ts sets --stage-tint) */
+.preview3d-stage { background: radial-gradient(ellipse 90% 55% at 50% 55%, color-mix(in srgb, var(--stage-tint, transparent) 32%, transparent), transparent 80%); }
+.preview3d-stage canvas { cursor: grab; outline: none; }
+.preview3d-stage canvas:active { cursor: grabbing; }
+.preview3d-stage canvas:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
+/* over the stage: what it plays and the way back; quiet, the hero is what is looked at */
+.preview3d-tools {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-3);
+  left: var(--space-3);
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.preview3d-tools .custom-select-wrap { flex: 0 1 auto; min-width: 0; max-width: 70%; }
+.preview3d-tools[data-busy='true'] .custom-select-icon { animation: preview3dSpin 1s linear infinite; }
+.preview3d-home { margin-left: auto; flex-shrink: 0; }
+/* the moves, while the pointer is over the stage: they are not worth the room the rest of the time */
+.preview3d-hint {
+  position: absolute;
+  z-index: 2;
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: var(--space-3);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-xs, 12px);
+  color: var(--text-muted);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.preview3d:hover .preview3d-hint, .preview3d:focus-within .preview3d-hint { opacity: 1; }
+.preview3d-hint b { font-weight: 600; color: var(--text); }
+.preview3d-missing + .preview3d-hint { bottom: var(--space-7); }
+.preview3d-note {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  text-align: center;
+  color: var(--text-muted);
+}
+.preview3d[data-status='loading'] .preview3d-note .ms { animation: preview3dSpin 1s linear infinite; }
+@keyframes preview3dSpin { to { rotate: 360deg; } }
+.preview3d-missing {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  font-size: var(--text-xs, 12px);
+  opacity: 0.7;
+}
 .item-fx-head { margin-top: var(--space-5); }
 .item-fx-hint { margin-bottom: var(--space-3); }
+/* the game's own unusual effects under the builder's cards: names only, so buttons rather than cards */
+#effectGrid + .item-fx-hint { margin-top: var(--space-4); }
+.item-fx-game { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.item-fx-game .style-btn::before { display: none; }
 .item-back { margin-bottom: var(--space-2); }
 .item-empty {
   display: flex;
@@ -424,6 +502,8 @@
 .card-pills { display: flex; gap: 5px; min-width: 0; }
 .card-meta-split .mtag { backdrop-filter: none; background: var(--surface); }
 /* a whole-map terrain built for an older map than the game's: read over the picture */
+/* a mod the signed config marks as misbehaving: one character, the words are in its title */
+.mtag-issue { font-weight: 800; min-width: 20px; justify-content: center; }
 .mtag.warn {
   color: var(--warning);
   background: rgba(40, 30, 6, 0.78);
@@ -450,6 +530,16 @@
   transition: all 0.2s var(--ease);
 }
 .author-chip .ms { font-size: 12px; }
+/* how many people have the mod: a fact about it, quieter than the author beside it, at the far end */
+.dl-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+.dl-count .ms { font-size: 13px; }
 /* what a modder or a sender did, quieter than who they are, so the author still leads */
 .author-chip .credit-role { color: var(--text-faint); font-weight: 500; }
 .author-chip.clickable { cursor: pointer; }
@@ -781,6 +871,23 @@
 .arcana-own .ms { font-size: var(--text-md); }
 .arcana-own input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: none; }
 .modal-actions .arcana-mode { margin-left: auto; }
+/* The game's prismatic gems: dots quieter than the pills above them, named on the label line when
+   one is pointed at or picked, so 42 of them stay a palette rather than a wall of words. */
+.arcana-gems { display: flex; flex-direction: column; gap: var(--space-2); }
+.arcana-gems-label { display: flex; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-faint); }
+.arcana-gem-name { color: var(--text-muted); }
+.arcana-gem-row { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.arcana-gem {
+  width: 20px; height: 20px; padding: 0;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--c) 60%, var(--border));
+  background: var(--c);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+.arcana-gem:hover { transform: scale(1.15); }
+.arcana-gem:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.arcana-gem.active { box-shadow: 0 0 0 2px var(--bg-deep), 0 0 0 4px var(--c), 0 0 10px var(--c); }
 /* The arcana's own picture is a 256-pixel item icon: drawn whole, at about twice its size rather
    than four, in a shorter frame (the audio window's), its edges faded into the window's so its
    square background does not show. */
@@ -790,3 +897,175 @@
   object-fit: contain;
   mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%);
 }
+/* a picture that stands on nothing (a set's art, cut to its figure in arcana/tint.ts) has no square
+   edge to hide: drawn whole and centred, a little in from the frame */
+.modal-media.arcana-media.cutout img { height: 90%; margin: auto; mask-image: none; }
+.card-media.cutout img { object-fit: contain; padding: var(--space-2); }
+
+/* Towers and trees out of the game's own looks (catalog/map/MapLookModal.tsx): no picture on top,
+   so the window opens on its title, then the looks of each side under the side's name; the cards
+   themselves are in workshop-windows.css. */
+.modal-body.map-looks { position: relative; padding-top: var(--space-5); }
+.map-looks .modal-title-row { padding-right: var(--space-6); }
+.map-side { display: flex; flex-direction: column; gap: var(--space-2); }
+.map-side-label { font-size: var(--text-xs); font-weight: var(--weight-semibold); color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* a sound of the user's own on a hero's event (catalog/sounds/SoundModal.tsx) */
+/* the author's window (creator/CreatorModal.tsx): the drafts, then one draft's form beside its card */
+.creator .modal-title-row { padding-right: var(--space-6); gap: var(--space-2); }
+.creator-list { display: flex; flex-direction: column; gap: var(--space-1); }
+.creator-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding: var(--space-2); border-radius: var(--radius-sm); background: none; border: 1px solid var(--border); color: var(--text); text-align: left; cursor: pointer; }
+.creator-row:hover { border-color: var(--border-strong); }
+.creator-row img, .creator-row-pic { width: 64px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-sm); display: grid; place-items: center; background: var(--bg-elev); color: var(--text-faint); }
+.creator-row-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.creator-grid { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: var(--space-4); align-items: start; }
+.creator-fields { display: flex; flex-direction: column; gap: var(--space-3); }
+.creator-field { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--text-muted); }
+.creator-field textarea { resize: vertical; min-height: 64px; font: inherit; color: var(--text); }
+.creator-card { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); padding-bottom: var(--space-2); }
+.creator-card img, .creator-card-pic { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: grid; place-items: center; background: var(--bg-elev); color: var(--text-faint); }
+.creator-card-name { font-weight: 700; font-family: var(--font-head); padding: var(--space-2) var(--space-3) 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.creator-card .text-meta { padding: 0 var(--space-3); }
+.creator-style { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.creator-style .input { flex: 1; min-width: 140px; }
+#creatorAddStyle { align-self: flex-start; }
+.creator-style-pic { display: block; flex: none; width: 56px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-sm); }
+.sound-own .modal-title-row { padding-right: var(--space-6); }
+.sound-own .style-btn::before { display: none; }
+.sound-events { display: flex; flex-wrap: wrap; gap: var(--space-1); max-height: 180px; overflow-y: auto; padding: var(--space-1) 0; }
+.sound-events .style-btn .ms { font-size: var(--text-sm); margin-right: var(--space-1); color: var(--primary); }
+.sound-file { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.sound-file-name { font-size: var(--text-sm); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sound-preview { width: 100%; height: 36px; }
+.sound-volume { display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); color: var(--text-muted); }
+.sound-edit { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
+.sound-edit-name, .sound-edit-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sound-edit-file { color: var(--text-muted); }
+/* a main menu background of the user's own (catalog/background/BackgroundModal.tsx) */
+.background-own .modal-title-row { padding-right: var(--space-6); }
+.background-own { display: flex; flex-direction: column; gap: var(--space-3); }
+.background-preview { position: relative; aspect-ratio: 16 / 9; width: min(100%, 448px); align-self: center; border-radius: var(--radius-md); overflow: hidden; background: var(--bg-deep); }
+.background-preview img, .background-preview video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.background-veil { position: absolute; inset: 0; background: #000; pointer-events: none; }
+.background-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-1); color: var(--text-faint); font-size: var(--text-sm); text-align: center; padding: var(--space-3); }
+.background-empty .ms { font-size: var(--text-xl); }
+.background-look { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.background-look .scale-range { width: 100%; max-width: none; }
+/* the HUD editor (catalog/hud/HudModal.tsx): the plan of a screen, then the list and the chosen panel beside it */
+.modal-content:has(> .hud-editor), .modal-content:has(.hud-editor) { width: min(1120px, calc(94vw / var(--content-zoom))); }
+.hud-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+.hud-editor .modal-title-row { padding-right: var(--space-6); }
+.hud-editor .scale-range { width: 100%; max-width: none; }
+.hud-room { display: grid; grid-template-columns: minmax(0, 1fr) 248px; gap: var(--space-4); align-items: start; }
+.hud-plan { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.hud-screen { position: relative; aspect-ratio: 16 / 9; width: 100%; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-deep); box-shadow: inset 0 0 0 1px var(--border); touch-action: none; }
+.hud-block { --part-tint: var(--primary); position: absolute; display: grid; grid-template-columns: repeat(var(--cols, 1), minmax(0, 1fr)); grid-template-rows: repeat(var(--rows, 1), minmax(0, 1fr)); gap: 1px; padding: 0; border: 0; border-radius: var(--radius-xs); background: color-mix(in srgb, var(--part-tint) 34%, transparent); cursor: grab; }
+.hud-block:active { cursor: grabbing; }
+.hud-block:hover { background: color-mix(in srgb, var(--part-tint) 48%, transparent); }
+.hud-block.is-frame { background: color-mix(in srgb, var(--part-tint) 12%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--part-tint) 30%, transparent); }
+.hud-block.is-chosen { outline: 2px solid var(--primary); outline-offset: 1px; z-index: 1; }
+.hud-block.is-hidden { background: none; box-shadow: inset 0 0 0 1px var(--border-strong); }
+.hud-block.is-hidden .hud-cell { visibility: hidden; }
+.hud-block:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.hud-cell { background: color-mix(in srgb, var(--part-tint) 40%, transparent); border-radius: var(--space-px); }
+.hud-side { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.hud-list { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
+.hud-list li { display: flex; align-items: center; border-radius: var(--radius-xs); }
+.hud-list li.is-chosen { background: var(--surface); }
+.hud-list li.is-inside .hud-list-name { padding-left: var(--space-4); }
+.hud-list-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2); border: 0; background: none; color: var(--text-muted); font: inherit; font-size: var(--text-sm); text-align: left; cursor: pointer; }
+.hud-list li.is-chosen .hud-list-name, .hud-list-name:hover { color: var(--text); }
+.hud-list-mark { width: var(--space-1); height: var(--space-1); border-radius: var(--radius-full); background: var(--primary); }
+.hud-list-eye { display: grid; place-items: center; padding: var(--space-1); border: 0; background: none; color: var(--text-faint); cursor: pointer; }
+.hud-list-eye:hover, .hud-list-eye[aria-pressed="true"] { color: var(--text); }
+.hud-list-eye .ms { font-size: var(--icon-sm); }
+.hud-panel { display: flex; flex-direction: column; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+.hud-panel-name { font-family: var(--font-display); font-size: var(--text-base); font-weight: 600; color: var(--text); }
+.hud-panel-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); min-height: var(--hit-min); font-size: var(--text-sm); color: var(--text-muted); }
+.hud-tint { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+.hud-tint input { width: var(--space-5); height: var(--space-5); padding: 0; border: 0; border-radius: var(--radius-xs); background: none; cursor: pointer; }
+@media (max-width: 860px) { .hud-room { grid-template-columns: minmax(0, 1fr); } }
+/* the effect editor (catalog/fx/EffectModal.tsx): a list, then the effect playing with its sliders under it */
+.modal-content:has(.fx-editor) { width: min(1120px, calc(94vw / var(--content-zoom))); }
+.fx-editor { display: flex; flex-direction: column; gap: var(--space-3); }
+.fx-editor .modal-title-row { padding-right: var(--space-6); }
+.fx-editor .scale-range { width: 100%; max-width: none; }
+.fx-room { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: var(--space-4); align-items: start; }
+.fx-list { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.fx-list ul { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; max-height: 440px; overflow-y: auto; }
+.fx-list-head { font-size: var(--text-sm); color: var(--text-muted); }
+.fx-search { width: 100%; min-height: var(--hit-min); padding: 0 var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font: inherit; font-size: var(--text-sm); }
+.fx-search:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.fx-back { align-self: flex-start; }
+.fx-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--space-2); width: 100%; padding: var(--space-1) var(--space-2); border: 0; border-radius: var(--radius-xs); background: none; color: var(--text-muted); font: inherit; font-size: var(--text-sm); text-align: left; overflow-wrap: anywhere; cursor: pointer; }
+.fx-row small { flex-basis: 100%; font-size: var(--text-xs); color: var(--text-faint); }
+.fx-row:hover, .fx-row.is-chosen { background: var(--surface); color: var(--text); }
+.fx-row[data-depth="1"] { padding-left: var(--space-4); }
+.fx-row[data-depth="2"], .fx-row[data-depth="3"] { padding-left: var(--space-5); }
+.fx-heroes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-1); max-height: 440px; overflow-y: auto; }
+.fx-hero { aspect-ratio: 16 / 10; padding: 0; border: 0; border-radius: var(--radius-xs); overflow: hidden; background: var(--surface); color: var(--text-muted); font: inherit; font-size: var(--text-xs); cursor: pointer; }
+.fx-hero img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.fx-hero:hover { box-shadow: inset 0 0 0 2px var(--border-strong); }
+.fx-hero:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.fx-group { flex-wrap: nowrap; }
+.fx-group img, .fx-group .ms { flex: none; width: var(--space-5); height: var(--space-5); border-radius: var(--radius-xs); font-size: var(--icon-sm); }
+.fx-stage { position: relative; }
+.fx-replay { position: absolute; right: var(--space-2); bottom: var(--space-2); display: grid; place-items: center; width: var(--hit-min); height: var(--hit-min); border: 0; border-radius: var(--radius-full); background: var(--surface-hover); color: var(--text); cursor: pointer; }
+.fx-replay:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.fx-none { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: var(--space-6); color: var(--text-muted); font-size: var(--text-sm); text-align: center; pointer-events: none; }
+.fx-view { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.fx-canvas { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background: var(--bg-deep); }
+.fx-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-2); aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background: var(--bg-deep); color: var(--text-faint); font-size: var(--text-sm); }
+.fx-empty .ms { font-size: var(--text-xl); }
+.fx-controls { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2) var(--space-4); }
+.fx-tint { grid-column: 1 / -1; }
+.fx-items { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--text-muted); cursor: pointer; }
+@media (max-width: 860px) { .fx-room { grid-template-columns: minmax(0, 1fr); } }
+.background-look .scale-range { width: 100%; }
+/* the rank medal and hero levels of the player's own screen (catalog/rank/RankModal.tsx) */
+.rank-look { display: flex; flex-direction: column; gap: var(--space-4); }
+.rank-look .modal-title-row { padding-right: var(--space-6); }
+.rank-look .style-btn::before { display: none; }
+.rank-look .scale-range { width: 100%; max-width: none; }
+.rank-medals { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: var(--space-2); }
+.rank-medal { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); padding: var(--space-2) var(--space-1); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text-muted); font-size: var(--text-xs); cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+.rank-medal:hover { border-color: var(--border-strong); color: var(--text); }
+.rank-medal.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--text); }
+.rank-medal img { width: 48px; height: 48px; object-fit: contain; }
+.rank-medal .ms { font-size: 32px; height: 48px; display: grid; place-items: center; }
+.rank-badge { display: inline-flex; align-items: center; gap: var(--space-1); font-variant-numeric: tabular-nums; }
+.rank-badge img { width: 24px; height: 24px; object-fit: contain; }
+.rank-heroes { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-1) var(--space-3); max-height: 300px; overflow-y: auto; padding-right: var(--space-1); }
+.rank-hero { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1); border-radius: var(--radius-sm); color: var(--text-muted); }
+.rank-hero.set { color: var(--text); background: color-mix(in srgb, var(--primary) 8%, transparent); }
+.rank-portrait { width: 40px; height: 22px; flex-shrink: 0; border-radius: var(--radius-xs); object-fit: cover; background: var(--bg-deep); }
+.rank-hero-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); }
+.rank-level { width: 56px; flex-shrink: 0; padding: var(--space-1) var(--space-2); }
+
+/* a hero recoloured part by part (catalog/paint, issue #422) */
+.hero-paint-btn { flex-shrink: 0; margin-right: var(--space-2); }
+/* the window itself: styles/paint.css */
+
+/* the map without its decor (catalog/decor/DecorModal.tsx) */
+.map-decor { display: flex; flex-direction: column; gap: var(--space-4); }
+.decor-groups { display: flex; flex-direction: column; gap: var(--space-2); }
+.decor-group { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--text-muted); text-align: left; cursor: pointer; transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out); }
+.decor-group:hover { border-color: var(--border-strong); color: var(--text); }
+.decor-group.active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--text); }
+.decor-group.active > .ms { color: var(--primary); }
+.decor-group-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); font-size: var(--text-sm); }
+.decor-group-text b { font-weight: 600; }
+.decor-count { flex-shrink: 0; font-size: var(--text-xs); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* Keep the model viewport below the animation picker. */
+.preview3d.preview3d-studio[data-status='shown'] { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.preview3d-studio[data-status='shown'] .preview3d-stage { position: relative; inset: auto; grid-row: 2; }
+.preview3d-studio .preview3d-tools { position: relative; inset: auto; grid-row: 1; min-height: 46px; padding: 6px 8px; }
+.preview3d-studio {
+  border: 1px solid #344253;
+  background: radial-gradient(ellipse at 50% 66%, #27384b, #111a26 72%);
+  color: #e6edf5;
+}
+
+.fx-canvas > canvas { display: block; width: 100%; height: 100%; border-radius: inherit; }
+.fx-preview-status { padding: 8px 12px; color: var(--text-muted); font-size: 12px; }

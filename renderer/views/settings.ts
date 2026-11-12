@@ -13,17 +13,22 @@ import { state } from '../core/store.ts';
 import { registerView, invalidateViews } from '../core/router.ts';
 import { fmtMB } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
-import { showWhatsNew } from '../ui/dialog.ts';
+import { confirmDialog, showWhatsNew } from '../ui/dialog.ts';
+import { refreshInstalledIndex } from '../core/installed.ts';
+import { showSupport } from '../ui/support.ts';
 import { refreshSidebarStatus } from '../ui/statusbar.ts';
 import { clampScale, currentScalePct, paintScale, applyScalePct, clampPanelZoom, paintPanels, savePanels } from '../ui/chrome.ts';
 import { applyLanguage } from '../ui/language.ts';
 import { paint } from '../ui/transitions.ts';
 import { adultShown, adultHint, setAdultShown } from '../core/adult.ts';
 import { loadCatalog } from './catalog.ts';
+import { catName } from '../core/categories.ts';
 import { showSettings, type SettingsActions, type SettingsModel } from '../settings/SettingsScreen.tsx';
 
 let model: SettingsModel | null = null;
 let key = 0;
+/** the last run of "Repair the app", kept while the page redraws */
+let repair: SettingsModel['repair'] = null;
 
 registerView('settings', () => renderSettings(true));
 
@@ -32,9 +37,10 @@ async function renderSettings(fresh = false): Promise<void> {
    * drew, and the compiler's state looks for Wine on disk. The longer the wait, the longer a click
    * lands on the page the redraw is about to replace (the Linux simulation's language switch, on
    * the pull request that added the compiler). */
-  const [s, cacheSize, version, tools, compiler, beta] = await Promise.all([
+  const [s, cacheSize, cacheFiles, version, tools, compiler, beta] = await Promise.all([
     window.api.settings.get(),
     window.api.misc.cacheSize(),
+    window.api.misc.cacheList().catch(() => []),
     window.api.update.version(),
     window.api.tools.state().catch(() => null), // older build
     window.api.compiler.state().catch(() => null),
@@ -49,10 +55,13 @@ async function renderSettings(fresh = false): Promise<void> {
     uiLang: s.uiLang,
     scalePct: Math.round((Number(s.uiScale) || 1) * 100),
     presence: s.discordPresence !== false,
+    countDownloads: s.countDownloads !== false,
+    everyone: s.everyoneWearsMine === true,
     beta,
     dotaPath: s.dotaGamePath || '',
     dotaValid: Boolean(s.dotaPathValid),
     cache: `${fmtMB(cacheSize)} MB`,
+    cacheFiles: cacheFiles.map((f) => ({ key: f.key, name: f.name, category: catName(f.categoryId), size: `${fmtMB(f.bytes)} MB` })),
     proxy: s.downloadProxy || '',
     // no row on a machine with no build of it: the button could only fail
     vrf: vrf && vrf.available !== false ? { ready: Boolean(vrf.ready), size: `${fmtMB(vrf.ready ? vrf.installedBytes : vrf.downloadBytes)} MB` } : null,
@@ -61,6 +70,7 @@ async function renderSettings(fresh = false): Promise<void> {
     adult: adultShown(),
     adultHint: adultHint(),
     version,
+    repair,
   };
   await paint(draw);
 }
@@ -70,7 +80,7 @@ function draw(): void {
 }
 
 /** A switch that shows its new position at once and tells main after. */
-function flip(field: 'presence' | 'adult'): boolean {
+function flip(field: 'presence' | 'adult' | 'countDownloads' | 'everyone'): boolean {
   if (!model) return false;
   model = { ...model, [field]: !model[field] };
   draw();
@@ -99,6 +109,12 @@ const actions: SettingsActions = {
   presence: async () => {
     state.settings = await window.api.settings.set('discordPresence', flip('presence'));
   },
+  countDownloads: async () => {
+    state.settings = await window.api.settings.set('countDownloads', flip('countDownloads'));
+  },
+  everyone: async () => {
+    state.settings = await window.api.settings.set('everyoneWearsMine', flip('everyone'));
+  },
   beta: async () => {
     if (!model) return;
     model = { ...model, beta: { ...model.beta, on: !model.beta.on } };
@@ -123,6 +139,15 @@ const actions: SettingsActions = {
   clearCache: async () => {
     await window.api.misc.clearCache();
     toast(L`Кэш очищен`);
+    renderSettings();
+  },
+  openCache: async () => {
+    const r = await window.api.misc.openCacheFolder();
+    if (r?.error) toast(r.error, 'error');
+  },
+  removeCached: async (key) => {
+    const r = await window.api.misc.cacheRemove(key);
+    if (!r?.ok) toast(L`Архив уже удалён`, 'error');
     renderSettings();
   },
   proxySave: async (value) => {
@@ -202,6 +227,30 @@ const actions: SettingsActions = {
     if (r?.error) toast(r.error, 'error', 7000);
     else toast(L`Отчёт сохранён`);
   },
-  whatsNew: () => showWhatsNew({ force: true }),
+  /* The game back the way Steam gave it, the app kept: for "is it the mods?" and for the day after
+   * a Dota update. Asked twice in words, because nothing about it can be undone from here. */
+  removeEverything: async () => {
+    const n = (await window.api.mods.list()).installed.length;
+    const msg = L`Удалить все моды (${n}) из папки игры и вернуть файлы Dota, которые меняло приложение? Образы из конструктора тоже удалятся. Вернуть это можно только установкой заново.`;
+    if (!await confirmDialog(msg, { okLabel: L`Удалить всё` })) return;
+    const r = await window.api.mods.removeEverything();
+    if (r.error) { toast(r.error, 'error', 7000); return; }
+    if (r.errors?.length) toast(L`Удалено не всё: ${r.errors[0]}`, 'warn', 9000);
+    else toast(L`Готово: игра без модов, как после установки`);
+    await refreshInstalledIndex();
+    invalidateViews();
+    renderSettings();
+  },
+  repair: async () => {
+    if (repair?.busy) return;
+    repair = { busy: true, steps: [] };
+    if (model) { model = { ...model, repair }; draw(); }
+    const steps = await window.api.patch.repairApp().catch((err) => [{ id: 'game', ok: false, text: err instanceof Error ? err.message : String(err) }]);
+    repair = { busy: false, steps };
+    toast(steps.every((s) => s.ok) ? L`Всё в порядке` : L`Починка нашла проблемы`, steps.every((s) => s.ok) ? 'ok' : 'warn');
+    renderSettings();
+  },
+  whatsNew: () => { showWhatsNew({ force: true }); },
+  support: () => { showSupport(); },
   open: (url) => window.api.misc.openExternal(url),
 };

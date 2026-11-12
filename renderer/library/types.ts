@@ -11,8 +11,12 @@ export type Match = { categoryId: string; name: string; styleLabel?: string | nu
 
 /** Two mods can carry the same file, and the one loaded first wins it. */
 export interface Cover {
+  /** the winner's record id or foreign-file key (src/installer-slots.ts coverage) */
+  key?: string;
   name: string;
   files: number;
+  /** which files it takes, sorted, at most COVER_PATHS of them */
+  paths?: string[];
 }
 
 export interface Member {
@@ -49,12 +53,15 @@ export interface LibRecord {
   zone?: unknown;
   /** how many heroes an import skins: two or more can be split */
   subjects?: number;
+  /** its item pictures were taken out (src/installer-repack.ts dropItemIcons) */
+  noItemIcons?: boolean;
   schemaCount?: number;
   schemaLive?: boolean;
   coveredBy?: Cover[];
   staleMap?: boolean;
   /** a Dota update changed files this mod replaces since it was installed (src/update-impact.ts) */
-  prePatch?: { since: string | null; changed: number; removed: number };
+  /** the paths are the first hundred of each kind, for the window the pill opens (views/library/pre-patch.ts) */
+  prePatch?: { since: string | null; changed: number; removed: number; changedPaths?: string[]; removedPaths?: string[] };
   /** the catalog has a newer version of this mod than the one installed (src/mod-update.ts) */
   updateAvailable?: boolean;
   /** a copy of the pumpkin's mod this install did not earn, kept off (src/scream-guard.ts) */
@@ -90,4 +97,10 @@ export interface RepairState {
   healed?: unknown[];
   /** the mods whose files the patch changed, by name */
   touched?: { build: string | null; mods: string[] };
+  /** the patch landed while the app was closed, and the game was put back only at start */
+  whileClosed?: true;
+  /** waiting on Steam's file check or an update rather than on Dota */
+  steam?: 'validating' | 'updating';
+  /** what started it: 'manual' is a button the user pressed, which answers for itself */
+  reason?: unknown;
 }

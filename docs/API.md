@@ -13,24 +13,38 @@ the code, not in this page.
 
 | Module | What it owns |
 |---|---|
+| [`src/ability-icons-service.ts`](#srcability-icons-servicets) | The window's half of a hero's ability icons picked from his own cosmetics' (what there is to pick |
+| [`src/ability-icons.ts`](#srcability-iconsts) | A hero's ability icons picked one by one from the icons his own cosmetics already ship: Fissure |
+| [`src/ability-sounds-service.ts`](#srcability-sounds-servicets) | The window's half of a sound of the user's own on a hero's sound event (issue #423; the events |
+| [`src/ability-sounds.ts`](#srcability-soundsts) | A sound of the user's own on one of a hero's sound events (issue #423): the hero's events file |
 | [`src/adopt.ts`](#srcadoptts) | What a VPK has to go through before it counts as a mod. |
 | [`src/app-context.ts`](#srcapp-contextts) | Everything the running app hands its IPC modules: the services src/main.ts builds at start, and the |
 | [`src/app-log.ts`](#srcapp-logts) | The app's own log: a small file every install keeps, so a support report (src/diagnostics.ts) |
 | [`src/app-page.ts`](#srcapp-pagets) | The page the main window loads. |
+| [`src/app-repair.ts`](#srcapp-repairts) | One button for when the app is in a strange state (issue #431). The fixes used to be spread |
 | [`src/arcana-base-color.ts`](#srcarcana-base-colorts) | An arcana base (src/arcana-bases.ts) in a colour of the user's: Terrorblade's, for the arcana |
 | [`src/arcana-base-store.ts`](#srcarcana-base-storets) | The arcana bases (src/arcana-bases.ts) brought down from their repository and kept here, so a |
 | [`src/arcana-bases.ts`](#srcarcana-basests) | Arcana bases: an arcana rebuilt by hand in Valve's Workshop Tools so that it works as the hero's |
 | [`src/arcana-notes.ts`](#srcarcana-notests) | What an arcana does in the game once the item builder puts it on, as somebody played it. |
 | [`src/arcana-service.ts`](#srcarcana-servicets) | The arcana window's side in the main process (issue #118): what the window shows, and the mod it |
+| [`src/arcana-sets.ts`](#srcarcana-setsts) | The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own |
 | [`src/arcana.ts`](#srcarcanats) | An arcana as a mod, built from the game's own files: the look of an item a player has not got, |
 | [`src/atomic-file.ts`](#srcatomic-filets) | Replace a small file so that whoever reads it next - this process, or the next start after |
+| [`src/background-builds.ts`](#srcbackground-buildsts) | Builds of the item table in the background, one at a time (src/schema-service.ts runs them, |
+| [`src/background.ts`](#srcbackgroundts) | The tray icon and the sign-in entry over Electron, for src/tray.ts, which holds the logic. |
 | [`src/beta.ts`](#srcbetats) | The beta channel: who is let in, and which update feed this copy reads. |
 | [`src/build-bar.ts`](#srcbuild-barts) | The bar at the bottom of the window while the item table builds in the background |
+| [`src/build-undo.ts`](#srcbuild-undots) | Cancel on the item table's bar (issue #425): the build stops, and the change that started it goes |
 | [`src/capture.ts`](#srccapturets) | Take a screenshot of the window, and try again when Chromium has no frame to hand over yet. |
 | [`src/catalog-signature.ts`](#srccatalog-signaturets) | Making the catalog's own author the only person who can change the catalog. |
 | [`src/catalog.ts`](#srccatalogts) | Catalog: fetch + cache mods.json / constants.json / guides.json from the Dota2PornFx repo |
 | [`src/channel-args.ts`](#srcchannel-argsts) | What each channel may be handed, checked before its handler runs (src/window-guard.ts). |
+| [`src/cli.ts`](#srcclits) | The command line (issue #436): put a preset on, list the mods, or switch them all off, with no |
 | [`src/cosmetic-names.ts`](#srccosmetic-namests) | Display names come from Valve's installed localization, while schema names remain the keys |
+| [`src/courier-models.ts`](#srccourier-modelsts) | A courier look's models, under the Default Courier's paths. |
+| [`src/crash-watch.ts`](#srccrash-watchts) | Dota closing seconds after Play, told to the window with the mods that are new since it last |
+| [`src/creator-premod.ts`](#srccreator-premodts) | A draft as the catalog takes it: the archive h6rd/PreMod makes, and the rules the catalog's |
+| [`src/creator.ts`](#srccreatorts) | The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's |
 | [`src/cursors.ts`](#srccursorsts) | Which cursor set is live, and which look a slot is wearing. |
 | [`src/deep-links.ts`](#srcdeep-linksts) | d2mm:// links: a preset or a single mod clicked anywhere on the system, and on Linux, telling |
 | [`src/dev-harness.ts`](#srcdev-harnessts) | The switches that let a script drive the window: a screenshot after some clicks (MM_SHOT and |
@@ -39,8 +53,14 @@ the code, not in this page.
 | [`src/diagnostics.ts`](#srcdiagnosticsts) | A support report a user can send instead of a round of screenshots: Dota's own path and |
 | [`src/discord-auth.ts`](#srcdiscord-authts) | Sign in with Discord, without a server of our own. |
 | [`src/discord-presence.ts`](#srcdiscord-presencets) | "Playing Dota 2 Mod Manager" in Discord, via Discord's local IPC socket. |
+| [`src/disk-space.ts`](#srcdisk-spacets) | Room on the disk, checked before a mod is written (issue #426). A disk that fills up halfway |
 | [`src/download-proxy.ts`](#srcdownload-proxyts) | The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session |
+| [`src/download-stats.ts`](#srcdownload-statsts) | How many times each catalog mod was downloaded, counted by the catalog's own counter (a |
+| [`src/effect-edit-service.ts`](#srceffect-edit-servicets) | The effect editor: finding an effect among the game's, showing it changed, and a change put in |
+| [`src/effect-edit.ts`](#srceffect-editts) | An effect of the game changed by hand: its size, how many particles it makes, how long they live, |
+| [`src/effect-finder.ts`](#srceffect-finderts) | Finding an effect by what it is, not by its file: a hero, his abilities, and the effects that |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
+| [`src/emblem-ring.ts`](#srcemblem-ringts) | An emblem mod draws on the ring under the selected hero, and Dota hides that ring unless the |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx-journal.ts`](#srcfile-tx-journalts) | The half of FileTx that outlives the process. |
@@ -48,12 +68,27 @@ the code, not in this page.
 | [`src/fingerprints.ts`](#srcfingerprintsts) | Fingerprint index: fetch + cache the fp -> mod identity map published alongside the |
 | [`src/folder-size.ts`](#srcfolder-sizets) | Bytes under a folder: the number Settings shows beside each cache, and the one the removal |
 | [`src/game-icons.ts`](#srcgame-iconsts) | Item pictures taken from the installed game instead of scraped off a wiki. |
+| [`src/game-launch.ts`](#srcgame-launchts) | What the app sees of the game after Play: whether Dota is open (src/game-watch.ts, for the |
 | [`src/game-repair.ts`](#srcgame-repairts) | Putting the game back after something else changed it (src/game-upkeep.ts runs this at start |
 | [`src/game-upkeep.ts`](#srcgame-upkeepts) | Keeping the game folder the way the user left it, while other programs change it underneath. |
+| [`src/game-watch.ts`](#srcgame-watchts) | Is Dota open right now, asked every few seconds and told to the window when it changes. |
 | [`src/gamelang-folders.ts`](#srcgamelang-foldersts) | Making and moving the dota_<lang> folders (src/gamelang.ts has the rule): whether a voice pack is |
 | [`src/gamelang-steam.ts`](#srcgamelang-steamts) | What Steam says about the game's language (src/gamelang.ts has the rule): the -language in the |
 | [`src/gamelang.ts`](#srcgamelangts) | Which dota_<lang> folder the game actually mounts. |
+| [`src/gem-colors.ts`](#srcgem-colorsts) | The game's own prismatic gem colours, read out of items_game.txt (issue #392). The table keeps |
+| [`src/generated-pak.ts`](#srcgenerated-pakts) | A pak the app built itself (the arcana window, src/arcana-service.ts; the map looks, |
+| [`src/glb-embed.ts`](#srcglb-embedts) | A GLB with its pictures inside (issue #417). |
+| [`src/hero-grid.ts`](#srchero-gridts) | Hero grids for the pick screen out of this patch's numbers (issue #428). |
 | [`src/hero-names.ts`](#srchero-namests) | Which hero a name means, in the three spellings this app meets: the game's folder id |
+| [`src/hero-paint-service.ts`](#srchero-paint-servicets) | A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is |
+| [`src/hero-particle-styles.ts`](#srchero-particle-stylests) |  |
+| [`src/hero-preview-fx.ts`](#srchero-preview-fxts) | The particles of a hero's 3D preview (src/hero-preview.ts), out of the game's files alone: each |
+| [`src/hero-preview-picks.ts`](#srchero-preview-picksts) | Equipment metadata used to build the desktop preview. |
+| [`src/hero-preview.ts`](#srchero-previewts) | The models of a hero as the item builder dresses it, for the 3D preview in the hero's window |
+| [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
+| [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is |
+| [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD laid out by hand (issues #420 and later): the stylesheet that lays the HUD out, |
+| [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
@@ -69,31 +104,63 @@ the code, not in this page.
 | [`src/installer-write.ts`](#srcinstaller-writets) | Writing a mod into the game folder and taking it out again (src/installer.ts is the door): a |
 | [`src/installer.ts`](#srcinstallerts) | The installer: everything that writes a mod into the game folder or takes it out again. The |
 | [`src/ipc.ts`](#srcipcts) | Every IPC module, registered in one place over the context src/main.ts builds. A new |
+| [`src/item-builder-ability-fx.ts`](#srcitem-builder-ability-fxts) | An item's ability effects without its model, as the game's loadout wears them. |
 | [`src/item-builder-assets.ts`](#srcitem-builder-assetsts) | What an item builder pick needs beyond its block in items_game: the game's files it puts under |
+| [`src/item-builder-details.ts`](#srcitem-builder-detailsts) | What the item builder's window shows beside the items, out of the game's own files: each hero's |
+| [`src/item-builder-donor.ts`](#srcitem-builder-donorts) | Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of |
 | [`src/item-builder-effects.ts`](#srcitem-builder-effectsts) | The particle effects the item builder can put on top of an item: the effect's id, its name in |
+| [`src/item-builder-everyone.ts`](#srcitem-builder-everyonets) | Everybody playing a hero wears the user's look for it, not only the user. |
+| [`src/item-builder-fx-patch.ts`](#srcitem-builder-fx-patchts) | What a pick in an ability effects slot writes (src/item-builder-ability-fx.ts says what the slots |
+| [`src/item-builder-kinetic.ts`](#srcitem-builder-kineticts) | Kinetic gems on any item: the game's animation gems (Fishstick, Rampant, Twister), which an owned |
 | [`src/item-builder-personas.ts`](#srcitem-builder-personasts) | Personas in the item builder: a hero's second look, with slots and items of its own. |
 | [`src/item-builder-refits.ts`](#srcitem-builder-refitsts) | Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's |
+| [`src/item-builder-sets.ts`](#srcitem-builder-setsts) | The item builder's sets: what a set of the game's puts on, and what the game says about it |
 | [`src/item-builder-slots.ts`](#srcitem-builder-slotsts) | The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit |
 | [`src/item-builder-styles.ts`](#srcitem-builder-stylests) | An item's styles in the item builder: which ones it has, and its visuals with one of them made |
+| [`src/item-builder-unusual.ts`](#srcitem-builder-unusualts) | The game's unusual and ethereal effects on any item (issue #393): Ethereal Flame, Sunfire, the |
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
+| [`src/item-files-service.ts`](#srcitem-files-servicets) | The picks' pak: the item builder's looks in the language folder, for the game to read with nothing |
+| [`src/item-files.ts`](#srcitem-filests) | The item builder's picks as files alone: a look the game takes from a pak in the language folder, |
+| [`src/item-icons-drop.ts`](#srcitem-icons-dropts) | A mod with its item pictures taken out. A hero's arcana from the catalog often brings its own |
 | [`src/item-portraits.ts`](#srcitem-portraitsts) | A hero's HUD portrait and minimap icon as an item builder pick makes them, written once for the |
+| [`src/item-skin.ts`](#srcitem-skints) | Which material set an item's visuals wear its model in (src/model-skin.ts makes a model wear it). |
 | [`src/item-sounds.ts`](#srcitem-soundsts) | An item's sounds and voice, as a mod gives them to a hero who does not own the item. |
 | [`src/item-visuals.ts`](#srcitem-visualsts) | What an item does to the game, read from its block in items_game ("visuals"), and what a mod |
 | [`src/kv3-blobs.ts`](#srckv3-blobsts) | Binary blobs in a KV3 block (src/kv3.ts): where they lie, how they are read, and how they are |
 | [`src/kv3-cells.ts`](#srckv3-cellsts) | The numbers in a parsed KV3 block (src/kv3.ts): read one where it lies, change it there, and the |
 | [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
 | [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
+| [`src/large-answer.ts`](#srclarge-answerts) | An answer too big for one IPC message. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
+| [`src/loadout-material.ts`](#srcloadout-materialts) | Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute |
+| [`src/loadout-resources.ts`](#srcloadout-resourcests) | Complete effect dependencies for the real loadout runtime, shared by hero and recolor views. |
+| [`src/loadout-sheet.ts`](#srcloadout-sheetts) | VTEX sprite-sheet metadata. Layout: ValveResourceFormat Texture.GetSpriteSheetData (MIT), |
 | [`src/lz4.ts`](#srclz4ts) | LZ4 block format: literals and back-references, the compression Valve's KV3 writer uses |
 | [`src/main-window.ts`](#srcmain-windowts) | The one window the app has: its size on the screen it opens on, the single page it may show, |
+| [`src/map-decor.ts`](#srcmap-decorts) | The map without its decor: grass, flowers, ferns and critters, or stones, bones, debris and the |
+| [`src/map-looks-service.ts`](#srcmap-looks-servicets) | Towers and trees from the game's own looks, per side, built in the app (issues #446, #421). |
 | [`src/material.ts`](#srcmaterialts) | Compiled resources at the block level, and a material's expressions: what an item's gem colours. |
+| [`src/menu-background-service.ts`](#srcmenu-background-servicets) | The main menu background of the user's own as a record in My mods (issue #418; the pak itself is |
+| [`src/menu-background.ts`](#srcmenu-backgroundts) | The main menu background of the user's own (issue #418): a WebM behind the menu, dimmed and |
 | [`src/minify.ts`](#srcminifyts) | Living next to Minify. |
 | [`src/mod-doctor.ts`](#srcmod-doctorts) | The mod doctor: what is wrong with a mod, found in its files and the game's, before anybody |
 | [`src/mod-id.ts`](#srcmod-idts) | What a mod actually replaces, asked of the game instead of guessed from folder names. |
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-attachments.ts`](#srcmodel-attachmentsts) | A model put under a plain hero's path with its attachments in the plain model's order (Discord, |
+| [`src/model-bodygroups.ts`](#srcmodel-bodygroupsts) | A model with some of its body groups shown differently by default. |
+| [`src/model-cloth.ts`](#srcmodel-clothts) | A wearable's model without its cloth, for the item builder's copy of it under a stock path of a |
+| [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
+| [`src/model-hitboxes.ts`](#srcmodel-hitboxests) | Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item. |
+| [`src/model-loadout.ts`](#srcmodel-loadoutts) | The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417). |
+| [`src/model-merge.ts`](#srcmodel-mergets) | Two models as one file: the mesh of a second model carried inside the first. |
+| [`src/model-particles.ts`](#srcmodel-particlests) | Particles a model brings by itself, with no item table to create them. |
+| [`src/model-scale.ts`](#srcmodel-scalets) | A compiled model made bigger about its origin, and how much bigger one model is than another. |
 | [`src/model-sequences.ts`](#srcmodel-sequencests) | A model put under another model's path that numbers its sequences as that one does. |
+| [`src/model-skin.ts`](#srcmodel-skints) | A model with one of its material sets made the one it wears by default. |
+| [`src/model-snapshot-fallback.ts`](#srcmodel-snapshot-fallbackts) | Last-resort particle snapshot for assets whose .vsnap is absent from the |
+| [`src/model-style-meshes.ts`](#srcmodel-style-meshests) | Source 2 exports bodygroup alternatives as independent glTF nodes. VRF doesn't |
 | [`src/mods-listing.ts`](#srcmods-listingts) | What My mods is drawn from: the answer to mods:list (src/ipc-mods.ts), which every screen asks |
 | [`src/net-download.ts`](#srcnet-downloadts) | A file downloaded to disk across the mirror chain (src/net.ts explains it): resumed where a |
 | [`src/net-fetch.ts`](#srcnet-fetchts) | A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a |
@@ -103,21 +170,42 @@ the code, not in this page.
 | [`src/notice-texts.ts`](#srcnotice-textsts) | The game's anti-cheat notice, rewritten in every language Dota ships (src/notice-text.ts puts |
 | [`src/overlays-cursor.ts`](#srcoverlays-cursorts) | Cursor sets (src/overlays.ts is the door for fonts and cursors). |
 | [`src/overlays.ts`](#srcoverlaysts) | Fonts and cursors: loose files written over the game's own. |
+| [`src/pak-stamp.ts`](#srcpak-stampts) | Whether the game's pak01 changed: a listing of its files' stats, which the app asks for before it |
+| [`src/panorama-files.ts`](#srcpanorama-filests) | Panorama's compiled styles (vcss_c) and scripts (vjs_c), read and written here rather than by |
+| [`src/particle-snapshot.ts`](#srcparticle-snapshotts) |  |
+| [`src/particle-spec.ts`](#srcparticle-spects) | The particles an item or a hero shows on its loadout, read out of the game for the 3D preview |
+| [`src/particle-surface.ts`](#srcparticle-surfacets) | An effect made to spread over a wearable's surface. |
 | [`src/patch-watch.ts`](#srcpatch-watchts) | Noticing that Dota was patched, while the app is open. |
 | [`src/patcher-gameinfo.ts`](#srcpatcher-gameinfots) | The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of |
 | [`src/patcher-signatures.ts`](#srcpatcher-signaturests) | The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client |
 | [`src/patcher.ts`](#srcpatcherts) | Search-path patch: registers an extra content folder ahead of the game's own, which |
+| [`src/persona-base-effects.ts`](#srcpersona-base-effectsts) | What of a persona's base the build takes: its persona's own effects, not another item's. |
+| [`src/png-strip.ts`](#srcpng-stripts) | A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a |
 | [`src/portable-update.ts`](#srcportable-updatets) | Updating a copy that was never installed. |
 | [`src/presence-status.ts`](#srcpresence-statusts) | What the user's Discord profile says while the app is open: which screen they are on, and how |
+| [`src/preset-install.ts`](#srcpreset-installts) | Putting a preset on: an own one whose mods may have gone, or a received one that is still a |
 | [`src/preset-link.ts`](#srcpreset-linkts) | Presets as a link: "d2mm://preset/<code>", where <code> is the whole preset squeezed |
 | [`src/preset-plan.ts`](#srcpreset-plants) | How a preset travels to somebody else (src/presets-service.ts applies, packs and receives |
 | [`src/preset-share.ts`](#srcpreset-sharets) | Shareable preset files (.d2mm) — a zip holding preset.json plus the VPK of every mod |
 | [`src/presets-service.ts`](#srcpresets-servicets) | Presets, and the two ways one travels to somebody else. |
+| [`src/preview-cache.ts`](#srcpreview-cachets) | The catalog's pictures, kept on this disk and served from it. |
 | [`src/pumpkin.ts`](#srcpumpkints) | The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/pumpkin-worker answers). |
+| [`src/quit-after-build.ts`](#srcquit-after-buildts) | Quitting waits for the item table being written. |
+| [`src/rank-look-script.ts`](#srcrank-look-scriptts) | The script the rank look puts into the game's layouts (src/rank-look.ts says which and why): |
+| [`src/rank-look-service.ts`](#srcrank-look-servicets) | The rank medal and hero levels of the player's own screen, as one record in My mods (what goes |
+| [`src/rank-look.ts`](#srcrank-lookts) | The rank medal and the Dota Plus hero levels the player sees on their own screen: a medal and |
+| [`src/razor-crest-preview.ts`](#srcrazor-crest-previewts) |  |
+| [`src/ready-presets-format.ts`](#srcready-presets-formatts) | The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked |
+| [`src/ready-presets.ts`](#srcready-presetsts) | The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the |
+| [`src/recolor-layers.ts`](#srcrecolor-layersts) | A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its |
+| [`src/recolor-modes.ts`](#srcrecolor-modests) | How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a |
+| [`src/recolor-sets.ts`](#srcrecolor-setsts) | What src/recolor.ts can recolour: each item's particle and material folders, the colour of the |
 | [`src/recolor.ts`](#srcrecolorts) | An item's effects in a colour of the user's choosing, built from the game's own files. |
-| [`src/release-notes.ts`](#srcrelease-notests) | The changelog section for one version, for the "What's new" window. |
+| [`src/release-notes.ts`](#srcrelease-notests) | The changelog for the "What's new" window and Home. |
 | [`src/remote-config-format.ts`](#srcremote-config-formatts) | The remote config's format (src/remote-config.ts fetches it and answers from it): what the |
 | [`src/remote-config.ts`](#srcremote-configts) | The one thing the app can be told after it has shipped. |
+| [`src/remove-everything.ts`](#srcremove-everythingts) | Taking out everything the app put into the game, in one go. |
+| [`src/repo-stars.ts`](#srcrepo-starsts) | How many stars the project has on GitHub, for the Home screen (renderer/home/). |
 | [`src/resource-compiler.ts`](#srcresource-compilerts) | resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app |
 | [`src/resource.ts`](#srcresourcets) | Compiled Source 2 resources at the block level: the blocks of a file, one replaced by new bytes, |
 | [`src/safe-zip.ts`](#srcsafe-zipts) | The one door every foreign archive comes through. |
@@ -127,18 +215,27 @@ the code, not in this page.
 | [`src/schema-items.ts`](#srcschema-itemsts) | Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the |
 | [`src/schema-kv.ts`](#srcschema-kvts) | KeyValues navigation for items_game.txt (src/schema.ts): finding a block's braces and walking |
 | [`src/schema-merge.ts`](#srcschema-mergets) | Mod deltas and the merge (src/schema.ts): which item blocks a mod changed, lifted out of the |
-| [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, and how a |
+| [`src/schema-service.ts`](#srcschema-servicets) | Orchestration around the item schema: what goes into it, when it is rebuilt, how a game update |
 | [`src/schema.ts`](#srcschemats) | Item-schema engine: the game's own scripts/items/items_game.txt is the only place |
 | [`src/scream-guard.ts`](#srcscream-guardts) | The pumpkin's mod belongs to whoever opened the pumpkin (src/pumpkin.ts). |
 | [`src/services.ts`](#srcservicests) | What the app is built from: every long-lived service, created once in the order they depend on |
 | [`src/settings.ts`](#srcsettingsts) | Simple JSON settings store in userData |
 | [`src/slot-zones.ts`](#srcslot-zonests) | The load order in two parts. |
+| [`src/sprite-frames.ts`](#srcsprite-framests) |  |
+| [`src/steam-appstate.ts`](#srcsteam-appstatets) | What Steam's own manifest says about Dota right now (issue #427). Pressing Play while Steam is |
 | [`src/steam.ts`](#srcsteamts) | Finding Steam, and then finding Dota inside it. |
 | [`src/steps.ts`](#srcstepsts) | Work a step at a time. |
+| [`src/support-prompt.ts`](#srcsupport-promptts) | When the window asking people to support the project comes up on its own. |
 | [`src/terrain-age.ts`](#srcterrain-agets) | Terrains that replace the whole map, and whether the game's own map has moved on since. |
+| [`src/toolchain-bucket.ts`](#srctoolchain-bucketts) | The toolchain's copy in our bucket: where it is, what it is called, and when it is asked first. |
 | [`src/toolchain.ts`](#srctoolchaints) | Tools the app can borrow, fetched only when something actually needs them. |
+| [`src/tower-looks.ts`](#srctower-looksts) | Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five |
+| [`src/tray.ts`](#srctrayts) | The app beside the game rather than in front of it (plan item 9, Misha's call on 2026-11-12). |
+| [`src/tree-sets.ts`](#srctree-setsts) | Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire |
 | [`src/types.ts`](#srctypests) | The shapes the main process hands between its modules: a record of the library and the files it |
+| [`src/ui-lang.ts`](#srcui-langts) | The window's language on the very first start, before the person has picked one: the system's. |
 | [`src/uninstall-args.ts`](#srcuninstall-argsts) | Whether this run of the app is the uninstaller asking what to take along. |
+| [`src/unusual-effects.ts`](#srcunusual-effectsts) | The game's unusual and ethereal effects, read out of items_game.txt (issue #393). An owned |
 | [`src/update-impact.ts`](#srcupdate-impactts) | Which installed mods a Dota update reached. |
 | [`src/updater.ts`](#srcupdaterts) | Where an installed copy looks for a new version, and on which channel. |
 | [`src/vpk-analyze.ts`](#srcvpk-analyzets) | What a mod changes, read from the paths inside it: which heroes, which equip slots, or which |
@@ -153,6 +250,344 @@ the code, not in this page.
 | [`src/wine.ts`](#srcwinets) | Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe, |
 | [`src/workshop-tools.ts`](#srcworkshop-toolsts) | A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build. |
 | [`src/write-jail.ts`](#srcwrite-jailts) | A run that may write only inside the folders it was given. |
+
+## src/ability-icons-service.ts
+
+The window's half of a hero's ability icons picked from his own cosmetics' (what there is to pick
+and how it goes in is src/ability-icons.ts). One record in My mods per hero, since two paks of the
+same icon would hide each other; each ability's pick can be put back to the game's own on its
+own, and putting back the last takes the record with it.
+
+The record goes early in the load order with the hero items (categoryId hero-items), so a catalog
+mod of the hero does not cover it. What it holds is copies of the game's own pictures, so a Dota
+update that reached it builds it again from the new ones.
+
+### `IconsGenerated`
+
+```ts
+export interface IconsGenerated { abilityIcons: string; picks: Record<string, string> }
+```
+
+What an icons record was built from: the hero, and the icon picked for each ability.
+
+### `IconChoiceView`
+
+```ts
+export interface IconChoiceView { icon: string; item: string; style: number | null }
+```
+
+One icon as the window draws it.
+
+### `AbilityIconsView`
+
+```ts
+export interface AbilityIconsView { ability: string; name: string; choices: IconChoiceView[] }
+```
+
+An ability with its icons, its name in the app's language.
+
+### `HeroIcons`
+
+```ts
+export interface HeroIcons
+```
+
+What the window shows for a hero.
+
+### `createAbilityIcons`
+
+```ts
+export function createAbilityIcons({ gamePath, installer, library, vanilla, vrf = () => null, lang = () => 'en', log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller & Pick<Installer, 'swapSlots'>; library: Pick<Library, 'list' | 'add' | 'update' | 'removeRecord'>; /** the game's own item table */ vanilla: () => string; /** ValveResourceFormat's CLI, when it is downloaded: the window's pictures are read with it */ vrf?: () => string | null
+```
+
+The service the icons:* channels call.
+
+## src/ability-icons.ts
+
+A hero's ability icons picked one by one from the icons his own cosmetics already ship: Fissure
+as the plain one, or as the arcana's, the Deep Magma totem's, the TI9 one... The window and the
+record are src/ability-icons-service.ts.
+
+What there is to pick is read off the game's item table: a cosmetic that changes an icon says so
+with an asset modifier of type ability_icon, "asset" the ability (its icon is
+panorama/images/spellicons/<asset>_png.vtex_c) and "modifier" the picture it shows instead, under
+the same folder. Only items whose used_by_heroes names the hero count, so a hero is offered his
+own icons and nobody else's. The game of 2026-11-07 has 1053 such modifiers; Earthshaker's
+Fissure alone has a dozen.
+
+Putting one on needs no compiler: the picked icon's compiled file is copied, byte for byte, to the
+ability's own path, which is what the item builder does with a cosmetic's icon
+(src/item-builder-assets.ts PICTURES), and over every picture a cosmetic would show for the
+ability instead (`forcedFiles`), so the pick is what the HUD draws whatever the hero wears.
+
+### `ICON_NAME`
+
+```ts
+export const ICON_NAME = /^[a-z0-9_]+(?:\/[a-z0-9_]+){0,5}$/
+```
+
+An icon's name as items_game writes a modifier: a path under spellicons, without the suffix.
+
+### `iconFile`
+
+```ts
+export const iconFile = (icon: string) => `panorama/images/spellicons/${icon}_png.vtex_c`
+```
+
+The compiled picture of an icon (an ability's own, or one a cosmetic shows instead).
+
+### `IconModifier`
+
+```ts
+export interface IconModifier { asset: string; modifier: string; style: number | null; at: number }
+```
+
+One ability_icon modifier of the item table.
+
+### `IconChoice`
+
+```ts
+export interface IconChoice { icon: string; item: string; itemId: string; style: number | null; locKey?: string }
+```
+
+One icon the window offers for an ability: the picture, and the cosmetic or set it comes from.
+
+### `AbilityIcons`
+
+```ts
+export interface AbilityIcons { ability: string; choices: IconChoice[] }
+```
+
+An ability the hero has a choice of icons for, with its choices in the table's order.
+
+### `iconModifiers`
+
+```ts
+export function iconModifiers(text: string): IconModifier[]
+```
+
+Every ability_icon modifier in the table, wherever it sits. The fields are read by key: one in
+the game of 2026-11-07 (Wraith King's Frostivus Bone Guard) has "modifier" before "asset".
+
+### `setLabel`
+
+```ts
+export function setLabel(name: string): string
+```
+
+"tine_of_the_behemoth_icons" as "Tine of the Behemoth": a shared set's name has no text of its own.
+
+### `modifierSets`
+
+```ts
+export function modifierSets(text: string): IconSource[]
+```
+
+The entries of the table's asset_modifiers section, each a named set of modifiers that is not an
+item and names no hero (Earthshaker's SLTV icons, Phantom Assassin's Ravening ones: 151 icon
+modifiers on the game of 2026-11-07). An id of `set:<n>` keeps them apart from items.
+
+### `IconSource`
+
+```ts
+export interface IconSource
+```
+
+An item of the table, or a set of its asset_modifiers section (`shared`), with where its block is.
+
+### `heroIconChoices`
+
+```ts
+export function heroIconChoices(text: string, sources: IconSource[], hero: string, order: string[], has: (file: string) => boolean, modifiers: IconModifier[] = iconModifiers(text)): AbilityIcons[]
+```
+
+The icons a hero can pick for each ability, once each by picture, those whose picture the game has
+and whose ability has an icon of its own to replace. They come from the items whose used_by_heroes
+names him, and from the shared sets (`modifierSets`) for an ability in his script: a set names no
+hero, so the ability is what makes it his. Abilities in `order` (his script's) come first, in that
+order; any other his items name (a summon's) follow by name.
+
+```
+@param sources the table's items (src/schema-items.ts listItems) and its shared sets
+@param has     whether pak01 holds a file
+```
+
+### `forcedFiles`
+
+```ts
+export function forcedFiles(ability: string, icon: string, modifiers: IconModifier[]): string[]
+```
+
+Every file a pick of `ability` has to cover: its own icon, and each picture a cosmetic swaps it to.
+A cosmetic that is on (worn on the account, or picked in the item builder through the item table)
+makes the HUD draw its own picture instead of the ability's: with Bracers of the Cavern Luminar on,
+Enchant Totem is earthshaker/bracers_of_the_cavern_luminar/earthshaker_enchant_totem, and a pick
+under the plain path alone was never seen (J0nathan550, 2026-11-07). The picked picture is left as
+it is: it already is what it should show.
+
+### `iconEntries`
+
+```ts
+export function iconEntries(read: (file: string) => Buffer | null, picks: Record<string, string>, modifiers: IconModifier[] = [], has: (file: string) => boolean = () => true): { entries: VpkEntry[]; gone: string[] }
+```
+
+The pak's files: each picked icon's compiled picture under every path its ability can be drawn
+from (`forcedFiles`), those the game has. A picture two abilities share (10 of 976 on the game
+of 2026-11-07: Keeper's Illuminate and its Spirit Form one) goes to the pick that comes first in
+`picks`. A pick the game has no file for any more (a Dota update took it) is left out and named
+in `gone`.
+
+```
+@param has  whether the game has a file; a path nothing is drawn from is not worth a copy
+```
+
+## src/ability-sounds-service.ts
+
+The window's half of a sound of the user's own on a hero's sound event (issue #423; the events
+themselves are src/ability-sounds.ts). One record in My mods per hero, since a hero's sounds are
+one events file and two paks of it would hide each other; each sound in it can be taken off on
+its own, and taking off the last removes the record.
+
+The user's WAVs are kept in userData/ability-sounds by their sha1, so building the hero again (a
+sound added or taken off, or after a Dota update rewrote his events file) needs nothing but what
+the app has. The window decodes whatever the user dropped in (MP3, OGG, WAV) and hands over
+16-bit PCM; this side checks it again before anything is compiled.
+
+### `SoundsGenerated`
+
+```ts
+export interface SoundsGenerated { sounds: string; edits: SoundEdit[] }
+```
+
+What a sounds record was built from.
+
+### `HeroSounds`
+
+```ts
+export interface HeroSounds { hero: string; events: HeroEvent[]; edits: SoundEdit[]; recId: string | null }
+```
+
+What the window shows for a hero: his events, and the sounds already on them.
+
+### `MAX_WAV`
+
+```ts
+export const MAX_WAV = 8 * 1024 * 1024
+```
+
+The longest sound the window takes: 30 s of 48 kHz stereo is 5.5 MB.
+
+### `createAbilitySounds`
+
+```ts
+export function createAbilitySounds({ gamePath, userDataDir, installer, library, compile, log = () => {} }: { gamePath: () => string | null | undefined; userDataDir: string; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update' | 'removeRecord'>; compile: (job: CompileJob) => Promise<VpkEntry[]>; log?: (msg: string) => void; })
+```
+
+The service the sounds:* channels call.
+
+## src/ability-sounds.ts
+
+A sound of the user's own on one of a hero's sound events (issue #423): the hero's events file
+out of the game, each chosen event made to play the user's sound instead of Valve's or on top of
+it, written back as KV3 text and compiled with the user's WAVs by Valve's resourcecompiler
+(src/resource-compiler.ts). The window and the service are src/ability-sounds-service.ts.
+
+Text, not binary: a events file written back as binary KV3 is dropped by the game in silence,
+every sound of the hero with it (skills/dota2-modding/references/sounds.md). Compiled from text,
+the compiler also measures each sound and lists the files the events use.
+
+The same rules tools/modkit/sounds.mjs has used on the Scream set: a replaced event keeps its
+template's type, level and mix group and loses its layers and length; a layered event gets a new
+event of the user's sound in its first free soundevent_layer, the way Valve's immortals layer.
+
+### `SoundMode`
+
+```ts
+export type SoundMode = 'replace' | 'layer'
+```
+
+How the user's sound goes on an event: instead of Valve's, or played with it.
+
+### `SoundEdit`
+
+```ts
+export interface SoundEdit { event: string; mode: SoundMode; volume: number; sound: string; name: string }
+```
+
+One event given a sound of the user's own. `sound` names the stored WAV (its sha1).
+
+### `HeroEvent`
+
+```ts
+export interface HeroEvent { name: string; type: string; files: number }
+```
+
+An event of the hero's, as the window lists it.
+
+### `eventsFile`
+
+```ts
+export const eventsFile = (hero: string) => `soundevents/game_sounds_heroes/game_sounds_${hero}.vsndevts_c`
+```
+
+The hero's events file in pak01: abilities, attacks, death, everything heard in a match.
+
+### `soundPath`
+
+```ts
+export const soundPath = (hero: string, sound: string) => `sounds/mods/d2mm/${hero}/${sound.slice(0, 16)}.vsnd`
+```
+
+Where a sound of the user's goes, compiled: one folder of ours per hero.
+
+### `soundHero`
+
+```ts
+export const soundHero = (file: string): string => SOUND_HERO[file] || file
+```
+
+The hero's own id for an events file's name: "crystalmaiden" is "crystal_maiden".
+
+### `heroesWithSounds`
+
+```ts
+export function heroesWithSounds(ix: Pick<VpkIndex, 'paths'>): string[]
+```
+
+The heroes that have an events file, by the file's name (an event's sounds of the release kind are not a hero's).
+
+### `heroEvents`
+
+```ts
+export function heroEvents(kv: Kv3Block): HeroEvent[]
+```
+
+The events a sound can be put on: those that play one. An event of ours made by a layer is left out.
+
+### `editedEvents`
+
+```ts
+export function editedEvents(kv: Kv3Block, hero: string, edits: SoundEdit[]): { text: string; gone: string[] }
+```
+
+The hero's events with the user's sounds on them, as the KV3 text the compiler reads.
+An event the game no longer has is passed over and named in `gone`.
+
+### `kvText`
+
+```ts
+export function kvText(kv: Kv3Block, n: Kv3Node, ind = 0): string
+```
+
+KV3 text of a node, the way Valve's own sources are written.
+
+### `wavProblem`
+
+```ts
+export function wavProblem(buf: Buffer): string | null
+```
+
+Is this a WAV the compiler takes: plain 16-bit PCM at a rate the game plays. Null when it is.
 
 ## src/adopt.ts
 
@@ -282,6 +717,42 @@ export function loadAppPage(win: Pick<BrowserWindow, 'loadURL' | 'loadFile'>, { 
 Loads the page into the window and returns its address, the one the navigation guard lets
 through, or null when a checkout was never built (an installer always carries the page).
 
+## src/app-repair.ts
+
+One button for when the app is in a strange state (issue #431). The fixes used to be spread
+over three places: the patch banner put the game back, a missing pak only showed as a mod that
+did nothing in game, and stale pictures needed the toolchain removed and installed again. This
+runs them in order and answers a line per step, so the user sees what was wrong and what the
+app did about it.
+
+Nothing here deletes a mod or a preset. The caches it clears are the ones the app fills again by
+itself (catalog pictures, previews, icons out of the game); the download cache is the user's to
+clear, because filling it again costs them the downloads.
+
+### `RepairStep`
+
+```ts
+export interface RepairStep
+```
+
+One line of the result: which step, whether it found the app healthy, what it says.
+
+### `missingMods`
+
+```ts
+export function missingMods(records: Pick<LibRecord, 'name' | 'enabled' | 'files'>[], onDisk: (relPath: string) => string): string[]
+```
+
+Switched-on mods with a pak the mod folder no longer has, in any of its on/off spellings.
+
+### `repairApp`
+
+```ts
+export async function repairApp({ repairAfterPatch, patchRepair, records, onDisk, clearCaches }: { repairAfterPatch: (reason: unknown) => Promise<void>; patchRepair: () => PatchRepair; records: () => Pick<LibRecord, 'name' | 'enabled' | 'files'>[]; /** where a mod-folder file is right now (Installer.langFileOnDisk) */ onDisk: (relPath: string) => string; clearCaches: () => void; }): Promise<RepairStep[]>
+```
+
+Run the steps in order; a step that throws is a failed line, not a failed repair.
+
 ## src/arcana-base-color.ts
 
 An arcana base (src/arcana-bases.ts) in a colour of the user's: Terrorblade's, for the arcana
@@ -372,11 +843,16 @@ build reads them from disk like it reads pak01.
 
 The repository holds each base as its compiled files under src/<id>/, and a VPK of the same
 files beside them for people to try by hand; the app takes the files. What is there is read from
-the repository's git tree, which names every file with git's hash of it: nothing to keep in step
-by hand, and each file is checked against its hash, so a mirror (src/net.ts) can be trusted with
-the bytes. The tree comes from api.github.com, which has no mirrors; where it cannot be reached a
-manifest.json in the repository, the same list (tools/arcana-bases-manifest.mjs writes it), comes
-through them; and where neither can, the list from last time.
+manifest.json in the repository, every file of every base with git's hash of it, and
+manifest.json.sig beside it: tools/arcana-bases-manifest.mjs writes both from the files, so
+they go up in the same commit. The app takes the list only when the signature is good against
+BASES_PUBLIC_KEY, and then each file only when it matches its hash, so a mirror (src/net.ts) can
+be trusted with all of it. Where neither can be had, or the signature is not good, the list from
+last time, checked again.
+
+Signed since 2026-10-30. Before that the list was the repository's git tree, and whatever was
+pushed to its main reached everybody who picked that arcana with no signature of ours: a second
+key now stands between a push and the users, as the catalog's does (src/catalog-signature.ts).
 
 On disk: blobs/<hash>, one per file whatever base it is in (both of Juggernaut's styles share
 most of theirs), and ready.json, each base that is all here with the hash of each of its files.
@@ -390,10 +866,44 @@ caller to build again. Everything that needs the network fails quietly into the 
 ### `BASES_REPO`
 
 ```ts
-export const BASES_REPO = 'J0nathan550/d2pfx-arcana-fixes'
+export const BASES_REPO = 'dota2modmanager/hero-base-fixes'
 ```
 
-Where the bases are published, owner/name on GitHub.
+Where the bases are published, owner/name on GitHub: J0nathan550/d2pfx-arcana-fixes until 2026-10-30.
+
+### `BASES_PUBLIC_KEY`
+
+```ts
+export const BASES_PUBLIC_KEY = 'MCowBQYDK2VwAyEAAzqINyzZu0s84UbXXU+9uRuN0Z8IH7TO2oSCMO0tcMU='
+```
+
+Base64 SPKI of the ed25519 key the bases' manifest is signed with. J0nathan550 holds the
+private half; `tools/sign-catalog.js --keygen` makes a pair in this form. Not the catalog's key:
+that one belongs to the catalog's author, and the bases are not his to vouch for.
+
+### `Pins`
+
+```ts
+export type Pins = Record<string, { commit: string; files: Record<string, string> }>
+```
+
+Files of a base to take from one commit rather than from the manifest's.
+
+### `PINNED`
+
+```ts
+export const PINNED: Pins = {}
+```
+
+Files of bases taken from an older commit of the repository than the manifest names. A hash
+here stands in for the signature: it is compiled into a signed app, and `bring` still checks it.
+
+The Acolyte's body was here until 2026-11-09, at the size of Valve's model, on the reading that
+the repository's, 1.351 times larger, stood the young Invoker as tall as the grown one. It was the
+other way round: the server draws the persona at the plain hero's ModelScale, 0.74, where Valve
+draws its owner's at the persona's hero_scale, 1, and 1 / 0.74 is 1.351. Valve's size came out a
+head shorter than the persona the game shows its owner, with the orbs out of place around him.
+The repository's body is that size, and its items are made as big (src/model-scale.ts).
 
 ### `Listing`
 
@@ -422,13 +932,14 @@ a git hash. The list can come from a mirror (the manifest), and a mirror that se
 its own and the bytes to match it could otherwise have put a file at any path of the user's
 game pak, a script among them; and a hash is a file name here, so it has to be one.
 
-### `listingFromTree`
+### `signedListing`
 
 ```ts
-export function listingFromTree(tree: { tree?: { path: string; type: string; sha: string }[] }): Listing
+export function signedListing(manifest: string, sig: string, key: string = BASES_PUBLIC_KEY): Listing | null
 ```
 
-The bases in a git tree (GET /git/trees/<branch>?recursive=1): every file under src/<id>/ but the VPK of them.
+The bases in a manifest, or null when its signature is not the bases' key's over exactly these
+bytes. Nothing in an unsigned list is taken, not even what safeListing would let through.
 
 ### `BaseStoreDeps`
 
@@ -441,7 +952,7 @@ What a store is made with: where it keeps the bases, and whom it tells.
 ### `createBaseStore`
 
 ```ts
-export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchDefault }: BaseStoreDeps)
+export function createBaseStore({ dir, onReady = () => {}, log = () => {}, fetchUrl = fetchMirrored, key = BASES_PUBLIC_KEY, pins = PINNED }: BaseStoreDeps)
 ```
 
 The bases on disk, and bringing one down when a build needs it (the header says how).
@@ -726,13 +1237,30 @@ the pak lists them, it leaves to the item builder's picks; `forms`: the picks wh
 particle it carries (src/arcana.ts arcanaForms); `code`: the app's code it was built by. A
 change to any of them builds it again (giveWay).
 
+### `ArcanaWindow`
+
+```ts
+export interface ArcanaWindow
+```
+
+One arcana the window builds.
+
 ### `ArcanaState`
 
 ```ts
-export interface ArcanaState
+export interface ArcanaState { arcanas: ArcanaWindow[]; gems: GemColor[]; gemArt: ReturnType<typeof prismaticGemArt> }
 ```
 
-What the window shows.
+What the window shows: each arcana, and the game's prismatic gems to offer as colours.
+
+### `WINDOWS`
+
+```ts
+export const WINDOWS: Record<string, { picture: string; model: string; base?: string; colorOnly?: boolean }> =
+```
+
+The arcanas the window builds: the picture it shows, the file whose presence says the game has
+ it, and the base the whole arcana is built from once it is here (src/arcana-bases.ts).
 
 ### `hex`
 
@@ -754,6 +1282,40 @@ A colour from the window: three whole numbers 0-255, or nothing.
 
 ```ts
 export function createArcanaService({ gamePath, installer, library, log = () => {}, bases, code = () => null }: { gamePath: () => string | null | undefined; installer: Pick<Installer, 'langFolder' | 'langFileOnDisk' | 'ensureLangFolder' | 'usedPakNames' | 'allocatePak' | 'writeInto' | 'remove' | 'slotBase' | 'moveToSlot' | 'setEnabled'>; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; /** the arcana bases kept on disk (src/arcana-base-store.ts): the whole arcana is built from *  Terrorblade's when it is here, and from Valve's files until it is */ bases?: Pick<BaseStore, 'entries' | 'want'>
+```
+
+_No description in the source._
+
+## src/arcana-sets.ts
+
+The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own
+names, its pictures, the particle that hosts its own, and the particles it swaps. Every entry is
+read off the item's visuals in items_game by `npm run item-plan` and checked in the game
+(docs/item-mods.md). Moved out of src/arcana.ts, which keeps how a set is built.
+
+### `ArcanaSet`
+
+```ts
+export interface ArcanaSet
+```
+
+The arcanas the app can build (src/arcana.ts): for each, the models it puts under the hero's own
+names, its pictures, the particle that hosts its own, and the particles it swaps. Every entry is
+read off the item's visuals in items_game by `npm run item-plan` and checked in the game
+(docs/item-mods.md). Moved out of src/arcana.ts, which keeps how a set is built.
+
+### `Child`
+
+```ts
+export interface Child { path: string; attachment?: string }
+```
+
+A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point).
+
+### `ARCANA_SETS`
+
+```ts
+export const ARCANA_SETS: Record<string, ArcanaSet> =
 ```
 
 _No description in the source._
@@ -782,29 +1344,7 @@ puts the arcana's files where the plain hero's are:
   until the files it was built from change, so the app builds it again then.
 Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
 
-### `ArcanaSet`
-
-```ts
-export interface ArcanaSet
-```
-
-_No description in the source._
-
-### `Child`
-
-```ts
-export interface Child { path: string; attachment?: string }
-```
-
-A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point).
-
-### `ARCANA_SETS`
-
-```ts
-export const ARCANA_SETS: Record<string, ArcanaSet> =
-```
-
-_No description in the source._
+Hands on from [`src/arcana-sets.ts`](#srcarcana-setsts): `ARCANA_SETS`.
 
 ### `withChildren`
 
@@ -902,6 +1442,53 @@ Write `data` to `file` through a temporary file beside it. An antivirus or a bac
 holding the old file makes Windows refuse the rename for a moment, so it is tried a few times;
 if the file stays held, it is written in place as before rather than not written at all.
 
+## src/background-builds.ts
+
+Builds of the item table in the background, one at a time (src/schema-service.ts runs them,
+src/schema-build.ts is what they build).
+
+### `createBackgroundBuilds`
+
+```ts
+export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void, { slow = () => {}, slowMs = SLOW_MS, now = () => performance.now() }: { slow?: (ms: number, after: string) => void; slowMs?: number; now?: () => number } = {})
+```
+
+Builds in the background, one at a time and in order. A build asked for while one runs stops
+that one before it writes anything, since its list of picks is out of date already, and builds
+once more from what the library holds then; everybody waiting gets the result of the build that
+wrote. A build run in place in between (heal, the patch switch) does the same, through `ran`.
+
+```
+@param steps    a build of the table, a step at a time
+@param onBuild  each step of a build in the background, and null when it ends
+@param slow     a step that held the thread past `slowMs`, with what came before it: the log
+then names the piece to split, where "not responding" says nothing
+```
+
+### `SLOW_MS`
+
+```ts
+export const SLOW_MS = 200
+```
+
+A step longer than this goes to the log: the window's budget is 100 ms (issue #286).
+
+## src/background.ts
+
+The tray icon and the sign-in entry over Electron, for src/tray.ts, which holds the logic.
+
+### `startBackground`
+
+```ts
+export function startBackground({ win, settings, appRoot, portable, play, diag }: { win: BrowserWindow; settings: Pick<Settings, 'get' | 'set'>; appRoot: string; portable: boolean; play: () => void; diag: (msg: string) => void; }): () => void
+```
+
+Keep the window in the tray and register the app with Windows, as the setting says.
+
+```
+@returns what Settings calls after the switch moves or the language changes
+```
+
 ## src/beta.ts
 
 The beta channel: who is let in, and which update feed this copy reads.
@@ -992,12 +1579,41 @@ The bar at the bottom of the window while the item table builds in the backgroun
 ### `buildBar`
 
 ```ts
-export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number } | { type: 'done' }) => void, label: () => string, after = 400, now = () => Date.now()): (step: BuildStep | null) => void
+export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number; cancel?: 'schema' } | { type: 'done' }) => void, label: () => string, after = 400, now = () => Date.now()): (step: BuildStep | null) => void
 ```
 
 The bar at the bottom of the window for a build in the background: shown once the build has run
 for `after` ms, so a pick that takes a fifth of a second does not flash it, and counted in the
-picks built anew. A build with none to build, the merge and the write alone, shows nothing.
+picks built anew, with Cancel on it (src/build-undo.ts). A build with none to build, the merge
+and the write alone, shows nothing.
+
+## src/build-undo.ts
+
+Cancel on the item table's bar (issue #425): the build stops, and the change that started it goes
+back too.
+
+The table is what makes the game match My mods, so a build dropped halfway would leave the
+library saying a look is on while the game still wears the old one. Instead the app keeps a
+picture of the library as of the last table written (mark, after every write and at a start
+with nothing pending), and Cancel puts the records the table reads back the way that picture
+has them: a pick taken off again, a switched mod switched back, a look put back on. One change,
+all of it or none (src/file-tx.ts): a preset of thirty looks goes back whole.
+
+### `Undone`
+
+```ts
+export type Undone = { ok: true; undone: number; left: string[] } | { ok: false; reason: 'nothing' | 'unknown' }
+```
+
+What Cancel did: how many records went back, and the names of those that could not.
+
+### `createBuildUndo`
+
+```ts
+export function createBuildUndo({ library, installer, settings, schema, log = () => {} }: { library: Library; installer: Pick<Installer, 'setEnabled' | 'masterIsOff' | 'setMasterEnabled'>; settings: Pick<Settings, 'get' | 'set'>; schema: { cancel: () => boolean }; log?: (msg: string) => void; })
+```
+
+Cancel for the item table: a picture of what the game has, and the way back to it.
 
 ## src/capture.ts
 
@@ -1192,6 +1808,14 @@ export type Check = (v: unknown) => string | null
 
 Why a value does not fit, or null when it does.
 
+### `ARCANA_WINDOWS`
+
+```ts
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana', 'terrorblade-span', 'terrorblade-scythes', 'razor-crest']
+```
+
+The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step.
+
 ### `WINDOW_SETTINGS`
 
 ```ts
@@ -1219,6 +1843,125 @@ export function checkArgs(channel: string, args: unknown[]): string | null
 Check one call. Fewer arguments than the channel takes is fine when the missing ones are
 optional; more is not, because no caller in the window sends them.
 
+## src/cli.ts
+
+The command line (issue #436): put a preset on, list the mods, or switch them all off, with no
+window. For scripts, LAN setups and Steam Deck desktop mode.
+
+  dota2-mod-manager --apply "d2mm://preset/..."   install the preset's mods and put it on
+  dota2-mod-manager --list                        every mod in My mods, on or off
+  dota2-mod-manager --disable-all                 every mod and look off, kept in My mods
+
+`--headless` may go along with any of them and changes nothing: none of them opens a window.
+The run goes through what the window uses (src/preset-install.ts, the installer, the library),
+so the write jail, the file journal and the remote switches hold here too. It starts after the
+game folder has been put right (src/game-upkeep.ts), the way a window would find it.
+
+Exit codes: 0 done; 1 failed, one line on stderr; 2 done without some of it, one line per thing
+left out; 3 the app is already open; 64 a command line it does not understand.
+
+### `CliCommand`
+
+```ts
+export type CliCommand = { run: 'apply'; link: string } | { run: 'list' } | { run: 'disable-all' }
+```
+
+What the command line asked for.
+
+### `CLI_OK`
+
+```ts
+export const CLI_OK = 0
+```
+
+Exit code: done.
+
+### `CLI_FAILED`
+
+```ts
+export const CLI_FAILED = 1
+```
+
+Exit code: failed, one line on stderr.
+
+### `CLI_PARTLY`
+
+```ts
+export const CLI_PARTLY = 2
+```
+
+Exit code: done without some of it, one stderr line per thing left out.
+
+### `CLI_BUSY`
+
+```ts
+export const CLI_BUSY = 3
+```
+
+Exit code: the app is already open and holds the library.
+
+### `CLI_USAGE`
+
+```ts
+export const CLI_USAGE = 64
+```
+
+Exit code: a command line it does not understand.
+
+### `cliCommand`
+
+```ts
+export function cliCommand(argv: readonly string[]): CliCommand | { run: 'usage'; why: string } | null
+```
+
+The command in a command line, null when it holds none (an ordinary start), or why it cannot
+be run. Everything else on the line (Electron's and Chromium's switches, --write-jail, the
+app folder) is left to whoever reads it.
+
+### `CliOut`
+
+```ts
+export interface CliOut { out(line: string): void; err(line: string): void }
+```
+
+Where the run's lines go: stdout for answers, stderr for what went wrong.
+
+### `CliDeps`
+
+```ts
+export type CliDeps = PresetInstallDeps & { schemaService: PresetInstallDeps['schemaService'] & { settled(): Promise<unknown> } }
+```
+
+What a run needs on top of the preset flows: the table build to wait for before exiting.
+
+### `runCli`
+
+```ts
+export async function runCli(cmd: CliCommand, deps: CliDeps, io: CliOut): Promise<number>
+```
+
+Run one command to the end, the item table included.
+
+```
+@returns the exit code
+```
+
+### `exitWithCli`
+
+```ts
+export async function exitWithCli( cmd: NonNullable<ReturnType<typeof cliCommand>>, deps: CliDeps, app: { exit(code?: number): void }, io: CliOut = stdio, ): Promise<void>
+```
+
+Run the command line's command and exit with its code. A line it cannot read exits at once.
+
+### `cliBusy`
+
+```ts
+export function cliBusy(app: { exit(code?: number): void }, io: CliOut = stdio): void
+```
+
+A second copy started with a command: the open one holds the library, so it says so and goes.
+
 ## src/cosmetic-names.ts
 
 Display names come from Valve's installed localization, while schema names remain the keys
@@ -1239,6 +1982,21 @@ export function cosmeticNameTable(items: Pick<SchemaItem, 'name' | 'itemName'>[]
 ```
 
 Resolve by item_name token, never by guessing a translation from the English title.
+
+### `gameTokens`
+
+```ts
+export function gameTokens(game: string, lang: string): Map<string, string>
+```
+
+Every text token of the game in the app's language, dota_*.txt before items_*.txt, read once per
+game build and language; empty with no game to read. Style, rarity and event names are in
+dota_*.txt (DOTA_Style_Bracers_of_the_Cavern_Luminar_0, DOTA_EventName_Spring2021), and
+items_*.txt has a few more.
+
+```
+@param lang  the app's language (src/i18n.ts getLang)
+```
 
 ### `styleNamer`
 
@@ -1268,6 +2026,205 @@ export function* chineseCosmeticNamesSteps(game: string, schemaText: string): Ge
 ```
 
 chineseCosmeticNames, a pause after each of the two language files and before the table.
+
+## src/courier-models.ts
+
+A courier look's models, under the Default Courier's paths.
+
+A look is the paid courier's visuals copied onto Default Courier (schema baseItemPatch), and the
+client draws its particles from that. The courier's model it does not: the server makes the unit
+and sets its model from its own item table, where Default Courier is the donkey. So a courier
+picked in unsafe mode came out as the donkey with the paid courier's particles on it.
+
+Under the donkey's paths the courier's own model is what the client loads for it, numbered as the
+donkey is (src/model-sequences.ts), since online the server picks the animation in the donkey and
+sends its number. A model that cannot be numbered so is left out (gameAssetEntries): the donkey
+is better than a courier playing its death for its run.
+
+### `courierCopies`
+
+```ts
+export function courierCopies(text: string, targetId: string, sourceId: string): AssetCopy[]
+```
+
+The files a courier look puts under the base courier's models: each of the source's models goes
+where the base has the same kind (walking, flying) for the same team, in the courier's material
+set (src/model-skin.ts), which the server would leave at the first. Nothing for a look of any
+other slot, which names no courier models.
+
+```
+@param targetId  the base item, Default Courier
+@param sourceId  the courier picked
+```
+
+### `lookPatch`
+
+```ts
+export function lookPatch(text: string, game: string, rec: Pick<LibRecord, 'name' | 'slot' | 'itemId'>, log: (msg: string) => void): SchemaPatch | null
+```
+
+A look's patch: its slot's base item dressed in the picked item's visuals, and for a courier its
+models under the base's paths; in a slot with no base item, the picked item flagged as the free one.
+
+Without the game's files to read the block still goes on, particles and all: the models are what
+a lobby would miss, not the look.
+
+```
+@param log  a model left out, and why
+```
+
+## src/crash-watch.ts
+
+Dota closing seconds after Play, told to the window with the mods that are new since it last
+ran normally (plan item 10, Discord #support).
+
+People who hit a crash at load bring it to Discord as "the game closes", with nothing else to
+go on. The app knows two things that narrow it down: that the game ran for seconds rather than
+minutes, and which mods went in after the last session that lasted. Those are the first to
+switch off. Nothing is switched off on its own: a game closed on purpose looks the same.
+
+Only a launch from the app's Play button counts: the app knows then that the player meant to
+play. The game watch (src/game-watch.ts) asks every few seconds, so the times are rough, and a
+crash in the first five seconds can go unseen. A session of a minute or more is a normal one,
+whoever started it.
+
+### `QuickExit`
+
+```ts
+export type QuickExit =
+```
+
+What the window is told after a quick exit.
+
+### `QUICK_MS`
+
+```ts
+export const QUICK_MS = 60_000
+```
+
+A run shorter than this after Play is a crash, not a game.
+
+### `LAUNCH_WINDOW_MS`
+
+```ts
+export const LAUNCH_WINDOW_MS = 5 * 60_000
+```
+
+Steam can take this long to start the game after Play; a start later than that was not ours.
+
+### `createCrashWatch`
+
+```ts
+export function createCrashWatch({ lastGood, setLastGood, mods, now = Date.now, quickMs = QUICK_MS, launchWindowMs = LAUNCH_WINDOW_MS }: { lastGood: () => number | null; setLastGood: (at: number) => void; mods: () => { id: string; name: string; enabled?: boolean; installedAt?: number }[]; now?: () => number; quickMs?: number; launchWindowMs?: number; })
+```
+
+```
+@param lastGood  when a session last lasted, ms; null before the first one
+@param setLastGood  remembers it
+@param mods  the installed mods, for the suspects
+```
+
+## src/creator-premod.ts
+
+A draft as the catalog takes it: the archive h6rd/PreMod makes, and the rules the catalog's
+upload page (h6rd/Dota2PornFxWeb, upload.js) holds a mod to. An author who sends this archive
+sends what rotten's own tool would have made, so nobody repacks it by hand.
+
+PreMod's archive, one per mod:
+  <name>.zip    the VPK, zipped on its own
+  <name>.webp   the preview, 854×480
+  mod.json      the catalog entry: name, preview, file, tags, links
+  hash.json     mod_name, and the sha256 of the VPK and of its zip
+A mod with styles carries one zip and one preview per style, named `<name> <label>`, and lists
+them in mod.json the way the catalog lists styles. What the upload form asks besides the files
+(category, hero, description, the mod it updates) goes in submit.json, under the form's names.
+
+The rules are the upload page's: a Latin name with single spaces, 29 characters at most (39 for
+the two heroes whose names are that long), the hero's name in it for a hero's mod, no more than
+three styles with labels of 12 characters, and 100 MB for the whole archive.
+
+### `MAX_STYLES`
+
+```ts
+export const MAX_STYLES = 3
+```
+
+The most looks one catalog mod may have.
+
+### `catalogProblems`
+
+```ts
+export function catalogProblems(d: { name: string; category: string; hero: string; styles: { label: string }[] }): string[]
+```
+
+What the draft needs to fit the catalog's rules, beyond what is still missing, in words.
+
+### `isWebp`
+
+```ts
+export const isWebp = (b: Buffer | Uint8Array | null | undefined): boolean
+```
+
+Is this a WebP picture, by its RIFF header.
+
+### `premodArchive`
+
+```ts
+export function premodArchive(d: { name: string; category: string; hero: string; description: string; author: string; replaces: { category: string; name: string } | null }, styles: PackedStyle[]): { name: string; zip: Buffer }
+```
+
+The archive PreMod would make of these files, with the form's fields beside it.
+
+## src/creator.ts
+
+The author's drafts (issue #236, step 1): a mod being made for the catalog, kept on the author's
+disk until it is ready, and then written out as the archive the catalog's own packer makes
+(src/creator-premod.ts) for the catalog's maintainer. Nothing is uploaded: the catalog is not ours to write to, and an upload
+service is the second step, decided with its maintainer.
+
+A draft is a folder under userData/creator/<id>/: draft.json and the files it names, copied in so
+the draft survives the originals being moved. Each style is a look of the mod with its own VPK
+and picture, the way the catalog lists styles.
+
+### `DraftStyle`
+
+```ts
+export interface DraftStyle { label: string; vpk: string | null; picture: string | null }
+```
+
+One look of the mod: its label, its VPK and its picture, by file name inside the draft.
+
+### `Draft`
+
+```ts
+export interface Draft
+```
+
+A mod being made for the catalog.
+
+### `DraftFields`
+
+```ts
+export type DraftFields = Partial<Pick<Draft, 'name' | 'category' | 'hero' | 'description' | 'author' | 'replaces'>> & { styles?: { label: string }[] }
+```
+
+What the form may change; the rest is the store's.
+
+### `createCreator`
+
+```ts
+export function createCreator({ userDataDir }: { userDataDir: string })
+```
+
+The drafts under userDataDir/creator, and the archive one of them becomes.
+
+### `Creator`
+
+```ts
+export type Creator = ReturnType<typeof createCreator>
+```
+
+The store createCreator makes.
 
 ## src/cursors.ts
 
@@ -1616,6 +2573,40 @@ export class DiscordPresence
 
 _No description in the source._
 
+## src/disk-space.ts
+
+Room on the disk, checked before a mod is written (issue #426). A disk that fills up halfway
+through a pak leaves the transaction to roll back and the user with an error about a file
+they never heard of; asking first costs one statfs and says what is wrong in megabytes.
+
+### `SPACE_MARGIN`
+
+```ts
+export const SPACE_MARGIN = 64 * 1024 * 1024
+```
+
+Kept free on top of what the write needs: the journal's copies and the OS's own work.
+
+### `freeBytes`
+
+```ts
+export function freeBytes(dir: string, statfs: StatFs = fs.statfsSync): number | null
+```
+
+Free bytes on the drive that holds dir, or null when the system will not say.
+dir may not exist yet (a language folder made on first install), so the nearest folder
+above it that does is asked instead.
+
+### `ensureSpace`
+
+```ts
+export function ensureSpace(dir: string, need: number, statfs: StatFs = fs.statfsSync): void
+```
+
+Throw before writing when dir's drive has less than need bytes plus the margin.
+A drive that cannot be asked is let through: refusing every install on a system without
+statfs would be worse than the error this is here to prevent.
+
 ## src/download-proxy.ts
 
 The optional HTTP/HTTPS route for app downloads, kept separate from Electron's browser session
@@ -1669,6 +2660,269 @@ export async function testDownloadProxy(value: string, fetchImpl: typeof fetch =
 
 _No description in the source._
 
+## src/download-stats.ts
+
+How many times each catalog mod was downloaded, counted by the catalog's own counter (a
+Cloudflare Worker its author runs, the same one the catalog site counts its downloads with).
+
+Two directions, and neither may ever cost the user anything:
+
+ - The numbers come down as one public file, downloads.json, a map of "category/group/mod" (and
+   "category/group/mod/style" for a mod with several looks) to a count. It is fetched at most
+   once every few minutes and kept on disk, so a window opened offline, or while the Worker is
+   down, shows yesterday's numbers instead of none.
+ - An install of a catalog mod goes up as a hit on that mod's key. Hits wait a moment and leave
+   together, so a preset of fifty mods is one request, and a key counts at most a few times per
+   request. A hit that cannot be sent is dropped, not retried: the counter is somebody else's
+   free-tier Worker, and a thousand windows retrying at it the moment it comes back is exactly
+   the load that took it down.
+
+A hit carries the mod's key and nothing else: no id, no machine, no settings. It goes out only
+when the build carries the counter's token (written into the release build by CI from a
+repository secret, never committed: tools/stats-token.mjs) and the user has not switched
+counting off in Settings. Every request has a short timeout and every failure is swallowed:
+an install never waits for the counter and never fails because of it.
+
+### `STATS_API`
+
+```ts
+export const STATS_API = 'https://d2pfx-counter.hrdqfck.workers.dev'
+```
+
+The counter's Worker: GET /downloads.json for the numbers, POST /hit to add to them.
+
+### `TOKEN_FILE`
+
+```ts
+export const TOKEN_FILE = path.join(import.meta.dirname, 'download-stats.token')
+```
+
+The build's copy of the counter's token, beside this file; absent in a source checkout.
+
+### `Counts`
+
+```ts
+export type Counts = Record<string, number>
+```
+
+Downloads by key (statKey).
+
+### `statKey`
+
+```ts
+export const statKey = (categoryId: string, groupId: string | null | undefined, modName: string, styleName?: string | null): string
+```
+
+A mod's key, the way the counter and the catalog site write it: categoryId/groupId/modName[/style].
+
+### `statStyleName`
+
+```ts
+export const statStyleName = (label: unknown): string
+```
+
+A look's name as the counter keys it: its label without "Style ", or "Default" when that leaves nothing.
+
+### `statKeysFor`
+
+```ts
+export function statKeysFor(modsData: Record<string, StatCategory> | null | undefined, categoryId: string, name: string, styleLabel?: string | null): string[]
+```
+
+The keys one install counts under, read off mods.json: the mod's own key, and for a mod with
+more than one look the look's key too, so the mod's total stays right and each look has its
+own number. Nothing for a mod the catalog does not list, since the counter would drop it anyway.
+
+### `DownloadStatsOptions`
+
+```ts
+export interface DownloadStatsOptions
+```
+
+What the counter is made over; everything past the first two stands in for a test.
+
+### `buildToken`
+
+```ts
+export function buildToken(file = TOKEN_FILE): string | null
+```
+
+The token this build was given, or null. Read once: it cannot change while the app runs.
+
+### `createDownloadStats`
+
+```ts
+export function createDownloadStats({ cacheFile, enabled, token = buildToken, api = STATS_API, fetch = globalThis.fetch, now = Date.now, log = () => {}, }: DownloadStatsOptions)
+```
+
+The counter for this app: get() the numbers to show, track() an install, flush() what waits.
+
+### `catalogModsReader`
+
+```ts
+export function catalogModsReader(file: string): () => Record<string, StatCategory> | null
+```
+
+mods.json's modsData off the catalog's cache file, parsed again only when the file changes.
+
+### `DownloadStats`
+
+```ts
+export type DownloadStats = ReturnType<typeof createDownloadStats>
+```
+
+One app's counter (createDownloadStats).
+
+## src/effect-edit-service.ts
+
+The effect editor: finding an effect among the game's, showing it changed, and a change put in
+My mods. The changes themselves are src/effect-edit.ts. One record per effect, built from the
+game's own file: making the same effect again replaces it, in its place in the load order.
+
+### `EffectGenerated`
+
+```ts
+export interface EffectGenerated { effect: string; edits: EffectEdits; items?: boolean; name?: string }
+```
+
+What an effect's record was built from. `effect` is a file, or `ability:hero/ability` for all of an ability's.
+
+### `createEffectEdit`
+
+```ts
+export function createEffectEdit({ gamePath, installer, library, sprites, resources, finder, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the textures of a system and its children, as the window takes them */ sprites: (defs: ParticleDef[]) => Promise<Record<string, Uint8Array>>; resources?: (defs: ParticleDef[]) => Promise<LoadoutResources>; /** an ability's effects, read off the game (src/effect-finder.ts) */
+```
+
+The service the fx:* channels call.
+
+## src/effect-edit.ts
+
+An effect of the game changed by hand: its size, how many particles it makes, how long they live,
+how fast they leave, and its colour.
+
+A particle system is a KV3 tree, and each of these is a handful of numbers in it: a system's
+constant radius and lifespan, its emitters' rates, the ranges its initializers roll from. A number
+in the file is either plain, or a parameter that says how it is made, and a literal or a random
+range can be scaled while the rest (a value read from a control point, a curve) is left alone.
+The changed file keeps its path, so a pak with it replaces the effect wherever the game plays it.
+
+Colour takes the chosen hue and saturation and keeps each colour's brightness. A sprite's own
+picture may be coloured too, and is multiplied by these: the renderer's desaturation brings it in
+as grey, the game's own switch for it, so the chosen colour is the one that shows, a sheet of
+frames keeps working, and no texture has to be copied or compiled.
+
+### `EffectEdit`
+
+```ts
+export interface EffectEdit { size?: number; count?: number; life?: number; speed?: number; tint?: string }
+```
+
+One system's changes, in percent of what the file says; what is left out stays.
+
+### `EffectEdits`
+
+```ts
+export type EffectEdits = Record<string, EffectEdit>
+```
+
+A whole effect's changes, by system path. `WHOLE` holds what goes on every system of it.
+
+### `WHOLE`
+
+```ts
+export const WHOLE = '*'
+```
+
+The key of the changes that go on every system.
+
+### `MIN_SCALE`
+
+```ts
+export const MIN_SCALE = 10
+```
+
+The lowest a slider goes, in percent.
+
+### `MAX_SCALE`
+
+```ts
+export const MAX_SCALE = 300
+```
+
+The highest a slider goes, in percent.
+
+### `cleanEdits`
+
+```ts
+export function cleanEdits(raw: unknown): EffectEdits
+```
+
+What the window sent: known fields, values in range, nothing that changes nothing.
+
+### `editTree`
+
+```ts
+export function editTree(kv: Kv3Block, edit: EffectEdit): boolean
+```
+
+The changes on one system's tree, made in place; whether any field took one.
+
+### `systemsOf`
+
+```ts
+export function systemsOf(read: (p: string) => Buffer | null | undefined, root: string): { path: string; depth: number }[]
+```
+
+The paths of a system and all under it, each once, root first.
+
+### `editedEntries`
+
+```ts
+export function editedEntries(read: (p: string) => Buffer | null | undefined, root: string, edits: EffectEdits): VpkEntry[]
+```
+
+The changed files of an effect, under the paths they have in the game.
+
+## src/effect-finder.ts
+
+Finding an effect by what it is, not by its file: a hero, his abilities, and the effects that
+belong to each. What belongs to an ability is read off the game's file names, the same way a
+hero's recolour reads it (src/recolor-layers.ts). An ability's files include what its effects
+create, so a file that another one in the group brings along is left out of the list: it is
+reached through that effect's systems.
+
+### `EffectGroup`
+
+```ts
+export interface EffectGroup { id: string; kind: 'ability' | 'effects' | 'items'; ability: string | null; name: string | null; paths: string[] }
+```
+
+One line of a hero's effects: an ability's, his other ones, or his items'.
+
+### `AbilityHit`
+
+```ts
+export interface AbilityHit { hero: string; ability: string; name: string }
+```
+
+An ability a search found.
+
+### `AbilityEffects`
+
+```ts
+export interface AbilityEffects { name: string | null; paths: string[]; files: string[] }
+```
+
+An ability as one thing to change: what it plays, and all the files it may call on.
+
+### `createEffectFinder`
+
+```ts
+export function createEffectFinder({ index, lang, heroes, table = () => null }: { index: () => VpkIndex; lang: () => string; /** the heroes, with their name in the npc's and in the app's language */ heroes: () => { hero: string; name: string }[]; /** the game's item table, for the particles items swap in */ table?: () => string | null; })
+```
+
+The finder over the game's pak.
+
 ## src/electron.ts
 
 Electron's main-process API, asked for at the moment it is used.
@@ -1687,6 +2941,63 @@ export function electron(): typeof import('electron')
 ```
 
 The electron module, as it stands when this is called.
+
+## src/emblem-ring.ts
+
+An emblem mod draws on the ring under the selected hero, and Dota hides that ring unless the
+console variable r_draw_selected_ring is 1. Almost every "my emblem does not show" in the
+support channel (October and November 2026) was answered with that one line, typed again by
+hand. So while an emblem is switched on, the app keeps the line in the game's autoexec.cfg,
+which Dota runs at every start, and takes it out again when no emblem is left.
+
+The line goes in under a comment of ours, and only our two lines are ever touched: whatever
+else the user keeps in autoexec stays as it was. A line of their own that already sets the
+variable is left to do the job.
+
+### `RING_MARK`
+
+```ts
+export const RING_MARK = '// Dota 2 Mod Manager: emblems show on the selection ring'
+```
+
+The comment the line sits under, which is how the app knows the line is its own.
+
+### `RING_LINE`
+
+```ts
+export const RING_LINE = 'r_draw_selected_ring 1'
+```
+
+The command that shows the ring.
+
+### `RING_CATEGORIES`
+
+```ts
+export const RING_CATEGORIES = new Set(['emblems'])
+```
+
+The categories whose mods need the ring.
+
+### `withRing`
+
+```ts
+export function withRing(text: string, on: boolean): string
+```
+
+autoexec's text with our line in it when `on`, without it otherwise; the user's lines kept.
+
+### `keepRing`
+
+```ts
+export function keepRing(gamePath: string, on: boolean): 'added' | 'removed' | null
+```
+
+Put the line in or take it out of <game>/dota/cfg/autoexec.cfg. Writes only when the text
+changes, and makes no file when there is nothing to put in one.
+
+```
+@returns what changed, or null
+```
 
 ## src/error-text.ts
 
@@ -1724,10 +3035,11 @@ One definition, handed to whoever needs it, so there is no second copy to leave 
 ### `createGate`
 
 ```ts
-export function createGate({ remoteConfig, settings }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; }): (name: string) => { error: string } | null
+export function createGate({ remoteConfig, settings, gameOpen = () => false }: { remoteConfig: FeatureSwitches; settings: Pick<Settings, 'get'>; gameOpen?: () => boolean; }): (name: string) => { error: string; gameOpen?: true } | null
 ```
 
 ```
+@param gameOpen  whether Dota is open (src/game-watch.ts): the game holds its files, so nothing is written
 @returns the answer to send back, or null to carry on
 ```
 
@@ -1974,6 +3286,26 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
 
 Item and hero pictures out of the installed game, cached in userData.
 
+## src/game-launch.ts
+
+What the app sees of the game after Play: whether Dota is open (src/game-watch.ts, for the
+status bar and the channels that write the game) and whether it closed seconds after Play
+(src/crash-watch.ts). The two share one answer from the system, asked by the game watch. Play
+itself is src/ipc-launch.ts.
+
+### `watchGame`
+
+```ts
+export function watchGame({ settings, library, diag, send, isRunning = () => dotaIsRunning() }: { settings: Pick<Settings, 'get' | 'set'>; library: Pick<Library, 'list'>; diag: (msg: string) => void; send: (channel: string, value: unknown) => void; isRunning?: () => Promise<boolean>; }): { gameWatch: GameWatch; launched: () => void }
+```
+
+Both watches over one process check.
+
+```
+@param send  to the window, when there is one
+@returns the game watch, which the gate asks, and `launched`, which Play calls
+```
+
 ## src/game-repair.ts
 
 Putting the game back after something else changed it (src/game-upkeep.ts runs this at start
@@ -2010,7 +3342,7 @@ How long a repair waits for Dota to close before it looks again.
 ### `createGameRepair`
 
 ```ts
-export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null; /** builds again the mods the app built out of the game's files; returns the ids it built */
+export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, steamBusy = () => null, retryMs = REPAIR_RETRY_MS, now = Date.now }: { settings: Pick<Settings, 'get' | 'set'>; installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>; library: Pick<Library, 'list'>; schemaService: Pick<ReturnType<typeof createSchemaService>, 'heal'>; /** which mods the patch reached; left out, nobody is told */ updateImpact?: Pick<ReturnType<typeof createUpdateImpact>, 'check' | 'clear'> | null; /** builds again the mods the app built out of the game's files; returns the ids it built */
 ```
 
 The repair, over the services src/game-upkeep.ts already holds.
@@ -2029,7 +3361,11 @@ Nothing is written while Dota is running. It holds gameinfo and its paks open, s
 half-succeed, and the client has already read the files anyway. The app says it is waiting and
 tries again after the game exits.
 
+Hands on from [`src/game-watch.ts`](#srcgame-watchts): `createGameWatch`.
+
 Hands on from [`src/game-repair.ts`](#srcgame-repairts): `REPAIR_RETRY_MS`, `PatchRepair`, `Stuck`.
+
+Hands on from [`src/steam-appstate.ts`](#srcsteam-appstatets): `launchWarning`.
 
 ### `dotaIsRunning`
 
@@ -2054,6 +3390,42 @@ export function createGameUpkeep({ settings, installer, library, schemaService, 
 ```
 
 _No description in the source._
+
+## src/game-watch.ts
+
+Is Dota open right now, asked every few seconds and told to the window when it changes.
+
+While the game runs it holds its paks and gameinfo open, and anything written then either fails
+halfway on Windows or waits for the next start to be read. The app stays open beside the game
+(the catalog, favourites and presets are worth browsing with Dota up), so instead of closing it
+says so: the status bar names it, and the channels that write the game folder answer "close
+Dota first" (src/feature-gate.ts) from the answer kept here, without asking the system again.
+
+The check runs a process list (src/game-upkeep.ts dotaIsRunning), which is async and never
+holds the main process. It runs every few seconds while the game is closed and every second while
+it is open, so the app lets go within a second of the game closing; a refusal asks again at once
+too, so the next click after the game is gone goes through.
+
+### `GameWatch`
+
+```ts
+export interface GameWatch
+```
+
+The watch: the last answer, and the switch that starts and stops asking.
+
+### `createGameWatch`
+
+```ts
+export function createGameWatch({ isRunning, send, everyMs = 5000, openMs = 1000 }: { isRunning: () => Promise<boolean>; send: (running: boolean) => void; everyMs?: number; openMs?: number; }): GameWatch
+```
+
+```
+@param isRunning  whether the Dota client is running, asked of the system
+@param send       told the new answer each time it changes
+@param everyMs    how often to ask while the game is closed
+@param openMs     how often to ask while it is open
+```
 
 ## src/gamelang-folders.ts
 
@@ -2112,6 +3484,16 @@ export const readKey = (text: string, key: string): string | null
 ```
 
 One "key" "value" pair out of a Valve KeyValues text, the first one that matches.
+
+### `steamAccountDir`
+
+```ts
+export function steamAccountDir(gamePath: string | null | undefined): string | null
+```
+
+The userdata/<account> folder of whoever is logged in to Steam, where Dota keeps the files that
+follow the account (hero grids). Without a logged-in account, the one account that has played
+Dota on this machine; with several and none of them current, null rather than a guess.
 
 ### `launchLanguage`
 
@@ -2180,7 +3562,7 @@ write into Steam's own config to set it up. Valve have already stopped mounting 
 folders; the languages with no voice pack of their own are the ones that could go the same
 way, while these three cannot - the game has to mount them to play their voices.
 
-Hands on from [`src/gamelang-steam.ts`](#srcgamelang-steamts): `launchLanguage`, `launchOptions`, `steamLanguage`.
+Hands on from [`src/gamelang-steam.ts`](#srcgamelang-steamts): `launchLanguage`, `launchOptions`, `steamAccountDir`, `steamLanguage`.
 
 Hands on from [`src/gamelang-folders.ts`](#srcgamelang-foldersts): `voiceInstalled`, `ensureLangFolder`, `moveLangFolder`.
 
@@ -2252,7 +3634,7 @@ src/minify.ts). Cross-checked against Minify's own enumeration of the same set.
 ### `modFolderFor`
 
 ```ts
-export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined): { suffix: string; followed: boolean }
+export function modFolderFor(launched: string | null | undefined, audio: string | null | undefined, lock?: string | null): { suffix: string; followed: boolean; locked?: true }
 ```
 
 The folder the game is going to mount, which is where mods have to go.
@@ -2270,7 +3652,8 @@ is the ordinary path and the one this app sets itself.
 ```
 @param launched  a `-language` value, if one is set
 @param audio     the voice language from the game's own settings
-@returns the folder, and whether a parameter chose it
+@param lock      the folder the user keeps in Settings, if any (src/settings.ts langFolderLock)
+@returns the folder, and whether a parameter or the user chose it
 ```
 
 ### `folderFor`
@@ -2334,6 +3717,277 @@ and therefore where a mod has to live.
 @param langs  a setting left out is left as it is
 ```
 
+## src/gem-colors.ts
+
+The game's own prismatic gem colours, read out of items_game.txt (issue #392). The table keeps
+them in its "colors" section, one block per gem: "unusual_creators_light" with a color_name
+("UnusualCreatorsLight") and a hex_color ("#..."). A colour picker can offer these next to free
+RGB, so "Creator's Light" on an arcana is the colour a real gem gives it.
+
+The section sits near the top of a 50 MB table, so it is found by its line rather than by
+walking every block before it.
+
+### `GemColor`
+
+```ts
+export interface GemColor { key: string; name: string; rgb: Rgb; picture?: string }
+```
+
+One prismatic gem colour.
+
+### `prismaticGemArt`
+
+```ts
+export function prismaticGemArt(index: Pick<VpkIndex, 'read'>): { image: string; mask: string | null } | null
+```
+
+The shared prismatic socket artwork and its color overlay, from the installed game.
+
+### `prismaticGemPictures`
+
+```ts
+export function prismaticGemPictures(gems: GemColor[], index: Pick<VpkIndex, 'has' | 'read'>): GemColor[]
+```
+
+Some client builds ship individual socket art alongside the shared layers.
+
+### `gemName`
+
+```ts
+export function gemName(colorName: string): string
+```
+
+"UnusualCreatorsLight" as "Creators Light"; digits stay one word: "International 2012".
+
+### `rgbOf`
+
+```ts
+export function rgbOf(hex: string): Rgb | null
+```
+
+"#FFAF00" as [255, 175, 0], or null.
+
+### `gemColors`
+
+```ts
+export function gemColors(text: string): GemColor[]
+```
+
+Every prismatic gem colour in the table, in the table's order.
+
+### `findGem`
+
+```ts
+export function findGem(gems: GemColor[], what: string): GemColor | null
+```
+
+The gem whose key or name this is, ignoring case, spaces and an apostrophe; or null.
+
+## src/generated-pak.ts
+
+A pak the app built itself (the arcana window, src/arcana-service.ts; the map looks,
+src/map-looks-service.ts), written into the mods folder like an installed one: a numbered pak
+in the early part of the load order, and on a rebuild the new one in the slot the old one had.
+
+### `PakInstaller`
+
+```ts
+export type PakInstaller = Pick<Installer, 'langFolder' | 'ensureLangFolder' | 'usedPakNames' | 'allocatePak' | 'writeInto' | 'remove' | 'slotBase' | 'moveToSlot' | 'setEnabled'>
+```
+
+What writing and swapping a generated pak needs of the installer.
+
+### `writePak`
+
+```ts
+export function writePak(installer: PakInstaller, vpk: Buffer): LibFile[]
+```
+
+The built pak written into a slot in the early part of the load order; the files it took.
+
+### `swapPak`
+
+```ts
+export function swapPak(installer: PakInstaller, rec: LibRecord, vpk: Buffer, off: boolean): LibFile[]
+```
+
+`vpk` in place of the record's pak: written beside it, then moved into the slot the old one had,
+and switched off when `off`. The caller builds first, so a build that fails leaves the old one.
+
+### `cssInForce`
+
+```ts
+export async function cssInForce(where: Omit<InForce, 'usable' | 'passedOver'>, decompile: (style: Buffer) => Promise<string>, log: (msg: string) => void = () => {}): Promise<{ css: string; from: LibRecord | null } | null>
+```
+
+A compiled style in force, read back as CSS. A mod's copy the tool cannot read is passed over for
+the next one, down to the game's own, so one odd mod does not stop the build. The game's copy
+failing is a real failure and is thrown. Null when nobody has the file.
+
+### `fileInForce`
+
+```ts
+export function fileInForce({ game, langFolder, records, own, file, usable = () => true, passedOver = () => {} }: { game: string; langFolder: string; records: LibRecord[]; own?: string | null; file: string; usable?: (data: Buffer) => boolean; passedOver?: (rec: LibRecord) => void; }): { data: Buffer; from: LibRecord | null } | null
+```
+
+The copy of a game file that is in force before a generated pak of ours: the first switched-on
+mod's, in load order (the first copy wins, as in the game), else the game's own in pak01. Null
+when neither has it. `own` is the generated record itself, which never counts. A caller that
+cannot work on every copy says which it can with `usable`; a mod's copy it refuses is passed over
+and named to `passedOver`.
+
+## src/glb-embed.ts
+
+A GLB with its pictures inside (issue #417).
+
+The toolchain exports a model as a GLB whose textures are PNG files beside it, named by relative
+links. The window reads a model from the bytes the main process hands it, with no folder to
+follow a link into, so each linked picture goes into the GLB's binary chunk and the image points
+at its slice of it: one file the three.js loader takes as it is.
+
+### `readGlb`
+
+```ts
+export function readGlb(buf: Buffer): { json: Gltf; bin: Buffer }
+```
+
+The GLB's JSON and binary chunks.
+
+### `writeGlb`
+
+```ts
+export function writeGlb(json: Gltf, bin: Buffer): Buffer
+```
+
+A GLB out of its two chunks, each padded as the format wants.
+
+### `BLANK_PNG`
+
+```ts
+export const BLANK_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64')
+```
+
+A grey PNG of one pixel: what a picture that cannot be had becomes, since an image with no data fails its whole material.
+
+### `embedGlb`
+
+```ts
+export function embedGlb(file: string): Buffer
+```
+
+The GLB at `file` with every picture it links to put inside it. A link that leaves the GLB's
+folder, or names a file that is not there, gets the blank pixel: the model shows without that texture.
+
+## src/hero-grid.ts
+
+Hero grids for the pick screen out of this patch's numbers (issue #428).
+
+The game keeps the grids in Steam's folder for the account, not in the game:
+userdata/<account>/570/remote/cfg/hero_grid_config.json. That makes them safe in any mode: no
+pak, no search path, nothing Valve checks. The numbers are OpenDota's public heroStats: picks
+and wins per rank bracket, for the matches of the last days.
+
+The file holds the user's own grids too, so the app never replaces it. It adds its grids as
+configs whose name starts with GRID_PREFIX, puts them back on the next apply, and takes only
+those away on "remove". The file as it was before the first write is kept in userData anyway.
+
+### `HERO_STATS_API`
+
+```ts
+export const HERO_STATS_API = 'https://api.opendota.com/api/heroStats'
+```
+
+Where the numbers come from.
+
+### `GRID_PREFIX`
+
+```ts
+export const GRID_PREFIX = 'D2MM · '
+```
+
+How the app's grids are told apart from the user's in the same file.
+
+### `GRID_KINDS`
+
+```ts
+export const GRID_KINDS = ['winrate', 'attribute', 'popular'] as const
+```
+
+The grids the app can make.
+
+### `GridKind`
+
+```ts
+export type GridKind = typeof GRID_KINDS[number]
+```
+
+One of the grids the app can make.
+
+### `HeroStat`
+
+```ts
+export interface HeroStat
+```
+
+One hero as heroStats lists it, cut to what a grid needs.
+
+### `gridName`
+
+```ts
+export function gridName(kind: GridKind): string
+```
+
+The name a grid of this kind carries in the pick screen, in the app's language.
+
+### `buildGrid`
+
+```ts
+export function buildGrid(stats: HeroStat[], kind: GridKind): Config
+```
+
+The grid of one kind out of heroStats: its name in the file and its categories.
+
+### `mergeGrids`
+
+```ts
+export function mergeGrids(existing: string | null, ours: Config[]): string
+```
+
+The file with the app's grids swapped for these; the user's configs and anything else stay.
+
+### `gridFile`
+
+```ts
+export const gridFile = (accountDir: string) => path.join(accountDir, '570', 'remote', 'cfg', 'hero_grid_config.json')
+```
+
+The grid file of the account, under a Steam account folder (userdata/<id>).
+
+### `gridsIn`
+
+```ts
+export function gridsIn(text: string | null): string[]
+```
+
+Which of the app's grids are in a grid file now, by config name.
+
+### `keepNumbers`
+
+```ts
+export function keepNumbers(raw: unknown): HeroStat[]
+```
+
+heroStats cut to the numbers a grid reads, so what is kept on disk is ours and nothing else.
+
+### `createHeroGrids`
+
+```ts
+export function createHeroGrids({ dataDir, accountDir, fetch = globalThis.fetch, now = Date.now }: { /** where the cache and the backup live (userData/hero-grid) */ dataDir: string; /** the logged-in account's userdata folder, or null when Steam has none */ accountDir: () => string | null; fetch?: typeof globalThis.fetch; now?: () => number; })
+```
+
+The grids for one account: the numbers fetched (and cached in userData, so a down API still
+leaves the last ones), the file written with a backup of how it was first.
+
 ## src/hero-names.ts
 
 Which hero a name means, in the three spellings this app meets: the game's folder id
@@ -2387,6 +4041,527 @@ Identity of a hero regardless of how the author spelled the folder. Authors mix
 "crystal_maiden", "crystalmaiden" and "CrystalMaiden" inside one pack, and each spelling
 used to count as a separate hero — which turned a single-hero skin into a "bundle of 3"
 and offered to split it into parts that make no sense.
+
+## src/hero-paint-service.ts
+
+A hero recoloured part by part, as one record in My mods (issue #422; what the parts are is
+src/recolor-layers.ts). The window lists the hero's layers and sends a colour for each one that is
+on; the pak is built from the game's own pak01, a file at a time, and goes early in the load order
+with the hero items, so it wins over a catalog mod of the same hero.
+
+Particles take the colour through src/recolor.ts. A picture is a compiled texture. Most of the
+hero's are block-compressed (all his small icons, nearly every ability icon): ValveResourceFormat
+reads one out as a PNG, it is repainted (`repaint`, Electron's image codec in the app), and
+Valve's compiler builds it again, as the child of a stylesheet that names it, which is how
+Panorama compiles a picture. The body's textures go the same way, as the colour of a material of
+the hero shader, and come back under the game's own names. A texture with a PNG inside
+(src/vtex.ts) needs neither tool: its PNG is repainted and put back behind the same header.
+
+A Dota update that reached the record builds it again with the same colours, a step at a time,
+after the update's repair has answered; the record's mark goes when that is done.
+
+### `PaintGenerated`
+
+```ts
+export interface PaintGenerated { paint: string; label: string; layers: Record<string, string>; items?: string[]; left?: number }
+```
+
+What a hero's paint record was built from: the hero, each layer's colour as '#rrggbb[:mode]', and the stock items he wore.
+
+### `PaintLayerView`
+
+```ts
+export interface PaintLayerView { id: string; kind: RecolorLayer['kind']; name: string | null; files: number; particles?: string[]; shares?: string[] }
+```
+
+One layer as the window lists it; an effect layer with its particles, for the 3D preview to tint.
+
+### `createHeroPaint`
+
+```ts
+export function createHeroPaint({ gamePath, installer, library, vanilla, repaint, vrf = () => null, compile, decode = vrfPng, lang = () => 'en', onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** the game's own item table */ vanilla: () => string; /** a PNG in the chosen colour and mode (src/recolor-modes.ts); Electron's codec in the app, a fake in tests */ repaint: (png: Buffer, color: Rgb, mode: PaintMode) => Buffer
+```
+
+The service the paint:* channels call.
+
+### `vrfPng`
+
+```ts
+export async function vrfPng(exe: string, vtex: Buffer): Promise<Buffer>
+```
+
+A compressed picture read out as a PNG by ValveResourceFormat, in a folder of its own that goes after.
+
+## src/hero-particle-styles.ts
+
+### `styleParticleRoots`
+
+```ts
+export function styleParticleRoots(model: {path: string; config: string}[], selected: string[], style: number)
+```
+
+Keep genuine model-born particles, but never spawn a style-0 version beside
+a style-specific override of the very same root (Spectre's *_ambient_v2_*).
+This is restricted to matching canonical paths and leaves unrelated
+weapon/shoulder or caster particles intact.
+
+### `isStockTerrorbladeBlade`
+
+```ts
+export const isStockTerrorbladeBlade = (path: string)
+```
+
+Checks whether a particle path refers to Terrorblade's default sword effect.
+
+### `replaceTerrorbladeBladeFx`
+
+```ts
+export function replaceTerrorbladeBladeFx(body: string, model: string, roots: Iterable<string>)
+```
+
+Determines whether Terrorblade's stock sword particles should be suppressed when a replacement provides its own effects.
+
+### `bladeSnapshots`
+
+```ts
+export function bladeSnapshots(def: ParticleDef, replacements?: Map<string, string>): ParticleDef
+```
+
+Use the wearable's native snapshot wherever its particle tree names the stock one.
+
+## src/hero-preview-fx.ts
+
+The particles of a hero's 3D preview (src/hero-preview.ts), out of the game's files alone: each
+worn part's, the body's and the hero's own. They need no exported model, so they are gathered
+before the models export and their resources (the models and pictures the particles name) fetch
+alongside; a cold Terrorblade waited 3.5 s for those after his models and then 1.8 s for their
+pictures. A part is named here by its place in the plan's parts; once the models are in,
+`forParts` moves each to its place among those that exported.
+
+### `FxPlan`
+
+```ts
+export interface FxPlan
+```
+
+What of the plan the particles read (src/hero-preview.ts plan).
+
+### `PlannedFx`
+
+```ts
+export interface PlannedFx { part: number; def: ParticleDef }
+```
+
+One particle: on a part by its place in the plan's parts, on the body (-1), or the hero's own (-2).
+
+### `previewParticles`
+
+```ts
+export function previewParticles(p: FxPlan, log?: (msg: string) => void): PlannedFx[]
+```
+
+Every particle the preview plays for the plan, at most 256 systems in all.
+
+### `forParts`
+
+```ts
+export function forParts(particles: PlannedFx[], placed: number[]): PlannedFx[]
+```
+
+The particles with each part's place among the parts that exported; a part whose model did not
+come takes its particles with it. The same list when every part came.
+
+```
+@param placed for each part of the plan, its place among the exported ones, or -1
+```
+
+## src/hero-preview-picks.ts
+
+Equipment metadata used to build the desktop preview.
+
+Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `wornSkin`.
+
+### `itemModel`
+
+```ts
+export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> }
+```
+
+The model an item puts on in the style picked, and the body it swaps the hero for. The build
+copies the item's model over the stock one (`stock`); its other copies are particles and other
+units' models, which the hero does not wear.
+
+### `bodySkinFor`
+
+```ts
+export function bodySkinFor(visuals: string, hero: string, model: string, implicitBody = false): number | undefined
+```
+
+A material group explicitly addressed to the hero body, even on a wearable.
+
+### `entityModel`
+
+```ts
+export function entityModel(block: string, hero: string): string | null
+```
+
+The body an item's "entity_model" modifier puts the hero in: a persona's, which the item's own
+copies leave out because a persona goes on through its base (src/item-builder-personas.ts).
+
+### `wornExtras`
+
+```ts
+export function wornExtras(visuals: string): { models: string[]; groups: { model: string; group: string; value: number }[] }
+```
+
+What an item wears besides its model, in the first style: second models, and the body groups it sets.
+
+### `monkeyKingCrown`
+
+```ts
+export function monkeyKingCrown(text: string, hero: string, equipped: { itemId?: string | number | null }[])
+```
+
+The separately authored crown that accompanies Great Sage's Reckoning.
+
+### `previewParticleReplacements`
+
+```ts
+export function previewParticleReplacements(visuals: string, includeSnapshots = false): Map<string, string>
+```
+
+Use the selected style's replacements even when they affect a different model's ambient.
+
+### `previewBladeReplacements`
+
+```ts
+export function previewBladeReplacements(existing: Map<string, string> | undefined, visuals: string | null | undefined)
+```
+
+Resolves blade model replacements for Terrorblade's 3D cosmetic preview.
+
+### `previewParticleReader`
+
+```ts
+export function previewParticleReader(read: (path: string) => Buffer | null, replacements: Map<string, string>, own?: Map<string, string>, suppressStockBlades = false)
+```
+
+Economy replacements can target a nested child as well as the equipped effect's root.
+
+### `previewStockHead`
+
+```ts
+export function previewStockHead(text: string, hero: string, body: string, index: Pick<VpkIndex, 'has'>, hatEquipped = false): string | null
+```
+
+The hidden body_head slot supplies the face independently of a hat or hair.
+
+### `previewEquipment`
+
+```ts
+export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[], slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string } }[])
+```
+
+Overlay temporary builder picks on the installed loadout, without changing either input.
+
+### `previewHeroParticles`
+
+```ts
+export function previewHeroParticles(script: string | null, hero: string, stockWeapon: boolean, index: Pick<VpkIndex, 'has'>): string[]
+```
+
+Razor's stock weapon is a particle, so it can exist even without a wearable model.
+
+### `previewCrestParticles`
+
+```ts
+export function previewCrestParticles(roots: string[], model: string, itemId: string, index: Pick<VpkIndex, 'paths'>): string[]
+```
+
+Some builds ship the Crest glow separately from the wearable's particle list.
+
+### `personaPreviewSlots`
+
+```ts
+export function personaPreviewSlots<S extends { slot: string; stock: string }>(text: string, hero: string, slots: readonly S[], equipped: readonly { slot?: unknown; itemId?: unknown }[]): S[]
+```
+
+The slots the preview dresses, with a persona's counted: a persona on (worn, or tried on in its
+slot) is worn with its own items alone, so the plain slots go and each of its own is there; one
+off takes its own slots with it. The window sends the slots it shows, which are the plain ones
+while a persona is tried on or still going on, and Invoker's Acolyte stood in the adult's hat,
+shoulders and cape.
+
+## src/hero-preview.ts
+
+The models of a hero as the item builder dresses it, for the 3D preview in the hero's window
+(issue #417): the body, and for each slot the item picked there, or the stock item where none is.
+
+The models come out of the game's pak01 as GLB files with the toolchain (src/model-glb.ts), the
+body with its idle clip, and go to the window with their pictures inside (src/glb-embed.ts). In
+the game a wearable follows the hero's bones by name; the window does the same (renderer
+catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
+build does (src/item-builder.ts itemEffectPatch, the copy that names a hero).
+
+Hands on from [`src/hero-preview-picks.ts`](#srchero-preview-picksts): `entityModel`, `wornExtras`, `wornSkin`.
+
+### `PreviewSlot`
+
+```ts
+export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } }
+```
+
+A preview slot with its stock item and an optional unsaved selection.
+
+### `HeroModels`
+
+```ts
+export type HeroModels =
+```
+
+What the window gets: each model's bytes, or why there are none.
+
+### `createHeroPreview`
+
+```ts
+export function createHeroPreview({ glb, library, gamePath, vanilla, log = () => {} }: { glb: Pick<ReturnType<typeof createModelGlb>, 'glbs'> & Partial<Pick<ReturnType<typeof createModelGlb>, 'sprites' | 'skinned'>>; library: Pick<Library, 'list'>; gamePath: () => string | null; vanilla: () => string; log?: (msg: string) => void; })
+```
+
+The 3D preview's models, made on demand.
+
+## src/hero-showcase.ts
+
+How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's
+own files rather than tuned by eye:
+
+ - the camera is panorama/layout/models/loadout/loadout_camera.vmdl's "loadout_camera_fullbody":
+   straight in front of the hero, 668 units out and 80 up, looking level (read out of the model on
+   2026-11-05; it is one keyframe, so it is written here);
+ - the hero stands at the origin at its script's LoadoutScale (Juggernaut 0.85, Pudge 0.98);
+ - its light, ambient, background colour and pedestal are its entry in
+   scripts/npc/portraits_showcase.txt, where an arcana's own model has an entry of its own.
+
+Positions and directions go to the window in the GLB's space: the toolchain turns Source's
+(x forward, y left, z up, inches) into (y, z, x) metres, which is why a hero faces +Z there.
+
+### `LOADOUT_CAMERA`
+
+```ts
+export const LOADOUT_CAMERA = { x: 668.17529, y: 0, z: 79.86814 }
+```
+
+The loadout camera, in Source units: loadout_camera_fullbody's one keyframe.
+
+### `Vec3`
+
+```ts
+export type Vec3 = [number, number, number]
+```
+
+A point or a direction, in Source's axes or the GLB's as the name using it says.
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+A linear colour, 1 being the game's 255.
+
+### `HeroStage`
+
+```ts
+export interface HeroStage
+```
+
+What the window stages the hero with. Colours are linear, 1 is the game's 255.
+
+### `toGlb`
+
+```ts
+export const toGlb = ([x, y, z]: Vec3, scale = 1): Vec3 => [y * scale, z * scale, x * scale]
+```
+
+A point or direction in Source's axes, in the GLB's.
+
+### `forward`
+
+```ts
+export function forward(angles: Vec3): Vec3
+```
+
+The way Source angles (pitch down, yaw, roll) look.
+
+### `showcaseEntry`
+
+```ts
+export function showcaseEntry(text: string, keys: string[]): Map<string, string> | null
+```
+
+The fields of the first of `keys` that portraits_showcase.txt has an entry for, or null.
+
+### `heroStage`
+
+```ts
+export function heroStage(showcase: string | null, script: string | null, keys: string[]): HeroStage
+```
+
+The stage for a hero.
+
+```
+@param showcase  portraits_showcase.txt, or null when the game has none
+@param script    the hero's script, for its LoadoutScale
+@param keys      the entries to look for, the most particular first: the body's model, then the hero
+```
+
+## src/hud-scale-service.ts
+
+The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is
+src/hud-scale.ts). One record. The style it starts from is the one in force: a HUD mod's copy
+when one is switched on (first in the load order wins, as in the game), else the game's own.
+Its CSS is read out of it, the layout goes at its end, and the style is written again here
+(src/panorama-files.ts), without ValveResourceFormat or Valve's compiler; the pak goes early in
+the load order, so it wins over the HUD mod it was made from.
+
+A Dota update that reached the record builds it again from the new style, after the update's
+repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
+
+### `HudGenerated`
+
+```ts
+export interface HudGenerated { hud: number; base: string; parts?: HudPart[] }
+```
+
+What a HUD record was built from. `hud` is the bottom bar's scale; a record from before the editor has nothing else.
+
+### `HudState`
+
+```ts
+export interface HudState
+```
+
+What the window shows: the layout on now, if any.
+
+### `createHudScale`
+
+```ts
+export function createHudScale({ gamePath, installer, library, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** a record built again after an update, so its mark can go */ onRebuilt?: (id: string) => void; log?: (msg: string) => void; })
+```
+
+The service the hud:* channels call.
+
+## src/hud-scale.ts
+
+The in-game HUD laid out by hand (issues #420 and later): the stylesheet that lays the HUD out,
+written again with rules added at its end, for Valve's compiler.
+
+panorama/styles/hud/hud_reborn.vcss_c holds the HUD's styles; a compiled style keeps them in a
+binary form, so the app reads them back as CSS with ValveResourceFormat, adds the rules, and has
+resourcecompiler.exe compile the whole file again. A rule goes on a panel by its id, and carries
+only what Panorama itself uses in this file: `ui-scale` scales a panel and all of it and keeps
+clicks where the buttons are drawn, `transform` moves it, `wash-color` tints it, and
+`visibility: collapse` takes it off the screen. Rules the game gives to a state (a flipped HUD,
+the seconds before the match) are stronger than these and stay in force.
+
+A style is a whole file: a HUD mod replaces this same one, so the rules go on the copy that is
+in force (the HUD mod's when one is on), and a Dota update that changes the file means building
+again from the new one (src/hud-scale-service.ts).
+
+### `STYLE`
+
+```ts
+export const STYLE = 'panorama/styles/hud/hud_reborn.vcss_c'
+```
+
+The stylesheet in the pak.
+
+### `SOURCE`
+
+```ts
+export const SOURCE = 'panorama/styles/hud/hud_reborn.css'
+```
+
+The same stylesheet as the compiler's source in an addon.
+
+### `MIN_SCALE`
+
+```ts
+export const MIN_SCALE = 60
+```
+
+The smallest scale the window offers, in percent.
+
+### `MAX_SCALE`
+
+```ts
+export const MAX_SCALE = 130
+```
+
+The largest scale the window offers, in percent.
+
+### `MAX_SHIFT`
+
+```ts
+export const MAX_SHIFT = 1920
+```
+
+How far a panel can be moved, in the HUD's own pixels (the screen is 1080 high to it).
+
+### `PARTS`
+
+```ts
+export const PARTS = [
+```
+
+The panels the window offers, by id in the HUD's layout. renderer/catalog/hud/parts.ts draws them,
+and a test keeps the two in step.
+
+### `HudPart`
+
+```ts
+export interface HudPart { id: string; scale?: number; x?: number; y?: number; opacity?: number; tint?: string; hidden?: boolean }
+```
+
+What was changed on one panel; what was not is left out.
+
+### `clampScale`
+
+```ts
+export function clampScale(n: unknown): number
+```
+
+A scale the window sent, as a whole step in range; 100 for anything else.
+
+### `cleanParts`
+
+```ts
+export function cleanParts(raw: unknown): HudPart[]
+```
+
+What the window sent, as panels this knows, values in range and defaults dropped.
+
+### `partsOfScale`
+
+```ts
+export const partsOfScale = (scale: number): HudPart[] => cleanParts([{ id: 'lower_hud', scale }, { id: 'minimap_container', scale }])
+```
+
+The layout an older record meant by its one scale: the bottom bar and the minimap.
+
+### `withLayout`
+
+```ts
+export function withLayout(css: string, raw: unknown): string
+```
+
+The CSS ValveResourceFormat read out of the style, with the layout at its end. The tool's own
+banner comment goes, and rules this added before are replaced rather than stacked.
+
+## src/i18n-en.ts
+
+Native dialogs, errors and labels in English, keyed by the exact Russian source string.
+
+_Exports nothing._
 
 ## src/i18n-zh-CN.ts
 
@@ -2691,6 +4866,33 @@ export function downloadCacheSize(inst: Installer): number
 
 Bytes the download cache holds.
 
+### `CachedDownload`
+
+```ts
+export interface CachedDownload { key: string; categoryId: string; name: string; bytes: number; at: number }
+```
+
+One archive in the download cache, as Settings lists it (issue #430).
+
+### `listDownloadCache`
+
+```ts
+export function listDownloadCache(inst: Installer): CachedDownload[]
+```
+
+Every archive in the download cache, largest first. The key is "<category>/<file>", the same
+key the hash index uses, and the only thing removeCachedDownload accepts.
+
+### `removeCachedDownload`
+
+```ts
+export function removeCachedDownload(inst: Installer, key: string): boolean
+```
+
+Delete one cached archive and its line in the hash index. Only a key the listing gave is
+accepted: the window hands this a string, and a joined path with "../" in it would delete
+whatever it pointed at.
+
 ### `clearDownloadCache`
 
 ```ts
@@ -2725,6 +4927,16 @@ Master "mods off" switch: every active mod pak is renamed <file>.moff so the gam
 ignores it (it only mounts pakNN_dir.vpk). Distinct from the per-mod ".off" state so
 the two never clobber each other. Official localization (pak01_*) / gameinfo.gi are
 never touched — turning mods off must not strip the game's own language files.
+
+### `MASTER_MARK`
+
+```ts
+export const MASTER_MARK = `dota2modmanager${MASTER_OFF}`
+```
+
+The master switch off, said on its own. A folder with nothing to rename (every mod already
+switched off one by one, the looks all in the item table) said "on" whatever was pressed: the
+switch flipped back at the next start and the table, which follows it, stayed in the game.
 
 ### `OWNERSHIP_FILE`
 
@@ -3155,7 +5367,7 @@ A record's slot as a number, or null for a mod that lives outside a numbered pak
 ### `coverage`
 
 ```ts
-export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, { name: string; files: number }[]>
+export function coverage(inst: Installer, mods: CoverageMod[]): Map<string, Cover[]>
 ```
 
 Which mods are quietly covering which, file by file.
@@ -3172,8 +5384,25 @@ ship, which is why the CRC decides and a shared path on its own does not.
 enabled mods only - a switched-off mod is renamed on disk and the game never sees it.
 Keyed rather than named, because two copies of the same mod in two slots share a name
 and are exactly the case worth reporting.
-@returns {Map<string, Array<{name: string, files: number}>>} mod key -> who covers it
+@returns {Map<string, Cover[]>} mod key -> who covers it, worst first, with the paths each one
+takes (sorted, at most COVER_PATHS of them, so the window can show which files and not only how many)
 ```
+
+### `COVER_PATHS`
+
+```ts
+export const COVER_PATHS = 200
+```
+
+How many of the paths a winner takes are listed: the count stays whole, the list does not.
+
+### `Cover`
+
+```ts
+export interface Cover { key: string; name: string; files: number; paths: string[] }
+```
+
+A mod that covers another: who (its key, as the caller gave it, and name), how many files, and which.
 
 ### `freeSlotBelow`
 
@@ -3327,12 +5556,145 @@ export function registerIpc(ctx: AppContext): void
 
 Register every channel the window can call.
 
+## src/item-builder-ability-fx.ts
+
+An item's ability effects without its model, as the game's loadout wears them.
+
+Every hero has hidden loadout slots, ability_effects_1 to ability_effects_9, one per ability
+that has effects to change: the hero's script names the ability of each (Earthshaker's
+ability_effects_2 is earthshaker_enchant_totem). An item that can go in one says so in its
+static attributes, `"can_equip_as_ability_effects" "2"`, once for each slot it fits, and marks
+the modifiers that slot takes, `"apply_when_equipped_in_ability_effects_slot" "2"`. Worn there,
+the item gives those modifiers and nothing else: Bracers of the Cavern Luminar's Enchant Totem
+on the Intergalactic Orbliterator's arms. Totem of Deep Magma fits all four of Earthshaker's.
+
+The slot's stock item is one for all heroes, "All Heroes' Default Ability Effects 2", with no
+model and no visuals. A pick writes the marked modifiers into it (src/item-builder-fx-patch.ts),
+so the picks of every hero in slot 2 share one block: mergeFxPatches joins them. Their
+particles, icons and sounds go under the plain paths as any pick's do (src/item-builder-assets.ts),
+ahead of the other picks', as the slot wins over the item worn in the game.
+
+The persona slots (ability_effects_1_persona_1) and the shared asset_modifiers sets, which the
+game hands out per account and no item names, are not offered.
+
+### `FX_SLOT`
+
+```ts
+export const FX_SLOT = /^ability_effects_(\d+)$/
+```
+
+A hero's ability effects slot, by its name in the table.
+
+### `fxSlotOf`
+
+```ts
+export function fxSlotOf(slot: unknown): number
+```
+
+The number of an ability effects slot, from its name or a builder slot's id (item:earthshaker:ability_effects_2); 0 for any other.
+
+### `fxSlotsOf`
+
+```ts
+export function fxSlotsOf(block: string): number[]
+```
+
+The slots an item block says it can be worn in as ability effects, in either form the table writes the attribute.
+
+### `fxVisuals`
+
+```ts
+export function fxVisuals(visuals: string, n: number): string
+```
+
+The visuals with only the modifiers ability effects slot `n` takes, in the first style. The pick
+is made the first style first (src/item-builder-styles.ts withStyle), so a style of 0, of none,
+or Valve's "default" on Totem of Deep Magma, is the one worn; its mark goes, as the stock item
+has no styles to choose from.
+
+### `hasModifiers`
+
+```ts
+export const hasModifiers = (visuals: string): boolean => /"asset_modifier\d*"/i.test(visuals)
+```
+
+Whether a visuals block has a modifier left in it.
+
+### `fxTarget`
+
+```ts
+export function fxTarget(items: SchemaItem[], n: number): SchemaItem | null
+```
+
+The stock item of ability effects slot `n`: the one for all heroes, with no persona in its slot.
+
+### `fxSlotLabel`
+
+```ts
+export const fxSlotLabel = (n: number): string => t('Эффекты способности {0}', n)
+```
+
+A slot's name for an ability effects slot, before the hero's script names its ability (src/schema-cosmetics.ts).
+
+### `fxAbilityLabel`
+
+```ts
+export const fxAbilityLabel = (ability: string): string => t('Эффекты: {0}', ability)
+```
+
+A slot's name once its ability is known: "Эффекты: Enchant Totem".
+
+### `fxSlots`
+
+```ts
+export function fxSlots(text: string, items: SchemaItem[], heroesOf: (item: SchemaItem) => string[], slotOf: (hero: string, equipSlot: string, targetId: string) => ItemSlot): ItemSlot[]
+```
+
+The builder's ability effects slots: one for each hero and slot some item of his fits, with the
+items that fit it. Whether the hero has that slot is his script's to say (src/schema-cosmetics.ts).
+
+```
+@param slotOf  the builder's slot fields for a hero and a slot name (src/item-builder-slots.ts)
+@param heroesOf  an item's heroes, npc_dota_hero_*
+```
+
+### `namedFxSlots`
+
+```ts
+export function namedFxSlots<S extends Pick<ItemSlot, 'abilityFx' | 'heroIds' | 'equipSlot' | 'slotLabel' | 'label' | 'heroLabel'>>(slots: S[], read: (file: string) => Buffer | null, lang: string): S[]
+```
+
+The ability effects slots named by their ability, as the hero's script and the game's text say
+("Эффекты: Enchant Totem"), and without those of a hero whose script has no such slot. Without
+the game's files they keep their numbers.
+
+```
+@param read  a file of pak01
+@param lang  the app's language
+```
+
+### `mergeFxPatches`
+
+```ts
+export function mergeFxPatches(list: SchemaPatch[], isFx: (p: SchemaPatch) => boolean): SchemaPatch[]
+```
+
+The patches with each ability effects slot's picks joined into one: the first pick's block with
+every other one's modifiers added, and all their files, the first pick's ahead. Two blocks of
+one id would leave the last alone in the table (src/schema-merge.ts), and with it one hero's effects.
+
+```
+@param isFx  whether a patch is an ability effects pick
+```
+
 ## src/item-builder-assets.ts
 
 What an item builder pick needs beyond its block in items_game: the game's files it puts under
 the plain paths (models, particles, the hero's own model), and the sounds and voice it makes the
 hero's own (src/item-sounds.ts writes those). src/item-builder.ts makes the block and asks this
 for the rest; the build reads the files out of pak01 here, in gameAssetEntries.
+
+Hands on from [`src/item-skin.ts`](#srcitem-skints): `firstStyleSkin`, `wornSkin`.
 
 ### `SpriteSwap`
 
@@ -3345,10 +5707,10 @@ A sprite of the game's sprite sheets shown in place of another (the minimap's he
 ### `PortraitSwap`
 
 ```ts
-export interface PortraitSwap { model: string; hero: string }
+export interface PortraitSwap { model: string; hero: string; scale?: number }
 ```
 
-A hero model whose HUD portrait settings go under the hero's own model's path.
+scale: how much bigger the body under the plain path is than the model whose settings these are
 
 ### `ItemAssets`
 
@@ -3406,7 +5768,7 @@ arcanas), and those were read as no entries at all.
 ### `heroModelPath`
 
 ```ts
-export function heroModelPath(ix: VpkIndex, hero: string): string
+export function heroModelPath(ix: Pick<VpkIndex, 'read'>, hero: string): string
 ```
 
 Where a hero's own model lives: the first "Model" in its script, which is the hero's (the ones
@@ -3451,6 +5813,190 @@ Read compiled asset bytes out of pak01 and stage them under the renamed path in 
 Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
 ```
 
+### `gameAssetEntriesSteps`
+
+```ts
+export function* gameAssetEntriesSteps(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): Generator<typeof PAUSE, VpkEntry[]>
+```
+
+gameAssetEntries, a pause before each file: an arcana is up to 20 MB, seconds on a cold hard disk after a Dota update.
+
+## src/item-builder-details.ts
+
+What the item builder's window shows beside the items, out of the game's own files: each hero's
+main attribute, which puts the heroes in the order the game's own hero grid has them (strength,
+agility, intelligence, universal), and a set's rarity, date, event and styles in the player's
+language (issue #526).
+
+### `HeroAttribute`
+
+```ts
+export type HeroAttribute = 'str' | 'agi' | 'int' | 'all'
+```
+
+A hero's main attribute as the game's hero grid groups them.
+
+### `heroAttributesSteps`
+
+```ts
+export function* heroAttributesSteps(index: Pick<VpkIndex, 'read'>, ids: string[]): Generator<typeof PAUSE, Record<string, HeroAttribute>>
+```
+
+Each hero's main attribute, out of its script in the game's archive
+(scripts/npc/heroes/npc_dota_hero_<id>.txt, "AttributePrimary"). A pause every sixteen heroes:
+the 128 reads are a few milliseconds each on a cold disk. A hero whose script is missing is left
+out, and the window puts it after the four groups.
+
+```
+@param ids  hero ids without the npc_dota_hero_ prefix
+```
+
+### `itemFacts`
+
+```ts
+export function itemFacts(block: string): { rarity?: string; date?: string }
+```
+
+An item's rarity key ("mythical") and the day it came out ("2021-09-01"), out of its block, for
+the item builder's cards: each left out when the block does not say.
+
+### `EventNames`
+
+```ts
+export type EventNames = Map<string, string>
+```
+
+The game's names for its events, by the words of the id run together in lower case ("spring2021").
+
+### `eventNames`
+
+```ts
+export function eventNames(tokens: Map<string, string>): EventNames
+```
+
+The names the game gives its events, in the language of its text: DOTA_EventNameShort_* where
+there is one ("The International 2019"), DOTA_EventName_* otherwise ("Nemestice"). Keyed without
+underscores, because the ids and the tokens put them in different places: EVENT_ID_INTERNATIONAL_2019
+is named by DOTA_EventNameShort_International2019, EVENT_ID_MUERTA_RELEASE_SPRING2023 by
+DOTA_EventName_MuertaRelease_Spring2023.
+
+```
+@param tokens  the game's text in the app's language (src/cosmetic-names.ts gameTokens)
+```
+
+### `eventName`
+
+```ts
+export function eventName(id: string, names: EventNames = new Map()): string
+```
+
+An event id as a person reads it: the game's own name in the player's language where its text has
+one, with the id's year when the name has no number of its own ("EVENT_ID_SPRING_2021" is
+"Nemestice 2021", and "EVENT_ID_NEW_BLOOM_2019" "New Bloom 2019" beside "New Bloom 2020"); else the
+id spelled out: "EVENT_ID_FALL_2025" is "Fall 2025", "EVENT_ID_10TH_ANNIVERSARY" "10th Anniversary".
+A bare number and "EVENT_ID_NONE" are no event.
+
+```
+@param names  the game's event names (eventNames); without them every id is spelled out
+```
+
+### `SetDetails`
+
+```ts
+export type SetDetails = ItemSet & { title: string; rarityName: string; eventName: string; description: string; styleNames: string[] }
+```
+
+A set as the window shows it: its name, rarity and description in the player's language, its event, and its styles' names.
+
+### `setDetails`
+
+```ts
+export function setDetails(sets: ItemSet[], named: (token: string) => string, stylesOf: (itemId: string) => string[] | undefined, events: EventNames = new Map()): SetDetails[]
+```
+
+```
+@param named  the game's localization: a token's text, '' for one it lacks (cosmetic-names.ts styleNamer)
+@param stylesOf  an item's style names in the player's language, by its id, for the items that have more than one
+@param events  the game's event names in the player's language (eventNames)
+```
+
+## src/item-builder-donor.ts
+
+Another item's effect on the one worn (issue #383): a hat the user likes, with the particles of
+the immortal hat they do not.
+
+An item's own effects are asset modifiers in its visuals: `particle_create`, a particle the game
+creates on the item while it is worn, and `particle`, one the item puts in place of a stock
+effect of the hero (an ability's). The pick wears the donor's modifiers of those two kinds
+beside its own, and the game loads the particles by their own paths, as it does for the item's
+own (src/item-builder.ts). An ability's new look comes with its icon and its sound, so the
+donor's `ability_icon` and `sound` go along: Puck's Blossom of the Merry Wanderer gave the
+ult its effect and left the stock icon (issue #534). An item whose only effect is an ability's,
+Tinker's Interstellar Astrarium head, is a donor too: the picker used to offer only items that
+create a particle. A particle the donor hangs on a point of its own model sits where the
+worn model has that point, or at its root where it has none.
+
+The donor rides in the pick's effect string as `from-<id>`, beside the effects and the style
+(src/item-builder.ts effectKey), so a record, a preset and a link carry it with nothing new.
+
+### `DONOR`
+
+```ts
+export const DONOR = /^from-(\d+)$/
+```
+
+The token of a donor in a pick's effect string.
+
+### `donorOf`
+
+```ts
+export function donorOf(key: string): string | null
+```
+
+The donor's id in an effect string, null for none.
+
+### `hasOwnEffect`
+
+```ts
+export const hasOwnEffect = (block: string, visuals: () => string | null): boolean
+```
+
+Whether an item has an effect another item could wear: what the picker offers as a donor. The
+ block is looked at first, so the visuals are read only for the few that have a particle.
+
+### `donorAdditions`
+
+```ts
+export function donorAdditions(baseText: string, visuals: string, donorId: string): string[]
+```
+
+The donor's modifiers the worn item takes, each as its text: each particle it does not create
+already, and each stock effect, ability icon and sound it leaves alone.
+
+```
+@throws when the donor is not in the table, or has no particle to give
+```
+
+### `withModifiers`
+
+```ts
+export function withModifiers(visuals: string, add: string[]): string
+```
+
+The visuals with these modifiers added at the end of the block.
+
+### `withDonorEffects`
+
+```ts
+export function withDonorEffects(baseText: string, visuals: string, donorId: string): string
+```
+
+The visuals with the donor's effects added (donorAdditions).
+
+```
+@throws when the donor is not in the table, or has no particle to give
+```
+
 ## src/item-builder-effects.ts
 
 The particle effects the item builder can put on top of an item: the effect's id, its name in
@@ -3471,7 +6017,9 @@ the credits of the program it goes into.
 export type ItemEffect = { id: string; name: string; type: string; modifier: string }
 ```
 
-An effect the builder can add to an item: a particle it creates.
+An effect the builder can add to an item: a particle it creates. Its name is the game's own
+English one in every language, as players look effects up by it ("Frostbloom"); the four the
+game names are its Attrib_Particle96, 163, 826 and 828, the other three are courier ambients.
 
 ### `ITEM_EFFECTS`
 
@@ -3488,6 +6036,173 @@ export function itemEffects(): { id: string; name: string }[]
 ```
 
 The effect variants the synthetic cosmetics/items picker can apply.
+
+### `appendItemEffect`
+
+```ts
+export function appendItemEffect(visuals: string, effect: ItemEffect): string
+```
+
+The visuals with an effect's particle created, after the ones they create already.
+
+## src/item-builder-everyone.ts
+
+Everybody playing a hero wears the user's look for it, not only the user.
+
+The builder puts a pick's model under the stock item's path, and an arcana base its body under
+the hero's. A match loads each wearable from the path the server's own item table names
+(src/item-builder.ts, withoutFileSwaps), so another player's Juggernaut with a sword of his own
+was drawn with that sword, on the base's body when one was on: the body is at the hero's path,
+which is everybody's, and the sword at its own, which nothing of ours filled. A persona's body
+with a plain item hanging off it, the thing src/item-builder-personas.ts keeps off the user's
+own hero, is what everybody else's looked like.
+
+So a hero the build dresses (a pick, or a base's part, at one of his stock paths) is worn by
+everybody exactly as the user's is, slot by slot. Every other wearable of his goes under the
+file the user's hero wears in its slot, at each model path its block names, its styles' included:
+- the build's, where it fills the stock path (a pick's model, else a base's part);
+- the game's own stock item, where it does not: the Planetfall base fills Earthshaker's totem and
+  bracers, and his belt is the plain one, so a store belt was drawn on the arcana (J0nathan550,
+  2026-10-30, with the Intergalactic Orbliterator on);
+- the pick's own model, where the stock item has none and the pick names one: Earthshaker's head
+  is his body's, so the Gar Beast's head stays at its own path, and everybody else's head was the
+  invisible box under the rest of the set (J0nathan550, 2026-10-31);
+- nothing, where neither has a model: a store head sat on the arcana's. Nothing is Valve's own
+  invisible box, the one Monkey King's transformation hides his wearables with.
+Its block in the table becomes the pick's, else the stock item's, keeping its own name and
+picture, so its own particles do not hang off our model; and it is the same in every style its
+owner can wear it in, since the server sends their style with it, not the user's
+(src/item-builder-styles.ts inEveryStyle).
+
+An arcana that swaps the hero's body (an entity_model naming the hero) is dressed too, in the slot
+it sits in (Planetfall in hero_base, under Earthshaker's Base). The server sets that body on its
+owner, from its own table, so the swap cannot be taken out of the table; the file is what can be
+changed. Under each body it names goes the user's hero's: the build's at the hero's path (a base's
+body), else the game's plain one. With the Gar Beast picked, another player's Planetfall was the
+arcana's body and particles with the Gar Beast's arms and belt on it.
+
+An arcana also swaps dozens of paid items' models for refits to its body (Planetfall 41, Dread
+Retribution 30), and the user's built blocks keep those swaps. So a dressed item's refit path gets
+the user's file as well, and a slot of the user's that is swapped itself is worn as what the swap
+shows. With an arcana on, hovering any set in the loadout showed that set (J0nathan550, 2026-10-31).
+
+Left alone: a slot with no stock item, items shared with other heroes, a persona (a second hero
+with slots of its own), and an item that swaps another form of the hero or one of his summons
+(hero_model_change, an entity_model for another unit), which the user's own hero has no file for.
+
+For a persona the stock paths hold the empty models its base puts there, so another player's plain
+items go the way the user's own do, and the persona's body is not dressed in them.
+
+The bytes are one buffer under many paths, and the pak stores them once (src/vpk-write.ts). Tried
+on Juggernaut first (five slots, about 140 wearables), then every hero (2026-10-30). The table is
+walked once whatever the number of heroes: a walk a hero was 118 ms each.
+
+### `everyoneWears`
+
+```ts
+export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEntry[], read: (path: string) => Buffer | null, heroes?: string[]): SchemaPatch[]
+```
+
+The patches that dress every other wearable of each hero the build dresses as the user's hero is
+dressed. Merged after the build's own, whose files and blocks win where both name one.
+
+```
+@param list     the build's patches (src/schema-build.ts buildSteps)
+@param beneath  the arcana bases' files, under every pick's
+@param read     a file of the game's pak01, for its stock items and the invisible box
+@param heroes   only these, as items_game names them without npc_dota_hero_; none: all of them
+```
+
+## src/item-builder-fx-patch.ts
+
+What a pick in an ability effects slot writes (src/item-builder-ability-fx.ts says what the slots
+are): the stock item of the slot, with the marked modifiers of the item picked, and the files
+they need under the plain paths. The item's model, and every modifier the slot does not take,
+stay out: that is what the slot is for.
+
+### `abilityFxPatch`
+
+```ts
+export function abilityFxPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, n: number, summon?: SummonModels): { id: string; block: string; own: null; added: string[]; unplaced: false } & ItemAssets
+```
+
+The block of ability effects slot `n` with what `itemId` gives it, in the style its key names.
+Shaped as item-builder.ts itemEffectPatch answers, with no model of its own.
+
+```
+@param summon  the plain models of the hero's summons, for an effect that swaps one (Techies' mines)
+@throws when the item or the slot's stock item is not in the table, or the item gives the slot nothing
+```
+
+## src/item-builder-kinetic.ts
+
+Kinetic gems on any item: the game's animation gems (Fishstick, Rampant, Twister), which an owned
+item carries in a socket the Game Coordinator sends and a mod cannot change. The table's
+"asset_modifiers" section says what each does: an activity (or ALL) and the modifier the hero's
+animations for it are marked with.
+
+A gem rides in the pick's effect string as `kinetic-<name>`, beside the effects (src/item-builder.ts
+effectKey). It goes in twice, as an arcana's animations do. In the table, which hero demo reads. And
+in the hero's model under its own path with the modifier taken off (arcana.ts asModel), because
+online the server sets the modifiers from its own table, where the stock item has none. One hero
+model goes in however many gems the hero wears, so the build gathers them (kineticEntries). A hero
+whose model is swapped by an arcana keeps that body: it goes in over the gems' (`beneath`).
+
+### `KINETIC`
+
+```ts
+export const KINETIC = /^kinetic-([\w-]+)$/
+```
+
+A gem's token in a pick's effect string, with its name in the table.
+
+### `KineticGem`
+
+```ts
+export interface KineticGem { name: string; token: string; activities: [string, string][] }
+```
+
+One gem of the table: its `name`, the token of the name the game shows, and [activity, modifier] pairs.
+
+### `kineticGems`
+
+```ts
+export function kineticGems(text: string): Map<string, KineticGem>
+```
+
+Every gem in the table, by its name in lower case.
+
+### `offeredKinetic`
+
+```ts
+export function offeredKinetic(text: string, heroes: string[]): { id: string; nameToken: string; fallback: string }[]
+```
+
+The gems a hero's model can play, as the picker offers them. @param heroes  npc_dota_hero_*
+
+### `picksGems`
+
+```ts
+export function picksGems(text: string, effectKey: string): KineticGem[]
+```
+
+The gems among a pick's effects. @throws when the table has no such gem, as an unknown effect does
+
+### `withKinetics`
+
+```ts
+export function withKinetics(visuals: string, gems: KineticGem[]): string
+```
+
+The visuals wearing these gems' activity modifiers, for hero demo.
+
+### `kineticEntries`
+
+```ts
+export function kineticEntries(game: string, worn: Map<string, Set<string>>): VpkEntry[]
+```
+
+Each hero's model with the modifiers of all the gems the hero wears taken off. @param worn  hero -> modifiers
 
 ## src/item-builder-personas.ts
 
@@ -3535,7 +6250,7 @@ One of a persona's slots: the plain stock item it is worn under, the game's own 
 ### `PersonaLayout`
 
 ```ts
-export interface PersonaLayout { hero: string; selector: SchemaItem; personas: SchemaItem[]; parts: PersonaPart[] }
+export interface PersonaLayout
 ```
 
 A hero's persona as the builder puts it on.
@@ -3616,6 +6331,30 @@ A persona slot's files over the persona's base. The base wins wherever it has a 
 particles rebuilt to fit the body, except at the slot's own model: there a pick wins, and the
 game's own item wins over an empty model but not over one rebuilt by hand (Mirana's mount).
 
+### `personaScales`
+
+```ts
+export function personaScales(on: Map<string, string>, ready: ReadyBase[], read: (path: string) => Buffer | null): Map<string, number>
+```
+
+How much bigger each persona's base body is than Valve's persona model, for each hero with a
+persona on whose base is here: what its items are made bigger by (src/model-scale.ts). The
+server draws the persona at the plain hero's scale, and a body compiled bigger to make up for it
+needs its items as big. Measured, not written down, so the items follow whatever the bases'
+repository publishes: a body compiled as Valve's measures 1, and nothing is scaled.
+
+```
+@param read  a file of the game's pak01: the hero's script and Valve's persona model
+```
+
+### `personaScaleOf`
+
+```ts
+export function personaScaleOf(rec: BuildRecord, scales: Map<string, number>): number | undefined
+```
+
+What a pick's models are made bigger by: a persona's own slot's, while its body is bigger (personaScales).
+
 ## src/item-builder-refits.ts
 
 Refits: an item's model made again to fit a body another item gives the hero. Faceless Void's
@@ -3672,6 +6411,57 @@ pick. The arcana's refit of the stock bracers is for when no bracers are picked.
 @param picks  each pick's patch, and the stock path its own model goes under as entryPath writes it
 ```
 
+## src/item-builder-sets.ts
+
+The item builder's sets: what a set of the game's puts on, and what the game says about it
+(rarity, release date, event). Out of src/item-builder-slots.ts when that file reached its
+budget; callers import it through src/item-builder.ts.
+
+Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
+(https://github.com/TheFleece).
+Copyright (C) 2026 h6rd
+Copyright (C) 2026 TheFleece
+SPDX-License-Identifier: GPL-3.0-or-later
+The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
+the credits of the program it goes into.
+
+### `ItemSet`
+
+```ts
+export interface ItemSet
+```
+
+A set, as the builder puts it on; see itemSets. What the game says about it comes as it is in
+the table: `rarity` a key of its "rarities" ("mythical"), `date` as "2021-08-18", `event` an
+event id ("EVENT_ID_FALL_2021"), and the name and description as localization tokens. `styles`
+is the most looks any of its pieces has, 1 for none.
+
+### `itemSets`
+
+```ts
+export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona' | 'abilityFx'>[] = itemSlots(text)): ItemSet[]
+```
+
+A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
+builder, in one write (schema-service pickSet).
+
+A set used to be one more slot, "bundle", put on as if it were one item. It is several, with
+no stock item to stand in for, so on the game of 2026-09-24 1760 of its 1971 choices did not
+build and the other 211 put a model-less block over whichever stock item came first.
+
+Only hero items are listed. A set's loading screen, cursor, HUD, ward, announcer or taunt
+has a tab of its own or is not the app's to set, and nobody puts one on with a set. A hero
+item the builder leaves alone (a persona) is listed as not fitting, with why: it
+is part of what the set looks like. A set with nothing to put on is left out, and so is a store
+bundle of several sets ("Bounty Hunter's Big Bundle": 22 items, 7 slots): more of its pieces
+want a taken slot than fit, and the first of each would dress the hero in a mix of sets that
+are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
+
+```
+@param text  items_game
+@param slots  itemSlots(text), when the caller has it already
+```
+
 ## src/item-builder-slots.ts
 
 The item builder's offer: for each hero, the slots it can dress, the paid wearables that fit
@@ -3694,25 +6484,21 @@ export interface ItemSlot
 
 A slot of a hero the builder can dress, and the paid items that fit it.
 
-### `ItemSet`
-
-```ts
-export interface ItemSet { id: string; name: string; heroIds: string[]; fit: number; heroLabel: string; pieces: SetPiece[] }
-```
-
-A set, as the builder puts it on; see itemSets.
-
 ### `AssetCopy`
 
 ```ts
-export type AssetCopy = { from: string; to: string; optional?: boolean } | { from: string; hero: string; activities: string[] } | { from: string; to: string; unit: string }
+export type AssetCopy = { from: string; to: string; optional?: boolean; skin?: number; form?: boolean } | { from: string; hero: string; activities: string[]; skin?: number } | { from: string; to: string; unit: string; skin?: number }
 ```
 
-A file in the game's archive staged under another path in the built VPK; an `optional` one (a
-picture the game has in some of its folders only) is left out when the game has not got it. A hero's own model
-names the hero instead of a path: where its model lives is in the hero's script, which the
-table does not say, and it goes in with the item's activity modifiers taken off (arcana.ts asModel).
-A summon's (forged spirits) names its unit, and is numbered as the plain model (model-sequences.ts).
+form: a hero's other body an item swaps in (Terrorblade's demon), which keeps its own cloth
+
+### `canonicalHeroId`
+
+```ts
+export function canonicalHeroId(hero: unknown): string
+```
+
+A hero id as the builder keys its slots: no npc_dota_hero_ prefix, lower case, Io as the table names it (wisp).
 
 ### `canonicalItemSlot`
 
@@ -3792,32 +6578,6 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
 
 itemSlots, a pause every couple of thousand items: the table's 26 000 are a quarter of a second.
 
-### `itemSets`
-
-```ts
-export function itemSets(text: string, slots: Pick<ItemSlot, 'slot' | 'slotLabel' | 'options' | 'persona'>[] = itemSlots(text)): ItemSet[]
-```
-
-A hero's sets as the builder puts them on: every wearable of the set that has a slot in the
-builder, in one write (schema-service pickSet).
-
-A set used to be one more slot, "bundle", put on as if it were one item. It is several, with
-no stock item to stand in for, so on the game of 2026-09-24 1760 of its 1971 choices did not
-build and the other 211 put a model-less block over whichever stock item came first.
-
-Only hero items are listed. A set's loading screen, cursor, HUD, ward, announcer or taunt
-has a tab of its own or is not the app's to set, and nobody puts one on with a set. A hero
-item the builder leaves alone (a persona) is listed as not fitting, with why: it
-is part of what the set looks like. A set with nothing to put on is left out, and so is a store
-bundle of several sets ("Bounty Hunter's Big Bundle": 22 items, 7 slots): more of its pieces
-want a taken slot than fit, and the first of each would dress the hero in a mix of sets that
-are each listed on their own anyway. Valve's "DO NOT USE" is left out as well.
-
-```
-@param text  items_game
-@param slots  itemSlots(text), when the caller has it already
-```
-
 ### `itemOptions`
 
 ```ts
@@ -3825,6 +6585,14 @@ export function itemOptions(text: string): { id: string; name: string }[]
 ```
 
 Wearable items with visuals and a matching stock default_item, offered under cosmetics/items.
+
+### `stockModels`
+
+```ts
+export function stockModels(text: string, heroes: string[]): string[]
+```
+
+The model_player of each stock item any of these heroes wears, as the table writes it.
 
 ### `itemHeroes`
 
@@ -3874,6 +6642,92 @@ item instead of its own (null: its own). Style 0, or a style the item has not go
 visuals as they are (`applied` false): the builder strips the styles, which leaves the item in
 its first.
 
+### `inEveryStyle`
+
+```ts
+export function inEveryStyle(visuals: string, count: number): string
+```
+
+A built item's visuals as they look whatever style it is worn in: its first style's entries with
+their mark taken off, every other style's taken out, and the first style's block under each of
+the `count` numbers the worn item can be in.
+
+For another player's item dressed in the user's look (src/item-builder-everyone.ts). The server
+sends the style the player chose in the game, not the user's: another player's Bracers of the
+Cavern Luminar in their second style, under the user's block with both styles in it, was drawn
+with the second style's orange particles and the parts of it the build had not copied (#402).
+The first style is the user's: the builder writes a pick in another one as the first (withStyle).
+
+### `blockInEveryStyle`
+
+```ts
+export function blockInEveryStyle(block: string, worn: string): string
+```
+
+A built item block worn as `worn` (an item block of the game's), in every style `worn` has (inEveryStyle).
+
+## src/item-builder-unusual.ts
+
+The game's unusual and ethereal effects on any item (issue #393): Ethereal Flame, Sunfire, the
+Champion's Auras. An owned courier's effect is a number the Game Coordinator sends; here the
+item builder writes the effect's particle into the item's visuals as a `particle_create`, the
+modifier the game already creates thousands of particles with, and the builder's own effects
+use (src/item-builder-effects.ts). What each number draws is read out of items_game
+(src/unusual-effects.ts).
+
+A `particle_create` gives the particle its place at the model, not the control points an effect
+hangs on named attachments. Effects whose origin is such a point (the eye glows, Luminous Gaze)
+have nowhere to start from, so they are not offered; effects that follow the model and put a
+few extra points on the eyes are, and draw what follows the model.
+
+An effect rides in the pick's effect string as `unusual-<number>`, beside the builder's own,
+the donor and the style (src/item-builder.ts effectKey).
+
+### `UNUSUAL`
+
+```ts
+export const UNUSUAL = /^unusual-(\d+)$/
+```
+
+The token of a game effect in a pick's effect string.
+
+### `OfferedEffect`
+
+```ts
+export interface OfferedEffect { id: string; nameToken: string }
+```
+
+One game effect the picker offers: its token, and the game's own name for it to look up.
+
+### `effectsOf`
+
+```ts
+export const effectsOf = (text: string): UnusualEffect[]
+```
+
+Every effect in the table, read once per table: the 3D preview asks on each slot it is shown (2026-11-10).
+
+### `offeredUnusual`
+
+```ts
+export function offeredUnusual(text: string, named: (id: number) => boolean): OfferedEffect[]
+```
+
+The effects the picker offers, by number: those the game names (dota_*.txt Attrib_Particle<n>),
+that start at the model rather than on its eyes, and that the builder does not offer already.
+
+```
+@param named whether the game has a name for an effect's number
+```
+
+### `unusualItemEffect`
+
+```ts
+export function unusualItemEffect(text: string, token: string): ItemEffect | null
+```
+
+The effect a token names, as the builder appends one; null when the table has no such number.
+
 ## src/item-builder.ts
 
 The item builder: a hero's stock item built from one of its wearables, with an effect on top.
@@ -3886,7 +6740,7 @@ game draws the wearable where the stock item was. An arcana that swaps the whole
 hero model too, under the plain hero's. src/schema-service.ts applies it along with
 the rest of the free cosmetics; src/schema.ts reads and merges the table.
 
-What the builder offers (slots, sets, effects) is src/item-builder-slots.ts, re-exported here;
+What the builder offers (slots, sets, effects) is src/item-builder-slots.ts and src/item-builder-sets.ts, re-exported here;
 this file is what a pick writes.
 
 Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -3897,11 +6751,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
 The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
 the credits of the program it goes into.
 
-Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSlotsSteps`, `itemSets`, `itemOptions`, `ItemSlot`, `ItemSet`, `AssetCopy`.
+Hands on from [`src/item-builder-slots.ts`](#srcitem-builder-slotsts): `itemSlots`, `itemSlotsSteps`, `itemOptions`, `ItemSlot`, `AssetCopy`.
+
+Hands on from [`src/item-builder-sets.ts`](#srcitem-builder-setsts): `itemSets`, `ItemSet`.
 
 Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
-Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `summonModels`, `SummonModels`.
+Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `gameAssetEntriesSteps`, `summonModels`, `SummonModels`.
+
+### `setVisualsBlock`
+
+```ts
+export function setVisualsBlock(blockText: string, visuals: string): string
+```
+
+An item block with these visuals in place of its own, or added at its end where it has none.
 
 ### `effectKey`
 
@@ -3914,10 +6778,37 @@ comma separated, '' for none. A pick carries several (the window says "you can p
 and this is how a record stores them and how two picks are told apart, so "fire,snow" and
 "snow,fire" are the same pick.
 
+Another item's effect goes after them, as "from-<id>" (src/item-builder-donor.ts).
+
 A style other than the item's first goes last, as "style-2" (src/item-builder-styles.ts). It
 rides in the same string so that a record, a preset and a shared link carry it as they carry the
 effects, with nothing new to keep in step; the first style is no token at all, which keeps every
 pick made before styles could be chosen the same pick.
+
+### `asItem`
+
+```ts
+export function asItem(block: string, text: string, item: { id: string; start: number }, model: string | null): string
+```
+
+A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
+built visuals, under that item's id, its own name and picture, and the model path its block names.
+
+### `itemVoices`
+
+```ts
+export function itemVoices(text: string, item: { start: number }): VoiceCue[]
+```
+
+The response criteria an item sets: a persona's voice item (src/item-builder-personas.ts PersonaLayout.voice).
+
+### `itemVisuals`
+
+```ts
+export function itemVisuals(text: string, item: { start: number }): string | null
+```
+
+The text of an item's "visuals" block, or null for an item without one.
 
 ### `defaultItemForWearable`
 
@@ -3927,10 +6818,41 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
 
 The stock default_item that matches a wearable by slot and by the hero(es) that can equip it.
 
+### `withoutFileSwaps`
+
+```ts
+export function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set<string>): string
+```
+
+The visuals without the model swaps the built files already make: the hero's own model swapped
+for an arcana's, and a stock item's model for another, where the pick puts that model under the
+plain path, and a hero's other form swapped for the item's (hero_model_change) the same way, and
+a summon's model put under the unit's. Each left in names a model only the paid item loads.
+
+The game wears an item's model only once it is loaded, and what a match loads is what the
+server's own item table names: the stock paths. Joining a match the client loaded the paid
+models with the hero, so the swaps worked; after a reconnect it did not, and the console said
+"Attempting to set nonresident model 'models/items/earthshaker/es_cosmic/es_cosmic_totem.vmdl'
+for item Def 459", the totem an ERROR model and the rest the plain hero (2026-10-18). Under the
+stock paths the same files are loaded either way.
+
+A persona's switch to its own loadout ("persona") goes too: the persona is worn as the plain
+hero (src/item-builder-personas.ts), and switched it would put on the persona's stock items,
+which are not where the picks for its slots are. So does its size ("hero_scale"): online the
+server draws the plain hero's ModelScale, and the base's body is compiled bigger to stand at
+Valve's size there; with the item's size on top the young Invoker stood a third taller than that
+in the hero screen and in "Try out" (Discord, 2026-11-12).
+
+```
+@param units  the heroes whose own model the pick puts under their path, and the summons whose
+model it puts under the unit's
+@param stock  the stock models the pick puts another model under, as normalizeAssetPath writes them
+```
+
 ### `itemEffectPatch`
 
 ```ts
-export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null } & ItemAssets
+export function itemEffectPatch(baseText: string, itemId: string | number, effectIds: string | string[] | null | undefined, targetId?: string, summon?: SummonModels, refit?: string): { id: string; block: string; own: string | null; added: string[]; unplaced: boolean; kinetic: string[]; heroes: string[] } & ItemAssets
 ```
 
 Turn one paid wearable into the hero's stock item for that slot.
@@ -3953,7 +6875,167 @@ when it is created, and a reconnect keeps them.
 item that swaps one; without it the swap stays in the table and shows in hero demo only
 @param refit  the model another pick makes of this one's, to wear in its place where the game
 has it (src/item-builder-refits.ts)
-@returns `own`: the stock path the item's model goes under, null when it wears none of its own
+@returns `own`: the stock path the item's model goes under, null when it wears none of its own;
+`added`: the systems of the effects asked for; `unplaced`: the slot has no stock model for it to go under, so only the table can put it on
+```
+
+## src/item-files-service.ts
+
+The picks' pak: the item builder's looks in the language folder, for the game to read with nothing
+of its own changed (src/item-files.ts says what goes in). One record in My mods, marked `generated`,
+so its slot, its switch and the master switch work as for any mod; built again in its slot when a
+pick changes, and taken away with the last pick.
+
+### `ItemFilesGenerated`
+
+```ts
+export interface ItemFilesGenerated { itemFiles: true; picks: number; left: LeftBehind[] }
+```
+
+What the pak's record was built from.
+
+### `isItemFilesRecord`
+
+```ts
+export const isItemFilesRecord = (rec: object) => ((rec as { generated?: ItemFilesGenerated }).generated)?.itemFiles === true
+```
+
+A record of this pak, for the code that goes through every record.
+
+### `createItemFilesPak`
+
+```ts
+export function createItemFilesPak({ installer, library, log = () => {} }: { installer: PakInstaller & { remove(files: LibRecord['files'], opts: { recId: string }): void }; library: Pick<Library, 'list' | 'add' | 'update' | 'removeRecord'>; log?: (msg: string) => void; })
+```
+
+The pak's one record over the installer and the library.
+
+## src/item-files.ts
+
+The item builder's picks as files alone: a look the game takes from a pak in the language folder,
+with no edit of the game's own files and no line in its item table.
+
+A pick has always been mostly files: its model under the stock path, its particle swaps, sounds
+and pictures (src/item-builder-assets.ts). The table's block added what a file was thought unable
+to say. Most of that a file can say after all:
+ - the item's `particle_create`s go into the wearable's own key values (src/model-particles.ts),
+   with hitboxes on its surface for them to spread over (src/model-hitboxes.ts);
+ - its material set is made the model's default (src/model-skin.ts);
+ - its activity modifiers are taken off the hero's body, so the item's motions are the plain ones
+   (arcana.ts asModel), one body per hero whatever the number of picks;
+ - the hero parts it hides become the default of the model that has them (src/model-bodygroups.ts);
+ - a second model it wears goes inside its first (src/model-merge.ts).
+
+What is left needs the table: `TABLE_ONLY`, and a slot with no stock model to stand in for. A pick
+with such a part still goes in by files, and says what it lost (`left`), so the window can tell
+and the person can allow the table. Calvin's constructor (dota-studio) showed that a whole look
+can be files; merging items into the hero's body as it does is not done here, since a body keeps
+one skeleton and his own notes speak of bone conflicts: a wearable stays a wearable.
+
+### `PickPatch`
+
+```ts
+export interface PickPatch extends SchemaPatch
+```
+
+A pick built for the table, with what this needs to know of it (src/schema-build.ts).
+
+### `BodyGroup`
+
+```ts
+export interface BodyGroup { model: string; group: string; value: number }
+```
+
+A choice of a body group an item makes, on the model that has the group.
+
+### `LeftBehind`
+
+```ts
+export interface LeftBehind { source: string; what: string[] }
+```
+
+One source and what of it stays behind without the table.
+
+### `ItemFiles`
+
+```ts
+export interface ItemFiles { entries: VpkEntry[]; left: LeftBehind[] }
+```
+
+A build's files, and what of the picks they could not carry.
+
+### `pickParts`
+
+```ts
+export function pickParts(patch: Pick<PickPatch, 'block' | 'own' | 'unplaced'>): { systems: string[]; skin: number; motions: string[]; groups: BodyGroup[]; extras: string[]; left: string[] }
+```
+
+What a pick's block asks of its files: its effects, material set and motions, and what it asks
+that a file cannot say.
+
+### `extraPlaces`
+
+```ts
+export function extraPlaces(stock: string[], extras: string[]): { under: { path: string; model: string | null }[]; merged: string[] }
+```
+
+Where a pick's second models go. The stock item's second model stays in the game's table, so the
+game makes it for a pick that goes as files: the pick's own takes its path, and with none left
+that path goes empty. A second model the stock item has no path for rides inside the first.
+
+```
+@param stock  the stock item's second models
+@param extras  the pick's
+```
+
+### `wornModel`
+
+```ts
+export function wornModel(model: Buffer, skin: number, systems: string[]): Buffer | null
+```
+
+A wearable as it goes in: in its material set, carrying its effects. Null: the file stays as it was.
+
+### `itemFilesSteps`
+
+```ts
+export function* itemFilesSteps(list: PickPatch[], beneath: VpkEntry[], game: string, shared?: { paths: string[]; entries: VpkEntry[] }): Generator<typeof PAUSE, ItemFiles>
+```
+
+The list a table build made, as one pak's files.
+
+```
+@param game  the game folder, for models the pick did not already copy
+@param beneath  files that go in after the picks' (the arcana bases)
+```
+
+## src/item-icons-drop.ts
+
+A mod with its item pictures taken out. A hero's arcana from the catalog often brings its own
+Blink Dagger and Black King Bar pictures along, and those show on every hero, which a player who
+wanted the arcana alone did not ask for (Discord, 2026-11-11). The choice stays on the record
+(noItemIcons), and an update takes them out of the new version too (src/ipc-mods.ts).
+
+### `ITEM_ICON_RE`
+
+```ts
+export const ITEM_ICON_RE = /^panorama\/images\/items\//
+```
+
+The item pictures of the shop and the inventory (Blink Dagger's is items/blink_png.vtex_c).
+
+### `dropItemIcons`
+
+```ts
+export function dropItemIcons(inst: Pick<Installer, 'langFolder'>, records: LibFile[]): number
+```
+
+Write a mod's packs again without their item pictures, switched on or off as they were. The
+volumes of a multi-part pack fold into the one file and drop out of `records`.
+
+```
+@param records  the mod's files, edited in place
+@returns how many pictures went
 ```
 
 ## src/item-portraits.ts
@@ -3970,10 +7052,20 @@ Both files are written whole, as the game's with those entries changed, and only
 changed. The approach is BetterSource2Viewer's character export (ExportPortraits,
 CharacterIcons.ReplaceSprites; MIT). The pictures themselves are plain copies (item-builder-assets.ts).
 
+### `scaledPortrait`
+
+```ts
+export function scaledPortrait(block: string, scale: number): string
+```
+
+A portrait block framed for a body `scale` times bigger: the camera and the light stand as much
+further from the origin, at the same angles and field of view. The young Invoker's body is 1.351
+times Valve's (src/arcana-base-store.ts), and the camera Valve set for its own was too close.
+
 ### `withPortraits`
 
 ```ts
-export function withPortraits(text: string, swaps: { from: string; to: string }[]): string
+export function withPortraits(text: string, swaps: { from: string; to: string; scale?: number }[]): string
 ```
 
 The portrait settings with each arcana's block written under the model it stands in for.
@@ -3994,6 +7086,32 @@ export function portraitEntries(gamePath: string, portraits: PortraitSwap[], spr
 
 The portrait settings and sprite sheet of every pick, to go into the build ahead of the picks' own
 files. A hero whose own model the game does not name is left out and said in `log`.
+
+## src/item-skin.ts
+
+Which material set an item's visuals wear its model in (src/model-skin.ts makes a model wear it).
+
+### `firstStyleSkin`
+
+```ts
+export function firstStyleSkin(visuals: string): string | undefined
+```
+
+The material set the first style's block names ("skin"), as a string, or undefined for none.
+
+### `wornSkin`
+
+```ts
+export function wornSkin(visuals: string, fallback = 0, model?: string): number
+```
+
+The material set an item wears its model in, 0 for the first: what its style says, or a
+"model_skin" modifier for the style picked. Luna's Midnight Locks is one model and three sets, and
+861 hero items are of this kind (2026-11-06).
+
+```
+@param visuals  the item's visuals with the picked style made its first (withStyle)
+```
 
 ## src/item-sounds.ts
 
@@ -4026,7 +7144,7 @@ An event to play as another: the one the server names, and the one the player he
 ### `VoiceCue`
 
 ```ts
-export interface VoiceCue { hero: string; key: string; value: string }
+export interface VoiceCue
 ```
 
 A response criterion an item sets for a hero ("customresponse" = "eartharc_cosmos").
@@ -4043,7 +7161,7 @@ block's buffers, so it takes its bytes along (src/kv3-write.ts writes `raw` when
 ### `voiceSwaps`
 
 ```ts
-export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>): SoundSwap[]
+export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value' | 'whole'>): SoundSwap[]
 ```
 
 The plain lines of a hero, each as the item's line for the same situation (see the top of the
@@ -4345,6 +7463,31 @@ export function readKv3(block: Buffer): Kv3Block
 
 Read a KV3 block (a resource's DATA block, magic included).
 
+## src/large-answer.ts
+
+An answer too big for one IPC message.
+
+Electron hands an answer to the window as one message, and a message of 787 MB (Primal Beast in
+Age of Attrition, 2026-11-08) ends the main process with no error to catch: the whole app closes.
+So the big pieces of an answer stay here. The answer names them, and preload.js fetches each in
+slices no message can choke on, then puts the answer back together.
+
+### `LargeRef`
+
+```ts
+export type LargeRef = { $large: number; size: number; text: boolean }
+```
+
+What stands in an answer for a piece that stays behind.
+
+### `createLargeAnswers`
+
+```ts
+export function createLargeAnswers({ now = Date.now, smallest = SMALLEST, slice = SLICE } = {})
+```
+
+The store behind one channel's answers.
+
 ## src/library.ts
 
 Library: manifest of installed mods + presets
@@ -4364,6 +7507,110 @@ export class Library
 ```
 
 _No description in the source._
+
+## src/loadout-material.ts
+
+Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute
+for Source's self-illumination, rim, diffuse and specular masks.
+
+### `NativeMaterial`
+
+```ts
+export interface NativeMaterial { shader: string; floats: Record<string,number>; ints: Record<string,number>; vectors: Record<string,number[]>; textures: Record<string,string>; gemParams?: string[] }
+```
+
+Native shader parameters stay separate so zero-valued flags and packed masks survive export.
+
+### `readLoadoutMaterial`
+
+```ts
+export function readLoadoutMaterial(file:Buffer|null):NativeMaterial|null
+```
+
+Accept both current KV3 and older NTRO materials from the installed game.
+
+### `loadoutDescriptor`
+
+```ts
+export function loadoutDescriptor(m:NativeMaterial):Record<string,unknown>
+```
+
+Channel layout is the native hero.vfx layout used by dota-loadout.
+
+### `LOADOUT_MASKS`
+
+```ts
+export const LOADOUT_MASKS:Record<string,string>={opacity:'g_tOpacity',masks:'g_tMasks1',specular:'g_tMasks2',normal:'g_tNormal',detail:'g_tDetail',fresnel:'g_tFresnelWarp',diffuseWarp:'g_tDiffuseWarp',cube:'g_tCubeMap'}
+```
+
+cube: the six faces as one strip (src/png-strip.ts); a metal without it came out black
+
+## src/loadout-resources.ts
+
+Complete effect dependencies for the real loadout runtime, shared by hero and recolor views.
+
+### `resourcePaths`
+
+```ts
+export function resourcePaths(value:Json):string[]
+```
+
+Collect native dependency paths without allowing arbitrary files or parent-directory traversal.
+
+### `drawnModels`
+
+```ts
+export function drawnModels(defs:ParticleDef[]):Set<string>
+```
+
+The models the effects' renderers draw. Others a tree names (a hero's body to emit from) cost a full export and draw nothing.
+
+### `loadoutResources`
+
+```ts
+export async function loadoutResources(defs:ParticleDef[],read:(p:string)=>Buffer|null,glb:Exporter):Promise<LoadoutResources>
+```
+
+Resolve effects and their children into a local resource packet.
+
+### `loadoutModel`
+
+```ts
+export async function loadoutModel(file:string,model:string,read:(p:string)=>Buffer|null,glb:Exporter):Promise<Buffer>
+```
+
+Add native material descriptors to exported GLBs.
+
+### `loadoutModels`
+
+```ts
+export async function loadoutModels( models: { file: string; model: string; skin?: number }[], read: (path: string) => Buffer | null, glb: Exporter, onMissing?: (model: string) => void, ): Promise<(Buffer | null)[]>
+```
+
+Export all material masks together so VRF opens the game archive once per batch.
+
+### `loadoutTexturePaths`
+
+```ts
+export function loadoutTexturePaths(models: string[], read: (path: string) => Buffer | null): string[]
+```
+
+Every texture the preview's materials of these models sample, colour included, as the sprites
+export names them. Read off the game's own materials, before any model is exported, so the
+pictures can be fetched while the models are (src/hero-preview.ts): they waited behind them.
+
+## src/loadout-sheet.ts
+
+VTEX sprite-sheet metadata. Layout: ValveResourceFormat Texture.GetSpriteSheetData (MIT),
+https://github.com/ValveResourceFormat/ValveResourceFormat . Frame PNGs are exported by VRF.
+
+### `loadoutSheet`
+
+```ts
+export function loadoutSheet(file:Buffer|null):LoadoutResources['sheets'][string]
+```
+
+Retain authored sequence IDs and frame durations when VRF exports individual frame PNGs.
 
 ## src/lz4.ts
 
@@ -4424,10 +7671,10 @@ The UI scale, kept inside a range where the layout still holds together.
 ### `ZOOM_MAX`
 
 ```ts
-export const ZOOM_MAX = 1.6
+export const ZOOM_MAX = 2.5
 ```
 
-_No description in the source._
+2.5 so a 3840 px screen at 100% Windows scaling can be filled (issue #388).
 
 ### `clampZoom`
 
@@ -4440,10 +7687,24 @@ A scale the layout can take: anything else, including nonsense, becomes the near
 ### `windowFit`
 
 ```ts
-export function windowFit(workArea: { width: number; height: number } | null | undefined): typeof DESIGNED
+export function windowFit(workArea: { width: number; height: number } | null | undefined, scale = 1): typeof DESIGNED
 ```
 
-The window's size and minimums for a work area, or the designed size when there is none.
+The window's size and minimums for a work area, or the designed size when there is none. A
+scale above 1 on a screen wider than WIDE grows the window with its content, so 1.3 is not a
+1440-pixel window holding a 1108-pixel layout.
+
+### `startScale`
+
+```ts
+export function startScale(workArea: { width: number; height: number } | null | undefined): number
+```
+
+The scale a first launch starts at (issue #388). On a 1440p or 4K screen at 100% Windows
+scaling the designed window filled a third of it and its tiles were tiny, and people took the
+app for broken before they found the slider. Above WIDE: about 80% of the scale that fills the
+work area, in steps of 0.05, so the window still has room around it. 2560x1400 starts at 1.2,
+3840x2100 at 1.85.
 
 ### `workAreaFrom`
 
@@ -4456,7 +7717,7 @@ A work area written "1366x728" (MM_WORKAREA, tools/sim profiles), standing in fo
 ### `createMainWindow`
 
 ```ts
-export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; pageExists?: (p: string) => boolean; }): BrowserWindow
+export function createMainWindow({ appRoot, settings, diag, workArea = null, quiet = false, pageExists, firstRun = false }: { appRoot: string; settings: Pick<Settings, 'get' | 'set'>; diag: (msg: string) => void; workArea?: { width: number; height: number } | null; quiet?: boolean; pageExists?: (p: string) => boolean; firstRun?: boolean
 ```
 
 Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the content.
@@ -4466,7 +7727,155 @@ Open the window on the app's page, locked to it, with Ctrl +/-/0 scaling the con
 @param workArea   stands in for the screen's (MM_WORKAREA); otherwise the primary display is asked
 @param quiet      created hidden (MM_QUIET), so a measuring run never takes over the screen
 @param pageExists stands in for the disk when a test asks whether the page was built
+@param firstRun   no settings.json was there before this start: the scale is picked for the screen
 ```
+
+## src/map-decor.ts
+
+The map without its decor: grass, flowers, ferns and critters, or stones, bones, debris and the
+stains on the ground, gone from the map, as a record in My mods.
+
+The list is the map's own, read each time it is built: every material the map names, and every
+material of each model it names, out of the map in force (a whole-map terrain's in the language
+folder, else the game's) and its models in pak01. A hand-kept list goes stale with every patch
+(ArdysaModsTools keeps 646 paths, 195 of them still on the map of 2026-11-04); this one is rebuilt
+after an update, like the HUD scale.
+
+A material, not a model, is what goes: most of the decor is baked into the map's own meshes
+(worldnodes/*agg_prop_flowers*), which no file in pak01 replaces, but those meshes draw with
+pak01's materials. Each decor material is a copy of the game's dev/transparent, which draws
+nothing and casts no shadow. tools/toolsnodraw was tried first: the game draws its "NODRAW"
+texture. Trees, buildings, cliffs, water, the ground and everything a player plays around are
+left alone (bench, 2026-11-04). What is left of a mesh costs nothing to speak of: on an RTX 4060
+both groups off gave 1-2% more FPS at each spot of the map (dota:bench --fps, 2026-11-06).
+
+### `DecorGroup`
+
+```ts
+export type DecorGroup = 'plants' | 'debris'
+```
+
+The two kinds of decor, each switched on its own.
+
+### `DECOR_GROUPS`
+
+```ts
+export const DECOR_GROUPS: DecorGroup[] = ['plants', 'debris']
+```
+
+_No description in the source._
+
+### `BLANK`
+
+```ts
+export const BLANK = 'materials/dev/transparent.vmat_c'
+```
+
+The material every decor material becomes: the game's own, which draws nothing.
+
+### `DecorGenerated`
+
+```ts
+export interface DecorGenerated { decor: DecorGroup[] }
+```
+
+What a decor record was built from.
+
+### `decorMaterialsSteps`
+
+```ts
+export function* decorMaterialsSteps(map: VpkIndex, pak: VpkIndex): Generator<typeof PAUSE, Record<DecorGroup, string[]>>
+```
+
+Each group's materials on `map`, in pak01, sorted. A pause after each stretch of files.
+
+### `decorPak`
+
+```ts
+export function decorPak(pak: VpkIndex, mats: Record<DecorGroup, string[]>, groups: DecorGroup[]): Buffer
+```
+
+The pak: each material of the groups asked for, as the blank one.
+
+### `clampGroups`
+
+```ts
+export function clampGroups(raw: unknown): DecorGroup[]
+```
+
+The groups the window sent that are groups, each once, in their order.
+
+### `DecorState`
+
+```ts
+export interface DecorState
+```
+
+What the window shows: the groups on now, and how many materials each takes on this map.
+
+### `createMapDecor`
+
+```ts
+export function createMapDecor({ gamePath, installer, library, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; onRebuilt?: (id: string) => void; log?: (msg: string) => void; })
+```
+
+The service the decor:* channels call.
+
+## src/map-looks-service.ts
+
+Towers and trees from the game's own looks, per side, built in the app (issues #446, #421).
+The window picks a look for Radiant and one for Dire; the pak comes out of the player's pak01
+(src/tower-looks.ts, src/tree-sets.ts) and goes into My mods as one record per kind, marked
+`generated` with what it was built from. Choosing again builds it again in its slot, and a
+Dota update that reached it builds it again from the new files.
+
+### `MapKind`
+
+```ts
+export type MapKind = 'towers' | 'trees'
+```
+
+The two kinds the window builds, each its catalog category.
+
+### `MapGenerated`
+
+```ts
+export interface MapGenerated { map: MapKind; radiant: string | null; dire: string | null }
+```
+
+What a generated record was built from. A side left null keeps the game's own.
+
+### `MapOption`
+
+```ts
+export interface MapOption { id: string; name: string; sides: Side[]; models: Partial<Record<Side, string>> }
+```
+
+One look a side can take, and the model it puts on each side, which the window draws where the game has no picture of it.
+
+### `MapLooksState`
+
+```ts
+export interface MapLooksState
+```
+
+What the window shows: the looks of each kind, and the record built before, if any.
+
+### `OFFERED_TREES`
+
+```ts
+export const OFFERED_TREES: MapOption[] = TREE_SETS.filter((s) => !s.tinted).map((s) => ({ id: s.id, name: s.name, sides: BOTH, models: { radiant: s.models[0], dire: s.models[0] } }))
+```
+
+The tree sets the window offers: the tinted ones come out washed white on the default map.
+
+### `createMapLooks`
+
+```ts
+export function createMapLooks({ gamePath, installer, library, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; })
+```
+
+The service the map:* channels call, over the game folder, the installer and the library.
 
 ## src/material.ts
 
@@ -4548,6 +7957,147 @@ The material with some expressions rewritten (`change` returns new bytecode, or 
 ```
 @returns the new file and how many expressions changed
 ```
+
+## src/menu-background-service.ts
+
+The main menu background of the user's own as a record in My mods (issue #418; the pak itself is
+src/menu-background.ts). One record: a new background takes the place of the one before, in its
+slot. The window encodes the user's file to WebM and hands it over; the WebM is kept in
+userData/menu-backgrounds by its sha1, so a Dota update that reached the record builds it again
+out of the new layouts with nothing asked of the user, and a new dimming or blur needs no file.
+
+### `BackgroundGenerated`
+
+```ts
+export interface BackgroundGenerated extends BackgroundLook { background: string; source: string }
+```
+
+What a background record was built from.
+
+### `BackgroundState`
+
+```ts
+export interface BackgroundState { installed: { id: string; source: string; dim: number; blur: number; enabled: boolean } | null }
+```
+
+What the window shows: the background on now, if any.
+
+### `createMenuBackground`
+
+```ts
+export function createMenuBackground({ gamePath, userDataDir, installer, library, log = () => {} }: { gamePath: () => string | null | undefined; userDataDir: string; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; log?: (msg: string) => void; })
+```
+
+The service the background:* channels call.
+
+## src/menu-background.ts
+
+The main menu background of the user's own (issue #418): a WebM behind the menu, dimmed and
+blurred as they chose, in a pak made out of the game's own layouts.
+
+The menu's background is a Panorama panel, DOTADashboardBackgroundManager, which picks one of
+several backgrounds (the event's, the last match's...). Mods in the catalog do this by hand: the
+manager told to show the last match's background, and that background given a movie. This does
+the same to the compiled layouts of the player's own game, read out of pak01 and written back
+with one change each, so nothing else in them is a copy of an older patch:
+
+- dashboard.vxml_c and dashboard_background_manager.vxml_c: the manager's override-background
+  set to DOTADashboardBackgroundLastMatch, where the manager is made and in its own layout;
+- dashboard_background_last_match.vxml_c: every panel of it hidden, and a MoviePanel playing
+  the WebM put over them, with a black panel over it for the dimming.
+
+A compiled layout keeps its panels as a tree in the LaCo block, binary KV3 (src/kv3.ts); the
+styles are inline, so no stylesheet is compiled. The WebM goes into the pak as it is: the
+game's movie panel plays a file from the archive by its path. A Dota update can change any of
+the three layouts, so the record is built again from the new ones (src/menu-background-service.ts).
+
+### `MOVIE`
+
+```ts
+export const MOVIE = 'd2mm/menu_background.webm'
+```
+
+Where the movie sits in the pak, and the files the pak replaces.
+
+### `LAYOUTS`
+
+```ts
+export const LAYOUTS =
+```
+
+_No description in the source._
+
+### `BackgroundLook`
+
+```ts
+export interface BackgroundLook { dim: number; blur: number }
+```
+
+How the movie is shown: how dark the veil over it is (0 to 0.9) and how blurred (0 to 20 px).
+
+### `attribute`
+
+```ts
+export const attribute = (name: string, value: string): Obj
+```
+
+A panel's attribute as the compiler writes one: a name and its value under it.
+
+### `children`
+
+```ts
+export function children(node: Obj): Kv3Node[]
+```
+
+A node's children as a list that can be changed: one child alone is stored as `child`, more as `vecChildren`.
+
+### `panels`
+
+```ts
+export function panels(root: Kv3Node, name: string, out: Obj[] = []): Obj[]
+```
+
+Every panel of this name anywhere in the layout.
+
+### `setAttribute`
+
+```ts
+export function setAttribute(panel: Obj, name: string, value: string): void
+```
+
+The attribute `name` of a panel set to `value`, in place of the one it had.
+
+### `veil`
+
+```ts
+export const veil = (dim: number): string => `#000000${Math.round(Math.min(Math.max(dim, 0), 0.9) * 255).toString(16).padStart(2, '0')}`
+```
+
+The veil's colour: black, as opaque as the dimming.
+
+### `backgroundLayouts`
+
+```ts
+export function backgroundLayouts(read: (file: string) => Buffer | null, look: BackgroundLook): { path: string; data: Buffer }[]
+```
+
+The three layouts with the movie in them, out of the game's own.
+
+### `webmProblem`
+
+```ts
+export function webmProblem(webm: Buffer, max = 48 * 1024 * 1024): string | null
+```
+
+Why these bytes cannot be the menu's movie, or null: a WebM, with a VP8 or VP9 track.
+
+### `buildBackground`
+
+```ts
+export function buildBackground(ix: Pick<VpkIndex, 'read'>, webm: Buffer, look: BackgroundLook): Buffer
+```
+
+The pak: the three layouts and the movie.
 
 ## src/minify.ts
 
@@ -4983,6 +8533,553 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 @returns the record, updated
 ```
 
+## src/model-attachments.ts
+
+A model put under a plain hero's path with its attachments in the plain model's order (Discord,
+Acolyte of the Lost Arts: Invoker's orbs under his feet in a lobby on Valve's servers).
+
+Online the server keeps the plain hero and tells the client which attachment a particle sits on
+by its number in the plain model's list, as it does for animations (src/model-sequences.ts
+numberedAs). Invoker's plain model has attach_orb2, attach_orb1, attach_orb3 at 6, 7 and 8 of
+12; the persona's body, compiled again, has the orbs first and seven in all, so the orbs went on
+attachments it has not got and stood at his feet. In "Try out" and with bots the client is the
+server too and reads the names from the model it has, which is why it looked right there.
+
+Each plain attachment's number gets the model's own attachment of that name. One the model has
+not got gets a stand-in: the model's attach_hitloc (or its first) under the plain name, so a
+particle put there is on the body rather than on the floor. The model's attachments the plain
+one has not got go after them.
+
+### `attachmentNames`
+
+```ts
+export function attachmentNames(model: Buffer): string[]
+```
+
+The names of a model's attachments, in order; empty when it has none or cannot be read.
+
+### `attachedAs`
+
+```ts
+export function attachedAs(model: Buffer, plain: Buffer): Buffer
+```
+
+`model` with its attachments numbered as `plain` numbers them. The model as it is when they are
+in that order already, or when either cannot be read (it then looks right in "Try out" still).
+
+### `entriesAttachedAs`
+
+```ts
+export function entriesAttachedAs(entries: VpkEntry[], read: (p: string) => Buffer | null): VpkEntry[]
+```
+
+A base's files with each model numbered as the game's model at its path (attachedAs).
+
+### `basesAttachedSteps`
+
+```ts
+export function* basesAttachedSteps(ready: ReadyBase[], pak: string): Generator<typeof PAUSE, ReadyBase[]>
+```
+
+The arcana bases of a build with their models numbered as the game's, a pause after each base.
+
+## src/model-bodygroups.ts
+
+A model with some of its body groups shown differently by default.
+
+An item hides parts of the hero through `bodygroup_visibility`: Sniper's hats take his head group
+to its second choice, which has no hair. The game reads that from its table. A model says the same
+for itself: each mesh belongs to a choice of a group, `m_meshGroups` names the choices
+("head_@1_#&1" is choice 1 of "head"), and `m_nDefaultMeshGroupMask` holds a bit per choice. So a
+file can make any choice the model's own default, and no line of the table is needed.
+
+### `withBodygroups`
+
+```ts
+export function withBodygroups(model: Buffer, groups: Map<string, number>): Buffer | null
+```
+
+The model with these groups set, or null when it has none of them.
+
+```
+@param groups  the group's name and the choice to make
+```
+
+### `withoutMeshes`
+
+```ts
+export function withoutMeshes(model: Buffer): Buffer | null
+```
+
+The model with nothing to draw. A stock item's second model comes from the table whatever goes
+under the item's path, so a pick without one leaves that file empty. Null: not a model this reads.
+
+### `hiddenMeshes`
+
+```ts
+export function hiddenMeshes(model: Buffer, groups: Map<string, number>): string[]
+```
+
+The names of the meshes these groups turn off: the toolchain exports every mesh of a model
+whatever its mask, so the 3D preview hides them by name.
+
+## src/model-cloth.ts
+
+A wearable's model without its cloth, for the item builder's copy of it under a stock path of a
+hero whose own cloth would drag it behind him.
+
+2191 of the game's 12660 item models carry a cloth simulation (a finite-element model,
+m_pFeModel in their PHYS block) for their tassels, banners, tails and capes. Copied under the
+stock item's path, which is how the builder puts a wearable on (src/item-builder.ts), it swings
+with the hero on Earth Spirit, Slark and Ember Spirit, and trails along the ground behind
+Centaur while he walks, creeping back once he stands still (2026-11-09, again 2026-11-10 on a
+build that kept the cloth of his Rout tail and head). So it is the hero, not the item.
+
+Centaur's body is the one among the 129 heroes whose own cloth has an m_flLocalForce other than
+1: his is 1.5; 99 others have 1 and the rest have no cloth. That share of the hero's movement is
+what the cloth is carried along by, and under a stock path his wearables' cloth goes with his.
+3.7.0 took the cloth out of every copy on every hero, and a player found it gone from Earth
+Spirit's Jade Reckoning, Slark's Sea Rake's Bridle and Ember's ponytail.
+
+So on such a hero a copy goes in with m_pFeModel null and the rest of PHYS as it was, a shape
+the game loads: 404 of its item models have a PHYS block whose m_pFeModel is null, with the same
+flags as the ones with cloth. Those parts hang still on their bones instead of swinging, and
+nothing trails. On every other hero, and under an item's own path, the cloth stays.
+
+### `withoutCloth`
+
+```ts
+export function withoutCloth(model: Buffer): Buffer
+```
+
+The model with its cloth simulation taken out; the same buffer when it has none, or cannot be read.
+
+### `hasCloth`
+
+```ts
+export function hasCloth(model: Buffer): boolean
+```
+
+Whether a model carries a cloth simulation.
+
+### `clothDragger`
+
+```ts
+export function clothDragger(read: (p: string) => Buffer | null): (to: string) => boolean
+```
+
+Whether a wearable copied to `to` would trail: a path in models/heroes/<folder>/ whose body,
+<folder>/<folder>.vmdl_c, drags cloth. Asked once per folder. A folder with its body under
+another name (Drow's drow_base) is not Centaur's, and its copies keep their cloth.
+
+### `dragsCloth`
+
+```ts
+export function dragsCloth(body: Buffer | null): boolean
+```
+
+Whether a hero's body drags the cloth of the wearables under his stock paths: its own cloth's local force is not 1.
+
+## src/model-glb.ts
+
+Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417).
+
+The Source 2 toolchain (src/toolchain.ts) turns a compiled model straight out of pak01 into a
+GLB with its textures as PNG files beside it, and with the clips asked for. Measured on the
+real game (2026-11-03): Techies with its idle 1.2 s and 2.3 MB, a wearable 1.1 s, and most of
+that is the program starting, so the models a preview asks for go out in one call, the way
+src/game-icons.ts fetches its pictures.
+
+The export runs as a child process, which keeps the main process free. The cache lives in
+userData under the game's build: a new build can change any model, so the old cache goes.
+
+### `modelFile`
+
+```ts
+export function modelFile(model: string): string | null
+```
+
+A model path as the game names it, compiled or not, or null for one that is not a model.
+
+### `glbAt`
+
+```ts
+export function glbAt(root: string, file: string): string
+```
+
+Where the toolchain puts a model's GLB under its output folder: the archive's layout, .glb for .vmdl_c.
+
+### `foundGlb`
+
+```ts
+export function foundGlb(root: string, file: string): string | null
+```
+
+The GLB a model's export left, or null. Asked for one model, the toolchain names the file after
+-o; but a body that brings its physics along is two files, and then -o is a folder holding the
+archive's layout: abaddon.glb/models/heroes/abaddon/abaddon.glb. Read as a file, that folder
+failed the whole 3D preview (2026-11-04).
+
+### `gameInfo`
+
+```ts
+export const gameInfo = (dota: string) => `"GameInfo"\n{\n\tFileSystem\n\t{\n\t\tSearchPaths\n\t\t{\n\t\t\tGame\t"${dota.replace(/\\/g, '/')}"\n\t\t}\n\t}\n}\n`
+```
+
+A gameinfo.gi that sends the toolchain to this game folder for what a lone file refers to.
+
+### `exportArgs`
+
+```ts
+export function exportArgs(pakFile: string, out: string, files: string[], clips: string[] | 'all', materials = false): string[]
+```
+
+The toolchain's arguments for these models out of this archive into this folder.
+
+### `spriteAt`
+
+```ts
+export function spriteAt(root: string, texture: string): string | null
+```
+
+Where a texture's picture landed: the file itself, or the largest frame of its sheet.
+
+### `cubeAt`
+
+```ts
+export function cubeAt(root: string, texture: string): string | null
+```
+
+A cube texture's picture: the toolchain writes its six faces apart (name_rt.png…), and the preview
+reads them as one strip (src/png-strip.ts), made here once and kept beside them as name.png.
+
+### `createModelGlb`
+
+```ts
+export function createModelGlb({ userDataDir, toolchain, getGamePath, run = runTool, log = () => {} }: { userDataDir: string; toolchain: { pathOf: (name: string) => string | null }; getGamePath: () => string | null; run?: Run; log?: (msg: string) => void; })
+```
+
+GLB files of the game's models, made on demand and kept per game build.
+
+## src/model-hitboxes.ts
+
+Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item.
+
+A particle system can start on a hitbox set of a model and pick points on those boxes. A wearable
+has no hitboxes, and the mesh the game's effects read instead it keeps only for a hero's body, so
+on an item the same system piles up in a ball at the model's origin, in the hand. Calvin's
+constructor (dota-studio) showed the way out: boxes made from the item's own vertices, in a set
+the particle points at, with `m_bUseBones` off (src/particle-surface.ts makes that copy).
+
+Each vertex goes to its heaviest bone and into the bone's own space (a box follows its bone), and
+the vertices of a bone are gathered into cells, one box per cell: small enough to read as the
+item's shape, and at most MAX_BOXES of them, since a system picks among boxes on every spawn.
+
+### `SURFACE_SET`
+
+```ts
+export const SURFACE_SET = 'mm_surface'
+```
+
+The set the boxes go in, which a system made to spread over them names.
+
+### `SurfaceBox`
+
+```ts
+export interface SurfaceBox { bone: string; min: number[]; max: number[] }
+```
+
+One box: the bone it follows, its corners in that bone's space.
+
+### `nameHash`
+
+```ts
+export function nameHash(name: string): number
+```
+
+The 32-bit MurmurHash2 the game keeps its names by: a lowercase name, seed 0x31415926.
+
+### `surfaceBoxes`
+
+```ts
+export function surfaceBoxes(file: Buffer): SurfaceBox[]
+```
+
+The boxes for a model's surface: as fine as MAX_BOXES lets them be. None for a model with no vertices.
+
+### `withSurfaceHitboxes`
+
+```ts
+export function withSurfaceHitboxes(model: Buffer, names: string[] = [SURFACE_SET]): Buffer | null
+```
+
+`model` with its surface boxes as a hitbox set under each of `names` on each of its meshes, or null
+for a model this cannot read or that has no vertices of its own. A set it already has stays.
+
+## src/model-loadout.ts
+
+The animation a hero plays on the game's loadout screen, for the 3D preview (issue #417).
+
+A hero's model lists its sequences in its ASEQ block, each with the activities it answers to: the
+first is an ACT_ name, the rest are modifiers an item can switch on. The loadout plays the
+sequence for ACT_DOTA_LOADOUT; the names differ per hero (Abaddon's loadout_anim, Juggernaut's
+loadout_default_anim, Pudge's pudge_loadout), so they are read out of the model, not guessed.
+
+An item can bring its own: Pudge's Dragonclaw Hook plays pudge_loadout under "whalehook". The
+sequence picked is the one whose modifiers are all among the items worn, with the most of them;
+with none worn, the plain one with no modifier at all. ACT_DOTA_LOADOUT_STATUE is a still pose
+for statues and is not the loadout.
+
+### `Sequence`
+
+```ts
+export interface Sequence { name: string; acts: string[] }
+```
+
+A sequence's name and every activity it answers to, the ACT_ one and its modifiers.
+
+### `modelSequences`
+
+```ts
+export function modelSequences(model: Buffer | null): Sequence[]
+```
+
+The model's sequences, or none when the file has no sequence block or one this reader cannot take.
+
+### `itemModifiers`
+
+```ts
+export function itemModifiers(text: string): ReadonlySet<string>
+```
+
+Every activity modifier any item switches on, in lower case, from items_game; found once per table.
+
+### `MotionGroup`
+
+```ts
+export type MotionGroup = typeof MOTION_GROUPS[number]
+```
+
+A kind of motion in that list.
+
+### `Motion`
+
+```ts
+export interface Motion { name: string; group: MotionGroup; act: string; mods: string[]; once: boolean }
+```
+
+A motion in that list: its sequence, its kind, its activity and modifiers for a label, and whether it ends.
+
+### `motionList`
+
+```ts
+export function motionList(seqs: Sequence[], modifiers: string[] = [], ofItems: ReadonlySet<string> = new Set()): Motion[]
+```
+
+What the body can be shown doing, by kind. A sequence with no activity is a layer of another one
+("@counter_helix") or the bind pose, and a statue's activity is the same motion again (Axe's
+"attack_main" under his "attack_main_anim").
+
+An item's modifier changes more than the loadout: Dragonclaw Hook's Pudge runs and swings by
+"whalehook" too. So the game's own rule for the loadout goes for each motion: of the sequences
+that differ only in the modifiers worn, those with the most of them stand for the rest. A
+sequence that needs an item the hero does not wear is not one it can do: Pudge alone has 30 of
+those in his stance, in every mix of hooks and arms.
+
+```
+@param modifiers  the activity modifiers of the items worn, as items_game names them
+@param ofItems    every modifier some item switches on (itemModifiers)
+```
+
+### `idleSequence`
+
+```ts
+export function idleSequence(seqs: Sequence[]): string | null
+```
+
+The plain idle: the sequence named "idle", else an idle with no modifier ("arcana_idle_anim").
+
+### `loadoutSequence`
+
+```ts
+export function loadoutSequence(seqs: Sequence[], modifiers: string[] = []): string | null
+```
+
+The loadout sequence for what the hero wears, or null for a model that has none.
+
+```
+@param modifiers  the activity modifiers of the items worn, as items_game names them
+```
+
+### `wearableClip`
+
+```ts
+export function wearableClip(seqs: Sequence[]): string | null
+```
+
+What a wearable does on its own while the hero stands: its loadout, else its idle, else a clip
+named for standing. Of the worn models in the game about a third have one (a cape, a tail, a
+mount's head); the rest are bones that follow the body and nothing else.
+
+### `itemActivities`
+
+```ts
+export function itemActivities(block: string): string[]
+```
+
+The activity modifiers an item's visuals switch on: Dragonclaw Hook's "whalehook".
+
+## src/model-merge.ts
+
+Two models as one file: the mesh of a second model carried inside the first.
+
+An item can wear a second model (`additional_wearable`): Death Prophet's skirts bring their
+spirits, Phoenix's wings their fire. The game makes that second wearable from its table, and a
+pick that goes as files has only its slot's one stock path to sit under. A compiled model keeps
+its meshes inside itself, each mesh a pair of blocks that `CTRL.embedded_meshes` names, so the
+second model's blocks can come along:
+ - its blocks are added to the file and named in CTRL, under the next mesh index;
+ - DATA gets a line for the mesh in its group and LOD masks, the same as the first mesh's;
+ - a bone the first model lacks joins its skeleton, under the parent it had. A vertex names its
+   bones through `m_remappingTable`, so the mesh keeps its own numbering and only its table is
+   rewritten to the joined skeleton;
+ - its materials join the resources the file names, and every material set, which keep the same
+   length and order (src/model-skin.ts).
+
+A wearable follows the hero by bone name, so what is merged follows as it did by itself. Its own
+clips stay behind, and a second model with morphs is refused, as is the older mesh layout.
+
+### `withBlocks`
+
+```ts
+export function withBlocks(file: Buffer, blocks: { name: string; data: Buffer }[]): Buffer
+```
+
+The file with these blocks after its own, each on a 16-byte line, as the compiler lays them.
+
+### `mergedModel`
+
+```ts
+export function mergedModel(first: Buffer, second: Buffer): Buffer | null
+```
+
+The first model with the second's meshes in it, or null where the two cannot go together.
+
+```
+@param first   the wearable's model
+@param second  the model it brings along
+```
+
+## src/model-particles.ts
+
+Particles a model brings by itself, with no item table to create them.
+
+A model's key values can list particles (`particle_cfg_list`): the game's own pedestals and
+Lycan's spirit wolves carry their ambient that way, 68 models of the game of 2026-11-06. Each row
+names a system and which of its control point configurations to start it with, and "preview" is
+the one a system's author points at the model's attachments. So a wearable under a stock path can
+carry what the item's `particle_create` entries would have made: the idea of building a look out
+of files alone comes from Calvin's constructor (dota-studio), this is the game's mechanism
+written here from its own files.
+
+The key values are a text in the model's DATA block, in the KV3 text form, and a system named
+there must also be in the file's reference list or the game does not load it.
+
+### `keyValuesWithParticles`
+
+```ts
+export function keyValuesWithParticles(text: string, paths: string[]): string
+```
+
+`text` with its particle list replaced by these systems; a text of the KV3 kind stays one.
+
+### `keyValueParticles`
+
+```ts
+export function keyValueParticles(text: string): { path: string; config: string }[]
+```
+
+Read only the authored ambient list from the model's KV3 text.
+
+### `modelParticleEntries`
+
+```ts
+export function modelParticleEntries(model: Buffer | null): ReturnType<typeof keyValueParticles>
+```
+
+Ambient systems authored on a compiled model.
+
+### `withParticles`
+
+```ts
+export function withParticles(model: Buffer, paths: string[]): Buffer | null
+```
+
+`model` with these particle systems of its own, or null for a model whose block this cannot change.
+
+```
+@param paths  the systems, as `.vpcf` paths; the ones already listed are replaced
+```
+
+## src/model-scale.ts
+
+A compiled model made bigger about its origin, and how much bigger one model is than another.
+
+A persona is worn as the plain hero (src/item-builder-personas.ts), and the server draws the
+plain hero at his own ModelScale: Invoker at 0.74, where Valve draws the Acolyte at 1 through the
+persona's hero_scale, which the server applies only to the persona's owner. A persona body
+compiled 1.35 times bigger stands at Valve's size, but its items do not follow: a wearable is
+bone-merged, its bones put where the body's are, and its vertices hang off those bones at the
+distances it was compiled with. The Acolyte's hair, weighted to the head alone, sat inside a head
+1.35 times bigger, and Invoker came out bald (hero-base-fixes 5f977421, 2026-10-27).
+
+So each item worn on such a body is made bigger by the same factor, here, from the game's own
+file: its vertices' positions, the translation of each bone's inverse bind pose (which the
+skinning uses, so the vertices stay on their bones), its skeleton's bone positions, and its
+bounds, hitboxes and attachment offsets. 107 of the 168 vertex buffers the five personas' items
+have are meshopt-compressed, the codec Valve uses; they are decoded, scaled and encoded again in
+the same version (0, "0xa0"), and every flag and size the model names stays as it was.
+
+Not scaled: an item's own animations (its jiggle and cloth bones keep their compiled distances
+where an animation moves them), its physics, and its morphs.
+
+### `modelScaleReady`
+
+```ts
+export const modelScaleReady = (): Promise<void> => codec
+```
+
+Resolves once models can be scaled: for a caller that starts before the codec is ready, a test.
+
+### `scaleModel`
+
+```ts
+export function scaleModel(file: Buffer, s: number): Buffer
+```
+
+A compiled model (vmdl_c) `s` times bigger about its origin. Its meshes are named in CTRL: the
+older models keep their buffers in one MBUF block per mesh (vbib_block), the newer in an MVTX
+block per buffer with the layout in CTRL itself (m_vertexBuffers).
+
+### `modelScaleAgainst`
+
+```ts
+export function modelScaleAgainst(model: Buffer, reference: Buffer): number | null
+```
+
+How much bigger `model` is than `reference`, from the bones they share: their total distance from
+their parents, one over the other. A persona's base compiled at 1.35 measures 1.35 against
+Valve's persona model, one compiled as Valve's measures 1. Null where they share no bone.
+
+### `scaledModels`
+
+```ts
+export function scaledModels(entries: VpkEntry[], scale: number | undefined, skipped: (path: string, why: string) => void): VpkEntry[]
+```
+
+A pick's files with its models `scale` times bigger (src/schema-build.ts, a persona's items). A
+model that cannot be is left at its own size, and `skipped` is told which and why.
+
 ## src/model-sequences.ts
 
 A model put under another model's path that numbers its sequences as that one does.
@@ -4999,6 +9096,15 @@ the same name (written any case, with or without underscores) or, failing that, 
 activity (the plain run is Infernus's runx); the rest
 follow in their own order, and every reference into the list is moved with its entry.
 
+A plain name with nothing left in the item to stand for it gets a stand-in: a copy of the item's
+own sequence for that activity, under the plain name, so one clip answers to two numbers. The
+flying donkey runs two ways (donkey_wings_run, donkey_wings_run_alt) and a courier flies one; the
+plain donkey idles two ways and many couriers one. Without stand-ins those models were dropped
+whole, and 143 of 216 couriers went back to the donkey for their flight, their walk or both
+(#403). A name the server never sends, a part with no activity, holds its place with the item's
+bind pose. A model with no run or no idle of its own still gets none: the donkey beats a courier
+standing still while it travels.
+
 ### `numberedAs`
 
 ```ts
@@ -5006,8 +9112,100 @@ export function numberedAs(model: Buffer, plain: Buffer): Buffer | null
 ```
 
 `model` with its sequences numbered as `plain` numbers its own, or null where that cannot be
-done: a plain sequence with nothing in the model to stand for it, a list either one has not got,
+done: a plain run or idle with nothing in the model to play it, a list either one has not got,
 or sequences of kinds this does not move the references of (multi, synth, command).
+
+## src/model-skin.ts
+
+A model with one of its material sets made the one it wears by default.
+
+An item can wear its model in another material set ("skin" in its visuals): Collector's Baby
+Roshan 2018 is the plain alt Baby Roshan's model in set 2, the silver one. A model put under a
+plain unit's path (src/courier-models.ts) is worn in set 0 online, since the server sets the
+skin from its own table, where the plain unit has none: the silver courier came out purple.
+
+So the meshes draw with the set's materials, matched to set 0's by place (a model's
+m_materialGroups lists every set in the same order), and set 0 takes the set's list under its
+own name and place, so that whether the game reads the meshes, the first set or the one named
+"0", it finds the chosen one. The materials are already among the model's references: every
+set's are.
+
+### `modelSkinMaterials`
+
+```ts
+export function modelSkinMaterials(model: Buffer | null, skin: number): Map<string, string>
+```
+
+The native material substitutions for a preview skin, including external meshes.
+
+### `withSkin`
+
+```ts
+export function withSkin(model: Buffer, skin: number): Buffer | null
+```
+
+`model` wearing material set `skin` by default; null where it has no such set or no mesh of its own to change.
+
+## src/model-snapshot-fallback.ts
+
+Last-resort particle snapshot for assets whose .vsnap is absent from the
+installed archive (notably PA's arcana weapon surfaces). An approximation
+from the *actual* skinned GLB is preferable to dropping every particle that
+samples that snapshot. Never replace a real .vsnap or invent an arbitrary
+free-floating point in space.
+
+### `snapshotFromModel`
+
+```ts
+export function snapshotFromModel(bytes: Uint8Array, side: 'left' | 'right' | null = null, max = 192): { position: number[][]; skinning: Weight[][] } | null
+```
+
+Sample skinned geometry when the game archive has no authored particle snapshot.
+
+## src/model-style-meshes.ts
+
+Source 2 exports bodygroup alternatives as independent glTF nodes. VRF doesn't
+carry their game-side bodygroup visibility into glTF: *_copy, *_alt and the
+first-style mesh can consequently all be drawn on top of one another.
+
+This is deliberately conservative. We only hide meshes when a model contains
+an explicit pair of primary and _alt materials on separate primitives. Models
+without that pair, including unrelated copy-named components, remain untouched.
+
+### `selectStyleMeshes`
+
+```ts
+export function selectStyleMeshes(data: Uint8Array, style = 0): Buffer
+```
+
+Keep only the first or alternative authored mesh for a model with an alternate bodygroup.
+
+### `syncArcanaStyles`
+
+```ts
+export function syncArcanaStyles<T extends { model: string; style?: number; explicitBaseStyle?: boolean }>(parts: T[]): void
+```
+
+A style chosen on a set's head also controls the exported alt meshes on its siblings.
+
+### `styleFamily`
+
+```ts
+export function styleFamily(model: string): string
+```
+
+Only multi-piece items from the same authored collection inherit a selected style.
+
+### `hidePreviewOnlyMeshes`
+
+```ts
+export function hidePreviewOnlyMeshes(data: Uint8Array): Buffer
+```
+
+Exported cinematic-only geometry is not part of the normal hero idle.
+Spectre's arcana has five landing-page dissolve blades which VRF exports as
+regular GLB nodes: in the inventory they appear as huge flat white shards.
+The material name is an explicit opt-in, not a broad 'hide extra meshes' rule.
 
 ## src/mods-listing.ts
 
@@ -5194,6 +9392,14 @@ export function noteFailure(host: string, why: string): void
 
 _No description in the source._
 
+### `noteStall`
+
+```ts
+export function noteStall(host: string, why: string): void
+```
+
+A host that took a whole timeout to say nothing is blocked rather than unlucky, so it stands down now.
+
 ### `noteSuccess`
 
 ```ts
@@ -5267,6 +9473,14 @@ config this way and derives the host from the address; this is the same rule aga
 where the address becomes a request, so nothing that reaches applyMirrors another way (a test,
 a later caller) can point downloads at plain http or at a host other than the one whose
 failures stand it down. The bytes are still checked against the catalog's hashes either way.
+
+### `pictureBases`
+
+```ts
+export function pictureBases(): string[]
+```
+
+The picture folders on hosts the signed config names (src/preview-cache.ts).
 
 ### `applyMirrors`
 
@@ -5555,6 +9769,257 @@ export class Overlays
 ```
 
 The font and cursor files of one install: writing them, keeping the originals, putting them back.
+
+## src/pak-stamp.ts
+
+Whether the game's pak01 changed: a listing of its files' stats, which the app asks for before it
+trusts anything it keeps of the game (the item table, the pictures, the 3D models).
+
+The game has 679 pak01 files, and a stat of each is 20 to 80 ms, seconds when the disk is busy.
+The item builder's 3D preview asked on every slot shown, and the window froze for 3.5 s of
+stats on a click (2026-11-10). An update rewrites pak01_dir.vpk, which indexes every other pak,
+so while it stands as it was the others do too, and the listing made with it is kept.
+
+### `pakFiles`
+
+```ts
+export function pakFiles(gamePath: string, kind: string, describe: (st: fs.Stats) => string): string
+```
+
+Each of the game's pak01 files, as `describe` puts its stat, in name order.
+
+```
+@param kind  which listing: each `describe` keeps its own
+@throws when pak01_dir.vpk or the folder cannot be read
+```
+
+### `gameSchemaStamp`
+
+```ts
+export function gameSchemaStamp(gamePath: string): string
+```
+
+Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
+
+## src/panorama-files.ts
+
+Panorama's compiled styles (vcss_c) and scripts (vjs_c), read and written here rather than by
+Valve's resourcecompiler (Discord, 2026-11-09: a rank medal refused with "Schema mismatches
+reported", the user's Workshop Tools of two Dota updates; most users have no tools at all).
+
+A script's DATA block is its JavaScript as it is (PanoramaScript from version 4), so a script is
+any of the game's scripts with its DATA in place of theirs. A style's DATA is a CRC, the pictures
+it names, each with its width and height (and a CRC from version 3), and then its CSS, minified,
+as text. The CRC of a style Valve ships does not match its text either (ValveResourceFormat
+stopped checking it for that), so nothing checks it. A picture the new CSS names that the style
+did not is added to the list, with its size, and to the style's references (RERL), as the
+compiler does, so the game loads it with the style.
+
+### `StyleImage`
+
+```ts
+export interface StyleImage { path: string; width: number; height: number; crc: number }
+```
+
+A picture a style names: its path (the compiled texture's, without _c), its size and its CRC.
+
+### `readStyle`
+
+```ts
+export function readStyle(file: Buffer): { images: StyleImage[]; css: string }
+```
+
+A compiled style's pictures and its CSS; throws when it is not one.
+
+### `cssImages`
+
+```ts
+export function cssImages(css: string): string[]
+```
+
+The pictures CSS names, as compiled textures: s2r://a/b.vtex, and a/b.png as the compiler turns it into a/b_png.vtex.
+
+### `textureSize`
+
+```ts
+export function textureSize(vtexC: Buffer): { width: number; height: number }
+```
+
+A texture's width and height, from its DATA block (VTEX: two shorts after the flags and reflectivity).
+
+### `writeStyle`
+
+```ts
+export function writeStyle(file: Buffer, css: string, known: (path: string) => StyleImage | null, texture: (path: string) => Buffer | null): Buffer
+```
+
+`file`, a compiled style, with `css` in place of its own. Each picture the CSS names that the
+style does not list is looked up: `known` from another style that lists it, else its size from
+`texture` (the compiled texture, from the game's pak). One neither has stays out of the list and
+is still named in the CSS, where the game loads it when a panel needs it.
+
+### `writeScript`
+
+```ts
+export function writeScript(template: Buffer, js: string): Buffer
+```
+
+A compiled script with `js` as its text: `template`, any of the game's scripts, with its DATA replaced.
+
+### `imagesOf`
+
+```ts
+export function imagesOf(styles: Buffer[]): (path: string) => StyleImage | null
+```
+
+The pictures of several styles by path, for writeStyle's `known`.
+
+## src/particle-snapshot.ts
+
+### `snapshotPoints`
+
+```ts
+export function snapshotPoints(file: Buffer, data: { num_particles?: unknown; attributes?: unknown; string_list?: unknown }): SnapshotPoint[]
+```
+
+Decode the attributes of a compiled snapshot without treating local points as world coordinates.
+
+## src/particle-spec.ts
+
+The particles an item or a hero shows on its loadout, read out of the game for the 3D preview
+(issue #417), and the attachment points they hang on.
+
+A particle system (.vpcf_c) is a KV3 tree: emitters, initializers, operators, renderers, the
+control points and what drives them, and child systems. The independent TS runtime executes
+supported operations in file order and diagnoses unsupported ones. This sends the full tree,
+child timing and snapshots rather than flattening them into one approximate sprite. A model's attachments
+(attach_sword, attach_hitloc) are in its MDAT blocks: a bone, an offset and a turn from it.
+
+Which systems: an item's "particle_create" asset modifiers for its first style, the ones the
+game spawns only on the loadout included, the team-only ones for Radiant; and the hero's own
+RenderablePortrait "loadout" particles, which the game plays as the loadout opens.
+
+### `Json`
+
+```ts
+export type Json = null | boolean | number | string | Json[] | { [k: string]: Json }
+```
+
+A KV3 value as plain JSON, as the window gets it over IPC.
+
+### `ParticleDef`
+
+```ts
+export interface ParticleDef { path: string; tree: { [k: string]: Json }; children: ParticleDef[]; childGroup?: number; delay?: number; endcap?: boolean; snapshot?: SnapshotPoint[]; snapshots?: Record<number, SnapshotPoint[]> }
+```
+
+A system with its children, as the window plays it.
+
+### `Attachment`
+
+```ts
+export interface Attachment extends Partial<LoadoutAttachment> { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
+```
+
+An attachment point: the bone it follows, and where it sits from it in the bone's own space (Source units).
+
+### `kvJson`
+
+```ts
+export function kvJson(kv: Kv3Block, n: Kv3Node | undefined): Json
+```
+
+A KV3 node as plain JSON.
+
+### `dataTree`
+
+```ts
+export function dataTree(file: Buffer | null): { [k: string]: Json } | null
+```
+
+The DATA tree of a compiled resource, or null for one the reader cannot take.
+
+### `particleDef`
+
+```ts
+export function particleDef(read: (path: string) => Buffer | null, path: string, budget = { left: 128 }, depth = 0, inherited = new Map<number, SnapshotPoint[]>()): ParticleDef | null
+```
+
+A system and its children, at most `budget` systems in all: a system with dozens of children
+would cost the window more than its look is worth.
+
+### `particleTextures`
+
+```ts
+export function particleTextures(def: ParticleDef): string[]
+```
+
+Every texture a system and its children draw with, once each.
+
+### `itemParticles`
+
+```ts
+export function itemParticles(block: string): string[]
+```
+
+The particle_create systems an item block brings, for its first style.
+
+### `bindItemParticle`
+
+```ts
+export function bindItemParticle(def: ParticleDef, effect: UnusualEffect | undefined, configName = ''): ParticleDef
+```
+
+Overlay economy control points onto the root particle's preview configuration.
+
+### `heroLoadoutParticles`
+
+```ts
+export function heroLoadoutParticles(script: string): string[]
+```
+
+The hero's own loadout particles, out of its script's RenderablePortrait block.
+
+### `modelAttachments`
+
+```ts
+export function modelAttachments(model: Buffer | null): Attachment[]
+```
+
+A model's attachment points.
+
+### `particleReport`
+
+```ts
+export function particleReport(def: ParticleDef): object
+```
+
+Preserve operator parameters for diagnosing missing rendering features; no texture bytes.
+
+## src/particle-surface.ts
+
+An effect made to spread over a wearable's surface.
+
+The game's unusual effects start with C_INIT_CreateOnModel reading the model's mesh, which it
+keeps only for the hero's own body: on a wearable the same system piles up at the model's origin.
+Calvin's constructor (dota-studio) answers with hitboxes over the item and a copy of the system
+that reads those instead; the same is done here, against the boxes src/model-hitboxes.ts lays in
+SURFACE_SET. Each system of the tree is copied under SURFACE: mesh and bones
+off in its emitters, and a mesh-skinning operator swapped for one that holds a particle to the
+box it started in, since the item moves with the hero's bones.
+
+### `surfaceSystem`
+
+```ts
+export function surfaceSystem(read: (p: string) => Buffer | null | undefined, system: string): { root: string; entries: VpkEntry[] } | null
+```
+
+The copies of `system` and its children that spread over a surface, or null where no system of
+the tree starts on the model (it hangs on attachment points, and goes on as it is).
+
+```
+@returns the root's path, and the files to put in the pak
+```
 
 ## src/patch-watch.ts
 
@@ -5869,6 +10334,69 @@ against that list rather than taken on faith: this is the moment the game become
 again, and a copy that is even one byte off leaves the client refusing to matchmake with
 no mod in sight to blame.
 
+## src/persona-base-effects.ts
+
+What of a persona's base the build takes: its persona's own effects, not another item's.
+Kept apart from src/item-builder-personas.ts, which says how a persona is worn.
+
+### `withoutOthersEffects`
+
+```ts
+export function withoutOthersEffects(text: string, ready: ReadyBase[]): ReadyBase[]
+```
+
+A persona's base without another item's effects: the Acolyte's carries Magus Apex's eyes as its
+orbs and its Sun Strike, at the plain hero's paths, and they won over the persona's own orbs. An
+effect folder under particles/econ/items/ that none of the persona's own items names is another
+item's: its files go, and so does a plain path's file that leads into it, where the persona's
+own copy or the game's then stands. The other bases' folders are their persona's own (axe_carnival,
+dk_persona, mirana_persona).
+
+## src/png-strip.ts
+
+A cube map's six faces as one strip, for the 3D preview's hero shader, which reads a cube from a
+row of six square faces (vendor/dota-loadout/src/viewer.js cubeOf). ValveResourceFormat writes a
+cube texture as six PNGs, name_rt, _lf, _bk, _ft, _up and _dn: the cube's faces in their order,
++X, -X, +Y, -Y, +Z, -Z in the game's axes, which is the order the shader looks them up in once it
+has turned a direction into the game's axes (TO_SOURCE). Without them the preview had no
+reflection at all, and a metal the game shows by its cube map (Razor's Severing Crest, at five
+times its weight; Terrorblade's blades) came out black.
+
+The main process has no image codec of its own (Electron's is not there in the tests), so this is
+one for what the toolchain writes: 8-bit, not interlaced, grey, grey with alpha, RGB or RGBA.
+
+### `CUBE_FACES`
+
+```ts
+export const CUBE_FACES = ['rt', 'lf', 'bk', 'ft', 'up', 'dn'] as const
+```
+
+The faces' suffixes, in the order the strip lays them out.
+
+### `decodePng`
+
+```ts
+export function decodePng(png: Buffer): { width: number; height: number; rgba: Buffer } | null
+```
+
+A PNG's pixels as RGBA, or null for one this does not read.
+
+### `encodePng`
+
+```ts
+export function encodePng(width: number, height: number, rgba: Buffer): Buffer
+```
+
+RGBA pixels as a PNG.
+
+### `cubeStrip`
+
+```ts
+export function cubeStrip(faces: Buffer[]): Buffer | null
+```
+
+Six square faces of one size, in CUBE_FACES order, as one strip; null where they are not that.
+
 ## src/portable-update.ts
 
 Updating a copy that was never installed.
@@ -5991,6 +10519,45 @@ export function createPresenceStatus({ presence, settings, library, installer }:
 ```
 
 The status kept in step with the app: the setting that turns it off, and the screen it names.
+
+## src/preset-install.ts
+
+Putting a preset on: an own one whose mods may have gone, or a received one that is still a
+wish list. The Presets screen (src/ipc-presets.ts) and the command line (src/cli.ts) both go
+through here, so `--apply` from a script does exactly what the button does: the same catalog
+downloads, the same one-cursor rule, the same table built once at the end.
+
+### `touchesSchema`
+
+```ts
+export function touchesSchema(rec: LibRecord): boolean
+```
+
+Does changing this record mean the item table has to be rebuilt?
+
+### `PresetInstallDeps`
+
+```ts
+export type PresetInstallDeps = Pick<AppContext, 'installer' | 'library' | 'schemaService' | 'presets'
+```
+
+What the preset flows need from the app.
+
+### `PresetApplied`
+
+```ts
+export type PresetApplied = { ok: true; installed: number; missing?: string[]; errors: string[] } | { error: string }
+```
+
+How applying went: the counts, and what was left out and why.
+
+### `createPresetInstall`
+
+```ts
+export function createPresetInstall({ installer, library, schemaService, presets, adoptImportedFiles, afterDeployMaster, disableOtherCursors, sendProgress, blocked, }: PresetInstallDeps)
+```
+
+The two ways a preset goes on, over the app's services.
 
 ## src/preset-link.ts
 
@@ -6164,8 +10731,8 @@ Parse and validate a .d2mm.
 
 Presets, and the two ways one travels to somebody else.
 
-A preset is a named set of "these mods on, everything else off", and the looks that go on in
-the slots it names (Library.picksOn). Sharing is what makes this
+A preset is a named set of "these mods on, everything else off", and the same for the looks
+(Library.picksOn). Sharing is what makes this
 more than a list: a preset that only names catalog mods is a few hundred bytes and installs
 from the catalog on the other end, while one that has to carry a mod's own bytes can run to
 hundreds of megabytes. Which of the two a given preset is depends on where its mods came
@@ -6178,6 +10745,8 @@ Lifted out of main.js unchanged. It was 268 lines in the middle of the file that
 window, reachable only through the process that owns that window, and testable only by
 launching the app. The bodies below are the same bodies; what changed is that the services
 they use arrive as arguments instead of as variables that happen to be in scope.
+
+Hands on from [`src/preset-install.ts`](#srcpreset-installts): `touchesSchema`.
 
 Hands on from [`src/preset-plan.ts`](#srcpreset-plants): `categoryModList`, `CatalogIndex`, `ShareEntry`.
 
@@ -6197,18 +10766,21 @@ export function packableRecord(rec: LibRecord | null | undefined): rec is LibRec
 
 Can this record go into a pack? Packs, fonts and cursors cannot; a lang-folder VPK can.
 
-### `touchesSchema`
+### `presetIsOn`
 
 ```ts
-export function touchesSchema(rec: LibRecord): boolean
+export function presetIsOn(library: Library, preset: Preset): boolean
 ```
 
-Does changing this record mean the item table has to be rebuilt?
+Whether what is on is exactly this preset, so the Presets screen can say which one you are in:
+its installed mods and no other, and for a preset that kept its looks, those and no other. A
+member not installed cannot be on, and is not asked about; a preset saved before it kept looks
+says nothing about them, and they are not asked about either.
 
 ### `presetsService`
 
 ```ts
-export function presetsService({ catalog, installer, library, schemaService, deployAndApply }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown; }; deployAndApply: (pack: LibRecord) => unknown; })
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply, settings }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; settings?: Pick<Settings, 'get' | 'set'>; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown; }; deployAndApply: (pack: LibRecord) => unknown
 ```
 
 Everything about presets that needs the running app's services.
@@ -6219,7 +10791,136 @@ Everything about presets that needs the running app's services.
 @param deps.library        the manifest of installed mods and saved presets
 @param deps.schemaService  puts a preset's looks on, and rebuilds the item table when a preset changes it
 @param deps.deployAndApply  rebuilds one pack's VPK
+@param deps.settings       where the preset applied last is kept (presetState)
 ```
+
+## src/preview-cache.ts
+
+The catalog's pictures, kept on this disk and served from it.
+
+The window used to ask raw.githubusercontent.com for every preview itself and turn to the mirror
+only once that failed. Where GitHub answers, that is under a second. Where it is blocked the
+connection hangs rather than failing: measured 2026-11-07, 33 category pictures on a clean run
+and not one drawn a minute later, while the catalog itself had loaded in seconds. The picture
+did not fail for the fallback to start, it just never came.
+
+So the window's requests for a catalog picture are redirected here (servePreviews). A picture on
+disk is answered from disk. One that is not goes to the mirror first, because that host is not
+blocked and its edge cache keeps a picture a few hundred kilobytes away from anybody; the other
+hosts join in after a moment instead of after a timeout. warm() then fetches the rest of the
+catalog in the background, a few at a time, so a category somebody opens for the first time is
+on disk already.
+
+Hosts that fetch GitHub on behalf of anybody (ghproxy and friends) stay out of this list. They
+carry mod archives because a digest checks those. A picture has no digest and goes straight to
+an image decoder, so it comes from a host that holds the catalog's own files.
+
+Videos stay out too: they are hundreds of megabytes together and the player wants Range
+requests. The window asks the mirror for those directly (ui/media.ts).
+
+### `SCHEME`
+
+```ts
+export const SCHEME = 'mm-preview'
+```
+
+The address scheme the window's pictures are answered on.
+
+### `PRIVILEGED_SCHEME`
+
+```ts
+export const PRIVILEGED_SCHEME = { scheme: SCHEME, privileges: { standard: true, secure: true } }
+```
+
+What the window has to be told about the scheme, before the app is ready.
+
+### `WATCHED`
+
+```ts
+export const WATCHED = `${RAW}${PREVIEWS}*`
+```
+
+The address pattern the window's picture requests are caught by.
+
+### `FRESH_MS`
+
+```ts
+export const FRESH_MS = 7 * 24 * 3600 * 1000
+```
+
+A picture older than this is asked about again, in case its author replaced it under the same name.
+
+### `pictureOf`
+
+```ts
+export function pictureOf(url: string): string | null
+```
+
+The catalog path of a picture address, encoded as it arrived, or null for anything else.
+
+### `redirectFor`
+
+```ts
+export function redirectFor(url: string): string | null
+```
+
+Where the window's request goes instead; null leaves it alone.
+
+### `pictureType`
+
+```ts
+export function pictureType(b: Uint8Array): string | null
+```
+
+What these bytes really are, or null when they are no picture at all: a host's error page, say.
+
+### `hostsFor`
+
+```ts
+export function hostsFor(rel: string): string[]
+```
+
+Hosts that carry this picture, best first.
+
+### `picturesIn`
+
+```ts
+export function picturesIn(mods: unknown, constants: unknown): string[]
+```
+
+Every picture the catalog names, categories first, encoded the way the window asks for them.
+
+### `Picture`
+
+```ts
+export interface Picture { bytes: Uint8Array; type: string }
+```
+
+A picture ready to hand over.
+
+### `createPreviewStore`
+
+```ts
+export function createPreviewStore({ dir, fetchFn = (url, init) => fetch(url, { ...init, ...downloadProxyFetchInit() } as RequestInit), stagger = STAGGER_MS, log = () => {}, }: StoreOptions)
+```
+
+The folder of pictures, and the one way in and out of it.
+
+### `PreviewStore`
+
+```ts
+export type PreviewStore = ReturnType<typeof createPreviewStore>
+```
+
+What createPreviewStore hands back.
+
+### `servePreviews`
+
+```ts
+export function servePreviews(session: Electron.Session, store: PreviewStore): void
+```
+
+Answers the scheme from the store and points the window's picture requests at it.
 
 ## src/pumpkin.ts
 
@@ -6293,10 +10994,654 @@ What the window is told after a key: the night opened (and whether the mod came 
 ### `createPumpkin`
 
 ```ts
-export function createPumpkin({ settings, importVpkPaths, library, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps)
+export function createPumpkin({ settings, importVpkPaths, library, voice = () => null, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps)
 ```
 
 The pumpkin's side in the main process: spend a key, fetch the prize again, say whether it is here.
+
+## src/quit-after-build.ts
+
+Quitting waits for the item table being written.
+
+A look switched on or off is written into the game by a build in the background, a few seconds
+for a library of several hundred picks. The window closed in those seconds took the build with
+it: the game kept the table from before, so a look off on screen was on in the game, and twice
+in a row the app was closed within seconds of a change (J0nathan550, 2026-10-29). The next start
+builds it again (schemaPending), but only if it stays open long enough. So the app stays, without
+its window, until the build has written, and no longer than LIMIT_MS for one that hangs. When no
+build is running nothing is held: the updater's quit-and-install goes through as it always did.
+
+### `LIMIT_MS`
+
+```ts
+export const LIMIT_MS = 30_000
+```
+
+The longest a quit waits for a build: a whole library is about three seconds of work.
+
+### `quitAfterBuild`
+
+```ts
+export function quitAfterBuild(app: { on(event: 'before-quit', fn: (e: QuitEvent) => void): unknown; quit(): void }, { busy, settled, log = () => {}, limitMs = LIMIT_MS }: { busy: () => boolean; settled: () => Promise<void>; log?: (msg: string) => void; limitMs?: number; }): void
+```
+
+```
+@param app      what of Electron's app this needs
+@param busy     whether a build is running or asked for (schemaService.busy)
+@param settled  resolves once none is (schemaService.settled)
+```
+
+## src/rank-look-script.ts
+
+The script the rank look puts into the game's layouts (src/rank-look.ts says which and why):
+Panorama JavaScript, written out with the player's levels and medal in it. Out of rank-look.ts
+when it outgrew that file's budget.
+
+### `levelsScript`
+
+```ts
+export function levelsScript(look: RankLook, ids: Record<number, string> = {}): string
+```
+
+The script the layouts include. It knows the levels and the medal, finds what is on its
+panel every frame (hero cards, the player's own panel at the pick, the strategy badge) and
+writes them in. Each part is in a try of its own: a panel a patch renamed stops that part only,
+and says so once in the game's console. `ids` names the chosen heroes by the number the game
+gives them, for the panels that know a hero only by it.
+
+## src/rank-look-service.ts
+
+The rank medal and hero levels of the player's own screen, as one record in My mods (what goes
+into it is src/rank-look.ts). The two styles' CSS is read out of the copy in force (a mod's when
+one carries them, else the game's), the medal's rules go at its end, and the styles and the
+levels script are written here (src/panorama-files.ts), without Valve's compiler; the layouts get
+the script's include. The pak goes early in the load order, so it wins over the mod it was made from.
+
+A Dota update that reached the record builds it again from the new files, after the update's
+repair has answered, and the record's mark from src/update-impact.ts is lifted when it is done.
+The window's pictures (the medals, the badge tiers) come out of the game too: the badges are
+PNGs in their textures, the medals are compressed and need ValveResourceFormat.
+
+### `RankGenerated`
+
+```ts
+export interface RankGenerated { rank: RankLook; script?: string }
+```
+
+What a rank record was built from, and the script it carries (SCRIPT_MARK when it was built).
+
+### `SCRIPT_MARK`
+
+```ts
+export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString() + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12)
+```
+
+The script and the layouts it goes into, as a short mark. A record built by an older app keeps
+that app's script in its pak, so a new part of it (the level in a match) stays out of the game
+until the record is built again; the app does that at start when the marks differ.
+
+### `RankState`
+
+```ts
+export interface RankState
+```
+
+What the window shows: the look on now, if any, the heroes of this patch, and whether ValveResourceFormat is there.
+
+### `MEDAL_PICTURES`
+
+```ts
+export const MEDAL_PICTURES = [...Array.from({ length: 9 }, (_, i) => `rank${i}`), 'rank8a', 'rank8b', 'rank8c']
+```
+
+The medals the window offers, by the name of their picture, and the six badge tiers.
+
+### `createRankLook`
+
+```ts
+export function createRankLook({ gamePath, installer, library, vrf, run = runTool, onRebuilt = () => {}, log = () => {} }: { gamePath: () => string | null | undefined; installer: PakInstaller; library: Pick<Library, 'list' | 'add' | 'update'>; /** ValveResourceFormat's CLI, when it is downloaded: the medals' pictures in the window */ vrf: () => string | null; /** how ValveResourceFormat is run for the pictures; tests hand one in */ run?: (exe: string, args: string[]) => Promise<unknown>
+```
+
+The service the rank:* channels call.
+
+## src/rank-look.ts
+
+The rank medal and the Dota Plus hero levels the player sees on their own screen: a medal and
+stars of their choosing, and a level from 1 to 30 for any hero, with the tier badge that level
+earns. Nobody else sees any of it. The game draws other players' medals from the same classes,
+so the medal is everyone's in this player's game, while the levels are only on the player's own
+hero cards and on their own pick.
+
+The medal is a picture a style puts on a panel by class: `.RankTier3 .RankTierImage` gets
+rank3_psd, `.RankPips2 .RankPipImage` gets pip2_psd. So the app reads the two styles that carry
+those rules back as CSS (ValveResourceFormat), and adds a copy of each rule with the chosen
+picture in it at the end, where it wins. A rule drawn small (`.Minimal`, the mini folder) gets the
+small picture, so the medal keeps its size.
+
+A level is a number the client asks Steam for, so no style can change it. A script can: Panorama
+runs the JavaScript a layout includes, and the script writes the number into the label and sets
+the tier class on the badge every frame. It goes into the layouts LAYOUTS lists, by adding one
+include to the tree in their LaCo block (as src/menu-background.ts does): the hero grid of the
+menu and the pick screen, the player's own panel at the pick, the strategy screen, the hero
+page with its badge, progress tab and experience bar, the card that opens over a hero, and in a
+match the frame round the portrait, the top bar and the card that opens on a player.
+
+Tried in the game on 2026-11-04: the profile medal, the hero grid and the pick badge took them.
+
+### `Medal`
+
+```ts
+export interface Medal { tier: number; stars: number; top: 0 | 5000 | 100 | 10 }
+```
+
+A medal: the tier (0 not calibrated, 8 Immortal), the stars of tiers 1 to 7, and an Immortal's leaderboard place.
+
+### `RankLook`
+
+```ts
+export interface RankLook { medal: Medal | null; levels: Record<string, number>; every: number | null }
+```
+
+What the player picked: a medal or the game's own, a level per hero, and one for every hero not named.
+
+### `STYLES`
+
+```ts
+export const STYLES = ['panorama/styles/dotastyles', 'panorama/styles/avatar_rank_tier'].map((p) => ({ compiled: `${p}.vcss_c`, source: `${p}.css` }))
+```
+
+The two styles that hold the medal's rules, as compiled in the pak and as the compiler's source.
+
+### `LAYOUTS`
+
+```ts
+export const LAYOUTS = ['panorama/layout/hero_grid_new.vxml_c', 'panorama/layout/hud/dota_hud_hero_picking_player.vxml_c', 'panorama/layout/hud/dota_hud_pregame.vxml_c', 'panorama/layout/dashboard_page_hero_new_v2.vxml_c', 'panorama/layout/tooltips/tooltip_hero_card.vxml_c',
+```
+
+The layouts the levels script goes into: the hero grid, the player's panel at the pick, the
+strategy screen, the hero page, the card over a hero, and in a match the HUD (the frame round the
+portrait), a player's place on the top bar and the card that opens on a player.
+
+### `SCRIPT`
+
+```ts
+export const SCRIPT = { source: 'panorama/scripts/d2mm_rank_look.js', compiled: 'panorama/scripts/d2mm_rank_look.vjs_c', ref: 'panorama/scripts/d2mm_rank_look.vjs' }
+```
+
+The script, as the compiler's source and as the layouts name it.
+
+### `TIERS`
+
+```ts
+export const TIERS = ['BronzeTier', 'SilverTier', 'GoldTier', 'PlatinumTier', 'MasterTier', 'GrandmasterTier']
+```
+
+The badge tiers in order, as the game's classes name them.
+
+### `TIER_FROM`
+
+```ts
+export const TIER_FROM = [1, 6, 12, 18, 25, 30]
+```
+
+The first level of each tier. The tiers are not five levels each: bronze 1-5, silver 6-11, gold
+12-17, platinum 18-24, master 25-29, grandmaster 30 alone (#549).
+
+### `tierOf`
+
+```ts
+export const tierOf = (level: number): number => Math.max(0, TIER_FROM.filter((from) => level >= from).length - 1)
+```
+
+The tier a level from 1 to 30 earns, 0 (bronze) to 5 (grandmaster).
+
+### `clampLook`
+
+```ts
+export function clampLook(raw: unknown): RankLook
+```
+
+What the window sent, kept to what the game has: tiers 0 to 8, stars 1 to 5, levels 1 to 30.
+
+### `lookIsEmpty`
+
+```ts
+export const lookIsEmpty = (look: RankLook): boolean => !look.medal && look.every === null && !Object.keys(look.levels).length
+```
+
+Whether there is anything to build.
+
+### `medalImage`
+
+```ts
+export function medalImage(m: Medal, mini: boolean): string
+```
+
+The medal's picture, as the rules name one; `mini` for a rule that draws it small.
+
+### `withMedal`
+
+```ts
+export function withMedal(css: string, medal: Medal): string
+```
+
+The CSS ValveResourceFormat read out of a style, with the medal's rules at its end: every rule
+that puts a medal on, copied with the chosen one, and every rule that puts stars on, copied with
+the chosen stars (none for tiers 0 and 8). The tool's banner goes, and rules this added before
+are replaced rather than stacked.
+
+### `takesScript`
+
+```ts
+export function takesScript(layout: Buffer): boolean
+```
+
+Whether the script's include can be put into this layout: an older compile keeps no tree in a LaCo block.
+
+### `withScript`
+
+```ts
+export function withScript(layout: Buffer): Buffer
+```
+
+A compiled layout that also includes the script: one SCRIPTS node put in front of its panel,
+the way the compiler writes `<scripts><include src="..."/></scripts>`. A layout that has it
+already is left as it is.
+
+## src/razor-crest-preview.ts
+
+### `goldenCrestModel`
+
+```ts
+export function goldenCrestModel(text: string, model: string, itemId: string): string | undefined
+```
+
+The distinct golden model path to try for the regular Crest's preview.
+
+### `crestActivities`
+
+```ts
+export function crestActivities(text: string, itemId: string, visuals: string): string[]
+```
+
+Use the same authored animation modifiers for both finishes of the same helmet.
+
+### `normalCrestOnGoldenRig`
+
+```ts
+export function normalCrestOnGoldenRig(normal: Buffer, goldenFile: string): Buffer | null
+```
+
+Borrow only the gold model's geometry and rig. Material indices must correspond before
+moving the normal version's textures and shader metadata onto the donor.
+
+### `mergeCrestAttachments`
+
+```ts
+export function mergeCrestAttachments(normal: Attachment[], donor: Attachment[]): Attachment[]
+```
+
+Prefer the donor rig's attachment points, retaining points unique to the original.
+
+## src/ready-presets-format.ts
+
+The ready-made presets' format (config/presets.json, issue #391): a short list of builds picked
+from the catalog, shown in the Presets screen and on the site. It lives beside the remote config
+and is signed with the same key, so the list changes without a release and a proxy cannot put a
+build of its own choosing in front of people.
+
+Shape:
+  {
+    "version": 1,
+    "presets": [ { "id": "minimal", "ru": "Минимализм", "en": "Minimal",
+                   "about": { "ru": "…", "en": "…" },
+                   "mods": [ { "category": "terrains", "name": "Dark Terrain Minify" },
+                             { "category": "huds", "name": "Hud Fernando", "style": "gray" } ] } ]
+  }
+
+A mod is named the way the catalog files it, as a preset link names it (src/preset-link.ts), so
+a list entry is readable in a pull request and the site turns it into a link the app opens.
+Only catalog mods: a look from the game's item table needs safe mode off, and a ready preset
+should work for everybody who presses its button.
+
+### `MAX_PRESETS`
+
+```ts
+export const MAX_PRESETS = 30
+```
+
+A short list, read by people: more than this is a sign the file was not edited by one.
+
+### `MAX_MODS`
+
+```ts
+export const MAX_MODS = 60
+```
+
+Mods in one ready preset at most.
+
+### `ReadyMod`
+
+```ts
+export interface ReadyMod { categoryId: string; name: string; styleLabel: string | null }
+```
+
+A catalog mod as a ready preset names it.
+
+### `ReadyPreset`
+
+```ts
+export interface ReadyPreset
+```
+
+One ready preset, as far as it passed the checks below.
+
+### `normalizeReady`
+
+```ts
+export function normalizeReady(raw: unknown): ReadyPreset[]
+```
+
+The fetched JSON cut down to presets with an id, a name and at least one mod; the rest is dropped.
+
+## src/ready-presets.ts
+
+The ready-made presets (issue #391): config/presets.json on main, fetched and checked the way the
+remote config is (src/remote-config.ts) and kept between starts, so the list is there offline
+once it has been seen. The format and its checks are src/ready-presets-format.ts.
+
+Default-safe like the remote config: no file, no network, a bad signature or malformed JSON all
+leave the last good list, or none, and the Presets screen simply shows no ready presets.
+
+### `READY_URL`
+
+```ts
+export const READY_URL = 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/presets.json'
+```
+
+The list every copy of the app reads, on main in this repository; its signature is this with .sig on the end.
+
+### `createReadyPresets`
+
+```ts
+export function createReadyPresets({ userDataDir, log = () => {}, publicKey = CONFIG_PUBLIC_KEY }: { userDataDir: string; log?: (msg: string) => void; publicKey?: string; })
+```
+
+```
+@param opts.publicKey  whose signature to accept; the remote config's unless a test signs its own
+```
+
+## src/recolor-layers.ts
+
+A hero in colours of the user's choosing, part by part (issue #422): each ability's effect and its
+icon, the hero's other effects, the hero's icons and portrait, and the effects of the items picked
+for him in the item builder. Each part is a layer with a colour of its own and its own switch,
+and the whole recolour is one pak (src/hero-paint-service.ts).
+
+What belongs to an ability is read off the game's file names: Valve names an ability's particles
+after it (particles/units/heroes/hero_juggernaut/juggernaut_blade_fury_glow.vpcf for
+juggernaut_blade_fury), and its icon is panorama/images/spellicons/<ability>_png.vtex_c. The
+ability list itself is the hero's script (scripts/npc/heroes/npc_dota_hero_<name>.txt). Particles
+no ability claims are the hero's other effects: the attack, the crit, the portrait. An item's
+effect is every particle its visuals name, with the children those particles create (RERL).
+
+The body is the colour textures of his model's materials (materials/models/heroes/<model folder>/,
+*_color_*.vtex_c), the folder his script's "Model" is in. An item's own colour is the colour
+textures its model's materials name (`itemModel:<id>`), apart from its effect.
+
+Particles take the colour through src/recolor.ts (the colours written in them move to the chosen
+hue); pictures and textures through `shadePixels` below, the same move pixel by pixel.
+
+### `LayerKind`
+
+```ts
+export type LayerKind = 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item' | 'itemModel'
+```
+
+What a layer recolours.
+
+### `RecolorLayer`
+
+```ts
+export interface RecolorLayer
+```
+
+One part of a hero that takes a colour of its own.
+
+### `heroAbilities`
+
+```ts
+export function heroAbilities(heroScript: string): string[]
+```
+
+The hero's abilities, in his script's order, once each; an Ability Draft copy (invoker_emp_ad) goes with its ability.
+
+### `heroModelFolder`
+
+```ts
+export function heroModelFolder(heroScript: string): string | null
+```
+
+The folder of the hero's model in his script, `juggernaut` for models/heroes/juggernaut/juggernaut.vmdl; null when it is not one of models/heroes.
+
+### `heroParticleFolder`
+
+```ts
+export function heroParticleFolder(paths: Iterable<string>, hero: string): string
+```
+
+The folder a hero's own particles are in.
+
+### `heroLayers`
+
+```ts
+export function heroLayers(paths: Iterable<string>, hero: string, abilities: string[], items: { id: string; name: string; particles: string[]; textures?: string[] }[] = [], model: string | null = null): RecolorLayer[]
+```
+
+The layers a hero has, from the paths in pak01. A layer with no files is left out: a hero with no
+picture for an ability, or an ability with no particle of its own, shows no row for it.
+
+```
+@param hero  the hero's name in his npc name, `juggernaut` for npc_dota_hero_juggernaut
+@param items the items he wears, with the particles their visuals name and their model's colour textures
+@param model the folder of his model (`heroModelFolder`), for the body's textures
+```
+
+### `withChildren`
+
+```ts
+export function withChildren(roots: string[], refs: (path: string) => string[]): string[]
+```
+
+A particle and the particles it creates, followed down the tree once each.
+
+```
+@param refs the particles a file names (src/resource.ts references), compiled paths
+```
+
+### `shadePixels`
+
+```ts
+export function shadePixels(pixels: Buffer, target: Rgb, { bgra = false }: { bgra?: boolean } = {}): number
+```
+
+Pixels moved to the chosen colour in place, as `shade` moves a particle's colours: greys stay,
+the rest take the chosen hue. `rgba` is four bytes a pixel; `bgra` says the red and blue are
+swapped, as Electron's bitmaps have them on Windows.
+
+### `modelColorTextures`
+
+```ts
+export function modelColorTextures(models: string[], read: (path: string) => Buffer | null): string[]
+```
+
+The colour textures a model's materials name, as compiled paths: a model names its meshes and
+materials (RERL), a material its textures, and the colour is g_tColor. An item's own colour.
+
+### `withShares`
+
+```ts
+export function withShares(layers: RecolorLayer[]): { layer: RecolorLayer; shares: string[] }[]
+```
+
+Each layer with the other items' colour layers it shares a texture with. Two worn items can be
+drawn from one texture (Troll Warlord's four axes, Alchemist's bottles): the game gives that
+texture one colour, so the window moves those layers together rather than show two colours the
+game will not.
+
+### `itemModelPaths`
+
+```ts
+export function itemModelPaths(block: string): string[]
+```
+
+Every model an item's block puts in the game, in its order, once each: its own (model_player,
+model_player1…), and those its visuals bring by asset_modifier - the unit it dresses (Juggernaut's
+Healing Ward, Lone Druid's bear, Witch Doctor's Death Ward), a style's model in place of the stock
+one, the hero's body an arcana swaps in, a hex, an extra wearable.
+
+## src/recolor-modes.ts
+
+How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a
+mode beside the colour, and the build, the window's pictures (renderer/catalog/paint/shade.ts)
+and the 3D preview's shader (vendor/dota-loadout/src/material.js, studioPaint) all move a pixel
+by the same rule, so what the 3D hero shows is what the game will.
+
+  tint   greys stay; the rest take the hue, their saturation and brightness scaled by the colour's
+         (the rule particles follow too, src/recolor.ts shade)
+  keep   greys stay; the rest take the hue alone, so every shade and highlight of the item stays
+  full   every pixel takes the hue and the colour's saturation: the item painted over, greys too
+  rgb    greys stay; the hue runs once round the wheel across the texture, from the colour's own
+
+A layer's colour travels as '#rrggbb' or '#rrggbb:mode'; the plain form is tint, which is how
+every record made before the modes reads.
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+How a picture takes its layer's colour in the hero's recolour (issue #422): the window offers a
+mode beside the colour, and the build, the window's pictures (renderer/catalog/paint/shade.ts)
+and the 3D preview's shader (vendor/dota-loadout/src/material.js, studioPaint) all move a pixel
+by the same rule, so what the 3D hero shows is what the game will.
+
+  tint   greys stay; the rest take the hue, their saturation and brightness scaled by the colour's
+         (the rule particles follow too, src/recolor.ts shade)
+  keep   greys stay; the rest take the hue alone, so every shade and highlight of the item stays
+  full   every pixel takes the hue and the colour's saturation: the item painted over, greys too
+  rgb    greys stay; the hue runs once round the wheel across the texture, from the colour's own
+
+A layer's colour travels as '#rrggbb' or '#rrggbb:mode'; the plain form is tint, which is how
+every record made before the modes reads.
+
+### `PaintMode`
+
+```ts
+export type PaintMode = 'tint' | 'keep' | 'full' | 'rgb'
+```
+
+How a picture takes its layer's colour; the comment at the top of this file says what each does.
+
+### `PAINT_MODES`
+
+```ts
+export const PAINT_MODES: readonly PaintMode[] = ['tint', 'keep', 'full', 'rgb']
+```
+
+The modes in the order the window offers them.
+
+### `parsePaint`
+
+```ts
+export function parsePaint(value: unknown): { hex: string; mode: PaintMode } | null
+```
+
+A layer's colour and mode out of '#rrggbb[:mode]'; null for anything else.
+
+### `paintValue`
+
+```ts
+export const paintValue = (hex: string, mode: PaintMode = 'tint'): string => (mode === 'tint' ? hex.toLowerCase() : `${hex.toLowerCase()}:${mode}`)
+```
+
+'#rrggbb' for tint, '#rrggbb:mode' for the rest.
+
+### `rgbOfHex`
+
+```ts
+export const rgbOfHex = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as Rgb
+```
+
+'#rrggbb' as its three channels.
+
+### `hsv`
+
+```ts
+export function hsv([r, g, b]: Rgb): Rgb
+```
+
+h in [0, 1), s and v in [0, 1].
+
+### `fromHsv`
+
+```ts
+export function fromHsv([h, s, v]: Rgb): Rgb
+```
+
+A colour out of `hsv`'s h, s and v, back to 0-255 channels.
+
+### `paintPixel`
+
+```ts
+export function paintPixel(from: Rgb, target: Rgb, mode: PaintMode, u = 0, v = 0): Rgb | null
+```
+
+One pixel in the colour, by the mode; null where it stays as it is.
+
+```
+@param target the colour as HSV (`hsv`), worked out once for the whole picture
+@param u,v    where the pixel is on the texture, 0 to 1: the rainbow runs along them
+```
+
+### `paintPixels`
+
+```ts
+export function paintPixels(pixels: Buffer | Uint8ClampedArray, width: number, color: Rgb, mode: PaintMode, { bgra = false }: { bgra?: boolean } = {}): number
+```
+
+A bitmap moved to the colour in place, four bytes a pixel; `bgra` says red and blue are swapped,
+as Electron's bitmaps have them on Windows. Answers how many pixels changed.
+
+## src/recolor-sets.ts
+
+What src/recolor.ts can recolour: each item's particle and material folders, the colour of the
+gem it comes with, and whether that colour is baked in (an item with no gem of its own).
+
+### `Rgb`
+
+```ts
+export type Rgb = [number, number, number]
+```
+
+A colour as three whole numbers 0-255.
+
+### `RecolorSet`
+
+```ts
+export interface RecolorSet
+```
+
+What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
+
+### `RECOLOR_SETS`
+
+```ts
+export const RECOLOR_SETS: Record<string, RecolorSet> =
+```
+
+_No description in the source._
 
 ## src/recolor.ts
 
@@ -6317,29 +11662,7 @@ the mod changes what the files do with the gem's colour instead:
   moved to the chosen one: every colour takes the chosen hue and keeps its own brightness and
   saturation scaled by the chosen colour's; black, white and greys stay as they are.
 
-### `Rgb`
-
-```ts
-export type Rgb = [number, number, number]
-```
-
-_No description in the source._
-
-### `RecolorSet`
-
-```ts
-export interface RecolorSet
-```
-
-What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with.
-
-### `RECOLOR_SETS`
-
-```ts
-export const RECOLOR_SETS: Record<string, RecolorSet> =
-```
-
-_No description in the source._
+Hands on from [`src/recolor-sets.ts`](#srcrecolor-setsts): `Rgb`, `RECOLOR_SETS`.
 
 ### `shade`
 
@@ -6360,6 +11683,18 @@ export function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb
 ```
 
 The colours written in a particle moved to the chosen one (but those `skip` names); `skipped` counts those with no room.
+
+### `liftForMod2x`
+
+```ts
+export function liftForMod2x(file: Buffer, share = 0.3): { file: Buffer; changed: number }
+```
+
+A particle drawn with a MOD2X renderer multiplies what is under it by twice its colour, so a
+channel near zero there wipes that channel off the ground: pure red fills the lane with red fog.
+Every channel of its colours is lifted to at least `share` of the strongest, which keeps the hue
+and leaves the ground its own colour under it. Particles drawn any other way come back as they
+were.
 
 ### `recolorResource`
 
@@ -6403,7 +11738,13 @@ A set recoloured into one VPK, from the game's pak01, for a hero whose item brin
 
 ## src/release-notes.ts
 
-The changelog section for one version, for the "What's new" window.
+The changelog for the "What's new" window and Home.
+
+Not only the version now running: a fix shipped an hour after a big release would otherwise
+replace that release's notes before anybody had read them. So the notes run from the start of
+this line (3.0.0 for 3.0.1, 3.1.0 for 3.1.2) up to now, newest first, and further back to the
+version the user last saw, for whoever skipped a few. Each version under its own heading once
+there is more than one.
 
 The same files CI puts on the release page ship inside the build (package.json, build.files),
 so the window works offline and needs no GitHub call. A Russian interface reads
@@ -6421,16 +11762,34 @@ export function changelogSection(text: string, version: string): string | null
 
 The section's text for `version` out of one changelog, or null when it has none.
 
+### `changelogVersions`
+
+```ts
+export function changelogVersions(text: string): string[]
+```
+
+The release versions a changelog has a heading for, betas left out.
+
+### `notesRange`
+
+```ts
+export function notesRange(versions: string[], version: string, seen: string | null): string[]
+```
+
+The versions whose notes go with `version`: its line from x.y.0, and anything newer than `seen`.
+
 ### `releaseNotes`
 
 ```ts
-export function releaseNotes(version: string, lang: string, appPath: string): string | null
+export function releaseNotes(version: string, lang: string, appPath: string, seen: string | null = null): string | null
 ```
 
-The notes for `version` in the interface's language when there is a translation.
+The notes for `version` in the interface's language when there is a translation, with the
+versions before it that go with it (notesRange), each under "## <version>" when there are several.
 
 ```
 @param appPath  where the build's files are (app.getAppPath())
+@param seen     the version whose notes the user saw last, or null
 @returns markdown, or null when this version has no section anywhere
 ```
 
@@ -6450,7 +11809,9 @@ Shape:
     "blocks":  [ { "id": "2026-09-16-install-2.7.0", "feature": "install",
                    "minVersion": "2.7.0", "maxVersion": "2.7.0", "until": "2026-09-27",
                    "ru": "…", "en": "…" } ],
-    "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] }
+    "beta":    { "salt": "d2mm-beta-1", "ids": ["<sha256 of salt:discordId>", …] },
+    "issues":  [ { "cat": "heroes", "mod": "Pudge Arcana", "ru": "…", "en": "…", "until": "2026-12-01",
+                   "revoked": true } ]
   }
 
 `features` switches something off in every version. That is right when the cause is outside
@@ -6464,6 +11825,12 @@ tools/rollback.mjs writes both, signs the file and refuses the mistakes.
 `beta` is the list of Discord accounts the beta channel is offered to, as hashes: the file is
 public and a list of a dozen people's accounts is not ours to publish. src/beta.ts does the
 checking; this only reads the block and refuses anything that is not shaped like one.
+
+`issues` are catalog mods known to misbehave, by category id and the name the catalog gives the
+mod. The catalog card carries a "!" and the mod's window says what is wrong. A mod a patch broke
+is marked the same day, without a release and without touching rotten's catalog. `revoked` says
+more: the mod does harm (a black screen in a match), so My mods marks the installed copy and offers
+to remove it. Copies that do not know the key show the "!" alone.
 
 ### `SWITCHABLE`
 
@@ -6528,6 +11895,14 @@ export interface RemoteBlock
 
 A feature switched off for a range of builds until a day.
 
+### `RemoteIssue`
+
+```ts
+export interface RemoteIssue { cat: string; mod: string; ru: string; en: string; until: string | null; revoked?: true }
+```
+
+A catalog mod known to misbehave, and what to tell whoever looks at it.
+
 ### `RemoteMirror`
 
 ```ts
@@ -6586,7 +11961,7 @@ say. A remote switch that fails open is a feature; one that fails closed is an o
 
 The format and its checks are src/remote-config-format.ts.
 
-Hands on from [`src/remote-config-format.ts`](#srcremote-config-formatts): `SWITCHABLE`, `BLOCKS_SINCE`, `MAX_TESTERS`, `MAX_MIRRORS`, `cmpVersion`, `applies`, `normalize`, `Off`, `RemoteNotice`, `RemoteBlock`, `RemoteMirror`, `RemoteConfig`.
+Hands on from [`src/remote-config-format.ts`](#srcremote-config-formatts): `SWITCHABLE`, `BLOCKS_SINCE`, `MAX_TESTERS`, `MAX_MIRRORS`, `cmpVersion`, `applies`, `normalize`, `Off`, `RemoteNotice`, `RemoteBlock`, `RemoteMirror`, `RemoteIssue`, `RemoteConfig`.
 
 ### `CONFIG_URL`
 
@@ -6641,6 +12016,84 @@ export function createRemoteConfig({ userDataDir, appVersion, log = () => {}, pu
 wants to sign its own fixture, which it cannot do with a private key that is not here
 @param opts.now          the clock a notice's until date is read against
 ```
+
+## src/remove-everything.ts
+
+Taking out everything the app put into the game, in one go.
+
+Two places ask for it: the uninstaller (src/uninstall-window.ts), and the button in Settings
+for a person who wants their game back the way Steam gave it without removing the app. The
+Discord asks for the second one every week, usually after a Dota update, and until now the
+only answer was "uninstall and install again".
+
+Everything goes through the same code the app uses day to day rather than deleting paths by
+hand, so a mod comes out the way removing it from My mods would, and the patch comes out the
+way the safe-mode switch would.
+
+### `RemovingInstaller`
+
+```ts
+export interface RemovingInstaller
+```
+
+What of the installer the removal asks.
+
+### `RemoveEverythingDeps`
+
+```ts
+export interface RemoveEverythingDeps
+```
+
+The app's services the removal borrows, so it removes the way the app does.
+
+### `removeEverything`
+
+```ts
+export function removeEverything({ settings, library, installer, schemaService, removeOne }: RemoveEverythingDeps, { revert, mods, notice = true }: { revert: boolean; mods: boolean; notice?: boolean }): { errors: string[]; removed: number }
+```
+
+Take out what was asked for, carrying on past a mod that will not come out.
+
+```
+@param revert put gameinfo and the signatures back, when safe mode was turned off
+@param mods   take every mod out of the game folder and off the list
+@param notice take out the anti-cheat notice pak too (the uninstaller)
+@returns one line per thing that could not be removed; empty when all of it went
+```
+
+## src/repo-stars.ts
+
+How many stars the project has on GitHub, for the Home screen (renderer/home/).
+
+Asked of api.github.com at most every six hours and kept in a small file under userData, so
+the number is there at once on the next start and stays there when the network is not.
+GitHub lets an unsigned caller sixty requests an hour; one in six hours is nowhere near it.
+It never throws and never waits long: a count that cannot be had is null, and Home shows
+the link without a number.
+
+### `STARS_API`
+
+```ts
+export const STARS_API = 'https://api.github.com/repos/dota2modmanager/dota2-mod-manager'
+```
+
+Where the count is read: the repository's own record, which carries stargazers_count.
+
+### `RepoStarsOptions`
+
+```ts
+export interface RepoStarsOptions
+```
+
+Where the count is kept, and the clock and network a test hands in instead.
+
+### `createRepoStars`
+
+```ts
+export function createRepoStars({ cacheFile, fetch = globalThis.fetch, now = Date.now }: RepoStarsOptions)
+```
+
+The star count for Home, cached on disk and asked for again after six hours.
 
 ## src/resource-compiler.ts
 
@@ -6703,6 +12156,15 @@ export function safeRel(rel: string): boolean
 ```
 
 A path inside an addon, as the game spells it: forward slashes, nothing that climbs out.
+
+### `compiledOf`
+
+```ts
+export function compiledOf(rel: string): string
+```
+
+What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, a Panorama style, layout or
+script under panorama/ to .vcss_c, .vxml_c or .vjs_c, anything else to its own name and _c.
 
 ### `SourceFile`
 
@@ -6811,10 +12273,10 @@ The blocks of a compiled resource: name, where its table entry is, where its dat
 ### `resourceBlock`
 
 ```ts
-export function resourceBlock(file: Buffer, name: string): { data: Buffer; replace(next: Buffer): Buffer }
+export function resourceBlock(file: Buffer, name: string, nth = 0): { data: Buffer; replace(next: Buffer): Buffer }
 ```
 
-One block of a compiled resource, and the file with new bytes in its place.
+One block of a compiled resource (the `nth` of that name: a model has an MDAT per mesh), and the file with new bytes in its place.
 
 ### `dataBlock`
 
@@ -6847,7 +12309,9 @@ export function withReferences(file: Buffer, paths: string[]): Buffer
 ```
 
 The file with `paths` added to the resources its RERL block names (those already there are kept
-once). A file with no RERL block is refused: adding a block is not done here.
+once). A file with no RERL block is refused: adding a block is not done here. A path is named as
+the compiler names it, by its source: `colorwarp.vtex`, not the compiled `colorwarp.vtex_c`, so a
+compiled name given here loses its `_c` rather than going in as a reference nothing loads.
 
 ## src/safe-zip.ts
 
@@ -6873,6 +12337,22 @@ export interface OpenedZip
 ```
 
 A foreign archive, opened: what is safe to hand out of it, and a way to unpack it.
+
+### `LIMITS`
+
+```ts
+export const LIMITS =
+```
+
+Measured against the 104 real archives on disk (catalog mods, fonts, cursors, packs),
+not guessed: the heaviest zip is 64 MB, the largest single entry unpacks to 301 MB, the
+fullest archive holds 111 files, and the tightest compression is 80x (cursor bitmaps).
+Every limit sits several times above that, so a legitimate archive never meets one.
+The size limits were raised on 2026-11-05: a voice pack on Hugging Face is a 1.02 GB zip holding
+one 1.21 GB pak, and it was refused as too large. They stop just short of 2 GiB, which
+fs.readFile refuses outright.
+The ratio is only judged on entries big enough to matter — a 20 KB text file that packs
+500x is not a threat, and small assets compress hard all the time.
 
 ### `isUnsafeName`
 
@@ -6927,6 +12407,8 @@ and the Play button, which waits for the last build before the game starts.
 
 Hands on from [`src/build-bar.ts`](#srcbuild-barts): `buildBar`.
 
+Hands on from [`src/background-builds.ts`](#srcbackground-buildsts): `createBackgroundBuilds`.
+
 ### `BuildStep`
 
 ```ts
@@ -6959,6 +12441,14 @@ export const isItemPick = (rec: LibRecord) => rec.categoryId === 'cosmetic' && (
 
 _No description in the source._
 
+### `FilesShared`
+
+```ts
+export interface FilesShared { paths: string[]; entries: VpkEntry[] }
+```
+
+The shared files as the picks' pak takes them: `paths` the ones the table's copy carries, `entries` the pak's own, made of the item picks alone.
+
 ### `createTableBuild`
 
 ```ts
@@ -6966,22 +12456,6 @@ export function createTableBuild({ library, bases, log }: { library: Pick<Librar
 ```
 
 What goes into the table: every enabled record's patches, each item builder pick built once.
-
-### `createBackgroundBuilds`
-
-```ts
-export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void)
-```
-
-Builds in the background, one at a time and in order. A build asked for while one runs stops
-that one before it writes anything, since its list of picks is out of date already, and builds
-once more from what the library holds then; everybody waiting gets the result of the build that
-wrote. A build run in place in between (heal, the patch switch) does the same, through `ran`.
-
-```
-@param steps    a build of the table, a step at a time
-@param onBuild  each step of a build in the background, and null when it ends
-```
 
 ## src/schema-cosmetics.ts
 
@@ -6992,10 +12466,10 @@ picks that used to live in settings.json. A pick is a library record like any ot
 ### `CosmeticSlots`
 
 ```ts
-export type CosmeticSlots = { slots: CosmeticSlot[]; sets: ItemSet[]; names?: Record<string, string>; error?: string }
+export type CosmeticSlots =
 ```
 
-What the window is told about the free looks and the item builder (cosmeticSlots).
+`heroAttrs`: each hero's main attribute by its id without the prefix, for the order of the game's hero grid.
 
 ### `CosmeticSlot`
 
@@ -7041,6 +12515,8 @@ Lifting, splitting and sweeping, over the library and the installer the service 
 Reading items_game.txt (src/schema.ts): the items section, one item's fields, the list the
 pickers show, the free item of a slot, and the game's own table out of its pak01. Text is latin1,
 byte for byte, so a block found here can be spliced back without re-encoding.
+
+Hands on from [`src/pak-stamp.ts`](#srcpak-stampts): `gameSchemaStamp`.
 
 ### `SchemaItem`
 
@@ -7163,6 +12639,24 @@ The free "base item" of a slot - the one every account owns (555 Default Weather
 590 Default Terrain, ...). Dressing it in another item's visuals is what makes a paid
 cosmetic the default one.
 
+### `OWNERLESS_SLOTS`
+
+```ts
+export const OWNERLESS_SLOTS = ['multikill_banner', 'tormentor']
+```
+
+The slots the game has no free item for, where it puts on whichever item is flagged as the free
+one: the multikill banner (two banners, neither with visuals: the game draws the one worn) and the
+Tormentor. A look there is the picked item with "baseitem" set (as ArdysaModsTools does it).
+
+### `ownerlessPatch`
+
+```ts
+export function ownerlessPatch(text: string, slot: string, itemId: string): string | null
+```
+
+An ownerless slot's look: the picked item's block with "baseitem" "1", or null when it is not in that slot.
+
 ### `cosmeticOptions`
 
 ```ts
@@ -7189,14 +12683,6 @@ build starts from, so a game update simply means a rebuild, never a stale schema
 @param gamePath  ...\dota 2 beta\game
 @returns stamp = version marker of the base file
 ```
-
-### `gameSchemaStamp`
-
-```ts
-export function gameSchemaStamp(gamePath: string): string
-```
-
-Cheap "did the game update?" probe: size+mtime of the paks that carry the schema.
 
 ## src/schema-kv.ts
 
@@ -7281,7 +12767,7 @@ An item block a mod changed, lifted out of the table it shipped.
 ### `SchemaPatch`
 
 ```ts
-export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[] }
+export interface SchemaPatch { id: string | number; block: string; source?: string; assets?: VpkEntry[]; own?: string | null; added?: string[]; unplaced?: boolean; item?: boolean }
 ```
 
 One block to splice into the game's table, and the files that come with it.
@@ -7408,9 +12894,8 @@ validateSchema, a pause every few megabytes of the brace count and every few tho
 
 ## src/schema-service.ts
 
-Orchestration around the item schema: what goes into it, when it is rebuilt, and how a
-game update is repaired. Kept out of src/main.ts so the whole flow can be exercised without
-starting Electron.
+Orchestration around the item schema: what goes into it, when it is rebuilt, how a game update
+is repaired. Kept out of src/main.ts so the whole flow can be exercised without Electron.
 
 The rules it enforces:
   - the schema is ALWAYS rebuilt from the installed game's own items_game.txt, so it can
@@ -7446,7 +12931,7 @@ The patch and the built table as Settings shows them; the patcher's own state is
 ### `createSchemaService`
 
 ```ts
-export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {} }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; })
+export function createSchemaService({ settings, library, installer, userDataDir, log = () => {}, bases, onBuild = () => {}, onDeployed = () => {}, modsOff = () => false, pak }: { settings: Pick<Settings, 'get' | 'set'>; library: Library; installer: SchemaInstaller; userDataDir: string; log?: (msg: string) => void; bases?: Pick<BaseStore, 'entries' | 'want'>; onBuild?: (step: BuildStep | null) => void; onDeployed?: (filled: Set<string>) => void; modsOff?: () => boolean; pak?: PakInstaller; })
 ```
 
 The item table and the search-path patch, kept in step with the library and the installed game.
@@ -7472,7 +12957,7 @@ them, and this file builds the result and writes it into the game. Callers impor
 
 Hands on from [`src/schema-kv.ts`](#srcschema-kvts): `blockBounds`, `eachChild`, `Bounds`, `KvChild`.
 
-Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `listItemsSteps`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
+Hands on from [`src/schema-items.ts`](#srcschema-itemsts): `SCHEMA_REL`, `findItem`, `itemFields`, `listItems`, `listItemsSteps`, `toUtf8`, `itemSearchText`, `inferredItemSlot`, `baseItemFor`, `cosmeticOptions`, `OWNERLESS_SLOTS`, `ownerlessPatch`, `readGameSchema`, `gameSchemaStamp`, `SchemaItem`, `GameSchema`.
 
 Hands on from [`src/schema-merge.ts`](#srcschema-mergets): `reindent`, `ownedAssetNeedles`, `blockUsesAssets`, `deltaTable`, `extractDeltas`, `stripKeyBlocks`, `baseItemPatch`, `mergeSchema`, `validateSchema`, `SchemaDelta`, `SchemaPatch`, `MergeResult`.
 
@@ -7557,6 +13042,16 @@ export function undeploy({ gamePath, folder }: { gamePath: string; folder: strin
 
 Drop the built schema, and the folder with it once nothing of ours is left there.
 
+### `sweepUnfinished`
+
+```ts
+export function sweepUnfinished(gamePath: string, folder: string, pid = process.pid): number
+```
+
+Take away the writes of the pak another run left half done: an app closed while a build wrote
+left 190 MB beside the pak, and nothing ever took it away. This run's own are its builds' to
+finish, so only another process's go. Answers how many went.
+
 ### `isDeployed`
 
 ```ts
@@ -7622,10 +13117,18 @@ the start to settle: on Linux, a copy of the Workshop Tools the game has (src/wo
 ### `createServices`
 
 ```ts
-export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons }: { userData: string; appVersion: () => string; /** the bar at the bottom of the window */ sendProgress: (evt: AppProgress) => void; diag: (msg: string) => void; /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */ fetchIcons: ConstructorParameters<typeof Icons>[1]
+export function createServices({ userData, appVersion, sendProgress, diag, fetchIcons, systemLanguages = null }: { userData: string; appVersion: () => string; /** the bar at the bottom of the window */ sendProgress: (evt: AppProgress) => void; diag: (msg: string) => void; /** Electron's network stack, which the wiki's pictures come through (see src/icons.ts) */ fetchIcons: ConstructorParameters<typeof Icons>[1]
 ```
 
 Build every service over this userData folder.
+
+### `electronRepaint`
+
+```ts
+export function electronRepaint(png: Buffer, color: Rgb, mode: PaintMode = 'tint'): Buffer
+```
+
+A PNG in the chosen colour through Electron's image codec, which hands its pixels over as BGRA.
 
 ## src/settings.ts
 
@@ -7787,6 +13290,75 @@ game refuses puts back what already moved and throws; the next call tries again.
 @returns {boolean} whether a mod moved
 ```
 
+## src/sprite-frames.ts
+
+### `spriteFrames`
+
+```ts
+export function spriteFrames(root: string, texture: string): { key: string; file: string }[]
+```
+
+VRF exports sheet sequences as name_seqN_frame.png or name_seqN.png.
+
+## src/steam-appstate.ts
+
+What Steam's own manifest says about Dota right now (issue #427). Pressing Play while Steam is
+still downloading an update queues the update first: the game starts minutes later, on new
+files the mods may not fit yet, and the user sees nothing happen. steamapps/appmanifest_570.acf
+says so before the launch, in one field.
+
+### `AppState`
+
+```ts
+export interface AppState { flags: number; toDownload: number; downloaded: number }
+```
+
+The game's state as Steam last wrote it: its flags, and the bytes of the download under way.
+
+### `parseAppManifest`
+
+```ts
+export function parseAppManifest(text: string): AppState | null
+```
+
+The fields this module reads, out of an appmanifest's text; null when it has no StateFlags.
+
+### `updatePending`
+
+```ts
+export function updatePending(state: AppState): boolean
+```
+
+Whether Steam has an update for the game that it has not finished.
+
+### `steamWork`
+
+```ts
+export function steamWork(state: AppState | null): 'validating' | 'updating' | null
+```
+
+What Steam is doing to the game's files right now, if anything: its file check (which it can
+start on its own, and which puts Valve's originals back over the app's edit) or an update. A
+repair written in the middle of either is overwritten by the next file Steam writes, so the
+repair waits for it (src/game-repair.ts).
+
+### `readAppState`
+
+```ts
+export function readAppState(gamePath: string | null | undefined, read: (p: string) => string = (p) => fs.readFileSync(p, 'utf-8')): AppState | null
+```
+
+The manifest next to a game folder ("<library>/steamapps/common/dota 2 beta/game"), read;
+null when it is not where Steam keeps it, which a copied or moved game can be.
+
+### `launchWarning`
+
+```ts
+export function launchWarning(gamePath: string | null | undefined, read?: (p: string) => string): string | null
+```
+
+What to tell the user before the launch, or null when Steam is done with the game.
+
 ## src/steam.ts
 
 Finding Steam, and then finding Dota inside it.
@@ -7930,10 +13502,89 @@ The step a walk yields between pieces of its work.
 ### `runSteps`
 
 ```ts
-export async function runSteps<R>(steps: Generator<unknown, R>): Promise<R>
+export async function runSteps<R>(steps: Generator<unknown, R>, signal?: AbortSignal): Promise<R>
 ```
 
-A generator run with the rest of the main process let in between its steps: for a channel the window waits on.
+A generator run with the rest of the main process let in between its steps: for a channel the
+window waits on.
+
+With a signal, an abort stops it between two steps (issue #425): the generator is closed, so its
+`finally` blocks run and a write journal open inside it can roll back, and the promise rejects
+with the signal's reason. A step is never cut in half.
+
+## src/support-prompt.ts
+
+When the window asking people to support the project comes up on its own.
+
+Not on the first two launches: on the first somebody is still finding their way, on the
+second they may not have installed anything yet. By the third they came back by themselves.
+"Later" puts it away for a week, three times at most; after that, and after "I did it" or a
+click on any of its actions, it only opens from Settings. A window that came back every day
+would get the project talked about, just not in the way it asks for.
+
+### `SupportPrompt`
+
+```ts
+export interface SupportPrompt
+```
+
+What settings.json keeps about the window, under supportPrompt.
+
+### `FIRST_LAUNCH`
+
+```ts
+export const FIRST_LAUNCH = 3
+```
+
+The launch it first opens on.
+
+### `SNOOZE_MS`
+
+```ts
+export const SNOOZE_MS = 7 * 24 * 60 * 60 * 1000
+```
+
+How long "later" puts it away for: a week.
+
+### `MAX_REMINDERS`
+
+```ts
+export const MAX_REMINDERS = 3
+```
+
+How many times it comes back after the first.
+
+### `readPrompt`
+
+```ts
+export function readPrompt(raw: unknown): SupportPrompt
+```
+
+Whatever settings.json holds, as a prompt state: a missing or hand-edited value starts fresh.
+
+### `counted`
+
+```ts
+export function counted(p: SupportPrompt): SupportPrompt
+```
+
+One more launch.
+
+### `due`
+
+```ts
+export function due(p: SupportPrompt, now: number): boolean
+```
+
+Whether the window opens on its own now.
+
+### `choose`
+
+```ts
+export function choose(p: SupportPrompt, choice: 'later' | 'done', now: number): SupportPrompt
+```
+
+What the user's answer leaves behind.
 
 ## src/terrain-age.ts
 
@@ -7998,6 +13649,36 @@ export function createTerrainAges({ downloadsDir, gamePath, storeFile, fetchTail
 @param deps.fetchTail     the last bytes of a catalog archive, for a terrain nobody has downloaded yet
 ```
 
+## src/toolchain-bucket.ts
+
+The toolchain's copy in our bucket: where it is, what it is called, and when it is asked first.
+
+### `FALLBACK_BASE`
+
+```ts
+export const FALLBACK_BASE = 'https://cdn.dota2modmanager.com/tools/'
+```
+
+The bucket's folder of pinned archives.
+
+### `downloadOrder`
+
+```ts
+export const downloadOrder = (release: string, spare: string, githubDown: boolean): [string, string] => (githubDown ? [spare, release] : [release, spare])
+```
+
+Where to ask for a pinned archive, in order. The bucket goes first while GitHub is known to be
+down: its three proxies then wait out a timeout each, half a minute of a bar at nothing, before
+the one copy that works gets asked. The digest checks the bytes from either.
+
+### `fallbackName`
+
+```ts
+export function fallbackName(name: string, version: string, build: string): string
+```
+
+The name of a pinned archive in the bucket. The version goes in, and the build off Windows.
+
 ## src/toolchain.ts
 
 Tools the app can borrow, fetched only when something actually needs them.
@@ -8021,6 +13702,8 @@ Rules this file exists to enforce:
     got a 404, and the pins below were used anyway. A channel that never carried anything is
     not a rollback plan, and an unsigned file that can redirect a fifty megabyte download is
     not one worth building. Removed 2026-09-16; a new tool version travels with a release.
+
+Hands on from [`src/toolchain-bucket.ts`](#srctoolchain-bucketts): `downloadOrder`, `fallbackName`.
 
 ### `ToolProgress`
 
@@ -8054,16 +13737,6 @@ export function pinFor(name: string, build: string = HOST_BUILD): Pin | null
 
 A tool's pin for one build, or null when that build has none.
 
-### `fallbackName`
-
-```ts
-export function fallbackName(name: string, version: string, build: string): string
-```
-
-The name of the copy of a pinned archive in the bucket, keyed by the tool, the version and the
-build. The Windows build keeps the name it had when it was the only one: every release before
-the Linux pin asks for exactly that name.
-
 ### `validPin`
 
 ```ts
@@ -8087,6 +13760,245 @@ export function createToolchain({ userDataDir, onProgress = () => {}, log = () =
 ```
 
 The tools in userData: what is there, fetching one at its pin, and deleting it again.
+
+## src/tower-looks.ts
+
+Tower looks as a file mod (issue #446). The game has thirteen items that dress the towers: five
+pairs a player equips per side ("Guardians of the Lost Path Radiant Towers"), offered by the
+free looks once safe mode is off, and three event items (New Bloom's dragon towers, The
+International 2017's) nobody can equip any more. Each says in its visuals which model the tower
+entity wears, which model stands in for each stage of its destruction, and which particles it
+swaps. Those are files, so a pak can put them under the default tower's names, for one side or
+both, with safe mode on.
+
+What a file cannot carry is left out and said: a particle the item creates (it needs a host),
+its sounds, the TI7 tower's level activities and skins.
+
+### `Side`
+
+```ts
+export type Side = 'radiant' | 'dire'
+```
+
+_No description in the source._
+
+### `DEFAULT_TOWER`
+
+```ts
+export const DEFAULT_TOWER: Record<Side, string> =
+```
+
+The model every tower of a side wears. The map's tower entities name it (maps/dota.vpk and hero
+demo, 2026-11-03), and that wins over npc_units.txt, which says tower_good for Radiant.
+
+### `TowerLook`
+
+```ts
+export interface TowerLook { id: string; name: string; sides: Side[]; models: Partial<Record<Side, string>> }
+```
+
+A look, the sides it dresses and the tower model it puts on each (the window draws a look the game has no picture of from it).
+
+### `TowerPlan`
+
+```ts
+export interface TowerPlan { files: { at: string; from: string }[]; skipped: string[] }
+```
+
+What a look does to one side: files under the default names, and what it leaves out.
+
+### `towerLookIds`
+
+```ts
+export function towerLookIds(text: string): string[]
+```
+
+The ids of the items whose visuals put a model on a tower, in the table's order.
+
+### `towerLooks`
+
+```ts
+export function towerLooks(text: string): TowerLook[]
+```
+
+Every look the table has, with the sides each dresses.
+
+### `towerPlan`
+
+```ts
+export function towerPlan(modifiers: AssetModifier[], side: Side): TowerPlan
+```
+
+What a look's visuals put under which name for one side.
+
+### `buildTowerLook`
+
+```ts
+export function buildTowerLook({ pak01, text, id, sides }: { pak01: string; text: string; id: string; sides: Side[] }):
+```
+
+A look for one side or both as one VPK, out of the game's pak01. A file the game lacks is left out and named.
+
+### `buildTowers`
+
+```ts
+export function buildTowers({ pak01, text, radiant, dire }: { pak01: string; text: string; radiant?: string | null; dire?: string | null }):
+```
+
+Each side's towers in a look of its own, or as they are where its id is null: one VPK out of pak01.
+
+### `asTower`
+
+```ts
+export function asTower(model: Buffer, plain: Buffer): Buffer
+```
+
+A look's tower model made to play as the plain tower (Discord, Stoneclaw Scavengers: the crab
+stood turned away and moved only its claws). The item's towers play activities of their own
+(ACT_DOTA_CUSTOM_TOWER_IDLE), which the tower asks for only while the item is on, and each of
+them is an aim matrix that turns the crab by a pose parameter the plain tower never sets. So the
+plain activity goes on the matrix's middle part (@idle_neutral, facing forward), the sequences are
+numbered as the plain tower's (the server sends the number), and so are the attachments its
+projectile leaves from. A model with none of those activities is only numbered.
+
+## src/tray.ts
+
+The app beside the game rather than in front of it (plan item 9, Misha's call on 2026-11-12).
+
+The app puts the game back after a Dota patch (src/game-repair.ts), but only while it runs: a
+patch that lands with it closed leaves the old item table in the game, and a launch from Steam
+fails until the app is opened. So by default it starts with Windows, hidden, and closing the
+window hides it in the tray instead of quitting. The patch watcher and the game watch keep
+running in the main process. Settings has the switch (renderer/settings/BackgroundBlock.tsx);
+off, the app closes when its window does and Windows does not start it.
+
+Electron is handed in rather than imported, so the logic runs under plain node in the tests.
+
+### `BACKGROUND_ARG`
+
+```ts
+export const BACKGROUND_ARG = '--background'
+```
+
+The argument Windows starts the app with at sign-in: no window, only the tray.
+
+### `LOGIN_ITEM_NAME`
+
+```ts
+export const LOGIN_ITEM_NAME = 'Dota 2 Mod Manager'
+```
+
+The name of the app's line under HKCU\...\Run.
+
+### `startedHidden`
+
+```ts
+export const startedHidden = (argv: readonly string[]) => argv.includes(BACKGROUND_ARG)
+```
+
+Started by Windows at sign-in rather than by a person.
+
+### `inBackground`
+
+```ts
+export const inBackground = (settings: Pick<Settings, 'get'>) => settings.get('runInBackground') !== false
+```
+
+The setting, on unless turned off.
+
+### `setLoginItem`
+
+```ts
+export function setLoginItem(app: LoginApp, on: boolean, { allowed }: { allowed: boolean }): void
+```
+
+Ask Windows to start the app at sign-in, or stop asking. A dev run or a sandbox never registers itself.
+
+### `lockOnceFreed`
+
+```ts
+export function lockOnceFreed(app: LockApp, { tries = 40, everyMs = 250 } = {}): Promise<boolean>
+```
+
+The lock, for the run the uninstaller starts. A copy in the tray holds it, and hearing
+--uninstall it quits (keepInTray's caller), so this waits for that rather than giving up.
+Without it the removal window never showed while the app sat in the tray.
+
+### `keepInTray`
+
+```ts
+export function keepInTray({ app, win, settings, makeTray, menu, t, play, diag = () => {} }: { app: { on(ev: 'before-quit', fn: () => void): void; quit(): void }; win: WinLike; settings: Pick<Settings, 'get' | 'set'>; makeTray: () => TrayLike; menu: (items: { label?: string; type?: 'separator'; click?: () => void }[]) => unknown; t: (ru: string) => string; play: () => void
+```
+
+Hide the window in the tray instead of closing it, while the setting is on.
+
+```
+@param makeTray  builds the icon (Electron's Tray over build/icon.png)
+@param menu  builds the right-click menu from its items (Electron's Menu.buildFromTemplate)
+@param t  the main process's words, read each time the menu is built
+@param play  what the menu's Play does
+```
+
+## src/tree-sets.ts
+
+Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire
+(issue #421). Trees are entities that name their model by path, and the two sides use models
+of their own, so a pak that puts other models under the default trees' names changes the trees
+of one side and leaves the other alone. Counted on the default map (2026-11-03): 1370 Radiant
+trees in eight models, 1097 Dire trees in four.
+
+The sets are the ones the game's terrains use. Autumn, spring and summer reuse the default
+names, so the pak works there as well; terrains with trees of their own are left as they are.
+
+### `Side`
+
+```ts
+export type Side = 'radiant' | 'dire'
+```
+
+The side of the map a tree stands on.
+
+### `DEFAULT_TREES`
+
+```ts
+export const DEFAULT_TREES: Record<Side, string[]> =
+```
+
+The models each side's trees wear on the default map, the most used first.
+
+### `TreeSet`
+
+```ts
+export interface TreeSet { id: string; name: string; models: string[]; tinted?: boolean }
+```
+
+`tinted`: its terrain tints these models through the map, which the default map does not, so
+ they come out washed white there (seen in game, 2026-11-03); the app does not offer them.
+
+### `TREE_SETS`
+
+```ts
+export const TREE_SETS: TreeSet[] = [
+```
+
+The sets the terrains use, read out of their entity lumps (2026-11-03). The reef's coral trees
+are left out: they ship inside that map, not in pak01.
+
+### `treePlan`
+
+```ts
+export function treePlan(side: Side, set: TreeSet): { at: string; from: string }[]
+```
+
+Which file goes under which name: each default model of the side takes the set's models in turn.
+
+### `buildTrees`
+
+```ts
+export function buildTrees({ pak01, radiant, dire }: { pak01: string; radiant?: string | null; dire?: string | null }):
+```
+
+A pak with each side's trees from its set, out of the game's pak01; a side left out keeps its trees.
 
 ## src/types.ts
 
@@ -8158,6 +14070,25 @@ export interface Preset
 
 A saved build, or one received as a .d2mm and not installed yet (`wanted`).
 
+## src/ui-lang.ts
+
+The window's language on the very first start, before the person has picked one: the system's.
+It used to be English for everybody, and most of the people who install the app read Russian
+(plan item 21, 2026-11-12). Russian also covers the languages whose speakers usually read it
+here; anything the app has no translation for stays English. Settings keep the choice after.
+
+### `uiLangFor`
+
+```ts
+export function uiLangFor(locales: readonly string[]): 'ru' | 'zh-CN' | 'en'
+```
+
+The app's language for a system's list of preferred ones, first match wins.
+
+```
+@param locales  as Electron's app.getPreferredSystemLanguages() gives them ("ru-RU", "zh-Hans-CN")
+```
+
 ## src/uninstall-args.ts
 
 Whether this run of the app is the uninstaller asking what to take along.
@@ -8207,6 +14138,50 @@ export const isUninstallRun = (argv: readonly unknown[] = []): boolean => argv.i
 ```
 
 A person removing the program, which is the only case the window may open in.
+
+## src/unusual-effects.ts
+
+The game's unusual and ethereal effects, read out of items_game.txt (issue #393). An owned
+courier, ward or weapon with such an effect carries a number in its attributes, which the Game
+Coordinator sends and a mod cannot change. The table says what each number draws: its
+"attribute_controlled_attached_particles" section maps it to a particle system and how that
+particle attaches ("rootbone_follow", or control points on named attachments). The names
+players know ("Ethereal Flame") are in dota_english.txt as Attrib_Particle<number>.
+
+With this a file mod can draw the effect itself: the particle goes in as a child of a particle
+the item always plays, the way an arcana's host particle works (src/arcana.ts).
+
+### `EffectPoint`
+
+```ts
+export interface EffectPoint { index: number; attachType: string; attachment: string | null; entity?: string }
+```
+
+One control point of an effect, put on a named attachment of the model.
+
+### `UnusualEffect`
+
+```ts
+export interface UnusualEffect
+```
+
+One effect the table knows, with the name players know it by when it has one.
+
+### `effectNames`
+
+```ts
+export function effectNames(english: string): Map<number, string>
+```
+
+Attrib_Particle<id> names out of dota_english.txt's text, by id.
+
+### `unusualEffects`
+
+```ts
+export function unusualEffects(text: string, english = ''): UnusualEffect[]
+```
+
+Every effect in the table, in its order; named ones carry the English name.
 
 ## src/update-impact.ts
 

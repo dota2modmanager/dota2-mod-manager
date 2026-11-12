@@ -71,6 +71,8 @@ const COSMETIC_SLOTS: Record<string, SlotMeta> = {
   announcer: { label: 'Комментатор', icon: 'campaign' },
   mega_kills: { label: 'Мега-килл', icon: 'record_voice_over' },
   streak_effect: { label: 'Серия убийств', icon: 'local_fire_department' },
+  multikill_banner: { label: 'Баннер мультикилла', icon: 'celebration' },
+  tormentor: { label: 'Торментор', icon: 'deployed_code' },
 };
 export const COSMETIC_PREFIX = 'cosmetic:';
 export function cosmeticMeta(slot: string): SlotMeta {
@@ -123,13 +125,14 @@ export const HELP_LINKS = {
 export const SORTS = [
   { key: 'default', label: 'По умолчанию' },
   { key: 'date', label: 'Сначала новые' },
+  { key: 'popular', label: 'Сначала популярные' },
   { key: 'name', label: 'По имени А-Я' },
   { key: 'name-desc', label: 'По имени Я-А' },
 ];
 
 // What the toolbar above a grid holds. Mods and free cosmetics share it, so "Установленные"
 // and "Избранное" mean the same thing wherever they are — and switching category resets it.
-export const FILTER_DEFAULTS: Filters = { sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '' };
+export const FILTER_DEFAULTS: Filters = { sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '', author: '' };
 export const freshFilters = (): Filters => ({ ...FILTER_DEFAULTS, tags: new Set() });
 
 // Chrome panels the user can resize, scale and fold away: the title bar, the status bar and

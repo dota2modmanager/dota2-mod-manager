@@ -49,8 +49,9 @@ function dress(): () => void {
     s.style.setProperty('--x', `${((i + 0.15 + Math.random() * 0.7) / n) * 100}%`);
     s.style.setProperty('--w', `${(3 + Math.random() * 7).toFixed(1)}px`);
     s.style.setProperty('--h', `${h.toFixed(0)}px`);
-    s.style.setProperty('--t', `${(9 + Math.random() * 12).toFixed(1)}s`);
-    s.style.setProperty('--wait', `${(-Math.random() * 20).toFixed(1)}s`);
+    // each runs down once, the long ones slower, and not all at the same moment
+    s.style.setProperty('--t', `${(1.5 + h / 30 + Math.random() * 1.5).toFixed(1)}s`);
+    s.style.setProperty('--wait', `${(Math.random() * 2.5).toFixed(1)}s`);
     band.appendChild(s);
     streaks.push(s);
   }

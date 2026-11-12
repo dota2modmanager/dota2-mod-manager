@@ -12,6 +12,14 @@ import type { AddressInfo } from 'node:net';
 import crypto from 'node:crypto';
 
 import * as net from '../src/net.ts';
+import { noteStall, stoodDown, resetHealth } from '../src/net-mirrors.ts';
+
+test('one silent timeout stands a host down, so a blocked GitHub costs one wait and not three', () => {
+  resetHealth();
+  noteStall('raw.githubusercontent.com', 'timed out');
+  assert.equal(stoodDown('raw.githubusercontent.com'), true);
+  resetHealth();
+});
 import type { Mirror } from '../src/net.ts';
 const { RAW_HOST } = net;
 
@@ -63,7 +71,7 @@ function tempDir(t: TestContext): string {
 
 test.afterEach(() => net.setMirrors(null));
 
-test('a host the signed config names joins the chain, after our own copy and before the proxies', () => {
+test('a host the signed config names joins the chain, after our own site and before the proxies', () => {
   /* The built-in list is compiled in, so arranging a second copy of the catalog somewhere used
      to mean a release and then waiting for people to take it. */
   const GITLAB = 'https://gitlab.com/rotten/mirror/-/raw/main/assets/files/';
@@ -74,7 +82,7 @@ test('a host the signed config names joins the chain, after our own copy and bef
   assert.equal(list[at], `${GITLAB}heroes/Mod.zip`, 'the path after assets/files/ is kept');
   // the whole prefix, not a host anywhere in the string: a substring check here reads as a
   // security check to the scanner, and it would be a bad one
-  assert.ok(at > list.findIndex((u) => u.startsWith('https://cdn.dota2modmanager.com/')), 'after our own bucket');
+  assert.ok(at > list.indexOf(RAW_URL), 'after the origin');
   assert.ok(at < list.findIndex((u) => u.startsWith('https://ghproxy.net/')), 'before the proxies, which are GitHub again');
 
   net.applyMirrors([]);
@@ -140,25 +148,18 @@ test('the four startup files can also come from the site, and nothing else can',
     assert.equal(list[0], url, 'GitHub is still asked first');
   }
   const mod = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/heroes/some-mod.zip`;
-  // The bucket on cdn. holds the archives; the site itself must not be asked for one.
   assert.ok(!net.mirrorsFor(mod, { small: true }).some((u) => u.startsWith('https://dota2modmanager.com/mirror/')),
     'a mod archive is not on the site and must not be asked for there');
 });
 
-// The archives live in a bucket now, which is the only entry on the list that is not GitHub
-// wearing a different hostname. The catalog JSON must not be asked for there and the bucket
-// must not be asked before the origin.
-test('a mod archive can come from the bucket, after GitHub and not before it', () => {
+// The bucket held old mods only once the catalog outgrew it, so every recent one cost a 404 there.
+// Its copies of the app, the toolchain and the pictures stay: those have other addresses.
+test('a mod archive is never asked for at the bucket', () => {
   const mod = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/heroes/Gopo%20Pudge.zip`;
   const list = net.mirrorsFor(mod);
   assert.equal(list[0], mod, 'the origin is still asked first');
-  assert.equal(list[1], 'https://cdn.dota2modmanager.com/assets/files/heroes/Gopo%20Pudge.zip');
-  assert.ok(list.indexOf('https://cdn.dota2modmanager.com/assets/files/heroes/Gopo%20Pudge.zip')
-    < list.findIndex((u) => u.includes('ghproxy')), 'and before the proxies, which go down with GitHub');
-
-  const catalog = `${RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/data/mods.json`;
-  assert.ok(!net.mirrorsFor(catalog, { small: true }).some((u) => u.includes('cdn.dota2modmanager.com')),
-    'the catalog json is on the site, not in the bucket');
+  assert.equal(list.some((u) => u.startsWith('https://cdn.dota2modmanager.com/')), false);
+  assert.ok(list.some((u) => u.startsWith('https://ghproxy.net/')), 'the proxies still carry it');
 });
 
 test('a URL that is not on GitHub raw is its own only mirror', () => {
@@ -199,13 +200,32 @@ test('a mirror that keeps failing is stood down instead of asked every time', as
   assert.equal(up.hits, 4, 'and every request still got its answer');
 });
 
-test('a 404 is the file missing, not the mirror failing', async (t) => {
+test('a 404 from the origin is the file missing, not the mirror failing', async (t) => {
   const first = await serve(t, dead(404));
   const second = await serve(t, body('should not be reached'));
-  net.setMirrors([first.mirror(), second.mirror()]);
+  net.setMirrors([{ ...first.mirror(), origin: true }, second.mirror()]);
 
   await assert.rejects(() => net.fetchText(RAW_URL), /404/);
   assert.equal(second.hits, 0, 'no point asking another mirror of the same repo');
+});
+
+test('a 404 from a mirror only says it has no copy: the next one is asked', async (t) => {
+  const blocked = await serve(t, dead(503));
+  const bucket = await serve(t, dead(404));
+  const proxy = await serve(t, body('the new mod'));
+  net.setMirrors([{ ...blocked.mirror(), origin: true }, bucket.mirror(), proxy.mirror()]);
+
+  assert.equal(await net.fetchText(RAW_URL), 'the new mod');
+  assert.equal(bucket.hits, 1, 'and a host that has no copy is not asked twice');
+  assert.deepEqual(net.mirrorHealth().filter((h) => h.why === 'HTTP 404'), [], 'nor marked down for it');
+});
+
+test('a 404 from every mirror comes back as a 404', async (t) => {
+  const blocked = await serve(t, dead(503));
+  const bucket = await serve(t, dead(404));
+  net.setMirrors([{ ...blocked.mirror(), origin: true }, bucket.mirror()]);
+
+  await assert.rejects(() => net.fetchText(RAW_URL), /HTTP 404/);
 });
 
 test('a download that was cut short resumes where it stopped', async (t) => {

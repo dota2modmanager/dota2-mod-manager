@@ -49,7 +49,8 @@ Miss the second and the button exists but does nothing; miss the third and TypeS
 call. `test/ipc-contract.test.js` and `test/api-types.test.js` hold the four together. The renderer is split by view
 (`catalog.ts`, `library.ts`, `presets.ts` and `settings.ts`, the larger ones with their parts in a
 folder of the same name) with shared pieces under `renderer/ui/`. Each draws with React components
-from the folder of its name under `renderer/`: `catalog/`, `library/`, `presets/`, `settings/`.
+from the folder of its name under `renderer/`: `catalog/`, `library/`, `presets/`, `settings/`,
+`studio/`.
 
 ## Where mods end up
 
@@ -162,7 +163,7 @@ the same stock materials into every VPK and authors carry the same filler partic
 own mods. Paths were the first attempt, a blocklist of stock paths was the second, CRC comparison
 is the one that works.
 
-## The item schema and safe mode
+## The item schema and the item table switch
 
 Some things cannot be done from a language folder at all. The engine reads
 `scripts/items/items_game.txt` through the MOD path only, so skinchanger-style sets with their own
@@ -170,8 +171,9 @@ effects and the free cosmetics the game already ships do nothing from where mods
 
 Supporting them means registering another folder ahead of the game's content, which means editing
 `gameinfo_branchspecific.gi` and re-signing it in `dota.signatures`. That is a change to Valve's
-own files, so it is off until the user agrees to it once, which is what the safe mode switch in
-the status bar means. `src/patcher.ts` performs it and reverses it byte for byte, and
+own files, so it is off until the user agrees to it once. Since 3.0 there is no switch in the
+status bar: the first look, set or preset that needs the table asks (`renderer/ui/game-files.ts`),
+and Settings, Game files turns it back off. `src/patcher.ts` performs it and reverses it byte for byte, and
 `src/schema-service.ts` decides when the schema is rebuilt: always from the installed game's own
 item table, never from a copy a mod happened to ship.
 
@@ -210,9 +212,9 @@ those sources (Source 2 Viewer's export) is the next half and is not here yet.
 ## Presets
 
 A preset is the set of enabled mods, and the looks from the game that were on, kept slot by slot
-(`src/library.ts` picksOn). Applying one switches its mods on and every other mod off, and puts
-each look on in its slot; a slot it does not name keeps what it has, so a courier picked after the
-preset was saved stays on. It travels two ways.
+(`src/library.ts` picksOn). Applying one switches its mods on and every other mod off, and the same
+for the looks: each of its own on in its slot, every other one off, kept in My mods. A preset of 20
+is 20 whatever was on before. It travels two ways.
 
 **As a link.** `src/preset-link.ts` encodes catalog identities, not file names, into
 `d2mm://preset/<code>`, and a look as its slot and item: deflate, base64url, a code short enough for a chat message. Catalog file
@@ -261,6 +263,9 @@ So each thing carries its own proof, and each has a different answer to a proof 
 | Catalog data: `mods.json`, `constants.json`, `guides.json`, `mod-hashes.json` | ed25519 signature by the catalog's author, public key pinned in `src/catalog-signature.ts` | keep the last good copy; on a first run, no catalog and an error |
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
 | `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `src/remote-config.ts` | ignore the file, exactly as if it were unreachable |
+| `config/presets.json`, the ready-made presets the Presets screen offers | ed25519 signature by the same key, checked in `src/ready-presets.ts` | keep the last good list, or show none |
+| The item builder's hero bases: `manifest.json` in `dota2modmanager/hero-base-fixes` | ed25519 signature by the bases' author, a key of its own pinned in `src/arcana-base-store.ts` | keep the last good list and the bases already here; a base not here yet is built from the game's files |
+| A hero base's file | git's hash of it, from that signed manifest | the base is not ready; asked for again in five minutes |
 | The Source 2 toolchain executable | version and sha256 pinned in `src/toolchain.ts`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |
 
 The three answers differ because what each file costs differs. Without a catalog there is nothing
@@ -525,13 +530,19 @@ that location is not writable.
 |---|---|
 | `src/main.ts` | Electron lifecycle, auto-update, and the order the app starts in |
 | `src/services.ts` | Every long-lived service, built once in the order they depend on each other |
+| `src/large-answer.ts` | An IPC answer too big for one message: its big pieces stay in the main process and `preload.js` fetches them in slices. |
 | `src/ipc.ts`, `src/ipc-*.ts` | Every IPC module registered in one place, and the handlers themselves, one file per group of channels, each naming what it needs |
 | `src/app-context.ts`, `src/electron.ts` | What the IPC modules are handed, and Electron asked for when a module registers |
 | `src/window-guard.ts`, `src/channel-args.ts` | Who may call the main process and with what: the sender, every channel's arguments, the page's permissions and navigation |
 | `src/main-window.ts`, `src/app-page.ts` | The window: its size on the screen it opens on, the one page it may show, Ctrl +/-/0 |
 | `src/dev-harness.ts`, `src/capture.ts` | `MM_SHOT`, `MM_EVAL` and the other switches a script drives the window with, and the screenshot they take |
 | `src/game-upkeep.ts` | The work done at start: the game path, the mod folder following the audio language, the load-order layout, the migrations |
+| `src/game-watch.ts` | Whether Dota is open, asked every few seconds and told to the window when it changes |
+| `src/crash-watch.ts` | Dota closing seconds after Play, told to the window with the mods installed since the last normal game |
+| `src/game-launch.ts` | The two watches on the game: open or not, and closed seconds after Play |
+| `src/tray.ts`, `src/background.ts` | Start with Windows and hide in the tray on close, so the app is there when a Dota update lands; the logic, then the Electron side |
 | `src/game-repair.ts` | Putting the game back after something else changed it: a Dota patch, Steam's file check, waiting while Dota runs |
+| `src/app-repair.ts` | Settings' "Repair the app": the game patch, missing mod files and the rebuildable caches, a line per step |
 | `src/patch-watch.ts` | Noticing a game update the moment it lands |
 | `src/update-impact.ts` | Which installed mods a game update reached: Valve's files they replace that the patch changed or removed |
 | `src/mod-update.ts` | Whether the catalog has another version of an installed mod (its fingerprint is not among the catalog's), and replacing it in its own slot ([#171](https://github.com/dota2modmanager/dota2-mod-manager/issues/171)) |
@@ -542,26 +553,46 @@ that location is not writable.
 | `src/lz4.ts` | LZ4 block format: decoding, chained frames, and literals-only encoding |
 | `src/material.ts` | A material's expressions (KV3 blobs or NTRO): a read of `$GemColor` swapped for a constant |
 | `src/resource.ts` | Compiled resources at the block level: a block replaced, the resources a file names (RERL) added to |
-| `src/recolor.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)) |
+| `src/recolor.ts`, `src/recolor-sets.ts` | An item's particles and materials in a chosen colour, out of the game's own pak01, as one VPK: what its gem colours, pointed at the chosen colour ([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118)), and the items it knows, the immortals with no gem baked in ([#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
+| `src/gem-colors.ts` | The game's own prismatic gem colours, read out of the "colors" section of items_game, for a colour picker to offer and for `npm run recolor -- --gem` ([#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
+| `src/unusual-effects.ts` | The game's unusual and ethereal effects out of items_game (`attribute_controlled_attached_particles`), with the particle, how it attaches and the English name of each, for drawing one with a file mod ([#393](https://github.com/dota2modmanager/dota2-mod-manager/issues/393)) |
 | `src/arcana.ts` | An arcana as a mod built from the game's own files, for a player who has not got it: its models, glow and pictures under the plain hero's names, its colour written in |
+| `src/arcana-sets.ts` | The arcanas the app can build, as data: models put under the hero's own names, pictures, the host particle and the swaps of each (Terrorblade [#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), Techies [#392](https://github.com/dota2modmanager/dota2-mod-manager/issues/392)) |
+| `src/tower-looks.ts` | Tower looks as a file mod: an item's tower models, destruction stages and particles out of pak01, put under the default tower's names for one side or both, for `npm run tower-looks` ([#446](https://github.com/dota2modmanager/dota2-mod-manager/issues/446)) |
+| `src/tree-sets.ts` | Trees on the map from another of the game's tree sets, one for Radiant and one for Dire: the set's models put under each side's default tree names, for `npm run trees` ([#421](https://github.com/dota2modmanager/dota2-mod-manager/issues/421)) |
 | `src/item-visuals.ts` | What an item changes while it is worn, read from its `visuals` in items_game, and what a mod built from the game's files has to do for each change. How to build one: [docs/item-mods.md](docs/item-mods.md) |
 | `src/mod-doctor.ts` | What is wrong with a mod's VPK, read from its files and the game's: a model's animations that need an item (in its animation clips, which the game picks by, and its sequences), sequences in another order than the game's, a particle's child drawn on the wrong attachment or missing |
 | `src/arcana-service.ts` | The arcana window's side in the main process: what the window shows, the mod built into My mods in an early slot, and built again after a Dota update |
+| `src/generated-pak.ts` | A pak the app built itself, written into the mods folder in an early slot, and on a rebuild swapped into the slot the old one had (the arcana window, the map looks) |
+| `src/map-looks-service.ts` | Towers and trees from the game's own looks, one per side, built in the app into one My mods record per kind and built again after a Dota update ([#446](https://github.com/dota2modmanager/dota2-mod-manager/issues/446), [#421](https://github.com/dota2modmanager/dota2-mod-manager/issues/421)) |
+| `src/menu-background.ts`, `src/menu-background-service.ts` | A picture, GIF or video of your own behind the main menu: the game's three dashboard layouts rewritten so the last match's background plays your WebM under a veil and blur, in one My mods record built again after a Dota update ([#418](https://github.com/dota2modmanager/dota2-mod-manager/issues/418)) |
+| `src/panorama-files.ts` | Panorama's compiled styles (`vcss_c`: a CRC, the pictures named with their size, then the CSS as text) and scripts (`vjs_c`: the JavaScript as text) read and written without Valve's compiler; a picture new CSS names is listed and referenced as the compiler would |
+| `src/hud-scale.ts`, `src/hud-scale-service.ts` | The HUD editor: the HUD's stylesheet in force (a HUD mod's or the game's) read, a rule per changed panel added (Panorama's `ui-scale`, `transform`, `opacity`, `wash-color`, `visibility`), written again by `src/panorama-files.ts` into one My mods record that is built again after a Dota update ([#420](https://github.com/dota2modmanager/dota2-mod-manager/issues/420)) |
+| `src/effect-edit.ts`, `src/effect-edit-service.ts`, `src/effect-finder.ts`, `src/ipc-effects.ts` | The effect editor: a game effect's size, count, life, speed and colour changed in its KV3 tree, and a pak with the changed files under the paths they have in the game, one My mods record per effect |
+| `src/map-decor.ts`, `src/ipc-decor.ts` | The map without its decor: every material the map in force names, and those of the models it names, sorted into plants (grass, flowers, ferns, animals) and debris (stones, bones, debris, stains); each one taken becomes a copy of the game's `dev/transparent`, so the decor baked into the map's own meshes goes too. One My mods record in Optimization, built again after a Dota update; channels `decor:state`, `decor:install` |
+| `src/rank-look.ts`, `src/rank-look-script.ts`, `src/rank-look-service.ts`, `src/ipc-rank.ts` | The rank medal and Dota Plus hero levels of the player's own screen: the medal's rules copied with the chosen picture at the end of the two styles that draw it, a script (`rank-look-script.ts`) that gives the hero grid, the card over a hero, the pick, the strategy screen and the hero page the chosen levels, included into those five layouts through their LaCo tree, all written by `src/panorama-files.ts` into one My mods record that is built again after a Dota update; channels `rank:state`, `rank:pictures`, `rank:install` |
+| `src/ability-icons.ts`, `src/ability-icons-service.ts`, `src/ipc-icons.ts` | A hero's ability icons picked from his own cosmetics': the item table's `ability_icon` modifiers of his items, and of the shared `asset_modifiers` sets for his abilities, offered per ability; the picked icon's compiled file copied to the ability's own path and over every picture a worn cosmetic would draw for it, the record moved ahead of any switched-on mod carrying the same icons, one My mods record per hero, built again after a Dota update |
+| `src/ability-sounds.ts`, `src/ability-sounds-service.ts` | A sound of your own on a hero's sound event: the events written as KV3 text with your sound instead of the game's or over it, compiled with your WAV by Valve's resourcecompiler into one My mods record per hero ([#423](https://github.com/dota2modmanager/dota2-mod-manager/issues/423)) |
 | `src/app-log.ts`, `src/error-text.ts` | The app's own log, and what a caught error says as one line |
 | `src/deep-links.ts` | d2mm:// links, and the Linux desktop entry that lets them arrive |
 | `src/discord-auth.ts`, `src/discord-presence.ts`, `src/presence-status.ts` | Signing in with Discord, and what the Discord status says and whether it is on |
 | `src/release-notes.ts` | The "What's new" text, out of the changelogs shipped with the build |
-| `src/feature-gate.ts` | Whether a feature has been switched off from `config/app.json`, asked once |
+| `src/repo-stars.ts` | The project's GitHub star count on Home, asked at most every six hours and kept on disk |
+| `src/feature-gate.ts` | Whether a write to the game may go ahead: not while Dota is open, not when `config/app.json` switched the feature off |
 | `preload.js` | The `window.api` surface, and nothing else crosses |
 | `src/installer.ts` | The door to everything below that writes a mod into the game folder or takes it out |
 | `src/installer-downloads.ts` | Getting a catalog archive onto this machine |
 | `src/installer-write.ts` | Writing a mod into the folder, switching its files on and off, removing them |
+| `src/disk-space.ts` | Room on the disk, checked before a mod is written, so a full drive is an error in megabytes instead of a half-written pak |
 | `src/installer-slots.ts`, `src/slot-zones.ts` | The load order: pak slots, moving and swapping them, its two parts, and which mod hides whose files |
 | `src/installer-packs.ts` | Several mods in one pak slot |
 | `src/installer-repack.ts` | What is already installed, read and rewritten: merged, unpacked, folded, split by hero |
 | `src/installer-folder.ts`, `src/installer-files.ts` | The language folder as a whole: the mods-off switch, the note of which files are ours, foreign files, and the names they share |
 | `src/overlays.ts`, `src/overlays-cursor.ts` | Fonts and cursors: files written over the game's own, their kept originals, putting them back after Steam's file check, and each cursor set's own copy |
 | `src/import.ts` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
+| `src/item-icons-drop.ts` | A mod written again without its item pictures, by the user's choice, kept through updates |
+| `src/ui-lang.ts` | The window's language on the first start, taken from the system's (src/services.ts sets it) |
+| `src/emblem-ring.ts` | The r_draw_selected_ring line in autoexec.cfg an emblem needs, kept while one is on |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/mods-listing.ts` | What My mods is drawn from: the library squared with the folder, foreign files named, which mod hides whose files |
@@ -576,27 +607,53 @@ that location is not writable.
 | `src/atomic-file.ts` | `manifest.json` and `settings.json` replaced in one step |
 | `src/library.ts` | `manifest.json`: installed records and presets |
 | `src/settings.ts`, `src/settings-view.ts` | `settings.json` and its defaults, and everything the Settings screen is told in one answer |
+| `src/support-prompt.ts` | When the window asking for support opens on its own: from the third launch, a week between reminders, three at most, never again after the user helped |
 | `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
+| `src/download-stats.ts` | The catalog's download counter: the counts on the cards, and one hit per catalog install, never in an install's way |
 | `src/net.ts`, `src/net-mirrors.ts`, `src/net-fetch.ts`, `src/net-download.ts`, `src/download-proxy.ts` | Downloads across the mirror chain: the hosts and how each is doing, an optional user proxy, a request along it, a file to disk checked against its hash |
+| `src/preview-cache.ts` | The catalog's pictures on this disk: the window's requests redirected here, the mirror asked first, the rest fetched in the background |
 | `src/remote-config.ts`, `src/remote-config-format.ts` | The switches and notices this project can change after a release, the version ranges a switch can be held to, the signature over them, and the checks the fetched file goes through |
+| `src/ready-presets.ts`, `src/ready-presets-format.ts` | The ready-made presets (`config/presets.json`): fetched and checked like the remote config, kept between starts, cut down to catalog mods with a name in both languages |
+| `src/creator.ts` | The author's drafts of mods for the catalog, kept under userData, and one written out as the archive PreMod makes |
+| `src/creator-premod.ts` | PreMod's archive of a draft (the VPK zipped, a WebP preview, mod.json, hash.json) and the catalog upload page's rules for a mod |
 | `tools/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `src/safe-zip.ts` | Every foreign archive comes through here |
 | `src/steam.ts` | Finding Steam and the game, and proving the folder is really a game |
+| `src/steam-appstate.ts` | What Steam's manifest says about Dota before Play: an update still downloading is said, not left for the user to wonder about |
 | `src/gamelang.ts`, `src/gamelang-steam.ts`, `src/gamelang-folders.ts` | Which folder Dota will mount, what Steam says about the game's language, and moving mods across when that changes |
+| `src/hero-grid.ts` | Hero grids for the pick screen out of OpenDota's heroStats, merged into the Steam account's `hero_grid_config.json` beside the user's own |
 | `src/patcher.ts`, `src/patcher-gameinfo.ts`, `src/patcher-signatures.ts` | The search-path patch: the two gameinfo files and the signature list, byte for byte, both directions |
 | `src/schema.ts`, `src/schema-kv.ts`, `src/schema-items.ts`, `src/schema-merge.ts` | `items_game.txt`: walking it, reading its items, merging a mod's blocks, building the item pak |
+| `src/pak-stamp.ts` | Whether the game's pak01 changed: a listing of its 679 files' stats, made again only when pak01_dir.vpk, which every update rewrites, has changed; the key of everything the app keeps of the game (the item table, its pictures, the 3D models) |
 | `src/schema-service.ts`, `src/schema-cosmetics.ts`, `src/schema-harvest.ts` | The item table as the app keeps it: the build and the repair, the free cosmetics, and a mod's own blocks |
-| `src/schema-build.ts`, `src/build-bar.ts` | Building the table: each item builder pick built once and kept, and a build a step at a time in the background, a newer one stopping an older one before it writes, with the Play button waiting for the last; and the bar at the bottom of the window while it runs |
-| `src/cosmetic-names.ts` | Official Chinese item names from the installed game's localization tokens; read-only and cached per game build |
-| `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts` | The item builder: what it offers each hero and slot, the effects, and what a pick writes |
+| `src/schema-build.ts`, `src/background-builds.ts`, `src/build-bar.ts` | Building the table: each item builder pick built once and kept, and a build a step at a time in the background, a newer one stopping an older one before it writes, with the Play button waiting for the last; and the bar at the bottom of the window while it runs |
+| `src/build-undo.ts` | Cancel on the table's bar: the build stops before it writes, and the records the table reads go back to how they were at the last table written, so My mods and the game agree ([#425](https://github.com/dota2modmanager/dota2-mod-manager/issues/425)) |
+| `src/quit-after-build.ts` | Quitting while the item table is written waits for it, up to a limit, so the game is not left a change behind My mods |
+| `src/cosmetic-names.ts` | Official Chinese item names, and every text token of the game in the app's language (`gameTokens`), from the installed game's localization tokens; read-only and cached per game build and language |
+| `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts`, `src/item-builder-donor.ts`, `src/item-builder-unusual.ts`, `src/item-builder-kinetic.ts`, `src/item-skin.ts` | The item builder: what it offers each hero and slot, the effects, the game's unusual effects ([#393](https://github.com/dota2modmanager/dota2-mod-manager/issues/393)), another item's effect on the one worn ([#383](https://github.com/dota2modmanager/dota2-mod-manager/issues/383)), and what a pick writes |
+| `src/item-builder-ability-fx.ts`, `src/item-builder-fx-patch.ts` | An item's ability effects without its model, as the game's hidden `ability_effects_N` loadout slots wear them (Bracers of the Cavern Luminar's Enchant Totem on other arms): a slot per hero and ability an item of his fits (`can_equip_as_ability_effects`), named by the ability his script gives it, the item's modifiers marked for that slot written into the slot's stock item, which every hero shares, so each slot's picks of all heroes are one block; their files ahead of the other picks', as the slot wins in the game, and kept on when a set goes on |
 | `src/item-builder-personas.ts` | Personas: the slot a persona is picked in and one for each of its own, each worn under one of the plain hero's slots over the persona's base, the game's own item where nothing is picked, and the rule that a hero with a persona on wears its items alone |
+| `src/persona-base-effects.ts` | A persona's base without another item's effects: an effect folder none of the persona's own items names goes, with the plain paths that lead into it (the Acolyte's base carried Magus Apex's orbs) |
+| `src/model-scale.ts` | A persona's items made as big as its body: each model worn in a persona's slot scaled about its origin (vertices through meshopt's codec, bones, bind poses, bounds), by how much bigger the persona's base body measures against Valve's persona model; a body compiled as Valve's measures 1, and nothing is scaled |
+| `src/item-builder-sets.ts`, `src/item-builder-details.ts`, `src/ipc-looks.ts` | The item builder as a changing room: a hero's sets with the rarity, release date and event the game gives each, the event by the name the game's text gives it in the player's language ([#526](https://github.com/dota2modmanager/dota2-mod-manager/issues/526)), each hero's main attribute out of its script so the hub follows the game's hero grid, and a saved look put on in one write, channel `cosmetics:wearLook` ([#527](https://github.com/dota2modmanager/dota2-mod-manager/issues/527)) |
 | `src/item-builder-styles.ts` | An item's styles, and its visuals with the chosen one made its only one: a pick in another style rides in its effect key as `style-N` |
+| `src/item-builder-everyone.ts` | Every other player of a hero the user built in the user's look, behind a switch in Settings: each of that hero's wearables under what the user's hero wears in its slot (the build's file, else the stock item, else the pick's own model, else Valve's invisible box), an arcana's body under the user's hero's body, and their blocks given its visuals |
 | `src/item-builder-refits.ts` | A pick worn with an item that makes its model again for another body (Faceless Void's and Drow's arcanas refit dozens): the refit in place of its own, and its own model keeping its stock path over the other item's swap of the stock model there |
 | `src/item-builder-assets.ts` | What a pick needs beyond its block: the game's files under the plain paths (models, particles, an arcana's hero model, a summon's model, the hero's portrait, minimap and ability pictures) and the sounds, voice, portrait settings and minimap sprite it switches |
-| `src/model-sequences.ts` | A model put under another model's path that numbers its sequences as that one does, so the numbers a lobby's server sends play the same animations (a summon's model from the item builder) |
+| `src/model-sequences.ts` | A model put under another model's path that numbers its sequences as that one does, so the numbers a lobby's server sends play the same animations (a summon's model from the item builder, a courier's) |
+| `src/model-attachments.ts` | A model put under a plain hero's path with its attachments numbered as the plain model's, so the attachment numbers a lobby's server sends land where they should (Invoker's orbs on the Acolyte of the Lost Arts) |
+| `src/courier-models.ts` | A courier look's models under the Default Courier's paths, since the server sets a courier's model from its own table and only the particles came through |
+| `src/item-files.ts`, `src/item-files-service.ts` | The item builder's picks as files alone, one pak in the language folder: what a pick's table block asks for said in its model and the hero's body, and what is left for the table. See the decision in `DECISIONS.md` |
+| `src/model-particles.ts`, `src/model-hitboxes.ts`, `src/particle-surface.ts` | A wearable that carries its own effects: the systems in its key values, hitboxes laid over its vertices, and copies of an effect that start on those boxes |
+| `src/model-bodygroups.ts` | A model with some of its body groups chosen by default, so an item hides the hero's parts with no line of the item table; and the meshes that turns off, for the 3D preview. |
+| `src/model-merge.ts` | A second model carried inside the first: its mesh blocks, bones and materials, for an item's `additional_wearable` built as files. |
+| `src/model-skin.ts` | A model made to wear one of its material sets by default, for a courier worn in another set (Collector's Baby Roshan 2018's silver), which the server leaves at the first |
+| `src/model-cloth.ts` | A wearable copied under Centaur's stock paths without its cloth simulation (m_pFeModel in PHYS set to null, every other block as it was): his body's own cloth, the one of 129 heroes' with a local force other than 1, dragged it behind him. On every other hero the cloth stays |
+| `src/png-strip.ts` | A cube map's six faces, as the toolchain writes them, made the one strip the 3D preview's hero shader reads, with a PNG reader and writer of its own: the main process has no image codec in the tests |
+| `src/hero-preview-fx.ts` | The 3D preview's particles, gathered out of the game's files before the models export so their models and pictures fetch alongside, and moved to their parts' places once the models are in |
 | `src/arcana-notes.ts` | What each arcana does in the game once the builder puts it on, from a pass through every one: a note with its problems, or that it is broken or not checked, which the slot window shows on the item |
 | `src/arcana-bases.ts` | The arcana bases, each arcana compiled again by hand so it works as the hero's own look: which base a pick puts on, by item, style and what is worn with it, and the rule that every other pick wins over the base where both write a path, the arcana's own parts excepted |
-| `src/arcana-base-store.ts` | The bases brought down from their repository (J0nathan550/d2pfx-arcana-fixes) and kept in userData: listed from its git tree, each file checked against its git hash, a base used only once all of it is here, and the build asked to run again when one comes |
+| `src/arcana-base-store.ts` | The bases brought down from their repository (dota2modmanager/hero-base-fixes) and kept in userData: listed from its manifest only with a good signature against `BASES_PUBLIC_KEY`, each file checked against its git hash, a base used only once all of it is here, and the build asked to run again when one comes |
 | `src/arcana-base-color.ts` | Terrorblade's base in the arcana window's colour: the gem's colour written into its particles and materials moved to the chosen one, for the window's mod and for the builder's copy while the window's record is on |
 | `src/item-portraits.ts` | A hero's HUD portrait camera and lights (`scripts/npc/portraits.txt`) and minimap sprite (`scripts/mod_textures.txt`) as the picks make them, every pick's in one copy of each file |
 | `src/item-sounds.ts` | An item's sounds and an arcana's voice, which the server gives only to the item's owner: the plain sound events rewritten as the item's in the game's soundevents files, every pick's in one copy of each |
@@ -604,21 +661,42 @@ that location is not writable.
 | `src/terrain-age.ts` | Terrains that replace the whole map, and whether the game's map has moved on since |
 | `src/mod-id.ts`, `src/fingerprints.ts`, `src/hero-names.ts` | What a mod replaces, asked of the game; recognising a file somebody else installed; which hero a name means |
 | `src/icons.ts`, `src/icon-match.ts`, `src/icon-wiki.ts` | Pictures off the Dota wikis: the cache and its misses, which file is an item's picture, and asking the two wikis |
-| `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
+| `src/game-icons.ts`, `src/vtex.ts`, `src/toolchain.ts`, `src/toolchain-bucket.ts` | Item pictures out of the installed game, and the Source 2 tools fetched only when something needs them |
+| `src/model-glb.ts` | The game's models as GLB with their textures, exported by the Source 2 tools in one call per batch and cached per game build, for the 3D preview of [#417](https://github.com/dota2modmanager/dota2-mod-manager/issues/417) |
+| `src/glb-embed.ts` | A GLB with the PNG textures it links to put into its binary chunk, so the window loads a model from bytes alone; a picture it cannot have becomes one grey pixel |
+| `src/hero-preview.ts` | The 3D preview's models for a hero: the body out of its script (or an arcana's), and for each slot the pick or its stock item, exported through `model-glb` and handed over with their textures inside |
+| `src/razor-crest-preview.ts` | Resolve Severing Crest's preview rig and carry over the original helmet's materials and attachments |
+| `src/hero-preview-picks.ts`, `src/hero-particle-styles.ts` | Resolve equipped and default models, selected styles, and their ambient particle replacements |
+| `src/model-style-meshes.ts`, `src/model-snapshot-fallback.ts` | Select style meshes and recover missing particle surfaces from exported geometry |
+| `src/model-loadout.ts` | The sequences a hero model has, out of its own ASEQ block, and the loadout one the game plays for the items worn (an item's activity modifiers pick the variant) |
+| `src/hero-showcase.ts` | How the game stages a hero on its loadout: the loadout camera, the hero's LoadoutScale, and its light, ambient, background colour and pedestal out of `portraits_showcase.txt` |
+| `src/particle-spec.ts` | The particles an item (`particle_create`) or a hero (its loadout) brings, as the system's KV3 tree in JSON with children inlined, and a model's attachment points; the full loadout runtime consumes them |
+| `src/loadout-resources.ts`, `src/loadout-material.ts`, `src/loadout-sheet.ts` | Full particle dependencies, native Dota material inputs and VTEX frame timing for the loadout engine; shared by the hero and recolor editor |
+| `src/particle-snapshot.ts` | Decompresses SNAP blocks and keeps positions, joint weights, colors and particle attributes |
+| `src/sprite-frames.ts` | Discovers every exported sprite-sheet sequence and frame in numeric order |
+| `src/ipc-preview3d.ts` | The channel `preview3d:models`: the hero's body and its slots' models as GLB bytes, or why there are none (no toolchain, no game, no body) |
+| `renderer/settings/PreviewCacheBlock.tsx` | Optional per-hero preparation of the GLB and particle-resource disk cache via `preview3d:warm` |
+| `src/recolor-layers.ts` | A hero split into layers for a colour each: every ability's particles and icon, the rest of his effects, his portraits, the colour textures of his body, and each worn item's effect and its model's own colour textures ([#422](https://github.com/dota2modmanager/dota2-mod-manager/issues/422)) |
+| `src/recolor-modes.ts` | How a picture takes its layer's colour: tint, keep details, whole, rainbow. One rule for the build, the window's pictures and the 3D preview's shader |
+| `src/hero-paint-service.ts`, `src/ipc-paint.ts` | The channels `paint:state` and `paint:install`: the hero recoloured layer by layer into one record of My mods, its compressed pictures read out by ValveResourceFormat and compiled again, built again after a Dota update |
 | `src/resource-compiler.ts`, `src/wine.ts`, `src/workshop-tools.ts` | Valve's resourcecompiler.exe from the Workshop Tools, found in the game, picked in Settings or kept, compiling sources staged in an addon of ours and handing back the compiled files; on Linux it runs under Wine in a prefix of the app's own, and a copy of the tools is kept for when Steam takes the Proton build's away |
 | `src/mod-preview.ts`, `src/mod-preview-pick.ts` | A picture for a mod that came with none, taken out of the mod itself, and which one is worth showing |
 | `src/preset-link.ts`, `src/preset-share.ts` | Presets as a link and as a file |
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |
+| `src/preset-install.ts` | Putting a preset on: an own one with mods to fetch back, a received one to resolve; the window and the command line share it |
+| `src/cli.ts` | The command line: `--apply <link>`, `--list`, `--disable-all`, run to an exit code with no window |
 | `src/pumpkin.ts` | The title bar pumpkin's key, checked once against its worker (`tools/pumpkin-worker`), and what it opens |
 | `src/scream-guard.ts` | What the pumpkin opens stays with the install that opened it: a copy found anywhere else is switched off and marked |
 | `src/diagnostics.ts`, `src/diagnostics-files.ts`, `src/diagnostics-render.ts` | The support report: what it gathers, what it reads off the disk, and how it is laid out |
 | `src/uninstall-args.ts`, `src/uninstall-window.ts` | Whether this run is the uninstaller asking what to take along, and the window that asks |
+| `src/remove-everything.ts` | Every mod out of the game and the patch reverted, in one go: the uninstaller and the Settings button share it |
 | `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |
 | `src/types.ts` | The shapes the main process hands between its modules |
-| `src/i18n.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
+| `src/i18n.ts`, `src/i18n-en.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
-| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*` | The four screens, in React |
+| `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*`, `renderer/studio/*`, `renderer/home/*` | The screens, in React; Home is where the window opens and where the name in the title bar leads; Items is the catalog screen with the game's looks (`views/catalog/sections.ts`), the Workshop gathers the tools built from the game's own files |
+| `renderer/creator/*` | The author's window: drafts of mods for the catalog, opened from the account menu |
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome, and the focus and names a keyboard and a screen reader need (`a11y.ts`) |
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
@@ -628,16 +706,16 @@ that location is not writable.
 | `tools/sandbox.js` | The throwaway game tree |
 | `src/write-jail.ts` | A run started with `--write-jail` writes nowhere else |
 | `tools/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
-| `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The archive mirror, the update mirror, the signing they share, and which archives the mirror copies again or refuses |
+| `tools/r2-sync.mjs`, `tools/r2-release.mjs`, `tools/r2-client.js`, `tools/mirror-plan.js` | The picture mirror, the update mirror, the signing they share, and which pictures the mirror copies again or refuses |
 | `tools/gen-fingerprints.js` | Regenerating the published fingerprint map, and `mod-paths.json`, the files each pak mod replaces |
 | `tools/dota-diff.mjs`, `tools/dota-watch.mjs` | What a Dota build changed, read from GameTracking-Dota2: by hand with `npm run dota:diff`, and twice an hour in the "Dota updates" issue |
 | `tools/recolor.mjs` | `npm run recolor`: the recolour, or with `--arcana` the whole arcana, as a VPK to import, before the window offers it |
 | `tools/clean-arcana-bases.mjs` | A compiled arcana base stripped to models, materials and particles, the editor's files, sounds, pictures and particles every hero shares moved aside |
 | `tools/pack-arcana-vpks.mjs` | Every base in a folder packed into a VPK with VPKTool, one at a time, each checked against the files it was made from |
-| `tools/arcana-bases-manifest.mjs` | manifest.json for the bases' repository, the list of files and hashes the app falls back on where api.github.com cannot be reached |
+| `tools/arcana-bases-manifest.mjs` | manifest.json and its signature for the bases' repository: the only list of files and hashes the app takes, written and signed in one step |
 | `tools/item-plan.mjs` | `npm run item-plan -- <item>`: `src/item-visuals.ts` from the command line, the first step of building an item as a mod |
 | `tools/mod-doctor.mjs` | `npm run doctor -- <mod_dir.vpk>`: `src/mod-doctor.ts` from the command line, against the game folder in the app's settings |
-| `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing, and whether the attack swings (`tools/dota-bench/verdict.mjs`) |
+| `tools/dota-bench.mjs`, `tools/dota-bench/*.ps1` | `npm run dota:bench -- --vpk <mod_dir.vpk>`: a mod tried in the real game on Windows with nobody at the keyboard: hero demo started with the mod in a free slot, the hero levelled, set on a dummy, its abilities pressed, and pictures taken, a burst of them through the swing, and whether the attack swings (`tools/dota-bench/verdict.mjs`); a build's item table tried through `dota_mods` (`schema.mjs`), and a sound heard in what the game played (`record.ps1`, `hear.mjs`) |
 | `tools/seo-report.mjs`, `tools/seo-state.mjs` | The weekly reach and search report posted to [issue #3](https://github.com/dota2modmanager/dota2-mod-manager/issues/3), and the numbers it carries from one week to the next inside the comment |
 | `tools/release-gate.mjs` | First job of every release: waits until the tagged commit has passed the checks in `.github/required-checks.json`, and refuses it otherwise |
 | `tools/check-credentials.mjs`, `tools/google-auth.mjs` | Every morning before the radar: tries each secret against its service and writes what works, what fails and when each expires, for the radar to report |
@@ -652,3 +730,7 @@ that location is not writable.
 | `tools/size-budget.mjs` | Holds the files listed in `.github/size-budget.json` at their length, and stops any other file crossing 300 lines unnoticed |
 | `tools/mutate.mjs` | Breaks one promise at a time from `.github/mutants.json` and fails where no test goes red, or where the mutant no longer applies to the code it names |
 | `tools/rollback.mjs` | Switches a feature off for the broken releases only, or everywhere, writes and signs `config/app.json`, and refuses a range old copies cannot read or a key the app does not pin |
+
+### 3D loadout renderer
+
+The preview uses `vendor/dota-loadout` as a local npm dependency, with desktop integration maintained in this repository. The TypeScript modules `renderer/catalog/preview3d/scene.ts`, `loadout-source.ts`, `loadout-textures.ts` and `loadout-controls.ts` own desktop data adaptation, cancellation and input. The vendored engine owns animation, bone merging, particles, material shading and HDR. `EffectStage.tsx` and effect thumbnails share that engine. The older independent runtime is retained for its existing regression tests, but is not used to render these views. No remote assets or iframe are used. See `vendor/dota-loadout/PROVENANCE.md`.

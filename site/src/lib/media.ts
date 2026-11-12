@@ -13,7 +13,7 @@
  */
 export type Lang = 'en' | 'ru';
 
-export const shotNames = ['catalog', 'heroes', 'my-mods'] as const;
+export const shotNames = ['catalog', 'builder', 'workshop', 'effects', 'hud', 'my-mods'] as const;
 export type ShotName = (typeof shotNames)[number];
 
 export const shotUrl = (lang: Lang, name: ShotName) =>
@@ -33,12 +33,12 @@ export const srcsetFor = (url: string, fullWidth: number) =>
 export const tourUrl = (lang: Lang) => `/video/dota-2-mod-manager-tour-${lang}.webm`;
 export const tourPoster = (lang: Lang) => `/video/dota-2-mod-manager-tour-${lang}.webp`;
 
-/** Measured off the files themselves, not remembered: 24.15s and 24.40s, both PT24S. */
-export const TOUR_SECONDS = 24;
-export const TOUR_ISO = 'PT24S';
+/** tools/site-tour.mjs films both languages to about 41 seconds. */
+export const TOUR_SECONDS = 41;
+export const TOUR_ISO = 'PT41S';
 /** When the clip was first published with the site. */
 export const TOUR_UPLOADED = '2026-08-09';
-export const TOUR_SIZE = { width: 880, height: 556 };
+export const TOUR_SIZE = { width: 1100, height: 696 };
 export const SHOT_SIZE = { width: 1360, height: 860 };
 
 /**
@@ -66,13 +66,19 @@ export const shotAlt: Record<Lang, Record<ShotName, string>> = {
   en: {
     catalog:
       'The Dota 2 mod catalog inside Dota 2 Mod Manager: cards from the D2PFX collection with previews and tags',
-    heroes: 'The heroes screen: every skin and mod for one Dota 2 hero in a single list',
+    builder: 'The item builder: a Dota 2 hero in a live 3D preview next to the items for each slot',
+    workshop: 'The Workshop: tools that build Dota 2 mods from the game files, grouped by what they change',
+    effects: 'The effect editor: sliders for a Dota 2 ability effect next to a preview of it playing',
+    hud: 'The HUD editor: a plan of the Dota 2 screen with panels to move and resize',
     'my-mods': 'My mods: installed Dota 2 mods with toggles and their load order',
   },
   ru: {
     catalog:
       'Каталог модов для Доты 2 в окне Dota 2 Mod Manager: карточки скинов из коллекции D2PFX с превью и тегами',
-    heroes: 'Экран героев: все скины и моды на одного героя Доты 2 одним списком',
+    builder: 'Конструктор предметов: герой Доты 2 в живом 3D-просмотре рядом с предметами для каждого слота',
+    workshop: 'Мастерская: инструменты, которые собирают моды для Доты 2 из файлов игры',
+    effects: 'Редактор эффектов: ползунки эффекта способности Доты 2 рядом с его проигрыванием',
+    hud: 'Редактор HUD: план экрана Доты 2 с панелями, которые можно двигать и менять',
     'my-mods': 'Мои моды: установленные моды Доты 2 с переключателями и порядком загрузки',
   },
 };
@@ -93,13 +99,13 @@ export const shotTitle: Record<Lang, Record<ShotName, string>> = {
 
 export const tourText: Record<Lang, { name: string; description: string }> = {
   en: {
-    name: 'Installing two Dota 2 mods in one take',
+    name: 'Dota 2 Mod Manager in one take',
     description:
-      'Twenty-four seconds of Dota 2 Mod Manager: find a hero in the catalog, take a set, take a second one, install both. Filmed off the app itself, no cuts and no speed-up.',
+      'Forty seconds of Dota 2 Mod Manager: install a mod from the catalog, dress a hero in the item builder, open the Workshop, make an effect bigger, move the minimap and switch a mod off in My mods. Filmed off the app on the real game. We cut the waits for loading and sped nothing up.',
   },
   ru: {
-    name: 'Как поставить два мода на Доту 2, один дубль',
+    name: 'Dota 2 Mod Manager одним дублем',
     description:
-      'Двадцать четыре секунды работы Dota 2 Mod Manager: находим героя в каталоге, берём сет, берём второй, ставим оба. Снято с самого приложения, без склеек и без ускорения.',
+      'Сорок секунд работы Dota 2 Mod Manager: ставим мод из каталога, одеваем героя в конструкторе, открываем Мастерскую, увеличиваем эффект, двигаем мини-карту и выключаем мод в «Моих модах». Снято с приложения на настоящей игре. Мы вырезали только ожидание загрузки, ускорения нет.',
   },
 };

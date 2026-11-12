@@ -9,6 +9,7 @@
 import type { BrowserWindow } from 'electron';
 import type { Settings } from './settings.ts';
 import type { Catalog } from './catalog.ts';
+import type { PreviewStore } from './preview-cache.ts';
 import type { Installer, InstallProgress } from './installer.ts';
 import type { Library } from './library.ts';
 import type { Fingerprints } from './fingerprints.ts';
@@ -19,9 +20,22 @@ import type { ToolsKeeper } from './workshop-tools.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import type { createArcanaService } from './arcana-service.ts';
+import type { createMapLooks } from './map-looks-service.ts';
+import type { createMenuBackground } from './menu-background-service.ts';
+import type { createHudScale } from './hud-scale-service.ts';
+import type { createEffectEdit } from './effect-edit-service.ts';
+import type { createEffectFinder } from './effect-finder.ts';
+import type { createRankLook } from './rank-look-service.ts';
+import type { createMapDecor } from './map-decor.ts';
+import type { createHeroPaint } from './hero-paint-service.ts';
+import type { createAbilityIcons } from './ability-icons-service.ts';
+import type { createAbilitySounds } from './ability-sounds-service.ts';
+import type { createBuildUndo } from './build-undo.ts';
+import type { createHeroPreview } from './hero-preview.ts';
 import type { createGameIcons } from './game-icons.ts';
 import type { createModPreviews } from './mod-preview.ts';
 import type { createRemoteConfig } from './remote-config.ts';
+import type { createReadyPresets } from './ready-presets.ts';
 import type { presetsService } from './presets-service.ts';
 import type { createGate } from './feature-gate.ts';
 import type { createCursors } from './cursors.ts';
@@ -32,6 +46,7 @@ import type { createUpdater, UpdaterLike } from './updater.ts';
 import type { findDotaGamePath, validateGamePath } from './steam.ts';
 import type { moveLangFolder } from './gamelang.ts';
 import type { LibRecord } from './types.ts';
+import type { DownloadStats } from './download-stats.ts';
 import type { PatchRepair } from './game-upkeep.ts';
 import type * as discordAuthModule from './discord-auth.ts';
 import type * as portableUpdateModule from './portable-update.ts';
@@ -40,7 +55,8 @@ import type * as portableUpdateModule from './portable-update.ts';
 export type AppProgress =
   | InstallProgress
   | ToolProgress
-  | { type: 'count'; label: string; done: number; total: number }
+  // cancel: the bar offers Cancel, and says whose build it stops (src/build-undo.ts)
+  | { type: 'count'; label: string; done: number; total: number; cancel?: 'schema' }
   | { type: 'done'; label?: string }
   | { type: 'error'; label: string; message: string };
 
@@ -52,6 +68,8 @@ export interface AppContext {
   // ---- the services ----
   settings: Settings;
   catalog: Catalog;
+  /** the catalog's pictures on this disk (src/preview-cache.ts) */
+  previewStore: PreviewStore;
   installer: Installer;
   library: Library;
   fingerprints: Fingerprints;
@@ -60,6 +78,26 @@ export interface AppContext {
   updateImpact: ReturnType<typeof createUpdateImpact>;
   /** the arcana built out of the game's own files (src/arcana-service.ts) */
   arcana: ReturnType<typeof createArcanaService>;
+  /** towers and trees from the game's own looks (src/map-looks-service.ts) */
+  mapLooks: ReturnType<typeof createMapLooks>;
+  /** a movie of the user's own behind the main menu (src/menu-background-service.ts) */
+  menuBackground: ReturnType<typeof createMenuBackground>;
+  /** the in-game HUD smaller or larger (src/hud-scale-service.ts) */
+  hudScale: ReturnType<typeof createHudScale>;
+  effectEdit: ReturnType<typeof createEffectEdit>;
+  effectFinder: ReturnType<typeof createEffectFinder>;
+  /** the rank medal and hero levels of the player's own screen (src/rank-look-service.ts) */
+  rankLook: ReturnType<typeof createRankLook>;
+  /** the map without its decor (src/map-decor.ts) */
+  mapDecor: ReturnType<typeof createMapDecor>;
+  /** a hero recoloured part by part (src/hero-paint-service.ts) */
+  heroPaint: ReturnType<typeof createHeroPaint>;
+  /** a hero's ability icons picked from his own cosmetics' (src/ability-icons-service.ts) */
+  abilityIcons: ReturnType<typeof createAbilityIcons>;
+  /** sounds of the user's own on a hero's events (src/ability-sounds-service.ts) */
+  abilitySounds: ReturnType<typeof createAbilitySounds>;
+  buildUndo: ReturnType<typeof createBuildUndo>;
+  heroPreview: ReturnType<typeof createHeroPreview>;
   icons: Icons;
   gameIcons: ReturnType<typeof createGameIcons>;
   modPreviews: ReturnType<typeof createModPreviews>;
@@ -71,7 +109,13 @@ export interface AppContext {
   /** copy the game's Workshop Tools into the kept copy, with the bar at the bottom; whether it copied */
   keepTools: (opts?: { force?: boolean }) => Promise<boolean>;
   remoteConfig: ReturnType<typeof createRemoteConfig>;
+  /** the ready-made presets (config/presets.json) */
+  readyPresets: ReturnType<typeof createReadyPresets>;
   presets: ReturnType<typeof presetsService>;
+  /** how many times each catalog mod was downloaded, and the hits this machine adds (src/download-stats.ts) */
+  downloadStats: DownloadStats;
+  /** count one install of a catalog mod; never throws and never waits */
+  countInstall: (categoryId: string, name: string, styleLabel?: string | null) => void;
   discordAuth: typeof discordAuthModule;
   portableUpdater: typeof portableUpdateModule;
   /** electron-updater, when the packaged build has it */
@@ -84,10 +128,14 @@ export interface AppContext {
   diag: (msg: string) => void;
   sendProgress: (evt: AppProgress) => void;
   dotaIsRunning: () => Promise<boolean>;
+  /** Play was pressed (src/game-launch.ts): a close seconds later is named as a crash */
+  gameLaunched: () => void;
   refreshPresence: () => void;
   applyPresenceSetting: () => void;
+  /** the tray and the sign-in entry as the setting says, menu in the current language (src/background.ts) */
+  applyBackground: () => void;
   clampZoom: (v: unknown) => number;
-  releaseNotes: (version: string, lang: string) => string | null;
+  releaseNotes: (version: string, lang: string, seen?: string | null) => string | null;
   afterDeployMaster: () => void;
   deployAndApply: (pack: LibRecord) => { key: string; path: string }[];
   repairAfterPatch: (reason?: unknown) => Promise<void>;
@@ -109,6 +157,8 @@ export interface AppContext {
   /** the main window; every channel is called from it, so it is open whenever a handler runs */
   win: () => BrowserWindow;
   langFolder: () => string;
+  /** the mods put into the folder they belong in now (src/game-upkeep.ts): after the folder kept in Settings changes */
+  keepModFolder: () => Promise<void>;
   patchWatcher: () => ReturnType<typeof createPatchWatcher> | null;
   updater: () => ReturnType<typeof createUpdater> | null;
   portableUpdate: () => string | null;

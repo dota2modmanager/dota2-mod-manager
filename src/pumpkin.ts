@@ -71,13 +71,15 @@ interface Deps {
   /** take a .vpk in as a mod (src/services.ts importVpkPaths) */
   importVpkPaths: (paths: string[]) => Promise<unknown>;
   library: { list(): Array<{ id: string; name: string; files: Array<{ relPath: string }> }>; update(id: string, fields: { preview?: string | null }): unknown };
+  /** the language the game speaks in, when Valve's voice for it is on disk; the worker has a voiced prize for some */
+  voice?: () => string | null;
   fetch?: typeof fetch;
   host?: string;
   log?: (msg: string) => void;
 }
 
 /** The pumpkin's side in the main process: spend a key, fetch the prize again, say whether it is here. */
-export function createPumpkin({ settings, importVpkPaths, library, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps) {
+export function createPumpkin({ settings, importVpkPaths, library, voice = () => null, fetch: get = fetch, host = PUMPKIN_HOST, log = () => {} }: Deps) {
   const call = (p: string, init: RequestInit = {}) => get(`${host}${p}`, {
     ...init, signal: AbortSignal.timeout(120000), ...downloadProxyFetchInit(),
   } as RequestInit);
@@ -97,7 +99,8 @@ export function createPumpkin({ settings, importVpkPaths, library, fetch: get = 
     const q = `key=${encodeURIComponent(key)}&install=${install()}`;
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pumpkin-'));
     try {
-      const res = await call(`/mod?${q}`);
+      const spoken = voice();
+      const res = await call(`/mod?${q}${spoken ? `&voice=${encodeURIComponent(spoken)}` : ''}`);
       if (!res.ok || !res.body) return { error: `HTTP ${res.status}` };
       const file = path.join(dir, `${PRIZE_NAME}.vpk`);
       await pipeline(Readable.fromWeb(res.body as never), fs.createWriteStream(file));

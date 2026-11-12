@@ -1,0 +1,7 @@
+[
+["terrorblade-arcana",{"name":"Fractal Horns of Inner Abysm","gem":[255,60,40],"own":["particles/econ/items/terrorblade/terrorblade_horns_arcana/"],"shared":["particles/units/heroes/hero_terrorblade/","particles/models/heroes/terrorblade/","particles/econ/items/terrorblade/"],"abilities":["particles/units/heroes/hero_terrorblade/","particles/models/heroes/terrorblade/"],"materials":["materials/models/heroes/terrorblade/","materials/models/items/terrorblade/"]}],
+["techies-arcana",{"name":"Swine of the Sunken Galley","gem":[255,175,0],"own":["particles/econ/items/techies/techies_arcana/"],"shared":["particles/units/heroes/hero_techies/"],"materials":["materials/models/items/techies/bigshot/"]}],
+["terrorblade-span",{"name":"Span of Sorrow","gem":[64,192,255],"own":["particles/econ/items/terrorblade/terrorblade_back_ti8/"],"shared":[],"materials":[],"bake":true}],
+["terrorblade-scythes",{"name":"Scythes of Sorrow","gem":[160,224,255],"own":["particles/econ/items/terrorblade/terrorblade_ti9_immortal/"],"shared":[],"materials":[],"bake":true}],
+["razor-crest",{"name":"Severing Crest","gem":[192,192,255],"own":["particles/econ/items/razor/razor_punctured_crest/"],"shared":[],"materials":[],"bake":true}]
+]

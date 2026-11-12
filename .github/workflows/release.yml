@@ -125,6 +125,12 @@ jobs:
 
       # EP_DRAFT keeps electron-builder uploading into the draft above. Without it, a release it
       # had to create for itself would come out public.
+      # the catalog download counter's token, from a secret into the build and never into git
+      - name: Give the build the download counter's token
+        run: node tools/stats-token.mjs
+        env:
+          STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
+
       - name: Build and upload the installer to the draft
         run: npx electron-builder --win --publish always
         env:
@@ -191,6 +197,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Give the build the download counter's token
+        run: node tools/stats-token.mjs
+        env:
+          STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
 
       - name: Build and upload the AppImage to the draft
         run: npx electron-builder --linux --publish always

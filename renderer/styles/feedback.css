@@ -19,7 +19,10 @@
   color: var(--text-muted);
 }
 #progressLabel { color: var(--text); font-weight: 500; }
-#progressSize { font-variant-numeric: tabular-nums; }
+#progressSize { font-variant-numeric: tabular-nums; margin-left: auto; }
+/* the item table's build: Cancel puts back the change that started it (src/build-undo.ts) */
+#progressCancel { margin: -4px 0 -4px var(--space-3); }
+#progressCancel.hidden { display: none; }
 .progress-track { height: 4px; background: var(--surface-hover); border-radius: 3px; overflow: hidden; }
 .progress-fill {
   height: 100%; width: 0%;
@@ -62,6 +65,20 @@
 }
 .toast.error { border-left-color: var(--danger); }
 .toast.warn { border-left-color: var(--warning); }
+/* "What do I do?" under an error (ui/toast.ts): a link-weight button on its own line, so the
+   message keeps the whole width and the button reads as an offer, not a second alert */
+.toast-help {
+  display: block;
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--primary-soft);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toast-help:hover, .toast-help:focus-visible { text-decoration: underline; }
 @keyframes slideIn {
   from { transform: translateX(40px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -209,6 +226,12 @@ html[lang="ru"] body.dropping::after {
   margin: 16px 0 7px; font-size: 14.5px; font-weight: 700; color: var(--text);
 }
 .notes-body h4:first-child { margin-top: 0; }
+/* each version's own heading, when the notes run over several (src/release-notes.ts) */
+.notes-body .notes-version {
+  margin: 22px 0 8px; padding-top: 14px; border-top: 1px solid var(--border);
+  font-size: 16px; font-weight: 800; color: var(--text);
+}
+.notes-body .notes-version:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 .notes-body p { margin: 0 0 9px; }
 .notes-body ul { margin: 0 0 12px; padding-left: 18px; }
 .notes-body li { margin-bottom: 5px; }

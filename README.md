@@ -61,8 +61,9 @@
 
 > [!NOTE]
 > Not affiliated with Valve. Every mod here is client-side: nobody else sees them, and no other
-> player's game is touched. Safe mode is on by default and keeps the app out of Dota's own files
-> entirely; the one feature that changes them asks first and reverts byte for byte.
+> player's game is touched. VPK mods and hero items from the builder never touch Dota's own files.
+> Looks for default items, item size and mods' effects need the item table, which asks once before
+> it edits them and reverts byte for byte.
 
 > **Why not just copy the files yourself?** You can, and people do. What the app adds is
 > everything after that: switching a mod off before a match without deleting it, a weather effect
@@ -73,10 +74,14 @@
 
 ## What it does
 
+The mod manager and modding toolkit for Dota 2: install mods from the community catalog, or build your own from the game's files.
+
 <table>
 <tr><td width="210"><b>The whole catalog</b></td><td>1000+ mods in 41 categories, read live from the <a href="https://github.com/h6rd/Dota2PornFxWeb">D2PFX</a> repository, so a mod added today installs today</td></tr>
 <tr><td><b>One click in, one click out</b></td><td>The app downloads it, picks a free pak slot and cleans up after itself. Categories that must load early get low slots by themselves</td></tr>
 <tr><td><b>Switch off, don't delete</b></td><td>Turn a mod off before a match and back on after. Your library stays, the game folder stays clean</td></tr>
+<tr><td><b>Any item on any hero</b></td><td>The item builder: sets, arcanas and single items from the game on any hero, with a live 3D preview. Hero items install as plain files. <a href="https://dota2modmanager.com/docs/builder/">The guide</a></td></tr>
+<tr><td><b>A Workshop of editors</b></td><td>Change any of the game's 82,000 effects, move and resize HUD panels, recolour a hero, swap towers and trees, set your own menu background and ability sounds. All built from your own game files. <a href="https://dota2modmanager.com/docs/workshop/">The guide</a></td></tr>
 <tr><td><b>Looks for the default items</b></td><td>Weather, couriers, wards, loading screens, announcers, mega-kills: the default item every account has is drawn as any other item in the game, on your screen and nobody else's. The list comes from the game's own item table, so anything Valve adds appears by itself</td></tr>
 <tr><td><b>It says when mods collide</b></td><td>Two mods carrying the same file cannot both win. The app names the file, says which mod the game loads it from, and lets you reorder</td></tr>
 <tr><td><b>Setups by link</b></td><td>Save what you run as a preset and send it in one message. The other side opens it and gets the same look</td></tr>
@@ -95,12 +100,14 @@
 <tr><td><b>Your own files</b></td><td>Import a <code>.vpk</code>, or adopt what somebody else's tool left in the folder. The app fingerprints it against the catalog and tells you what it is</td></tr>
 <tr><td><b>Auto-updates</b></td><td>The app checks GitHub Releases and installs new versions itself</td></tr>
 <tr><td><b>Windows and Linux</b></td><td>Both ship with every release: an installer and a portable build for Windows, an AppImage for Linux. Steam is found wherever your distribution keeps it, flatpak included</td></tr>
-<tr><td><b>No account, no telemetry</b></td><td>Nothing is collected and nothing is sent. Signing in with Discord is optional and only puts your name on a setup you share</td></tr>
+<tr><td><b>No account, nothing about you</b></td><td>Nothing about you is collected or sent. Installing a catalog mod adds one to its download count, and that can be switched off. Signing in with Discord is optional and only puts your name on a setup you share</td></tr>
 </table>
 </details>
 
 <div align="center">
-  <img src="site/public/screenshots/dota-2-mod-manager-heroes-en.webp" alt="Mods grouped hero by hero" width="49%">
+  <img src="site/public/screenshots/dota-2-mod-manager-builder-en.webp" alt="The item builder with a 3D preview" width="49%">
+  <img src="site/public/screenshots/dota-2-mod-manager-workshop-en.webp" alt="The Workshop" width="49%">
+  <img src="site/public/screenshots/dota-2-mod-manager-effects-en.webp" alt="The effect editor" width="49%">
   <img src="site/public/screenshots/dota-2-mod-manager-my-mods-en.webp" alt="Installed mods, with the load order" width="49%">
 </div>
 
@@ -187,10 +194,12 @@ Nothing is injected into Dota's process, and no file of the game is opened while
 - Fonts and cursors go into the game's own folders, with the originals backed up first
 - Everything that writes to the game folder is one transaction: if a step fails, the whole
   change rolls back, displaced files included
-- Safe mode, on by default, means the app never touches Dota's own files. Turning it off adds
-  one line to `gameinfo_branchspecific.gi` and a signature to `dota.signatures` — both backed up
-  before the first edit, both restored byte for byte when it goes back on.
-  [What that buys and costs](https://dota2modmanager.com/docs/safe/)
+- VPK mods and hero items from the builder go into a folder Dota reads by itself, and Dota's own
+  files stay as Valve shipped them. The item table (looks for default items, item size, kill
+  effects, mods' effects) adds one line to
+  `gameinfo_branchspecific.gi` and a signature to `dota.signatures`. The app asks the first time
+  something needs it, backs both files up first, and Settings, Game files restores them byte for
+  byte. [What that buys and costs](https://dota2modmanager.com/docs/safe/)
 - After a Dota update the app checks its own work. If Valve changed the search paths that line
   is copied from, it writes the line again. It also compares the game files your mods replace
   with the new build, and a mod whose files the update changed gets a pre-patch mark in My mods:
@@ -220,13 +229,17 @@ installed here survives its uninstall.
 | | |
 |---|---|
 | [Installing mods](https://dota2modmanager.com/docs/install/) | The whole route, by hand and with the app |
+| [Every function, and where to find it](https://dota2modmanager.com/docs/features/) | All of the app, screen by screen, and how to use each tool |
+| [Item builder](https://dota2modmanager.com/docs/builder/) | Any item on any hero, the 3D preview, and which picks need the item table |
+| [Workshop](https://dota2modmanager.com/docs/workshop/) | The effect and HUD editors, recolours, the map, sounds and the rest |
 | [The language folder](https://dota2modmanager.com/docs/language/) | Why `-language` is not needed, and what it does when it is there |
 | [VPK and load order](https://dota2modmanager.com/docs/vpk/) | Pak slots, which mod wins, and `gameinfo.gi` |
-| [Safe mode](https://dota2modmanager.com/docs/safe/) | What the app writes into the game, and what it does not |
+| [Game files](https://dota2modmanager.com/docs/safe/) | What the app writes into the game, and what it does not |
 | [Free cosmetics](https://dota2modmanager.com/docs/cosmetics/) | The item table, and what it can and cannot give you |
 | [After a Dota patch](https://dota2modmanager.com/docs/troubleshooting/) | What breaks, and what the app puts back |
 | [Make mods with AI](https://dota2modmanager.com/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | The skill an assistant builds mods with, and how an item mod is built from the game's files |
 | [Every fact, checkable](https://dota2modmanager.com/facts/) | Version, platforms, counts, and how to verify each one |
+| [docs/catalog-data.md](docs/catalog-data.md) | The whole mod catalog as one JSON file, field by field, for your own bot, site or script |
 | [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Which file owns which decision, and every module's exports |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | How to work on it, with or without an assistant, and how to report a hole |
 | [docs/assurance-case.md](docs/assurance-case.md) | What could go wrong, what stops it, and the test that proves each answer |
@@ -351,7 +364,7 @@ the two additional terms this project adds under section 7 of the GPL.
 | [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Every Dota build as text, read by this repository's checks to report what an update changed. Not the app | None stated. Read over the network; nothing from it is copied here |
 
 <!-- facts:deps-en -->
-`package.json` lists 16: `adm-zip`, `electron-updater` and `undici` ship inside the app, `motion`, `react` and `react-dom` are built into its window, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
+`package.json` lists 21: `adm-zip`, `electron-updater`, `meshoptimizer` and `undici` ship inside the app, `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` and `three` are built into its window, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
 <!-- /facts:deps-en -->
 The tests use no dependencies at all, and `tools/` uses one, `vite`, to build the window. The VPK reader and writer, the KeyValues parser, the zip guards and the
 update logic are written here, because every dependency is a stranger with write access to a
@@ -372,9 +385,15 @@ writing VPK archives is done by this repository's own code, which is why `src/vp
 - Community tools (VPKMerge, Background Changer, Compiler, ItemsFix) belong to their authors.
 - **[J0nathan550](https://github.com/J0nathan550)** brought the arcanas into the item builder,
   played every one of them through it, and compiled again by hand the ones Valve's files break
-  there, so Razor runs forward and Juggernaut keeps all his animations. The fixed arcanas live in
-  [d2pfx-arcana-fixes](https://github.com/J0nathan550/d2pfx-arcana-fixes), and the app downloads
-  them from there.
+  there, so Razor runs forward and Juggernaut keeps all his animations. The fixed arcanas, personas and
+  immortals live in [hero-base-fixes](https://github.com/dota2modmanager/hero-base-fixes), and the
+  app downloads them from there, signed.
+- **[Harlord](https://discord.com/users/436420477511139329)** ([dota-studio.lol](https://dota-studio.lol/),
+  [Telegram](https://t.me/harlord_mods)) gave this app many of its ideas: how items sit on the hero,
+  the look of the 3D preview, and building items as files with no item table. Harlord let us test
+  dota-studio.lol and take ideas from it. The code here is our own. As
+  [HarlordLeg](https://github.com/HarlordLeg), Harlord built the hero loadout renderer in the 3D
+  preview and has been a maintainer since 2026-11-08.
 - **Dota's updates** are read from [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2)
   by [SteamTracking](https://github.com/SteamTracking), which commits every Dota build as text within
   the hour. The [Dota updates](https://github.com/dota2modmanager/dota2-mod-manager/issues/225)
@@ -386,12 +405,6 @@ writing VPK archives is done by this repository's own code, which is why `src/vp
 Every other page that links here, from the catalog's README to the projects built from this
 code, is listed with dates in [MENTIONS.md](MENTIONS.md). The few the maintainer wrote are in a
 list of their own.
-
-<br>
-
-## Sponsors
-
-Sponsored by [VGTopup](https://vgtopup.com/), a game top-up store. Paid placement.
 
 <br>
 

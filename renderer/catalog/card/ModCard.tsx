@@ -17,6 +17,7 @@ import { previewUrl } from '../../ui/media.ts';
 import { openPlayer } from '../../ui/player.ts';
 import { toggleQueued } from '../../ui/queue.ts';
 import { staleTerrainWhy } from '../../core/terrain-age.ts';
+import { modIssue } from '../../ui/notice.ts';
 import { installTarget } from '../mods.ts';
 import { SLOT_TAGS, modTags, tagLabel } from '../tags.ts';
 import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
@@ -27,7 +28,8 @@ import { playablePreview } from '../preview.ts';
 import { cssColor } from '../colors.ts';
 import { Media } from './Media.tsx';
 import { ToolMeta } from './ToolMeta.tsx';
-import { useQueued, useTerrainMark } from './hooks.ts';
+import { useDownloads, useQueued, useTerrainMark } from './hooks.ts';
+import { formatCount } from '../../core/download-counts.ts';
 import { CardShell } from './CardShell.tsx';
 import { CardName } from './CardName.tsx';
 
@@ -59,6 +61,7 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
   const entry = canQueue(cat, m) && !installed ? queueEntry(cat, m) : null;
   const queued = useQueued(entry?.key ?? null);
   const stale = useTerrainMark(cat, m);
+  const downloads = useDownloads(cat, m);
 
   const isPack = m.type === 'pack';
   // a tool that is only a link says so under its name, in the row that also carries its pills
@@ -67,7 +70,9 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
    * room for about two words. Пак / Свой / Ссылка are about the mod itself, so they are counted
    * first and the tags take what is left; what a mod does comes before the slot it sits in. */
   const looks = m.styles ? Math.min(m.styles.length, 5) : 0;
-  const badges = (isPack ? 1 : 0) + (m._custom ? 1 : 0) + (external ? 1 : 0);
+  // a mod the signed config marks as misbehaving: one "!" chip, the words on hover and in its window
+  const issue = modIssue(cat, m.name);
+  const badges = (isPack ? 1 : 0) + (m._custom ? 1 : 0) + (external ? 1 : 0) + (issue ? 1 : 0);
   const room = Math.max(0, (looks > 2 ? 1 : 2) - badges);
   const labels = catalogConstants().TAG_CONFIGS?.[cat]?.map;
   const tags = modTags(m).sort((a, b) => (SLOT_TAGS.has(a) ? 1 : 0) - (SLOT_TAGS.has(b) ? 1 : 0)).slice(0, room);
@@ -114,6 +119,7 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
           </button>
         )}
         <div className="media-tags" style={{ '--looks': looks } as CSSProperties}>
+          {issue && <span className="mtag warn mtag-issue" title={issue} aria-label={issue}>!</span>}
           {isPack && <span className="mtag">{L`Пак`}</span>}
           {stale && (
             <span className="mtag warn" title={staleTerrainWhy()} data-owned="react" hidden={stale === 'awaiting'}
@@ -137,10 +143,16 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
         <CardName>{catalogName(m.name)}</CardName>
         {cat === 'tools'
           ? <ToolMeta mod={m} installed={installed} />
-          : (withCat || author) && (
+          : (withCat || author || downloads > 0) && (
             <div className="card-meta">
               {withCat && <span>{catName(cat)}</span>}
               {author && <span className="author-chip"><span className="ms">person</span>{author}</span>}
+              {/* how many have it, quieter than who made it: no number at all until the counter answers */}
+              {downloads > 0 && (
+                <span className="dl-count" title={L`Скачиваний: ${downloads}`} aria-label={L`Скачиваний: ${downloads}`}>
+                  <span className="ms">download</span>{formatCount(downloads)}
+                </span>
+              )}
             </div>
           )}
       </div>

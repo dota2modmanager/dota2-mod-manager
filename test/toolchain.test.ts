@@ -13,7 +13,7 @@ import type { AddressInfo } from 'node:net';
 import AdmZip from 'adm-zip';
 
 import * as net from '../src/net.ts';
-import { createToolchain, BUILT_IN_PINS, validPin, runTool, fallbackName, type ToolProgress } from '../src/toolchain.ts';
+import { createToolchain, BUILT_IN_PINS, validPin, runTool, fallbackName, downloadOrder, type ToolProgress } from '../src/toolchain.ts';
 
 /** The Windows build's pin: what the tests below download, on whichever system runs them. */
 const WIN = BUILT_IN_PINS.vrf['win32-x64'];
@@ -137,6 +137,27 @@ test('a tool downloads, unpacks and is found where it says', async (t) => {
   assert.ok(state && state.installedBytes > 0);
 });
 
+test('an older tool on disk is brought up to its pin, and one never downloaded is left alone', async (t) => {
+  const data = toolZip();
+  await serve(t, data);
+  WIN.sha256 = crypto.createHash('sha256').update(data).digest('hex');
+
+  const none = createToolchain({ userDataDir: userDir(t), build: 'win32-x64' });
+  await none.catchUp();
+  assert.equal(none.pathOf('vrf'), null);
+
+  const dir = userDir(t);
+  const old = path.join(dir, 'toolchain', 'vrf', '19.2');
+  fs.mkdirSync(old, { recursive: true });
+  fs.writeFileSync(path.join(old, WIN.exe), 'old');
+  fs.writeFileSync(path.join(dir, 'toolchain', 'installed.json'), JSON.stringify({ vrf: { version: '19.2', exe: WIN.exe, sha256: 'a', at: 1 } }));
+  const tc = createToolchain({ userDataDir: dir, build: 'win32-x64' });
+  assert.equal(tc.pathOf('vrf'), path.join(old, WIN.exe));
+  await tc.catchUp();
+  assert.match(String(tc.pathOf('vrf')), new RegExp(WIN.version.replace('.', '\\.')));
+  assert.ok(!fs.existsSync(old), 'the old one is gone');
+});
+
 test('an archive that hashes to something else is not unpacked at all', async (t) => {
   await serve(t, toolZip());
   const dir = userDir(t);
@@ -209,6 +230,11 @@ test('a machine with no build of a tool is told so, and offered nothing', async 
   const state = tc.state().find((s) => s.name === 'vrf');
   assert.equal(state?.available, false);
   assert.equal(state?.ready, false);
+});
+
+test('with GitHub known to be down the bucket is asked first, not after three timeouts', () => {
+  assert.deepEqual(downloadOrder('release', 'bucket', false), ['release', 'bucket']);
+  assert.deepEqual(downloadOrder('release', 'bucket', true), ['bucket', 'release']);
 });
 
 test('the copy in the bucket keeps the name released versions ask for', () => {

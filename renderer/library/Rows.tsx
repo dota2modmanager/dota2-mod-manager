@@ -41,11 +41,16 @@ function RowBox({ className, motionKey, lift, children, ...data }: {
 
 const stagger = (i: number) => ({ '--i': Math.min(i, 20) }) as CSSProperties;
 const rowClass = (base: string, enabled: boolean, selected: boolean) => `${base} ${enabled ? '' : 'disabled'} ${selected ? 'selected' : ''}`;
+/* With the master switch off nothing loads, so every row is drawn off, looks included: the looks
+   stayed lit while the mods above them went dark (J0nathan550, 2026-10-29). Each keeps its own
+   state underneath, and the switch turned on puts it back. */
+const masterTitle = () => L`Выключено мастер-переключателем внизу справа: включится вместе с ним`;
 
 export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & { r: RowModel }) {
   const [adopting, setAdopting] = useState(false);
+  const on = r.enabled && !masterOff;
   return (
-    <RowBox className={rowClass('lib-row', r.enabled, r.selected)} motionKey={motionKey} lift={r.lift} data-row={r.id} data-order={r.order ?? undefined} style={stagger(r.index)}>
+    <RowBox className={rowClass('lib-row', on, r.selected)} motionKey={motionKey} lift={r.lift} data-row={r.id} data-order={r.order ?? undefined} style={stagger(r.index)}>
       <Grip id={r.id} order={r.order} />
       {r.selectable
         ? <input type="checkbox" className="lib-check" data-check={r.id} checked={r.selected} aria-label={L`Выбрать мод`}
@@ -56,14 +61,14 @@ export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & 
         <div className="lib-name">
           <span title={r.cosmetic?.name || r.name}>{catalogName(r.name)}</span>
           {r.styleLabel && <>{' '}<span className="lib-style-label" title={r.styleLabel}>({catalogLabel(r.styleLabel)})</span></>}
-          <Tags tags={r.tags} />
+          <Tags tags={r.tags} onOpen={(what) => (what === 'prePatch' ? actions.prePatch(r.id) : actions.covers(r.id))} />
         </div>
         <div className="lib-meta"><span>{r.meta}</span>{r.pakFile && <PakFile name={r.pakFile} />}</div>
       </div>
       <div className="lib-actions">
         {r.toggle
-          ? <button className={`toggle ${r.enabled ? 'on' : ''}`} data-id={r.id} role="switch" aria-checked={r.enabled} aria-label={L`Включить/выключить`}
-            title={r.toggle.title ?? undefined} disabled={masterOff} onClick={() => actions.toggle(r.id)} />
+          ? <button className={`toggle ${on ? 'on' : ''}`} data-id={r.id} role="switch" aria-checked={on} aria-label={L`Включить/выключить`}
+            title={masterOff ? masterTitle() : r.toggle.title ?? undefined} disabled={masterOff} onClick={() => actions.toggle(r.id)} />
           : <span className="text-meta">{L`всегда активен`}</span>}
         {r.adoptable && (
           <button className="btn btn-sm btn-primary" data-adopt={r.id} title={L`Привязать к каталогу`} disabled={adopting}
@@ -79,9 +84,10 @@ export function ModRow({ r, masterOff, actions, motionKey }: RowProps & Moves & 
 
 export function PackRow({ p, masterOff, actions, motionKey }: RowProps & Moves & { p: PackRowModel }) {
   const n = p.members.length;
+  const on = p.enabled && !masterOff;
   return (
     <>
-      <RowBox className={rowClass('lib-row pack-row', p.enabled, p.selected)} motionKey={motionKey} lift={p.lift} data-row={p.id} data-order={p.order ?? undefined} style={stagger(p.index)}>
+      <RowBox className={rowClass('lib-row pack-row', on, p.selected)} motionKey={motionKey} lift={p.lift} data-row={p.id} data-order={p.order ?? undefined} style={stagger(p.index)}>
         <Grip id={p.id} order={p.order} />
         <input type="checkbox" className="lib-check" data-check={p.id} checked={p.selected} aria-label={L`Выбрать пак`}
           onChange={(e) => actions.select(p.id, e.target.checked)} />
@@ -92,11 +98,11 @@ export function PackRow({ p, masterOff, actions, motionKey }: RowProps & Moves &
         <PackThumb p={p} />
         <div className="lib-info">
           <div className="lib-name">{p.name}{' '}<span className="lib-tag pack">{L`Пак · ${n} ${plural(n, 'мод', 'мода', 'модов')}`}</span></div>
-          <div className="lib-meta"><span>{L`${p.onCount} из ${n} включено`}</span>{p.pakFile && <PakFile name={p.pakFile} />}</div>
+          <div className="lib-meta"><span>{L`${masterOff ? 0 : p.onCount} из ${n} включено`}</span>{p.pakFile && <PakFile name={p.pakFile} />}</div>
         </div>
         <div className="lib-actions">
-          <button className={`toggle ${p.enabled ? 'on' : ''}`} data-id={p.id} role="switch" aria-checked={p.enabled} aria-label={L`Включить/выключить пак целиком`}
-            disabled={masterOff} onClick={() => actions.toggle(p.id)} />
+          <button className={`toggle ${on ? 'on' : ''}`} data-id={p.id} role="switch" aria-checked={on} aria-label={L`Включить/выключить пак целиком`}
+            title={masterOff ? masterTitle() : undefined} disabled={masterOff} onClick={() => actions.toggle(p.id)} />
           <button className="btn btn-sm btn-danger" data-del={p.id} onClick={() => actions.remove(p.id)}>{L`Удалить`}</button>
         </div>
       </RowBox>
@@ -117,8 +123,9 @@ export function PackRow({ p, masterOff, actions, motionKey }: RowProps & Moves &
 
 function MemberRow({ packId, m, masterOff, actions }: RowProps & { packId: string; m: MemberModel }) {
   const [busy, setBusy] = useState(false);
+  const on = m.enabled && !masterOff;
   return (
-    <div className={rowClass('member-row', m.enabled, m.selected)}>
+    <div className={rowClass('member-row', on, m.selected)}>
       <input type="checkbox" className="lib-check" data-check={m.key} checked={m.selected} aria-label={L`Выбрать мод в паке`}
         onChange={(e) => actions.select(m.key, e.target.checked)} />
       <Thumb thumb={m.thumb} cls="member-thumb" />
@@ -127,8 +134,8 @@ function MemberRow({ packId, m, masterOff, actions }: RowProps & { packId: strin
         <div className="member-meta">{m.meta}</div>
       </div>
       <div className="member-actions">
-        <button className={`toggle sm ${m.enabled ? 'on' : ''}`} data-mtoggle={m.id} data-pack={packId} role="switch" aria-checked={m.enabled}
-          aria-label={L`Включить/выключить мод в паке`} disabled={masterOff || busy}
+        <button className={`toggle sm ${on ? 'on' : ''}`} data-mtoggle={m.id} data-pack={packId} role="switch" aria-checked={on}
+          aria-label={L`Включить/выключить мод в паке`} title={masterOff ? masterTitle() : undefined} disabled={masterOff || busy}
           onClick={() => { setBusy(true); actions.toggleMember(packId, m.id).finally(() => setBusy(false)); }} />
         <button className="member-x" data-mremove={m.id} data-pack={packId} aria-label={L`Удалить из пака`} title={L`Удалить из пака`}
           onClick={() => actions.removeMember(packId, m.id)}>
@@ -148,7 +155,7 @@ export function ExternalRow({ f, actions }: { f: ExternalRowModel; actions: Libr
     <div className={`lib-row ${f.enabled ? '' : 'disabled'} ${f.dup ? 'dup' : ''}`}>
       <Thumb thumb={f.thumb} cls="lib-thumb" />
       <div className="lib-info">
-        <div className="lib-name">{f.name}<Tags tags={f.tags} /></div>
+        <div className="lib-name">{f.name}<Tags tags={f.tags} onOpen={() => actions.covers(f.key)} /></div>
         <div className="lib-meta">{f.fileName && <span>{f.fileName}</span>}{f.size && <span>{f.size}</span>}<span>{f.sub}</span></div>
       </div>
       <div className="lib-actions">
@@ -157,6 +164,12 @@ export function ExternalRow({ f, actions }: { f: ExternalRowModel; actions: Libr
         {f.adopt && (
           <button className="btn btn-sm btn-primary" data-adopt={f.key} title={f.adopt.title} disabled={busy} onClick={adopt}>
             <span className="ms">library_add_check</span>{L`Принять`}
+          </button>
+        )}
+        {!f.simple && (
+          <button className="btn btn-sm btn-icon" data-extlabel={f.key} title={f.labelled ? L`Изменить подпись` : L`Подписать: своё название видно только здесь`}
+            aria-label={L`Подписать`} onClick={() => actions.external('label', f.key)}>
+            <span className="ms">edit</span>
           </button>
         )}
         {f.splittable && (

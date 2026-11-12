@@ -11,7 +11,7 @@ public static class Con {
   [StructLayout(LayoutKind.Sequential)] public struct KEYBDINPUT { public ushort wVk; public ushort wScan; public uint dwFlags; public uint time; public IntPtr dwExtraInfo; }
   [StructLayout(LayoutKind.Explicit, Size = 40)] public struct INPUT { [FieldOffset(0)] public uint type; [FieldOffset(8)] public KEYBDINPUT ki; }
   [DllImport("user32.dll")] public static extern uint SendInput(uint n, INPUT[] inputs, int size);
-  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern void keybd_event(byte k, byte s, uint f, UIntPtr e);
   static void Send(ushort scan, uint flags) {
     var i = new INPUT[1]; i[0].type = 1; i[0].ki.wScan = scan; i[0].ki.dwFlags = flags;
     SendInput(1, i, Marshal.SizeOf(typeof(INPUT)));
@@ -24,6 +24,9 @@ public static class Con {
 "@
 $p = Get-Process dota2 -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $p) { Write-Output "no dota"; exit 1 }
+# Windows hands the front only to the window that last had input; an Alt tap counts as input,
+# so Dota can come forward while somebody else's window is in front (it is checked below)
+if ([Con]::GetForegroundWindow() -ne $p.MainWindowHandle) { [Con]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero); [Con]::keybd_event(0x12, 0, 2, [UIntPtr]::Zero) }
 [Con]::SetForegroundWindow($p.MainWindowHandle) | Out-Null
 Start-Sleep -Milliseconds 150
 # never type into another window: somebody may be using the computer

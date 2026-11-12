@@ -39,7 +39,7 @@ the folder free of anything a user should not download.
 
 ## What this is
 
-A desktop mod manager for Dota 2. Electron 45 on Node 24. The window is **TypeScript and React,
+A desktop mod manager and modding toolkit for Dota 2. Electron 45 on Node 24. The window is **TypeScript and React,
 with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer`). New screens
 and components are written that way: one component per file, logic that decides things in plain
 modules with tests, and no file past 300 lines (`npm run size` fails one). The main process in
@@ -119,6 +119,8 @@ npm --prefix site test        # links, markup, every kind of page at 320-1440 px
                               # same pages in WebKit
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
 npm run guide-shots           # the app's own pictures in the guides, taken in the sandbox
+node tools/site-shots.mjs <dir>  # the site's and the README's big pictures, on the real game through a write jail
+node tools/site-tour.mjs <dir>   # the tour on the site, filmed off the app in both languages, after site-shots
 ```
 
 The tests are what CI runs before the site deploys. The WebKit ones (every browser on an iPhone

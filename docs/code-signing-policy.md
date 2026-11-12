@@ -19,12 +19,14 @@ project's name.
 
 | Role | Who | What they do |
 |---|---|---|
-| Committers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Write changes. A change reaches `main` only through a pull request, the maintainers' own included |
-| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Review a pull request from outside the project before merging it: a merge needs write access, so such a change always passes a maintainer. The maintainers' own changes merge once the required checks pass |
-| Approvers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa) | Tag a release on a commit of `main`, and approve each signing request once signing is in place |
+| Committers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd), [@HarlordLeg](https://github.com/HarlordLeg) | Write changes. A change reaches `main` only through a pull request, the maintainers' own included |
+| Reviewers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd), [@HarlordLeg](https://github.com/HarlordLeg) | Review a pull request from outside the project before merging it: a merge needs write access, so such a change always passes a maintainer. The maintainers' own changes merge once the required checks pass |
+| Approvers | [@TheFleece](https://github.com/TheFleece), [@Nersaa](https://github.com/Nersaa), [@J0nathan550](https://github.com/J0nathan550), [@h6rd](https://github.com/h6rd), [@HarlordLeg](https://github.com/HarlordLeg) | Tag a release on a commit of `main`, and approve each signing request once signing is in place |
 
-Both are owners of the [dota2modmanager](https://github.com/dota2modmanager) organization, which
-requires two-factor authentication of every member. They use it on every service that can publish
+[@TheFleece](https://github.com/TheFleece) and [@Nersaa](https://github.com/Nersaa) own the
+[dota2modmanager](https://github.com/dota2modmanager) organization; the other three hold the Maintain
+role on the repository, which does not reach its settings or secrets. The organization requires
+two-factor authentication of every member, and all five use it on every service that can publish
 anything. [GOVERNANCE.md](../GOVERNANCE.md) says who decides what.
 
 ## How a release is built
@@ -59,9 +61,11 @@ copy that does not verify is ignored exactly as if it were unreachable.
 
 ## Privacy
 
-This program sends no information about you, your machine or your games. There is no telemetry and
-no account. It contacts the mod catalog and the update feed; every address it can contact, what for
-and when, is listed in [PRIVACY.md](../PRIVACY.md).
+This program sends no information about you or your machine, and has no account. The one thing it
+reports is a download count: installing a mod from the catalog sends that mod's name to the
+catalog's counter, with no identifier, and Settings can switch it off. It contacts the mod catalog,
+that counter and the update feed; every address it can contact, what for and when, is listed in
+[PRIVACY.md](../PRIVACY.md).
 
 ## What the program does to a machine
 

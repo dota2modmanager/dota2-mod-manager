@@ -15,6 +15,14 @@ import type { MenuItem } from '../../ui/menu.ts';
 import type { LibRecord } from '../../library/types.ts';
 import { pickModsDialog, type Candidate } from './pick-mods.ts';
 import { recolorFromLibrary } from '../catalog/arcana.ts';
+import { mapLooksFromLibrary } from '../catalog/map-looks.ts';
+import { soundsFromLibrary } from '../catalog/sounds.ts';
+import { abilityIconsFromLibrary } from '../catalog/ability-icons.ts';
+import { backgroundFromLibrary } from '../catalog/background.ts';
+import { hudFromLibrary } from '../catalog/hud.ts';
+import { rankFromLibrary } from '../catalog/rank.ts';
+import { labelFor, recLabelKey } from '../../library/labels.ts';
+import { askLabel, clearLabel } from './label.ts';
 import { lib, recById, screen } from './state.ts';
 
 async function moveRecord(id: string, dir: number) {
@@ -54,6 +62,22 @@ async function splitRecord(id: string) {
   const r = await window.api.mods.splitMod(id);
   if (r.error) toast(r.error, 'error', 6000);
   else toast(L`Разобрано на ${r.count}: ${r.names.map(n => catalogName(n)).join(', ')}`, 'ok', 6000);
+  await screen.reload();
+}
+
+/* A hero mod's Blink Dagger and other item pictures taken out of it: they show on every hero, and
+ * the person wanted the hero (Discord, 2026-11-11). For good: an update takes them out again. */
+async function dropItemIcons(id: string) {
+  const rec = recById(id);
+  if (!rec) return;
+  if (!await confirmDialog(
+    L`Убрать из «${catalogName(rec.name)}» иконки предметов? Блинк, БКБ и другие предметы снова будут с обычными картинками на всех героях. Вернуть их можно, только поставив мод заново.`,
+    { okLabel: L`Убрать` },
+  )) return;
+  const r = await window.api.mods.dropItemIcons(id);
+  if (r.error) toast(r.error, 'error', 6000);
+  else if (!r.dropped) toast(L`В этом моде нет иконок предметов`, 'warn');
+  else toast(L`«${catalogName(rec.name)}»: убрано иконок предметов: ${r.dropped}`, 'ok', 6000);
   await screen.reload();
 }
 
@@ -146,12 +170,19 @@ export function menuFor(id: string): MenuItem[] | null {
   const rec = recById(id);
   if (!rec) return null;
   const ordered = lib.order.has(rec.id);
+  const gen = rec.generated as { set?: string; map?: string; sounds?: string; abilityIcons?: string; background?: string; hud?: number; rank?: object } | undefined;
   const remove: MenuItem = { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => deleteRecord(rec.id) };
+  const key = recLabelKey(rec.id);
+  const naming: (MenuItem | false)[] = [
+    { label: L`Подписать`, icon: 'edit', onPick: () => askLabel(key, catalogName(rec.name)) },
+    Boolean(labelFor(key)) && { label: L`Убрать подпись`, icon: 'label_off', onPick: () => clearLabel(key) },
+  ];
   const items: (MenuItem | false | undefined)[] = rec.kind === 'pack' ? [
     // same rule as a mod row: the switch and the delete are on the row, the rest is here
     { label: L`Добавить моды в пак`, icon: 'add', onPick: () => addToPack(rec.id) },
     { label: L`Разобрать на отдельные моды`, icon: 'call_split', onPick: () => disbandPack(rec.id) },
     langDir(rec) && { label: L`Сохранить одним файлом`, icon: 'save', onPick: () => exportRecord(rec.id) },
+    ...naming,
     ordered && { separator: true },
     ...orderItems(rec),
     { separator: true },
@@ -159,8 +190,14 @@ export function menuFor(id: string): MenuItem[] | null {
   ] : [
     rec.updateAvailable && { label: L`Обновить до новой версии`, icon: 'upgrade', onPick: async () => { await updateRecord(rec.id); await screen.reload(); } },
     rec.updateAvailable && { separator: true },
-    // the arcana the app built: another colour is chosen in its window, not here
-    Boolean(rec.generated) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary() },
+    // what the app built: another colour or look is chosen in its window, not here
+    Boolean(gen?.set) && { label: L`Перекрасить`, icon: 'palette', onPick: () => void recolorFromLibrary(String(gen?.set)) },
+    Boolean(gen?.sounds) && { label: L`Изменить звуки`, icon: 'graphic_eq', onPick: () => void soundsFromLibrary(String(gen?.sounds)) },
+    Boolean(gen?.abilityIcons) && { label: L`Изменить иконки`, icon: 'imagesmode', onPick: () => void abilityIconsFromLibrary(String(gen?.abilityIcons)) },
+    Boolean(gen?.background) && { label: L`Изменить фон`, icon: 'wallpaper', onPick: () => void backgroundFromLibrary() },
+    typeof gen?.hud === 'number' && { label: L`Изменить размер`, icon: 'aspect_ratio', onPick: () => void hudFromLibrary() },
+    Boolean(gen?.rank) && { label: L`Изменить ранг и уровни`, icon: 'military_tech', onPick: () => void rankFromLibrary() },
+    Boolean(gen?.map) && { label: L`Изменить вид`, icon: 'tune', onPick: () => void mapLooksFromLibrary(gen?.map === 'trees' ? 'trees' : 'towers') },
     Boolean(rec.generated) && { separator: true },
     ...orderItems(rec),
     ordered && { separator: true },
@@ -169,7 +206,9 @@ export function menuFor(id: string): MenuItem[] | null {
     },
     langDir(rec) && { label: L`Распаковать в папку`, icon: 'folder_open', onPick: () => unpackRecord(rec.id) },
     (rec.subjects || 0) >= 2 && { label: L`Разобрать по героям`, icon: 'call_split', onPick: () => splitRecord(rec.id) },
+    langDir(rec) && !rec.noItemIcons && (rec.categoryId === 'heroes' || rec.categoryId === 'imported') && { label: L`Убрать иконки предметов`, icon: 'hide_image', onPick: () => dropItemIcons(rec.id) },
     rec.prePatch && { label: L`Убрать метку «до патча»`, icon: 'done', onPick: () => clearPrePatch(rec.id) },
+    ...naming,
     { separator: true },
     remove,
   ];

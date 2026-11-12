@@ -34,7 +34,7 @@ function complete(english, chinese) {
 test('Simplified Chinese covers every renderer and native key, keeping every placeholder', () => {
   const context = renderer('zh-CN');
   complete(context.english, context.window.ZH_CN);
-  const nativeSource = read('src/i18n.ts').match(/const EN = (\{[\s\S]*?\}) satisfies Record<string, string>;/);
+  const nativeSource = read('src/i18n-en.ts').match(/const EN = (\{[\s\S]*?\}) satisfies Record<string, string>;/);
   assert.ok(nativeSource, 'native dictionary found');
   complete(vm.runInNewContext(`(${nativeSource[1]})`), nativeChinese);
   assert.deepEqual(Object.keys(context.window.ZH_CN_PLURAL).sort(), Object.keys(context.window.EN_PLURAL).sort());
@@ -45,6 +45,8 @@ test('Chinese is restored before the renderer draws, with a Chinese date and num
   assert.equal(context.window.I18N_LANG, 'zh-CN');
   assert.equal(context.window.i18nLocale(), 'zh-CN');
   assert.equal(context.window.tr('Настройки'), '设置');
+  assert.equal(context.window.tr('Разор'), '雷泽');
+  assert.equal(context.window.tr('Гребень Разора'), '雷泽的头冠');
   assert.equal(vm.runInContext('L`Надето: ${"Official item"}`', context), '已装备：Official item');
   assert.equal(context.window.tr(null), null);
   assert.equal(context.window.tr('an external item name'), 'an external item name');

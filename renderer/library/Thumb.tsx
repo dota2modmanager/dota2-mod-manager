@@ -4,20 +4,20 @@
 import { Fragment, useEffect, useRef } from 'react';
 import { watchIconFor } from '../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../catalog/cosmetic/CosmeticCard.tsx';
-import { useArcanaPicture, useTinted } from '../catalog/arcana/tint.ts';
+import { gemOf, useArcanaPicture, useTinted } from '../catalog/arcana/tint.ts';
 import { Picture } from '../ui/Picture.tsx';
 import type { PackRowModel, Tag, Thumb as ThumbModel } from './model.ts';
 
 export function Thumb({ thumb, cls }: { thumb: ThumbModel; cls: string }) {
   if ('url' in thumb) return <Picture url={thumb.url} cls={cls} />;
   if ('key' in thumb) return <Fetched name={thumb.key} icon={thumb.icon} cls={cls} />;
-  if ('arcana' in thumb) return <ArcanaThumb color={thumb.arcana} cls={cls} />;
+  if ('arcana' in thumb) return <ArcanaThumb color={thumb.arcana} set={thumb.set} cls={cls} />;
   return <div className={cls}>{thumb.icon && <span className="ms thumb-glyph">{thumb.icon}</span>}</div>;
 }
 
 /** The arcana the app built, in its colour (catalog/arcana/). */
-function ArcanaThumb({ color, cls }: { color: [number, number, number]; cls: string }) {
-  const src = useTinted(useArcanaPicture(), color);
+function ArcanaThumb({ color, set, cls }: { color: [number, number, number]; set: string; cls: string }) {
+  const src = useTinted(useArcanaPicture(set), color, gemOf(set));
   return src ? <img className={cls} src={src} alt="" data-owned="react" /> : <div className={cls}><span className="ms thumb-glyph">palette</span></div>;
 }
 
@@ -63,18 +63,21 @@ export function PackThumb({ p }: { p: PackRowModel }) {
 }
 
 /** The pills after a name, each after a space, as the name line has always spaced them. */
-export function Tags({ tags }: { tags: Tag[] }) {
+export function Tags({ tags, onOpen }: { tags: Tag[]; onOpen?: (what: NonNullable<Tag['opens']>) => void }) {
   return (
     <>
-      {tags.map((t, i) => (
-        <Fragment key={i}>
-          {' '}
-          <span className={t.cls ? `lib-tag ${t.cls}` : 'lib-tag'} title={t.title}>
-            {t.icon && <span className="ms">{t.icon}</span>}
-            {t.text}
-          </span>
-        </Fragment>
-      ))}
+      {tags.map((t, i) => {
+        const cls = t.cls ? `lib-tag ${t.cls}` : 'lib-tag';
+        const inner = <>{t.icon && <span className="ms">{t.icon}</span>}{t.text}</>;
+        return (
+          <Fragment key={i}>
+            {' '}
+            {t.opens && onOpen
+              ? <button type="button" className={`${cls} opens`} title={t.title} onClick={() => onOpen(t.opens!)}>{inner}</button>
+              : <span className={cls} title={t.title}>{inner}</span>}
+          </Fragment>
+        );
+      })}
     </>
   );
 }

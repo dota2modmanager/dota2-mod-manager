@@ -37,13 +37,26 @@ function portraitBlock(text: string, model: string): { start: number; nameEnd: n
   return null;
 }
 
+/**
+ * A portrait block framed for a body `scale` times bigger: the camera and the light stand as much
+ * further from the origin, at the same angles and field of view. The young Invoker's body is 1.351
+ * times Valve's (src/arcana-base-store.ts), and the camera Valve set for its own was too close.
+ */
+export function scaledPortrait(block: string, scale: number): string {
+  const n = (v: string) => String(Math.round(Number(v) * scale * 1e4) / 1e4);
+  return block
+    .replace(/("Portrait(?:Light)?Position"\s+")([-\d.]+) ([-\d.]+) ([-\d.]+)"/g, (_m, k, x, y, z) => `${k}${n(x)} ${n(y)} ${n(z)}"`)
+    .replace(/("PortraitLightDistance"\s+")([-\d.]+)"/g, (_m, k, d) => `${k}${n(d)}"`);
+}
+
 /** The portrait settings with each arcana's block written under the model it stands in for. */
-export function withPortraits(text: string, swaps: { from: string; to: string }[]): string {
+export function withPortraits(text: string, swaps: { from: string; to: string; scale?: number }[]): string {
   let out = text;
-  for (const { from, to } of swaps) {
+  for (const { from, to, scale } of swaps) {
     const own = portraitBlock(text, from);
     if (!own) continue; // no settings of its own: the plain model's are the best there are
-    const block = `\t"${to}"${text.slice(own.nameEnd, own.end)}`;
+    const settings = text.slice(own.nameEnd, own.end);
+    const block = `\t"${to}"${scale && scale !== 1 ? scaledPortrait(settings, scale) : settings}`;
     const at = portraitBlock(out, to);
     if (at) out = out.slice(0, at.start) + block + out.slice(at.end);
     else { const close = out.lastIndexOf('}'); out = `${out.slice(0, close)}${block}\r\n${out.slice(close)}`; }
@@ -74,10 +87,10 @@ export function portraitEntries(gamePath: string, portraits: PortraitSwap[], spr
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   const ix = sharedVpkIndex(pak);
-  const swaps: { from: string; to: string }[] = [];
+  const swaps: { from: string; to: string; scale?: number }[] = [];
   for (const p of portraits) {
     try {
-      swaps.push({ from: normalizeAssetPath(p.model), to: normalizeAssetPath(heroModelPath(ix, p.hero)) });
+      swaps.push({ from: normalizeAssetPath(p.model), to: normalizeAssetPath(heroModelPath(ix, p.hero)), ...(p.scale ? { scale: p.scale } : {}) });
     } catch (err) {
       log(`schema: the portrait of ${p.hero} left out of the build: ${(err as Error)?.message || err}`);
     }

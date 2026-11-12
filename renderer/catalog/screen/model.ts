@@ -3,6 +3,13 @@
  * markup in one place per shape. */
 import type { Filters, Mod } from '../types.ts';
 import type { ArcanaCardModel } from '../arcana/ArcanaCard.tsx';
+import type { MapLookCardModel } from '../map/MapLookCard.tsx';
+import type { SoundCardModel } from '../sounds/SoundCard.tsx';
+import type { BackgroundCardModel } from '../background/BackgroundCard.tsx';
+import type { HudCardModel } from '../hud/HudCard.tsx';
+import type { RankCardModel } from '../rank/RankCard.tsx';
+import type { DecorCardModel } from '../decor/DecorCard.tsx';
+import type { MapKind } from '../../api/content.ts';
 import type { CosmeticItem } from '../cosmetic/CosmeticCard.tsx';
 
 export interface ToolbarModel {
@@ -10,6 +17,9 @@ export interface ToolbarModel {
   /** print the count only when the list is narrower than the category: "did that chip do anything" */
   showCount: boolean;
   sort: string;
+  /** the authors of the mods on screen, with how many each, and the one picked ('' for all) */
+  authors: { value: string; label: string }[];
+  author: string;
   heroes: string[];
   hero: string;
   groups: string[];
@@ -58,7 +68,18 @@ export type ScreenModel =
     toolbar: ToolbarModel | null;
     note?: string;
     /** a tool the app has in it, first in the grid (the arcana's, among the tools) */
-    lead?: ArcanaCardModel | null;
+    lead?: ArcanaCardModel[] | null;
+    /** towers or trees out of the game's own looks, first in those two categories */
+    mapLead?: MapLookCardModel | null;
+    /** a sound of the user's own on a hero's event, first among the hero sounds */
+    soundLead?: SoundCardModel | null;
+    /** a main menu background of the user's own, first among the backgrounds */
+    backgroundLead?: BackgroundCardModel | null;
+    /** the in-game HUD smaller or larger, first among the HUDs */
+    hudLead?: HudCardModel | null;
+    rankLead?: RankCardModel | null;
+    /** the map without its decor, first in Optimization */
+    decorLead?: DecorCardModel | null;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -82,7 +103,8 @@ export type ScreenModel =
     search: string;
     installedOnly: boolean;
     count: string;
-    heroes: { hero: string; icon: string | null; installed: boolean; meta: string }[];
+    /** the heroes in the four groups of the game's hero grid, then any the game did not say */
+    groups: { attr: string; name: string; heroes: { hero: string; icon: string | null; installed: boolean; meta: string }[] }[];
   };
 
 /** What the screen can ask the catalog to do. */
@@ -102,5 +124,11 @@ export interface ScreenActions {
   cosmeticFavChanged: () => void;
   cosmeticFilter: (patch: { sort?: string; installedOnly?: boolean; favOnly?: boolean; search?: string }) => void;
   openHero: (hero: string, card: HTMLElement) => void;
-  openArcana: (card: HTMLElement) => void;
+  openArcana: (set: string, card: HTMLElement) => void;
+  openMapLooks: (kind: MapKind, card: HTMLElement) => void;
+  openSounds: (card: HTMLElement) => void;
+  openBackground: (card: HTMLElement) => void;
+  openHud: (card: HTMLElement) => void;
+  openRank: (card: HTMLElement) => void;
+  openDecor: (card: HTMLElement) => void;
 }

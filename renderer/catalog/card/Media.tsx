@@ -3,7 +3,7 @@
  * the mirror once, then gives up to the placeholder and counts towards the one warning.
  * Give it key={url}: a new address is a new picture, with its own retry. */
 import { useState } from 'react';
-import { isVideo, isAudio, mirrorOf, mediaGaveUp } from '../../ui/media.ts';
+import { isVideo, isAudio, firstSrc, spareSrc, mediaGaveUp } from '../../ui/media.ts';
 
 interface Props {
   url: string | null;
@@ -14,14 +14,14 @@ interface Props {
 }
 
 export function Media({ url, hoverPlay = false, autoplay = false, fallbackIcon = 'image' }: Props) {
-  const [src, setSrc] = useState(url);
+  const [src, setSrc] = useState(firstSrc(url));
   const [gaveUp, setGaveUp] = useState(false);
 
   if (!src || gaveUp) {
     return <div className="noimg"><span className="ms">{gaveUp ? 'image_not_supported' : fallbackIcon}</span></div>;
   }
   const failed = () => {
-    const spare = src === url ? mirrorOf(url) : null;
+    const spare = spareSrc(src, url);
     if (spare) setSrc(spare);
     else { setGaveUp(true); mediaGaveUp(); }
   };

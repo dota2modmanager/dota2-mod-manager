@@ -44,9 +44,9 @@ test passed, and nobody could install a mod in 2.6.5 or 2.6.6.
 *Check:* `npm run lint`, `eslint.config.js` for the rule list, and `.github/workflows/test.yml`,
 where it runs before the suite.
 
-### The app ships three dependencies
+### The app ships four dependencies
 
-`adm-zip`, `electron-updater` and `undici` ship inside it. `undici` supplies the supported
+`adm-zip`, `electron-updater`, `undici` and `meshoptimizer` ship inside it. `undici` supplies the supported
 HTTP/HTTPS `ProxyAgent` used when a user configures a download proxy; implementing CONNECT and
 streaming transport here would duplicate a networking client in the app. `electron`, `electron-builder`, `eslint`,
 `typescript`, `fast-check` and `axe-core` only build and check it, and never reach a user's machine. The VPK reader and writer, the
@@ -54,6 +54,35 @@ KeyValues parser, the zip guards, the mirror logic and the update checks are wri
 because every dependency is a stranger with write access to a game folder on tens of thousands
 of machines. That is a bias rather than a ban: a pull request adding one has to say what it
 replaces and why writing it here is worse.
+
+`meshoptimizer` was added on 2026-10-31 to make a persona's items as big as its body
+(`src/model-scale.ts`). Most of the game's item models keep their vertices in meshopt's vertex
+codec, 107 of the 168 buffers the five scaled personas' items have, and a position cannot be
+changed without decoding the buffer and encoding it again. The codec is Valve's own choice and has
+one reference implementation, this package, by its author: a decoder written here would be a
+second implementation of a format whose only test is whether the game draws the result, and an
+encoder would be two. It has no dependencies of its own, and the app uses its decoder and encoder
+and nothing else.
+
+`qrcode-generator` was added on 2026-11-03 for the QR code on a preset's picture (issue #433).
+It is built into the window, has no dependencies, makes no network call and writes nothing: it
+turns the preset's link into a grid of dark and light squares. A QR encoder is Reed-Solomon codes,
+forty sizes and eight masks, and a mistake in one only shows as a phone that cannot read it.
+
+`three` and `@types/three` were added on 2026-11-03 for the 3D preview of a hero in the item
+builder (issue #417). three.js reads the GLB the toolchain exports, plays the body's idle and
+draws it with WebGL; the models never leave the computer, and the library makes no network call.
+A glTF loader, skinning, an orbit camera and physically based lighting are each a project of their
+own, and the window loads the 640 KB with `import()` only when someone opens the preview.
+
+`dota-loadout` is bundled by Vite from a local npm package in `vendor/dota-loadout`.
+The bundled version is based on 0.1.0. It replaces the independent approximate particle renderer: three.js supplies
+WebGL, loaders and geometry, but not Dota's particle operators, snapshots, material
+semantics or attachment rules. The desktop adapter is TypeScript; the library runtime
+is retained in JavaScript, with MIT notices and the import provenance alongside it.
+Both the dressed hero and recolor preview use it. The renderer receives only local
+resource packets over IPC; it never loads models from the upstream hosting service.
+Run `npm run test:preview` to verify the integration.
 
 `eslint` was added on 2026-09-10 and is the one case where writing it here would have been the
 wrong answer. Two releases shipped in which no mod could be installed, because splitting a file
@@ -92,7 +121,7 @@ It also flips a check on the OpenSSF Scorecard, which recognises fuzzing in Java
 through a short list of libraries and not through generators of our own. That is a real reason and
 not the reason: the shrinking is.
 
-Seven more came on 2026-09-27 with the decision below, and `axe-core` on 2026-10-11 (above), thirteen
+Seven more came on 2026-09-27 with the decision below, `axe-core` on 2026-10-11 (above), `qrcode-generator` on 2026-11-03 and `three` with `@types/three` the same day (above), and `dota-loadout` for the Studio renderer, seventeen
 devDependencies in all. `vite` and
 `@vitejs/plugin-react` build the window's page. `react`, `react-dom` and `motion` are written into
 that page once a screen imports them, which makes them part of the app in every sense but the
@@ -332,6 +361,29 @@ that already. What they no longer get is to put words on the screen in this proj
 and its signature disagree - the failure an unsigned edit would otherwise cause in silence, on
 the day somebody reached for a switch and it did not work.
 
+### The hero bases are signed, by a key of their own
+
+Since 2.13.0 the item builder puts on arcanas, personas and some immortals that J0nathan550
+compiled again by hand, downloaded the first time somebody picks one. Until 2026-10-30 the app
+listed them from his repository's git tree: each file was checked against its hash, but whatever
+was pushed to `main` reached everybody who picked that arcana, with no signature of ours.
+
+Now the repository is the organisation's (`dota2modmanager/hero-base-fixes`, renamed because it
+fixes more than arcanas), and the app takes the list of bases only from `manifest.json` with a
+good signature in `manifest.json.sig`, against a key pinned in `src/arcana-base-store.ts`. Every
+file is still checked against its hash in that list, so the list and the files can both travel
+the mirrors. A push without the key changes nothing anybody downloads: the list from last time
+stays, and the bases already here keep being built with. The tree is no longer read at all: a
+list nobody signed is no list, and dropping it took api.github.com out of the path.
+
+The key is not the catalog's. The catalog's author holds that one, and these files are not his
+to vouch for; J0nathan550 compiles them and holds this one. Pinning a commit in the app was the
+other way, and was turned down because every fix would then wait for a release.
+
+*Check:* `BASES_PUBLIC_KEY` in `src/arcana-base-store.ts`, `test/arcana-base-store.test.ts`, and
+`tools/arcana-bases-manifest.mjs`, which writes and signs the manifest in one step and refuses a
+key that is not the pinned one's pair.
+
 ### Nothing is collected, and that is enforced by review rather than by a setting
 
 There is no telemetry, no analytics, no crash reporting and no opt-out to configure, because
@@ -429,6 +481,27 @@ change what is installed or where a link goes.
 *Check:* `translation` in `renderer/i18n.js` and `t` in `src/i18n.ts` for the fallback, and
 `test/chinese.test.js`, `test/chinese-catalog.test.ts` and `test/chinese-heroes.test.ts`.
 
+### Hero items go in as files, and the item table keeps only what files cannot do
+
+Decided on 2026-11-06. A pick from the item builder is a pak in the language folder. The game reads that folder by itself, so nothing of the game's is edited and no permission is asked.
+
+The table needs `gameinfo_branchspecific.gi` patched and signed in `dota.signatures`. A pak needs neither. A pick was already mostly files: its model under the stock path, its swapped particles, sounds and pictures. The block in the table added four things, and three of them fit in files:
+
+| The table said | A file says |
+|---|---|
+| `particle_create` | `particle_cfg_list` in the wearable's key values, the mechanism 68 of the game's own models use |
+| `model_skin` | the material set made the model's default |
+| `activity` | the hero body with the modifier taken off, one body per hero for all picks |
+| the rest (`TABLE_ONLY` in `src/item-files.ts`) | nothing yet |
+
+An added effect also has to reach the item's surface. Calvin's constructor at dota-studio showed how: hitboxes from the item's vertices and a copy of the effect that starts on them. We use the idea, not his code. `src/model-hitboxes.ts` and `src/particle-surface.ts` were written from the game's files, and his way of merging items into the hero's body stays out: he reports bone conflicts on some items, a wearable under a stock path has none, and a merged body would lose the item's own motions and hide rules.
+
+What stays on the table: a slot with no stock model, a second model (`additional_wearable`), hidden hero parts (`bodygroup_visibility`), item scale, kill effects, the game's non-hero looks, personas, and mods that carry item blocks. A pick with such a part still goes in, and the window counts it as waiting for the table.
+
+Someone who already allowed the table stays on it. New picks with the table off go as files. Moving everyone is a later step, after enough items have been compared in the game.
+
+*Check:* `test/item-files.test.ts` for what a pick's block asks of its files, and `npm run dota:bench -- --vpk <the pak> --hero axe` for the real game.
+
 ### The anti-cheat notice is rewritten, and there is no switch for it
 
 When Dota cannot verify the game before matchmaking, Valve's window says the anti-cheat "was
@@ -467,6 +540,21 @@ it the radar asks again.
 
 *Check:* `osv-scanner.toml`, `npm ls sprintf-js`, and `acceptedAdvisories` in `tools/radar.mjs`
 with its test in `test/radar.test.js`.
+
+### A second advisory in the build tools, fixed only in a major they do not take
+
+`minimatch` (GHSA-g3hv-75wg-m249, moderate) is fixed in 11.0.1 and in no older line. Every tool
+here that uses it asks for one: `electron-builder` 26 and 27-alpha bring 3.x, 5.x, 9.x and 10.x
+through `app-builder-lib`, `@electron/asar`, `@electron/universal` and `ejs`, and `eslint` 10.14
+asks for ^10. An override to 11 is not a fix: the 3.x callers call the module itself, and 11
+exports a name. The flaw is a slow match on a glob pattern an attacker writes, and the patterns
+here come from the build and lint configs in this repository. `npm ls minimatch --omit=dev` is
+empty, so none of it ships inside the app.
+
+It is accepted in `osv-scanner.toml` until 2027-01-08, the same date as `sprintf-js`, so both
+come back as questions together, around when `electron-builder` 27 is out of alpha.
+
+*Check:* `osv-scanner.toml`, `npm ls minimatch` and `npm ls minimatch --omit=dev`.
 
 ### The installer is not signed
 
@@ -582,31 +670,53 @@ a pull request merges and before a release builds.
 
 Since 2026-10-11 the same tool also answers the removal window the uninstaller opens, three ways,
 and checks the game folder is byte for byte what it was. The simulator (`tools/sim/`) drives more
-through the window on every pull request, on Windows and on Linux: presets, imports, the item
+through the window every night, on Windows and on Linux: presets, imports, the item
 builder, mod switches checked against what the game would load, and the keyboard alone. And
 `.github/workflows/update.yml` builds an installer from a pull request that touches the install path
 and runs it over the last release the way an update arrives.
 
 What it still does not cover: the required check installs one mod of one shape, a zip holding a
-single VPK, in one category; the simulator and the update rehearsal are not required, so a red one
-does not stop a merge by itself, and the radar reports it the next morning. The AppImage is built
+single VPK, in one category; the update rehearsal is not required, so a red one does not stop a merge
+by itself, and the radar reports it the next morning. The simulator runs only at night since
+2026-11-05 (see *The simulator runs at night* below). The AppImage is built
 on every pull request and installed only on a tag.
 
 *Check:* `.github/workflows/e2e.yml` and the `e2e-linux` and `e2e-windows` artifacts it uploads:
 a screenshot per launch, the window's own step report and the app log; `.github/workflows/sim.yml`
 and `.github/workflows/update.yml`.
 
-### A preset puts its looks back slot by slot, and leaves the others
+### The simulator runs at night
+
+Until 2026-11-05 the simulator ran on every pull request, in the merge queue and on every commit to
+`main`. It never blocked a merge, yet of the 60 commits on `main` from 2026-11-03 it marked 17 red,
+almost all for timing on a busy runner: a toast fading between the two frames of the repaint
+check, a list not drawn within 15 seconds. It caught one real bug in that time, a Russian heading
+left on the English Home screen. A red cross on every other commit taught everybody to stop
+reading it, and each one cost a look.
+
+So it runs every night and on demand (`gh workflow run sim.yml -f set=pr`), and at night a failed
+scenario gets a second launch of its own; only a failure that comes back counts. Retrying on every
+pull request would double a fifteen-minute wait whenever a run fails. A failure that holds shows on
+the pinned "Project status" issue the next morning, since the radar reads a scheduled workflow's
+last run. The required checks are unchanged.
+
+*Check:* `.github/workflows/sim.yml`, `--retry` in `tools/sim/run.mjs`.
+
+### A preset is the whole state, looks included
 
 Until 2.14.0 a preset held mods only, on purpose: applying a build used to switch off every free
 look it did not name, and people lost their courier and wards to a preset that had never mentioned
 them. So the looks were left out, and a build made with the item builder came back without any of
 it ([#284](https://github.com/dota2modmanager/dota2-mod-manager/issues/284)).
 
-Now a preset keeps the looks that were on, slot by slot, apart from its mods. Applying it puts each
-look on in its slot and leaves every slot it does not name as it is. The cost: a preset cannot say
-"nothing in this slot", and switching from one hero's build to another's leaves the first hero
-dressed. A preset saved before 2.14.0 keeps no looks and changes none.
+Since then a preset keeps the looks that were on, slot by slot, apart from its mods. Until
+2026-10-29 applying one put each of its looks on and left every slot it did not name as it was, so
+switching from a build of a hundred to a build of twenty added to the hundred, and the first hero
+stayed dressed. Now a preset's looks are switched as its mods are: its own on, every other look
+off, nothing deleted, each kept in My mods to be put on again. That is safe for the reason the old
+rule was not: a preset that knows which looks were on can say which were not. The cost: a courier
+picked after a preset was saved goes off when it is applied, and has to be saved into it. A preset
+saved before 2.14.0 keeps no looks and changes none.
 
 *Check:* `node --test test/presets-service.test.ts`, the tests under "the looks in a preset".
 
@@ -653,19 +763,6 @@ before.
 *Check:* download the installer from the latest release and ask Windows who signed it:
 `Get-AuthenticodeSignature .\Dota-2-Mod-Manager-Setup.exe`. It answers `NotSigned` today, and
 the day it stops, this entry is out of date.
-
-### The arcana bases come from a contributor's own repository
-
-Since 2.13.0 the item builder puts on arcanas that J0nathan550 compiled again by hand, downloaded
-from his repository the first time somebody picks one. The app takes only files under `models/`,
-`materials/` and `particles/`, checks each against its git hash, and builds from the game's own
-files when the repository cannot be reached. It reads the repository's `main` branch, though, with
-no signature of ours: whatever he pushes reaches everybody who picks that arcana. Pinning a commit
-in the app would make every fix wait for a release; moving the repository into the organisation
-or signing its manifest would keep fixes immediate and put a second key between a push and the
-users. Not decided yet.
-
-*Check:* `BASES_REPO` and the branch it is read from, in `src/arcana-base-store.ts`.
 
 ---
 

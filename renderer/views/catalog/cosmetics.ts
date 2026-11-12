@@ -2,7 +2,6 @@
  * a look's window (catalog/cosmetic/CosmeticModal.tsx draws it) and the pick itself. A hero's item
  * opens the item builder's window instead (views/item-builder.ts). */
 import { COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
-import { state } from '../../core/store.ts';
 import { pickedIn, refreshInstalledIndex } from '../../core/installed.ts';
 import { toast } from '../../ui/toast.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
@@ -11,11 +10,14 @@ import { favKey, isFav, toggleFavorite } from '../../catalog/favorites.ts';
 import { redrawScreen } from '../../catalog/screen/root.tsx';
 import { showCosmeticModal } from '../../catalog/modal/root.tsx';
 import type { CosmeticOption } from '../../catalog/types.ts';
-import { openItemSlotModal, redrawItemSlotModal } from '../item-builder.ts';
+import { redrawItemSlotModal } from '../item-builder.ts';
+import { openItemSlotModal } from '../item-hero.ts';
 import { refreshItemHub } from '../item-hub.ts';
 import { cosmeticFavValue, findCosmetic, isItemCosmeticSlot, slotData, type Look } from './lists.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { installing, screen } from './state.ts';
+import { catalogOnShow } from '../../core/router.ts';
+import { allowItemTable } from '../../ui/game-files.ts';
 
 let open: Look | null = null;
 sharesOverlay(() => { open = null; });
@@ -74,6 +76,8 @@ export async function pickCosmetic(slot: string, o: CosmeticOption, remove: bool
   const effect = isItemCosmeticSlot(slot) ? String(effectId || '') : '';
   const k = COSMETIC_PREFIX + slot + '|' + o.id + '|' + effect;
   if (installing.has(k)) return;
+  // an item goes in by files; the game's other looks are lines in its table
+  if (!remove && !isItemCosmeticSlot(slot) && !await allowItemTable()) return;
   const live = pickedIn(slot);
   installing.add(k);
   if (open) drawCosmeticModal();
@@ -95,7 +99,7 @@ export async function pickCosmetic(slot: string, o: CosmeticOption, remove: bool
 export async function afterCosmeticPick(): Promise<void> {
   await refreshInstalledIndex();
   redrawScreen(); // the live look is marked on whatever screen is on show, drawn again in place
-  if (state.view === 'catalog') screen.rail(); // the slot's "picked" dot
+  if (catalogOnShow()) screen.rail(); // the slot's "picked" dot
   await refreshItemHub();
   if (open) drawCosmeticModal();
   redrawItemSlotModal();

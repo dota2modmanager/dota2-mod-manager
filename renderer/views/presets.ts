@@ -6,6 +6,7 @@
  * used to empty every preset on screen, because the card counted only the records it could
  * resolve; a build outliving its installations is the point of storing identities, so a member
  * that is not installed is drawn as absent instead of dropped. */
+import { allowItemTable } from '../ui/game-files.ts';
 import { state } from '../core/store.ts';
 import { registerView, switchView } from '../core/router.ts';
 import { refreshInstalledIndex } from '../core/installed.ts';
@@ -19,19 +20,26 @@ import { paint } from '../ui/transitions.ts';
 import { recThumb } from '../library/thumbs.ts';
 import type { LibRecord } from '../library/types.ts';
 import { showPresets } from '../presets/PresetsScreen.tsx';
-import type { OwnPreset, PresetsActions, SharedPreset } from '../presets/model.ts';
-import type { PresetRecord } from '../api/content.ts';
+import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from '../presets/model.ts';
+import type { PresetRecord, ReadyPresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
+import { presetPicture } from './presets/picture.ts';
+import { recPreviewUrl } from '../ui/thumb.ts';
+import { isVideo } from '../ui/media.ts';
 
 type Preset = PresetRecord;
 
 let presets: Preset[] = [];
+let ready: ReadyPresetRecord[] = [];
+let byId = new Map<string, LibRecord>();
 let key = 0;
 
 registerView('presets', () => renderPresets(true));
 
 const STRIP = 12;
 const mods = (n: number) => `${n} ${plural(n, 'мод', 'мода', 'модов')}`;
+/** A preset with looks only the item table can put on: a hero's items go in by files. */
+const tableLooks = (p: { picks?: { slot: string }[] } | undefined) => !!p?.picks?.some((x) => !x.slot.startsWith('item:'));
 
 function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
   const recs = p.modIds.map((id) => byId.get(id)).filter((r): r is LibRecord => Boolean(r));
@@ -63,6 +71,7 @@ function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
     id: p.id,
     name: p.name,
     count: [n || !picks.length ? mods(n) : '', picks.length ? L`виды из игры: ${picks.length}` : ''].filter(Boolean).join(' · '),
+    on: p.on || null,
     absent: absent.length ? { text: L`${absent.length} не установлено`, title: absent.map((a) => a.name).join(', ') } : null,
     linkTitle: !link.count ? L`В пресете только свои моды — ссылка их не донесёт, отправь файлом`
       : link.skipped.length ? L`Ссылка донесёт ${link.count} из каталога; свои моды (${link.skipped.length}) в неё не влезут — для них нужен файл`
@@ -97,12 +106,36 @@ function sharedCard(p: Preset): SharedPreset {
   };
 }
 
+// A ready-made preset (config/presets.json): the catalog's covers for its mods, its categories
+// counted, and whether it was taken already and is the one on now
+function readyCard(p: ReadyPresetRecord): ReadyPreset {
+  const thumbs = p.mods.map((m) => recThumb({ ...m, id: '', files: [] } as unknown as LibRecord));
+  const counts = new Map<string, number>();
+  for (const m of p.mods) counts.set(m.categoryId, (counts.get(m.categoryId) || 0) + 1);
+  const own = p.taken ? presets.find((x) => x.id === p.taken) : null;
+  return {
+    id: p.id,
+    name: p.name,
+    about: p.about,
+    count: mods(p.mods.length),
+    strip: thumbs.slice(0, STRIP),
+    rest: Math.max(0, thumbs.length - STRIP),
+    cats: [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id, n]) => ({ id, icon: catIcon(id), name: catName(id), n })),
+    taken: own && !own.wanted ? { on: own.on === 'active' } : null,
+  };
+}
+
 async function renderPresets(fresh = false): Promise<void> {
-  presets = await window.api.presets.list();
+  [presets, ready] = await Promise.all([window.api.presets.list(), window.api.presets.ready().catch(() => [])]);
   const { installed } = await window.api.mods.list();
-  const byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
+  byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
   if (fresh) key++;
-  await paint(() => showPresets({ key, presets: presets.map((p) => (p.wanted ? sharedCard(p) : ownCard(p, byId))) }, actions));
+  // a ready preset taken is one of yours as well: renamed, shared or deleted from your list
+  await paint(() => showPresets({
+    key,
+    presets: presets.map((p) => (p.wanted ? sharedCard(p) : ownCard(p, byId))),
+    ready: ready.map(readyCard),
+  }, actions));
 }
 
 async function share(id: string) {
@@ -111,7 +144,12 @@ async function share(id: string) {
   // the link is made up front: it is a local encode, and offering it already written beats a
   // button that might turn out to have nothing to copy
   const link = await window.api.presets.shareLink(id);
-  if (await shareSheet(preset, link.error ? null : link) !== 'file') return;
+  // the picture: the covers the card leads with, still pictures only
+  const covers = (preset.modIds || []).map((m) => byId.get(m)).map((r) => (r ? recPreviewUrl(r) : null))
+    .filter((u): u is string => Boolean(u) && !isVideo(u!));
+  const card = ownCard(preset, byId);
+  const picture = link.web ? () => presetPicture({ name: preset.name, count: card.count, covers, link: link.web! }) : undefined;
+  if (await shareSheet(preset, link.error ? null : link, picture) !== 'file') return;
   const plan = await window.api.presets.exportPlan(id);
   if (plan.error) { toast(plan.error, 'error', 6000); return; }
   if (!plan.entries.length) { toast(L`В пресете нет модов`, 'warn'); return; }
@@ -139,6 +177,9 @@ const actions: PresetsActions = {
   },
   importFile: async () => handlePresetImport(await window.api.presets.importDialog()),
   apply: async (id) => {
+    // a look is a line in the game's item table: a preset that carries looks asks for it first,
+    // and a "not now" still applies the mods (ui/game-files.ts)
+    if (tableLooks(presets.find((p) => p.id === id))) await allowItemTable();
     // a channel that rejects must not leave the button lying about it: that is the shape of the
     // bug that made Install look like a hang for two releases
     let r;
@@ -152,9 +193,8 @@ const actions: PresetsActions = {
       toast(r.installed ? L`Пресет применён · доустановлено ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}` : L`Пресет применён`);
       if (r.missing?.length) toast(L`Своих модов нет на этом компьютере, из каталога их не вернуть: ${r.missing.join(', ')}`, 'warn', 8000);
       for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
-      // a look is a line in the game's item table, which safe mode keeps the game from reading
-      if (presets.find((p) => p.id === id)?.picks?.length && !state.settings?.schemaPatch) {
-        toast(L`Виды из игры в этом пресете заработают, когда выключишь безопасный режим`, 'warn', 8000);
+      if (tableLooks(presets.find((p) => p.id === id)) && !state.settings?.schemaPatch) {
+        toast(L`Виды из игры в этом пресете ждут разрешения на таблицу предметов`, 'warn', 8000);
       }
     }
     await refreshInstalledIndex();
@@ -166,6 +206,16 @@ const actions: PresetsActions = {
     if (r.error) toast(r.error, 'error', 7000);
     else {
       toast(L`Установлено и применено: ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}`);
+      for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
+    }
+    await refreshInstalledIndex();
+    await renderPresets();
+  },
+  takeReady: async (id) => {
+    const r = await window.api.presets.takeReady(id);
+    if (r.error) toast(r.error, 'error', 7000);
+    else {
+      toast(r.installed ? L`Пресет применён · установлено ${r.installed} ${plural(r.installed, 'мод', 'мода', 'модов')}` : L`Пресет применён`);
       for (const err of (r.errors || []).slice(0, 3)) toast(err, 'warn', 7000);
     }
     await refreshInstalledIndex();

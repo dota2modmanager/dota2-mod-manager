@@ -407,18 +407,19 @@ test('item cosmetics build one slot per hero part, infer missing stock slots, of
     { id: '9601', name: 'Bloodseeker offhand blade' },
     { id: '9701', name: 'Io Ambient' },
     { id: '9457', name: 'No visuals here' },
-    { id: '9455', name: 'Golden Full-Bore Bonanza' },
+    { id: '9455', name: 'Golden Full-Bore Bonanza', fx: true },
     { id: '9801', name: 'Tidehunter bonus anchor' },
   ]);
+  // the effects by the game's own English names in every language: players look them up as "Frostbloom"
   assert.deepEqual(builder.itemEffects(), [
     { id: '', name: 'No effect' },
-    { id: 'fire', name: 'Fire' },
-    { id: 'lightnings', name: 'Lightnings' },
+    { id: 'fire', name: 'Trail of Burning Doom' },
+    { id: 'lightnings', name: 'Ionic Vapor' },
     { id: 'frostbloom', name: 'Frostbloom' },
-    { id: 'snow', name: 'Snow' },
+    { id: 'snow', name: 'Snowdrift' },
     { id: 'bubbles', name: 'Bubbles' },
-    { id: 'sand-storm', name: 'Sand Storm' },
-    { id: 'ghost', name: 'Ghost' },
+    { id: 'sand-storm', name: 'Desert Sands' },
+    { id: 'ghost', name: 'Anniversary Ghost' },
   ]);
 });
 
@@ -663,15 +664,80 @@ test('a whole set goes on in one write, a row per piece, and a piece already on 
 
   service.pickCosmetic('item:sniper:head', '9457', 'No visuals here', 'fire,snow');
   service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape', 'ghost');
+  // an arcana in a slot the set has no piece for, and another hero's pick
+  service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
+  service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
+  // an arcana with a base (src/arcana-bases.ts: Juggernaut's), and a persona's piece, as the library keeps them
+  const kept = (slot: string, itemId: string) => { const r = library.add({ name: itemId, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] }); library.update(r.id, { slot, itemId }); return r.id; };
+  const based = kept('item:sniper:misc', '9059');
+  const persona = kept('item:sniper:weapon_persona_1', '9971');
   writes = 0;
   const res = service.pickSet('9960');
   assert.deepEqual(res, { applied: 2, pieces: 4 });
   assert.equal(writes, 1, 'one write for the whole set');
   assert.deepEqual(picks().map((r) => [r.slot, r.itemId, r.effectId || '']).sort(), [
+    ['item:bloodseeker:weapon', '9953', ''], // another hero's: his own
     ['item:sniper:back', '9455', ''], // the set's cape in place of the spare one, and no effects with it
     ['item:sniper:head', '9457', 'fire,snow'], // already on: keeps what it had
+    ['item:sniper:hero_base', '9970', ''], // a slot the set has no piece for: as the game's loadout keeps it (issue #577)
   ]);
+  assert.equal(library.find(based)?.enabled, false, 'an arcana whose base puts its body under the hero goes off, kept in My mods');
+  assert.equal(library.find(persona)?.enabled, false, 'a persona would be worn in the set\'s place');
   assert.throws(() => service.pickSet('404'), /Set not found/);
+});
+
+test('a set carries what the game says about it: rarity, release date, event (issue #526)', () => {
+  const field = (k: string, v: string) => `\n\t\t\t"${k}"\t\t"${v}"`;
+  const text = itemSetTable().replace('"name"\t\t"Sniper Set"', `"name"\t\t"Sniper Set"${field('item_rarity', 'Immortal')}`
+    + `${field('creation_date', '2016-05-01')}${field('event_id', 'EVENT_ID_INTERNATIONAL_2016')}`);
+  const sets = builder.itemSets(text);
+  const sniper = sets.find((s) => s.name === 'Sniper Set');
+  assert.deepEqual([sniper?.rarity, sniper?.date, sniper?.event, sniper?.styles], ['immortal', '2016-05-01', 'EVENT_ID_INTERNATIONAL_2016', 1]);
+  const blood = sets.find((s) => s.name === 'Bloodseeker Set');
+  assert.deepEqual([blood?.rarity, blood?.date, blood?.event], ['', '', ''], 'a set the game says nothing about');
+});
+
+test("a set's piece carries its own rarity, as the slot offering it does", () => {
+  const text = itemSetTable().replace('"name"\t\t"Golden Full-Bore Bonanza"', '"name"\t\t"Golden Full-Bore Bonanza"\n\t\t\t"item_rarity"\t\t"Mythical"');
+  const sniper = builder.itemSets(text).find((s) => s.name === 'Sniper Set');
+  assert.deepEqual(sniper?.pieces.filter((p) => p.fits).map((p) => [p.name, 'rarity' in p ? p.rarity : undefined]),
+    [['Golden Full-Bore Bonanza', 'mythical'], ['No visuals here', undefined]]);
+});
+
+test("a saved look goes on in one write, and the hero's other picks go off, kept in My mods (issue #527)", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-looks-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const game = path.join(dir, 'game');
+  fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), vpk.buildVpk([entry(schema.SCHEMA_REL, itemSetTable())]));
+  const library = new Library(path.join(dir, 'lib'));
+  let writes = 0;
+  const settings = settingsIn({ dotaGamePath: game, schemaPatch: false }, (k) => { if (k === 'schemaStamp') writes++; });
+  const service = createSchemaService({ settings, library, installer: NO_INSTALLER, userDataDir: dir });
+  const picks = () => library.list().filter((r) => r.categoryId === 'cosmetic' && r.enabled !== false);
+
+  const arcana = service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
+  service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape');
+  service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
+  writes = 0;
+  const res = service.wearLook('item:sniper:', [
+    { slot: 'item:sniper:head', itemId: '9457', name: 'No visuals here', effectId: 'fire' },
+    { slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza' },
+    { slot: 'item:bloodseeker:weapon', itemId: '1', name: 'not this hero' },
+  ]);
+  assert.deepEqual(res, { applied: 2, picks: 3 }, "another hero's pick in the list is skipped and counted");
+  assert.equal(writes, 1, 'one write for the whole look');
+  assert.deepEqual(picks().map((r) => [r.slot, r.itemId, r.effectId || '']).sort(), [
+    ['item:bloodseeker:weapon', '9953', ''],
+    ['item:sniper:back', '9455', ''],
+    ['item:sniper:head', '9457', 'fire'],
+  ]);
+  assert.equal(library.find(arcana!.id)?.enabled, false, 'the arcana went off, kept in My mods');
+  assert.throws(() => service.wearLook('item:../:', []), /Look not found/);
+
+  // a style a piece does not have leaves it in its first
+  service.pickSet('9960', { style: 1 });
+  assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.effectId || '', '');
 });
 
 /** A hero's stock base and its arcana, as items_game has Juggernaut's: a whole other hero model,
@@ -705,6 +771,37 @@ function arcanaTable() {
   ]);
 }
 
+// #401: The Resurrection of Shen wears Vengeful Spirit's body in material set 1 in its second
+// style, the purple one. Online the server draws the body at the hero's path in set 0, so the body
+// put there has to wear the picked set as its first; it went in as it was, and came out orange.
+function skinnedArcana(withModelSkin: boolean) {
+  const venge = `\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_vengefulspirit"\t\t"1"\n\t\t\t}\n`;
+  const entry = (fields: [string, string][]) => `\t\t\t\t"asset_modifier"\n\t\t\t\t{\n${fields.map(([k, v]) => `\t\t\t\t\t"${k}"\t\t"${v}"\n`).join('')}\t\t\t\t}\n`;
+  const body = 'models/items/vengefulspirit/arcana/arcana.vmdl';
+  return table([
+    `\t\t"445"\n\t\t{\n\t\t\t"name"\t\t"Vengeful Spirit's Shoulders"\n\t\t\t"prefab"\t\t"default_item"\n\t\t\t"item_slot"\t\t"shoulder"\n\t\t\t"model_player"\t\t"models/heroes/vengeful/vengeful_upperbody.vmdl"\n${venge}\t\t}\n`,
+    `\t\t"22718"\n\t\t{\n\t\t\t"name"\t\t"Wings"\n\t\t\t"prefab"\t\t"wearable"\n\t\t\t"item_rarity"\t\t"arcana"\n\t\t\t"item_slot"\t\t"shoulder"\n\t\t\t"model_player"\t\t"models/items/vengefulspirit/arcana/wings.vmdl"\n${venge}`
+      + `\t\t\t"visuals"\n\t\t\t{\n`
+      + entry([['type', 'entity_model'], ['asset', 'npc_dota_hero_vengefulspirit'], ['modifier', body], ['style', '0']])
+      + entry([['type', 'entity_model'], ['asset', 'npc_dota_hero_vengefulspirit'], ['modifier', body], ['style', '1']])
+      + (withModelSkin ? entry([['type', 'model_skin'], ['style', '0'], ['skin', '0']]) + entry([['type', 'model_skin'], ['style', '1'], ['skin', '1']]) : '')
+      + `\t\t\t\t"styles"\n\t\t\t\t{\n`
+      + `\t\t\t\t\t"0"\n\t\t\t\t\t{\n\t\t\t\t\t\t"name"\t\t"#Orange"\n${withModelSkin ? '' : '\t\t\t\t\t\t"skin"\t\t"0"\n'}\t\t\t\t\t}\n`
+      + `\t\t\t\t\t"1"\n\t\t\t\t\t{\n\t\t\t\t\t\t"name"\t\t"#Purple"\n${withModelSkin ? '' : '\t\t\t\t\t\t"skin"\t\t"1"\n'}\t\t\t\t\t}\n`
+      + `\t\t\t\t}\n\t\t\t}\n\t\t}\n`,
+  ]);
+}
+
+test("an arcana's hero body is worn in the material set of the style picked, from model_skin or the style's own block", () => {
+  for (const withModelSkin of [true, false]) {
+    const text = skinnedArcana(withModelSkin);
+    const body = (effect: string) => builder.itemEffectPatch(text, '22718', effect).assetCopies.find((c) => 'hero' in c);
+    assert.deepEqual(body('style-1'), { from: 'models/items/vengefulspirit/arcana/arcana.vmdl', hero: 'npc_dota_hero_vengefulspirit', activities: [], skin: 1 },
+      `the second style's set (${withModelSkin ? 'model_skin' : 'styles block'})`);
+    assert.equal(body('')!.skin, undefined, 'the first style is the set the body wears already');
+  }
+});
+
 test('an arcana is offered and dresses the stock item of its slot, the hero base most of them sit in', () => {
   /* Arcanas used to be left out by their name, and hero_base with them: twelve heroes have a stock
      "<Hero>'s Base" for an arcana to dress, and none of it was offered. */
@@ -713,8 +810,8 @@ test('an arcana is offered and dresses the stock item of its slot, the hero base
   assert.equal(slot?.slot, 'item:juggernaut:hero_base');
   assert.equal(slot?.slotLabel, 'Hero base');
   // the arcana, and not the persona beside it; with no note, as its base fixes what J0nathan550's
-  // pass found (src/arcana-bases.ts)
-  assert.deepEqual(slot?.options, [{ id: '9059', name: 'Bladeform Legacy' }], 'the arcana, and not the persona beside it');
+  // pass found (src/arcana-bases.ts); its replaced ability effects make it a donor too (issue #534)
+  assert.deepEqual(slot?.options, [{ id: '9059', name: 'Bladeform Legacy', rarity: 'arcana', fx: true }], 'the arcana, and not the persona beside it');
   assert.equal(builder.defaultItemForWearable(text, '9059')?.id, '811');
   assert.equal(builder.defaultItemForWearable(text, '9070'), null, 'a persona does not dress the stock base');
 });
@@ -769,6 +866,11 @@ test("an arcana's hero model goes in under the path the hero's script names, pla
     { from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_juggernaut', activities: ['arcana'] },
   ]);
   assert.deepEqual(entries.map((en) => vpk.entryPath(en)), ['models/heroes/juggernaut/juggernaut.vmdl_c'], 'once, at the hero path');
+  // a pause before each file read, so an arcana's 20 files are not one piece of the window's time
+  const steps = builder.gameAssetEntriesSteps(dir, [{ from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_juggernaut', activities: ['arcana'] }]);
+  let pauses = 0;
+  for (let r = steps.next(); !r.done; r = steps.next()) pauses++;
+  assert.equal(pauses, 1);
   assert.deepEqual(clips(entries[0].data), [['attack', ['ACT_DOTA_ATTACK']], ['attack_plain', []]],
     'the arcana attack is the one played with no item to switch it on');
   assert.throws(() => builder.gameAssetEntries(dir, [{ from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_nobody', activities: [] }]),
@@ -1020,8 +1122,18 @@ test("a pick that changes the hero's other form puts the form's model under its 
   const pick = builder.itemEffectPatch(text, '31410', '');
   assert.equal(pick.id, '5960');
   assert.deepEqual(pick.assetCopies.filter((c) => 'to' in c && c.to.endsWith('.vmdl')),
-    [{ from: 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl', to: 'models/heroes/terrorblade/demon.vmdl' }]);
+    [{ from: 'models/items/terrorblade/dreadhunt_demon/dreadhunt_demon.vmdl', to: 'models/heroes/terrorblade/demon.vmdl', form: true }]);
   assert.doesNotMatch(pick.block, /dreadhunt_demon\.vmdl/, 'the swap is the file now, not the table');
   assert.match(pick.block, /"type"\s+"ability_icon"/, 'the rest of the visuals stay');
   assert.match(pick.block, /n_creep_ogre_med/, 'only a form under models/heroes/ is staged; anything else stays for the game');
+});
+
+// Everglyph Goggles of the Crimson Witness: the plain goggles' model in material set 1, the red one.
+// The pick goes under the stock head's path, where the server's table has no skin: it came out blue.
+test('an item put under a stock path wears its own material set', () => {
+  const item = (id: string, name: string, prefab: string, model: string, extra = '') => `\t\t"${id}"\n\t\t{\n\t\t\t"name"\t\t"${name}"\n\t\t\t"prefab"\t\t"${prefab}"\n\t\t\t"item_slot"\t\t"head"\n\t\t\t"model_player"\t\t"${model}"\n\t\t\t"used_by_heroes"\n\t\t\t{\n\t\t\t\t"npc_dota_hero_meepo"\t\t"1"\n\t\t\t}\n\t\t\t"visuals"\n\t\t\t{\n${extra}\t\t\t}\n\t\t}\n`;
+  const text = `"items_game"\n{\n\t"items"\n\t{\n${item('1', 'Stock', 'default_item', 'models/heroes/meepo/head.vmdl')}${item('2', 'Goggles', 'wearable', 'models/items/meepo/goggles.vmdl')}${item('3', 'Crimson', 'wearable', 'models/items/meepo/goggles.vmdl', '\t\t\t\t"skin"\t\t"1"\n')}\t}\n}\n`;
+  const copy = (id: string) => builder.itemEffectPatch(text, id, '').assetCopies[0];
+  assert.deepEqual(copy('3'), { from: 'models/items/meepo/goggles.vmdl', to: 'models/heroes/meepo/head.vmdl', skin: 1 });
+  assert.deepEqual(copy('2'), { from: 'models/items/meepo/goggles.vmdl', to: 'models/heroes/meepo/head.vmdl' });
 });

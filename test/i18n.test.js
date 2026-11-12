@@ -26,7 +26,7 @@ test('the check reads the main process\'s modules, whatever language they are wr
   const main = SIDES.find((s) => s.name === 'main').files;
   const fs = require('fs');
   const modules = fs.readdirSync(path.join(__dirname, '..', 'src'))
-    .filter((f) => /\.[jt]s$/.test(f) && !f.endsWith('.d.ts') && f !== 'i18n.ts')
+    .filter((f) => /\.[jt]s$/.test(f) && !f.endsWith('.d.ts') && f !== 'i18n.ts' && f !== 'i18n-en.ts')
     .map((f) => `src/${f}`);
   assert.ok(modules.length > 40, 'src/ was found');
   assert.deepEqual(modules.filter((f) => !main.includes(f)), [], 'every src/ module is read');

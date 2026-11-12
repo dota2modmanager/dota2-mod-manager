@@ -25,6 +25,10 @@ export function Toolbar({ model: t, actions }: Props) {
           <Dropdown icon={t.groupIcon} id="groupSelect" label={t.groupLabel} value={t.group} first={t.groupLabel}
             options={t.groups.map((g) => ({ value: g, label: catalogLabel(g) }))} onPick={(group) => actions.filter({ group })} />
         )}
+        {(t.authors.length > 1 || t.author) && (
+          <Dropdown icon="brush" id="authorSelect" label={L`Автор`} value={t.author} first={L`Все авторы`}
+            options={t.authors} onPick={(author) => actions.filter({ author })} />
+        )}
         {t.slots.length > 0 && (
           <Dropdown icon="checkroom" id="slotSelect" label={L`Слот`} value={t.slot} first={L`Все слоты`}
             options={t.slots.map((s) => ({ value: s.id, label: s.label }))} onPick={(slot) => actions.filter({ slot })} />

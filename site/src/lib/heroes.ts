@@ -19,7 +19,14 @@ export interface HeroImage {
 
 export interface HeroMod {
   name: string;
+  /** The catalog's category; a hero's own skins are 'heroes'. */
+  categoryId?: string;
+  /** Tagged 18+ by the catalog. Never read past this file: such mods are dropped below. */
+  adult?: boolean;
   styleLabel: string | null;
+  /** The catalog group the mod sits in (a hero item's hero, a creep's side), part of its download
+      counter's key; null in a category without groups. */
+  group?: string | null;
   /** Which parts of the hero this replaces: head, weapon, arms... Empty means a recolour. */
   slots: string[];
   image: HeroImage | null;
@@ -36,9 +43,30 @@ export interface Hero {
   mods: HeroMod[];
 }
 
-export const heroes: Hero[] = (data as { heroes: Hero[] }).heroes;
+/* Mods the catalog tags 18+ (explicit hero models) are on no page of the site: not the landing,
+   not a hero's page, not a mod page. The catalog's browser alone lists them, and only after the
+   visitor says they are 18 and want them (src/scripts/browse.ts), the way the app asks
+   (renderer/core/adult.ts). A hero left with nothing else has no page. */
+const raw = (data as { heroes: Hero[] }).heroes;
+
+/** The 18+ mods, each with the hero it is for: what the catalog's browser shows once asked. */
+export const adultHeroMods = raw.flatMap((h) => h.mods.filter((m) => m.adult).map((mod) => ({ hero: h.slug, mod })));
+
+export const heroes: Hero[] = raw
+  .map((h) => ({ ...h, mods: h.mods.filter((m) => !m.adult) }))
+  .filter((h) => h.mods.length);
 
 export const heroBySlug = new Map(heroes.map((h) => [h.slug, h]));
+
+/**
+ * The picture a hero is shown by: their newest skin, and only without one their newest mod of
+ * any kind. A ranged-attack pack lists every ranged hero, so "newest of any kind" gave nine of the
+ * twelve heroes on the landing the same picture of an attack.
+ */
+export function heroPicture(hero: Hero): HeroImage | null {
+  const pictured = hero.mods.filter((m) => m.image).sort((a, b) => (b.date ?? 0) - (a.date ?? 0));
+  return (pictured.find((m) => (m.categoryId ?? 'heroes') === 'heroes') ?? pictured[0])?.image ?? null;
+}
 
 export const totalHeroMods = heroes.reduce((n, h) => n + h.mods.length, 0);
 

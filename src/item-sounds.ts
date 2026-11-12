@@ -28,7 +28,11 @@ import { drain, PAUSE } from './steps.ts';
 export interface SoundSwap { sound: string; as: string }
 
 /** A response criterion an item sets for a hero ("customresponse" = "eartharc_cosmos"). */
-export interface VoiceCue { hero: string; key: string; value: string }
+export interface VoiceCue {
+  hero: string; key: string; value: string;
+  /** a persona's: its voice is the whole voice, so every plain line takes one of its lines it can (voiceSwaps) */
+  whole?: boolean;
+}
 
 type Index = VpkIndex;
 type Obj = Extract<Kv3Node, { kind: 'object' }>;
@@ -72,7 +76,7 @@ function rulesOf(ix: Index, hero: string): Kv3Node | null {
  * The plain lines of a hero, each as the item's line for the same situation (see the top of the
  * file). A plain line already given one keeps it: a line can be in several rules.
  */
-export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>): SoundSwap[] {
+export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value' | 'whole'>): SoundSwap[] {
   const criteria = list(rules, 'm_Requirements');
   const named = (expr: string) => new Set(criteria
     .filter((c) => str(c, 'm_matchKey').toLowerCase() === cue.key.toLowerCase() && str(c, 'm_matchExpr') === expr)
@@ -80,10 +84,13 @@ export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>)
   const is = named(cue.value);
   const isNot = named(`!=${cue.value}`);
   if (!is.size) return [];
+  // for a persona, every other criterion on the item's key is another item's (Invoker's plain lines ask that he is
+  // not the "happy" Acolyte as well), and says nothing of the situation a line is said in
+  const keyed = new Set(cue.whole ? criteria.filter((c) => str(c, 'm_matchKey').toLowerCase() === cue.key.toLowerCase()).map((c) => str(c, 'm_name')) : []);
   const groups = list(rules, 'm_ResponseGroups').map((g) => {
     const req = list(g.kind === 'object' ? g.members.get('m_pEmbeddedRule') : undefined, 'm_Requirements')
       .map((r) => (r.kind === 'string' ? r.value : ''));
-    const rest = req.filter((r) => !is.has(r) && !isNot.has(r));
+    const rest = req.filter((r) => !is.has(r) && !isNot.has(r) && !keyed.has(r));
     return {
       item: req.some((r) => is.has(r)), concept: req[0] || '', rest: new Set(rest), key: [...rest].sort().join('|'),
       lines: list(g, 'm_responses').filter((r) => str(r, 'm_type') === 'SPEAK').map((r) => str(r, 'm_value')).filter(Boolean),
@@ -94,7 +101,10 @@ export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>)
   for (const plain of groups.filter((g) => !g.item)) {
     const twin = own.find((g) => g.key === plain.key)
       ?? own.filter((g) => g.concept === plain.concept && [...plain.rest].every((r) => g.rest.has(r)))
-        .sort((a, b) => a.rest.size - b.rest.size)[0];
+        .sort((a, b) => a.rest.size - b.rest.size)[0]
+      // or, for a persona, one that asks less than the plain rule: the Acolyte's lines have no 5% chance on them
+      ?? (cue.whole ? own : []).filter((g) => g.concept === plain.concept && [...g.rest].every((r) => plain.rest.has(r)))
+        .sort((a, b) => b.rest.size - a.rest.size)[0];
     if (!twin) continue;
     plain.lines.forEach((line, i) => { if (!out.has(line)) out.set(line, twin.lines[i % twin.lines.length]); });
   }

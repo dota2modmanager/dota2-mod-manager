@@ -48,6 +48,7 @@ const words = {
   slots: slotNames[lang], heroesLabel: lang === 'ru' ? 'Герои' : 'Heroes',
   heroBase: pathIn(lang, '/heroes/'), catBase: pathIn(lang, '/catalog/'),
   modBase: pathIn(lang, '/mods/'), modPage: b.modPage, authorBase: pathIn(lang, '/authors/'), plainStyle: modPage[lang].plainStyle,
+  adultBadge: b.adultBadge,
 };
 const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((c) => c.group === g));
 ---
@@ -101,6 +102,9 @@ const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((
     <div class="result-line">
       <span id="browse-count" aria-live="polite">{b.shown.replace('{n}', nf.format(Math.min(mods.length, total))).replace('{total}', nf.format(total))}</span>
       <button class="clear-btn" type="button" id="browse-clear" hidden>{b.clear}</button>
+      {mode === 'all' && context === 'all' && (
+        <button class="chip adult-chip" type="button" id="browse-adult" aria-pressed="false" title={b.adultHint}>{b.adultBadge}</button>
+      )}
     </div>
   </div>
 
@@ -139,6 +143,19 @@ const groupsHere = GROUPS.map(([g]) => g).filter((g) => catalogCategories.some((
     <p class="quick-note" id="quick-links"></p>
   </div>
 </dialog>
+
+{mode === 'all' && context === 'all' && (
+  <dialog class="quick adult-ask" id="adult-ask" aria-labelledby="adult-ask-title">
+    <div class="quick-body">
+      <h2 id="adult-ask-title">{b.adultTitle}</h2>
+      <p>{b.adultText}</p>
+      <div class="btn-row">
+        <button class="btn ghost" type="button" data-adult-no>{b.adultNo}</button>
+        <button class="btn" type="button" data-adult-yes>{b.adultYes}</button>
+      </div>
+    </div>
+  </dialog>
+)}
 
 <div class="tray" id="tray" hidden>
   <div class="tray-count"><span id="tray-count"></span><small>{b.trayHint}</small></div>

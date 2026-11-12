@@ -14,3 +14,14 @@
 id = "GHSA-hp3w-g68c-fv3c"
 ignoreUntil = 2027-01-08
 reason = "Build-time only (electron-builder -> @electron/get 3 -> global-agent -> roarr); no fixed sprintf-js exists, and no format string comes from outside. Gone with electron-builder 27."
+
+# minimatch is fixed only in 11.0.1, and every tool here that uses it asks for an older major:
+# electron-builder 26 and 27-alpha (app-builder-lib ^10, @electron/asar with 3.x, ejs -> jake ->
+# filelist with 5.x, @electron/universal with 3.x and 9.x) and eslint 10.14 (^10). An override to
+# 11 breaks the 3.x callers, which call the module itself where 11 exports a name. The flaw needs
+# a glob pattern an attacker writes; the patterns here come from the build and lint configs in
+# this repository, and `npm ls minimatch --omit=dev` is empty: none of it ships inside the app.
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-01-08
+reason = "Build and lint tools only (electron-builder, eslint); every one asks for minimatch below 11, the only fixed major, and the patterns come from this repository's configs. Nothing of it ships inside the app."

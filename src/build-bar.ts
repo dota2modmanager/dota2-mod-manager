@@ -5,9 +5,10 @@ import type { BuildStep } from './schema-build.ts';
 /**
  * The bar at the bottom of the window for a build in the background: shown once the build has run
  * for `after` ms, so a pick that takes a fifth of a second does not flash it, and counted in the
- * picks built anew. A build with none to build, the merge and the write alone, shows nothing.
+ * picks built anew, with Cancel on it (src/build-undo.ts). A build with none to build, the merge
+ * and the write alone, shows nothing.
  */
-export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number } | { type: 'done' }) => void,
+export function buildBar(send: (evt: { type: 'count'; label: string; done: number; total: number; cancel?: 'schema' } | { type: 'done' }) => void,
   label: () => string, after = 400, now = () => Date.now()): (step: BuildStep | null) => void {
   let started: number | null = null;
   let shown = false;
@@ -25,6 +26,6 @@ export function buildBar(send: (evt: { type: 'count'; label: string; done: numbe
     picks = 'total' in step ? step : { done: picks.total, total: picks.total };
     if (!picks.total || (!shown && now() - started < after)) return;
     shown = true;
-    send({ type: 'count', label: label(), ...picks });
+    send({ type: 'count', label: label(), ...picks, cancel: 'schema' });
   };
 }

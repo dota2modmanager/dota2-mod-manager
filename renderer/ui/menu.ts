@@ -30,7 +30,7 @@ function closeMenu(): void {
 }
 
 /** x and y are the viewport coordinates of the click. A falsy entry is a row left out. */
-function openMenu(items: (MenuItem | false | null | undefined)[], x: number, y: number): void {
+export function openMenu(items: (MenuItem | false | null | undefined)[], x: number, y: number): void {
   closeMenu();
   const live = items.filter((item): item is MenuItem => Boolean(item));
   if (!live.length) return;

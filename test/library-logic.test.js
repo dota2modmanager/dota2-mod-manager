@@ -46,6 +46,27 @@ test('a search finds a pack by the name of a mod inside it', async () => {
   assert.equal(order.matchesSearch(pack, '   '), true, 'an empty search leaves everything');
 });
 
+test('a row the user named (issue #399) is found by that name, and the name never reaches the file', async () => {
+  const { order } = await load();
+  const labels = await import('../renderer/library/labels.ts');
+  const mine = rec('Pudge Arcana');
+  labels.labels.map = labels.withLabel({}, labels.recLabelKey(mine.id), '  the   red  one ');
+  assert.equal(labels.labelFor(labels.recLabelKey(mine.id)), 'the red one', 'spaces are tidied');
+  assert.equal(order.matchesSearch(mine, 'RED'), true);
+  assert.equal(order.matchesSearch(mine, 'pudge'), true, 'the name it came with still finds it');
+  assert.equal(order.matchesSearch(rec('Lina'), 'red'), false);
+
+  const off = labels.fileLabelKey('pak33_dir.vpk.off');
+  assert.equal(off, labels.fileLabelKey('PAK33_dir.vpk'), 'switching a file off and on keeps its label');
+  const long = labels.withLabel(labels.labels.map, off, 'x'.repeat(200));
+  assert.equal(long[off].length, labels.LABEL_MAX);
+  const cleared = labels.withLabel(long, off, '   ');
+  assert.equal(Object.hasOwn(cleared, off), false, 'an empty label takes the name away');
+  assert.equal(Object.hasOwn(long, off), true, 'the map passed in is left as it was');
+  assert.equal(labels.labelFor('__proto__'), null);
+  labels.labels.map = {};
+});
+
 test('the selection forgets what is gone, and the bulk bar offers only what the ticked rows allow', async () => {
   const { sel } = await load();
   const vpk = { root: 'lang', relPath: 'pak05_dir.vpk' };

@@ -28,13 +28,18 @@ on:
   # mirrors. A change to one of those is a change to the site.
   push:
     branches: [main]
-    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*']
+    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*', 'config/presets.json*']
   # A pull request that touches the site gets the build and the check on its output, and nothing
   # is deployed. Dependabot's Astro 7 bump passed every test in this repository while building
   # the site as version 0.0.0, because nothing built the site before a merge.
   pull_request:
-    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*']
+    paths: ['site/**', '.github/workflows/site.yml', 'docs/p/**', 'docs/terms/**', 'docs/code-signing-policy*.md', 'PRIVACY*.md', 'CHANGELOG*.md', 'config/app.json*', 'config/presets.json*']
   workflow_dispatch:
+    inputs:
+      purge:
+        description: 'Addresses to drop from the cache after the deploy, space-separated (https://dota2modmanager.com/...)'
+        required: false
+        default: ''
 
 # Read only. This job used to commit the IndexNow ledger back, which is why it once needed write
 # and the owner's token; the ledger moved to the Actions cache and nothing here writes to the
@@ -84,6 +89,8 @@ jobs:
       # failing, so a bad minute at GitHub costs freshness and not a deploy.
       - name: Build
         working-directory: site
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: npm run build
 
       # The build reads the app's version and each page's card off the disk around it, and both
@@ -104,11 +111,20 @@ jobs:
       # It takes about a minute. On 2026-10-26 the download hung twice in a row for the whole job's
       # thirty minutes and the release went out without its site, so each try gets four minutes
       # and a stuck one is tried again.
+      # timeout stops npx but not the package install it started under sudo, which goes on holding the dpkg
+      # lock. On 2026-11-04 a slow mirror ran the first try out, and the next two failed at once on
+      # that lock, so a retry waits for the lock first: by then that install has usually finished.
+      # On 2026-11-07 the mirror hung past the step's limit and turned main red with nothing wrong
+      # in the code. A failed install now skips the WebKit tests for this run with a warning: the
+      # next deploy, a day at most away, runs them again.
       - name: Install WebKit for the iPhone tests
+        id: webkit
         working-directory: site
         timeout-minutes: 14
+        continue-on-error: true
         run: |
           for try in 1 2 3; do
+            while sudo fuser /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock >/dev/null 2>&1; do sleep 5; done
             timeout 240 npx playwright-core install --with-deps webkit && exit 0
             echo "::warning::WebKit install attempt $try did not finish"
           done
@@ -117,7 +133,7 @@ jobs:
       - name: Test the pages in a browser
         working-directory: site
         env:
-          SITE_WEBKIT: required
+          SITE_WEBKIT: ${{ steps.webkit.outcome == 'success' && 'required' || '' }}
         run: npm test
 
       # The screenshot of whatever failed, and the screen it failed on.
@@ -144,6 +160,18 @@ jobs:
           path: indexnow.state.json
           key: indexnow-ledger-${{ github.run_id }}
           restore-keys: indexnow-ledger-
+
+      # A page the deploy took away is still served by an edge that already had it (tools/purge.mjs).
+      # Before IndexNow, which rewrites the ledger this compares against. The token is the deploy's,
+      # which also holds Zone, Cache Purge (r2.yml). A refused purge turns the run red.
+      - name: Drop the pages that went from the cache
+        if: github.event_name != 'pull_request'
+        working-directory: site
+        env:
+          CLOUDFLARE_ZONE_ID: b1b7154350d99e0812859bbc6d775806
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PURGE: ${{ inputs.purge }}
+        run: node tools/purge.mjs $PURGE
 
       # Bing and Yandex are told the pages changed. Google does not take part and finds them
       # its own way, so a failure here is a slower crawl and nothing more.

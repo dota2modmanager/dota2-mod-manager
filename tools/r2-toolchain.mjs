@@ -7,7 +7,7 @@
  * knows is a proxy standing in front of GitHub, so when GitHub is down the whole chain is, and
  * the feature falls back to scraping the wiki.
  *
- * This puts the archive in the bucket the mods already live in. Safe from anywhere, and that is
+ * This puts the archive in the bucket the pictures already live in. Safe from anywhere, and that is
  * what a pin is for: the digest lives in this project's source rather than travelling with the
  * URL, so whoever hands the bytes over cannot also decide what they should hash to. Nothing is
  * uploaded until it has been checked against that digest here as well.

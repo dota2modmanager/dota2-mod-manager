@@ -49,6 +49,7 @@ function stand(t: TestContext) {
     applyMasterToCursors: (on: boolean) => calls.push(`cursors ${on}`), blocked: () => blockedWith, catalog: {},
     diag: () => {}, disableOtherCursors: () => { calls.push('other cursors off'); return ['Old cursors']; }, fingerprints,
     importVpkBuffers: () => {}, importVpkPaths: () => {}, installer, isCursorRecord: () => false, library,
+    countInstall: (cat: string, name: string) => calls.push(`counted ${cat}/${name}`), downloadStats: { get: async () => ({}) },
     refreshPresence: () => calls.push('presence'),
     schemaService: { state: () => ({ enabled: schemaOn }), harvest: () => harvest, refresh: () => { refreshed++; } },
     sendProgress: (p: { type: string; label: string }) => progress.push(p), verifyStuck: () => [], win: () => null,
@@ -137,7 +138,8 @@ test('a switched-on mod that hides another one\'s files is named on that row, an
   const first = s.pak('pak30', [['models/heroes/pudge/pudge.vmdl_c', 'version one']], { name: 'First' })!;
   const second = s.pak('pak31', [['models/heroes/pudge/pudge.vmdl_c', 'version two']], { name: 'Second' })!;
   let { installed } = await s.list();
-  assert.deepEqual(installed.find((r) => r.id === second.id)!.coveredBy, [{ name: 'First', files: 1 }]);
+  assert.deepEqual(installed.find((r) => r.id === second.id)!.coveredBy,
+    [{ key: first.id, name: 'First', files: 1, paths: ['models/heroes/pudge/pudge.vmdl_c'] }]);
   assert.equal(installed.find((r) => r.id === first.id)!.coveredBy, undefined, 'the game mounts the lower slot first, so it wins');
 
   s.installer.setEnabled(first.files, false, first.id);
@@ -166,7 +168,7 @@ test('a mod a Dota update reached carries how many of its files changed and how 
   const axe = s.pak('pak31', [['models/heroes/axe/axe.vmdl_c', 'an axe model']])!;
   s.reached.set(hud.id, { since: '6946', changed: ['a', 'b'], removed: ['c'], sig: 'x' });
   const rows = (await s.list()).installed;
-  assert.deepEqual(rows.find((r) => r.id === hud.id)?.prePatch, { since: '6946', changed: 2, removed: 1 });
+  assert.deepEqual(rows.find((r) => r.id === hud.id)?.prePatch, { since: '6946', changed: 2, removed: 1, changedPaths: ['a', 'b'], removedPaths: ['c'] });
   assert.equal('prePatch' in (rows.find((r) => r.id === axe.id) || {}), false);
 });
 
@@ -198,6 +200,20 @@ test('a catalog mod the catalog has replaced says so, and the update keeps its s
   assert.equal(r.ok, true, JSON.stringify(r));
   assert.deepEqual(r.record?.files, [{ root: 'lang', relPath: 'pak34_dir.vpk' }]);
   assert.ok(((await s.call('mods:update', 'nobody')) as { error?: string }).error);
+});
+
+test('item pictures taken out of a mod stay out of its update', async (t) => {
+  const s = stand(t);
+  fs.writeFileSync(path.join(path.dirname(s.lang), 'dota', 'pak01_dir.vpk'), buildVpk([entry('scripts/items/items_game.txt', 'the game')]));
+  const tiny = s.pak('pak36', [['models/heroes/tiny/tiny.vmdl_c', 'tiny']], { categoryId: 'heroes', name: 'Tiny Arcana', fileRef: 'Tiny Arcana.vpk' })!;
+  s.library.update(tiny.id, { noItemIcons: true });
+  const newer = path.join(path.dirname(s.lang), 'newer.vpk');
+  fs.writeFileSync(newer, buildVpk([entry('models/heroes/tiny/tiny.vmdl_c', 'tiny 2'), entry('panorama/images/items/blink_png.vtex_c', 'blink')]));
+  s.installer.download = async () => newer;
+  assert.equal(((await s.call('mods:update', tiny.id)) as { ok?: boolean }).ok, true);
+  const { listVpkPathsFile } = await import('../src/vpk.ts');
+  assert.deepEqual(listVpkPathsFile(path.join(s.lang, 'pak36_dir.vpk')), ['models/heroes/tiny/tiny.vmdl_c']);
+  assert.equal(s.library.find(tiny.id)?.noItemIcons, true);
 });
 
 test('an update rebuilds the item table the old file fed, and a failed download says so and keeps the mod', async (t) => {
@@ -267,6 +283,7 @@ test('a cursor set steps the one that is on aside first, and keeps a copy of its
   const r = await s.call('mods:install', { categoryId: 'cursors', name: 'Gold', fileRef: 'gold.zip' });
   assert.equal(r.ok, true, JSON.stringify(r));
   assert.deepEqual(r.replaced, ['Old cursors']);
+  assert.ok(s.calls.includes('counted cursors/Gold'), 'a catalog install reaches the download counter');
   assert.equal(s.calls[0], 'other cursors off', 'before the new set is written over it');
   assert.equal(stored, r.record.id);
   assert.deepEqual(s.progress.at(-1), { type: 'done', label: 'Gold' });

@@ -1,18 +1,23 @@
-/* Writes manifest.json into a checkout of the arcana bases' repository (src/arcana-base-store.ts):
-   each base under src/<id>/ with git's hash of each of its files, the VPK of them left out.
+/* Writes manifest.json and manifest.json.sig into a checkout of the bases' repository
+   (src/arcana-base-store.ts): each base under src/<id>/ with git's hash of each of its files, the
+   VPK of them left out, and the signature of exactly those bytes.
 
-   The app reads the same list from the repository's git tree on api.github.com, and needs this
-   file only where that host cannot be reached and the mirrors can: so it has to be what the tree
-   says, which is why it is written from the files and not by hand. Run it before each push.
+   The app takes no other list of the bases, and takes this one only with a good signature against
+   BASES_PUBLIC_KEY: so it is written from the files and not by hand, and signed in the same step,
+   so the two cannot go up in different commits. Run it before each push, and commit both.
 
-   Usage: node tools/arcana-bases-manifest.mjs <checkout of d2pfx-arcana-fixes> */
+   The key is the private half of the pair whose public half is BASES_PUBLIC_KEY. It never goes
+   into either repository. `tools/sign-catalog.js --keygen` makes a pair.
+
+   Usage: node tools/arcana-bases-manifest.mjs <checkout of hero-base-fixes> <key.pem> */
 import fs from 'node:fs';
 import path from 'node:path';
-import { blobSha } from '../src/arcana-base-store.ts';
+import crypto from 'node:crypto';
+import { blobSha, signedListing } from '../src/arcana-base-store.ts';
 
-const root = process.argv[2];
-if (!root || !fs.existsSync(path.join(root, 'src'))) {
-  console.error('usage: node tools/arcana-bases-manifest.mjs <checkout with a src/ folder of bases>');
+const [root, keyFile] = process.argv.slice(2);
+if (!root || !fs.existsSync(path.join(root, 'src')) || !keyFile || !fs.existsSync(keyFile)) {
+  console.error('usage: node tools/arcana-bases-manifest.mjs <checkout with a src/ folder of bases> <private key .pem>');
   process.exit(1);
 }
 
@@ -37,5 +42,18 @@ for (const id of fs.readdirSync(path.join(root, 'src')).sort()) {
   bases[id] = files;
   console.log(`${id}: ${Object.keys(files).length} files`);
 }
-fs.writeFileSync(path.join(root, 'manifest.json'), `${JSON.stringify({ bases }, null, 1)}\n`);
-console.log(`\nwrote ${path.join(root, 'manifest.json')}`);
+
+const manifest = `${JSON.stringify({ bases }, null, 1)}\n`;
+const sig = crypto.sign(null, Buffer.from(manifest), crypto.createPrivateKey(fs.readFileSync(keyFile, 'utf8'))).toString('base64');
+// checked as the app will check it: a key that is not the pinned one's pair is caught here, not by
+// every user's app refusing the push
+const listing = signedListing(manifest, sig);
+if (!listing) {
+  console.error(`\n${keyFile} is not the key the app checks against (BASES_PUBLIC_KEY). Nothing written.`);
+  process.exit(1);
+}
+const dropped = Object.keys(bases).filter((id) => Object.keys(bases[id]).length !== Object.keys(listing[id] || {}).length);
+if (dropped.length) console.warn(`\nthe app will leave files of these out (only models/, materials/, particles/): ${dropped.join(', ')}`);
+fs.writeFileSync(path.join(root, 'manifest.json'), manifest);
+fs.writeFileSync(path.join(root, 'manifest.json.sig'), `${sig}\n`);
+console.log(`\nwrote and signed ${path.join(root, 'manifest.json')}`);

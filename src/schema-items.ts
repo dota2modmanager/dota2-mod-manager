@@ -7,6 +7,9 @@ import { readVpkEntryFile } from './vpk.ts';
 import { t } from './i18n.ts';
 import { blockBounds, eachChild, eachChildSteps, type Bounds } from './schema-kv.ts';
 import { drain, PAUSE } from './steps.ts';
+import { pakFiles } from './pak-stamp.ts';
+
+export { gameSchemaStamp } from './pak-stamp.ts';
 
 /** An item of items_game as the pickers read it; see listItems. */
 export interface SchemaItem {
@@ -225,13 +228,31 @@ export function baseItemFor(text: string, slot: string | null | undefined): Sche
 }
 
 /**
+ * The slots the game has no free item for, where it puts on whichever item is flagged as the free
+ * one: the multikill banner (two banners, neither with visuals: the game draws the one worn) and the
+ * Tormentor. A look there is the picked item with "baseitem" set (as ArdysaModsTools does it).
+ */
+export const OWNERLESS_SLOTS = ['multikill_banner', 'tormentor'];
+
+/** An ownerless slot's look: the picked item's block with "baseitem" "1", or null when it is not in that slot. */
+export function ownerlessPatch(text: string, slot: string, itemId: string): string | null {
+  if (!OWNERLESS_SLOTS.includes(slot)) return null;
+  const item = listItems(text).find((i) => i.id === itemId);
+  if (!item || slotOf(item) !== slot) return null;
+  const block = text.slice(item.start, item.end).replace(/[ \t]*"baseitem"[ \t]+"[^"]*"[ \t]*\r?\n/i, '');
+  const close = block.lastIndexOf('}');
+  return `${block.slice(0, close).trimEnd()}\r\n\t\t\t"baseitem"\t\t"1"\r\n\t\t${block.slice(close)}`;
+}
+
+/**
  * What can be put on that base item, read straight out of the installed game: anything Valve
  * adds to the schema later shows up on its own, without an app update.
  * @returns name is the schema's own English name, sorted A-Z
  */
 export function cosmeticOptions(text: string, slot: string): { id: string; name: string }[] {
+  const ownerless = OWNERLESS_SLOTS.includes(slot);
   return listItems(text)
-    .filter((i) => slotOf(i) === slot && !i.baseitem && i.hasVisuals && i.name)
+    .filter((i) => slotOf(i) === slot && !i.baseitem && (i.hasVisuals || ownerless) && i.name)
     .map((i) => ({ id: i.id, name: toUtf8(i.name) }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
@@ -246,7 +267,7 @@ export function readGameSchema(gamePath: string): GameSchema {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   let key: string | null = null;
-  try { key = `${gamePath}|${pakFiles(gamePath, (st) => `${st.size}:${st.mtimeMs}:${st.ino}`)}`; } catch { /* read it anew */ }
+  try { key = `${gamePath}|${pakFiles(gamePath, 'read', (st) => `${st.size}:${st.mtimeMs}:${st.ino}`)}`; } catch { /* read it anew */ }
   if (key && lastRead?.key === key) return lastRead.schema;
   const hit = readVpkEntryFile(pak, SCHEMA_REL);
   if (!hit) throw new Error(t('items_game.txt не найден в pak01 игры'));
@@ -265,18 +286,3 @@ export function readGameSchema(gamePath: string): GameSchema {
  * one string, and the comparison is the engine seeing the same string twice. */
 let lastRead: { key: string; schema: GameSchema } | null = null;
 
-/** Each of the game's pak01 files, as `describe` puts its stat, in name order. */
-function pakFiles(gamePath: string, describe: (st: fs.Stats) => string): string {
-  const dir = path.join(gamePath, 'dota');
-  const parts: string[] = [];
-  for (const f of fs.readdirSync(dir)) {
-    if (!/^pak01_(dir|\d{3})\.vpk$/i.test(f)) continue;
-    parts.push(`${f}:${describe(fs.statSync(path.join(dir, f)))}`);
-  }
-  return parts.sort().join('|');
-}
-
-/** Cheap "did the game update?" probe: size+mtime of the paks that carry the schema. */
-export function gameSchemaStamp(gamePath: string): string {
-  return pakFiles(gamePath, (st) => `${st.size}:${Math.floor(st.mtimeMs)}`);
-}

@@ -12,16 +12,20 @@ import { paint } from '../ui/transitions.ts';
 import { refreshNotices } from '../ui/notice.ts';
 import { loadOrder } from '../library/order.ts';
 import { pruneSelection } from '../library/selection.ts';
+import { labels } from '../library/labels.ts';
 import type { LibRecord } from '../library/types.ts';
 import { showLibrary } from '../library/root.tsx';
 import { actions } from './library/actions.ts';
 import { libraryModel } from './library/build.ts';
 import { lib, screen } from './library/state.ts';
+import { bindRowSelect } from './library/row-select.ts';
 
 export { handleImportResult } from './library/import.ts';
 
 // a visit to the screen draws it fresh, the rows' entrance and all (router.js asks only when stale)
 registerView('library', () => renderLibrary(true));
+// Ctrl and Shift with a click, Ctrl+A, Escape and Delete over the rows
+bindRowSelect(() => actions.bulk('remove'));
 
 /** Read the mods, the folder and the patch state from main again, and draw. */
 async function renderLibrary(fresh = false): Promise<void> {
@@ -29,6 +33,7 @@ async function renderLibrary(fresh = false): Promise<void> {
   // re-read rather than trust the boot copy: the banners over the list are about the folder on
   // disk right now, and a mod can go missing between two visits to this screen
   state.settings = await window.api.settings.get();
+  labels.map = state.settings.modLabels || {};
   lib.stuck = res.verifyStuck || [];
   try { lib.repair = await window.api.patch.repairState(); } catch { lib.repair = { state: 'idle' }; }
   await refreshNotices();

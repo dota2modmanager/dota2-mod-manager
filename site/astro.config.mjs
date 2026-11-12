@@ -52,7 +52,7 @@ function cardText(lang, path) {
   if (path === '/') {
     return {
       title: 'Dota 2 Mod Manager',
-      caption: lang === 'ru' ? 'Мод-менеджер для Доты 2' : 'A mod manager for Dota 2',
+      caption: lang === 'ru' ? 'Менеджер модов и инструменты для модинга Доты 2' : 'The mod manager and modding toolkit for Dota 2',
     };
   }
   if (path === '/docs/') return { title: docsIndex[lang].h1, caption: docsIndex[lang].description };
@@ -77,7 +77,7 @@ export default defineConfig({
         "default-src 'self'",
         "img-src 'self' data: https:",
         "media-src 'self' https:",
-        "connect-src 'self' https://raw.githubusercontent.com https://api.github.com https://pumpkin.dota2modmanager.com",
+        "connect-src 'self' https://raw.githubusercontent.com https://api.github.com https://pumpkin.dota2modmanager.com https://d2pfx-counter.hrdqfck.workers.dev",
         "font-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",

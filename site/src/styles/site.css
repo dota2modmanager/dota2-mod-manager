@@ -689,6 +689,16 @@ section { padding: 56px 0; }
 }
 
 /* the AI tile: the words on the left, the conversation that makes a mod on the right */
+.tile h3 a { color: inherit; text-decoration: none; }
+.tile h3 a:hover { color: var(--primary); }
+.make-all { margin: 24px 0 0; }
+.edges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px 40px; margin-top: 32px; }
+.edge { border-top: 2px solid var(--primary); padding-top: 16px; }
+.edge h3 { margin: 0 0 8px; font-size: 20px; }
+.edge p { margin: 0; color: var(--text-dim); font-size: 15px; }
+@media (max-width: 980px) { .edges { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .edges { grid-template-columns: 1fr; gap: 24px; } }
+
 .tile.ai {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: center;
   min-height: 0;
@@ -996,6 +1006,9 @@ section { padding: 56px 0; }
 }
 .mcard-meta { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-faint); min-width: 0; }
 .mcard-meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* how many times it was downloaded (src/scripts/downloads.ts): at the end of the first row, never cut */
+.mcard-dl { margin-left: auto; padding-left: 4px; display: inline-flex; align-items: center; gap: 3px; flex: none; font-variant-numeric: tabular-nums; }
+.mcard-dl b { font-weight: 600; color: var(--text-dim); }
 .mcard-style { font-size: 12px; font-weight: 600; color: var(--on-primary); background: var(--primary); border-radius: 999px; padding: 1px 8px; justify-self: start; }
 .mcard-add {
   position: absolute; right: 8px; top: 8px; z-index: 1;
@@ -1047,6 +1060,21 @@ section { padding: 56px 0; }
   .pager-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 .prose-block { padding-block: 32px 0; padding-inline: 0; }
+/* the ready-made presets (ReadyPresets.astro): a fan of covers beside what the set is and its mods */
+.ready { padding: 48px 0 0; }
+.ready h2 { font-size: clamp(22px, 2.6vw, 30px); }
+.ready-list { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); list-style: none; padding: 0; margin: 16px 0 0; }
+.ready-card { display: flex; flex-direction: column; background: var(--surface-container); border: 1px solid var(--border); border-radius: var(--radius); }
+.ready-covers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; background: var(--surface-low); border-radius: var(--radius) var(--radius) 0 0; overflow: hidden; }
+.ready-covers img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.ready-body { display: flex; flex-direction: column; gap: 10px; padding: 16px 18px 18px; flex: 1; }
+.ready-body h3 { margin: 0; font-size: 19px; }
+.ready-body h3 small { font-size: 13px; font-weight: 500; color: var(--text-faint); margin-left: 6px; }
+.ready-body > p { margin: 0; color: var(--text-dim); font-size: 14.5px; }
+.ready-mods { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; }
+.ready-mods li { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--surface-low); border: 1px solid var(--border); }
+.ready-mods small { color: var(--text-faint); margin-left: 6px; }
+.ready-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
 .kinds { padding: 48px 0 0; }
 .kinds h2 { font-size: clamp(22px, 2.6vw, 30px); }
 .kinds h2 + .chips { margin-bottom: 24px; }
@@ -1070,6 +1098,13 @@ section { padding: 56px 0; }
 .quick-pic img { width: 100%; height: 100%; object-fit: cover; }
 .quick-body { padding: 22px 24px 24px; display: grid; gap: 14px; }
 .quick-body h2 { margin: 0; font-size: clamp(22px, 3vw, 30px); }
+/* the 18+ question (src/scripts/adult.ts): the quick view's box, narrower, no picture */
+.adult-ask { width: min(520px, calc(100vw - 24px)); }
+.adult-ask p { margin: 0; color: var(--text-dim); }
+.adult-ask .btn-row { justify-content: flex-end; }
+/* the 18+ button sits at the end of the result line, quiet until it is on */
+.result-line .adult-chip { margin-left: auto; --tone: var(--immortal); }
+.mcard-adult { background: var(--immortal); color: #1d1200; }
 .quick-facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; font-size: 14.5px; }
 .quick-facts dt { color: var(--text-faint); }
 .quick-facts dd { margin: 0; color: var(--text); }

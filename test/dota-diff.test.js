@@ -55,7 +55,34 @@ test('changes are counted by folder and by hero', async () => {
   assert.equal(heroOf('models/items/pudge/arcana/a.vmdl_c'), 'pudge');
   assert.equal(heroOf('panorama/layout/hud/x.vxml_c'), null);
   const heroes = byHero(diffLists(parsePakList(PAK_6944), parsePakList(PAK_6952)));
-  assert.deepEqual(heroes, [{ hero: 'pudge', added: 1, modified: 0, removed: 1 }], 'an unchanged voice line counts for nobody');
+  assert.deepEqual(heroes, [{ hero: 'Pudge', added: 1, modified: 0, removed: 1 }], 'an unchanged voice line counts for nobody');
+});
+
+// #228: on 6944 -> 6952 the report listed nyx_assassin and nerubian_assassin as two heroes, and
+// a persona's folder as a hero of its own.
+test('a hero is one row whatever folder Valve files it under, by the name people know', async () => {
+  const { byHero, heroOf } = await load();
+  assert.equal(heroOf('particles/econ/items/nyx_assassin/x.vpcf_c'), 'nerubian_assassin');
+  assert.equal(heroOf('models/heroes/nerubian_assassin/x.vmdl_c'), 'nerubian_assassin');
+  assert.equal(heroOf('models/heroes/antimage_female/x.vmdl_c'), 'antimage');
+  // spellings of Valve's own, seen on 6944 -> 6952 once the first two were folded
+  assert.equal(heroOf('particles/econ/items/legion/x.vpcf_c'), 'legion_commander');
+  assert.equal(heroOf('models/heroes/tiny_03/tiny_03.vmdl_c'), 'tiny');
+  assert.equal(heroOf('materials/models/heroes/witchdoctor/x.vtex_c'), 'witch_doctor');
+  const heroes = byHero({
+    added: [
+      'models/heroes/nerubian_assassin/a.vmdl_c', 'particles/econ/items/nyx_assassin/b.vpcf_c', 'particles/units/heroes/hero_nyx_assassin/c.vpcf_c',
+      'models/heroes/antimage/a.vmdl_c', 'models/heroes/antimage_female/b.vmdl_c',
+      'models/heroes/invoker_kid/a.vmdl_c',
+    ],
+    modified: ['materials/models/heroes/nerubian_assassin/d.vmat_c'],
+    removed: ['models/items/invoker/a.vmdl_c'],
+  });
+  assert.deepEqual(heroes, [
+    { hero: 'Nyx Assassin', added: 3, modified: 1, removed: 0 },
+    { hero: 'Anti-Mage', added: 2, modified: 0, removed: 0 },
+    { hero: 'Invoker', added: 1, modified: 0, removed: 1 },
+  ]);
 });
 
 test('the 6946 rename shows up in the search paths, and comments do not', async () => {

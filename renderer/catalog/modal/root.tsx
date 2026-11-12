@@ -1,5 +1,5 @@
 /* Where the catalog hands a window to React: a mod's (ModModal.tsx), a free look's
- * (cosmetic/CosmeticModal.tsx), the arcana's (arcana/ArcanaModal.tsx) or one of the item
+ * (cosmetic/CosmeticModal.tsx), the arcana's (arcana/ArcanaModal.tsx), towers' or trees' (map/MapLookModal.tsx) or one of the item
  * builder's (builder/). Drawn synchronously, so
  * the window is laid out by the time the overlay shows and modal-motion.ts measures it to grow it
  * out of the card. A builder window carries the number of the time it was opened: the same number
@@ -11,9 +11,17 @@ import { ModModal } from './ModModal.tsx';
 import type { ModModalActions, ModModalModel } from './model.ts';
 import { CosmeticModal, type CosmeticModalActions, type CosmeticModalModel } from '../cosmetic/CosmeticModal.tsx';
 import { ArcanaModal, type ArcanaModalActions, type ArcanaModalModel } from '../arcana/ArcanaModal.tsx';
-import { SlotPicker } from '../builder/SlotPicker.tsx';
+import { MapLookModal, type MapLookModalActions, type MapLookModalModel } from '../map/MapLookModal.tsx';
+import { SoundModal, type SoundModalActions, type SoundModalModel } from '../sounds/SoundModal.tsx';
+import { IconModal, type IconModalActions, type IconModalModel } from '../icons/IconModal.tsx';
+import { BackgroundModal, type BackgroundModalActions, type BackgroundModalModel } from '../background/BackgroundModal.tsx';
+import { HudModal, type HudModalActions, type HudModalModel } from '../hud/HudModal.tsx';
+import { EffectModal, type EffectModalActions, type EffectModalModel } from '../fx/EffectModal.tsx';
+import { RankModal, type RankModalActions, type RankModalModel } from '../rank/RankModal.tsx';
+import { DecorModal, type DecorModalActions, type DecorModalModel } from '../decor/DecorModal.tsx';
+import { PaintModal, type PaintModalActions, type PaintModalModel } from '../paint/PaintModal.tsx';
+import { CreatorModal, type CreatorActions, type CreatorModel } from '../../creator/CreatorModal.tsx';
 import { HeroModal } from '../builder/HeroModal.tsx';
-import { SetModal, SetsModal } from '../builder/SetsModal.tsx';
 import type * as B from '../builder/model.ts';
 
 const panel = document.getElementById('modalContent') as HTMLElement;
@@ -33,14 +41,19 @@ export const clearModal = (): void => show(null);
 export const showModModal = (model: ModModalModel, actions: ModModalActions): void => show(<ModModal m={model} actions={actions} />);
 export const showCosmeticModal = (model: CosmeticModalModel, actions: CosmeticModalActions): void =>
   show(<CosmeticModal m={model} actions={actions} />);
+export const showMapLookModal = (model: MapLookModalModel, actions: MapLookModalActions): void =>
+  show(<MapLookModal m={model} actions={actions} />);
+export const showSoundModal = (model: SoundModalModel, actions: SoundModalActions): void => show(<SoundModal m={model} actions={actions} />);
+export const showIconModal = (model: IconModalModel, actions: IconModalActions): void => show(<IconModal m={model} actions={actions} />);
+export const showPaintModal = (key: number, model: PaintModalModel, actions: PaintModalActions): void => show(<PaintModal key={key} m={model} actions={actions} />);
+export const showBackgroundModal = (model: BackgroundModalModel, actions: BackgroundModalActions): void => show(<BackgroundModal m={model} actions={actions} />);
+export const showHudModal = (model: HudModalModel, actions: HudModalActions): void => show(<HudModal m={model} actions={actions} />);
+export const showEffectModal = (model: EffectModalModel, actions: EffectModalActions): void => show(<EffectModal m={model} actions={actions} />);
+export const showCreatorModal = (model: CreatorModel, actions: CreatorActions): void => show(<CreatorModal m={model} actions={actions} />);
+export const showRankModal = (model: RankModalModel, actions: RankModalActions): void => show(<RankModal m={model} actions={actions} />);
+export const showDecorModal = (model: DecorModalModel, actions: DecorModalActions): void => show(<DecorModal m={model} actions={actions} />);
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 
-export const showSlotPicker = (key: number, m: B.SlotPickerModel, actions: B.SlotPickerActions): void =>
-  show(<SlotPicker key={key} m={m} actions={actions} />);
 export const showHeroModal = (key: number, m: B.HeroModalModel, actions: B.HeroModalActions): void =>
   show(<HeroModal key={key} m={m} actions={actions} />);
-export const showSetsModal = (key: number, m: B.SetsModalModel, actions: B.SetsModalActions): void =>
-  show(<SetsModal key={key} m={m} actions={actions} />);
-export const showSetModal = (key: number, m: B.SetModalModel, actions: B.SetModalActions): void =>
-  show(<SetModal key={key} m={m} actions={actions} />);

@@ -15,8 +15,9 @@ plays every day. A mistake here does not throw a stack trace, it quietly breaks 
 **Their machine.** The app opens archives written by strangers, renders text written by
 strangers, and downloads files over a route it does not control.
 
-**Their privacy.** No account is required, nothing is collected, and the list of addresses the
-app can reach is short and public ([PRIVACY.md](../PRIVACY.md)).
+**Their privacy.** No account is required, nothing about the user is collected, the one count
+(catalog downloads, by mod name) can be switched off, and the list of addresses the app can reach
+is short and public ([PRIVACY.md](../PRIVACY.md)).
 
 ## Trust boundaries
 

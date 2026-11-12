@@ -23,6 +23,9 @@ import { customPacks, saveCustomPacks } from './lists.ts';
 import { doInstall, installPack, onInstalling, packMemberName } from './install.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { installing, screen } from './state.ts';
+import { modIssue } from '../../ui/notice.ts';
+import { catalogOnShow, switchView } from '../../core/router.ts';
+import { modStates } from '../../catalog/modal/status.ts';
 
 interface ModWindow {
   categoryId: string;
@@ -56,6 +59,7 @@ function packMembers(mod: Mod): { name: string; hit: { categoryId: string; mod: 
 
 const NOTE: Record<string, () => string> = {
   fonts: () => L`Шрифт ставится в файлы игры (game\\dota\\panorama\\fonts) — параметр запуска не нужен. Оригиналы сохраняются автоматически.`,
+  emblems: () => L`Эмблема рисуется на кольце под выбранным героем. Пока она включена, приложение само держит в autoexec.cfg команду r_draw_selected_ring 1. Если стоит Minify, выключи в нём Misc Optimization: она прячет это кольцо.`,
   cursors: () => L`Курсор ставится в game\\dota\\resource\\cursor — параметр запуска не нужен. Оригиналы сохраняются автоматически. Включать и выключать его можно в «Моих модах», но активным может быть только один курсор: новый выключит предыдущий.`,
 };
 
@@ -112,6 +116,8 @@ function drawModal(): void {
     guidesHtml: modGuidesHtml(mod),
     links: otherLinks.map((l) => ({ index: links.indexOf(l), label: tr(LINK_LABEL[l.type || ''] || l.type || 'Ссылка') })),
     note: NOTE[categoryId]?.() ?? null,
+    issue: modIssue(categoryId, mod.name),
+    states: categoryId === 'tools' ? [] : modStates(installedRec),
   };
 
   showModModal(model, {
@@ -156,6 +162,16 @@ function drawModal(): void {
       redrawScreen();
       redraw();
     },
+    enable: async () => {
+      if (!installedRec) return;
+      const r = await window.api.mods.setEnabled(installedRec.id, true);
+      if (r.error) { toast(r.error, 'error'); return; }
+      toast(L`${catalogName(mod.name)} включён`);
+      await refreshInstalledIndex();
+      redrawScreen();
+      redraw();
+    },
+    showInLibrary: () => { closeOverlay(); void switchView('library'); },
     runTool: async () => {
       const r = await window.api.misc.runTool(model.toolRelPath);
       if (r.error) toast(r.error, 'error');
@@ -179,5 +195,5 @@ function savePack(mod: Mod, name: string, modNames: string[]): void {
   packs.push({ name, mods: modNames });
   saveCustomPacks(packs);
   toast(L`Пак «${name}» сохранён — он появился в категории Паки`);
-  if (state.view === 'catalog' && state.activeCategory === 'packs') { closeOverlay(); screen.redraw(); }
+  if (catalogOnShow() && state.activeCategory === 'packs') { closeOverlay(); screen.redraw(); }
 }

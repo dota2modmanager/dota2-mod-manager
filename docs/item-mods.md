@@ -40,6 +40,22 @@ assistant follows.
    kills it with the game slowed to a quarter and films the fall close, then six seconds later what
    lies on the ground (`01-death.png`, `01-death-after.png`). A party
    invite that covers the screen at the start is declined.
+
+   **A build that changes the item table** (an unusual effect, another item's effect on the pick,
+   anything the item builder writes into `items_game`) does nothing from the language folder: the
+   game reads the table only through `dota_mods`, the folder the search-path patch registers. Build
+   it in the sandbox, after `node tools/sandbox.js item "<item name>"` has put that item's files
+   into the sandbox's pak01, and pass what the app wrote there:
+   `npm run dota:bench -- --schema "sandbox/steamapps/common/dota 2 beta/game/dota_mods/pak01_dir.vpk"`.
+   The bench puts it in the game's `dota_mods` for the run and the owner's own table back after
+   (`tools/dota-bench/schema.mjs`). It needs safe mode off in the app; a patch a Dota update left
+   unsigned is applied again, as the app's next start would.
+
+   **A sound** (`--sound <the wav>`, without `--short`, `--skills` naming the ability's key) is
+   judged by ear of a kind: what the computer plays during the casts is recorded
+   (`tools/dota-bench/record.ps1`, WASAPI loopback), and the sound looked for in it by normalised
+   cross-correlation (`tools/dota-bench/hear.mjs`). `verdict.json` gets `sound: { heard, score, at }`;
+   the recording stays as `heard.wav`. Leave the game's sound on.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
    the two (`resourceBlock(file, 'ANIM').replace(...)`) and bench each: the block that carries the
@@ -101,6 +117,11 @@ control point 15 (strength in control point 16) and to materials as `$GemColor`.
   gem. For one who does not, there is no gem and CP 16 is 0, so the build writes into the starting
   colours what all the tints would have made of them (`bakeTint`), bringing a colour over 255 down
   whole so its hue stays.
+- An item that comes with no gem (the immortals in `RECOLOR_SETS` marked `bake`: Span of Sorrow,
+  Scythes of Sorrow, Severing Crest) is built the second way for everybody, and its tints are left
+  as they are: a prismatic gem set in the item turns them on and shows that gem's colour. Benched
+  2026-11-04 with the item picked in the item builder (`--schema`): the effects take the colour,
+  the blades' teal is the model's own material and stays.
 - A material reads it in a VfxEval expression, `exists($GemColor) ? $GemColor : float3(...)`. The
   build replaces the read with a constant (`src/material.ts`): the attribute's token is MurmurHash2
   of the lowercased name, seed `0x31415926`; opcodes 0x19 ATTRIBUTE, 0x1F EXISTS, 0x04 BRANCH,

@@ -7,6 +7,7 @@
  *   npm run recolor -- #ffc1dc --out tb.vpk         the same, written where you say
  *   npm run recolor -- 255,193,220 --game "<...>\dota 2 beta\game"
  *   npm run recolor -- ff3c28 --arcana             the arcana itself, for a player who has not got it
+ *   npm run recolor -- --gem "Creators Light" --set techies-arcana   a prismatic gem's colour, by its name
  *
  * The files come out of the game's own pak01 (src/recolor.ts, src/arcana.ts). Without --game, the
  * game folder the app has in its settings is used. Import the VPK in My mods like any other.
@@ -30,13 +31,26 @@ function appGame() {
   try { return JSON.parse(fs.readFileSync(path.join(base, 'Dota 2 Mod Manager', 'settings.json'), 'utf8')).dotaGamePath || null; } catch { return null; }
 }
 
+/** A prismatic gem's colour by its name, out of the game's items_game (src/gem-colors.ts). */
+export async function gemTarget(game, name) {
+  const { sharedVpkIndex } = await import('../src/vpk.ts');
+  const { gemColors, findGem } = await import('../src/gem-colors.ts');
+  const text = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')).read('scripts/items/items_game.txt').toString('latin1');
+  const gems = gemColors(text);
+  const gem = findGem(gems, name);
+  if (!gem) throw new Error(`no gem "${name}"; the game has: ${gems.map((g) => g.name).join(', ')}`);
+  console.log(`${gem.name}: #${gem.rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`);
+  return gem.rgb;
+}
+
 async function main(argv) {
   const opt = (name) => { const i = argv.indexOf(name); return i === -1 ? null : argv[i + 1]; };
-  const target = parseColor(argv.find((a, i) => !a.startsWith('--') && !['--out', '--game', '--set'].includes(argv[i - 1])));
-  if (!target) throw new Error('give a colour: 255,193,220 or #ffc1dc');
   const arcana = argv.includes('--arcana');
   const game = opt('--game') || appGame();
   if (!game) throw new Error('no game folder: pass --game "<...>\\dota 2 beta\\game"');
+  const target = opt('--gem') ? await gemTarget(game, opt('--gem'))
+    : parseColor(argv.find((a, i) => !a.startsWith('--') && !['--out', '--game', '--set', '--gem'].includes(argv[i - 1])));
+  if (!target) throw new Error('give a colour: 255,193,220 or #ffc1dc, or --gem "<name>"');
   const set = opt('--set') || 'terrorblade-arcana';
   const { buildRecolor, RECOLOR_SETS } = await import('../src/recolor.ts');
   const { buildArcana } = await import('../src/arcana.ts');

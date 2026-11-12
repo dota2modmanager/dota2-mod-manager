@@ -58,3 +58,24 @@ export function bulkOffer(sel: Set<string>, records: LibRecord[]): BulkOffer {
   }
   return offer;
 }
+
+/**
+ * A click on a row with Ctrl or Shift held, the way Windows Explorer picks files: Ctrl ticks or
+ * unticks the one row, Shift ticks every row from the last one clicked to this one. Shift adds to
+ * what is ticked rather than replacing it, because a tick here is kept until it is taken off, and
+ * losing a dozen of them to one click would be a surprise.
+ * @param order the rows' keys as the screen shows them, top to bottom
+ * @param anchor the row clicked last, or '' for none
+ * @returns the row the next Shift-click counts from
+ */
+export function clickSelect(sel: Set<string>, order: string[], anchor: string, key: string, mods: { ctrl: boolean; shift: boolean }): string {
+  const from = order.indexOf(anchor);
+  const to = order.indexOf(key);
+  if (mods.shift && from !== -1 && to !== -1) {
+    const [a, b] = from < to ? [from, to] : [to, from];
+    for (const k of order.slice(a, b + 1)) sel.add(k);
+    return anchor;
+  }
+  if (sel.has(key)) sel.delete(key); else sel.add(key);
+  return key;
+}

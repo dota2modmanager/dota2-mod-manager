@@ -18,6 +18,8 @@ export interface OwnPreset {
   id: string;
   name: string;
   count: string;
+  /** what is on is exactly this preset; or it was applied last and something changed since */
+  on: 'active' | 'changed' | null;
   absent: { text: string; title: string } | null;
   /** what the share button says it can carry */
   linkTitle: string;
@@ -43,9 +45,23 @@ export interface SharedPreset {
   warn: string | null;
 }
 
+/** A ready-made preset out of config/presets.json: a build to take in one press. */
+export interface ReadyPreset {
+  id: string;
+  name: string;
+  about: string;
+  count: string;
+  strip: Thumb[];
+  rest: number;
+  cats: PresetCategory[];
+  /** the preset it became when taken, and whether that one is on right now */
+  taken: { on: boolean } | null;
+}
+
 export interface PresetsModel {
   key: number;
   presets: (OwnPreset | SharedPreset)[];
+  ready: ReadyPreset[];
 }
 
 export interface PresetsActions {
@@ -54,6 +70,7 @@ export interface PresetsActions {
   apply: (id: string) => Promise<void>;
   share: (id: string) => void;
   resolve: (id: string) => Promise<void>;
+  takeReady: (id: string) => Promise<void>;
   remove: (id: string) => void;
   menu: (id: string) => { label?: string; icon?: string; separator?: boolean; danger?: boolean; onPick?: () => void }[] | null;
 }

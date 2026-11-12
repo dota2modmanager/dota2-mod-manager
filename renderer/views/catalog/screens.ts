@@ -1,7 +1,13 @@
 /* The catalog's screens as catalog/screen/Screen.tsx draws them: the favourites, the home page,
  * the search results, one category, one slot of free looks. Each works out its model and hands it
  * over inside paint(), so a view transition captures the new screen whole. */
-import { arcanaLead } from './arcana.ts';
+import { arcanaLeads } from './arcana.ts';
+import { mapLookLead } from './map-looks.ts';
+import { soundLead } from './sounds.ts';
+import { backgroundLead } from './background.ts';
+import { hudLead } from './hud.ts';
+import { rankLead } from './rank.ts';
+import { decorLead } from './decor.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
@@ -24,7 +30,7 @@ import { showScreen } from '../../catalog/screen/root.tsx';
 import type { ScreenActions, ToolbarModel } from '../../catalog/screen/model.ts';
 import type { CosmeticItem } from '../../catalog/cosmetic/CosmeticCard.tsx';
 import type { Mod } from '../../catalog/types.ts';
-import { applyFilters, categoryMods, collectSlots, cosmeticFavValue, favoriteCosmetics, favoriteMods, filterCosmetics,
+import { applyFilters, authorsOf, categoryMods, collectSlots, cosmeticFavValue, favoriteCosmetics, favoriteMods, filterCosmetics,
   isGroupedCategory, searchCosmetics, tagLabel, visibleCategories, type Look } from './lists.ts';
 import { view } from './state.ts';
 
@@ -55,7 +61,8 @@ export async function renderFavorites(actions: ScreenActions): Promise<void> {
     kind: 'list',
     key: 'favorites',
     title: L`Избранное`,
-    toolbar: empty ? null : toolbarModel(mods.length + cos.length, { installable, fav: false }),
+    accent: searchAccent(),
+    toolbar: empty ? null : toolbarModel(mods.length + cos.length, { installable, fav: false, all }),
     note: empty ? L`Здесь пусто — жми на сердечко у мода в каталоге` : undefined,
     mods: all.length ? { heading: cosAll.length > 0, mods, withCat: true, emptyText: NOTHING() } : null,
     cosmetics: cosAll.length ? { items: cosmeticItems(cos, true), emptyText: NOTHING() } : null,
@@ -63,7 +70,7 @@ export async function renderFavorites(actions: ScreenActions): Promise<void> {
 }
 
 /** The catalog's own list of what arrived lately, newest first, as mods the app knows. */
-function recentMods(): Mod[] {
+export function recentMods(): Mod[] {
   return (catalogData()?.mods?.recentlyAddedMods || [])
     .map((r) => {
       const hit = state.modIndex.get(r.name.toLowerCase());
@@ -92,7 +99,8 @@ export async function renderRecent(actions: ScreenActions): Promise<void> {
     key: 'recent',
     title: L`Недавно добавленные`,
     back: 'home',
-    toolbar: toolbarModel(mods.length, { installable: all.some(canBeInstalled) }),
+    accent: searchAccent(),
+    toolbar: toolbarModel(mods.length, { installable: all.some(canBeInstalled), all }),
     mods: { heading: false, mods, withCat: true, emptyText: NOTHING() },
     cosmetics: null,
   }, actions));
@@ -115,6 +123,7 @@ export async function renderSearchResults(actions: ScreenActions): Promise<void>
   // whether the "Установленные" chip makes sense at all - decided before filtering, or the chip
   // would vanish once it filtered everything out and could never be undone
   const installable = mods.some(canBeInstalled) || cosAll.length > 0;
+  const all = mods;
   mods = applyFilters(mods);
   const cos = filterCosmetics(cosAll);
   const shownCos = cos.slice(0, COS_SEARCH_LIMIT);
@@ -124,7 +133,7 @@ export async function renderSearchResults(actions: ScreenActions): Promise<void>
     key: 'search',
     title: L`Поиск:`,
     accent: state.search.trim(),
-    toolbar: toolbarModel(mods.length + cos.length, { installable }),
+    toolbar: toolbarModel(mods.length + cos.length, { installable, all }),
     note: !mods.length && !cos.length ? L`Ничего не найдено` : undefined,
     mods: mods.length ? { heading: cos.length > 0, mods, withCat: true } : null,
     cosmetics: cos.length ? {
@@ -153,7 +162,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     : [];
   const mods = applyFilters(all, categoryId);
   const installable = all.some(canBeInstalled);
-  const toolbar = toolbarModel(mods.length, { tags, slots, groups, heroes, categoryId, installable });
+  const toolbar = toolbarModel(mods.length, { tags, slots, groups, heroes, categoryId, installable, all });
   if (byHero && heroGridWanted(f)) {
     const tiles = await heroTiles(mods, (cat: string, m: object) => isInstalled(cat, m as Mod));
     await paint(() => showScreen({ kind: 'heroes', key: `cat:${categoryId}:heroes`, title: catName(categoryId), toolbar, tiles }, actions));
@@ -167,15 +176,28 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   // the mod that names no hero at the end rather than in the middle of the alphabet
   if (grouped && byHero) mods.sort((a, b) => (a._group ? 0 : 1) - (b._group ? 0 : 1) || String(a._group).localeCompare(String(b._group)));
 
-  // the arcana the app builds itself leads the tools, unless the toolbar narrows it away
-  const lead = categoryId === 'tools' && !f.favOnly ? await arcanaLead() : null;
+  // the arcanas the app builds itself lead the tools, unless the toolbar narrows them away
+  const lead = categoryId === 'tools' && !f.favOnly ? await arcanaLeads() : null;
+  const mapLead = !f.favOnly ? await mapLookLead(categoryId) : null;
+  const soundCard = !f.favOnly ? soundLead(categoryId) : null;
+  const backgroundCard = !f.favOnly ? backgroundLead(categoryId) : null;
+  const hudCard = !f.favOnly ? hudLead(categoryId) : null;
+  const rankCard = !f.favOnly ? rankLead(categoryId) : null;
+  const decorCard = !f.favOnly ? decorLead(categoryId) : null;
   await paint(() => showScreen({
     kind: 'list',
     key: `cat:${categoryId}`,
     title: (byHero && heroName(f.hero)) || catName(categoryId),
+    accent: searchAccent(),
     back: byHero && f.hero ? 'heroes' : undefined,
     toolbar,
-    lead: lead && (!f.installedOnly || lead.installed) ? lead : null,
+    lead: lead?.filter((a) => !f.installedOnly || a.installed) ?? null,
+    mapLead: mapLead && (!f.installedOnly || mapLead.installed) ? mapLead : null,
+    soundLead: soundCard && (!f.installedOnly || soundCard.installed) ? soundCard : null,
+    backgroundLead: backgroundCard && (!f.installedOnly || backgroundCard.installed) ? backgroundCard : null,
+    hudLead: hudCard && (!f.installedOnly || hudCard.changed !== null) ? hudCard : null,
+    rankLead: rankCard && (!f.installedOnly || rankCard.installed) ? rankCard : null,
+    decorLead: decorCard && (!f.installedOnly || decorCard.installed) ? decorCard : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },
     cosmetics: null,
   }, actions));
@@ -225,20 +247,29 @@ const GROUP_LABEL: Record<string, string> = {
 // Is the list in front of you shorter than the category itself? That, and only that, is when
 // a number of results is worth printing: it answers "did that chip do anything". Sorting is
 // not narrowing - the same mods come back in another order - so it does not count.
-const narrowed = () => filtersNarrowed(view.filters) || Boolean(state.search.trim());
+// An author remembered from another category and with nothing here is set aside, and narrows nothing.
+const narrowed = (author: string) => filtersNarrowed({ ...view.filters, author }) || Boolean(state.search.trim());
+
+/** The search a list is narrowed by, beside its title. */
+const searchAccent = () => state.search.trim() || undefined;
 
 interface ToolbarParts {
   tags?: string[]; slots?: string[]; groups?: string[]; heroes?: string[];
   categoryId?: string | null; installable?: boolean; fav?: boolean;
+  /** the list before the toolbar narrows it, for its authors */
+  all?: Mod[];
 }
 
 function toolbarModel(resultCount: number,
-  { tags = [], slots = [], groups = [], heroes = [], categoryId = null, installable = true, fav = true }: ToolbarParts): ToolbarModel {
+  { tags = [], slots = [], groups = [], heroes = [], categoryId = null, installable = true, fav = true, all = [] }: ToolbarParts): ToolbarModel {
   const f = view.filters;
+  const { authors, author } = authorsOf(all);
   return {
     resultCount,
-    showCount: narrowed(),
+    showCount: narrowed(author),
     sort: f.sort,
+    authors: authors.map((a) => ({ value: a.name, label: `${a.name} (${a.count})` })),
+    author,
     heroes,
     hero: f.hero,
     groups,

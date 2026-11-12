@@ -20,6 +20,7 @@ import type { Library } from './library.ts';
 import type { createSchemaService } from './schema-service.ts';
 import type { createUpdateImpact } from './update-impact.ts';
 import { createGameRepair, REPAIR_RETRY_MS, type PatchRepair } from './game-repair.ts';
+import { readAppState, steamWork } from './steam-appstate.ts';
 
 /** Mods moved into the folder the game mounts, told to the user once in Settings. */
 type LangMigration = { from: string; to: string; moved: number };
@@ -49,6 +50,9 @@ type RunCommand = (cmd: string, args: string[], done: (err: Error | null, stdout
 
 /** One step of the work done at start: its name for the log, and the work. */
 type Step = { name: string; run: () => unknown };
+
+/** The watch that keeps asking whether Dota is running and tells the window (src/game-watch.ts). */
+export { createGameWatch } from './game-watch.ts';
 
 /** Run each step in order; one that throws is logged as skipped and the rest still run. */
 export async function runSteps(steps: Step[], diag: (msg: string) => void): Promise<void> {
@@ -92,7 +96,8 @@ export function createGameUpkeep({
   let langFolder = gamelang.FALLBACK_FOLDER;
   let langMigration: LangMigration | null = null;
   let slotMigration: { moved: number } | null = null;
-  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, rebuildGenerated, diag, send, isRunning, retryMs, now });
+  const repair = createGameRepair({ settings, installer, library, schemaService, updateImpact, rebuildGenerated, diag, send, isRunning, retryMs, now,
+    steamBusy: () => steamWork(readAppState(settings.get('dotaGamePath'))) });
 
   /* Auto-detect on first run, and re-detect whenever the saved path stopped being a Dota install:
    * a library moved to another drive leaves the old tree behind, and writing mods into it looks
@@ -134,7 +139,7 @@ export function createGameUpkeep({
     if (!game) return;
     const lang = gamelang.detectLangSuffix(game);
     const launched = gamelang.launchLanguage(game);
-    const chosen = gamelang.modFolderFor(launched, lang.suffix);
+    const chosen = gamelang.modFolderFor(launched, lang.suffix, settings.get('langFolderLock'));
     langFolder = chosen.suffix;
 
     /* A launch option is not ours to overrule. While `-language X` is set the engine reads
@@ -144,6 +149,10 @@ export function createGameUpkeep({
      * of mods end up in the one folder the game reads. */
     if (chosen.followed) {
       diag(`launch option -language ${langFolder}: following it instead of setting the voice language`);
+    } else if (chosen.locked && launched) {
+      // kept by the user: the launch option mounts its own folder while it is there, and the mods
+      // wait in theirs for it to go, unmoved and in their order
+      diag(`mods kept in dota_${langFolder}; launch option -language ${launched} mounts dota_${launched} while it is set`);
     } else if (lang.suffix !== langFolder) {
       if (await isRunning()) {
         diag(`audio language is ${lang.suffix}, Dota is running - leaving boot.vcfg alone`);
@@ -156,7 +165,9 @@ export function createGameUpkeep({
     // whatever the mods were following before: our own last setting, and the folder the game was
     // mounting until a moment ago
     let moved = 0;
-    const from = new Set([settings.get('langSuffix'), lang.suffix].filter((s): s is string => !!s && s !== langFolder));
+    // a folder the user keeps takes back only our own last one: the launch option's may hold files
+    // of somebody else's, and it is the one the folder is kept from
+    const from = new Set([settings.get('langSuffix'), chosen.locked && launched ? null : lang.suffix].filter((s): s is string => !!s && s !== langFolder));
     for (const old of from) moved += gamelang.moveLangFolder(game, old, langFolder);
     if (moved) {
       langMigration = { from: [...from][0], to: langFolder, moved };
@@ -243,4 +254,6 @@ export function createGameUpkeep({
 }
 
 export { REPAIR_RETRY_MS } from './game-repair.ts';
+/** What Steam's manifest says before Play: an update still downloading (src/steam-appstate.ts). */
+export { launchWarning } from './steam-appstate.ts';
 export type { PatchRepair, Stuck } from './game-repair.ts';

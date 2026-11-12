@@ -38,6 +38,8 @@ export const COMPILER = 'resourcecompiler.exe';
 /* A hero model with its animations is minutes, not seconds: ResourceCompilerTest gives one ten. */
 const COMPILE_TIMEOUT_MS = 10 * 60 * 1000;
 const ADDON = /^[a-z0-9_]{1,64}$/;
+/** What the compiler says when its libraries are of two different builds of the tools. */
+const SCHEMA_MISMATCH = /Schema mismatches reported/i;
 
 /* The check Settings runs: the smallest model there is, the empty one a persona's base puts at each
  * of the plain hero's slots. It goes through everything a real compile does (Wine, the addon, the
@@ -78,6 +80,20 @@ export function installOf(exe: string | null | undefined): string | null {
 /** A path inside an addon, as the game spells it: forward slashes, nothing that climbs out. */
 export function safeRel(rel: string): boolean {
   return !!rel && !path.isAbsolute(rel) && !/[\\:\0]/.test(rel) && rel.split('/').every((s) => s && s !== '.' && s !== '..');
+}
+
+/** What a Panorama source compiles to: a style, a layout, a script. */
+const PANORAMA: Record<string, string> = { css: '.vcss_c', xml: '.vxml_c', js: '.vjs_c' };
+
+/**
+ * What a source compiles to: a sound (.wav, .mp3) to a .vsnd_c, a Panorama style, layout or
+ * script under panorama/ to .vcss_c, .vxml_c or .vjs_c, anything else to its own name and _c.
+ */
+export function compiledOf(rel: string): string {
+  if (/\.(wav|mp3)$/i.test(rel)) return rel.replace(/\.(wav|mp3)$/i, '.vsnd_c');
+  const pano = /^panorama\/.*\.(css|xml|js)$/i.exec(rel);
+  if (pano) return rel.slice(0, -pano[1].length - 1) + PANORAMA[pano[1].toLowerCase()];
+  return `${rel}_c`;
 }
 
 /** A source file to stage, at its path in the addon (models/heroes/razor/razor.vmdl). */
@@ -199,7 +215,7 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
   /** Everything a compile needs before it starts: the compiler, and here Wine with its prefix made. */
   async function prepare(): Promise<{ exe: string; install: string; wine: string | null }> {
     const found = locate();
-    if (!found) throw new Error(t('resourcecompiler.exe не найден. Он входит в Dota 2 Workshop Tools: поставь их в Steam или укажи файл вручную'));
+    if (!found) throw new Error(t('Нужны Dota 2 Workshop Tools, бесплатное дополнение в Steam. Открой свойства Dota 2, вкладку «Доп. контент», отметь Dota 2 Workshop Tools и дождись загрузки'));
     if (!needsWine) return { ...found, wine: null };
     const w = wine();
     if (!w) throw new Error(t('Для resourcecompiler.exe нужен Wine: поставь его из пакетов своей системы или Proton в Steam'));
@@ -232,7 +248,10 @@ export function createResourceCompiler({ userDataDir, gamePath, chosen, keeper, 
           ? await run(w, [exe, ...args], { cwd: path.dirname(exe), env: wineEnv(prefix), timeoutMs: COMPILE_TIMEOUT_MS })
           : await run(exe, args, { cwd: path.dirname(exe), timeoutMs: COMPILE_TIMEOUT_MS });
         log(`resourcecompiler: ${rel} exited with ${code} after ${((Date.now() - started) / 1000).toFixed(1)} s`);
-        if (code !== 0 || !fs.existsSync(path.join(out, `${rel}_c`))) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', rel, tail(said) || `exit ${code}`));
+        // the tools' own libraries out of step (resourcecompiler.dll and modtools.dll of two Dota
+        // updates): it refuses whatever the file, so the 450 schema lines say nothing to a person
+        if (code !== 0 && SCHEMA_MISMATCH.test(said)) throw new Error(t('Workshop Tools в игре от разных обновлений, и resourcecompiler.exe отказывается собирать. В Steam открой свойства Dota 2, «Установленные файлы», и проверь целостность файлов. Если не помогло, Valve ещё не обновили Workshop Tools под этот патч: подожди их обновления'));
+        if (code !== 0 || !fs.existsSync(path.join(out, compiledOf(rel)))) throw new Error(t('resourcecompiler.exe не собрал {0}: {1}', rel, tail(said) || `exit ${code}`));
       }
       // the compiled files, and not the tools' own notes about the addon beside them
       return walk(out).filter((rel) => rel.endsWith('_c') && !/^tools_/.test(rel)).map((rel) => entryAt(rel, fs.readFileSync(path.join(out, rel))));

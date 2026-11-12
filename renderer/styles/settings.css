@@ -81,3 +81,94 @@
 .settings-link { color: var(--primary-soft); cursor: pointer; font-size: var(--text-sm); }
 .settings-block .modal-note { margin-top: var(--space-3); }
 .settings-block .modal-note .btn { margin-left: var(--space-2); }
+
+/* ============ Settings: About ============
+   The support strip is the one tinted surface on the page: everything else in this block is
+   for reading, and it is the one row that asks for something. */
+.about-support {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--primary-dim);
+}
+.about-support > .ms {
+  font-size: var(--icon-xl);
+  color: var(--primary-soft);
+  font-variation-settings: 'FILL' 1;
+  flex-shrink: 0;
+}
+.about-support-text { flex: 1; min-width: 0; }
+.about-support-title { font-family: var(--font-head); font-size: var(--text-base); font-weight: var(--weight-bold); }
+.about-support-text .settings-hint { margin-top: var(--space-1); }
+.about-support .btn { flex-shrink: 0; }
+
+.about-app {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+.about-name { font-family: var(--font-head); font-size: var(--text-md); font-weight: var(--weight-bold); }
+.about-ver { font-size: var(--text-sm); color: var(--text-muted); }
+.about-gap { flex: 1; }
+.about-app .btn { align-self: center; }
+
+.about-sub {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text);
+}
+/* who did what, as one table: the roles line up, so do the names, so do the links */
+.about-credits {
+  display: grid;
+  grid-template-columns: max-content max-content 1fr;
+  align-items: baseline;
+  column-gap: var(--space-5);
+  row-gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+}
+.about-role { color: var(--text-muted); }
+.about-legal {
+  margin-top: var(--space-5);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--text-faint);
+}
+@media (max-width: 620px) {
+  .about-support { flex-wrap: wrap; }
+  .about-credits { grid-template-columns: 1fr; row-gap: 0; }
+  .about-role { margin-top: var(--space-2); }
+}
+
+/* The download cache, one archive at a time (issue #430): a long list folded under the total,
+   each name cut with an ellipsis so a 150-character archive name cannot push the button off. */
+.cache-files .cache-file { margin-bottom: 6px; }
+.cache-file-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.cache-file-cat { margin-left: 8px; color: var(--text-muted); font-size: var(--text-sm); }
+
+/* "Repair the app": a line per step, green when it found nothing wrong (src/app-repair.ts) */
+.repair-steps { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.repair-steps li { display: flex; align-items: flex-start; gap: var(--space-2); }
+.repair-steps li .ms { font-size: 18px; }
+.repair-steps li.ok .ms { color: var(--success, #4ade80); }
+.repair-steps li.bad .ms { color: var(--warning); }
+.repair-mods { display: block; color: var(--text-muted); font-size: var(--text-xs); margin-top: 2px; }
+
+/* "Game files" (settings/GameFilesBlock.tsx): the state beside the switch, and the line when the
+   edit fell off */
+.settings-state { margin-left: auto; font-size: var(--text-sm); color: var(--text-muted); }
+.settings-hint.warn { color: var(--warning); }
+
+/* switches that belong together (GridBlock.tsx): one column after the longest name, the name a click target too */
+.settings-switches { display: grid; grid-template-columns: max-content auto; justify-content: start; align-items: center; gap: var(--space-3) var(--space-5); margin-top: var(--space-2); }
+.settings-switch-row { display: contents; cursor: pointer; }
+.settings-switches .settings-label { min-width: 0; }
+.settings-switches + .settings-hint { margin-top: var(--space-4); }

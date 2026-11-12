@@ -24,14 +24,18 @@ the modding commands: they run on Node's own modules. Run it only to build the a
 
 The skill is the folder `skills/dota2-modding` in that checkout.
 
-- **Claude Code:** in the session, run
-  `/plugin marketplace add dota2modmanager/dota2-mod-manager`, then
+- **Claude Code:** the person types these two in the session (an assistant cannot run a slash
+  command itself): `/plugin marketplace add dota2modmanager/dota2-mod-manager`, then
   `/plugin install dota2-modding@dota2modmanager`. Or copy the folder to
   `~/.claude/skills/dota2-modding` (all projects) or `.claude/skills/dota2-modding` (this one).
 - **Another agent that reads Agent Skills (a folder with SKILL.md):** copy the folder into that
   agent's skills directory.
 - **An agent without skills:** add this line to the AGENTS.md (or rules file) of the folder you
   work in: `For Dota 2 mods, read <checkout>/skills/dota2-modding/SKILL.md first and follow it.`
+
+Installing is a convenience, not a step the rest depends on: an assistant that cannot install it
+(or is not allowed to change the person's settings) reads `<checkout>/skills/dota2-modding/SKILL.md`
+straight from the clone and follows it.
 
 From now on, read `SKILL.md` at the start of any Dota 2 modding task.
 

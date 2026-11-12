@@ -92,16 +92,16 @@ const NO_INSTALLER: SchemaInstaller = {
   installedSize: () => { throw new Error('the installer was not meant to be asked'); },
 };
 
-function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild } = {} as {
+function service(t: TestContext, { values = {}, installer = NO_INSTALLER, text = GAME_TABLE, bases, onBuild, onDeployed, modsOff, pak } = {} as {
   values?: Record<string, unknown>; installer?: SchemaInstaller; text?: string; bases?: Parameters<typeof createSchemaService>[0]['bases'];
-  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild'];
+  onBuild?: Parameters<typeof createSchemaService>[0]['onBuild']; onDeployed?: (filled: Set<string>) => void; modsOff?: () => boolean; pak?: Parameters<typeof createSchemaService>[0]['pak'];
 }) {
   const g = game(t, text);
   fs.mkdirSync(g.userData, { recursive: true });
   const library = new Library(g.userData);
   const settings = settingsIn({ dotaGamePath: g.game, schemaPatch: false, ...values });
   const said: string[] = [];
-  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild });
+  const svc = createSchemaService({ settings, library, installer, userDataDir: g.userData, log: (m) => said.push(m), bases, onBuild, onDeployed, pak, modsOff });
   return { ...g, library, settings, svc, said };
 }
 
@@ -171,6 +171,23 @@ test('a mod switched off leaves the table, and with nothing left the table goes'
   assert.equal(s.svc.state().mods, 0);
 });
 
+test('with every mod off the table goes, cosmetics and all, and comes back when they are on', (t) => {
+  let off = false;
+  const s = service(t, { values: { schemaPatch: true }, modsOff: () => off });
+  modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+  s.svc.setEnabled(true);
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), true);
+
+  off = true;
+  assert.deepEqual(s.svc.refresh(), { ok: true, deployed: false, patches: 0 });
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, '"mods off" said vanilla, and the picked items stayed on');
+  assert.equal(s.settings.get('schemaPatch'), true, 'the patch itself stays on: safe mode is a switch of its own');
+
+  off = false;
+  assert.equal((s.svc.refresh() as { deployed?: boolean }).deployed, true);
+  assert.match(deployedTable(s.game) as string, /models\/mod\/rifle\.vmdl/);
+});
+
 // ---------- a Dota update ----------
 
 test('a game update is noticed, and repaired: the patch put back and the table rebuilt on the new one', (t) => {
@@ -210,6 +227,23 @@ test('a table built by older code is rebuilt at the next start or launch, the ga
   assert.equal(s.svc.state().stale, true);
   assert.deepEqual(s.svc.heal(), { ok: true, healed: ['schema'] });
   assert.equal(s.settings.get('schemaStamp'), built);
+});
+
+test('a build the last run never wrote is built at the next start, and a write it left half done is taken away', (t) => {
+  const s = service(t);
+  const rifle = modWith(s.library, 'Rifle mod', [riflePatch('models/mod/rifle.vmdl')]);
+  s.svc.setEnabled(true);
+  assert.equal(s.settings.get('schemaPending'), false, 'a build that wrote says so');
+  // the app closed while the table was written: the library moved on, the game did not
+  s.library.setEnabled(rifle.id, false);
+  s.settings.set('schemaPending', true);
+  const dir = path.join(s.game, patcher.FOLDER);
+  fs.writeFileSync(path.join(dir, `${schema.SCHEMA_VPK}.999999-1.mmtmp`), 'half a pak');
+  fs.writeFileSync(path.join(dir, `${schema.SCHEMA_VPK}.${process.pid}-7.mmtmp`), 'a write of this run, still going');
+  assert.deepEqual(s.svc.heal(), { ok: true, healed: ['schema'] }, 'the stamp still matched, and the start did not notice');
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, 'the game caught up: its only mod is off, so the table went');
+  assert.equal(s.settings.get('schemaPending'), false);
+  assert.deepEqual(fs.readdirSync(dir).filter((f) => f.endsWith('.mmtmp')), [`${schema.SCHEMA_VPK}.${process.pid}-7.mmtmp`]);
 });
 
 test("the code's fingerprint follows its files", (t) => {
@@ -409,6 +443,26 @@ const STYLED_TABLE = table([
 ]);
 const soundFile = (events: [string, string][]) => resource([['DATA', encodeKv3({ obj: events.map(([name, file]) => [name, { obj: [['vsnd_files', { arr: [{ str: file }] }]] }]) })]]);
 
+test('with the table off a pick goes in as a pak of its own, and leaves with the last pick', (t) => {
+  const written: Buffer[] = [];
+  const pak = {
+    langFolder: () => 'lang', ensureLangFolder: () => {}, usedPakNames: () => new Set<string>(), allocatePak: () => 'pak09_dir.vpk',
+    writeInto: (vpk: Buffer) => { written.push(vpk); }, remove: () => {}, slotBase: () => null, moveToSlot: (r: { files: LibFile[] }) => r.files, setEnabled: () => {},
+  };
+  const s = service(t, { text: STYLED_TABLE, pak: pak as never });
+  fs.writeFileSync(path.join(s.game, 'dota', 'pak01_dir.vpk'), schema.buildSchemaVpk(STYLED_TABLE, []));
+
+  const rec = s.svc.pickCosmetic('item:earthshaker:arms', '7293', 'Bracers of the Cavern Luminar', '') as LibRecord;
+  assert.equal(written.length, 1, 'the pick was built with nothing asked of the game');
+  assert.equal(schema.isDeployed(s.game, patcher.FOLDER), false, 'and no table went up');
+  assert.equal(s.library.list().filter((r) => (r.generated as { itemFiles?: boolean } | undefined)?.itemFiles).length, 1);
+  assert.equal(s.svc.state().cosmeticsPicked, 0, 'a pick that goes as files waits for nothing');
+
+  s.library.removeRecord(rec.id);
+  s.svc.refresh();
+  assert.equal(s.library.list().length, 0, 'the last pick took the pak with it');
+});
+
 test("a pick's sounds go into the built table's pak, its styles are named from the game, and a broken file costs only the sounds", (t) => {
   const s = service(t, { values: { schemaPatch: true }, text: STYLED_TABLE });
   const pak = (rules: Buffer) => fs.writeFileSync(path.join(s.game, 'dota', 'pak01_dir.vpk'), schema.buildSchemaVpk(STYLED_TABLE, [
@@ -495,6 +549,18 @@ test('an arcana picked puts its base on once it is here, its own part takes the 
   assert.equal(built('models/heroes/juggernaut/jugg_mask.vmdl_c'), "Valve's arcana mask", 'and the mask alone is Valve\'s again');
 });
 
+test('the paths the table hands the arcana window take in its arcana base, not only the files of the picks', (t) => {
+  // the window's Terrorblade loads ahead of the table and gives up what it is told the table fills:
+  // told only the picks' files, it kept Valve's materials over the base's, and the body was plain
+  const bases = { entries: (id: string) => (id === 'bladeform_legacy' ? Object.entries(BASE).map(([p, d]) => entryAt(p, Buffer.from(d))) : null), want: async () => true };
+  let filled = new Set<string>();
+  const s = service(t, { values: { schemaPatch: true }, text: ARCANA_TABLE, bases, onDeployed: (f) => { filled = f; } });
+  fs.writeFileSync(path.join(s.game, 'dota', 'pak01_dir.vpk'), schema.buildSchemaVpk(ARCANA_TABLE,
+    Object.entries(VALVE).map(([p, d]) => entryAt(p, Buffer.from(d)))));
+  s.svc.pickCosmetic('item:juggernaut:body', '9059', 'Bladeform Legacy', '');
+  for (const p of Object.keys(BASE)) assert.ok(filled.has(p), p);
+});
+
 // ---------- building in the background ----------
 
 /** The Juggernaut table with Valve's files in the game's pak, for the builder's picks. */
@@ -578,8 +644,8 @@ test('the bar shows a build only once it has run long enough to be seen, and cou
   bar({ stage: 'packed' });
   bar(null);
   assert.deepEqual(sent, [
-    { type: 'count', label: 'Building items', done: 3, total: 3 },
-    { type: 'count', label: 'Building items', done: 3, total: 3 },
+    { type: 'count', label: 'Building items', done: 3, total: 3, cancel: 'schema' },
+    { type: 'count', label: 'Building items', done: 3, total: 3, cancel: 'schema' },
     { type: 'done' },
   ], 'past the wait: the count, full while the pak is written, then the end');
 

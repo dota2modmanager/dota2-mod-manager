@@ -14,7 +14,7 @@ install: the commands that need a game build a throwaway one first (`npm run san
 |---|---|---|---|
 | The code does what its tests say: more than 1,300 tests in 150 files | `test/` | Tests: `test` (Linux), `windows` | `npm test` |
 | Coverage does not go backwards: lines 92.9%, branches 86.9%, functions 91.6% on 2026-10-11 | `.github/coverage-baseline.json`, a floor that only rises | Tests | `npm run verify` |
-| The tests catch real breakage, not only run the code | 207 deliberate breakages in `.github/mutants.json`, each with the test file that has to go red | Mutants, weekly; `test/mutate.test.js` holds every entry against today's source on every push | `npm run mutate` |
+| The tests catch real breakage, not only run the code | 210 deliberate breakages in `.github/mutants.json`, each with the test file that has to go red | Mutants, weekly; `test/mutate.test.js` holds every entry against today's source on every push | `npm run mutate` |
 | Malformed archives and VPK files are refused, not trusted | `test/safe-zip-fuzz.test.js`, `test/vpk-fuzz.test.ts` | Tests | `npm run fuzz` |
 | An install interrupted at any point leaves the game folder whole | `test/file-tx-crash.test.ts` kills a child process with SIGKILL at every write in turn and checks what it left | Tests | `node --test test/file-tx-crash.test.ts` |
 
@@ -23,7 +23,7 @@ install: the commands that need a game build a throwaway one first (`npm run san
 | Claim | Evidence | Runs in CI as | Run it yourself |
 |---|---|---|---|
 | A mod installs, switches and uninstalls through the real window, and the game folder ends byte for byte as it started | `tools/e2e.mjs` presses the buttons in the real window over a sandbox game tree, with a fixed catalog so the check does not depend on the live one | Window: "Install a mod through the window", on Linux and on Windows | `npm run e2e` |
-| It works on the screens and renderers people have: 1366x768 to 4K, scales from 100% to 200%, software rendering, no GPU raster | `tools/sim/`, the profiles in `tools/sim/profiles.json` | Simulation: one screen per system on every pull request, the full set nightly | `npm run sim` |
+| It works on the screens and renderers people have: 1366x768 to 4K, scales from 100% to 200%, software rendering, no GPU raster | `tools/sim/`, the profiles in `tools/sim/profiles.json` | Simulation: the full set nightly, a failed scenario launched twice before it counts | `npm run sim` |
 | An update keeps your mods, your favourites and your settings | `.github/workflows/update.yml` installs the last release, uses it, runs a freshly built installer over it the way an update arrives, and checks everything is still there | Update, on pull requests that touch the path and weekly | in CI only: it installs software |
 | The keyboard and a screen reader can do what a mouse can | [docs/accessibility.md](accessibility.md): each promise with the check behind it | Simulation, the a11y scenario | `npm run sim -- --scenario a11y` |
 

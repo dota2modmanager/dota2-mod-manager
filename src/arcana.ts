@@ -21,59 +21,15 @@
  *   until the files it was built from change, so the app builds it again then.
  * Not here: the kill effect (a modifier the item adds), the arcana's sounds and voice lines.
  */
-import { readKv3, numberOf, type Kv3Node } from './kv3.ts';
+import { readKv3, numberOf, type Kv3Block, type Kv3Node } from './kv3.ts';
 import { writeKv3 } from './kv3-write.ts';
 import { recolorFiles, recolorResource, RECOLOR_SETS, type Rgb } from './recolor.ts';
 import { dataBlock, resourceBlock, resourceBlocks, withReferences } from './resource.ts';
 import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
+import { ARCANA_SETS, type Child } from './arcana-sets.ts';
 
-export interface ArcanaSet {
-  /** the recolour set with the arcana's particles and materials */
-  recolor: string;
-  /** models to put under another name: game path -> the model in pak01, and the activity modifier
-   *  the item turns on for it, whose animations are to play without it */
-  models: Record<string, { from: string; modifier?: string }>;
-  /** images whose name with this removed is the plain one (`_alt1`) */
-  images: { under: string[]; mark: string; hero: string };
-  /** a particle the hero creates, the arcana's version of it, and the arcana's own particles to hang on it */
-  host: { at: string; from: string; children: Child[] };
-  /** another item's particle the arcana swaps for one of its own while both are worn (its visuals
-   *  in items_game): game path -> the arcana's version in pak01 */
-  swaps?: Record<string, string>;
-  /** a particle an item of the hero's form creates in the loadout only, hung on one the game creates
-   *  in that form (at), on the form's attachment, while the item is picked in the builder */
-  forms?: { item: string; at: string; child: string; attachment: string }[];
-}
+export { ARCANA_SETS, type ArcanaSet, type Child } from './arcana-sets.ts';
 
-/** A particle to hang on another, and the model attachment it is drawn at (none: its parent's first point). */
-export interface Child { path: string; attachment?: string }
-
-const TB = 'particles/units/heroes/hero_terrorblade';
-const ARCANA = 'particles/econ/items/terrorblade/terrorblade_horns_arcana';
-const DREADHUNT = 'particles/econ/items/terrorblade/dreadhunt';
-
-export const ARCANA_SETS: Record<string, ArcanaSet> = {
-  'terrorblade-arcana': {
-    recolor: 'terrorblade-arcana',
-    models: {
-      'models/heroes/terrorblade/terrorblade.vmdl_c': { from: 'models/heroes/terrorblade/terrorblade_arcana.vmdl_c', modifier: 'abysm' },
-      'models/heroes/terrorblade/horns.vmdl_c': { from: 'models/heroes/terrorblade/horns_arcana.vmdl_c' },
-    },
-    images: { under: ['panorama/images/heroes/', 'panorama/images/spellicons/'], mark: '_alt1', hero: 'terrorblade' },
-    host: {
-      at: `${TB}/terrorblade_ambient_eyes.vpcf_c`,
-      from: `${ARCANA}/terrorblade_ambient_eyes_arcana_horns.vpcf_c`,
-      // its own preview puts it on the horns' attach_hitloc, the chest
-      children: [{ path: `${ARCANA}/terrorblade_ambient_body_arcana_horns.vpcf`, attachment: 'attach_hitloc' }],
-    },
-    // Rictus Ripper's head (31411) creates an eye with nothing in it; worn with the arcana, the
-    // eye is the arcana's, whose glow takes the gem's colour (Fractal Horns' visuals, 2026-10-19)
-    swaps: { [`${DREADHUNT}/dreadhunt_head_ambient.vpcf_c`]: `${DREADHUNT}/dreadhunt_arcana_head_ambient.vpcf_c` },
-    // Rictus Ripper's demon (31410) has its eye spawn_in_loadout_only: in a match the demon had none.
-    // The game creates the metamorphosis on the demon, so the eye goes on it, at the demon's eye
-    forms: [{ item: '31410', at: `${TB}/terrorblade_metamorphosis.vpcf_c`, child: `${DREADHUNT}/dreadhunt_demon_ambient.vpcf`, attachment: 'attach_eye' }],
-  },
-};
 
 type Obj = Extract<Kv3Node, { kind: 'object' }>;
 type Arr = Extract<Kv3Node, { kind: 'array' }>;
@@ -123,6 +79,16 @@ export function withChildren(file: Buffer, children: Child[]): Buffer {
   return withReferences(block.replace(writeKv3(kv)), children.map((c) => c.path));
 }
 
+/** The highest control point the operators name, -1 for none. A point set with no number is 1. */
+function usedPoints(kv: Kv3Block, ops: Obj[]): number {
+  let top = -1;
+  for (const o of ops) {
+    if ((o.members.get('_class') as { value?: string } | undefined)?.value === 'C_OP_SetSingleControlPointPosition' && !o.members.has('m_nCP1')) top = Math.max(top, 1);
+    for (const [key, v] of o.members) if (v.kind === 'number' && /^m_n\w*(CP|ControlPoint)\w*$/.test(key)) top = Math.max(top, numberOf(kv, v));
+  }
+  return top;
+}
+
 /**
  * A particle with one more child, drawn at an attachment its parent did not bind: the host binds a
  * new control point to it in its first configuration, and hands that point to the child as its
@@ -137,14 +103,22 @@ export function withChildAt(file: Buffer, child: string, attachment: string): Bu
   const list = root?.get('m_Children') as Arr | undefined;
   const first = list?.items[0] as Obj | undefined;
   const drivers = ((root?.get('m_controlPointConfigurations') as Arr | undefined)?.items[0] as Obj | undefined)?.members.get('m_drivers') as Arr | undefined;
-  const like = drivers?.items.find((d) => d.kind === 'object' && d.members.has('m_attachmentName') && d.members.has('m_iControlPoint')) as Obj | undefined;
+  // a driver with no m_iControlPoint binds the first point (Techies' ambient has only that one)
+  const binds = (d: Kv3Node, ...keys: string[]) => d.kind === 'object' && keys.every((x) => d.members.has(x));
+  const like = (drivers?.items.find((d) => binds(d, 'm_attachmentName', 'm_iControlPoint')) ?? drivers?.items.find((d) => binds(d, 'm_attachmentName'))) as Obj | undefined;
   const ref = first?.kind === 'object' ? first.members.get('m_ChildRef') : undefined;
   const name = like?.members.get('m_attachmentName');
   if (!root || !list || first?.kind !== 'object' || ref?.kind !== 'string' || !drivers || !like || name?.kind !== 'string') {
     throw new Error('arcana: the host binds no control point to an attachment');
   }
-  if (root.has('m_PreEmissionOperators')) throw new Error('arcana: the host already hands its children points');
-  const point = drivers.items.length;
+  const pre = root.get('m_PreEmissionOperators') as Arr | undefined;
+  const ops = (pre?.items ?? []).filter((o): o is Obj => o.kind === 'object');
+  if (ops.some((o) => (o.members.get('_class') as { value?: string } | undefined)?.value === 'C_OP_SetParentControlPointsToChildCP')) {
+    throw new Error('arcana: the host already hands its children points');
+  }
+  // a point nobody uses: the host's own operators may place points it never binds (Techies' ambient
+  // sets 1 and 2 beside the cart), and the new one must not land on them
+  const point = Math.max(drivers.items.length, usedPoints(kv, ops) + 1);
   const driver = new Map(like.members);
   driver.set('m_iControlPoint', int32(point));
   driver.set('m_attachmentName', { ...name, value: attachment });
@@ -154,7 +128,8 @@ export function withChildAt(file: Buffer, child: string, attachment: string): Bu
   list.items.unshift({ kind: 'object', members });
   const hand = new Map<string, Kv3Node>([['_class', { kind: 'string', value: 'C_OP_SetParentControlPointsToChildCP' }],
     ['m_nNumControlPoints', int32(1)], ['m_nFirstSourcePoint', int32(point)]]);
-  root.set('m_PreEmissionOperators', { ...list, items: [{ kind: 'object', members: hand }] });
+  if (pre) pre.items.push({ kind: 'object', members: hand });
+  else root.set('m_PreEmissionOperators', { ...list, items: [{ kind: 'object', members: hand }] });
   return withReferences(block.replace(writeKv3(kv)), [child]);
 }
 
@@ -284,7 +259,10 @@ export function buildArcana({ pak01, set, target, skip, forms = [] }: { pak01: s
   for (const [to, { from, modifier }] of Object.entries(def.models)) files.set(to, asModel(index.read(from) as Buffer, modifier));
   for (const [p, data] of arcanaPictures(pak01, set)) files.set(p, data);
   for (const [p, data] of arcanaSwaps(pak01, set, target)) files.set(p, data);
-  const host = withChildren(index.read(def.host.from) as Buffer, def.host.children);
+  const from = index.read(def.host.from) as Buffer;
+  const host = def.host.bind
+    ? def.host.children.reduce((f, c) => withChildAt(f, c.path, c.attachment || ''), from)
+    : withChildren(from, def.host.children);
   files.set(def.host.at, recolorResource(host, target, { gem: RECOLOR_SETS[def.recolor].gem, bake: true }).file);
   arcanaForms(pak01, set, target, forms, files);
   for (const p of files.keys()) if (skip?.(p.toLowerCase())) files.delete(p);

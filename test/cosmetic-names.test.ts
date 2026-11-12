@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { localizationTokens, cosmeticNameTable, chineseCosmeticNames } from '../src/cosmetic-names.ts';
+import { localizationTokens, cosmeticNameTable, chineseCosmeticNames, gameTokens } from '../src/cosmetic-names.ts';
 import { buildVpk, crc32 } from '../src/vpk.ts';
 import { cosmeticName, cosmeticNameMatches, setCosmeticNames } from '../renderer/ui/cosmetic-name.ts';
 import { byName, matchingSets } from '../renderer/catalog/builder/logic.ts';
@@ -60,6 +60,29 @@ test('installed localization is cached, invalidated after a game update, and opt
   fs.writeFileSync(pak, buildVpk([]));
   assert.equal(Object.keys(chineseCosmeticNames(game, table)).length, 0);
   assert.deepEqual(chineseCosmeticNames(path.join(game, 'missing'), table), {});
+});
+
+test("the game's text in the app's language is read once per game build and language, dota_*.txt first, and is empty with no game", (t) => {
+  // style, rarity and event names and the sets' descriptions all come from here (src/item-builder-details.ts)
+  const game = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-game-text-'));
+  t.after(() => fs.rmSync(game, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(game, 'dota'));
+  const write = (files: Record<string, string>) => fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk(Object.entries(files).map(([file, text]) => {
+    const data = Buffer.from(text);
+    return { ext: 'txt', folder: path.posix.dirname(file), name: path.posix.basename(file, '.txt'), data, preload: Buffer.alloc(0), crc: crc32(data) };
+  })));
+  write({
+    'resource/localization/dota_english.txt': language('"DOTA_EventName_Spring2021" "Nemestice" "DOTA_Item_Desc_X" "from dota"'),
+    'resource/localization/items_english.txt': language('"DOTA_Item_Desc_X" "from items" "DOTA_Item_Desc_Y" "only in items"'),
+    'resource/localization/dota_russian.txt': language('"DOTA_EventName_Spring2021" "Враждостояние"'),
+  });
+  const en = gameTokens(game, 'en');
+  assert.deepEqual([en.get('dota_eventname_spring2021'), en.get('dota_item_desc_x'), en.get('dota_item_desc_y')], ['Nemestice', 'from dota', 'only in items']);
+  assert.equal(gameTokens(game, 'en'), en, 'the same build and language: read once');
+  assert.equal(gameTokens(game, 'ru').get('dota_eventname_spring2021'), 'Враждостояние');
+  write({ 'resource/localization/dota_english.txt': language('"DOTA_EventName_Spring2021" "Nemestice, after an update"') });
+  assert.equal(gameTokens(game, 'en').get('dota_eventname_spring2021'), 'Nemestice, after an update');
+  assert.equal(gameTokens(path.join(game, 'missing'), 'en').size, 0);
 });
 
 test('Chinese labels and bilingual searches do not change item ids, icon keys or English/Russian labels', () => {

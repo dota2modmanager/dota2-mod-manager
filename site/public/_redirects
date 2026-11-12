@@ -3,3 +3,23 @@
 # Google worked out which one we meant and skipped the rest. The canonical was doing its job,
 # but making the duplicate a redirect says it in the one language nobody has to interpret.
 https://www.dota2modmanager.com/* https://dota2modmanager.com/:splat 301!
+
+# Pages that 18+ mods had until 2026-11-07, when they came off every page (src/lib/heroes.ts).
+# A Pages edge that already handed one out kept serving its copy for days after the deploy
+# that removed it, past a cache purge. A redirect is answered before any file is looked up.
+/mods/pudge-with-a-penis/ /catalog/ 301
+/ru/mods/pudge-with-a-penis/ /ru/catalog/ 301
+/mods/nude-naga-siren/ /catalog/ 301
+/ru/mods/nude-naga-siren/ /ru/catalog/ 301
+/mods/nude-drow-ranger/ /catalog/ 301
+/ru/mods/nude-drow-ranger/ /ru/catalog/ 301
+/mods/nude-drow-ranger-v2/ /catalog/ 301
+/ru/mods/nude-drow-ranger-v2/ /ru/catalog/ 301
+/mods/nude-queen-of-pain/ /catalog/ 301
+/ru/mods/nude-queen-of-pain/ /ru/catalog/ 301
+/mods/nude-marci/ /catalog/ 301
+/ru/mods/nude-marci/ /ru/catalog/ 301
+/mods/tcoaal-mach-v1/ /catalog/ 301
+/ru/mods/tcoaal-mach-v1/ /ru/catalog/ 301
+/mods/tcoaal-mach-v2/ /catalog/ 301
+/ru/mods/tcoaal-mach-v2/ /ru/catalog/ 301

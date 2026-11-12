@@ -35,8 +35,8 @@ const CUT = {
   announcers: { pad: 0, ratio: 0.62 },
   tools: { pad: 0, ratio: 0.62 },
   cosmetics: { pad: 0, ratio: 0.62 },
-  'safe-mode': { pad: 0 },
-  'safe-confirm': { pad: 0 },
+  'game-files': { pad: 8 },
+  'item-table-confirm': { pad: 0 },
 };
 const WIDTH = 1200;
 

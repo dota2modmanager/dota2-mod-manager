@@ -102,3 +102,18 @@ test('the prize goes only to the install that spent the key', async () => {
   assert.deepEqual([...new Uint8Array(await ok.arrayBuffer())], [1, 2, 3]);
   assert.equal((await call('GET', `/mod?key=${key}&install=${INSTALL_B}`)).status, 403);
 });
+
+test('a game that speaks Russian gets the prize with the Russian voice, any other the plain one', async () => {
+  const { env, call } = setup();
+  const { key } = await (await call('POST', '/claim', { ticket: await oldTicket(env, 20000) })).json();
+  await call('POST', '/redeem', { key, install: INSTALL_A });
+  const bytes = async (q: string) => [...new Uint8Array(await (await call('GET', `/mod?key=${key}&install=${INSTALL_A}${q}`)).arrayBuffer())];
+  // no Russian pack in the bucket yet: the plain prize, not a 404
+  assert.deepEqual(await bytes('&voice=russian'), [1, 2, 3]);
+  const objects = new Map([['necrophos-scream.vpk', new Uint8Array([1, 2, 3])], ['necrophos-scream.russian.vpk', new Uint8Array([7])]]);
+  env.PRIZE = { async get(name: string) { const b = objects.get(name); return b ? { body: b, size: b.length, httpMetadata: {}, customMetadata: {} } : null; } };
+  assert.deepEqual(await bytes('&voice=russian'), [7]);
+  assert.deepEqual(await bytes(''), [1, 2, 3]);
+  // only voices the worker knows reach the bucket's names
+  assert.deepEqual(await bytes('&voice=..%2Fsecret'), [1, 2, 3]);
+});

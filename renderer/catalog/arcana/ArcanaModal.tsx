@@ -1,13 +1,23 @@
-/* The arcana's window (issue #118): the mod window's twin, with the same markup and classes. The
- * colours are the looks a mod offers (.style-btn), and the picture is the arcana's own out of the
- * game, drawn in the colour pointed at before anything is built (tint.ts). */
+/* An arcana's window (issue #118): the mod window's twin, with the same markup and classes. The
+ * colours are the looks a mod offers (.style-btn), then the game's prismatic gems as quieter dots,
+ * and the picture is the arcana's own out of the game, drawn in the colour pointed at before
+ * anything is built (tint.ts). */
 import { useRef, useState, type CSSProperties } from 'react';
-import { GEM, toHex, useTinted, type Rgb } from './tint.ts';
+import { arcanaWords } from './heroes.ts';
+import { gemOf, isCutOut, toHex, useArcanaPicture, useTinted, type Rgb } from './tint.ts';
 
 export type ArcanaMode = 'mod' | 'recolor';
 
+/** A prismatic gem's colour, as items_game names it (src/gem-colors.ts). */
+export interface Gem { key: string; name: string; rgb: Rgb }
+
 export interface ArcanaModalModel {
+  set: string;
+  /** the item's name, as the game has it */
+  name: string;
   picture: string | null;
+  /** the game's prismatic gems, offered as colours */
+  gems: Gem[];
   /** the colour picked in the window */
   chosen: Rgb;
   /** the colour of the "own colour" button, once one was picked there */
@@ -15,6 +25,8 @@ export interface ArcanaModalModel {
   installed: { color: Rgb; mode: ArcanaMode } | null;
   /** what is being built right now */
   busy: ArcanaMode | null;
+  /** only the colour is built: an immortal the hero wears, with no gem of its own */
+  colorOnly?: boolean;
 }
 
 export interface ArcanaModalActions {
@@ -24,9 +36,9 @@ export interface ArcanaModalActions {
   remove: () => void;
 }
 
-/** The colours offered, the game's own first. */
-export const PRESETS: { color: Rgb; label: () => string }[] = [
-  { color: GEM, label: () => L`Как в игре` },
+/** The colours offered, the arcana's own gem first. */
+export const presets = (set: string): { color: Rgb; label: () => string }[] => [
+  { color: gemOf(set), label: () => L`Как в игре` },
   { color: [255, 193, 220], label: () => L`Розовый` },
   { color: [163, 92, 255], label: () => L`Фиолетовый` },
   { color: [60, 120, 255], label: () => L`Синий` },
@@ -41,17 +53,22 @@ const same = (a: Rgb | null | undefined, b: Rgb | null | undefined) => Boolean(a
 export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: ArcanaModalActions }) {
   // pointing at a colour shows it, so the picture answers before the click does
   const [hover, setHover] = useState<Rgb | null>(null);
-  const picture = useTinted(m.picture, hover ?? m.chosen);
+  const gem = gemOf(m.set);
+  const picture = useTinted(useArcanaPicture(m.set, m), hover ?? m.chosen, gem);
   const own = useRef<HTMLInputElement>(null);
+  const PRESETS = presets(m.set);
   const isPreset = PRESETS.some((p) => same(p.color, m.chosen));
-  const ownColor = m.own ?? (isPreset ? null : m.chosen);
+  const gemPicked = m.gems.find((g) => same(g.rgb, m.chosen)) ?? null;
+  const ownColor = m.own ?? (isPreset || gemPicked ? null : m.chosen);
   const installed = m.installed;
   const current = installed && same(installed.color, m.chosen);
-  const wholeArcana = installed?.mode !== 'recolor';
+  const wholeArcana = !m.colorOnly && installed?.mode !== 'recolor';
+  const words = arcanaWords(m.set, m.name);
+  const pointed = hover ? m.gems.find((g) => same(g.rgb, hover)) : null;
 
   return (
     <>
-      <div className="modal-media cos arcana-media">
+      <div className={`modal-media cos arcana-media ${isCutOut(picture) ? 'cutout' : ''}`}>
         {picture ? <img src={picture} alt="" /> : <div className="noimg"><span className="ms">palette</span></div>}
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}>
           <span className="ms">close</span>
@@ -59,12 +76,12 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
       </div>
       <div className="modal-body">
         <div className="modal-title-row">
-          <div className="modal-title">Fractal Horns of Inner Abysm</div>
+          <div className="modal-title">{m.name}</div>
         </div>
         <div className="modal-sub">
-          <span>{L`Террорблейд`}</span>
-          <span>{`· ${L`аркана из файлов игры`}`}</span>
-          {installed && <span>{`· ${wholeArcana ? L`стоит` : L`стоит только цвет`} ${toHex(installed.color).toUpperCase()}`}</span>}
+          <span>{words.hero()}</span>
+          <span>{`· ${m.colorOnly ? L`эффекты в цвете самоцвета` : L`аркана из файлов игры`}`}</span>
+          {installed && <span>{`· ${wholeArcana || m.colorOnly ? L`стоит` : L`стоит только цвет`} ${toHex(installed.color).toUpperCase()}`}</span>}
         </div>
         <div className="style-row" onMouseLeave={() => setHover(null)}>
           {PRESETS.map((p) => (
@@ -83,11 +100,26 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
               onInput={(e) => actions.choose(hexRgb(e.currentTarget.value), true)} />
           </button>
         </div>
+        {m.gems.length > 0 && (
+          <div className="arcana-gems">
+            <div className="arcana-gems-label">
+              {L`Призматические самоцветы`}
+              <span className="arcana-gem-name">{(pointed ?? gemPicked)?.name ?? ''}</span>
+            </div>
+            <div className="arcana-gem-row" onMouseLeave={() => setHover(null)}>
+              {m.gems.map((g) => (
+                <button key={g.key} className={`arcana-gem ${same(g.rgb, m.chosen) ? 'active' : ''}`}
+                  style={{ '--c': toHex(g.rgb) } as CSSProperties} title={g.name} aria-label={g.name}
+                  onMouseEnter={() => setHover(g.rgb)} onFocus={() => setHover(g.rgb)} onClick={() => actions.choose(g.rgb)} />
+              ))}
+            </div>
+          </div>
+        )}
         <div className="modal-actions">
           {m.busy
             ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
             : !installed
-              ? <button className="btn btn-primary" id="arcanaInstallBtn" onClick={() => actions.install('mod')}><span className="ms">download</span>{L`Установить`}</button>
+              ? <button className="btn btn-primary" id="arcanaInstallBtn" onClick={() => actions.install(m.colorOnly ? 'recolor' : 'mod')}><span className="ms">download</span>{L`Установить`}</button>
               : current
                 ? <button className="btn btn-primary" disabled><span className="ms">check</span>{L`Установлено`}</button>
                 : <button className="btn btn-primary" id="arcanaInstallBtn" onClick={() => actions.install(installed.mode)}><span className="ms">palette</span>{L`Перекрасить`}</button>}
@@ -95,15 +127,17 @@ export function ArcanaModal({ m, actions }: { m: ArcanaModalModel; actions: Arca
             <button className="btn btn-danger" id="arcanaRemoveBtn" onClick={actions.remove}><span className="ms">delete</span>{L`Убрать`}</button>
           )}
           {/* the other build, for the few who have the arcana: an action of its own, not a switch */}
-          {!m.busy && (
+          {!m.busy && !m.colorOnly && (
             <button className="btn btn-ghost btn-sm arcana-mode" id="arcanaModeBtn" onClick={() => actions.install(wholeArcana ? 'recolor' : 'mod')}>
               {wholeArcana ? L`Аркана уже куплена? Только цвет` : L`Поставить аркану целиком`}
             </button>
           )}
         </div>
         <div className="modal-note">
-          {wholeArcana
-            ? L`Собирается из файлов твоей игры: модель, рога, свечение и иконки. Эффекта убийства и звуков арканы нет, их даёт сам предмет. После обновления Доты соберётся заново сам.`
+          {m.colorOnly
+            ? L`Перекрашивает эффекты предмета, когда он надет: твой собственный или выбранный в конструкторе предметов. Сам предмет не даёт.`
+            : wholeArcana
+            ? L`Собирается из файлов твоей игры: модель, эффекты и иконки. Звуков и эффекта убийства арканы нет, их даёт сам предмет. После обновления Доты соберётся заново сам.`
             : L`Только цвет: перекрашивает аркану, которая у тебя уже есть. Модель и свечение даёт сама игра.`}
         </div>
       </div>

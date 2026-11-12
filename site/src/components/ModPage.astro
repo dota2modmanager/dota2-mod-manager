@@ -104,6 +104,7 @@ const author = authorOf(mod);
             : mod.authorUrl ? <a href={mod.authorUrl} rel="noopener nofollow">{mod.author}</a> : mod.author}</dd></>
         )}
         {mod.date && <><dt>{b.added}</dt><dd>{dayOf(lang, mod.date)}</dd></>}
+        <dt id="mod-dl-label" hidden>{b.downloads}</dt><dd id="mod-dl" data-count={mod.countKey} hidden></dd>
       </dl>
       <div class="btn-row">
         <a class="btn" id="mod-app" href={first.app}><Icon name="open" />{b.openApp}</a>

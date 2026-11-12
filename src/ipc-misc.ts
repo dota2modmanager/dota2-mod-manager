@@ -59,6 +59,18 @@ export function registerMiscIpc({
     installer.clearDownloadCache();
     return { ok: true };
   });
+  // the folder the archives sit in, for whoever wants to look at them or copy one out
+  ipcMain.handle('misc:openCacheFolder', () => {
+    try {
+      fs.mkdirSync(installer.downloadsDir, { recursive: true });
+      shell.openPath(installer.downloadsDir);
+      return { ok: true };
+    } catch (err) {
+      return { error: errorText(err) };
+    }
+  });
+  ipcMain.handle('misc:cacheList', () => installer.listDownloadCache());
+  ipcMain.handle('misc:cacheRemove', (e, key) => ({ ok: installer.removeCachedDownload(key) }));
 
   ipcMain.handle('misc:runTool', (e, toolDirName) => {
     // find first exe inside the tool folder and launch it

@@ -11,6 +11,7 @@ repo root unless they say otherwise.
 | `npm run modkit -- find <words...> [--ext vmdl_c] [--limit 200]` | paths in the game's pak01 holding every word |
 | `npm run modkit -- extract <path or folder>... --out <dir>` | copies the game's compiled files out as they are |
 | `npm run modkit -- recolor <hero> <colour> --out <dir> [--include <folder>]... [--one-pass]` | a hero's particles and status effects in a colour, compiled |
+| `npm run modkit -- warp <status effect .vpcf_c> <colour warp .vtex> --out <dir>` | a status effect pointed at another of the game's colour warps, in the compiled file, no compile |
 | `npm run modkit -- compile <addon> [source...] [--dry-run]` | Valve's compiler on `content/dota_addons/<addon>/`; output in `game/dota_addons/<addon>/` |
 | `npm run modkit -- pack <dir> --out <mod.vpk> [--keep <path>]...` | a folder of compiled files as one VPK, without the game's own files |
 | `npm run modkit -- model <hero> [--out model.json]` | the hero model's bones and sequences: number, activity, modifiers, clips ([animations.md](animations.md)) |

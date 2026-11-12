@@ -4,8 +4,20 @@
  *
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
  *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
- *                          [--idle-seconds 12] [--spawn] [--death]
+ *                          [--idle-seconds 12] [--spawn] [--death] [--map small|full]
+ *   npm run dota:bench -- --vpk towers_dir.vpk --towers     the demo's two towers, for tower looks
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
+ *   npm run dota:bench -- --vpk pick.vpk --schema items_game.txt --hero juggernaut
+ *                          a build that changes the item table too (tools/dota-bench/schema.mjs)
+ *   npm run dota:bench -- --vpk sounds.vpk --sound mine.wav --hero juggernaut --skills q
+ *                          whether the game plays that sound when the abilities are cast: what the
+ *                          computer plays is recorded (record.ps1) and the sound looked for in it
+ *                          (hear.mjs), into verdict.json as "sound"
+ *   npm run dota:bench -- --fps [--vpk pak.vpk] [--against <verdict.json>]
+ *                          how fast the real map runs, in a match of a private lobby: FPS at each
+ *                          spot, and how busy the graphics card is at 60 FPS (dota-bench/fps.mjs).
+ *                          The game keeps the last lobby's settings: set a password and cheats
+ *                          once by hand. With no cheats the match does not start and the run stops.
  *
  * It puts the mod into the language folder through the app's own installer (a free slot), starts
  * Dota straight into hero demo with the hero (`+dota_demo_hero`, no client screens), and plays a
@@ -40,18 +52,37 @@ import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { attackVerdict, readDiffs } from './dota-bench/verdict.mjs';
+import { placeSchema } from './dota-bench/schema.mjs';
+import { hear } from './dota-bench/hear.mjs';
+import { SPOTS, readFps, readBusy, mean, fpsChange } from './dota-bench/fps.mjs';
 import { readBars, bodyOf, spawned, follow, frame, readSkills, bindOf, unknownCommands, SCAN, SKILLS, DEFAULT_SKILLS } from './dota-bench/scene.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const STEAM = 'C:/Program Files (x86)/Steam/steam.exe';
+/**
+ * Steam is wherever its installer put it, and it says where in the registry: a fixed C: path
+ * failed on a machine with Steam on E:, after the mod was already in the game folder.
+ */
+function findSteam() {
+  if (process.env.STEAM && fs.existsSync(process.env.STEAM)) return process.env.STEAM;
+  try {
+    const out = execFileSync('reg', ['query', 'HKCU\\Software\\Valve\\Steam', '/v', 'SteamExe'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const m = /SteamExe\s+REG_SZ\s+(.+)/i.exec(out);
+    if (m && fs.existsSync(m[1].trim())) return m[1].trim();
+  } catch { /* no key: the default below */ }
+  return 'C:/Program Files (x86)/Steam/steam.exe';
+}
+const STEAM = findSteam();
 const W = 1920;
 const H = 1080;
 /** The demo panel, the ability bar and the hero on screen, measured in a 1600x900 window: they scale with the height. */
 const AT900 = {
-  level30: [170, 270], scepter: [117, 303], shard: [193, 303], dummy: [189, 213], enemy: [117, 213], mana: [18, 393], refresh: [126, 446], decline: [908, 563],
+  level30: [170, 270], scepter: [117, 303], shard: [193, 303], dummy: [189, 213], enemy: [117, 213], mana: [18, 393], refresh: [126, 446], decline: [908, 563], towers: [15, 417], towerGood: [98, 819], towerBad: [168, 773],
   icons: [583, 771, 467, 96], hero: [500, 40, 600, 600], fight: [630, 200, 290, 310],
 };
 const AT = Object.fromEntries(Object.entries(AT900).map(([k, v]) => [k, v.map((n) => Math.round(n * H / 900))]));
+
+/** The play menu and the lobby's button, in the 1920x1080 window; a note about the last match sits at `dismiss`. */
+const LOBBY = { dismiss: [960, 597], play: [1696, 1034], create: [1617, 709] };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const arg = (name, fallback = null) => { const i = process.argv.indexOf(name); return i === -1 ? fallback : process.argv[i + 1]; };
@@ -85,6 +116,13 @@ function logSince(log, since) {
   let fd;
   try { fd = fs.openSync(log, 'r'); } catch { return ''; }
   try { return fs.fstatSync(fd).mtimeMs > since ? fs.readFileSync(fd, 'utf8') : ''; } finally { fs.closeSync(fd); }
+}
+
+/** The graphics card's busy figure now (dota-bench/fps.mjs), or null without an NVIDIA card. */
+function cardBusy() {
+  try {
+    return readBusy(execFileSync('nvidia-smi', ['--query-gpu=utilization.gpu,clocks.gr', '--format=csv,noheader,nounits'], { encoding: 'utf8' }));
+  } catch { return null; }
 }
 
 function ps(script, ...args) {
@@ -139,8 +177,21 @@ async function main() {
   const game = settings.dotaGamePath;
   if (!game) throw new Error('bench: no game folder in the app settings');
   const log = path.join(game, 'dota', 'console.log');
+  // a failed spawn is an 'error' event the finally below never sees, so it left the mod installed
+  if (!fs.existsSync(STEAM)) throw new Error(`bench: no Steam at ${STEAM}; set STEAM to steam.exe`);
   const placed = vpk ? await install(path.resolve(vpk), game, settings.langSuffix || 'russian') : null;
   if (placed) console.log(`bench: mod in ${placed}`);
+  const table = arg('--schema');
+  let unplace = null;
+  try {
+    // safe mode off in the app: a patch an update unsigned is applied again, as the app's next start would
+    const heal = settings.schemaPatch === true ? { backupDir: path.join(process.env.APPDATA || '', 'Dota 2 Mod Manager', 'backups', 'patch') } : null;
+    unplace = table ? await placeSchema(path.resolve(table), game, heal) : null;
+  } catch (e) {
+    if (placed) fs.rmSync(placed, { force: true });
+    throw e;
+  }
+  if (unplace) console.log('bench: item table in dota_mods');
   const shots = [];
   const notes = [];
   const note = (msg) => { notes.push(msg); console.log(`bench: ${msg}`); };
@@ -197,7 +248,96 @@ async function main() {
   const turn = [W / 2 + 200, H / 2, W / 2 - 250, H / 2].join(',');
   try {
     const started = Date.now();
-    spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
+    // --menu: the game's own screens instead of the demo, for what a mod changes there (a menu
+    // background, a medal, a hero badge). A picture once the menu is up, then one after each
+    // click of --clicks "x,y;x,y" (points in the 1920x1080 window), three seconds apart; "wait:N"
+    // in the list is a picture N seconds on, with no click.
+    if (process.argv.includes('--menu')) {
+      spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H)], { detached: true, stdio: 'ignore' }).unref();
+      await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load').catch(() => note('no word of the menu in console.log; taking the pictures anyway'));
+      await sleep(Number(arg('--menu-wait', '25')) * 1000);
+      shot('01-menu');
+      for (const [k, at] of (arg('--clicks') || '').split(';').filter(Boolean).entries()) {
+        // "wait:20" is no click, only a picture twenty seconds later (a match loading)
+        if (at.startsWith('wait:')) { await sleep(Number(at.slice(5)) * 1000); shot(`02-click-${k + 1}`); continue; }
+        // Panorama takes a click only on a panel the pointer is already over
+        const p = at.split(',').map(Number);
+        input('hover', p[0] - 6, p[1]);
+        await sleep(400);
+        input('hover', ...p);
+        await sleep(400);
+        click(p);
+        await sleep(3000);
+        shot(`02-click-${k + 1}`);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, menu: true, notes }, null, 2));
+      return;
+    }
+    // --fps: a match of a private lobby rather than the demo, whose small map is not the one played
+    if (process.argv.includes('--fps')) {
+      const press = async (at, wait) => {
+        input('hover', at[0] - 6, at[1]);
+        await sleep(300);
+        input('hover', ...at);
+        await sleep(300);
+        click(at);
+        await sleep(wait);
+      };
+      spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '-condebug'], { detached: true, stdio: 'ignore' }).unref();
+      await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load');
+      await sleep(30000);
+      await press(LOBBY.dismiss, 2500);
+      await press(LOBBY.play, 2500);
+      await press(LOBBY.create, 4000);
+      shot('01-lobby');
+      const inLobby = Date.now();
+      await press(LOBBY.play, 3000);
+      await until(() => /HERO_SELECTION/.test(logSince(log, inLobby).slice(-200000)), 120000, 'the picks');
+      await sleep(4000);
+      await command(`dota_select_hero npc_dota_hero_${hero}`);
+      await sleep(3000);
+      await command('dota_dev forcegamestart', 'fps_max 999', 'cl_showfps 2');
+      await until(() => /STATE_PRE_GAME/.test(logSince(log, inLobby).slice(-200000)), 120000, 'the match, which takes a lobby with cheats on');
+      await sleep(6000);
+      await command('dota_pause', 'dota_all_vision 1');
+      await sleep(3000);
+      const measure = async (cap) => {
+        await command(`fps_max ${cap}`);
+        const run = {};
+        for (const [spot, [x, y]] of Object.entries(SPOTS)) {
+          await command(`dota_camera_set_lookatpos ${x} ${y}`);
+          await sleep(3000);
+          const from = fs.readFileSync(log).length;
+          await command('cl_resetfps');
+          await sleep(3000);
+          const busy = [];
+          for (let k = 0; k < 8; k++) { busy.push(cardBusy()); await sleep(450); }
+          await sleep(3000);
+          shot(`${cap}-${spot}`);
+          await command('cl_printfps');
+          run[spot] = { fps: readFps(fs.readFileSync(log).subarray(from).toString('latin1')), busy: mean(busy) };
+          console.log(`bench: ${cap} ${spot}: ${run[spot].fps} FPS, card busy ${run[spot].busy}`);
+        }
+        return run;
+      };
+      const free = await measure(999);
+      const held = await measure(60);
+      const result = { vpk: vpk ?? null, free, held, notes };
+      const against = arg('--against');
+      if (against) {
+        const was = JSON.parse(fs.readFileSync(against, 'utf8'));
+        result.against = { free: fpsChange(free, was.free), held: fpsChange(held, was.held) };
+        console.table(result.against.free);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify(result, null, 2));
+      return;
+    }
+    // --map small: the demo's own small map instead of the whole one, where an effect is not lost
+    // against the lanes. The convar is the demo menu's map choice (context_menu_demo_mode: 0 the demo
+    // map, 1 the full map), kept between launches: without --map the demo opens on what the player
+    // last picked. A map's name is no value for it ("Error parsing string ... as int").
+    const demoMap = { small: '0', full: '1' }[arg('--map')] ?? arg('--map');
+    spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), ...(demoMap ? ['+dota_hero_demo_map', demoMap] : []), '+dota_demo_hero', `npc_dota_hero_${hero}`, '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
     await until(() => /OnAddNewHeroEntry/.test(logSince(log, started)), 240000, 'the demo to start');
     await sleep(4000);
     const centre = { x: AT.hero[0] + AT.hero[2] / 2, y: AT.hero[1] + AT.hero[3] / 3 };
@@ -212,6 +352,35 @@ async function main() {
       heroBar = me(bars, centre);
     }
     if (!heroBar) throw new Error('bench: the hero\'s health bar is not on screen');
+    // --towers: hero demo's "Towers" box puts up a Radiant and a Dire tower, and keeps its state
+    // from the last demo, so the box is read by its colour (light when ticked) before a click. A
+    // click on the minimap takes the camera to each tower. Towers named with --units are killed
+    // after their picture and filmed as they fall (the demo's own towers did not die by name).
+    if (process.argv.includes('--towers')) {
+      const box = path.join(out, 'box.png');
+      ps('shot.ps1', '-Out', box);
+      const [r, g, b] = ps('pixel.ps1', '-In', box, '-X', AT.towers[0] + 4, '-Y', AT.towers[1]).trim().split(/\s+/).map(Number);
+      fs.rmSync(box, { force: true });
+      if (r + g + b < 300) {
+        click(AT.towers);
+        await sleep(3000);
+      }
+      // the fog of war greys out the other side's base: all vision shows both as they are lit
+      await command('dota_all_vision 1');
+      await sleep(1000);
+      const names = (arg('--units') || '').split(',').filter(Boolean);
+      const looks = (arg('--look') || [AT.towerGood, AT.towerBad].map((p) => p.join(',')).join(';')).split(';').filter(Boolean);
+      for (const [k, at] of looks.entries()) {
+        click(at.split(',').map(Number));
+        await sleep(1500);
+        shot(`10-tower-${k + 1}`);
+        if (!names[k]) continue;
+        await command(`dota_kill_unit_by_name ${names[k]}`);
+        burst(`10-tower-${k + 1}-falls`, [W / 2 - 600, H / 2 - 450, 1200, 900], 16, 300, 0.4);
+      }
+      fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, towers: looks.length, notes }, null, 2));
+      return;
+    }
     // --idle-seconds: the hero left standing, close, for an idle that does something every few seconds
     const idleFor = Number(arg('--idle-seconds', '0'));
     if (idleFor > 0) {
@@ -349,7 +518,15 @@ async function main() {
     burst('06-attack-close-side', close, 12, 120, 0.5);
     input('key', inspectKey);
     await sleep(2000);
+    const sound = arg('--sound');
+    if (sound && process.argv.includes('--short')) note('--sound is heard while the abilities are cast, which --short leaves out');
     if (!process.argv.includes('--short')) {
+      // what the game plays while the abilities go, for --sound to be looked for in
+      const heard = path.join(out, 'heard.wav');
+      const stop = path.join(out, 'heard.stop');
+      fs.rmSync(stop, { force: true });
+      const recorder = sound ? spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(HERE, 'dota-bench', 'record.ps1'), '-Out', heard, '-Seconds', '600', '-Stop', stop], { stdio: 'ignore' }) : null;
+      const recorded = recorder ? new Promise((r) => recorder.on('exit', r)) : null;
       // every ability, cooldowns refreshed before each, the ones aimed at a hero on the enemy
       for (const { key, enemy: aimed } of skills) {
         const look = path.join(out, `07-before-${key}.png`);
@@ -376,6 +553,14 @@ async function main() {
         click(bodyOf(heroBar, cam));
         await sleep(1500);
       }
+      if (recorder) {
+        fs.writeFileSync(stop, '');
+        await recorded;
+        const file = path.join(out, 'verdict.json');
+        const result = fs.existsSync(heard) ? hear(path.resolve(sound), heard) : { heard: false, score: 0, at: 0, error: 'nothing was recorded' };
+        fs.writeFileSync(file, JSON.stringify({ ...JSON.parse(fs.readFileSync(file, 'utf8')), sound: result }, null, 2));
+        console.log(`bench: the sound ${result.heard ? 'was heard' : 'WAS NOT HEARD'} (match ${result.score} at ${result.at} s of the casts)`);
+      }
     }
     shot('08-end');
   } finally {
@@ -383,6 +568,7 @@ async function main() {
     await until(() => !dotaRunning(), 60000, 'Dota to close').catch(() => {});
     try { fs.copyFileSync(log, path.join(out, 'console.log')); } catch { /* the game wrote none */ }
     if (placed) { fs.rmSync(placed, { force: true }); console.log('bench: mod taken out'); }
+    if (unplace) { unplace(); console.log('bench: item table taken out'); }
   }
   console.log(`bench: ${shots.length} pictures in ${out}`);
 }

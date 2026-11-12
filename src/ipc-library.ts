@@ -14,23 +14,28 @@ import { touchesSchema } from './presets-service.ts';
 import { electron } from './electron.ts';
 import { errorText } from './error-text.ts';
 import { FileTx } from './file-tx.ts';
+import { removeEverything } from './remove-everything.ts';
 import type { AppContext } from './app-context.ts';
 import type { LibRecord } from './types.ts';
 
 /** Register this module's channels, over the services and callbacks src/main.ts hands it. */
 export function registerLibraryIpc({
-  applyMasterToCursors, disableOtherCosmetics, disableOtherCursors,
-  installer, isCursorRecord, library, refreshPresence, schemaService,
-}: Pick<AppContext, 'applyMasterToCursors' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService'>): void {
+  applyMasterToCursors, blocked, disableOtherCosmetics, disableOtherCursors,
+  installer, isCursorRecord, library, refreshPresence, schemaService, settings,
+}: Pick<AppContext, 'applyMasterToCursors' | 'blocked' | 'disableOtherCosmetics' | 'disableOtherCursors' | 'installer' | 'isCursorRecord' | 'library' | 'refreshPresence' | 'schemaService' | 'settings'>): void {
   const { ipcMain } = electron();
   ipcMain.handle('mods:masterState', () => {
     try { return { off: installer.masterIsOff() }; } catch { return { off: false }; }
   });
 
   ipcMain.handle('mods:setMaster', (e, enabled) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     try {
       const r = installer.setMasterEnabled(!!enabled);
       applyMasterToCursors(!!enabled);
+      // the item table and the cosmetics in it: taken off with the rest, built again when back on
+      void schemaService.refreshInBackground();
       refreshPresence();
       return { ok: true, ...r };
     } catch (err) {
@@ -45,7 +50,22 @@ export function registerLibraryIpc({
     library.removeRecord(rec.id);
   }, installer.log);
 
+  // a mod's item pictures out of it, for good: an update takes them out again (src/ipc-mods.ts)
+  ipcMain.handle('mods:dropItemIcons', (e, id) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    const rec = library.find(id);
+    if (stop || !rec) return stop || { error: t('Мод не найден') };
+    try {
+      const files = rec.files.map((f) => ({ ...f }));
+      const dropped = installer.dropItemIcons(files);
+      if (dropped) library.update(id, { files, noItemIcons: true });
+      return { ok: true, dropped };
+    } catch (err) { return { error: errorText(err) }; }
+  });
+
   ipcMain.handle('mods:setEnabled', async (e, id, enabled) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     // a copy of the pumpkin's mod this install did not earn stays off (src/scream-guard.ts)
@@ -63,7 +83,9 @@ export function registerLibraryIpc({
         library.setEnabled(id, enabled);
         return others;
       }, installer.log);
-      if (touchesSchema(rec)) await schemaService.refreshInBackground();
+      // not waited for: the switch stood still for the whole build, a 200 MB pak written, and looked
+      // as if the click had not taken. The bar says how far it is, and Play waits for it
+      if (touchesSchema(rec)) void schemaService.refreshInBackground();
       return { ok: true, replaced };
     } catch (err) {
       return { error: errorText(err) };
@@ -80,6 +102,8 @@ export function registerLibraryIpc({
    * milliseconds each.
    */
   ipcMain.handle('mods:removeMany', async (e, ids) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const errors: string[] = [];
     let removed = 0;
     let schemaTouched = false;
@@ -98,10 +122,26 @@ export function registerLibraryIpc({
     return { ok: true, removed, errors };
   });
 
+  /* Settings → "Remove everything the app put into the game": every mod off the disk and the
+   * list, and gameinfo with the signatures back as Steam shipped them. The game the way it was
+   * before the app, without uninstalling the app (src/remove-everything.ts says why both ask). */
+  ipcMain.handle('mods:removeEverything', async () => {
+    const stop = blocked('toggle'); // Dota open: it holds the files, gameinfo included
+    if (stop) return stop;
+    const { errors, removed } = removeEverything(
+      { settings, library, installer, schemaService, removeOne },
+      { revert: true, mods: true, notice: false },
+    );
+    installer.log(`removeEverything: removed=${removed} errors=${errors.length}`);
+    return { ok: true, removed, errors };
+  });
+
   // Same bargain for switching a selection on or off: one rebuild for the batch, not one
   // per mod. Cursors and cosmetics are left out because only one of each can be live and
   // the screen never offers them here.
   ipcMain.handle('mods:setEnabledMany', async (e, ids, enabled) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const errors: string[] = [];
     let changed = 0;
     let schemaTouched = false;
@@ -152,6 +192,8 @@ export function registerLibraryIpc({
   });
 
   ipcMain.handle('mods:remove', async (e, id) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    if (stop) return stop;
     const rec = library.find(id);
     if (!rec) return { error: t('Мод не найден') };
     try {

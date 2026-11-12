@@ -53,6 +53,7 @@ it closes Dota, copies the console log and removes the mod.
 | `--idle-seconds 12` | film a long idle from the front in the inspect view (a gesture every few loops) |
 | `--spawn` | kill the hero and film the respawn |
 | `--death` | film the death in slow motion |
+| `--map small` | the demo's own small map instead of the whole one: effects are not lost against the lanes (`full` for the whole map; without it the demo opens on what the player picked last) |
 | `--now` | start although someone used the mouse in the last two minutes (only with the owner's yes) |
 | no `--vpk` | the game as it is, to compare |
 
@@ -67,7 +68,10 @@ Read the results:
   not swing" when it does (the motion barely changes the pixels): look at the attack frames.
 - the pictures, in order; compare with a run without `--vpk` before calling anything broken;
 - `console.log` (the game runs with `-condebug`): errors about your files' paths, sounds and
-  materials.
+  materials, and `Attempting to use invalid particle definition "<your effect>"`, the only sign of
+  an effect the game rejected: it draws nothing and the pictures cannot tell you why;
+- the pictures as cells: each sheet is 8 frames a row of 405x288, cut one out and enlarge it before
+  judging a small effect or a material.
 
 The bench camera is high and behind. A gesture in front of the face shows only in the inspect
 frames or a render.

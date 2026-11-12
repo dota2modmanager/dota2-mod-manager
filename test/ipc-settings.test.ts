@@ -22,7 +22,9 @@ function stand({ picked = [] as string[], signIn = async () => ({ id: '1', usern
   const window = { isDestroyed: () => false, show: () => log.push('show'), focus: () => log.push('focus') };
   const channels = registerAgainst(() => registerSettingsIpc({
     applyPresenceSetting: () => log.push('presence setting'),
-    catalog: { load: async () => ({}) },
+    applyBackground: () => log.push('background'),
+    catalog: { load: async () => ({ mods: { modsData: { heroes: [{ preview: 'a.webp' }] } }, constants: {} }) },
+    previewStore: { warm: async (rels: string[]) => { log.push(`warm ${rels.length}`); throw new Error('a full disk'); } },
     discordAuth: { signIn },
     findDotaGamePath: async () => GAME,
     library: {},
@@ -44,6 +46,13 @@ function stand({ picked = [] as string[], signIn = async () => ({ id: '1', usern
   const call = (channel: string, ...args: unknown[]) => channels.get(channel)!({}, ...args);
   return { call, store, log };
 }
+
+test('a loaded catalog starts its pictures coming, and trouble with those is no trouble with the catalog', async () => {
+  const s = stand();
+  const loaded = await s.call('catalog:load') as { mods?: unknown };
+  assert.ok(loaded.mods);
+  assert.deepEqual(s.log, ['warm 1']);
+});
 
 test('picking the Steam folder instead of game inside it is taken to mean game', async () => {
   const s = stand({ picked: [BETA] });
@@ -122,4 +131,14 @@ test('the tab the window reports is passed on, and a nonsense one reads as the c
   await s.call('presence:view', 'library');
   await s.call('presence:view', 42);
   assert.deepEqual(s.log, ['view library', 'presence', 'view catalog', 'presence']);
+});
+
+test('the support window counts a launch once per run, however often the window asks', async () => {
+  const s = stand();
+  s.store.set('supportPrompt', { launches: 2, state: 'new', until: 0, later: 0 });
+  assert.deepEqual(await s.call('support:state'), { due: true }, 'this run is the third launch');
+  assert.deepEqual(await s.call('support:state'), { due: true }, 'a reload of the window is not a fourth');
+  assert.equal((s.store.get('supportPrompt') as { launches: number }).launches, 3);
+  assert.deepEqual(await s.call('support:choose', 'done'), { ok: true });
+  assert.deepEqual(await s.call('support:state'), { due: false });
 });

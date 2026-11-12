@@ -22,6 +22,11 @@ export type PatchRepair = {
   at?: number;
   /** the mods whose files this patch changed (src/update-impact.ts), by name */
   touched?: { build: string | null; mods: string[] };
+  /** the patch landed while the app was closed and the app had to put the game back at start: a
+   * launch from Steam in between ran on the old item table or a search path the patch undid */
+  whileClosed?: true;
+  /** waiting on Steam rather than on Dota: its file check or an update is writing the game's files */
+  steam?: 'validating' | 'updating';
 };
 
 /** A mod Steam's file check took away that the app could not put back from what it holds. */
@@ -31,7 +36,7 @@ export type Stuck = { id: string; name: string };
 export const REPAIR_RETRY_MS = 20000;
 
 /** The repair, over the services src/game-upkeep.ts already holds. */
-export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, retryMs = REPAIR_RETRY_MS, now = Date.now }: {
+export function createGameRepair({ settings, installer, library, schemaService, updateImpact = null, rebuildGenerated, diag, send, isRunning, steamBusy = () => null, retryMs = REPAIR_RETRY_MS, now = Date.now }: {
   settings: Pick<Settings, 'get' | 'set'>;
   installer: Pick<Installer, 'lostToVerify' | 'restoreDeployed'>;
   library: Pick<Library, 'list'>;
@@ -44,6 +49,8 @@ export function createGameRepair({ settings, installer, library, schemaService, 
   /** tells the window what the repair did */
   send: (repair: PatchRepair) => void;
   isRunning: () => Promise<boolean>;
+  /** what Steam is doing to the game's files (src/steam-appstate.ts steamWork); left out, nothing */
+  steamBusy?: () => 'validating' | 'updating' | null;
   retryMs?: number;
   now?: () => number;
 }) {
@@ -143,6 +150,16 @@ export function createGameRepair({ settings, installer, library, schemaService, 
       return;
     }
 
+    /* Steam's file check after a crash, or an update still landing: what it has not written yet
+     * would land over the repair. Wait it out, then put the mods back. */
+    const steam = steamBusy();
+    if (steam) {
+      diag(`Steam is ${steam} the game - repair deferred`);
+      setPatchRepair({ state: 'waiting', reason, steam, at: now() });
+      timer = setTimeout(() => { void repairAfterPatch(reason); }, retryMs);
+      return;
+    }
+
     const { healed, error } = heal();
     // remembered only now: a stamp stored before a failed repair would make the next start think
     // there is nothing to fix
@@ -167,7 +184,8 @@ export function createGameRepair({ settings, installer, library, schemaService, 
       const changed = Boolean(stamp && known && stamp !== known);
       if (changed || hit) {
         if (changed) diag(`Dota changed while the app was closed: ${known} -> ${stamp}`);
-        patchRepair = { state: error ? 'failed' : 'done', healed, error, at: now(), ...(hit ? { touched: hit } : {}) };
+        const mended = changed && healed.some((h) => h !== 'files');
+        patchRepair = { state: error ? 'failed' : 'done', healed, error, at: now(), ...(hit ? { touched: hit } : {}), ...(mended ? { whileClosed: true as const } : {}) };
       }
       if (stamp) settings.set('gameStamp', stamp);
     } catch (e) {

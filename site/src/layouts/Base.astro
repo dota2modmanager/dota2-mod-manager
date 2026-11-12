@@ -72,6 +72,7 @@ const section = path.startsWith('/catalog/') || path.startsWith('/mods/') || pat
 const navLinks = [
   { id: 'catalog', href: pathIn(lang, '/catalog/'), label: t('nav.catalog'), note: t('menu.catalog') },
   { id: 'heroes', href: pathIn(lang, '/heroes/'), label: t('nav.heroesShort'), note: t('menu.heroes') },
+  { id: 'features', href: pathIn(lang, '/docs/features/'), label: t('nav.features'), note: t('menu.features') },
   { id: 'docs', href: pathIn(lang, '/docs/'), label: t('nav.guides'), note: t('menu.guides') },
 ];
 const fonts = lang === 'ru' ? [onestCyr, unboundedCyr] : [onestLatin, unboundedLatin];

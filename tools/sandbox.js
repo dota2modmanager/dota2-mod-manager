@@ -8,6 +8,9 @@
  *   node tools/sandbox.js reset    restore the tree to pristine, wipe userData, keep mods
  *   node tools/sandbox.js status   what is on disk right now
  *   node tools/sandbox.js pin      point the settings at the sandbox game (start:sandbox runs it)
+ *   node tools/sandbox.js item "Ancient Exile - Head" [more names] [--game <sandbox game>]
+ *                                  an item's files from the real game into the sandbox's pak01,
+ *                                  with every effect the item builder can put on it
  *
  * The layout mirrors a real Steam library, because the app derives things from it: the game
  * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.ts walks three levels up
@@ -171,7 +174,8 @@ function signaturesFor(branchText) {
 }
 
 /* What the item builder reads out of pak01 besides the table, copied from the real game so the
- * sandbox can run it: every hero's two portraits (its hub shows them), and for a whole set
+ * sandbox can run it: every hero's two portraits and its script (its hub shows them, grouped by
+ * the attribute the script names), and for a whole set
  * (Blightfall, so "Equip the whole set" builds every piece) and one more wearable the model and
  * particles it copies plus the effect particles it points at. A few MB. Only these, rather than
  * the whole archive: the real one is tens of gigabytes. */
@@ -179,6 +183,64 @@ const BUILDER_SAMPLE = [
   'Blightfall - Head', 'Blightfall - Shoulder', 'Blightfall - Back', 'Blightfall - Weapon', 'Blightfall - Mount',
   'Compendium Rider of Avarice Helmet',
 ];
+
+/**
+ * The files the item builder needs to build these items with any of its effects or the game's
+ * unusual ones: what their visuals name and what a build copies, in compiled paths.
+ */
+function itemAssets(ix, schemaText, names) {
+  const builder = require('../src/item-builder.ts');
+  const { offeredUnusual } = require('../src/item-builder-unusual.ts');
+  const compiled = (p) => { const c = String(p).toLowerCase().replace(/\\/g, '/'); return c.endsWith('_c') ? c : `${c}_c`; };
+  const effects = [null, ...builder.itemEffects().map((fx) => fx.id), ...offeredUnusual(schemaText, () => true).map((fx) => fx.id)];
+  const want = new Set();
+  const found = [];
+  for (const sl of builder.itemSlots(schemaText)) {
+    for (const o of sl.options.filter((x) => names.includes(x.name))) {
+      found.push(o.name);
+      for (const fx of effects) {
+        let built;
+        try { built = builder.itemEffectPatch(schemaText, o.id, fx); } catch { continue; }
+        for (const m of built.block.matchAll(/"((?:models|particles|materials)\/[^"]+\.(?:vmdl|vpcf|vmat|vtex))"/gi)) want.add(compiled(m[1]));
+        for (const c of built.assetCopies) { want.add(compiled(c.from)); want.add(compiled(c.to)); }
+      }
+    }
+  }
+  const out = [];
+  for (const rel of want) {
+    const data = ix.read(rel);
+    if (data) out.push(entry(rel, data));
+  }
+  return { entries: out, found: [...new Set(found)] };
+}
+
+/** `item`: the named items' files added to the sandbox's pak01, for building them in the app. */
+function item() {
+  const { openVpkIndex, listVpkPathsFile } = require('../src/vpk.ts');
+  const args = process.argv.slice(3);
+  const at = args.indexOf('--game');
+  const game = at === -1 ? GAME : path.resolve(args[at + 1]);
+  // without --game, at is -1, and at + 1 would drop the first name
+  const names = at === -1 ? args : args.filter((a, i) => i !== at && i !== at + 1);
+  const real = findDotaGamePathSync();
+  if (!real || !names.length) {
+    log(real ? 'usage: node tools/sandbox.js item "<item name>" [more] [--game <sandbox game>]' : 'the real game was not found');
+    process.exitCode = 1;
+    return;
+  }
+  const pak = path.join(game, 'dota', 'pak01_dir.vpk');
+  const own = openVpkIndex(pak);
+  const schemaText = own.read(SCHEMA_REL).toString('latin1');
+  const { entries, found } = itemAssets(openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk')), schemaText, names);
+  const missing = names.filter((n) => !found.includes(n));
+  if (missing.length) log('  not an item the builder offers:', missing.join(', '));
+  const have = new Set(listVpkPathsFile(pak));
+  const added = entries.filter((e) => !have.has(e.name === ' ' ? e.folder : `${e.folder}/${e.name}.${e.ext}`));
+  const kept = [...have].map((rel) => entry(rel, own.read(rel)));
+  fs.writeFileSync(`${pak}.new`, buildVpk([...kept, ...added]));
+  fs.renameSync(`${pak}.new`, pak);
+  log(`  ${added.length} files of ${found.join(', ') || 'nothing'} added to ${pak}`);
+}
 
 function builderAssets(real, schemaText) {
   const { openVpkIndex } = require('../src/vpk.ts');
@@ -191,6 +253,8 @@ function builderAssets(real, schemaText) {
     for (const id of new Set(slots.flatMap((sl) => sl.heroIds))) {
       want.add(`panorama/images/heroes/npc_dota_hero_${id}_png.vtex_c`);
       want.add(`panorama/images/heroes/selection/npc_dota_hero_${id}_png.vtex_c`);
+      // the hero's script: its main attribute puts it in its group of the hub (src/item-builder-details.ts)
+      want.add(`scripts/npc/heroes/npc_dota_hero_${id}.txt`);
     }
     const compiled = (p) => { const c = String(p).toLowerCase().replace(/\\/g, '/'); return c.endsWith('_c') ? c : `${c}_c`; };
     const effects = builder.itemEffects().map((fx) => fx.id);
@@ -209,6 +273,27 @@ function builderAssets(real, schemaText) {
     }
   } catch (e) {
     log('  could not copy the item builder\'s files:', e.message);
+  }
+  return out;
+}
+
+/* The game's text in the three languages the app speaks (dota_ and items_ of english, russian and
+ * schinese): the names of styles, rarities and events, the sets' descriptions and the Chinese item
+ * names are read out of these (src/cosmetic-names.ts gameTokens). About 28 MB. */
+function textAssets(real) {
+  const { openVpkIndex } = require('../src/vpk.ts');
+  const out = [];
+  try {
+    const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
+    for (const file of ['dota', 'items']) {
+      for (const lang of ['english', 'russian', 'schinese']) {
+        const rel = `resource/localization/${file}_${lang}.txt`;
+        const data = ix.read(rel);
+        if (data) out.push(entry(rel, data));
+      }
+    }
+  } catch (e) {
+    log('  could not copy the game\'s text files:', e.message);
   }
   return out;
 }
@@ -373,13 +458,13 @@ function buildGameTree() {
       log('  could not read the real schema, using the stub:', e.message);
     }
   }
-  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real), ...arcanaAssets(real)] : [];
+  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real), ...textAssets(real), ...arcanaAssets(real)] : [];
   fs.writeFileSync(
     path.join(GAME, 'dota', 'pak01_dir.vpk'),
     buildVpk([entry(SCHEMA_REL, Buffer.from(schema, 'latin1')), ...extras])
   );
   log(`  items_game.txt from ${origin}`);
-  if (extras.length) log(`  ${extras.length} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat files, Terrorblade)`);
+  if (extras.length) log(`  ${extras.length} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat and text files, Terrorblade)`);
 
   // dota_russian: Valve's gameinfo plus stand-ins for the voice paks. langFolders() decides
   // "this folder holds Valve content" by the presence of pak01_*, and the 2.0 feature
@@ -586,9 +671,9 @@ function status() {
 }
 
 const cmd = process.argv[2] || 'status';
-const commands = { seed, reset, status, pin };
+const commands = { seed, reset, status, pin, item };
 if (!commands[cmd]) {
-  log('usage: node tools/sandbox.js <seed|reset|status|pin>');
+  log('usage: node tools/sandbox.js <seed|reset|status|pin|item>');
   process.exitCode = 1;
 } else {
   Promise.resolve(commands[cmd]()).catch((e) => {

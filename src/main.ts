@@ -31,10 +31,15 @@ import { createPatchWatcher } from './patch-watch.ts';
 import { moveLangFolder } from './gamelang.ts';
 import { uninstallFlow } from './uninstall-window.ts';
 import { isUninstallRun } from './uninstall-args.ts';
+import { lockOnceFreed, startedHidden } from './tray.ts';
+import { startBackground } from './background.ts';
+import { startDota } from './ipc-launch.ts';
+import { cliBusy, cliCommand, exitWithCli } from './cli.ts';
 import { createGate } from './feature-gate.ts';
 import { settingsViewFor } from './settings-view.ts';
 import { registerIpc } from './ipc.ts';
 import { guardTheApp } from './window-guard.ts';
+import { PRIVILEGED_SCHEME, servePreviews } from './preview-cache.ts';
 import { jailLogTo, jailRoots, jailThisRun } from './write-jail.ts';
 import { createAppLog } from './app-log.ts';
 import { releaseNotes } from './release-notes.ts';
@@ -42,13 +47,15 @@ import { firstLink, handleDeepLink, installDesktopEntry } from './deep-links.ts'
 import { createMainWindow, clampZoom, workAreaFrom } from './main-window.ts';
 import { attachDevHarness } from './dev-harness.ts';
 import { createGameUpkeep, dotaIsRunning } from './game-upkeep.ts';
+import { watchGame } from './game-launch.ts';
 import type { AppContext, AppProgress } from './app-context.ts';
 import type { BrowserWindow } from 'electron';
 
-const { app, ipcMain, shell, net, session } = electron();
+const { app, ipcMain, net, session, protocol } = electron();
 
 // a sandbox run (--write-jail=<folder>) writes nowhere else, from its first write on (src/write-jail.ts)
 jailThisRun(process.argv, process.env);
+protocol.registerSchemesAsPrivileged([PRIVILEGED_SCHEME]); // before the app is ready, or the window will not know the address
 
 /** electron-updater, which a development checkout may not have installed yet. */
 type AutoUpdater = UpdaterLike & { quitAndInstall(): void };
@@ -61,13 +68,9 @@ try {
  *
  * electron-builder's portable target unpacks the app into a temp folder and runs it from there,
  * setting PORTABLE_EXECUTABLE_DIR to the folder the exe was actually launched from. Without using
- * that, "portable" would only mean "no installer": the settings, the mod library and the download
- * cache would still sit in %APPDATA%, and somebody carrying the exe on a stick would find none of
- * it on the next machine. So the data goes next to the exe, which is what the word promises.
- *
- * A folder that cannot be written to falls back to the ordinary location rather than failing.
- * That is what happens when the exe is dropped into Program Files, and a working app with its data
- * in the usual place beats a dead one.
+ * that, "portable" would only mean "no installer": the settings, the library and the cache would
+ * still sit in %APPDATA%. So the data goes next to the exe. A folder that cannot be written to
+ * (the exe dropped into Program Files) falls back to the ordinary location rather than failing.
  */
 const IS_PORTABLE = !!process.env.PORTABLE_EXECUTABLE_DIR;
 if (IS_PORTABLE) {
@@ -82,13 +85,11 @@ if (IS_PORTABLE) {
 /* Asked to put up the removal window, unless this is an update wearing the same clothes.
  *
  * The uninstaller runs the app once with --uninstall to ask what should go along with it, and
- * reads the exit code for the answer (build/installer.nsh). An update runs the old uninstaller
- * with --updated and /KEEP_APP_DATA, and the NSIS side already stops there. This is the second
- * lock on the same door: it went wrong once, in front of everybody, and the failure mode is a
- * person being asked whether to delete their mods while they are merely updating. Both locks and
- * the reasoning are in src/uninstall-args.ts, which takes a command line so the cases can be
- * tested without being launched. */
+ * reads the exit code for the answer (build/installer.nsh). An update must never land here: it
+ * would ask somebody merely updating whether to delete their mods. Both locks against that and
+ * the reasoning are in src/uninstall-args.ts. */
 const IS_UNINSTALL = isUninstallRun(process.argv);
+const CLI = cliCommand(process.argv); // --apply, --list, --disable-all: no window (src/cli.ts)
 
 // A small rotating log every install keeps, so a support report does not depend on reproducing
 // the problem live (src/app-log.ts). MM_DIAG mirrors it for the screenshot harness.
@@ -100,6 +101,7 @@ process.on('uncaughtException', (err) => diag(`uncaughtException: ${err?.stack |
 process.on('unhandledRejection', (reason) => diag(`unhandledRejection: ${(reason as Error | null)?.stack || reason}`));
 
 let win: BrowserWindow | undefined;
+let applyBackground = () => {}; // the tray and the sign-in entry, once the window exists (src/background.ts)
 const windowOpen = () => (win && !win.isDestroyed() ? win : null);
 
 // Presets take a link that arrives before the rest of the app is up; until then there is nothing
@@ -115,10 +117,14 @@ const takeLink = (url: string | null | undefined) => handleDeepLink(url, {
 
 // One running copy only: two instances writing manifest.json would race each other, and a link
 // clicked while the app is open must reach the window that already exists.
-if (!app.requestSingleInstanceLock()) {
-  app.quit();
+// A copy in the tray (src/tray.ts) holding the lock gives way to the uninstaller's run, which waits for it.
+const firstLock = app.requestSingleInstanceLock();
+const locked = firstLock ? Promise.resolve(true) : IS_UNINSTALL ? lockOnceFreed(app) : Promise.resolve(false);
+if (!firstLock && !IS_UNINSTALL) {
+  if (CLI) cliBusy(app); else app.quit();
 } else {
   app.on('second-instance', (e, argv) => {
+    if (isUninstallRun(argv)) { app.quit(); return; }
     const w = windowOpen();
     if (w) {
       if (w.isMinimized()) w.restore();
@@ -130,7 +136,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('open-url', (e, url) => { e.preventDefault(); takeLink(url); }); // macOS
 }
 
-app.whenReady().then(start).catch((e) => diag(`whenReady FAIL: ${(e as Error)?.stack || e}`));
+Promise.all([locked, app.whenReady()]).then(([ok]) => (ok ? start() : app.quit())).catch((e) => diag(`whenReady FAIL: ${(e as Error)?.stack || e}`));
 app.on('window-all-closed', () => app.quit());
 
 /** Build the services, put the game folder right, register the channels and open the window. */
@@ -144,7 +150,8 @@ async function start(): Promise<void> {
   guardTheApp({ app, ipcMain, session, appRoot, devUrl: process.env.MM_DEV_URL, log: diag });
   const sendProgress = (evt: AppProgress) => windowOpen()?.webContents.send('progress', evt);
 
-  const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch });
+  const firstRun = !fs.existsSync(path.join(userData, 'settings.json')); // before anything saves it: picks the scale
+  const services = createServices({ userData, appVersion: () => app.getVersion(), sendProgress, diag, fetchIcons: net.fetch, systemLanguages: firstRun ? app.getPreferredSystemLanguages() : null });
   const {
     settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
     remoteConfig, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana,
@@ -154,7 +161,7 @@ async function start(): Promise<void> {
   // and a patch took while the app was closed, and the migrations older versions left behind.
   const upkeep = createGameUpkeep({
     settings, installer, library, schemaService, updateImpact, reconcileCursors: cursors.reconcileCursors, diag,
-    rebuildGenerated: (ids) => arcana.rebuild(ids),
+    rebuildGenerated: (ids) => [...arcana.rebuild(ids), ...services.mapLooks.rebuild(ids), ...services.menuBackground.rebuild(ids), ...services.hudScale.rebuild(ids), ...services.effectEdit.rebuild(ids), ...services.rankLook.rebuild(ids), ...services.mapDecor.rebuild(ids), ...services.heroPaint.rebuild(ids), ...services.abilityIcons.rebuild(ids)],
     send: (repair) => windowOpen()?.webContents.send('patch-repair', repair),
     findGame: findDotaGamePath, validGame: validateGamePath,
   });
@@ -167,23 +174,26 @@ async function start(): Promise<void> {
     diag('uninstall window up');
     return;
   }
+  if (CLI) return exitWithCli(CLI, { installer, library, schemaService, presets: services.presets, sendProgress, afterDeployMaster: services.afterDeployMaster,
+    adoptImportedFiles: adopt.adoptImportedFiles, disableOtherCursors: cursors.disableOtherCursors, blocked: createGate({ remoteConfig, settings }) }, app);
 
   presets = services.presets;
-
+  servePreviews(session.defaultSession, services.previewStore);
   let updater: ReturnType<typeof createUpdater> | null = null;
   let patchWatcher: ReturnType<typeof createPatchWatcher> | null = null;
-  // The last few things the interface said went wrong, so a report can list them separately from
-  // two thousand lines of ordinary log (see diag:rendererError).
+  // what the interface last said went wrong, for a report to list apart from the log (diag:rendererError)
   const rendererErrors: unknown[] = [];
+  // Play, Dota open or not (the status bar and the gate), and closing seconds after Play
+  const { gameWatch, launched: gameLaunched } = watchGame({ settings, library, diag, send: (ch, v) => win?.webContents.send(ch, v) });
 
   /* Everything the IPC modules may ask for, in one place. What changes while the app runs (the
      window, the updater, the patch watcher, the upkeep's state) is a function read when needed. */
   const ctx: AppContext = {
-    settings, catalog, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
-    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, presets, arcana, discordAuth, portableUpdater, autoUpdater,
+    settings, catalog, previewStore: services.previewStore, installer, library, fingerprints, schemaService, updateImpact, icons, gameIcons, modPreviews,
+    toolchain, compiler, toolsKeeper, keepTools, remoteConfig, readyPresets: services.readyPresets, presets, arcana, mapLooks: services.mapLooks, menuBackground: services.menuBackground, hudScale: services.hudScale, effectEdit: services.effectEdit, effectFinder: services.effectFinder, rankLook: services.rankLook, mapDecor: services.mapDecor, heroPaint: services.heroPaint, abilityIcons: services.abilityIcons, abilitySounds: services.abilitySounds, buildUndo: services.buildUndo, heroPreview: services.heroPreview, discordAuth, portableUpdater, autoUpdater,
     // One gate, handed to every module that guards a channel with it. Two copies is how installing
     // broke once: the call went to one file and the helper stayed in the other.
-    blocked: createGate({ remoteConfig, settings }),
+    blocked: createGate({ remoteConfig, settings, gameOpen: () => gameWatch.running() }),
     settingsView: settingsViewFor({
       settings, library, discordAuth, validateGamePath,
       langFolder: () => upkeep.langFolder(),
@@ -192,17 +202,17 @@ async function start(): Promise<void> {
     }),
 
     diag, sendProgress, clampZoom, afterDeployMaster: services.afterDeployMaster, deployAndApply: services.deployAndApply,
-    dotaIsRunning: () => dotaIsRunning(),
+    dotaIsRunning: () => dotaIsRunning(), gameLaunched,
     refreshPresence: () => presenceStatus.refresh(),
     // follows the setting: turning it off tears the connection down, not just the updates
-    applyPresenceSetting: () => presenceStatus.apply(),
+    applyPresenceSetting: () => presenceStatus.apply(), applyBackground: () => applyBackground(),
     setPresenceView: (view) => presenceStatus.setView(view),
     // the "What's new" text for a version, out of the changelogs shipped with the build
-    releaseNotes: (version, lang) => releaseNotes(version, lang, appRoot),
+    releaseNotes: (version, lang, seen) => releaseNotes(version, lang, appRoot, seen),
     repairAfterPatch: (reason) => upkeep.repairAfterPatch(reason),
     setPatchRepair: (next) => upkeep.setPatchRepair(next),
-    importVpkPaths: services.importVpkPaths,
-    importVpkBuffers: services.importVpkBuffers,
+    importVpkPaths: services.importVpkPaths, importVpkBuffers: services.importVpkBuffers,
+    downloadStats: services.downloadStats, countInstall: services.countInstall,
     adoptImportedFiles: adopt.adoptImportedFiles,
     isCursorRecord: cursors.isCursorRecord,
     disableOtherCursors: cursors.disableOtherCursors,
@@ -214,7 +224,7 @@ async function start(): Promise<void> {
     // every channel is called from the window, so it is open whenever one runs; if that ever
     // stops being true this says so by name
     win: () => { if (!win) throw new Error('the main window is not open yet'); return win; },
-    langFolder: () => upkeep.langFolder(),
+    langFolder: () => upkeep.langFolder(), keepModFolder: () => upkeep.keepModFolder(),
     patchWatcher: () => patchWatcher,
     updater: () => updater,
     portableUpdate: () => (updater ? updater.portableVersion() : null),
@@ -227,17 +237,6 @@ async function start(): Promise<void> {
   };
 
   registerIpc(ctx);
-  // Launch Dota through Steam so the user's own launch options apply (-novid, -fps max, -language
-  // russian all differ per user). rungameid is what pressing Play in Steam does.
-  ipcMain.handle('game:launch', async () => {
-    // an item table still being built (a pick a moment ago, a base just come) goes in first
-    await schemaService.settled();
-    // a Dota update wipes the search-path patch and moves the item table underneath our build:
-    // the launch button is the last chance to notice before the game starts
-    schemaService.heal();
-    void shell.openExternal('steam://rungameid/570');
-    return { ok: true };
-  });
 
   // only the installed build claims the scheme: a dev run must not point the system's d2mm://
   // handler at a local electron binary
@@ -248,16 +247,17 @@ async function start(): Promise<void> {
 
   // The window (src/main-window.ts): sized to the screen, locked to the app's page, Ctrl +/-/0
   // scaling its content. Then whichever dev switch is set (src/dev-harness.ts).
-  const opened = createMainWindow({
-    appRoot, settings, diag,
+  const opened = createMainWindow({ appRoot, settings, diag,
     // dev: MM_WORKAREA=1366x728 stands in for a smaller screen (tools/sim profiles), and
     // MM_QUIET=1 keeps an automated run off the screen of whoever is using the machine
     workArea: workAreaFrom(process.env.MM_WORKAREA),
-    quiet: !!process.env.MM_QUIET,
+    quiet: !!process.env.MM_QUIET || startedHidden(process.argv), firstRun, // Windows starting it at sign-in: the tray only
   });
   win = opened;
+  applyBackground = startBackground({ win: opened, settings, appRoot, portable: IS_PORTABLE, diag, play: () => { void startDota(ctx); } });
   attachDevHarness(opened, { diag, appRoot, quit: () => app.quit() });
   diag('createWindow done');
+  opened.webContents.on('did-finish-load', () => { gameWatch.stop(); gameWatch.start(); });
   // launched BY a link (cold start): the renderer has to exist before it can be told
   const cold = firstLink(process.argv);
   if (cold) opened.webContents.once('did-finish-load', () => takeLink(cold));

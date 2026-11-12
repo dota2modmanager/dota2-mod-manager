@@ -1,6 +1,6 @@
 /* What every item builder window shares: a look's picture, the header with its way back, the bar
  * along the bottom, and what an empty search says. */
-import { useEffect, useRef, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../cosmetic/CosmeticCard.tsx';
 import type { BuilderAction } from './model.ts';
@@ -38,11 +38,18 @@ export function BuilderHead({ back, onBack, title, sub, onClose }: {
   );
 }
 
+/** Status of the active wardrobe write and its corresponding 3D refresh. */
+export const WardrobeProgress = createContext<'pending' | 'failed' | null>(null);
+
 /** What goes along the window's bottom: what it will put on, and the one button that does it. */
 export function BuilderFoot({ summary, action, onApply }: { summary: ReactNode; action: BuilderAction; onApply: () => void }) {
+  const progress = useContext(WardrobeProgress);
   return (
     <>
       <div className="item-picker-sum">{summary}</div>
+      <span className="ward-equip-progress" role="status">
+        {progress === 'pending' ? <><span className="ms" aria-hidden="true">progress_activity</span>{L`Надеваю скин…`}</> : progress === 'failed' ? L`Не удалось обновить 3D` : ''}
+      </span>
       <button className="btn btn-primary" id="itemApplyBtn" disabled={action.off} onClick={onApply}>
         <span className="ms">{action.icon}</span>{action.label}
       </button>
@@ -71,4 +78,29 @@ export function PickerSearch({ id, value, onChange, inputRef }: {
       <input type="text" id={id} ref={inputRef} placeholder={L`Поиск…`} value={value} autoComplete="off" onChange={(e) => onChange(e.target.value)} />
     </div>
   );
+}
+
+/**
+ * An effect's picture: its own where the builder has one, else drawn out of the game's particles
+ * (preview3d/effect-thumb.ts) once the card is on screen, the glyph until then.
+ */
+export function FxThumb({ id, picture }: { id: string; picture: string | null }) {
+  const [drawn, setDrawn] = useState<string | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // a kinetic gem is an animation: nothing to draw
+    if (picture || id.startsWith('kinetic-') || !ref.current) return undefined;
+    let gone = false;
+    const seen = new IntersectionObserver((at) => {
+      if (!at.some((e) => e.isIntersecting)) return;
+      seen.disconnect();
+      void import('../preview3d/effect-thumb.ts').then(({ effectThumb }) => effectThumb(id)).then((uri) => { if (!gone) setDrawn(uri); }, () => {});
+    });
+    seen.observe(ref.current);
+    return () => { gone = true; seen.disconnect(); };
+  }, [id, picture]);
+  const shown = picture || drawn;
+  return shown
+    ? <span className="card-thumb"><img src={shown} alt="" loading="lazy" /></span>
+    : <div className="fx-glyph" ref={ref}><span className="ms">{id.startsWith('kinetic-') ? 'directions_run' : 'auto_awesome'}</span></div>;
 }

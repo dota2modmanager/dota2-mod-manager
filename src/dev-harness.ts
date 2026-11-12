@@ -74,6 +74,11 @@ export async function takeShot(win: DrivenWindow, env: Env, { diag, wait = sleep
       await wait(2500);
     }
     if (env.MM_CAT) {
+      // the window opens on Home (3.0), and the rail is the catalog's or the Items section's
+      if (!env.MM_VIEW) {
+        await run(`document.querySelector('[data-view="${env.MM_CAT.startsWith('cosmetic:') ? 'items' : 'catalog'}"]')?.click()`);
+        await wait(2500);
+      }
       await run(`document.querySelector('.rail-item[data-cat="${env.MM_CAT}"]')?.click()`);
       await wait(2500);
     }

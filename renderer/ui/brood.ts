@@ -8,7 +8,8 @@
  * only thing that warms it (ui/pumpkin.ts). So this is in every theme, all year round, and costs
  * nothing until somebody says her name.
  */
-import { spawnSpider } from './spiders.ts';
+import { loose, spawnSpider } from './spiders.ts';
+import { burstRoom } from './spider-motion.ts';
 
 /** Her name in the three languages the window speaks, and the short forms people type. */
 const HER = /brood|бруд|паучих|育母/i;
@@ -19,6 +20,10 @@ let lastBurst = 0;
 export function broodFrom(el: Element, count = 14): void {
   const now = performance.now();
   if (now - lastBurst < 1200) return;      // one burst per gesture, not one per keystroke
+  // only as many as the window has room for: clicking her mods over and over tops the brood up,
+  // it never grows it past the cap (ui/spider-motion.ts MAX_LOOSE)
+  count = burstRoom(count, loose());
+  if (!count) return;
   lastBurst = now;
   const r = el.getBoundingClientRect();
   const x = r.left + r.width / 2, y = r.top + Math.min(r.height / 2, 60);

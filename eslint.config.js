@@ -88,7 +88,7 @@ module.exports = [
   {
     ignores: [
       'node_modules/**', 'dist/**', 'out/**', 'sandbox/**', 'site/**', 'coverage/**',
-      '.claude/**', 'assets/**',
+      '.claude/**', 'assets/**', 'target/**', 'src-tauri/gen/**',
     ],
   },
   {
@@ -96,6 +96,11 @@ module.exports = [
     files: ['preload.js', 'src/**/*.js', 'test/**/*.js', 'tools/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'commonjs', globals: NODE },
     rules,
+  },
+  {
+    // The bundled renderer exports ES modules.
+    files: ['test/loadout-*.test.js', 'test/sprite-texture-selection.test.js', 'test/tinker-cosmic-*.test.js'],
+    languageOptions: { sourceType: 'module' },
   },
   {
     /* The mail worker runs in Cloudflare's runtime rather than in Node: a module, with fetch and
@@ -112,6 +117,19 @@ module.exports = [
     // .mjs tools are modules, and they have top-level await
     files: ['tools/**/*.mjs'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: NODE },
+    rules,
+  },
+  {
+    // the preset bot runs in Cloudflare's runtime, which has the web's streams as globals
+    files: ['tools/preset-bot/**/*.mjs'],
+    languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { ...NODE, DecompressionStream: 'readonly' } },
+    rules,
+  },
+  {
+    /* The Tauri shell's bridge (docs/rust-migration.md): a classic script injected into the page
+       before anything else runs, so browser globals and no module syntax. */
+    files: ['src-tauri/src/**/*.js'],
+    languageOptions: { ecmaVersion: 2024, sourceType: 'script', globals: BROWSER },
     rules,
   },
   {

@@ -9,6 +9,9 @@ export interface Tag {
   text: string;
   icon?: string;
   title?: string;
+  /** the pill opens a window: 'covers' is the list of who covers the row (views/library/covers.ts),
+   * 'prePatch' what a Dota update changed under the mod (views/library/pre-patch.ts) */
+  opens?: 'covers' | 'prePatch';
 }
 
 /** A row's picture: a preview, a picture fetched by name when it scrolls near, or only a glyph. */
@@ -16,7 +19,7 @@ export type Thumb =
   | { url: string; video: boolean }
   | { key: string; icon: string | null }
   /** the arcana the app built, its picture out of the game in the colour it was built in */
-  | { arcana: [number, number, number] }
+  | { arcana: [number, number, number]; set: string }
   | { icon: string | null };
 
 export interface RowModel {
@@ -88,11 +91,15 @@ export interface ExternalRowModel {
   simple: boolean;
   adopt: { title: string } | null;
   splittable: boolean;
+  /** the user gave the file a name of their own (library/labels.ts) */
+  labelled: boolean;
 }
 
 /** What the banners over the list say, as data; Banners.tsx words it. */
 export interface BannersModel {
   masterOff: boolean;
+  /** looks picked and mods whose effects live in the item table, while the game is not allowed to read it (ui/game-files.ts) */
+  tableOff: number;
   /** installed and foreign files recognised as catalog mods, waiting to be linked */
   matched: number;
   nearLimit: { slots: number; ceil: number } | null;
@@ -114,6 +121,10 @@ export interface BannersModel {
   stuck: string[];
   /** catalog mods whose author published a new version, by name (src/mod-update.ts) */
   updates: string[];
+  /** catalog mods the catalog no longer lists, by name (catalog/mods.ts delistedFrom) */
+  delisted: string[];
+  /** installed mods the signed config revokes, with its words (src/remote-config-format.ts) */
+  revoked: Array<{ id: string; name: string; text: string }>;
   repair: RepairState;
 }
 
@@ -152,12 +163,18 @@ export interface LibraryActions {
   adopt: (id: string) => Promise<void>;
   menu: (id: string) => { label?: string; icon?: string; separator?: boolean; disabled?: boolean; danger?: boolean; onPick?: () => void }[] | null;
   reorder: (id: string, to: number) => Promise<void>;
+  /** the window that lists who covers a row, by record id or foreign-file key */
+  covers: (key: string) => void;
+  /** the window that lists what a Dota update changed under a mod, and what to do about it */
+  prePatch: (id: string) => void;
   banner: (id: string, data?: string) => Promise<void>;
   enableAll: (on: boolean) => void;
   disableCosmetics: () => void;
   importFiles: () => void;
   importFolder: () => void;
+  /** the window that says what was checked and whether it is fine (views/library/check.ts) */
+  check: () => void;
   bulk: (what: 'enable' | 'disable' | 'combine' | 'extract' | 'adopt' | 'remove') => void;
-  external: (what: 'toggle' | 'adopt' | 'split' | 'remove', key: string) => Promise<void>;
+  external: (what: 'toggle' | 'adopt' | 'split' | 'remove' | 'label', key: string) => Promise<void>;
   noticeRead: () => void;
 }

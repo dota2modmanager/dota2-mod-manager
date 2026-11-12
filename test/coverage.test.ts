@@ -45,7 +45,7 @@ test('the lower pak number supplies the file, and the other one is told', (t) =>
 
   const covered = installer.coverage([top, under]);
   assert.equal(covered.has('pak10'), false, 'the winner is not covered by anybody');
-  assert.deepEqual(covered.get('pak20'), [{ name: 'pak10', files: 1 }]);
+  assert.deepEqual(covered.get('pak20'), [{ key: 'pak10', name: 'pak10', files: 1, paths: [MODEL] }]);
 });
 
 test('two copies of one mod are the case worth reporting, not one to hide', (t) => {
@@ -56,7 +56,7 @@ test('two copies of one mod are the case worth reporting, not one to hide', (t) 
   const newer = { ...put('pak10', [[MODEL, 'this season\'s hook']]), key: 'b', name: 'Pudge Hook' };
 
   const covered = installer.coverage([older, newer]);
-  assert.deepEqual(covered.get('a'), [{ name: 'Pudge Hook', files: 1 }]);
+  assert.deepEqual(covered.get('a'), [{ key: 'b', name: 'Pudge Hook', files: 1, paths: [MODEL] }]);
   assert.equal(covered.has('b'), false);
 });
 
@@ -102,7 +102,7 @@ test('a hero model many mods happen to replace is still a real fight', (t) => {
     .map((slot) => put(slot, [['models/heroes/pudge/pudge.vmdl_c', `pudge by ${slot}`]]));
   const covered = installer.coverage(mods);
   assert.equal(covered.size, 4, 'four of the five are overruled');
-  assert.deepEqual(covered.get('pak50'), [{ name: 'pak10', files: 1 }]);
+  assert.deepEqual(covered.get('pak50'), [{ key: 'pak10', name: 'pak10', files: 1, paths: ['models/heroes/pudge/pudge.vmdl_c'] }]);
 });
 
 test('mods that share nothing are left alone', (t) => {
@@ -119,7 +119,10 @@ test('a mod covered by two others names both, worst first', (t) => {
   const loser = put('pak30', [['a/one.vmdl_c', 'X1'], ['a/two.vmdl_c', 'X2'], ['b/three.vmdl_c', 'X3']]);
 
   const covered = installer.coverage([first, second, loser]);
-  assert.deepEqual(covered.get('pak30'), [{ name: 'pak05', files: 2 }, { name: 'pak06', files: 1 }]);
+  assert.deepEqual(covered.get('pak30'), [
+    { key: 'pak05', name: 'pak05', files: 2, paths: ['a/one.vmdl_c', 'a/two.vmdl_c'] },
+    { key: 'pak06', name: 'pak06', files: 1, paths: ['b/three.vmdl_c'] },
+  ]);
   assert.equal(covered.has('pak05'), false);
 });
 
@@ -253,4 +256,25 @@ test('a map mod Minify built is left alone; a hand-installed terrain is not', ()
   assert.equal(foreign.includes('maps/dota.vpk'), false, 'Minify built this one');
   assert.equal(foreign.includes('maps/other.vpk'), true, 'no marker means unknown, not untouchable');
   fs.rmSync(root, { recursive: true, force: true });
+});
+
+test('two winners that share a name are two winners, each with its own paths', (t) => {
+  // the same skin twice, above a third copy: one row per copy, so the window can say which to move
+  const { installer, put } = stand(t);
+  const a = { ...put('pak05', [['a.vmdl_c', 'A']]), key: 'a', name: 'Skin' };
+  const b = { ...put('pak06', [['b.vmdl_c', 'B']]), key: 'b', name: 'Skin' };
+  const loser = put('pak30', [['a.vmdl_c', 'X'], ['b.vmdl_c', 'Y']]);
+  assert.deepEqual(installer.coverage([a, b, loser]).get('pak30')?.map((c) => [c.key, c.paths]), [['a', ['a.vmdl_c']], ['b', ['b.vmdl_c']]]);
+});
+
+test('the path list stops at COVER_PATHS while the count stays whole', async (t) => {
+  const { COVER_PATHS } = await import('../src/installer-slots.ts');
+  const { installer, put } = stand(t);
+  const many = Array.from({ length: COVER_PATHS + 5 }, (_, i): [string, string] => [`p/${String(i).padStart(4, '0')}.vmdl_c`, `w${i}`]);
+  const top = put('pak10', many);
+  const under = put('pak20', many.map(([p]) => [p, 'other']));
+  const [c] = installer.coverage([top, under]).get('pak20') ?? [];
+  assert.equal(c.files, COVER_PATHS + 5);
+  assert.equal(c.paths.length, COVER_PATHS);
+  assert.equal(c.paths[0], 'p/0000.vmdl_c');
 });

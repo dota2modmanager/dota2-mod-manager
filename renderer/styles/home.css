@@ -1,0 +1,119 @@
+/* ============ Home (renderer/home/, views/home.ts) ============
+   From the app to the user, top to bottom: the name (small: a screenshot should say which program
+   it is, nothing more), a way into every section with what is in it now, the catalog's newest mods
+   (the loudest part, being pictures), then this version's changes beside the news and the game. */
+.home { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.home-head { display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.home-logo { display: grid; place-items: center; color: var(--primary-soft); }
+.home-name { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; min-width: 0; }
+.home-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+.home-version { font-size: var(--text-sm); color: var(--text-faint); font-family: var(--font-numeric); }
+.home-links { display: flex; gap: var(--space-1); margin-left: auto; flex-wrap: wrap; }
+.home-links .ms { font-size: var(--icon-sm); }
+#homeStars .ms { color: var(--warning); }
+
+/* the ways into the sections: one row while the window has room for five, then two rows */
+.home-dests {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-3);
+}
+.home-dest {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  text-align: left;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+.home-dest:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.home-dest:active { background: var(--state-active); }
+.home-dest:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.home-dest-icon { font-size: var(--icon-lg); color: var(--primary-soft); }
+.home-dest-body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.home-dest-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-head);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+}
+.home-dest-title .tb-new { position: static; }
+.home-dest-line { font-size: var(--text-sm); color: var(--text-muted); line-height: var(--leading-normal); }
+
+/* six of the newest in one row that fits the window: the catalog's strip scrolls sideways, and
+   a scrollbar under six cards said there was more than there is */
+.recent-row.home-recent { grid-auto-flow: row; grid-template-columns: repeat(6, minmax(0, 1fr)); overflow: visible; margin: -10px -8px 0; }
+@media (max-width: 1180px) { .recent-row.home-recent { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.home-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+.home-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.home-panel-title, .home-news-title {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text);
+}
+.home-news-title { font-size: var(--text-base); margin-top: var(--space-2); }
+.home-quiet { margin: 0; font-size: var(--text-sm); color: var(--text-muted); }
+
+.home-notes, .home-status, .home-news {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+.home-notes li { position: relative; padding-left: var(--space-4); color: var(--text); }
+.home-notes li::before {
+  content: '';
+  position: absolute;
+  left: var(--space-1);
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--primary-soft);
+}
+
+.home-status-row { display: flex; align-items: center; gap: var(--space-2); }
+.home-status-row .ms { font-size: var(--icon-md); }
+.home-status-row.ok .ms { color: var(--installed); }
+.home-status-row.warn .ms { color: var(--warning); }
+.home-status-text { flex: 1; min-width: 0; color: var(--text); }
+
+.home-news li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2); color: var(--text); }
+.home-news li.warn { color: var(--warning); }
+.home-news-date { font-family: var(--font-numeric); font-size: var(--text-xs); color: var(--text-faint); }

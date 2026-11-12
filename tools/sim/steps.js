@@ -154,10 +154,55 @@ function answerNextDialog(answer) {
   return { asked, restore: () => { dialog.showOpenDialog = real; } };
 }
 
+/** Where a section is opened from: its tab, or for Home the name in the title bar (3.0). */
+const tabOf = (view) => (view === 'home' ? '#tbHome' : `.tb-tab[data-view="${view}"]`);
+/** The section the window says is open, as an expression. */
+const openNow = (view) => (view === 'home'
+  ? `document.getElementById('tbHome')?.hasAttribute('aria-current')`
+  : `document.querySelector('.tb-tab.active')?.dataset.view === ${lit(view)}`);
+
 async function openSection(sim, view) {
-  await sim.click(`.tb-tab[data-view="${view}"]`);
-  return sim.until(`document.querySelector('.tb-tab.active')?.dataset.view === ${lit(view)}
-    && !document.querySelector(${lit(`.view-pane[data-pane="${view}"]`)})?.hidden && ${calm}`, 10000);
+  await sim.click(tabOf(view));
+  // Items draws in the catalog's pane (renderer/core/router.ts PANE_OF)
+  const paneName = view === 'items' ? 'catalog' : view;
+  return sim.until(`${openNow(view)}
+    && !document.querySelector(${lit(`.view-pane[data-pane="${paneName}"]`)})?.hidden && ${calm}`, 10000);
+}
+
+/**
+ * The item table on or off, the way a person does it since 3.0: Settings, "Game files", its switch
+ * (renderer/settings/GameFilesBlock.tsx). Turning it on shows the window that explains it
+ * (renderer/ui/game-files.ts), `onAsk` looks at that window before it is answered; turning it off
+ * asks to confirm. Safe mode had a switch of its own in the status bar until then.
+ * @returns {Promise<{ asked: boolean, ok: boolean }>} whether a window came up, and whether the switch ended as asked
+ */
+async function itemTable(sim, on, { onAsk } = {}) {
+  await openSection(sim, 'settings');
+  if (!await sim.until(`document.getElementById('itemTableSwitch')`, 8000)) return { asked: false, ok: false };
+  const state = () => sim.js(`document.getElementById('itemTableSwitch').getAttribute('aria-checked') === 'true'`);
+  if (await state() === on) return { asked: false, ok: true };
+  // Settings is longer than the window and the switch sits low in it: on a 1360x860 window the
+  // click went below the last pixel of the page (localization, CI, 2026-11-04)
+  await sim.js(`document.getElementById('itemTableSwitch').scrollIntoView({ block: 'center', behavior: 'instant' })`);
+  await sim.still();
+  // the switch sits at the right edge, where toasts land: wait for the last one to go
+  await sim.until(`!document.querySelector('#toasts .toast')`, 8000);
+  // a toast still up from before is not this answer
+  await sim.js(`document.querySelectorAll('#toasts .toast').forEach((t) => { t.dataset.simOld = '1'; })`);
+  await sim.click('#itemTableSwitch');
+  const box = on ? '.safe-box [data-c="yes"]' : '.confirm-overlay [data-c="yes"]';
+  const asked = Boolean(await sim.until(`document.querySelector(${lit(box)})`, 5000));
+  if (asked) {
+    if (onAsk) await onAsk();
+    await sim.click(box);
+  }
+  // a refusal (the game holds gameinfo open) is a red toast that fades in a few seconds, so it is
+  // read here, while it is still up, rather than by the caller after the wait
+  const flipped = `document.getElementById('itemTableSwitch').getAttribute('aria-checked') === '${on}'`;
+  // turning it off rebuilds the packs and puts both files back; a CI runner took longer than 15 s
+  await sim.until(`${flipped} || document.querySelector('#toasts .toast.error:not([data-sim-old])')`, 45000);
+  const said = await sim.js(`[...document.querySelectorAll('#toasts .toast')].map((t) => t.textContent.trim()).join(' | ')`);
+  return { asked, ok: Boolean(await sim.js(flipped)), said, click: sim.lastClick };
 }
 
 /**
@@ -207,6 +252,7 @@ async function installFromCard(sim, m, langDir) {
   const shown = await categoryList(sim, m.categoryId);
   const none = { pak: null, added: [], asked: null, ok: false };
   if (!sim.check(`${m.categoryId}: the category lists its mods`, !!shown, 'not one card in it, so no mod could be found there')) return none;
+  await allCards(sim); // the grid draws a page at a time
   const at = await sim.until(`(() => {
     const names = [...document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card .card-name')];
     return names.findIndex((n) => n.textContent.trim() === ${lit(m.name)}) + 1;
@@ -272,6 +318,9 @@ async function setEnabled(sim, name, on) {
 async function removeFromLibrary(sim, name) {
   const row = rowOf(await libraryRows(sim), name);
   if (!row) return false;
+  // the last removal's toast sits over the top rows for a few seconds (the banner about the item
+  // table moves them up under it); a hand waits for it to go rather than clicking the toast
+  await sim.until(`!document.querySelector('#toasts .toast')`, 8000);
   await sim.click(`.lib-row[data-row="${row.id}"] [data-del]`);
   if (await sim.until(`document.querySelector('.confirm-overlay [data-c="yes"]')`, 5000)) {
     await sim.still();
@@ -318,8 +367,23 @@ function whoServes(game, folder, pak) {
   return { files: mine.length + Object.values(lost).reduce((a, b) => a + b, 0), served: mine.length, lost };
 }
 
+/**
+ * Every card of the list on show, the way a person gets them: a long list is drawn a page at a time
+ * (renderer/ui/growing.ts), so this scrolls to the end until the marker of the next page is gone.
+ * @returns {Promise<number>} how many cards the list shows then
+ */
+async function allCards(sim) {
+  const cards = `document.querySelectorAll('.view-pane[data-pane="catalog"] .grid .card').length`;
+  for (let i = 0; i < 40; i++) {
+    const more = await sim.js(`(() => { const m = document.querySelector('.view-pane[data-pane="catalog"] .grid-more'); if (m) m.scrollIntoView({ block: 'end', behavior: 'instant' }); return Boolean(m); })()`);
+    if (!more) break;
+    await sim.settle(250);
+  }
+  return sim.js(cards);
+}
+
 module.exports = {
-  calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard,
+  calm, modalOpen, listing, listingDiff, readyMods, openSection, heroesList, categoryList, installFromCard, allCards,
   libraryRows, rowOf, setEnabled, removeFromLibrary, gameOf, gameLoads, mountedOurs, whoServes,
-  modFile, answerNextDialog,
+  modFile, answerNextDialog, itemTable, tabOf, openNow,
 };

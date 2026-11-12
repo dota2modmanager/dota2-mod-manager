@@ -23,6 +23,9 @@ import { validateDownloadProxy } from './download-proxy.ts';
 /** Why a value does not fit, or null when it does. */
 export type Check = (v: unknown) => string | null;
 
+/** The arcanas the arcana window builds: src/arcana-service.ts WINDOWS, which a test keeps in step. */
+export const ARCANA_WINDOWS = ['terrorblade-arcana', 'techies-arcana', 'terrorblade-span', 'terrorblade-scythes', 'razor-crest'];
+
 const fail = (what: string) => `expected ${what}`;
 
 const str = (max: number, min = 0): Check => (v) =>
@@ -74,6 +77,13 @@ const PATH = str(4096, 1);
 const NAME = str(500);
 /** A picture: a catalog address or a frame as a data URI. */
 const PREVIEW = optional(str(16 * MB));
+/** One pick of a saved look in the item builder (renderer/views/item-looks.ts). */
+const HUD_PART = shape({ id: str(40, 1), scale: optional(num(60, 130)), x: optional(num(-1920, 1920)), y: optional(num(-1920, 1920)), opacity: optional(num(10, 100)), tint: optional(str(7, 7)), hidden: optional(bool) });
+const EFFECT_EDITS: Check = (v) => {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
+  return Object.keys(v).length <= 64 ? json(16000)(v) : fail('at most 64 systems');
+};
+const LOOK_PICK = shape({ slot: str(200, 1), itemId: str(20, 1), name: str(500), effectId: optional(str(500)) });
 
 /**
  * The settings the window has a control for, and what each may be set to. The rest - the game
@@ -82,11 +92,28 @@ const PREVIEW = optional(str(16 * MB));
  */
 export const WINDOW_SETTINGS: Record<string, Check> = {
   discordPresence: bool,
+  countDownloads: bool,
+  everyoneWearsMine: bool,
   favorites: list(str(500), 20000),
+  itemLooks: list(shape({ id: str(60, 1), hero: str(200, 1), name: str(80, 1), picks: list(LOOK_PICK, 40), at: num(0, 1e14) }), 2000),
   langPromptSeen: bool,
+  // the three folders the game mounts by its voice language (src/gamelang.ts MOD_FOLDERS)
+  langFolderLock: oneOf(null, 'koreana', 'russian', 'schinese'),
+  modLabels: (v) => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return fail('an object');
+    const entries = Object.entries(v);
+    if (entries.length > 5000) return fail('at most 5000 labels');
+    for (const [k, label] of entries) {
+      if (!/^(rec|file):.{1,500}$/.test(k)) return `label key ${k.slice(0, 60)}: expected rec:<id> or file:<name>`;
+      const bad = str(80, 1)(label);
+      if (bad) return `label ${k.slice(0, 60)}: ${bad}`;
+    }
+    return null;
+  },
   panels: either(oneOf(null), json(64 * 1024)),
   pumpkin: bool,
   pumpkinLit: bool,
+  runInBackground: bool,
   secret: bool,
   showAdult: bool,
   theme: str(40, 1),
@@ -113,17 +140,19 @@ const settingsSet: Check[] = [
 export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the window and the app (src/ipc-window.ts, src/main.ts)
   'win:minimize': [], 'win:maximize': [], 'win:close': [], 'win:isMaximized': [],
-  'app:version': [], 'app:notes': [str(16)], 'app:notesSeen': [],
+  'app:version': [], 'app:notes': [str(16)], 'app:notesSeen': [], 'app:stars': [],
   'update:install': [], 'update:fetchPortable': [], 'update:revealPortable': [PATH],
   'beta:state': [], 'beta:set': [bool],
-  'game:launch': [],
+  'game:launch': [], 'game:steamDownloads': [], 'game:steamProperties': [],
+  'grid:state': [], 'grid:apply': [list(oneOf('winrate', 'attribute', 'popular'), 3)], 'grid:remove': [],
   'ui:setZoom': [num(0.25, 5)],
   // settings and the account (src/ipc-settings.ts)
   'settings:get': [], 'settings:set': settingsSet, 'settings:testProxy': [downloadProxy], 'settings:detectDota': [], 'settings:browseDota': [],
   'settings:moveLangFiles': [optional(str(64))],
   'presence:view': [str(64)],
+  'support:state': [], 'support:choose': [oneOf('later', 'done')],
   'account:signIn': [], 'account:signOut': [],
-  'catalog:load': [optional(bool)], 'catalog:terrainAges': [],
+  'catalog:load': [optional(bool)], 'catalog:terrainAges': [], 'catalog:downloadCounts': [],
   // mods (src/ipc-mods.ts, src/ipc-library.ts, src/ipc-foreign.ts)
   // a stuck font or cursor is reinstalled from its record, whose category the handler judges
   'mods:install': [shape({ categoryId: str(100), name: NAME, styleLabel: optional(NAME), fileRef: optional(str(1000)), preview: PREVIEW })],
@@ -134,11 +163,11 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'mods:exportSingle': [ID], 'mods:unpackToFolder': [ID],
   'mods:masterState': [], 'mods:setMaster': [bool],
   'mods:setEnabled': [ID, bool], 'mods:setEnabledMany': [IDS, bool],
-  'mods:remove': [ID], 'mods:removeMany': [IDS],
+  'mods:remove': [ID], 'mods:removeMany': [IDS], 'mods:removeEverything': [],
   'mods:move': [ID, num(-1, 1)], 'mods:reorder': [ID, num(0, 10000)],
   'mods:mapsOwner': [],
   'mods:externalSetEnabled': [PATH, bool], 'mods:externalRemove': [PATH],
-  'mods:splitMod': [ID], 'mods:splitExternal': [PATH],
+  'mods:splitMod': [ID], 'mods:dropItemIcons': [ID], 'mods:splitExternal': [PATH],
   'mods:adoptMod': [ID, PREVIEW], 'mods:adoptExternal': [PATH, PREVIEW], 'mods:adoptFont': [NAME, PREVIEW], 'mods:adoptCursor': [PREVIEW],
   // combined packs (src/ipc-packs.ts)
   'packs:combine': [shape({ name: NAME, modIds: IDS })],
@@ -148,29 +177,59 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'presets:list': [], 'presets:save': [NAME], 'presets:update': [ID], 'presets:rename': [ID, NAME], 'presets:delete': [ID],
   'presets:apply': [ID], 'presets:resolve': [ID], 'presets:exportPlan': [ID], 'presets:shareLink': [ID],
   'presets:export': [ID, optional(shape({ skip: optional(list(str(1000), 10000)), author: optional(str(200)), note: optional(str(5000)) }))],
-  'presets:importDialog': [], 'presets:importFile': [PATH],
+  'presets:importDialog': [], 'presets:importFile': [PATH], 'presets:ready': [], 'presets:takeReady': [ID],
   // the game: its schema, cosmetics, pictures, tools (src/ipc-game.ts)
   'config:state': [], 'config:noticeSeen': [str(200, 1)],
-  'patch:state': [], 'patch:repairState': [], 'patch:repairNow': [], 'patch:repairSeen': [], 'patch:setEnabled': [bool],
+  'patch:state': [], 'patch:repairState': [], 'patch:repairNow': [], 'patch:repairApp': [], 'patch:repairSeen': [], 'patch:setEnabled': [bool],
   'schema:refresh': [],
+  'schema:cancel': [],
   'cosmetics:slots': [],
-  'cosmetics:heroPortraits': [list(either(str(100), num(0, 1e9)), 1000)],
+  'cosmetics:heroPortraits': [list(either(str(100), num(0, 1e9)), 1000), optional(bool)],
   'cosmetics:heroPortraitsByName': [list(str(200), 1000)],
   'cosmetics:icons': [list(str(500), 20000)],
   'cosmetics:pick': [str(100, 1), either(str(100), num(0, 1e9)), optional(NAME), optional(either(str(100), num(0, 1e9)))],
-  'cosmetics:pickSet': [either(str(100, 1), num(0, 1e9))],
+  'cosmetics:pickSet': [either(str(100, 1), num(0, 1e9)), optional(num(0, 64))],
+  'cosmetics:wearLook': [str(200, 1), list(LOOK_PICK, 40)],
   'preview:video': [str(500, 1)], 'preview:frame': [str(500, 1), bytes(32 * MB)],
   'tools:state': [], 'tools:install': [str(100, 1)], 'tools:remove': [str(100, 1)],
   // resourcecompiler.exe (src/ipc-compiler.ts): its path comes from a dialog, never from here
   'compiler:state': [], 'compiler:browse': [], 'compiler:forget': [], 'compiler:prepare': [], 'compiler:check': [], 'compiler:keep': [], 'compiler:removeKept': [],
-  'arcana:state': [], 'arcana:install': [list(num(0, 255), 3), oneOf('mod', 'recolor')],
+  'sounds:heroes': [],
+  // the 3D preview: a hero and its slots, each with the stock item it dresses (src/hero-preview.ts)
+  'preview3d:warm': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1) }), 40)],
+  'preview3d:prefetch': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1) }), 40), str(120, 1), list(str(20, 1), 400)],
+  'preview3d:models': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1), tryOn: optional(shape({ itemId: str(20), effectId: str(500) })) }), 40)], 'preview3d:slice': [num(1, Number.MAX_SAFE_INTEGER), num(0, Number.MAX_SAFE_INTEGER)], 'preview3d:motions': [str(200, 1)], 'preview3d:effect': [str(40, 1)], 'preview3d:model': [str(200, 1)], 'sounds:hero': [str(60, 1)], 'sounds:remove': [str(60, 1), str(200, 1)],
+  'sounds:add': [str(60, 1), str(200, 1), oneOf('replace', 'layer'), num(0.05, 1), bytes(8 * MB), str(200)],
+  // the menu's background (src/ipc-background.ts): a WebM the window encoded, or null for a new look alone
+  // the in-game HUD's layout (src/ipc-hud.ts): what src/hud-scale.ts cleanParts then puts in range
+  'hud:state': [], 'hud:install': [list(HUD_PART, 11)],
+  // the effect editor (src/ipc-effects.ts): src/effect-edit.ts cleanEdits keeps what it knows of the changes
+  'fx:search': [str(200)], 'fx:heroes': [], 'fx:hero': [str(40, 2)], 'fx:load': [str(300, 1)], 'fx:preview': [str(300, 1), EFFECT_EDITS], 'fx:install': [str(300, 1), EFFECT_EDITS, optional(bool)],
+  // the author's drafts (src/ipc-creator.ts): the files come from a dialog, never from here
+  'creator:list': [], 'creator:remove': [ID], 'creator:export': [ID, optional(list(optional(bytes(8 * MB)), 3))],
+  'creator:save': [optional(ID), shape({
+    name: optional(str(500)), category: optional(str(60)), hero: optional(str(60)), description: optional(str(5000)), author: optional(str(200)),
+    replaces: optional(shape({ category: str(60, 1), name: str(500, 1) })), styles: optional(list(shape({ label: str(200) }), 12)),
+  })],
+  'creator:attach': [ID, num(0, 11), oneOf('vpk', 'picture')],
+  'rank:state': [], 'rank:pictures': [], 'rank:install': [json(64 * 1024)],
+  // the map without its decor (src/ipc-decor.ts): the groups taken off
+  'decor:state': [], 'decor:install': [list(oneOf('plants', 'debris'), 2)],
+  'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
+  // a hero's ability icons from his own cosmetics' (src/ipc-icons.ts): his npc name, an ability, an icon under spellicons or null for the game's
+  'icons:heroes': [], 'icons:hero': [str(40, 2)], 'icons:pictures': [list(str(160, 1), 200)],
+  'icons:set': [str(40, 2), str(100, 1), optional(str(160, 1))], 'icons:clear': [str(40, 2)],
+  // a hero recoloured part by part (src/ipc-paint.ts): his npc name, and a #rrggbb per layer that is on
+  'paint:state': [str(40, 2), optional(list(str(12), 24))], 'paint:icons': [list(str(100), 60)], 'paint:install': [str(40, 2), json(64 * 1024), optional(str(80)), optional(list(str(12), 24))],
+  'map:state': [], 'map:install': [oneOf('towers', 'trees'), optional(str(40)), optional(str(40))],
+  'arcana:state': [], 'arcana:install': [oneOf(...ARCANA_WINDOWS), list(num(0, 255), 3), oneOf('mod', 'recolor')],
   // the small errands (src/ipc-misc.ts)
-  'misc:openLangFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],
+  'misc:openLangFolder': [], 'misc:openCacheFolder': [], 'misc:openToolsFolder': [optional(str(260, 1))],
   'misc:openExternal': [optional((v) => {
     if (typeof v !== 'string' || v.length > 4096) return fail('an address');
     try { return /^https?:$/.test(new URL(v).protocol) ? null : fail('an http or https address'); } catch { return fail('an address'); }
   })],
-  'misc:cacheSize': [], 'misc:clearCache': [], 'misc:runTool': [str(260, 1)],
+  'misc:cacheSize': [], 'misc:clearCache': [], 'misc:cacheList': [], 'misc:cacheRemove': [str(520, 1)], 'misc:runTool': [str(260, 1)],
   // the pumpkin's key (src/ipc-pumpkin.ts)
   'pumpkin:redeem': [str(80)], 'pumpkin:prizeAgain': [], 'pumpkin:hasPrize': [],
   // diagnostics (src/ipc-diagnostics.ts)

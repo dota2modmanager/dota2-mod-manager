@@ -11,9 +11,22 @@ import { registerWindowIpc } from './ipc-window.ts';
 import { registerMiscIpc } from './ipc-misc.ts';
 import { registerSettingsIpc } from './ipc-settings.ts';
 import { registerGameIpc } from './ipc-game.ts';
+import { registerLaunchIpc } from './ipc-launch.ts';
 import { registerCompilerIpc } from './ipc-compiler.ts';
 import { registerDiagnosticsIpc } from './ipc-diagnostics.ts';
 import { registerPumpkinIpc } from './ipc-pumpkin.ts';
+import { registerGridIpc } from './ipc-grid.ts';
+import { registerSoundsIpc } from './ipc-sounds.ts';
+import { registerPreview3dIpc } from './ipc-preview3d.ts';
+import { registerBackgroundIpc } from './ipc-background.ts';
+import { registerHudIpc } from './ipc-hud.ts';
+import { registerEffectsIpc } from './ipc-effects.ts';
+import { registerRankIpc } from './ipc-rank.ts';
+import { registerDecorIpc } from './ipc-decor.ts';
+import { registerPaintIpc } from './ipc-paint.ts';
+import { registerIconsIpc } from './ipc-icons.ts';
+import { registerCreatorIpc } from './ipc-creator.ts';
+import { registerLooksIpc } from './ipc-looks.ts';
 
 /** Register every channel the window can call. */
 export function registerIpc(ctx: AppContext): void {
@@ -21,6 +34,7 @@ export function registerIpc(ctx: AppContext): void {
   registerSettingsIpc(ctx);
   registerModsIpc(ctx);
   registerGameIpc(ctx);
+  registerLaunchIpc(ctx);
   registerCompilerIpc(ctx);
   registerLibraryIpc(ctx);
   registerForeignIpc(ctx);
@@ -29,4 +43,16 @@ export function registerIpc(ctx: AppContext): void {
   registerMiscIpc(ctx);
   registerDiagnosticsIpc(ctx);
   registerPumpkinIpc(ctx);
+  registerGridIpc(ctx);
+  registerSoundsIpc(ctx);
+  registerPreview3dIpc(ctx);
+  registerBackgroundIpc(ctx);
+  registerHudIpc(ctx);
+  registerEffectsIpc(ctx);
+  registerRankIpc(ctx);
+  registerDecorIpc(ctx);
+  registerPaintIpc(ctx);
+  registerIconsIpc(ctx);
+  registerCreatorIpc(ctx);
+  registerLooksIpc(ctx);
 }

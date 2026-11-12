@@ -6,16 +6,18 @@
  * (mod-window.ts), installing (install.ts) and the free looks (cosmetics.ts). What they draw with
  * is catalog/, in React. */
 import { $ } from '../core/dom.ts';
-import { COSMETIC_PREFIX, RAIL_SECTIONS, freshFilters } from '../core/constants.ts';
+import { COSMETIC_PREFIX, RAIL_SECTIONS } from '../core/constants.ts';
 import { state } from '../core/store.ts';
-import { registerView, switchView } from '../core/router.ts';
+import { registerView, switchView, catalogOnShow } from '../core/router.ts';
+import { enterSection, sectionOnShow } from './catalog/sections.ts';
 import { pickedIn } from '../core/installed.ts';
 import { catName, catIcon } from '../core/categories.ts';
 import { toast } from '../ui/toast.ts';
 import { paint } from '../ui/transitions.ts';
 import { refreshSidebarStatus } from '../ui/statusbar.ts';
 import { refreshNotices, noticeBannerHtml, bindNotice } from '../ui/notice.ts';
-import { bindItemBuilder, openItemHeroModal } from './item-builder.ts';
+import { bindItemBuilder } from './item-builder.ts';
+import { openItemHeroModal } from './item-hero.ts';
 import { itemRailEntry } from './item-hub.ts';
 import { setHeroLayout } from './hero-grid.ts';
 import { showScreen } from '../catalog/screen/root.tsx';
@@ -30,13 +32,26 @@ import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, re
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
 import { openArcanaWindow } from './catalog/arcana.ts';
-import { screen, view } from './catalog/state.ts';
+import { openMapLooks } from './catalog/map-looks.ts';
+import { openSounds } from './catalog/sounds.ts';
+import { openBackground } from './catalog/background.ts';
+import { openHud } from './catalog/hud.ts';
+import { openRank } from './catalog/rank.ts';
+import { openDecor } from './catalog/decor.ts';
+import { remember, screen, startFilters, view } from './catalog/state.ts';
+import { onDownloadCounts } from '../core/download-counts.ts';
 
-registerView('catalog', () => renderCatalog());
+// one pane, two tabs (views/catalog/sections.ts)
+registerView('catalog', () => { enterSection('catalog'); return renderCatalog(); });
+registerView('items', () => { enterSection('items'); return renderCatalog(); });
 
 // ---------- the rail (catalog/rail/Rail.tsx) ----------
 
 function railModel(): RailModel {
+  return sectionOnShow() === 'items' ? itemsRail() : catalogRail();
+}
+
+function catalogRail(): RailModel {
   const cats = new Set(visibleCategories().map((c) => c.id));
   const favCount = favoriteMods().length + favoriteCosmetics().length;
   const sections: RailModel['sections'] = [{ label: null, items: [
@@ -47,32 +62,33 @@ function railModel(): RailModel {
     const present = ids.filter((id) => cats.has(id));
     if (present.length) sections.push({ label: tr(label), items: present.map((id) => ({ id, icon: catIcon(id), name: catName(id) })) });
   }
-  // Free cosmetics only work once safe mode is off (the patch is what lets the game read them at
-  // all): showing the section without that would just be a list of dead buttons.
-  const cos = cosmeticSlotList();
-  if (cos.length) {
-    const items = cos
-      .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
-      .map((s) => {
-        const id = COSMETIC_PREFIX + s.slot;
-        return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
-      });
-    const builder = itemRailEntry();
-    if (builder) items.push(builder);
-    sections.push({ label: L`Косметика`, items });
-  }
   return { active: state.activeCategory, sections };
 }
 
+/* Items: the builder first, it is what most people come here for, then the standard slots whose
+ * look the game lets you change (weather, terrain, couriers, wards...). Shown before the game's
+ * table is read too, so the tab is never an empty column. */
+function itemsRail(): RailModel {
+  // the builder is there once the game's table has items to build from (a stub table has none)
+  const entry = itemRailEntry();
+  const sections: RailModel['sections'] = entry ? [{ label: null, items: [{ ...entry, name: L`Конструктор героев` }] }] : [];
+  const looks = cosmeticSlotList()
+    .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
+    .map((s) => {
+      const id = COSMETIC_PREFIX + s.slot;
+      return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
+    });
+  if (looks.length) sections.push({ label: L`Виды из игры`, items: looks });
+  return { active: state.activeCategory, sections };
+}
+
+// The search in the title bar stays: in a category it narrows that category, and "All categories"
+// shows what it finds everywhere (renderCatalog). It used to be cleared here, and a search could not
+// be carried from one category to the next.
 function pickCategory(id: string): Promise<void> {
   state.activeCategory = id;
-  view.filters = freshFilters();
+  view.filters = startFilters();
   view.cosSearch = '';
-  if (state.search) {
-    state.search = '';
-    ($('#globalSearch') as HTMLInputElement).value = '';
-    $('#clearSearch').classList.add('hidden');
-  }
   return renderCatalog();
 }
 
@@ -86,13 +102,14 @@ function renderRail(): void {
 const actions: ScreenActions = {
   openCategory: async (id) => {
     state.activeCategory = id;
-    view.filters = freshFilters();
+    view.filters = startFilters();
     await renderCatalog(); // the grid has to exist before it can be scrolled to the top
     $('#main').scrollTop = 0;
   },
   openRecent: () => void actions.openCategory('recent'),
   filter: (patch) => {
     Object.assign(view.filters, patch);
+    remember(patch);
     renderCatalog();
   },
   toggleTag: (tag) => {
@@ -120,7 +137,7 @@ const actions: ScreenActions = {
   retry: () => loadCatalog(true),
   openMod: (mod: Mod, card) => openModWindow(mod._cat || '', mod, card),
   favChanged: () => {
-    if (state.view !== 'catalog') return;
+    if (!catalogOnShow()) return;
     // in a list that IS the favourites, the card has to leave it
     if (state.activeCategory === 'favorites' || view.filters.favOnly) renderCatalog();
     else renderRail();
@@ -129,18 +146,26 @@ const actions: ScreenActions = {
   cosmeticFavChanged: () => actions.favChanged(),
   cosmeticFilter: ({ search, ...patch }) => {
     Object.assign(view.filters, patch);
+    remember(patch);
     if (search !== undefined) view.cosSearch = search;
     renderCatalog();
   },
   openHero: (hero, card) => openItemHeroModal(hero, card),
-  openArcana: (card) => void openArcanaWindow(card),
+  openArcana: (set, card) => void openArcanaWindow(set, card),
+  openMapLooks: (kind, card) => void openMapLooks(kind, card),
+  openSounds: (card) => void openSounds(card),
+  openBackground: (card) => void openBackground(card),
+  openHud: (card) => void openHud(card),
+  openRank: (card) => void openRank(card),
+  openDecor: (card) => void openDecor(card),
 };
 
 async function renderCatalog(): Promise<void> {
   const cat = state.catalog;
   if (!cat || cat.error) {
     bannerLayer().replaceChildren();
-    await paint(() => showScreen(cat
+    // paint() may run this a frame late: a "Loading" landing after the catalog drew stayed for good
+    await paint(() => state.catalog === cat && showScreen(cat
       ? { kind: 'offline', offline: Boolean(cat.offline), error: String(cat.error) }
       : { kind: 'loading' }, actions));
     return;
@@ -150,8 +175,8 @@ async function renderCatalog(): Promise<void> {
   await refreshNotices();
 
   const active = state.activeCategory;
-  if (state.search.trim()) await renderSearchResults(actions);
-  else if (active === 'all') await renderHome(actions);
+  // the search finds things everywhere from the front page, and narrows a category picked with it
+  if (active === 'all') await (state.search.trim() ? renderSearchResults(actions) : renderHome(actions));
   else if (active === 'favorites') await renderFavorites(actions);
   else if (active === 'recent') await renderRecent(actions);
   else if (active.startsWith(COSMETIC_PREFIX)) await renderCosmeticCategory(active.slice(COSMETIC_PREFIX.length), actions);
@@ -215,11 +240,12 @@ const CATALOG_MAX_AGE = 30 * 60 * 1000;
 export async function loadCatalog(force = false): Promise<void> {
   if (force) toast(L`Обновляю каталог…`);
   state.catalog = null;
-  if (state.view === 'catalog') renderCatalog();
+  if (catalogOnShow()) renderCatalog();
   const cat = await window.api.catalog.load(force);
   state.catalog = cat;
   if (!cat.error) buildModIndex();
-  if (state.view === 'catalog') renderCatalog();
+  if (catalogOnShow()) renderCatalog();
+  window.dispatchEvent(new Event('mm:catalog')); // Home shows its newest mods (views/home.ts)
   if (!cat.error && waitingLink) {
     const link = waitingLink;
     waitingLink = null;
@@ -236,7 +262,7 @@ export async function loadCatalog(force = false): Promise<void> {
       if (fresh.error) return;
       state.catalog = fresh;
       buildModIndex();
-      if (state.view === 'catalog') renderCatalog();
+      if (catalogOnShow()) renderCatalog();
     });
   }
 }
@@ -266,6 +292,8 @@ window.api.catalog.onModLink((link) => void openModLink(link));
 
 // what the window's parts reach back into the screen for (views/catalog/state.ts)
 screen.redraw = renderCatalog;
+// a list sorted by popularity is put in order again once the numbers it sorts by arrive
+onDownloadCounts(() => { if (catalogOnShow() && view.filters.sort === 'popular') void renderCatalog(); });
 screen.rail = renderRail;
 screen.favChanged = actions.favChanged;
 // The item builder lives in views/item-builder.ts and reaches the catalog only through this.

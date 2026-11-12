@@ -10,6 +10,12 @@ import { BuilderHub } from './BuilderHub.tsx';
 import { CosmeticGrid } from '../cosmetic/CosmeticCard.tsx';
 import { ModGrid } from '../card/ModGrid.tsx';
 import { ArcanaCard } from '../arcana/ArcanaCard.tsx';
+import { MapLookCard } from '../map/MapLookCard.tsx';
+import { SoundCard } from '../sounds/SoundCard.tsx';
+import { BackgroundCard } from '../background/BackgroundCard.tsx';
+import { HudCard } from '../hud/HudCard.tsx';
+import { RankCard } from '../rank/RankCard.tsx';
+import { DecorCard } from '../decor/DecorCard.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -60,8 +66,14 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
         <>
           {m.mods.heading && <div className="section-h"><span className="ms">extension</span>{L`Моды`}</div>}
           <div className="grid" id="modGrid">
-            {m.lead && <ArcanaCard m={m.lead} onOpen={actions.openArcana} />}
-            <ModGrid mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead ? undefined : m.mods.emptyText}
+            {m.lead?.map((a, i) => <ArcanaCard key={a.set} m={a} index={i} onOpen={actions.openArcana} />)}
+            {m.mapLead && <MapLookCard m={m.mapLead} onOpen={actions.openMapLooks} />}
+            {m.soundLead && <SoundCard m={m.soundLead} onOpen={actions.openSounds} />}
+            {m.backgroundLead && <BackgroundCard m={m.backgroundLead} onOpen={actions.openBackground} />}
+            {m.hudLead && <HudCard m={m.hudLead} onOpen={actions.openHud} />}
+            {m.rankLead && <RankCard m={m.rankLead} onOpen={actions.openRank} />}
+            {m.decorLead && <DecorCard m={m.decorLead} onOpen={actions.openDecor} />}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead || m.hudLead || m.rankLead || m.decorLead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

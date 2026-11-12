@@ -55,7 +55,7 @@ export async function downloadFile(url: string, dest: string, {
    * download was abandoned on the first wrong checksum, so a single stale copy on one mirror
    * took the mod away from everybody who reaches that mirror first.
    *
-   * That is not hypothetical: the bucket skipped an archive it already had under the same
+   * That is not hypothetical: our old bucket skipped an archive it already had under the same
    * name, so 24 mods that upstream had replaced still sat there in their old versions. Anybody
    * who cannot reach GitHub got those bytes, the checksum said no, and the install stopped -
    * while three proxies that had the current file were never asked.

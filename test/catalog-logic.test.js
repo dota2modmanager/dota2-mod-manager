@@ -14,7 +14,7 @@ const load = async () => ({
 });
 
 const names = (list) => list.map((m) => m.name);
-const freshFilters = () => ({ sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '' });
+const freshFilters = () => ({ sort: 'default', tags: new Set(), installedOnly: false, favOnly: false, group: '', hero: '', slot: '', author: '' });
 const noChecks = { isInstalled: () => false, isFav: () => false, heroMatches: () => true };
 
 test('a flat category keeps its order, drops the tools this app replaces, and lists the user\'s packs last', async () => {
@@ -118,7 +118,7 @@ test('the toolbar narrows by every filter at once and sorts only when asked', as
 test('sorting is not narrowing', async () => {
   const { filters } = await load();
   assert.equal(filters.narrowed({ ...freshFilters(), sort: 'name' }), false);
-  for (const change of [{ installedOnly: true }, { favOnly: true }, { group: 'x' }, { hero: 'x' }, { slot: 'x' }]) {
+  for (const change of [{ installedOnly: true }, { favOnly: true }, { group: 'x' }, { hero: 'x' }, { slot: 'x' }, { author: 'x' }]) {
     assert.equal(filters.narrowed({ ...freshFilters(), ...change }), true, JSON.stringify(change));
   }
   assert.equal(filters.narrowed({ ...freshFilters(), tags: new Set(['effects']) }), true);
@@ -186,4 +186,22 @@ test('a duration token reads the same written as the stylesheet has it or as the
   assert.equal(parseCssTime('1.5s'), 1500);
   assert.equal(parseCssTime(''), 0);
   assert.equal(parseCssTime('auto'), 0);
+});
+
+test('an installed mod the catalog no longer lists is delisted; a renamed file, a link or an unknown category is not', async () => {
+  const { mods } = await load();
+  const listing = mods.catalogListing({
+    heroes: { groups: [{ name: 'Pudge', mods: [{ name: 'Bare Pudge', file: 'Bare Pudge.zip', styles: [{ label: 'Red', file: 'Bare Pudge Red.zip' }] }] }] },
+    terrain: [{ name: 'Desert', file: 'Desert.vpk' }],
+  });
+  const rec = (categoryId, name, fileRef, kind) => ({ categoryId, name, fileRef, kind });
+  assert.equal(mods.delistedFrom(listing, rec('heroes', 'Bare Pudge', 'Bare Pudge.zip')), false);
+  assert.equal(mods.delistedFrom(listing, rec('heroes', 'Bare Pudge', 'Bare Pudge Red.zip')), false, 'a style file is listed');
+  assert.equal(mods.delistedFrom(listing, rec('heroes', 'bare pudge', 'Bare Pudge v2.zip')), false, 'same name, new file: an update, not a removal');
+  assert.equal(mods.delistedFrom(listing, rec('heroes', 'Hero Meta', 'Hero Meta.zip')), true);
+  assert.equal(mods.delistedFrom(listing, rec('terrain', 'Old Map', 'Old Map.vpk')), true);
+  assert.equal(mods.delistedFrom(listing, rec('heroes', 'Hero Meta', 'https://example.com/x.zip')), false, 'a link has no catalog file');
+  assert.equal(mods.delistedFrom(listing, rec('heroes', 'Pack', 'Pack.zip', 'pack')), false, 'a pack');
+  assert.equal(mods.delistedFrom(listing, rec('imported', 'pak05', null)), false, 'an import');
+  assert.equal(mods.delistedFrom(listing, rec('couriers', 'Gone', 'Gone.zip')), false, 'a category the catalog did not hand over says nothing');
 });

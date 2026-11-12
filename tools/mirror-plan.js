@@ -59,6 +59,18 @@ function checkBody(body, want) {
 
 /* ---------- how much room is left ---------- */
 
+/**
+ * Whether an object of this size fits. Replacing a copy costs the difference, so a full bucket can
+ * still take the new version of an archive it holds: stopping at the first object past the budget
+ * is what left 1613 copies out of date while a run copied nothing at all.
+ *
+ * @param {{used: number, budget: number, already?: number, size: number}} o  bytes; `already` is the copy it replaces
+ * @returns {boolean}
+ */
+function fits({ used, budget, already = 0, size }) {
+  return used - already + size <= budget;
+}
+
 /** Close enough to the end that somebody should hear about it before it arrives. */
 const NEARLY_FULL = 0.95;
 
@@ -202,7 +214,18 @@ function currentPlan(stable, beta) {
   return { uploads, keep: new Set(uploads.map((u) => `${UPDATES}${u.name}`)) };
 }
 
+/**
+ * Every preview in a GitHub tree listing, each once, with its path as the bucket stores it.
+ *
+ * @param {{tree?: Array<{path: string, type: string}>}} listing  the git/trees answer
+ */
+function previewPaths(listing) {
+  return (listing?.tree || [])
+    .filter((entry) => entry.type === 'blob' && entry.path.startsWith('assets/previews/'))
+    .map((entry) => entry.path);
+}
+
 module.exports = {
-  staleCopies, publishedHash, checkBody, budgetNote, releasePlan, retargetFeed, staleReleaseFiles, currentPlan,
+  previewPaths, staleCopies, publishedHash, checkBody, budgetNote, fits, releasePlan, retargetFeed, staleReleaseFiles, currentPlan,
   UPDATES, BETA_MARK, betaName,
 };

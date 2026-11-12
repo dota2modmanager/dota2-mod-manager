@@ -10,8 +10,10 @@
 import './locales/zh-CN-catalog.js';
 import './locales/zh-CN-library.js';
 import './locales/zh-CN-app.js';
+import './locales/en-more.js';
 import './i18n.js';
 import './shell/errors.ts';
+import './ui/scroll-watch.ts';
 import { paintAccount, paintMaximized } from './shell/titlebar.ts';
 import './shell/switches.ts';
 import './shell/search.ts';
@@ -19,13 +21,16 @@ import './shell/drop.ts';
 import './shell/progress.ts';
 import './shell/updates.ts';
 import './views/settings.ts';
+import './views/studio.ts';
+import './views/home.ts';
 import { state } from './core/store.ts';
-import { render, invalidateViews } from './core/router.ts';
+import { render, invalidateViews, catalogOnShow, switchView } from './core/router.ts';
 import { refreshInstalledIndex, firstCosmeticSlots } from './core/installed.ts';
 import { switchOffStaleTerrains } from './core/terrain-age.ts';
 import { askAdultOnce } from './core/adult.ts';
 import { toast } from './ui/toast.ts';
 import { showWhatsNew, toolchainDialog } from './ui/dialog.ts';
+import { offerSupport } from './ui/support.ts';
 import { watchMedia } from './ui/media.ts';
 import { refreshPatchState, refreshMasterSwitch, refreshSidebarStatus } from './ui/statusbar.ts';
 import { applyContentZoom, readPanels, bindPanels } from './ui/chrome.ts';
@@ -97,9 +102,11 @@ async function offerToolchain(): Promise<void> {
   await refreshPatchState();
   await switchOffStaleTerrains();
   await refreshInstalledIndex();
+  // the window opens on Home (3.0): drawn now, and again once the catalog's newest mods are in
+  if (state.view === 'home') await switchView('home');
   // the free looks are read out of the game's 50 MB table, most of a second on the first start:
   // the catalog is drawn without waiting for them, and drawn again with them once they are here
-  const looks = firstCosmeticSlots().then(() => { if (state.view === 'catalog') render(); });
+  const looks = firstCosmeticSlots().then(() => { if (catalogOnShow()) render(); });
   await loadCatalog();
   await looks;
 
@@ -120,5 +127,8 @@ async function offerToolchain(): Promise<void> {
 
   // the app updates itself in the background, so this is the only place a user finds out what
   // changed while they were away
-  showWhatsNew();
+  const sawNotes = await showWhatsNew();
+
+  // from the third start: a star, a word about us, and why (ui/support.ts, src/support-prompt.ts)
+  await offerSupport({ quiet: sawNotes });
 })();

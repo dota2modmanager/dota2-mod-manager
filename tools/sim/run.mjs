@@ -7,6 +7,7 @@
  *   node tools/sim/run.mjs --only fhd:angle-gl          one screen and renderer
  *   node tools/sim/run.mjs --scenario scroll            one scenario
  *   node tools/sim/run.mjs --app <exe>                  a packaged build instead of this tree
+ *   node tools/sim/run.mjs --retry                      a failed scenario gets a second launch
  *
  * One app launch per screen and renderer: the renderer is a command-line switch and the screen is
  * decided when the window opens, so neither can change mid-run. Each launch gets the sandbox's
@@ -20,6 +21,12 @@
  * and until 2026-10-01 the next launch started among whatever the last one left: a second screen
  * in the same run, or the next run on the same machine, failed on a library it never made.
  * The state after the last launch is left as it is, to look at.
+ *
+ * With --retry (the nightly run) a launch with failed scenarios gets one more launch of just those,
+ * in <screen>--<renderer>--retry, and passes when that one does. Most of what went red on main
+ * from 2026-11-03 to 2026-11-05 was timing on a busy runner (a toast fading between two frames, a
+ * list not drawn in 15 s), not the app; a failure that comes back on the second launch is the
+ * one worth a look. Both launches are in the report.
  *
  * Exit code 1 when any check failed, 2 when a launch produced no results at all.
  */
@@ -41,6 +48,7 @@ function arg(name, fallback = null) {
   const i = process.argv.indexOf(`--${name}`);
   return i > 0 ? process.argv[i + 1] : fallback;
 }
+const flag = (name) => process.argv.includes(`--${name}`);
 
 /** The screen and renderer pairs to run, from --only or a named set for this system. */
 export function plan({ only, set = 'pr', platform = process.platform } = {}) {
@@ -63,12 +71,12 @@ export function scenariosFor(i, all, { looks = config.looks, explicit = false } 
 }
 
 /** The command line and environment one launch needs. Pure, so the tests can read it. */
-export function launch(screenName, rendererName, { scenarios, app = null, platform = process.platform, electron = 'electron' } = {}) {
+export function launch(screenName, rendererName, { scenarios, app = null, platform = process.platform, electron = 'electron', suffix = '' } = {}) {
   const screen = config.screens[screenName];
   const renderer = config.renderers[rendererName];
   if (!screen) throw new Error(`no screen "${screenName}"`);
   if (!renderer) throw new Error(`no renderer "${rendererName}"`);
-  const out = path.join(OUT, `${screenName}--${rendererName}`);
+  const out = path.join(OUT, `${screenName}--${rendererName}${suffix}`);
   // held to the sandbox: a write anywhere else is refused (src/write-jail.ts)
   const args = [...(app ? [] : [root]), `--user-data-dir=${USERDATA}`, `--write-jail=${path.dirname(USERDATA)}`, ...renderer.args];
   if (screen.scale && screen.scale !== 1 && platform === 'win32') args.push(`--force-device-scale-factor=${screen.scale}`);
@@ -134,6 +142,18 @@ export function silentScenarios(asked, checks) {
   return silent;
 }
 
+/**
+ * The scenarios a second launch runs: the ones with a failed check or none at all, in the order
+ * asked. A launch that wrote no results runs everything again.
+ */
+export function toRetry(asked, result) {
+  const names = String(asked || '').split(',').map((s) => s.trim()).filter(Boolean);
+  if (!result) return names;
+  const failed = new Set(result.checks.filter((c) => !c.ok).map((c) => c.scenario));
+  const silent = new Set(silentScenarios(asked, result.checks).map((s) => s.split(':')[0]));
+  return names.filter((n) => failed.has(n) || silent.has(n));
+}
+
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 /** One page with every run, every failed check and its pictures. */
@@ -166,22 +186,30 @@ async function main() {
   const explicit = Boolean(arg('scenario'));
   const electron = require('electron');
   const runs = [];
-  for (const [i, [screen, renderer]] of pairs.entries()) {
+  const once = async (screen, renderer, scenarios, suffix = '') => {
     execFileSync(process.execPath, [path.join(root, 'tools', 'sandbox.js'), 'reset'], { cwd: root, stdio: 'ignore' });
-    const scenarios = scenariosFor(i, all, { explicit });
-    const spec = launch(screen, renderer, { scenarios, app: arg('app'), electron });
-    console.log(`\n=== ${screen} / ${renderer}: ${scenarios}`);
+    const spec = launch(screen, renderer, { scenarios, app: arg('app'), electron, suffix });
+    console.log(`\n=== ${screen} / ${renderer}${suffix}: ${scenarios}`);
     const result = await runOne(spec, Number(arg('timeout', 900)) * 1000);
-    runs.push({ screen, renderer, dir: path.basename(spec.out), result, silent: result ? silentScenarios(scenarios, result.checks) : [] });
+    const run = { screen, renderer, dir: path.basename(spec.out), result, silent: result ? silentScenarios(scenarios, result.checks) : [] };
+    runs.push(run);
+    return run;
+  };
+  const passed = (r) => (r.result?.passed ?? false) && !r.silent.length;
+  const summary = [];
+  for (const [i, [screen, renderer]] of pairs.entries()) {
+    const scenarios = scenariosFor(i, all, { explicit });
+    const first = await once(screen, renderer, scenarios);
+    const failed = first.result ? [...first.result.checks.filter((c) => !c.ok).map((c) => `${c.scenario}: ${c.name}: ${c.detail}`), ...first.silent] : ['no results'];
+    const again = !passed(first) && flag('retry') ? await once(screen, renderer, toRetry(scenarios, first.result).join(','), '--retry') : null;
+    summary.push({ screen, renderer, passed: passed(first) || (!!again && passed(again)), failed, ...(again ? { retried: passed(again) ? 'passed' : 'failed again' } : {}) });
   }
   fs.mkdirSync(OUT, { recursive: true });
-  const summary = runs.map((r) => ({ screen: r.screen, renderer: r.renderer, passed: (r.result?.passed ?? false) && !r.silent.length,
-    failed: r.result ? [...r.result.checks.filter((c) => !c.ok).map((c) => `${c.scenario}: ${c.name}: ${c.detail}`), ...r.silent] : ['no results'] }));
   fs.writeFileSync(path.join(OUT, 'summary.json'), JSON.stringify(summary, null, 1));
   fs.writeFileSync(path.join(OUT, 'index.html'), reportHtml(runs));
   const bad = summary.filter((s) => !s.passed);
   console.log(`\n${summary.length - bad.length} of ${summary.length} run(s) passed. Report: ${path.join(OUT, 'index.html')}`);
-  process.exit(runs.some((r) => !r.result) ? 2 : bad.length ? 1 : 0);
+  process.exit(!bad.length ? 0 : runs.some((r) => !r.result) ? 2 : 1);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

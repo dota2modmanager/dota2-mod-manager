@@ -21,30 +21,11 @@ import { attributeToken, constantExpression, rewriteExpressions, withConstant } 
 import { dataBlock } from './resource.ts';
 import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
 
-export type Rgb = [number, number, number];
+export type { Rgb } from './recolor-sets.ts';
+import type { Rgb } from './recolor-sets.ts';
 
-/** What can be recoloured, by path prefix in pak01, and the colour of the gem the item comes with. */
-export interface RecolorSet {
-  name: string;
-  gem: Rgb;
-  /** particles only this item uses: colours written in them follow the chosen one */
-  own: string[];
-  /** particles it shares with the hero and his other items: only the gem's tint changes */
-  shared: string[];
-  /** materials that read the gem's colour */
-  materials: string[];
-}
-
-export const RECOLOR_SETS: Record<string, RecolorSet> = {
-  'terrorblade-arcana': {
-    name: 'Fractal Horns of Inner Abysm',
-    // items_game, colors: unusual_terrorblade_abysm, "Reflection's Shade"
-    gem: [255, 60, 40],
-    own: ['particles/econ/items/terrorblade/terrorblade_horns_arcana/'],
-    shared: ['particles/units/heroes/hero_terrorblade/', 'particles/models/heroes/terrorblade/', 'particles/econ/items/terrorblade/'],
-    materials: ['materials/models/heroes/terrorblade/', 'materials/models/items/terrorblade/'],
-  },
-};
+export { RECOLOR_SETS, type RecolorSet } from './recolor-sets.ts';
+import { RECOLOR_SETS } from './recolor-sets.ts';
 
 /** A member name that holds a colour. Not m_bSaturateColorPreAlphaBlend: that one is a switch. */
 const COLOR_KEY = /^m_(?!b)\w*(Colou?r|Tint)\w*$/i;
@@ -209,6 +190,31 @@ export function shadeColors(kv: Kv3Block, target: Rgb, skip?: RegExp, from?: Rgb
 }
 
 /**
+ * A particle drawn with a MOD2X renderer multiplies what is under it by twice its colour, so a
+ * channel near zero there wipes that channel off the ground: pure red fills the lane with red fog.
+ * Every channel of its colours is lifted to at least `share` of the strongest, which keeps the hue
+ * and leaves the ground its own colour under it. Particles drawn any other way come back as they
+ * were.
+ */
+export function liftForMod2x(file: Buffer, share = 0.3): { file: Buffer; changed: number } {
+  const block = dataBlock(file);
+  const kv = readKv3(block.data);
+  if (!kv.strings.some((x) => /BLEND_MODE_MOD2X/.test(x))) return { file, changed: 0 };
+  let changed = 0;
+  for (const a of kv.arrays) {
+    if (!COLOR_KEY.test(a.key) || (a.cells.length !== 3 && a.cells.length !== 4)) continue;
+    if (a.cells.some((c) => c === null || c.float)) continue;
+    const cells = a.cells as NonNullable<(typeof a.cells)[number]>[];
+    const rgb = cells.slice(0, 3).map((c) => readCell(kv, c));
+    const floor = Math.round(Math.max(...rgb) * share);
+    if (rgb.every((n) => n >= floor)) continue;
+    rgb.forEach((n, i) => { if (n < floor) writeCell(kv, cells[i], floor); });
+    changed++;
+  }
+  return { file: changed ? block.replace(kv.encode()) : file, changed };
+}
+
+/**
  * One compiled particle in the chosen colour. With `gem`, the gem's tint is pointed at the chosen
  * colour; with `own` (the default), a particle the gem does not tint has its written colours moved.
  * With `bake`, for a hero who has no gem (src/arcana.ts), that tint is off and what is written is
@@ -268,7 +274,10 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
     if (!particle && !material) continue;
     try {
       const file = index.read(p) as Buffer;
-      const r = particle ? recolorResource(file, target, { gem: def.gem, own: under(p, def.own), bake }) : { skipped: 0, ...recolorMaterial(file, target, { bake }) };
+      // an ability's effect is baked: the game hands the gem to Sunder, not to Terror Wave or Demon Zeal,
+      // whose tint then never ran and left Valve's blue however the tint was pointed
+      const ability = under(p, def.abilities ?? []);
+      const r = particle ? recolorResource(file, target, { gem: def.bake ? undefined : def.gem, own: under(p, def.own) || ability, bake: bake || ability }) : { skipped: 0, ...recolorMaterial(file, target, { bake }) };
       changed += r.changed;
       skipped += r.skipped;
       if (r.changed) files.set(p, r.file);
@@ -283,7 +292,7 @@ export function recolorFiles({ pak01, set, target, bake = false }: { pak01: stri
 export function buildRecolor({ pak01, set, target, skip }: { pak01: string; set: string; target: Rgb; skip?: (p: string) => boolean }): {
   vpk: Buffer; files: number; changed: number; skipped: number; failed: Failed;
 } {
-  const r = recolorFiles({ pak01, set, target });
+  const r = recolorFiles({ pak01, set, target, bake: RECOLOR_SETS[set]?.bake });
   if (!r.files.size) throw new Error('recolor: nothing in the set took the colour');
   for (const p of r.files.keys()) if (skip?.(p.toLowerCase())) r.files.delete(p);
   return { vpk: buildVpk([...r.files].map(([p, f]) => entryAt(p, f))), files: r.files.size, changed: r.changed, skipped: r.skipped, failed: r.failed };

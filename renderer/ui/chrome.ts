@@ -12,6 +12,7 @@
 import { $ } from '../core/dom.ts';
 import { state } from '../core/store.ts';
 import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS, type Panels, type PanelSize } from '../core/constants.ts';
+import { catalogOnShow } from '../core/router.ts';
 
 type PanelZoom = 'topZoom' | 'bottomZoom' | 'railZoom';
 type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
@@ -22,7 +23,7 @@ type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
 // the wheel was turning. Ctrl +/-/0 come from src/main-window.ts (there they also block Electron's own
 // zoom accelerators); Ctrl + wheel and the slider in Settings land here.
 const SCALE_MIN = 70;
-const SCALE_MAX = 160;
+const SCALE_MAX = 250; // src/main-window.ts ZOOM_MAX
 export const clampScale = (pct: unknown): number => Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round(Number(pct) / 5) * 5));
 export const currentScalePct = (): number => Math.round((Number(state.settings?.uiScale) || 1) * 100);
 
@@ -123,7 +124,7 @@ export function paintPanels(): void {
   document.body.classList.toggle('top-folded', p.topFolded);
   document.body.classList.toggle('bottom-folded', p.bottomFolded);
   document.body.classList.toggle('rail-folded', p.railFolded);
-  document.body.classList.toggle('rail-off', p.railFolded || state.view !== 'catalog');
+  document.body.classList.toggle('rail-off', p.railFolded || !catalogOnShow());
   paintPanelScales();
   paintGripToggle('#topToggle', p.topFolded ? 'expand_more' : 'expand_less',
     p.topFolded ? L`Развернуть верхнюю панель` : L`Свернуть верхнюю панель`);
@@ -205,11 +206,26 @@ function bindNavScroll(): void {
   // own zoom decides how much room it really has
   const tb = document.querySelector<HTMLElement>('#titlebar');
   if (tb) {
+    // Measured, not guessed from the width: the tabs come first, then the name, so the bar gives
+    // up the "Dota 2" pill, then the search's width, and the name only when nothing else is
+    // left. The name stays on screen otherwise, so a screenshot says which program it is.
+    const nav = document.querySelector<HTMLElement>('#tbNav');
+    const crowded = () => !!nav && nav.scrollWidth > nav.clientWidth + 1;
     const syncWidth = () => {
-      tb.classList.toggle('narrow', tb.clientWidth < 1000);
-      tb.classList.toggle('tiny', tb.clientWidth < 870);
+      tb.classList.remove('narrow', 'tight', 'tiny');
+      for (const step of ['narrow', 'tight', 'tiny']) {
+        if (!crowded()) break;
+        tb.classList.add(step);
+      }
+      syncNavOverflow();
     };
-    new ResizeObserver(syncWidth).observe(tb);
+    // a frame later: the classes change the sizes being watched, and a change inside the
+    // callback is a loop the browser stops and reports
+    let queued = 0;
+    const watch = new ResizeObserver(() => { cancelAnimationFrame(queued); queued = requestAnimationFrame(syncWidth); });
+    watch.observe(tb);
+    // a tab's word changes with the language and the bar's width does not
+    document.querySelectorAll('#tbNav .tb-tab').forEach((t) => watch.observe(t));
     syncWidth();
   }
 

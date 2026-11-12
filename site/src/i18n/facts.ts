@@ -63,7 +63,7 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
           ['Installer downloads', '{downloads}'],
           ['Interface languages', 'English and Russian'],
           ['Account', 'Not required'],
-          ['Telemetry', 'None'],
+          ['Telemetry', 'None about you; catalog downloads are counted by mod, and that can be switched off'],
           ['Updates', 'The app updates itself'],
         ],
       },
@@ -83,6 +83,14 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
           [
             'Shows you which mod is winning',
             'Two mods carrying the same file cannot both apply. The app says which one the game is loading, and you drag them into a different order to change the answer.',
+          ],
+          [
+            'Puts any item from the game on any hero',
+            'The item builder shows sets, arcanas and single items on the hero in a live 3D preview. Hero items install as plain files.',
+          ],
+          [
+            'Edits the game from a Workshop of tools',
+            'Effects, HUD panels, hero colours, towers, trees, the menu background and ability sounds, all built from your own game files.',
           ],
           [
             'Unlocks cosmetics your account already owns',
@@ -138,7 +146,7 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
           '<b>Off is not delete.</b> A mod you switch off stays in your library.',
           '<b>It reads a live catalog.</b> New mods appear without an app update, because the catalog is not baked into the build.',
           '<b>It adopts what is already there.</b> Mods installed by hand or by another tool are recognised rather than trampled.',
-          '<b>No account, no telemetry, no ads.</b> Signing in with Discord is optional and only puts your name on a setup you share.',
+          '<b>No account, no ads, nothing about you.</b> Signing in with Discord is optional and only puts your name on a setup you share. Installing a catalog mod adds one to its download count, and Settings can switch that off.',
           '<b>It does not ask for your Steam login.</b> Nothing that installs a file into a folder needs your account. Anything that asks for it is doing something else.',
           '<b>It runs next to Minify.</b> Not an alternative to it: Minify compiles mods where this installs them from a catalog, and the app is built to share a game with it - it stays out of the pak slots Minify writes, never touches its files, and says which of the two the game is reading. <a href="~/docs/compare/">The detail</a>.',
         ],
@@ -150,7 +158,7 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
         items: [
           'It does not change the game rules and gives you no advantage. The mods are what you see on your own screen; nobody else in the match sees them.',
           'It does not touch your Steam account, and never asks for a password or a Steam Guard code.',
-          'It collects nothing. There is no telemetry and no analytics in the app.',
+          'It collects nothing about you. There are no analytics in the app; the only thing it reports is one count per catalog install, by mod name, and that can be switched off.',
           'It does not inject code into the game or touch its memory, and does nothing on your behalf in a match.',
           'It is not affiliated with Valve. Valve has not endorsed it and takes no part in it.',
         ],
@@ -244,7 +252,7 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
           ['Скачиваний установщика', '{downloads}'],
           ['Языки интерфейса', 'русский и английский'],
           ['Аккаунт', 'не нужен'],
-          ['Телеметрия', 'нет'],
+          ['Телеметрия', 'о тебе никакой; скачивания модов из каталога считаются по названию мода, и это выключается'],
           ['Обновления', 'обновляется сама'],
         ],
       },
@@ -264,6 +272,14 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
           [
             'Показывает, чей мод выигрывает',
             'Два мода с одним и тем же файлом не могут примениться оба. Программа говорит, чей файл грузит игра, и порядок меняется перетаскиванием.',
+          ],
+          [
+            'Надевает любой предмет из игры на любого героя',
+            'Конструктор предметов показывает сеты, арканы и отдельные предметы на герое в живом 3D-просмотре. Предметы героев ставятся обычными файлами.',
+          ],
+          [
+            'Правит игру инструментами Мастерской',
+            'Эффекты, панели HUD, цвета героя, башни, деревья, фон меню и звуки способностей. Всё собирается из файлов твоей игры.',
           ],
           [
             'Открывает косметику, которая уже твоя',
@@ -331,7 +347,7 @@ export const facts: Record<'en' | 'ru', FactsPage> = {
         items: [
           'Не меняет правила игры и не даёт преимущества. Моды - это картинка на твоём экране, соперники и союзники её не видят.',
           'Не трогает аккаунт Steam и никогда не просит пароль или код Steam Guard.',
-          'Ничего не собирает. Телеметрии и аналитики в программе нет.',
+          'Ничего о тебе не собирает. Аналитики в программе нет; единственное, о чём она сообщает, это одна отметка на установку мода из каталога, по его названию, и это выключается.',
           'Не внедряет код в игру, не трогает её память и ничего не делает за тебя в матче.',
           'Не связана с Valve. Valve её не одобряла и к ней не причастна.',
         ],

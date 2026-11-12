@@ -1,6 +1,9 @@
 /* What My mods can ask for (library/model.ts, LibraryActions): the ticks, the search, the switches,
  * the bulk bar, the banners and the foreign files. What a single row's menu does is in
  * record-actions.ts. */
+import { showInstallCheck } from './check.ts';
+import { banners } from './build.ts';
+import { allowItemTable } from '../../ui/game-files.ts';
 import { isCursorRec, isCosmeticRec, isFontRec, isPackableRec } from '../../core/records.ts';
 import { toast } from '../../ui/toast.ts';
 import { confirmDialog } from '../../ui/dialog.ts';
@@ -12,6 +15,9 @@ import { handleImportResult } from './import.ts';
 import { pickModsDialog } from './pick-mods.ts';
 import { combineSelection, deleteRecord, menuFor, standalonePackable, updateRecord } from './record-actions.ts';
 import { lib, recById, screen } from './state.ts';
+import { showCovers } from './covers.ts';
+import { showPrePatch } from './pre-patch.ts';
+import { configIssue } from './delisted.ts';
 
 const tick = (ids: string[], on: boolean) => { for (const id of ids) { if (on) lib.sel.add(id); else lib.sel.delete(id); } screen.draw(); };
 
@@ -137,10 +143,20 @@ async function updateAll() {
 
 async function banner(what: string, data?: string) {
   if (what === 'adoptAll') return adoptAll();
+  if (what === 'allowTable') { if (await allowItemTable()) await screen.reload(); return; }
   if (what === 'updateAll') return updateAll();
   if (what === 'combine') {
     const ids = await pickModsDialog(standalonePackable(), { title: L`Выбери моды для объединения в пак`, okLabel: L`Далее` });
     if (ids) await combineSelection(ids);
+    return;
+  }
+  if (what === 'removeRevoked') {
+    const ids = lib.records.filter((r) => configIssue(r)?.revoked).map((r) => r.id);
+    if (!ids.length || !await confirmDialog(L`Удалить отозванные моды (${ids.length})?`)) return;
+    const r = await window.api.mods.removeMany(ids);
+    if (r.error || r.errors?.length) toast(r.error || r.errors[0], 'error', 6000);
+    else toast(L`Удалено`);
+    await screen.reload();
     return;
   }
   if (what === 'reinstallStuck') {
@@ -213,6 +229,22 @@ export const actions: LibraryActions = {
     lib.still = true;
     await screen.reload();
   },
+  covers: async (key) => {
+    const to = await showCovers(key);
+    if (to === null) return;
+    const res = await window.api.mods.reorder(key, to);
+    if (res?.error) toast(res.error, 'error', 6000);
+    await screen.reload();
+  },
+  prePatch: async (id) => {
+    const choice = await showPrePatch(id);
+    if (!choice) return;
+    const res = choice === 'update' ? (await updateRecord(id) ? {} : null)
+      : choice === 'off' ? await window.api.mods.setEnabled(id, false)
+        : await window.api.mods.clearPrePatch(id);
+    if (res && 'error' in res && res.error) toast(res.error, 'error', 6000);
+    await screen.reload();
+  },
   banner,
   enableAll: (on) => { enableAll(on); },
   disableCosmetics: async () => {
@@ -223,6 +255,7 @@ export const actions: LibraryActions = {
     await screen.reload();
   },
   importFiles: async () => { await handleImportResult(await window.api.mods.importDialog()); },
+  check: () => showInstallCheck(banners()),
   importFolder: async () => { await handleImportResult(await window.api.mods.importFolderDialog()); },
   bulk: (what) => {
     if (what === 'enable' || what === 'disable') setTicked(what === 'enable');

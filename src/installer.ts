@@ -21,6 +21,7 @@ import * as downloads from './installer-downloads.ts';
 import * as slots from './installer-slots.ts';
 import * as packs from './installer-packs.ts';
 import * as repack from './installer-repack.ts';
+import { dropItemIcons } from './item-icons-drop.ts';
 import * as folder from './installer-folder.ts';
 import * as write from './installer-write.ts';
 import type { Library } from './library.ts';
@@ -211,6 +212,8 @@ export class Installer {
   cachedArchive(...a: Rest<typeof downloads.cachedArchive>) { return downloads.cachedArchive(this, ...a); }
   downloadCacheSize(...a: Rest<typeof downloads.downloadCacheSize>) { return downloads.downloadCacheSize(this, ...a); }
   clearDownloadCache(...a: Rest<typeof downloads.clearDownloadCache>) { return downloads.clearDownloadCache(this, ...a); }
+  listDownloadCache(...a: Rest<typeof downloads.listDownloadCache>) { return downloads.listDownloadCache(this, ...a); }
+  removeCachedDownload(...a: Rest<typeof downloads.removeCachedDownload>) { return downloads.removeCachedDownload(this, ...a); }
 
   // ---------- the load order: src/installer-slots.ts and src/slot-zones.ts ----------
 
@@ -250,6 +253,7 @@ export class Installer {
   unpackToFolder(...a: Rest<typeof repack.unpackToFolder>) { return repack.unpackToFolder(this, ...a); }
   displayNameForFile(...a: Rest<typeof repack.displayNameForFile>) { return repack.displayNameForFile(this, ...a); }
   harvestSchema(...a: Rest<typeof repack.harvestSchema>) { return repack.harvestSchema(this, ...a); }
+  dropItemIcons(records: LibFile[]) { return dropItemIcons(this, records); }
   installedSize(...a: Rest<typeof repack.installedSize>) { return repack.installedSize(this, ...a); }
   analyzeRecord(...a: Rest<typeof repack.analyzeRecord>) { return repack.analyzeRecord(this, ...a); }
   splitVpkFile(...a: Rest<typeof repack.splitVpkFile>) { return repack.splitVpkFile(this, ...a); }

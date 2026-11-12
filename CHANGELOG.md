@@ -2,6 +2,626 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.8.0
+
+### My mods
+
+- New "Check" button: it lists what the app looked at (the game, the folder the game reads, the
+  language, Minify, the slots) and says whether everything fits. Before, no banner left you guessing
+  whether the app had looked at all.
+- A mod's window now says why an installed mod is not in the game: it is switched off, another mod
+  covers its files, it waits for the item table, or a Dota update changed what it replaces. A button
+  next to it fixes what can be fixed.
+- Mods the catalog no longer lists get a "gone from the catalog" tag and a banner. Mods that do harm
+  in a match are marked "revoked", with a Remove button.
+- "Remove item icons" in a hero mod's menu takes out the Blink Dagger, BKB and other item pictures an
+  arcana brings to every hero. An update of that mod keeps them out.
+- Ctrl+click ticks a row, Shift+click ticks a range, Ctrl+A ticks everything shown, Delete removes
+  the ticked rows.
+- The mouse's side buttons (and Alt+Left, Alt+Right) go back and forward between sections.
+
+### Dota updates and Play
+
+- The app can start with Windows and keep running in the tray, so it puts the game right after a
+  Dota update even when its window is closed. You can turn this off in Settings.
+- When Dota updated while the app was closed, My mods says so and tells you what to do next time.
+- When Steam checks the game files, the app waits for the check to finish before it puts the mods
+  back, instead of racing it.
+- When Dota closes seconds after Play, the app names the mods installed since the last good start and
+  offers to switch them off.
+
+### Hero builder
+
+- Item styles that only change colour, like the Crimson Witness goggles on Meepo, now show in the
+  match too. Online they came out in the plain colour.
+- Personas stand at their real size in the hero screen, in Try out and with bots. The young Invoker
+  was a third taller there than in the match.
+- The young Invoker's orbs float around him online, not at his feet. Six arcana bodies had the same
+  fault and got the same fix.
+- A persona speaks with its own voice, and its items' styles show in the builder.
+- New "Random look" under the hero: fill the empty slots, shuffle everything, arcanas and immortals
+  only, or one whole set.
+- Sets show the game's own event names in your language, and their descriptions without markup.
+- Arcanas are read in small steps, so the window no longer stalls on a slow disk.
+
+### Everything else
+
+- Emblems work without the console: while an emblem is on, the app keeps r_draw_selected_ring 1 in
+  autoexec.cfg for you, and removes it when no emblem is left.
+- Ranks and the HUD size no longer need the Dota 2 Workshop Tools.
+- The Stoneclaw crab tower look faces forward and moves like a tower.
+- Settings can remove everything the app put in the game, without uninstalling it.
+- On the very first start the app opens in your system's language.
+- Ready presets no longer name mods the catalog dropped.
+
+## 3.7.2
+
+### Hero builder
+
+- Items from the builder have their physics again: tails, capes, tassels and beads swing as they do
+  in the game. Only Centaur's items go without it, since on him they dragged along the ground.
+- An item worn with an arcana that reshapes it now keeps the style you picked. Queen of Pain's
+  Bloodfeather Frock and Boots stayed in their first style under her arcana, and so did items under
+  Planetfall and Windranger's, Faceless Void's and Drow's arcanas.
+- "Equip the whole set" now changes only the set's own slots, as in the game. A set no longer takes
+  your arcana or other items off.
+- To change the style of one piece of a set, open that piece. The set's note now says so.
+- The builder no longer freezes for seconds when you switch slots with an arcana on.
+
+## 3.7.1
+
+### Hero builder
+
+- Terrorblade's arcana picked in the builder now puts on his arcana body. In the game he wore its
+  effects on his plain body, and more so once a gem colour was saved.
+- New: "Effects only" next to the prismatic gems, on all five items that have them. It colours the
+  effects of an item you already own in the game, without wearing it in the builder.
+- Terrorblade's arcana colour now reaches his Aghanim's and shard effects too. They stayed blue.
+- Every hero's minimap icon from the builder now shows. A persona picked first could leave out
+  everybody else's.
+
+### Personas
+
+- A persona from the builder now works with the item table off. Invoker's Acolyte stood bald, with
+  none of his own items, and at the grown Invoker's minimap icon.
+- The young Invoker is his real size, with his own orbs, attack and portrait. He was a head
+  shorter, wore Magus Apex's eyes as orbs, and had three orbs hanging where he spawned.
+- A persona's summon has a slot of its own: the young Invoker gets his own Forge Spirits.
+- The 3D preview shows a persona in its own items only, also while you try one on.
+- Effects an item shows in the loadout alone no longer play in the match.
+
+### Settings
+
+- New: "Mods folder" under Game files. Keep your mods in dota_russian, dota_schinese or dota_koreana,
+  and a -language in Steam's launch options no longer moves and renumbers them on each start.
+- When resourcecompiler.exe refuses because the Workshop Tools come from two different updates,
+  the app now says so, and what to do in Steam, instead of a page of schema errors.
+
+## 3.7.0
+
+### Recolour
+
+- The Recolour window now shows your hero in 3D, in the items you wear, and repaints him as you
+  pick colours. What you see there is what you get in the game.
+- Every item you wear can take its own colour, stock ones too. So can the units an item brings:
+  Healing Ward, Death Ward, Lone Druid's bear, wolves, hexes, an arcana's body.
+- A picture can take a colour in four ways: Tint (as before), Keep details (only the hue changes),
+  Whole (greys and metal too) and Rainbow (the hue runs across the texture).
+- Pick a part to colour it on its own, or colour everything that is on at once. Ready colours and
+  the game's prismatic gems sit next to the colour picker.
+- Items that share one texture, such as Troll Warlord's two axes, change colour together, since
+  the game can only give that texture one colour.
+- If some textures could not be built, the app now says how many instead of "Done".
+
+### Hero builder
+
+- New: a Prismatic Gems tab on items that have one, with the game's gems and a colour of your own.
+  The 3D preview changes as you pick. On Terrorblade, the Fractal Horns colour carries over to his
+  other items and his blades, and Scythes of Sorrow and Span of Sorrow can take their own.
+- Click an item to see it on the hero before you put it on. The camera and the animation stay.
+- Items no longer stretch behind a walking hero in the game. Centaur in the Rout of the Emerald
+  Marauder dragged his axe and banner along the ground. Their cloth now hangs still instead.
+- Putting on a set on Primal Beast no longer closes the app.
+
+### 3D preview
+
+- Many items looked washed out, see-through or black, Abaddon and Spirit Breaker among them. More
+  than half of the game's hero and item materials were being skipped; they all load now.
+- Metal that shines in the game now reflects light instead of looking flat black.
+- The first look at a hero is faster, about a third quicker for most. Opening a slot gets its
+  items ready in the background, so trying one on takes seconds.
+- A hero whose animation walks off, like Marci's debut, stays on the stand.
+- Settings can prepare the 3D preview ahead of time.
+
+## 3.6.0
+
+### Hero builder
+
+- New: kinetic gems. Heroes who have them get a "Kinetic gems" shelf under Effects, such as Fish!
+  for Lion. Gems on a few heroes, such as Tusk and Skywrath Mage, play only in offline games.
+- Effect tiles show real pictures. Before, many stayed empty or took seconds to draw.
+- Meepo's Crimson head now looks red in the game.
+- The 3D preview shows the right head on Arc Warden and Tinker, and Mace of Aeons animates on
+  Faceless Void. The Abominable Snowbeast changes materials on Primal Beast's head and body.
+  Skin and cloth have softer highlights, and one broken particle no longer stops the others.
+
+### Dota 2 Workshop Tools
+
+- When a tool is missing, the error tells you what to do: open Dota 2's properties in Steam, go to
+  the DLC tab and tick Dota 2 Workshop Tools. An "Open in Steam" button takes you there, in the
+  error and in Settings.
+
+### When GitHub is down
+
+- Tools download from our own server first, so installing VRF takes seconds instead of half a
+  minute. Arcana base files have a mirror too.
+- The site's download menu also links the installers on our own server.
+
+### Chinese
+
+- Hero and tower names match the game's own: Razor is now 雷泽, and the tower sets name their
+  faction.
+
+### Website
+
+- 18+ mods no longer appear on the site's pages. The catalog lists them only after you confirm you
+  are 18.
+- Each hero's tile on the site shows that hero's own skin.
+
+Thanks to HarlordLeg for the 3D preview fixes and to F21HGG for the Chinese names.
+
+## 3.5.0
+
+### 3D preview
+
+- The hero's 3D preview in the Hero builder and the picture in the effect editor now draw
+  particles from the game's own particle data. Effects that were missing or showed as solid
+  squares appear, and they stay on the item while the hero moves.
+- Putting on another item keeps the current picture and camera until the new one is ready, and
+  the line beside the equip button says the preview is updating.
+- Items with an animation of their own, such as Io's Altar Ball, move the way they do in the game.
+- Known issue: Arc Warden in his default items can show without a head.
+
+Thanks to HarlordLeg for the new renderer, built on dota-loadout by justkiddingxd.
+
+## 3.4.0
+
+### Ability effects
+
+- Each hero in the Hero builder has new tabs, one per ability, such as "Effects: Enchant Totem"
+  for Earthshaker. Pick an item there and the hero gets only its effects for that ability:
+  particles, sounds and icon, without its model. This is the game's own ability effects slot, so
+  you can wear one set and another item's spell effects, like the Intergalactic Orbliterator's
+  arms with the Enchant Totem of Bracers of the Cavern Luminar.
+- 120 heroes have these tabs, for every ability the game lets an item restyle. One item can fill
+  several: Totem of Deep Magma changes all four of Earthshaker's.
+- The effects in these tabs win over the ones of the item you wear. Putting on a set leaves them
+  as they are.
+
+### Ability icons
+
+- New in the Workshop: "Ability icons". Pick a hero, then any icon his cosmetics have for each
+  ability, such as a dozen for Earthshaker's Fissure. The icon stays even with an item on that
+  brings its own. "The game's own" takes your pick off.
+
+### Another item's effect
+
+- An item that only restyles an ability, such as Tinker's Interstellar Astrarium head, can now be
+  picked as the effect.
+- The effect now brings the ability's icon and sound with it, not only the particles.
+
+## 3.3.3
+
+### HUD editor and rank tool
+
+- Builds no longer stop with "ENOENT hud_reborn.css". Interface mods from a recent compiler, such
+  as Crystal Interface and Material You Interface, broke the old file reader. Source 2 Viewer 20.1
+  reads them.
+- The app now updates a helper tool already on your disk, so you do not stay on the old reader.
+- If one interface mod has a style the app cannot read, it takes the next copy and keeps building.
+
+### Fixes
+
+- The diagnostic report no longer says "BROKEN: not patched" when you switched the item table off.
+- The effect editor refuses an edit it cannot save, with a message, where it used to throw an
+  error.
+
+## 3.3.2
+
+### Pictures
+
+- Catalog pictures now load in about a second, even when GitHub is blocked where you live. Before,
+  they could stay blank for over a minute.
+- The app keeps pictures on your disk, so they show at once next time and work without internet.
+- It fetches the rest of the catalog's pictures in the background, about 70 MB once.
+- Category covers and style pictures no longer go missing behind a blocked GitHub.
+
+### Downloads
+
+- If GitHub is blocked, your first mod waits about 10 seconds and the next ones start straight
+  away. Each mod used to wait 20 seconds.
+
+## 3.3.0
+
+### HUD editor
+
+- The HUD size window is now a plan of your screen with eleven of the game's panels on it. Drag a
+  panel, nudge it by a pixel with the arrow keys, resize it, tint it, fade it or hide it.
+- Larger abilities widen the bar on the plan the same way they do in the game, and push the
+  portrait and inventory aside.
+- A moved minimap or bottom bar keeps its place when you mirror the HUD in the game's settings.
+
+### Effect editor
+
+- A new Workshop window opens any of the game's 82,000 effects. Find one through a hero, an
+  ability, an item or a search by name, then change its size, count, lifetime, speed and colour.
+- Colour shows on any sprite, even an orange fire texture.
+- An ability opens as one effect, with all its files changing together. A checkbox adds the
+  versions from items, such as an arcana's.
+- The picture plays the changed effect once after each edit, and a button plays it again.
+- Edited effects rebuild themselves after a Dota update.
+
+### Hero items without the item table
+
+- Hero items now install as files. The app leaves `gameinfo` and the signature file alone, and it
+  no longer asks for the item table before a hero item.
+- Files now carry an item's effects, material set, the hero's motions, the parts it hides and its
+  second model, such as Death Prophet's spirits or Phoenix's fire.
+- Effects you add to an item spread over its surface instead of gathering in a ball.
+- The window tells you which picks still need the table: item size, kill effects and a few others.
+  If you already allowed the table, nothing changes for you.
+
+### 3D preview
+
+- Items sit on the hero the way they do in the game. Bracers and armour that floated or fell
+  behind now follow the bones.
+- The camera moves freely: drag to tilt, right button to shift, wheel to zoom, WASD with Q and E
+  to fly. Double click puts it back.
+- The list above the stage plays any animation of the hero, and motions follow what the hero wears.
+- Wearables play their own animations, second models show, and parts an item hides disappear.
+- Materials, light and glow sit closer to the game's, and styles with their own material set show
+  in it.
+- Glowing parts of an item only brighten what is behind them, and very strong rim light no longer
+  washes a dark item white.
+- Effects on a hero play once, as in the game, instead of bursting forever.
+
+### Fixes
+
+- New mods download again for people who reach the catalog through a mirror.
+- Mods larger than 1 GB install.
+- The rank look builds when another mod carries a broken copy of a layout.
+- 18 heroes that refused a custom sound take one now.
+- The young Invoker is back to the game's size.
+
+### Thanks
+
+- Harlord (dota-studio.lol) gave this release many of its ideas: how items sit on the hero, the
+  look of the 3D preview, and building items as files. Harlord is now in the credits in Settings.
+
+## 3.2.0
+
+### Hero levels in a match
+
+- The chosen Dota Plus level now shows in a match too: on the frame round your hero's portrait,
+  on your hero in the top bar, and on the card that opens when you click yourself.
+- The rank and levels mod no longer costs frames. It used to search the whole interface on
+  every frame, which dropped FPS in the lobby and in a match by a third or more.
+- After an app update the mod rebuilds itself when its script changed, so you get the fixes
+  without applying it again.
+
+### Workshop windows
+
+- Your own ability sound: pick a hero from a grid of portraits with a search, then find the
+  sound in that hero's list with a second search. Crystal Maiden has her name and portrait now.
+- Towers and trees: every look is a card with a picture, and both sides fit in one window
+  without scrolling. Tree sets and towers with no item picture are drawn from their models.
+- The Techies arcana picture shows the whole figure, centred, in its window and on its tile.
+- The Hero grids tile opens Settings at the grid switches and highlights them. The switches
+  line up in one column.
+- The Hero recolour tile opens the first hero in Items and highlights the Recolour button.
+
+## 3.1.0
+
+### A changing room for each hero
+
+The item builder works like Dota's own loadout screen now.
+
+- The hero list is the game's hero grid: Strength, Agility, Intelligence and Universal side by
+  side, with the portraits from hero selection.
+- Each hero opens in one window. The hero stands on the left, the tabs run down the middle (sets,
+  each slot, your saved looks), and the right side shows what the tab offers. Only that part
+  scrolls.
+- Every slot shows what the hero wears, with a button to take it off. Another button puts every
+  default item back.
+- A slot has tabs for its items, the chosen item's styles, effects, and an effect taken from
+  another item. Effects sit on three shelves: unusual, seasonal and courier. They keep the names
+  the game gives them in English, such as Frostbloom or Ethereal Flame, so you can find them the
+  way players call them.
+- Every item, set piece and persona shows its rarity colour and year.
+
+### Sets and saved looks
+
+- Sets show their rarity, release date and event. Sort them by name, newest, oldest or rarest,
+  and filter by rarity, year, event and styles. The app remembers your filters.
+- A set with styles has a style switch, and "Equip the whole set" puts each piece on in that
+  style.
+- Save what a hero wears as a look, rename or delete it, and put it back on in one click. The
+  hero's other items switch off and stay in My mods.
+
+### The 3D preview, staged as in Dota
+
+- The hero stands where Dota's loadout screen puts it: the same camera, scale, light, background
+  and pedestal, all read from your game files.
+- The hero plays the loadout animation for the items it wears, and its materials use the game's
+  shading.
+- Item effects and the hero's own loadout effects play around the model, with their textures.
+- Personas and arcanas show their own body. Crystal Maiden's arcana animates instead of standing
+  in a T-pose.
+
+### Hero recolour you can see
+
+- The recolour window shows the hero's portrait, abilities and items as pictures. Each picture
+  takes the colour it will get in the game, and an effect you switch on rings its picture in its
+  colour.
+- Pick one of the game's 45 prismatic gem colours for every layer at once, or switch all layers
+  on or off with one button.
+- Click an ability's picture or the portrait to switch its icon, and an item's picture to switch
+  its effect.
+
+### Fixed
+
+- The recolour window scrolls, so you can reach the items and the "Put it on" button at the
+  bottom.
+- Sets that Dota shows with an empty slot's picture, such as Witch Rylai, show their first piece.
+- The Techies arcana recolour in the Workshop has its picture again.
+- Hero level badges show the level you chose from the first frame. The real level no longer
+  flashes for a moment when a page opens.
+
+## 3.0.2
+
+### Fixed
+
+- "My look on everyone playing that hero" no longer turns other players' items into the red ERROR
+  model. It works the way it did before 3.0.0 again. With a very large library, a few spells (such
+  as Skywrath Mage's Arcane Bolt) can again show stray item models.
+- Scrolling no longer gets stuck: when the window ignores the mouse wheel, the app scrolls the page
+  itself.
+
+### Your own rank medal and Dota Plus hero levels
+
+- The level you choose for a hero now shows on the hero grid, the card that opens over a hero, the
+  hero page and its Progress tab, not only on the pick badge.
+- Badges show the medal for the level you chose, and no longer flash the real level when a page
+  opens.
+- A hero you did not choose a level for shows its real level again.
+
+## 3.0.1
+
+### Fixed
+
+- The 3D preview in the item builder works again. For heroes whose body comes with a physics
+  model, such as Abaddon, it said it could not get the model out of the game.
+- The catalog no longer gets stuck on "Loading the catalog" when you open a category while it is
+  still loading.
+- The close button in the hero window no longer covers the Recolor button.
+
+### What's new keeps the big release
+
+"What's new" and Home now show this fix together with the 3.0.0 notes, and anything else you missed
+since the last version you opened.
+
+## 3.0.0
+
+### A new layout, and a Home screen
+
+The window now opens on Home. It shows the version, the project's GitHub stars, a way into every
+section with what is in it now, the newest mods in the catalog, what changed in this version, and
+anything that needs your attention, such as Dota not found or mods switched off. Click the name or
+the logo at the top left to come back to it.
+
+The title bar has new sections. Items holds the hero builder and the looks from the game, which
+used to sit in the catalog's list. Workshop gathers everything the app builds from your own game
+files, and marks new tools with a dot. Settings moved to the gear icon. The window opens at
+1440x900 so all of it fits, and on 1440p and 4K screens it starts scaled up, now up to 250%.
+
+The "Safe" switch is gone. The app asks for the item table, which the item builder and the looks
+from the game need, the first time you open one of them. You can switch it in Settings → Game
+files.
+
+### New in the Workshop
+
+- **Hero recolour by layers:** each ability, the body, the portrait and each picked item in a
+  colour of its own.
+- **Your own sound on a hero's ability**, instead of the game's sound or over it, built with
+  Valve's own compiler.
+- **Towers and trees from the game's own looks**, a different one for Radiant and for Dire.
+- **Map without decor:** take grass, flowers, stones and debris off the map.
+- **A main menu background of your own** from a picture, GIF or video.
+- **The in-game HUD** smaller or larger, from 60% to 130%.
+- **Your own rank medal and Dota Plus hero levels**, seen only on your screen.
+- **Hero grids for the pick screen** from this patch's win rates.
+- Gem colours for Techies' arcana and for three immortals: Terrorblade's Span and Scythes of
+  Sorrow, and Razor's Severing Crest.
+- Two more free cosmetic slots: the multikill banner and the Tormentor.
+
+### Item builder
+
+- See the hero in 3D, turning in the items you picked.
+- Put the game's unusual and ethereal effects on any item, or another item's effect on the one you
+  wear.
+- An arcana's body follows the style you picked, and other players' items take your look in
+  whatever style they wear.
+
+### Presets
+
+- Ready-made presets: five builds from the catalog, installed and applied with one press.
+- Share a preset as a picture with its mods' covers and a QR code.
+
+### When something goes wrong
+
+- Every error ends with "What do I do?", which opens the right part of the guide, and "Send a
+  report", which saves the diagnostics and opens Discord.
+- Settings has a "Repair the app" button that runs every fix in order.
+- While Dota is open, the status bar says so and the app writes nothing to the game until you close
+  it.
+- Play warns you when Steam is still updating Dota, with a button to Steam's downloads.
+- The app checks free disk space before it writes a mod.
+- A catalog mod with a known problem carries a "!" with the reason.
+
+### My mods
+
+- Give any row a name of your own.
+- Click the "overruled" pill to see which mod covers this one, file by file, and move it above.
+- Click the "pre-patch" pill to see what the Dota update changed and what to do about it.
+- Settings lists the download cache archive by archive, deletes one at a time and opens its folder.
+
+### Fixed
+
+- Clicking Broodmother over and over no longer fills the window with spiders and slows it down.
+- The Halloween look stays under an open mod window, and its spider no longer covers the GitHub
+  stars.
+- Cancel on the item table's bar puts back the change that started the build.
+- Couriers with fewer animations than the donkey keep their own models.
+
+## 2.21.0
+
+### Mods by author, and a catalog that remembers
+
+The toolbar has a new "Author" dropdown: pick someone and the list shows only the mods they made,
+with how many each author has beside their name.
+
+The catalog now remembers how you left it: the sort, the author, the "Installed" and "Favorites"
+chips and the search stay as they were when you open another category, and after a restart. An
+author with nothing in a category is set aside there instead of leaving it empty. A search no
+longer disappears when you pick a category: it narrows that category instead, and "All categories"
+shows what it finds everywhere.
+
+### Your look on everyone playing your hero
+
+A new switch in Settings, under "Item builder": "My look on everyone playing that hero". With it on,
+every player of a hero you built, ally or enemy, is drawn in your look on your screen: your picks,
+the plain items where you picked nothing, and nothing of their own store items. Only you see it.
+
+It holds for arcanas too. Another player's Planetfall is drawn with your Earthshaker's body and
+items, and with an arcana of your own on, hovering any set in the loadout shows your look instead
+of that set.
+
+### A set is the whole hero
+
+Putting a set on now switches off that hero's other picks, an arcana in the hero base included, so
+the hero wears the set and nothing else. The picks that went off stay in My mods, ready to go back
+on.
+
+### Personas at their full size
+
+The game draws a persona worn this way at the plain hero's size, so the Acolyte of the Lost Arts
+came out about three quarters of Valve's. The persona's items are now made as big as its body, so a
+persona compiled at full size wears them at full size too. The bigger bodies for the Acolyte,
+Conduit of the Blueheart, the Disciple's Path, Legion Commander's persona and the Toy Butcher arrive
+from hero-base-fixes by themselves once this version is in.
+
+### Chinese
+
+Catalog titles added this week read as phrases instead of word by word, and the auto-pick guide is
+in Chinese.
+
+Thanks to J0nathan550 for the item builder and the catalog, and to F21HGG for the Chinese.
+
+## 2.20.0
+
+### Presets switch the looks too
+
+Applying a preset now does to the looks from the game what it already did to mods: the ones in the
+preset go on, and every other look goes off. Before, a preset only added its looks, so switching
+from a build of a hundred items to one of twenty left you with all hundred and twenty, and the
+first hero stayed dressed. Nothing is deleted: the looks that went off stay in My mods, ready to go
+back on.
+
+The Presets screen marks the preset you applied last. "Applied" means what is on is exactly that
+preset; "Changed" means something was switched on or off since.
+
+A courier picked after a preset was saved now goes off when that preset is applied. Save it into
+the preset to keep it.
+
+### Couriers in unsafe mode
+
+A courier picked with safe mode off is now the courier itself. Before, the game drew the donkey with
+the courier's particles on it, so a Baby Roshan was a donkey that glowed. Collector's Baby Roshan
+2018 wears its silver.
+
+### The fixed hero models are signed
+
+The arcanas, personas and immortals that J0nathan550 compiled again by hand now come from
+[hero-base-fixes](https://github.com/dota2modmanager/hero-base-fixes) in the project's own
+organization, and the app checks a signature on them before it downloads anything. Nobody can
+change what reaches you by pushing to that repository without the signing key.
+
+### Fixed
+
+- Closing the app a few seconds after switching a look on or off could leave the game with the old
+  item table, so a look that was off on screen was still on in the game. The app now finishes
+  writing before it quits, for up to 30 seconds.
+- The master switch at the bottom right turned off could flip back on at the next start, and the
+  looks stayed in the game. With it off, every row in My mods, looks included, is now drawn off.
+- An app closed while it was writing the game's pak could leave about 190 MB beside it for good.
+  It is now cleaned up at the next start.
+- The status bar said "Dota 2 connected", which read as the game being open. It says "Dota 2
+  found", because that is what it checks.
+
+Thanks to J0nathan550 for all of the above.
+
+## 2.19.0
+
+### Support the project
+
+From the third launch, a window asks for two things, both free: a star on GitHub, and a few
+words about the app somewhere people talk about Dota mods. It says why each one helps. Stars bring
+developers who add features and fix the app. Being better known gets us free code signing from
+SignPath, so Windows stops warning about an "unknown publisher".
+
+"Remind me later" puts it away for a week, three times at most. "Already done" or either button
+in it closes it for good. Settings has a "How to support the project" button that opens it
+any time.
+
+### Settings
+
+- The About block is regrouped: the support button first, then the version with "What's new"
+  and "Source code", then the credits in one table, then the licence.
+
+### Fixed
+
+- A mod with several looks shows the downloads of all its looks together. Before, Tidehunter's
+  arcana showed 12 instead of 778.
+
+## 2.18.0
+
+### How many people took a mod
+
+A catalog card shows how many times people installed that mod through the app, and the toolbar can
+sort by it: pick "Most downloaded first". The numbers come from the D2PFX counter.
+
+Each install you make adds one to that mod's count. The app sends only the mod's name and look, with
+no account, no install ID and nothing about your computer. If you would rather not be counted,
+turn off "Count my downloads" in Settings, under Catalog. The counts stay on the cards either way.
+When the counter is down, the cards show no number and installs work as before.
+
+### Items and heroes
+
+- Under Faceless Void's arcana, Bracers of Aeons, Jewel of Aeons and the Claszian Apostasy Belt
+  wear the refit Valve made for the arcana's body. Before, they came out broken. Drow Ranger's
+  Dread Retribution bow shows again under her arcana, at its full size.
+- Items you pick keep their model even when another pick swaps the stock model on the same slot.
+- Personas get their own default items every time. Before, an assembly sometimes dressed a persona
+  in the base model's items.
+
+### Catalog and window
+
+- Long lists draw a page at a time while you scroll, so a category with six hundred heroes opens
+  without the wait.
+- The help menu opens over the catalog toolbar instead of under it.
+- In the blood theme, the streaks run down once and stay. The floor stains no longer turn darker
+  where they overlap.
+
 ## 2.17.0
 
 ### The night begins again

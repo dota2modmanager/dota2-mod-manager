@@ -23,12 +23,23 @@
 import { state } from './store.ts';
 import { $ } from './dom.ts';
 import { screenChanging, paint } from '../ui/transitions.ts';
+import { createViewHistory, type ViewHistory } from './view-history.ts';
 
 /** What a screen does to draw itself; some fetch first, and the switch waits for them. */
 type Draw = () => unknown;
 
 const screens = new Map<string, Draw>();
 const panes = new Map<string, HTMLElement>();
+
+/* Items (the builder and the game's own looks) is the catalog's screen showing another part of
+ * what it holds: one pane, one rail, two sections. What a shared pane last drew is remembered, so
+ * coming back to one section never shows the other's picture. */
+const PANE_OF: Record<string, string> = { items: 'catalog' };
+const paneOf = (view: string): string => PANE_OF[view] || view;
+const drawnAs = new Map<string, string>();
+
+/** Whether the catalog's pane (Catalog or Items) is the one on show. */
+export const catalogOnShow = (): boolean => paneOf(state.view) === 'catalog';
 
 // screens whose picture no longer matches the data; rebuilt when they are next opened
 const stale = new Set<string>();
@@ -43,12 +54,13 @@ export function registerView(name: string, render: Draw): void {
 
 /** The element a screen owns and draws into. Created on first ask, then kept. */
 export function pane(name: string): HTMLElement {
+  name = paneOf(name);
   let el = panes.get(name);
   if (!el) {
     el = document.createElement('div');
     el.className = 'view-pane';
     el.dataset.pane = name;
-    el.hidden = name !== state.view;
+    el.hidden = name !== paneOf(state.view);
     $('#view-root').appendChild(el);
     panes.set(name, el);
   }
@@ -65,7 +77,7 @@ export function invalidateViews(): void {
 }
 
 function showPane(view: string): void {
-  for (const [name, el] of panes) el.hidden = name !== view;
+  for (const [name, el] of panes) el.hidden = name !== paneOf(view);
 }
 
 /** Redraw whatever is showing, because something under it changed. A name with nothing
@@ -74,11 +86,28 @@ function showPane(view: string): void {
 export function render(): unknown {
   invalidateViews();
   stale.delete(state.view);
+  drawnAs.set(paneOf(state.view), state.view);
   const draw = screens.get(state.view);
   return draw ? draw() : undefined;
 }
 
-export function switchView(view: string): Promise<void> {
+let history: ViewHistory | null = null;
+
+/** Back to the section before this one, as the mouse's back button does. */
+export function goBack(): Promise<void> | null {
+  const view = history?.back();
+  return view && view !== state.view ? switchView(view, { fromHistory: true }) : null;
+}
+
+/** Forward again after going back. */
+export function goForward(): Promise<void> | null {
+  const view = history?.forward();
+  return view && view !== state.view ? switchView(view, { fromHistory: true }) : null;
+}
+
+export function switchView(view: string, { fromHistory = false }: { fromHistory?: boolean } = {}): Promise<void> {
+  if (!history) history = createViewHistory(state.view);
+  if (!fromHistory) history.visit(view);
   const main = $('#main');
   scrolls.set(state.view, main.scrollTop);
   document.querySelectorAll<HTMLElement>('.tb-tab').forEach((b) => {
@@ -87,8 +116,11 @@ export function switchView(view: string): Promise<void> {
     // the underline says which section this is; aria-current says it to a screen reader
     if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
+  // Home has no tab: the name in the title bar is its way in, and says so while it is showing
+  const home = document.getElementById('tbHome');
+  if (view === 'home') home?.setAttribute('aria-current', 'page'); else home?.removeAttribute('aria-current');
   state.view = view;
-  const railOff = view !== 'catalog';
+  const railOff = paneOf(view) !== 'catalog';
   $('#catRail').classList.toggle('hidden', railOff);
   $('#gripRail').classList.toggle('hidden', railOff); // nothing to resize without the rail
   document.body.classList.toggle('rail-off', railOff || !!state.panels.railFolded);
@@ -97,8 +129,9 @@ export function switchView(view: string): Promise<void> {
   window.api.presence.view(view); // what Discord shows the user is doing
 
   const el = pane(view);
-  const kept = !stale.has(view) && el.childElementCount > 0;
+  const kept = !stale.has(view) && el.childElementCount > 0 && drawnAs.get(paneOf(view)) === view;
   stale.delete(view);
+  drawnAs.set(paneOf(view), view);
   const settled = () => { main.scrollTop = scrolls.get(view) || 0; };
   if (kept) {
     // nothing to build, so the swap is the whole update and gets the transition to itself
