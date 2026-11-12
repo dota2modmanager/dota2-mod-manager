@@ -12,7 +12,7 @@ import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay
 import { screen } from './state.ts';
 
 let open = false;
-const EMPTY: HudModalModel = { parts: [], chosen: 'lower_hud', saved: true, installed: false, hudMod: null, vrf: false, busy: null };
+const EMPTY: HudModalModel = { parts: [], chosen: 'lower_hud', saved: true, installed: false, hudMod: null, busy: null };
 let m = EMPTY;
 /** The layout on now, to tell a change from it. */
 let on: HudPart[] = [];
@@ -31,9 +31,9 @@ export function hudLead(category: string): HudCardModel | null {
 
 async function load(): Promise<boolean> {
   const r = await window.api.hud.state();
-  if (r.error || !('vrf' in r)) { toast(r.error || L`Не удалось прочитать интерфейс игры`, 'error'); return false; }
+  if (r.error || !('hudMod' in r)) { toast(r.error || L`Не удалось прочитать интерфейс игры`, 'error'); return false; }
   on = r.installed?.parts ?? [];
-  m = { ...m, parts: on, saved: true, installed: !!r.installed, hudMod: r.hudMod, vrf: r.vrf };
+  m = { ...m, parts: on, saved: true, installed: !!r.installed, hudMod: r.hudMod };
   return true;
 }
 
@@ -52,21 +52,8 @@ function draw(): void {
     close: closeOverlay,
     choose: (chosen) => { if (chosen !== m.chosen) { m = { ...m, chosen }; draw(); } },
     parts: (parts) => { m = { ...m, parts, saved: layoutKey(parts) === layoutKey(on) }; draw(); },
-    getTool: () => void getTool(),
     install: () => void install(),
   });
-}
-
-async function getTool(): Promise<void> {
-  m = { ...m, busy: 'tool' };
-  draw();
-  const r = await window.api.tools.install('vrf').catch((err) => ({ error: String(err?.message || err) }));
-  m = { ...m, busy: null };
-  if (r && 'error' in r && r.error) toast(r.error, 'error', 8000);
-  const made = m.parts;
-  await load();
-  m = { ...m, parts: made, saved: layoutKey(made) === layoutKey(on) };
-  draw();
 }
 
 async function install(): Promise<void> {

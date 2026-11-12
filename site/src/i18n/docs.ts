@@ -606,7 +606,7 @@ const en: Record<CoreSlug, Doc> = {
       },
 
       { k: 'h2', t: 'It asks for the Dota 2 Workshop Tools', id: 'workshop-tools' },
-      { k: 'p', t: 'Custom sounds, the HUD editor, the rank tool and some arcanas compile files with Valve\'s compiler. It comes with the Dota 2 Workshop Tools, a free add-on to the game in Steam. You install it once.' },
+      { k: 'p', t: 'Custom sounds and some arcanas compile files with Valve\'s compiler. It comes with the Dota 2 Workshop Tools, a free add-on to the game in Steam. You install it once.' },
       {
         k: 'steps',
         items: [
@@ -1141,7 +1141,7 @@ const ru: Record<CoreSlug, Doc> = {
       },
 
       { k: 'h2', t: 'Просит Dota 2 Workshop Tools', id: 'workshop-tools' },
-      { k: 'p', t: 'Свои звуки, редактор HUD, ранг и часть аркан собирает компилятор Valve. Он входит в Dota 2 Workshop Tools, бесплатное дополнение к игре в Steam. Ставится один раз.' },
+      { k: 'p', t: 'Свои звуки и часть аркан собирает компилятор Valve. Он входит в Dota 2 Workshop Tools, бесплатное дополнение к игре в Steam. Ставится один раз.' },
       {
         k: 'steps',
         items: [

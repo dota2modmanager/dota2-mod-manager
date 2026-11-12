@@ -1,8 +1,8 @@
 /* The rank medal and hero levels of the player's own screen: the medal's rules added to the two
  * styles, the levels script, its include put into the layouts (src/rank-look.ts), and the record in
  * My mods that keeps them (src/rank-look-service.ts). The layouts here have the shape the game's
- * compiled ones have; Valve's own files cannot be committed. The two tools are functions:
- * ValveResourceFormat hands back CSS, the compiler hands back what it was given. */
+ * compiled ones have; Valve's own files cannot be committed. The styles and the script are written
+ * by the app (src/panorama-files.ts), so the test reads them back as the game would. */
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -12,12 +12,13 @@ import { Installer } from '../src/installer.ts';
 import { Library } from '../src/library.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
 import { readKv3, type Kv3Node } from '../src/kv3.ts';
-import { resourceBlock } from '../src/resource.ts';
+import { references, resourceBlock } from '../src/resource.ts';
+import { readStyle } from '../src/panorama-files.ts';
 import { clampLook, LAYOUTS, medalImage, SCRIPT, STYLES, tierOf, withMedal, withScript } from '../src/rank-look.ts';
 import { levelsScript } from '../src/rank-look-script.ts';
 import { createRankLook } from '../src/rank-look-service.ts';
 import { encodeKv3, resource, type V } from './helpers/kv3-build.ts';
-import type { CompileJob } from '../src/resource-compiler.ts';
+import { script, style, texture } from './helpers/panorama.ts';
 
 const s = (str: string): V => ({ str });
 const layout = (...body: V[]): Buffer => resource([['RED2', Buffer.from('editor')], ['DATA', Buffer.alloc(6)],
@@ -256,7 +257,11 @@ function world(t: TestContext) {
   fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
   fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([
-    ...STYLES.map((st) => entryAt(st.compiled, Buffer.from(st.source))),
+    // the first lists the medal's picture, the second does not: it is taken from the first
+    entryAt(STYLES[0].compiled, style(`${CSS}/* from ${STYLES[0].source} */`, [['panorama/images/rank_tier_icons/rank6_psd.vtex', 128, 128]])),
+    entryAt(STYLES[1].compiled, style(`${CSS}/* from ${STYLES[1].source} */`)),
+    entryAt('panorama/images/rank_tier_icons/rank1_psd.vtex_c', texture(96, 96)),
+    entryAt('panorama/scripts/popups/popup_settings.vjs_c', script()),
     ...LAYOUTS.map((p) => entryAt(p, layout(styles(), panel('Panel')))),
     entryAt('scripts/npc/heroes/npc_dota_hero_axe.txt', Buffer.from('axe')),
     entryAt('scripts/npc/heroes/npc_dota_hero_antimage.txt', Buffer.from('am')),
@@ -265,19 +270,16 @@ function world(t: TestContext) {
   const userdata = path.join(dir, 'userdata');
   const installer = new Installer({ userDataDir: userdata, getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} });
   const library = new Library(userdata);
-  const jobs: CompileJob[] = [];
   const rebuilt: string[] = [];
   const logged: string[] = [];
   const service = createRankLook({
     gamePath: () => game, installer, library, vrf: () => 'vrf.exe',
-    decompile: async (exe, style) => `${CSS}/* from ${style.toString()} */\n`,
-    compile: async (job) => { jobs.push(job); return job.files.map((f) => entryAt(f.path.replace(/\.css$/, '.vcss_c').replace(/\.js$/, '.vjs_c'), f.data)); },
     run: async () => {},
     onRebuilt: (id) => rebuilt.push(id),
     log: (msg) => logged.push(msg),
   });
   const pak = (rec: { files: { relPath: string }[] }) => openVpkIndex(path.join(installer.langFolder(), rec.files[0].relPath));
-  return { service, installer, library, jobs, rebuilt, logged, pak };
+  return { service, installer, library, rebuilt, logged, pak };
 }
 
 test('in a match the player’s own hero shows its level on the portrait, the top bar and the player card', () => {
@@ -318,15 +320,16 @@ test('a look is one record: both styles with the medal, the script, and the layo
   await assert.rejects(w.service.install({ medal: null, levels: {}, every: null }), /медаль|medal/i);
   const rec = await w.service.install({ medal: { tier: 6, stars: 2, top: 0 }, levels: { axe: 30 }, every: null });
   assert.equal(rec.categoryId, 'ranks');
-  assert.deepEqual(w.jobs[0].compile, [...STYLES.map((st) => st.source), SCRIPT.source]);
   const ix = w.pak(rec);
-  for (const st of STYLES) assert.match(ix.read(st.compiled)!.toString(), new RegExp(`from ${st.source}[\\s\\S]*rank6_psd`));
-  assert.match(ix.read(SCRIPT.compiled)!.toString(), /"axe":30/);
+  for (const st of STYLES) assert.match(readStyle(ix.read(st.compiled)!).css, new RegExp(`from ${st.source}[\\s\\S]*rank6_psd`));
+  // the picture the second style did not list is listed now, at the size the first gives it, and named to load with it
+  assert.deepEqual(readStyle(ix.read(STYLES[1].compiled)!).images, [{ path: 'panorama/images/rank_tier_icons/rank6_psd.vtex', width: 128, height: 128, crc: 0 }]);
+  assert.ok(references(ix.read(STYLES[1].compiled)!).includes('panorama/images/rank_tier_icons/rank6_psd.vtex'));
+  assert.match(resourceBlock(ix.read(SCRIPT.compiled)!, 'DATA').data.toString(), /"axe":30/);
   for (const p of LAYOUTS) assert.deepEqual(shape(ix.read(p)!).refs, [SCRIPT.ref]);
   // levels alone need no style
   const again = await w.service.install({ medal: null, levels: {}, every: 20 });
   assert.equal(again.id, rec.id);
-  assert.deepEqual(w.jobs[1].compile, [SCRIPT.source]);
   assert.equal(w.pak(again).read(STYLES[0].compiled), null);
   assert.deepEqual(w.service.state().installed, { id: rec.id, look: { medal: null, levels: {}, every: 20 }, enabled: true });
 });

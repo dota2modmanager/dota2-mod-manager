@@ -1,7 +1,6 @@
 /* The in-game HUD made smaller or larger (issue #420): the rule added to the HUD's stylesheet
- * (src/hud-scale.ts), and the record in My mods that keeps it (src/hud-scale-service.ts). The two
- * tools are functions here: ValveResourceFormat hands back CSS, the compiler hands back what it was
- * given, so the test reads exactly what would have gone to Valve's compiler. */
+ * (src/hud-scale.ts), and the record in My mods that keeps it (src/hud-scale-service.ts). The style
+ * is read and written by the app (src/panorama-files.ts), so the test reads it back as the game would. */
 import test, { type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,10 +9,11 @@ import path from 'node:path';
 import { Installer } from '../src/installer.ts';
 import { Library } from '../src/library.ts';
 import { buildVpk, entryAt, openVpkIndex } from '../src/vpk.ts';
-import { clampScale, cleanParts, PARTS, partsOfScale, SOURCE, STYLE, withLayout } from '../src/hud-scale.ts';
+import { clampScale, cleanParts, PARTS, partsOfScale, STYLE, withLayout } from '../src/hud-scale.ts';
 import { SHAPES, boxOf, layoutKey, shapeOf, withPatch } from '../renderer/catalog/hud/parts.ts';
 import { createHudScale } from '../src/hud-scale-service.ts';
-import type { CompileJob } from '../src/resource-compiler.ts';
+import { readStyle } from '../src/panorama-files.ts';
+import { style } from './helpers/panorama.ts';
 
 const GAME_CSS = '/* Prettified by Source 2 Viewer 20.1.0.0 - https://valveresourceformat.github.io */\n\nDOTAHud\n{\n\twidth: 100%;\n}\n';
 
@@ -89,6 +89,9 @@ test('a scale from the window is a step of 5 between 60 and 130', () => {
   assert.equal(clampScale(undefined), 100);
 });
 
+/** The game's HUD style, compiled, saying where it came from. */
+const styled = (from: string) => style(`${GAME_CSS}/* from ${from} */\n`);
+
 /** A layout with the bottom bar at this percent. */
 const bar = (scale: number) => [{ id: 'lower_hud', scale }];
 
@@ -98,40 +101,27 @@ function world(t: TestContext) {
   const game = path.join(dir, 'game');
   fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
   fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
-  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt(STYLE, Buffer.from('game style'))]));
+  fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt(STYLE, styled('game style'))]));
   const userdata = path.join(dir, 'userdata');
   const installer = new Installer({ userDataDir: userdata, getGamePath: () => game, getLangSuffix: () => 'russian', onProgress: () => {} });
   const library = new Library(userdata);
-  const jobs: CompileJob[] = [];
   const rebuilt: string[] = [];
-  let tool: string | null = 'vrf.exe';
-  let unreadable = '';
-  const service = createHudScale({
-    gamePath: () => game, installer, library, vrf: () => tool,
-    // the "decompiled" CSS says which compiled style it came from
-    decompile: async (exe, style) => {
-      if (unreadable && new RegExp(`^(${unreadable})`).test(style.toString())) throw new Error('the tool could not read it');
-      return `${GAME_CSS}/* from ${style.toString()} */\n`;
-    },
-    compile: async (job) => { jobs.push(job); return [entryAt(STYLE, job.files[0].data)]; },
-    onRebuilt: (id) => rebuilt.push(id),
-  });
-  const built = (rec: { files: { relPath: string }[] }) => openVpkIndex(path.join(installer.langFolder(), rec.files[0].relPath)).read(STYLE)!.toString();
-  const hudMod = (name: string) => {
+  const service = createHudScale({ gamePath: () => game, installer, library, onRebuilt: (id) => rebuilt.push(id) });
+  const built = (rec: { files: { relPath: string }[] }) => readStyle(openVpkIndex(path.join(installer.langFolder(), rec.files[0].relPath)).read(STYLE)!).css;
+  const hudMod = (name: string, readable = true) => {
     installer.ensureLangFolder();
     const pak = installer.allocatePak(installer.usedPakNames(), false);
-    fs.writeFileSync(path.join(installer.langFolder(), pak), buildVpk([entryAt(STYLE, Buffer.from(`${name} style`))]));
+    fs.writeFileSync(path.join(installer.langFolder(), pak), buildVpk([entryAt(STYLE, readable ? styled(`${name} style`) : Buffer.from(`${name}, not a style`))]));
     return library.add({ name, categoryId: 'huds', styleLabel: null, fileRef: null, preview: null, files: [{ root: 'lang', relPath: pak }] });
   };
-  return { service, library, installer, jobs, rebuilt, built, hudMod, game, noTool: () => { tool = null; }, cannotRead: (name: string) => { unreadable = name; } };
+  return { service, library, installer, rebuilt, built, hudMod, game };
 }
 
 test('on the game’s own HUD: one record, compiled from the game’s style with the scale at its end', async (t) => {
   const w = world(t);
-  assert.deepEqual(w.service.state(), { installed: null, hudMod: null, vrf: true });
+  assert.deepEqual(w.service.state(), { installed: null, hudMod: null });
   const rec = await w.service.install(bar(83));
   assert.equal(rec.categoryId, 'huds');
-  assert.deepEqual(w.jobs.map((j) => j.compile), [[SOURCE]]);
   assert.match(w.built(rec), /from game style[\s\S]*ui-scale: 85%;/);
   const again = await w.service.install(bar(70));
   assert.equal(again.id, rec.id);
@@ -155,28 +145,19 @@ test('with a HUD mod on, the scale goes on the HUD mod’s style and the pak com
   assert.equal(w.service.state().hudMod, null);
 });
 
-test('a mod’s style the tool cannot read is passed over for the game’s, and the game’s own failing is an error', async (t) => {
+test('a mod’s style the app cannot read is passed over for the game’s, and the game’s own missing is an error', async (t) => {
   const w = world(t);
-  w.hudMod('Crystal');
-  w.cannotRead('Crystal');
+  w.hudMod('Crystal', false);
   const rec = await w.service.install(bar(83));
   assert.match(w.built(rec), /from game style/);
-  w.cannotRead('Crystal|game');
-  await assert.rejects(() => w.service.install(bar(70)), /could not read/);
-});
-
-test('without ValveResourceFormat nothing is built, and it says what to get', async (t) => {
-  const w = world(t);
-  w.noTool();
-  assert.equal(w.service.state().vrf, false);
-  await assert.rejects(w.service.install(bar(80)), /ValveResourceFormat/);
-  assert.equal(w.library.list().length, 0);
+  fs.writeFileSync(path.join(w.game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt(STYLE, Buffer.from('not a style'))]));
+  await assert.rejects(() => w.service.install(bar(70)), /hud_reborn/);
 });
 
 test('a Dota update builds the record again after answering, from the new style, and says when it is done', async (t) => {
   const w = world(t);
   const rec = await w.service.install(bar(80));
-  fs.writeFileSync(path.join(w.game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt(STYLE, Buffer.from('patched style'))]));
+  fs.writeFileSync(path.join(w.game, 'dota', 'pak01_dir.vpk'), buildVpk([entryAt(STYLE, styled('patched style'))]));
   assert.deepEqual(w.service.rebuild(['someone-else']), []);
   assert.deepEqual(w.service.rebuild([rec.id]), [], 'not built yet when it answers');
   for (let i = 0; i < 50 && !w.rebuilt.length; i++) await new Promise((r) => setTimeout(r, 10));

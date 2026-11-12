@@ -261,7 +261,7 @@ const EN = {
   'Свой фон меню: {0}': 'Own menu background: {0}',
   'Выбери картинку, GIF или видео': 'Pick a picture, GIF or video',
   'В игре нет файла {0}': 'The game has no file {0}',
-  'ValveResourceFormat не смог прочитать стиль интерфейса': 'ValveResourceFormat could not read the interface style',
+  'Не удалось прочитать стиль {0}': 'Could not read the style {0}',
   'В игре нет панели фона меню': 'The game has no menu background panel',
   'Это не WebM': 'This is not a WebM',
   'Фон больше {0} МБ': 'The background is over {0} MB',

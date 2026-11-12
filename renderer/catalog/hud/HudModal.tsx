@@ -17,16 +17,13 @@ export interface HudModalModel {
   installed: boolean;
   /** the HUD mod the layout goes on, or null for the game's own */
   hudMod: string | null;
-  /** ValveResourceFormat is downloaded */
-  vrf: boolean;
-  busy: 'tool' | 'build' | null;
+  busy: 'build' | null;
 }
 
 export interface HudModalActions {
   close: () => void;
   choose: (id: string) => void;
   parts: (parts: HudPart[]) => void;
-  getTool: () => void;
   install: () => void;
 }
 
@@ -191,22 +188,16 @@ export function HudModal({ m, actions }: { m: HudModalModel; actions: HudModalAc
       </div>
 
       <div className="modal-actions">
-        {!m.vrf
-          ? <button className="btn btn-primary" id="hudToolBtn" disabled={m.busy !== null} onClick={actions.getTool}>
-            <span className="ms">{m.busy === 'tool' ? 'progress_activity' : 'download'}</span>{L`Скачать ValveResourceFormat`}
-          </button>
-          : m.busy === 'build'
-            ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
-            : <button className="btn btn-primary" id="hudInstallBtn" disabled={m.saved} onClick={actions.install}>
-              <span className="ms">download</span>{m.installed ? L`Обновить` : L`Поставить`}
-            </button>}
+        {m.busy === 'build'
+          ? <button className="btn btn-primary" disabled><span className="ms">progress_activity</span>{L`Собираю…`}</button>
+          : <button className="btn btn-primary" id="hudInstallBtn" disabled={m.saved} onClick={actions.install}>
+            <span className="ms">download</span>{m.installed ? L`Обновить` : L`Поставить`}
+          </button>}
         {m.parts.length > 0 && <button type="button" className="btn btn-ghost" id="hudResetBtn" onClick={() => actions.parts([])}>{L`Вернуть всё как в игре`}</button>}
       </div>
 
       <div className="modal-note">
-        {m.vrf
-          ? L`Стиль интерфейса собирает компилятор Valve из Dota 2 Workshop Tools, бесплатного DLC в Steam. После обновления Доты приложение соберёт его заново само.`
-          : L`Стиль интерфейса из игры читает ValveResourceFormat, его нужно один раз скачать. Собирает компилятор Valve из Dota 2 Workshop Tools.`}
+        {L`После обновления Доты приложение соберёт стиль интерфейса заново само.`}
       </div>
     </div>
   );

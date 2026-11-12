@@ -169,6 +169,16 @@
   border-color: rgba(251, 191, 36, 0.32);
 }
 .modal-note.warn b { color: var(--warning); }
+/* an installed mod that is off, covered or waits for the item table: what it is and the one thing to do (catalog/modal/status.ts) */
+.modal-note.mod-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+}
+.modal-note.mod-state > .ms { color: var(--warning); font-size: var(--icon-md); flex: none; }
+.modal-note.mod-state > span:not(.ms) { flex: 1; }
+.modal-note.mod-state > .btn { flex: none; }
 .modal-field { display: flex; flex-direction: column; gap: 8px; }
 .modal-field-label { font-size: 12px; font-weight: 700; color: var(--text); }
 .modal-field .select-wrap { width: fit-content; }

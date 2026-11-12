@@ -24,7 +24,8 @@ import { doInstall, installPack, onInstalling, packMemberName } from './install.
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { installing, screen } from './state.ts';
 import { modIssue } from '../../ui/notice.ts';
-import { catalogOnShow } from '../../core/router.ts';
+import { catalogOnShow, switchView } from '../../core/router.ts';
+import { modStates } from '../../catalog/modal/status.ts';
 
 interface ModWindow {
   categoryId: string;
@@ -115,6 +116,7 @@ function drawModal(): void {
     links: otherLinks.map((l) => ({ index: links.indexOf(l), label: tr(LINK_LABEL[l.type || ''] || l.type || 'Ссылка') })),
     note: NOTE[categoryId]?.() ?? null,
     issue: modIssue(categoryId, mod.name),
+    states: categoryId === 'tools' ? [] : modStates(installedRec),
   };
 
   showModModal(model, {
@@ -159,6 +161,16 @@ function drawModal(): void {
       redrawScreen();
       redraw();
     },
+    enable: async () => {
+      if (!installedRec) return;
+      const r = await window.api.mods.setEnabled(installedRec.id, true);
+      if (r.error) { toast(r.error, 'error'); return; }
+      toast(L`${catalogName(mod.name)} включён`);
+      await refreshInstalledIndex();
+      redrawScreen();
+      redraw();
+    },
+    showInLibrary: () => { closeOverlay(); void switchView('library'); },
     runTool: async () => {
       const r = await window.api.misc.runTool(model.toolRelPath);
       if (r.error) toast(r.error, 'error');
