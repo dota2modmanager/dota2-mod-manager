@@ -167,7 +167,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'mods:move': [ID, num(-1, 1)], 'mods:reorder': [ID, num(0, 10000)],
   'mods:mapsOwner': [],
   'mods:externalSetEnabled': [PATH, bool], 'mods:externalRemove': [PATH],
-  'mods:splitMod': [ID], 'mods:splitExternal': [PATH],
+  'mods:splitMod': [ID], 'mods:dropItemIcons': [ID], 'mods:splitExternal': [PATH],
   'mods:adoptMod': [ID, PREVIEW], 'mods:adoptExternal': [PATH, PREVIEW], 'mods:adoptFont': [NAME, PREVIEW], 'mods:adoptCursor': [PREVIEW],
   // combined packs (src/ipc-packs.ts)
   'packs:combine': [shape({ name: NAME, modIds: IDS })],

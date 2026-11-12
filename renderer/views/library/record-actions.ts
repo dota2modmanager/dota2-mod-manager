@@ -65,6 +65,22 @@ async function splitRecord(id: string) {
   await screen.reload();
 }
 
+/* A hero mod's Blink Dagger and other item pictures taken out of it: they show on every hero, and
+ * the person wanted the hero (Discord, 2026-11-11). For good: an update takes them out again. */
+async function dropItemIcons(id: string) {
+  const rec = recById(id);
+  if (!rec) return;
+  if (!await confirmDialog(
+    L`Убрать из «${catalogName(rec.name)}» иконки предметов? Блинк, БКБ и другие предметы снова будут с обычными картинками на всех героях. Вернуть их можно, только поставив мод заново.`,
+    { okLabel: L`Убрать` },
+  )) return;
+  const r = await window.api.mods.dropItemIcons(id);
+  if (r.error) toast(r.error, 'error', 6000);
+  else if (!r.dropped) toast(L`В этом моде нет иконок предметов`, 'warn');
+  else toast(L`«${catalogName(rec.name)}»: убрано иконок предметов: ${r.dropped}`, 'ok', 6000);
+  await screen.reload();
+}
+
 /** Standalone mods that can go into a pack. */
 export function standalonePackable(): Candidate[] {
   return lib.records.filter(isPackableRec).map((r) => ({
@@ -190,6 +206,7 @@ export function menuFor(id: string): MenuItem[] | null {
     },
     langDir(rec) && { label: L`Распаковать в папку`, icon: 'folder_open', onPick: () => unpackRecord(rec.id) },
     (rec.subjects || 0) >= 2 && { label: L`Разобрать по героям`, icon: 'call_split', onPick: () => splitRecord(rec.id) },
+    langDir(rec) && !rec.noItemIcons && rec.categoryId !== 'item-icons' && { label: L`Убрать иконки предметов`, icon: 'hide_image', onPick: () => dropItemIcons(rec.id) },
     rec.prePatch && { label: L`Убрать метку «до патча»`, icon: 'done', onPick: () => clearPrePatch(rec.id) },
     ...naming,
     { separator: true },

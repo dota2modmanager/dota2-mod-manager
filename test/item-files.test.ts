@@ -32,6 +32,12 @@ test('motions, a material set and what only the table does', () => {
   assert.deepEqual(p.left, ['its pet']);
 });
 
+test('a material set the visuals name by themselves is the pick\'s too', () => {
+  // the Crimson Witness goggles: the plain goggles' model, "skin" "1" in the visuals (Discord, 2026-11-08)
+  assert.equal(pickParts({ block: block(`${mod('particle_create', 'particles/a.vpcf')}"skin"\t"1"\n`), own: 'm' }).skin, 1);
+  assert.equal(pickParts({ block: block(mod('particle_create', 'particles/a.vpcf')), own: 'm' }).skin, 0);
+});
+
 test('a pick\'s second model takes the stock one\'s path, and with none that path goes empty', () => {
   assert.deepEqual(extraPlaces(['s.vmdl'], ['a.vmdl']), { under: [{ path: 's.vmdl', model: 'a.vmdl' }], merged: [] });
   assert.deepEqual(extraPlaces(['s.vmdl'], []), { under: [{ path: 's.vmdl', model: null }], merged: [] });

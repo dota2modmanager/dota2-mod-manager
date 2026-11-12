@@ -76,6 +76,7 @@ contextBridge.exposeInMainWorld('api', {
     masterState: () => ipcRenderer.invoke('mods:masterState'),
     setMaster: (enabled) => ipcRenderer.invoke('mods:setMaster', enabled),
     splitMod: (id) => ipcRenderer.invoke('mods:splitMod', id),
+    dropItemIcons: (id) => ipcRenderer.invoke('mods:dropItemIcons', id),
     splitExternal: (fileName) => ipcRenderer.invoke('mods:splitExternal', fileName),
     adoptMod: (id, preview) => ipcRenderer.invoke('mods:adoptMod', id, preview),
     adoptExternal: (fileName, preview) => ipcRenderer.invoke('mods:adoptExternal', fileName, preview),

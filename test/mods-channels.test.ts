@@ -202,6 +202,20 @@ test('a catalog mod the catalog has replaced says so, and the update keeps its s
   assert.ok(((await s.call('mods:update', 'nobody')) as { error?: string }).error);
 });
 
+test('item pictures taken out of a mod stay out of its update', async (t) => {
+  const s = stand(t);
+  fs.writeFileSync(path.join(path.dirname(s.lang), 'dota', 'pak01_dir.vpk'), buildVpk([entry('scripts/items/items_game.txt', 'the game')]));
+  const tiny = s.pak('pak36', [['models/heroes/tiny/tiny.vmdl_c', 'tiny']], { categoryId: 'heroes', name: 'Tiny Arcana', fileRef: 'Tiny Arcana.vpk' })!;
+  s.library.update(tiny.id, { noItemIcons: true });
+  const newer = path.join(path.dirname(s.lang), 'newer.vpk');
+  fs.writeFileSync(newer, buildVpk([entry('models/heroes/tiny/tiny.vmdl_c', 'tiny 2'), entry('panorama/images/items/blink_png.vtex_c', 'blink')]));
+  s.installer.download = async () => newer;
+  assert.equal(((await s.call('mods:update', tiny.id)) as { ok?: boolean }).ok, true);
+  const { listVpkPathsFile } = await import('../src/vpk.ts');
+  assert.deepEqual(listVpkPathsFile(path.join(s.lang, 'pak36_dir.vpk')), ['models/heroes/tiny/tiny.vmdl_c']);
+  assert.equal(s.library.find(tiny.id)?.noItemIcons, true);
+});
+
 test('an update rebuilds the item table the old file fed, and a failed download says so and keeps the mod', async (t) => {
   const s = stand(t);
   fs.writeFileSync(path.join(path.dirname(s.lang), 'dota', 'pak01_dir.vpk'), buildVpk([entry('scripts/items/items_game.txt', 'the game')]));

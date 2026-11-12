@@ -217,3 +217,17 @@ test("a look's switch answers at once, not after the item table is written", asy
   assert.equal(s.library.find(look.id)?.enabled, false);
   wrote();
 });
+
+test('a mod with its item pictures taken out keeps the rest, says how many went, and remembers it', async (t) => {
+  const s = stand(t);
+  const rec = s.mod('pak31');
+  fs.writeFileSync(path.join(s.lang, 'pak31_dir.vpk'), buildVpk([entry('models/pak31.vmdl_c', 'x'), entry('panorama/images/items/blink_png.vtex_c', 'b')]));
+  assert.deepEqual(await s.call('mods:dropItemIcons', rec.id), { ok: true, dropped: 1 });
+  assert.equal(s.library.find(rec.id)!.noItemIcons, true);
+  assert.deepEqual(await s.call('mods:dropItemIcons', rec.id), { ok: true, dropped: 0 }, 'nothing left: the window says so');
+  assert.ok(((await s.call('mods:dropItemIcons', 'nobody')) as { error?: string }).error);
+  t.mock.method(s.installer, 'dropItemIcons', () => { throw new Error('disk full'); });
+  assert.deepEqual(await s.call('mods:dropItemIcons', rec.id), { error: 'disk full' });
+  s.openGame();
+  assert.deepEqual(await s.call('mods:dropItemIcons', rec.id), { error: 'blocked toggle' });
+});

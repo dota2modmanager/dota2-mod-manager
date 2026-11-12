@@ -59,6 +59,7 @@ function packMembers(mod: Mod): { name: string; hit: { categoryId: string; mod: 
 
 const NOTE: Record<string, () => string> = {
   fonts: () => L`Шрифт ставится в файлы игры (game\\dota\\panorama\\fonts) — параметр запуска не нужен. Оригиналы сохраняются автоматически.`,
+  emblems: () => L`Эмблема рисуется на кольце под выбранным героем. Пока она включена, приложение само держит в autoexec.cfg команду r_draw_selected_ring 1. Если стоит Minify, выключи в нём Misc Optimization: она прячет это кольцо.`,
   cursors: () => L`Курсор ставится в game\\dota\\resource\\cursor — параметр запуска не нужен. Оригиналы сохраняются автоматически. Включать и выключать его можно в «Моих модах», но активным может быть только один курсор: новый выключит предыдущий.`,
 };
 
