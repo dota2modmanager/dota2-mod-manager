@@ -590,6 +590,8 @@ that location is not writable.
 | `src/installer-folder.ts`, `src/installer-files.ts` | The language folder as a whole: the mods-off switch, the note of which files are ours, foreign files, and the names they share |
 | `src/overlays.ts`, `src/overlays-cursor.ts` | Fonts and cursors: files written over the game's own, their kept originals, putting them back after Steam's file check, and each cursor set's own copy |
 | `src/import.ts` | Taking a mod in: a `.vpk`, a `.zip`, an author's folder, or bytes off a drop |
+| `src/item-icons-drop.ts` | A mod written again without its item pictures, by the user's choice, kept through updates |
+| `src/emblem-ring.ts` | The r_draw_selected_ring line in autoexec.cfg an emblem needs, kept while one is on |
 | `src/cursors.ts` | Which cursor set is live, which look a slot wears, and the repair at startup |
 | `src/adopt.ts` | What a VPK goes through before it counts as a mod: named, harvested, split |
 | `src/mods-listing.ts` | What My mods is drawn from: the library squared with the folder, foreign files named, which mod hides whose files |

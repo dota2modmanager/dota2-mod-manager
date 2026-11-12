@@ -56,6 +56,8 @@ export interface ModsApi {
   masterState: () => Promise<{ off: boolean }>;
   setMaster: (enabled: boolean) => Promise<Reply>;
   splitMod: (id: string) => Promise<Parts>;
+  /** the mod's item pictures taken out of it, how many went */
+  dropItemIcons: (id: string) => Promise<Reply<{ dropped: number }>>;
   splitExternal: (fileName: string) => Promise<Parts>;
   adoptMod: (id: string, preview: string | null) => Promise<Adopted>;
   adoptExternal: (fileName: string, preview: string | null) => Promise<Adopted>;

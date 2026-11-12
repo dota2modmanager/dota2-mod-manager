@@ -9,6 +9,7 @@
  * follows every change.
  */
 import { errorText } from './error-text.ts';
+import { RING_CATEGORIES, keepRing } from './emblem-ring.ts';
 import * as zones from './slot-zones.ts';
 import type { AppContext } from './app-context.ts';
 import type { ForeignItem } from './installer-folder.ts';
@@ -170,6 +171,17 @@ export function createModsListing({ installer, library, fingerprints, schemaServ
     // the renderer re-lists after every install, toggle, preset and bulk action, so this is
     // the one place that keeps the Discord status honest without hooking a dozen handlers
     refreshPresence();
+    // an emblem shows only on the selection ring: the line that turns it on stays in autoexec
+    // while one is on (src/emblem-ring.ts), kept from here for the same reason as above
+    setImmediate(() => {
+      try {
+        const game = installer.getGamePath?.();
+        if (!game) return;
+        const on = !installer.masterIsOff() && installed.some((r) => RING_CATEGORIES.has(r.categoryId) && r.enabled !== false);
+        const did = keepRing(game, on);
+        if (did) diag(`autoexec: selection ring line ${did}`);
+      } catch (err) { diag(`autoexec not written: ${errorText(err)}`); }
+    });
     // The lifted item blocks are only ever needed in the main process; the renderer just
     // shows that a mod has them, and whether the patch that makes them work is on. Copies,
     // never the stored records — dropping the field off those would erase it on save.

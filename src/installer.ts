@@ -21,6 +21,7 @@ import * as downloads from './installer-downloads.ts';
 import * as slots from './installer-slots.ts';
 import * as packs from './installer-packs.ts';
 import * as repack from './installer-repack.ts';
+import { dropItemIcons } from './item-icons-drop.ts';
 import * as folder from './installer-folder.ts';
 import * as write from './installer-write.ts';
 import type { Library } from './library.ts';
@@ -252,6 +253,7 @@ export class Installer {
   unpackToFolder(...a: Rest<typeof repack.unpackToFolder>) { return repack.unpackToFolder(this, ...a); }
   displayNameForFile(...a: Rest<typeof repack.displayNameForFile>) { return repack.displayNameForFile(this, ...a); }
   harvestSchema(...a: Rest<typeof repack.harvestSchema>) { return repack.harvestSchema(this, ...a); }
+  dropItemIcons(records: LibFile[]) { return dropItemIcons(this, records); }
   installedSize(...a: Rest<typeof repack.installedSize>) { return repack.installedSize(this, ...a); }
   analyzeRecord(...a: Rest<typeof repack.analyzeRecord>) { return repack.analyzeRecord(this, ...a); }
   splitVpkFile(...a: Rest<typeof repack.splitVpkFile>) { return repack.splitVpkFile(this, ...a); }

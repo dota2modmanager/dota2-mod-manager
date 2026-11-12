@@ -239,5 +239,10 @@ const EN = {
   "Steam проверяет файлы Dota: моды вернутся, когда он закончит": "Steam is checking Dota's files: your mods come back when it is done",
   "Ctrl+клик по строке отмечает её, Shift+клик отмечает все строки до неё, Ctrl+A отмечает всё, Delete удаляет отмеченное": "Ctrl+click a row to tick it, Shift+click to tick every row up to it, Ctrl+A ticks everything, Delete removes what is ticked",
   "Обновление пришло, пока приложение было закрыто. Если Dota с тех пор запускалась из Steam с ошибкой, причина в этом, и теперь всё исправлено. После обновлений Доты открывай приложение до игры или запускай её кнопкой «Играть» здесь.": "The update came while the app was closed. If Dota has started from Steam with an error since then, this was why, and it is fixed now. After a Dota update, open the app before you play, or start the game with Play here.",
+  "Убрать иконки предметов": "Remove item icons",
+  "Убрать из «{0}» иконки предметов? Блинк, БКБ и другие предметы снова будут с обычными картинками на всех героях. Вернуть их можно, только поставив мод заново.": "Remove the item icons from “{0}”? Blink Dagger, BKB and the other items get their usual pictures back on every hero. The only way to get them back is to install the mod again.",
+  "«{0}»: убрано иконок предметов: {1}": "“{0}”: item icons removed: {1}",
+  "Эмблема рисуется на кольце под выбранным героем. Пока она включена, приложение само держит в autoexec.cfg команду r_draw_selected_ring 1. Если стоит Minify, выключи в нём Misc Optimization: она прячет это кольцо.": "An emblem is drawn on the ring under the selected hero. While one is on, the app keeps the command r_draw_selected_ring 1 in autoexec.cfg for you. If you use Minify, turn off its Misc Optimization: it hides that ring.",
+  "В этом моде нет иконок предметов": "This mod has no item icons",
 };
 window.EN_MORE = EN;

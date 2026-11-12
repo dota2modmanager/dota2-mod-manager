@@ -53,6 +53,8 @@ export interface LibRecord {
   zone?: unknown;
   /** how many heroes an import skins: two or more can be split */
   subjects?: number;
+  /** its item pictures were taken out (src/installer-repack.ts dropItemIcons) */
+  noItemIcons?: boolean;
   schemaCount?: number;
   schemaLive?: boolean;
   coveredBy?: Cover[];

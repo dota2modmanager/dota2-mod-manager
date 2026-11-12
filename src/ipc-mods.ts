@@ -70,6 +70,11 @@ export function registerModsIpc({
     try {
       const hadSchema = Array.isArray(rec.schema) && rec.schema.length > 0;
       const updated = await updateMod({ installer, library, rec, log: diag });
+      // the item pictures the user took out stay out of the new version too
+      if (rec.noItemIcons && updated) {
+        const files = updated.files.map((f) => ({ ...f }));
+        if (installer.dropItemIcons(files)) library.update(updated.id, { files, noItemIcons: true });
+      }
       const harvest = schemaService.harvest(updated);
       if (hadSchema || (harvest && harvest.deltas)) schemaService.refresh();
       if (installer.masterIsOff()) {

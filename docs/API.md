@@ -60,6 +60,7 @@ the code, not in this page.
 | [`src/effect-edit.ts`](#srceffect-editts) | An effect of the game changed by hand: its size, how many particles it makes, how long they live, |
 | [`src/effect-finder.ts`](#srceffect-finderts) | Finding an effect by what it is, not by its file: a hero, his abilities, and the effects that |
 | [`src/electron.ts`](#srcelectronts) | Electron's main-process API, asked for at the moment it is used. |
+| [`src/emblem-ring.ts`](#srcemblem-ringts) | An emblem mod draws on the ring under the selected hero, and Dota hides that ring unless the |
 | [`src/error-text.ts`](#srcerror-textts) | What a caught error says, as one line of text. |
 | [`src/feature-gate.ts`](#srcfeature-gatets) | Is this feature switched off right now? |
 | [`src/file-tx-journal.ts`](#srcfile-tx-journalts) | The half of FileTx that outlives the process. |
@@ -120,6 +121,7 @@ the code, not in this page.
 | [`src/item-builder.ts`](#srcitem-builderts) | The item builder: a hero's stock item built from one of its wearables, with an effect on top. |
 | [`src/item-files-service.ts`](#srcitem-files-servicets) | The picks' pak: the item builder's looks in the language folder, for the game to read with nothing |
 | [`src/item-files.ts`](#srcitem-filests) | The item builder's picks as files alone: a look the game takes from a pak in the language folder, |
+| [`src/item-icons-drop.ts`](#srcitem-icons-dropts) | A mod with its item pictures taken out. A hero's arcana from the catalog often brings its own |
 | [`src/item-portraits.ts`](#srcitem-portraitsts) | A hero's HUD portrait and minimap icon as an item builder pick makes them, written once for the |
 | [`src/item-skin.ts`](#srcitem-skints) | Which material set an item's visuals wear its model in (src/model-skin.ts makes a model wear it). |
 | [`src/item-sounds.ts`](#srcitem-soundsts) | An item's sounds and voice, as a mod gives them to a hero who does not own the item. |
@@ -2938,6 +2940,63 @@ export function electron(): typeof import('electron')
 ```
 
 The electron module, as it stands when this is called.
+
+## src/emblem-ring.ts
+
+An emblem mod draws on the ring under the selected hero, and Dota hides that ring unless the
+console variable r_draw_selected_ring is 1. Almost every "my emblem does not show" in the
+support channel (October and November 2026) was answered with that one line, typed again by
+hand. So while an emblem is switched on, the app keeps the line in the game's autoexec.cfg,
+which Dota runs at every start, and takes it out again when no emblem is left.
+
+The line goes in under a comment of ours, and only our two lines are ever touched: whatever
+else the user keeps in autoexec stays as it was. A line of their own that already sets the
+variable is left to do the job.
+
+### `RING_MARK`
+
+```ts
+export const RING_MARK = '// Dota 2 Mod Manager: emblems show on the selection ring'
+```
+
+The comment the line sits under, which is how the app knows the line is its own.
+
+### `RING_LINE`
+
+```ts
+export const RING_LINE = 'r_draw_selected_ring 1'
+```
+
+The command that shows the ring.
+
+### `RING_CATEGORIES`
+
+```ts
+export const RING_CATEGORIES = new Set(['emblems'])
+```
+
+The categories whose mods need the ring.
+
+### `withRing`
+
+```ts
+export function withRing(text: string, on: boolean): string
+```
+
+autoexec's text with our line in it when `on`, without it otherwise; the user's lines kept.
+
+### `keepRing`
+
+```ts
+export function keepRing(gamePath: string, on: boolean): 'added' | 'removed' | null
+```
+
+Put the line in or take it out of <game>/dota/cfg/autoexec.cfg. Writes only when the text
+changes, and makes no file when there is nothing to put in one.
+
+```
+@returns what changed, or null
+```
 
 ## src/error-text.ts
 
@@ -6947,6 +7006,35 @@ The list a table build made, as one pak's files.
 ```
 @param game  the game folder, for models the pick did not already copy
 @param beneath  files that go in after the picks' (the arcana bases)
+```
+
+## src/item-icons-drop.ts
+
+A mod with its item pictures taken out. A hero's arcana from the catalog often brings its own
+Blink Dagger and Black King Bar pictures along, and those show on every hero, which a player who
+wanted the arcana alone did not ask for (Discord, 2026-11-11). The choice stays on the record
+(noItemIcons), and an update takes them out of the new version too (src/ipc-mods.ts).
+
+### `ITEM_ICON_RE`
+
+```ts
+export const ITEM_ICON_RE = /^panorama\/images\/items\//
+```
+
+The item pictures of the shop and the inventory (Blink Dagger's is items/blink_png.vtex_c).
+
+### `dropItemIcons`
+
+```ts
+export function dropItemIcons(inst: Pick<Installer, 'langFolder'>, records: LibFile[]): number
+```
+
+Write a mod's packs again without their item pictures, switched on or off as they were. The
+volumes of a multi-part pack fold into the one file and drop out of `records`.
+
+```
+@param records  the mod's files, edited in place
+@returns how many pictures went
 ```
 
 ## src/item-portraits.ts

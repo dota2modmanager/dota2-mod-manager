@@ -22,7 +22,7 @@
 import path from 'node:path';
 import { eachChild, blockBounds, findItem, itemFields, listItemsSteps } from './schema.ts';
 import { asModel } from './arcana.ts';
-import { heroModelPath, firstStyleSkin, normalizeAssetPath } from './item-builder-assets.ts';
+import { heroModelPath, firstStyleSkin, normalizeAssetPath, wornSkin } from './item-builder-assets.ts';
 import { itemHeroes } from './item-builder-slots.ts';
 import { withParticles } from './model-particles.ts';
 import { withSurfaceHitboxes } from './model-hitboxes.ts';
@@ -93,10 +93,16 @@ function visualsOf(block: string): string {
   return out;
 }
 
-/** The set a pick wears its model in, 0 for the first. */
+/**
+ * The set a pick wears its model in, 0 for the first. Last of all the "skin" the visuals name by
+ * themselves, as 709 items do: the Crimson Witness goggles are the plain goggles' model in its
+ * second set, and came out in the plain green online, where the server leaves a wearable in set 0
+ * (Discord, 2026-11-08). The preview read it there all along (wornSkin).
+ */
 function skinOf(block: string, mods: Map<string, string>[]): number {
   const visuals = visualsOf(block);
-  return Number(ofType(mods, 'model_skin')[0]?.get('skin') ?? (visuals && firstStyleSkin(visuals))) || 0;
+  const named = ofType(mods, 'model_skin')[0]?.get('skin') ?? (visuals ? firstStyleSkin(visuals) : undefined);
+  return Number(named ?? (visuals ? wornSkin(visuals) : 0)) || 0;
 }
 
 /**

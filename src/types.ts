@@ -33,6 +33,8 @@ export interface LibRecord {
   members?: PackMember[];
   /** the item blocks this mod changed, lifted out of the table it shipped (src/schema-service.ts) */
   schema?: { id: string; name: string; block: string }[];
+  /** its item pictures taken out by the user, and again after every update (src/installer-repack.ts dropItemIcons) */
+  noItemIcons?: boolean;
   /** looked at once for a whole-game table, so a clean mod is not scanned at every start */
   schemaChecked?: boolean;
   /** the fingerprint before a shipped table was stripped out, so the catalog still knows it */

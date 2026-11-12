@@ -50,6 +50,19 @@ export function registerLibraryIpc({
     library.removeRecord(rec.id);
   }, installer.log);
 
+  // a mod's item pictures out of it, for good: an update takes them out again (src/ipc-mods.ts)
+  ipcMain.handle('mods:dropItemIcons', (e, id) => {
+    const stop = blocked('toggle'); // Dota open: it holds the files
+    const rec = library.find(id);
+    if (stop || !rec) return stop || { error: t('Мод не найден') };
+    try {
+      const files = rec.files.map((f) => ({ ...f }));
+      const dropped = installer.dropItemIcons(files);
+      if (dropped) library.update(id, { files, noItemIcons: true });
+      return { ok: true, dropped };
+    } catch (err) { return { error: errorText(err) }; }
+  });
+
   ipcMain.handle('mods:setEnabled', async (e, id, enabled) => {
     const stop = blocked('toggle'); // Dota open: it holds the files
     if (stop) return stop;
