@@ -171,3 +171,50 @@ test('item effects, unusual effects, item visuals and localization in Rust answe
   }
   assert.ok(compare(cases) > 300);
 });
+
+test('model rewrites in Rust make the bytes the TypeScript ones make, on the game models', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { createHash } = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { modelSkinMaterials, withSkin } = await import('../src/model-skin.ts');
+  const { withoutCloth, hasCloth, dragsCloth } = await import('../src/model-cloth.ts');
+  const { attachmentNames, attachedAs } = await import('../src/model-attachments.ts');
+  const { numberedAs } = await import('../src/model-sequences.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const models = [...index.paths()].filter((p) => p.endsWith('.vmdl_c'));
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-models-'));
+  const saved = new Map<string, { $file: string }>();
+  const file = (p: string) => {
+    if (!saved.has(p)) {
+      const at = path.join(tmp, `${saved.size}.vmdl_c`);
+      fs.writeFileSync(at, index.read(p) ?? Buffer.alloc(0));
+      saved.set(p, { $file: at });
+    }
+    return saved.get(p)!;
+  };
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const sha = (b: Buffer | null) => (b ? createHash('sha1').update(b).digest('hex') : null);
+  const bodies = models.filter((p) => /^models\/heroes\/([^/]+)\/\1\.vmdl_c$/.test(p));
+  const items = spread(models.filter((p) => p.startsWith('models/items/')), 160);
+  const couriers = spread(models.filter((p) => p.startsWith('models/courier/')), 60);
+  const spirits = models.filter((p) => /forge_spirit/.test(p));
+  const plainCouriers = ['donkey', 'donkey_wings', 'donkey_dire', 'donkey_dire_wings'].map((n) => `models/props_gameplay/${n}.vmdl_c`);
+  const bodyOf = (p: string) => bodies.find((b) => p.startsWith(`models/items/${b.split('/')[2]}/`)) ?? bodies[0];
+  const some = [...items, ...couriers, ...spread(bodies, 40)];
+  const cases: Case[] = [
+    { name: 'model-skin.modelSkinMaterials', ts: ((m: string | null, s: number) => [...modelSkinMaterials(m === null ? null : buf(m), s)]) as never, inputs: [[null, 1], ...some.flatMap((p) => [0, 1, 2].map((s) => [file(p), s]))] },
+    { name: 'model-skin.withSkin', ts: ((m: string, s: number) => sha(withSkin(buf(m), s))) as never, inputs: some.flatMap((p) => [0, 1, 3].map((s) => [file(p), s])) },
+    { name: 'model-cloth.withoutCloth', ts: ((m: string) => sha(withoutCloth(buf(m)))) as never, inputs: some.map((p) => [file(p)]) },
+    { name: 'model-cloth.hasCloth', ts: ((m: string) => hasCloth(buf(m))) as never, inputs: some.map((p) => [file(p)]) },
+    { name: 'model-cloth.dragsCloth', ts: ((m: string | null) => dragsCloth(m === null ? null : buf(m))) as never, inputs: [[null], ...bodies.map((p) => [file(p)])] },
+    { name: 'model-attachments.attachmentNames', ts: ((m: string) => attachmentNames(buf(m))) as never, inputs: some.map((p) => [file(p)]) },
+    { name: 'model-attachments.attachedAs', ts: ((m: string, p: string) => sha(attachedAs(buf(m), buf(p)))) as never, inputs: items.map((p) => [file(p), file(bodyOf(p))]) },
+    { name: 'model-sequences.numberedAs', ts: ((m: string, p: string) => sha(numberedAs(buf(m), buf(p)))) as never, inputs: [
+      ...couriers.flatMap((p) => plainCouriers.map((c) => [file(p), file(c)])),
+      ...spirits.map((p) => [file(p), file('models/heroes/invoker/forge_spirit.vmdl_c')]),
+      ...items.slice(0, 40).map((p) => [file(p), file(bodyOf(p))]),
+    ] },
+  ];
+  assert.ok(compare(cases) > 1000);
+});

@@ -10,7 +10,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use crate::kv::latin1;
 use crate::{
     cosmetic_names, hero_names, i18n, item_builder_donor as donor, item_builder_effects as effects,
-    item_builder_styles as styles, item_visuals, unusual_effects,
+    item_builder_styles as styles, item_visuals, model_attachments, model_cloth, model_sequences, model_skin,
+    unusual_effects,
 };
 
 /// A text argument as items_game's latin1 bytes: a string one byte per char, or {"$file": path}
@@ -41,6 +42,12 @@ fn opt_b(args: &[Value], i: usize) -> Result<Option<Arc<Vec<u8>>>, String> {
 
 fn n(args: &[Value], i: usize) -> f64 {
     args.get(i).and_then(Value::as_f64).unwrap_or(0.0)
+}
+
+/// A file made by a call, as its sha1 in hex (null for none): what the test compares.
+fn sha(file: Option<Vec<u8>>) -> Value {
+    use sha1::{Digest, Sha1};
+    file.map_or(Value::Null, |f| json!(Sha1::digest(&f).iter().map(|b| format!("{b:02x}")).collect::<String>()))
 }
 
 fn kv_err(e: crate::kv::KvError) -> String {
@@ -161,6 +168,18 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 .unwrap_or_default();
             json!(cosmetic_names::cosmetic_name_table(items.iter().map(|(a, b)| (a.as_str(), b.as_str())), &tokens))
         }
+        "model-skin.modelSkinMaterials" => {
+            let m =
+                model_skin::model_skin_materials(opt_b(args, 0)?.as_deref().map(Vec::as_slice), n(args, 1) as usize);
+            json!(m.into_iter().collect::<Vec<_>>())
+        }
+        "model-skin.withSkin" => sha(model_skin::with_skin(&b(args, 0)?, n(args, 1) as usize)),
+        "model-cloth.withoutCloth" => sha(Some(model_cloth::without_cloth(&b(args, 0)?))),
+        "model-cloth.hasCloth" => json!(model_cloth::has_cloth(&b(args, 0)?)),
+        "model-cloth.dragsCloth" => json!(model_cloth::drags_cloth(opt_b(args, 0)?.as_deref().map(Vec::as_slice))),
+        "model-attachments.attachmentNames" => json!(model_attachments::attachment_names(&b(args, 0)?)),
+        "model-attachments.attachedAs" => sha(Some(model_attachments::attached_as(&b(args, 0)?, &b(args, 1)?))),
+        "model-sequences.numberedAs" => sha(model_sequences::numbered_as(&b(args, 0)?, &b(args, 1)?)),
         "item-visuals.itemVisuals" => json!(item_visuals::item_visuals(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?),
         "item-visuals.findItems" => json!(item_visuals::find_items(&b(args, 0)?, &s(args, 1))
             .map_err(kv_err)?
