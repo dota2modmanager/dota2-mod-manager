@@ -16,6 +16,7 @@ import { withSkin } from './model-skin.ts';
 import { clothDragger, withoutCloth } from './model-cloth.ts';
 import { firstStyleSkin } from './item-skin.ts';
 import { drain, PAUSE } from './steps.ts';
+import { attachedAs } from './model-attachments.ts';
 export { firstStyleSkin, wornSkin } from './item-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
 
@@ -254,9 +255,7 @@ const summonsByIndex = new WeakMap<VpkIndex, SummonModels>();
 function heroModelBytes(data: Buffer, activities: string[]): Buffer {
   try {
     return activities.reduce((model, modifier) => asModel(model, modifier), data);
-  } catch {
-    return data;
-  }
+  } catch { return data; }
 }
 
 /**
@@ -289,7 +288,7 @@ export function* gameAssetEntriesSteps(gamePath: string, assetCopies: AssetCopy[
     const worn = 'unit' in copy && copy.skin ? withSkin(data, copy.skin) : copy.skin ? withSkin(data, copy.skin) ?? data : data;
     // the resolver saw it numbered (summonModels); a game changed since would leave the unit plain
     const bytes = 'unit' in copy ? worn && numberedAs(worn, ix.read(to) ?? Buffer.alloc(0))
-      : 'hero' in copy ? heroModelBytes(worn!, copy.activities)
+      : 'hero' in copy ? attachedAs(heroModelBytes(worn!, copy.activities), ix.read(to) ?? Buffer.alloc(0))
         // a wearable under Centaur's stock paths loses its cloth, which trailed behind him (src/model-cloth.ts)
         : to.endsWith('.vmdl_c') && !('form' in copy && copy.form) && drags(to) ? withoutCloth(worn!) : worn;
     if (!bytes) continue;

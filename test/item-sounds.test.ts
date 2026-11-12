@@ -48,6 +48,35 @@ test("a hero's plain lines are voiced as the arcana's said in the same situation
   assert.deepEqual(voiceSwaps(rules, { key: 'customresponse', value: 'another_item' }), [], 'a criterion the rules never ask for voices nothing');
 });
 
+/** Invoker's rules as the Acolyte of the Lost Arts has them: the plain lines ask that he is not the
+ *  "happy" Acolyte either, and some are said by chance; the Acolyte's ask for neither. */
+const KID: V = { obj: [
+  ['m_Requirements', { arr: [
+    criterion('IsInvoker', 'classname', 'npc_dota_hero_invoker'),
+    criterion('IsKid', 'customresponse', 'kid_persona'),
+    criterion('IsOld', 'customresponse', '!=kid_persona'),
+    criterion('IsNotHappy', 'customresponse', '!=happy_kidvoker'),
+    criterion('Chance_5', 'randomnum', '>95'),
+  ] }],
+  ['m_ResponseGroups', { arr: [
+    group('invo_Select', ['Select', 'IsInvoker', 'IsOld', 'IsNotHappy', 'Chance_5'], ['invo_rare_1', 'invo_rare_2']),
+    group('invo_Kill', ['Kill', 'IsInvoker', 'IsOld', 'IsNotHappy'], ['invo_kill_1']),
+    group('kid_Select', ['Select', 'IsInvoker', 'IsKid'], ['kid_rare_1']),
+    group('kid_Kill', ['Kill', 'IsInvoker', 'IsKid'], ['kid_kill_1']),
+  ] }],
+] };
+
+test("a persona's voice takes every plain line it has a situation for, an arcana's only the close ones", () => {
+  const rules = readKv3(encodeKv3(KID)).root;
+  assert.deepEqual(voiceSwaps(rules, { key: 'customresponse', value: 'kid_persona' }), [],
+    'as an arcana: no rule of the Acolyte asks what the plain ones do, so none matched, and he spoke as the plain Invoker');
+  assert.deepEqual(voiceSwaps(rules, { key: 'customresponse', value: 'kid_persona', whole: true }), [
+    { sound: 'invo_rare_1', as: 'kid_rare_1' },
+    { sound: 'invo_rare_2', as: 'kid_rare_1' },
+    { sound: 'invo_kill_1', as: 'kid_kill_1' },
+  ]);
+});
+
 const event = (file: string, extra: [string, V][] = []): V => ({ obj: [
   ['type', { str: 'dota_update_default' }], ['volume', { dbl: 0.5 }], ['vsnd_files', { arr: [{ str: file }] }], ...extra,
 ] });

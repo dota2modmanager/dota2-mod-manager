@@ -26,10 +26,11 @@ import { summonModels, type ItemAssets, type PortraitSwap, type SpriteSwap } fro
 import { styleOf } from './item-builder-styles.ts';
 import { basesHereSteps, withoutBaseFiles, type ReadyBase } from './arcana-bases.ts';
 import { ownModelsWin, pickModels, refitsOf, type PickModels } from './item-builder-refits.ts';
-import { isSelectorSlot, leftOut, personaAssets, personaRecords, personaScaleOf, personaScales, personasOn, type BuildRecord } from './item-builder-personas.ts';
+import { isSelectorSlot, leftOut, personaAssets, personaLayouts, personaRecords, personaScaleOf, personaScales, personasOn, type BuildRecord } from './item-builder-personas.ts';
 import { withoutOthersEffects } from './persona-base-effects.ts';
 import { scaledModels } from './model-scale.ts';
 import { createColoredBases, windowColor } from './arcana-base-color.ts';
+import { basesAttachedSteps } from './model-attachments.ts';
 import { lookPatch } from './courier-models.ts';
 import { fxSlotOf, mergeFxPatches } from './item-builder-ability-fx.ts';
 import { abilityFxPatch } from './item-builder-fx-patch.ts';
@@ -152,7 +153,9 @@ export function createTableBuild({ library, bases, log }: {
     yield* listItemsSteps(vanillaText);
     // Terrorblade's in the arcana window's colour while its record is on (src/arcana-base-color.ts)
     // the persona bases without another item's effects (src/persona-base-effects.ts)
-    const ready = withoutOthersEffects(vanillaText, colored(bases ? yield* basesHereSteps(picks(), bases, log) : [], windowColor(library.list())));
+    // with their models' attachments numbered as the game's: online the server tells them by number (src/model-attachments.ts)
+    const here = bases ? yield* basesAttachedSteps(yield* basesHereSteps(picks(), bases, log), path.join(game, 'dota', 'pak01_dir.vpk')) : [];
+    const ready = withoutOthersEffects(vanillaText, colored(here, windowColor(library.list())));
     const out: schema.SchemaPatch[] = [];
     const sounds: SoundSwap[] = [];
     const voices: VoiceCue[] = [];
@@ -179,6 +182,15 @@ export function createTableBuild({ library, bases, log }: {
     const pak = path.join(game, 'dota', 'pak01_dir.vpk');
     // a persona's body compiled bigger than Valve's makes its items as big (src/model-scale.ts)
     const on = personasOn(records);
+    // and its voice, an item of the voice slot no pick is made in: without it the Acolyte of the
+    // Lost Arts spoke as the plain Invoker (Discord). Left out of the picks' pak with the persona.
+    for (const hero of on.keys()) {
+      const voice = personaLayouts(vanillaText).get(hero)?.voice;
+      const cues = voice ? itemBuilder.itemVoices(vanillaText, voice).map((c) => ({ ...c, whole: true })) : [];
+      voices.push(...cues);
+      const selector = records.find((r) => isSelectorSlot(r.slot) && r.persona && String(r.slot).startsWith(`item:${hero}:`));
+      if (selector && !worn(selector)) for (const cue of cues) fromPersona.add(cue);
+    }
     const index = on.size && fs.existsSync(pak) ? yield* sharedVpkIndexSteps(pak) : null;
     const scales = index ? personaScales(on, ready, (p) => index.read(p)) : new Map<string, number>();
     const scaleOf = (r: BuildRecord) => personaScaleOf(r, scales);

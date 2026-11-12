@@ -212,7 +212,16 @@ export function* itemSlotsSteps(text: string): Generator<typeof PAUSE, ItemSlot[
       ...(styles.length ? { styles } : {}), ...(note ? { note } : {}), ...(hasOwnEffect(block, () => visualsOf(text, item)) ? { fx: true as const } : {}),
     });
   }
-  for (const s of personaSlots(text)) slots.set(s.slot, s);
+  // a persona's items have styles as well: the Acolyte's Dark Artistry Throwback Hair has two
+  const byId = new Map(items.map((i) => [i.id, i]));
+  for (const s of personaSlots(text)) {
+    for (const o of s.options) {
+      const item = byId.get(o.id);
+      const styles = item && text.slice(item.start, item.end).includes('"styles"') ? styleTokens(visualsOf(text, item)) : [];
+      if (styles.length) o.styles = styles;
+    }
+    slots.set(s.slot, s);
+  }
   // the hidden ones the game wears an item's ability effects in, without its model
   yield PAUSE;
   for (const s of fxSlots(text, items, heroesOf, slotFields)) slots.set(s.slot, s);

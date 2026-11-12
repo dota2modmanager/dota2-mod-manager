@@ -33,6 +33,7 @@ import { styleOf, withStyle } from './item-builder-styles.ts';
 import { DONOR, donorAdditions, donorOf, withModifiers } from './item-builder-donor.ts';
 import { UNUSUAL, unusualItemEffect } from './item-builder-unusual.ts';
 import { KINETIC, picksGems, withKinetics } from './item-builder-kinetic.ts';
+import type { VoiceCue } from './item-sounds.ts';
 
 export { itemSlots, itemSlotsSteps, itemOptions } from './item-builder-slots.ts';
 export { itemSets } from './item-builder-sets.ts';
@@ -122,6 +123,12 @@ export function asItem(block: string, text: string, item: { id: string; start: n
 
 function itemBlock(text: string, item: { start: number; end: number }): string {
   return text.slice(item.start, item.end);
+}
+
+/** The response criteria an item sets: a persona's voice item (src/item-builder-personas.ts PersonaLayout.voice). */
+export function itemVoices(text: string, item: { start: number }): VoiceCue[] {
+  const visuals = itemVisuals(text, item);
+  return visuals ? itemAssets(text, visuals, itemHeroes(text, item)).voices : [];
 }
 
 /** The text of an item's "visuals" block, or null for an item without one. */
