@@ -90,7 +90,8 @@ test('the whole catalog, drawn from data, numbers its cards too', async () => {
 
 test('a mod page says how many times it was downloaded, and so do the cards under it', async () => {
   const k = keyOf(plain);
-  const near = data.mods.filter((m) => m !== plain && catOf(m) === catOf(plain)).map(keyOf);
+  // every other mod has a count: the cards under a hero's mod are that hero's, from any section
+  const near = data.mods.filter((m) => m !== plain).map(keyOf);
   const { context, page } = await open(`/mods/${plain[0]}/`, { [k]: 4321, ...Object.fromEntries(near.map((n) => [n, 7])) });
   await page.waitForSelector('#mod-dl:not([hidden])');
   assert.deepEqual(await page.evaluate(() => [document.getElementById('mod-dl-label').textContent, document.getElementById('mod-dl').textContent]), ['Downloads', '4,321']);
