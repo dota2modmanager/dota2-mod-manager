@@ -27,6 +27,7 @@ import type { Installer } from './installer.ts';
 import type { Library } from './library.ts';
 import type { LibRecord } from './types.ts';
 import { swapPak, writePak } from './generated-pak.ts';
+import { entriesAttachedAs } from './model-attachments.ts';
 
 /** The whole arcana, or only its colour over one the player has. */
 export type ArcanaMode = 'mod' | 'recolor';
@@ -159,7 +160,8 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
     if (params.mode !== 'mod') return buildRecolor(args).vpk;
     const forms = params.forms || [];
     const baseId = WINDOWS[params.set]?.base;
-    const base = baseId ? bases?.entries(baseId) : null;
+    const stored = baseId ? bases?.entries(baseId) : null; // with its models numbered as the game's (src/model-attachments.ts)
+    const base = stored && entriesAttachedAs(stored, (p) => sharedVpkIndex(pak).read(p));
     if (baseId) void bases?.want(baseId);
     if (!base) return buildArcana({ ...args, forms }).vpk;
     // the base under the plain paths in the chosen colour, the arcana's pictures and swaps from the game
@@ -176,7 +178,6 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
     const c = code();
     return c ? { ...params, code: c } : params;
   };
-
 
   /**
    * A record built again from `params`, in the slot it had: the new pak goes in beside, then takes

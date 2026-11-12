@@ -146,6 +146,7 @@ the code, not in this page.
 | [`src/mod-preview-pick.ts`](#srcmod-preview-pickts) | Which picture a mod gives, and whether it is worth showing (src/mod-preview.ts makes it, caches |
 | [`src/mod-preview.ts`](#srcmod-previewts) | A picture for a mod that came with none, taken out of the mod itself. |
 | [`src/mod-update.ts`](#srcmod-updatets) | A catalog mod brought to the version the catalog has now, in the place it already had. |
+| [`src/model-attachments.ts`](#srcmodel-attachmentsts) | A model put under a plain hero's path with its attachments in the plain model's order (Discord, |
 | [`src/model-bodygroups.ts`](#srcmodel-bodygroupsts) | A model with some of its body groups shown differently by default. |
 | [`src/model-cloth.ts`](#srcmodel-clothts) | A wearable's model without its cloth, for the item builder's copy of it under a stock path of a |
 | [`src/model-glb.ts`](#srcmodel-glbts) | Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items (issue #417). |
@@ -6196,7 +6197,7 @@ One of a persona's slots: the plain stock item it is worn under, the game's own 
 ### `PersonaLayout`
 
 ```ts
-export interface PersonaLayout { hero: string; selector: SchemaItem; personas: SchemaItem[]; parts: PersonaPart[] }
+export interface PersonaLayout
 ```
 
 A hero's persona as the builder puts it on.
@@ -6740,6 +6741,14 @@ export function asItem(block: string, text: string, item: { id: string; start: n
 A built block worn as another item of the same hero and slot (src/item-builder-everyone.ts): the
 built visuals, under that item's id, its own name and picture, and the model path its block names.
 
+### `itemVoices`
+
+```ts
+export function itemVoices(text: string, item: { start: number }): VoiceCue[]
+```
+
+The response criteria an item sets: a persona's voice item (src/item-builder-personas.ts PersonaLayout.voice).
+
 ### `itemVisuals`
 
 ```ts
@@ -7050,7 +7059,7 @@ An event to play as another: the one the server names, and the one the player he
 ### `VoiceCue`
 
 ```ts
-export interface VoiceCue { hero: string; key: string; value: string }
+export interface VoiceCue
 ```
 
 A response criterion an item sets for a hero ("customresponse" = "eartharc_cosmos").
@@ -7067,7 +7076,7 @@ block's buffers, so it takes its bytes along (src/kv3-write.ts writes `raw` when
 ### `voiceSwaps`
 
 ```ts
-export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value'>): SoundSwap[]
+export function voiceSwaps(rules: Kv3Node, cue: Pick<VoiceCue, 'key' | 'value' | 'whole'>): SoundSwap[]
 ```
 
 The plain lines of a hero, each as the item's line for the same situation (see the top of the
@@ -8438,6 +8447,56 @@ file with a fixed path (a terrain's maps/dota.vpk) has to make room first.
 ```
 @returns the record, updated
 ```
+
+## src/model-attachments.ts
+
+A model put under a plain hero's path with its attachments in the plain model's order (Discord,
+Acolyte of the Lost Arts: Invoker's orbs under his feet in a lobby on Valve's servers).
+
+Online the server keeps the plain hero and tells the client which attachment a particle sits on
+by its number in the plain model's list, as it does for animations (src/model-sequences.ts
+numberedAs). Invoker's plain model has attach_orb2, attach_orb1, attach_orb3 at 6, 7 and 8 of
+12; the persona's body, compiled again, has the orbs first and seven in all, so the orbs went on
+attachments it has not got and stood at his feet. In "Try out" and with bots the client is the
+server too and reads the names from the model it has, which is why it looked right there.
+
+Each plain attachment's number gets the model's own attachment of that name. One the model has
+not got gets a stand-in: the model's attach_hitloc (or its first) under the plain name, so a
+particle put there is on the body rather than on the floor. The model's attachments the plain
+one has not got go after them.
+
+### `attachmentNames`
+
+```ts
+export function attachmentNames(model: Buffer): string[]
+```
+
+The names of a model's attachments, in order; empty when it has none or cannot be read.
+
+### `attachedAs`
+
+```ts
+export function attachedAs(model: Buffer, plain: Buffer): Buffer
+```
+
+`model` with its attachments numbered as `plain` numbers them. The model as it is when they are
+in that order already, or when either cannot be read (it then looks right in "Try out" still).
+
+### `entriesAttachedAs`
+
+```ts
+export function entriesAttachedAs(entries: VpkEntry[], read: (p: string) => Buffer | null): VpkEntry[]
+```
+
+A base's files with each model numbered as the game's model at its path (attachedAs).
+
+### `basesAttachedSteps`
+
+```ts
+export function* basesAttachedSteps(ready: ReadyBase[], pak: string): Generator<typeof PAUSE, ReadyBase[]>
+```
+
+The arcana bases of a build with their models numbered as the game's, a pause after each base.
 
 ## src/model-bodygroups.ts
 

@@ -12,7 +12,8 @@ import {
 } from '../src/item-builder-personas.ts';
 import { ARCANA_BASES, readyBase } from '../src/arcana-bases.ts';
 import { encodeKv3, resource } from './helpers/kv3-build.ts';
-import { itemEffectPatch } from '../src/item-builder.ts';
+import { itemEffectPatch, itemVoices } from '../src/item-builder.ts';
+import { itemSlots } from '../src/item-builder-slots.ts';
 import { entryAt, entryPath } from '../src/vpk.ts';
 import type { LibRecord } from '../src/types.ts';
 
@@ -77,6 +78,19 @@ test('the builder offers a slot to pick the persona in, and one for each of its 
   // a persona has a rarity as any item does, and its card says it
   const rare = personaSlots(TABLE.replace('"The Toy Butcher"', '"The Toy Butcher"\n\t\t\t"item_rarity"\t\t"Immortal"'));
   assert.equal(rare[0].options[0].rarity, 'immortal');
+});
+
+test("a persona's voice is its voice slot's item, and its styled items offer their styles", () => {
+  const styles = ['"styles"', '{', '"0" { "name" "#Toy_Hair_0" }', '"1" { "name" "#Toy_Hair_1" }', '}'].join('\n');
+  const table = TABLE.replace('\t}\n}\n', [
+    item('766', "Pudge Persona's Voice", 'default_item', 'voice_persona_1', '', modifier({ type: 'response_criteria', asset: 'toy_pug' })),
+    item('50003', 'Toy Hair', 'wearable', 'head_persona_1', 'models/items/pudge_cute/toy_hair.vmdl', styles),
+    '\t}', '}', ''].join('\n'));
+  const pudge = personaLayouts(table).get('pudge')!;
+  assert.equal(pudge.voice?.id, '766');
+  assert.deepEqual(itemVoices(table, pudge.voice!), [{ hero: 'npc_dota_hero_pudge', key: 'customresponse', value: 'toy_pug' }]);
+  const head = itemSlots(table).find((x) => x.slot === 'item:pudge:head_persona_1')!;
+  assert.deepEqual(head.options.find((o) => o.id === '50003')?.styles, ['#Toy_Hair_0', '#Toy_Hair_1']);
 });
 
 test("with the persona on the hero wears its items alone, the game's own where nothing is picked", () => {

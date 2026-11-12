@@ -46,7 +46,11 @@ export const PERSONA_BASES = ARCANA_BASES.filter((b) => b.persona);
 export interface PersonaPart { slot: string; host: SchemaItem; given: SchemaItem | null; options: SchemaItem[] }
 
 /** A hero's persona as the builder puts it on. */
-export interface PersonaLayout { hero: string; selector: SchemaItem; personas: SchemaItem[]; parts: PersonaPart[] }
+export interface PersonaLayout {
+  hero: string; selector: SchemaItem; personas: SchemaItem[]; parts: PersonaPart[];
+  /** the persona's voice, an item of the voice slot no part of the body takes: its response criterion is the persona's lines */
+  voice: SchemaItem | null;
+}
 
 const slotOf = (item: SchemaItem) => canonicalItemSlot(inferredItemSlot(item));
 const rank = (slot: string) => { const at = HOST_ORDER.indexOf(slot); return at === -1 ? HOST_ORDER.length : at; };
@@ -99,7 +103,8 @@ function layoutOf(text: string, hero: string, items: SchemaItem[]): PersonaLayou
     }
   }
   const parts = slots.filter((s) => hosts.has(s)).map((slot) => ({ slot, host: hosts.get(slot)!, ...own.get(slot)! }));
-  return { hero, selector, personas, parts };
+  const voice = items.find((i) => i.prefab === 'default_item' && slotOf(i) === `voice_persona_${n}`) ?? null;
+  return { hero, selector, personas, parts, voice };
 }
 
 const modelled = (part: { given: SchemaItem | null; options: SchemaItem[] }) => !!part.given?.model || part.options.some((o) => o.model);
