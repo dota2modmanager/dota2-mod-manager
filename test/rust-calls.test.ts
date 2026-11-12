@@ -228,7 +228,7 @@ test('item skins, voices and sound files in Rust answer as the TypeScript ones d
   const text = fs.readFileSync(file).toString('latin1');
   const some = [...styled, ...blocks];
   const skinned = [...text.matchAll(/"asset_modifier\d*"\s*\{[^{}]*"model_skin"[^{}]*\}/gi)].slice(0, 60).map((m) => `"visuals" { ${m[0]} }`);
-  const models = some.slice(0, 60).map((b) => itemVisuals(text, b.id)?.models?.[0] ?? null);
+  const models = some.slice(0, 60).map((b) => itemVisuals(text, b.id)?.model ?? null);
   const cases: Case[] = [
     { name: 'item-skin.firstStyleSkin', ts: firstStyleSkin as never, inputs: [...some, ...skinned.map((v) => ({ visuals: v }))].map((b) => [b.visuals]) },
     { name: 'item-skin.wornSkin', ts: wornSkin as never, inputs: [
