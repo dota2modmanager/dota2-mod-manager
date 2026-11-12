@@ -8,7 +8,7 @@
  *
  * Wire format, one JSON object per line, every line this process writes starting with MARK
  * (anything else on stdout is a library's console output, and Rust drops it):
- *   Rust -> host  {t:'invoke', id, channel, args}   answer with {t:'result', id, ok, value|error}
+ *   Rust -> host  {t:'invoke', id, channel, args}   answer with a line `R <id> j|b|e <json>` (writeResult)
  *                 {t:'send', channel, args}         ipcRenderer.send, no answer
  *                 {t:'reply', id, ok, value|error}  the answer to one of the host's requests
  *                 {t:'loaded'}                      the page finished loading
@@ -27,6 +27,7 @@ import { EventEmitter } from 'node:events';
 import { pathToFileURL } from 'node:url';
 
 import { decode, encode } from './wire.ts';
+import { makeNativeImage } from './images.ts';
 
 const MARK = '\u0001MM ';
 const appRoot = path.resolve(import.meta.dirname, '..', '..');
@@ -37,6 +38,15 @@ for (const name of ['log', 'info', 'debug'] as const) console[name] = (...a: unk
 
 function write(msg: Record<string, unknown>): void {
   process.stdout.write(MARK + JSON.stringify(encode(msg)) + '\n');
+}
+
+/** An invoke's answer, on a line Rust hands to the window without parsing what is in it:
+ * `R <id> j <json>` (no bytes inside), `R <id> b <json>` (bytes as {$b64}), `R <id> e <message>`. */
+function writeResult(id: number, ok: boolean, value: unknown): void {
+  if (!ok) { process.stdout.write(`${MARK}R ${id} e ${JSON.stringify(String(value))}\n`); return; }
+  const seen = { bytes: false };
+  const json = JSON.stringify(encode(value === undefined ? null : value, seen)) ?? 'null';
+  process.stdout.write(`${MARK}R ${id} ${seen.bytes ? 'b' : 'j'} ${json}\n`);
 }
 
 /* ---- requests to the shell ---- */
@@ -171,23 +181,8 @@ class WindowHandle extends EventEmitter {
   getContentSize() { return [1280, 800]; }
 }
 
-/** Pictures without Chromium: PNG in and out is all the main process asks of nativeImage. */
-const nativeImage = lenient({
-  createFromBuffer: (buf: Buffer) => imageOf(buf),
-  createFromPath: (_file: string) => imageOf(Buffer.alloc(0)),
-  createFromBitmap: (_px: Buffer, size: { width: number; height: number }) => imageOf(Buffer.alloc(0), size),
-  createEmpty: () => imageOf(Buffer.alloc(0)),
-});
-function imageOf(png: Buffer, size = { width: 0, height: 0 }) {
-  return lenient({
-    isEmpty: () => png.length === 0,
-    toPNG: () => png,
-    toDataURL: () => `data:image/png;base64,${png.toString('base64')}`,
-    getSize: () => size,
-    resize: () => imageOf(png, size),
-    toBitmap: () => Buffer.alloc(0),
-  });
-}
+/** Pictures without Chromium (images.ts). */
+const nativeImage = makeNativeImage(lenient);
 
 const dialog = lenient({
   showOpenDialog: (_win: unknown, opts?: unknown) => request('dialog.open', opts ?? _win),
@@ -230,14 +225,20 @@ loader._load = function stubbed(req, ...rest) {
 
 /* ---- the stream from Rust ---- */
 
+/** MM_TRACE=1: each answer's time on stderr, the work apart from the sending */
+const TRACE = process.env.MM_TRACE === '1';
+
 async function answer(id: number, channel: string, args: unknown[]): Promise<void> {
   const fn = handlers.get(channel);
-  if (!fn) { write({ t: 'result', id, ok: false, error: `no handler for ${channel}` }); return; }
+  if (!fn) { writeResult(id, false, `no handler for ${channel}`); return; }
   try {
+    const t0 = TRACE ? performance.now() : 0;
     const value = await fn({ sender: WindowHandle.all[0]?.webContents, senderFrame }, ...args);
-    write({ t: 'result', id, ok: true, value: value === undefined ? null : value });
+    const t1 = TRACE ? performance.now() : 0;
+    writeResult(id, true, value);
+    if (TRACE) process.stderr.write(`[mm-host] ${channel}: ${(t1 - t0).toFixed(0)} ms, sent in ${(performance.now() - t1).toFixed(0)} ms\n`);
   } catch (err) {
-    write({ t: 'result', id, ok: false, error: String((err as Error)?.message ?? err) });
+    writeResult(id, false, String((err as Error)?.message ?? err));
   }
 }
 

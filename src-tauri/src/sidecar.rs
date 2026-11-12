@@ -18,7 +18,16 @@ use tauri::{AppHandle, Emitter};
 
 const MARK: &str = "\u{1}MM ";
 
-type Reply = std::sync::mpsc::Sender<Result<Value, String>>;
+/// An answer from the host, as the JSON text it wrote: handed to the window without being parsed
+/// here, which for a few megabytes of item table is most of the time an answer takes.
+pub enum Answer {
+    /// no bytes inside
+    Json(String),
+    /// bytes inside, as {$b64}: the window decodes it
+    Bytes(String),
+}
+
+type Reply = std::sync::mpsc::Sender<Result<Answer, String>>;
 
 pub struct Sidecar {
     stdin: Mutex<Option<ChildStdin>>,
@@ -95,7 +104,7 @@ impl Sidecar {
     }
 
     /// Call one of the host's channels and wait for its answer. Runs on a blocking thread.
-    pub fn invoke(&self, channel: &str, args: Value) -> Result<Value, String> {
+    pub fn invoke(&self, channel: &str, args: Value) -> Result<Answer, String> {
         if self.wait_ready().is_none() {
             return Err("the TypeScript host did not start".into());
         }
@@ -137,19 +146,23 @@ impl Sidecar {
                 eprintln!("[host] {line}");
                 continue;
             };
+            // R <id> j|b|e <json>: an invoke's answer, kept as text (host.ts writeResult)
+            if let Some(rest) = body.strip_prefix("R ") {
+                let mut parts = rest.splitn(3, ' ');
+                let (Some(id), Some(kind), Some(json)) = (parts.next(), parts.next(), parts.next()) else { continue };
+                let Ok(id) = id.parse::<u64>() else { continue };
+                if let Some(tx) = self.pending.lock().unwrap().remove(&id) {
+                    let res = match kind {
+                        "j" => Ok(Answer::Json(json.to_string())),
+                        "b" => Ok(Answer::Bytes(json.to_string())),
+                        _ => Err(serde_json::from_str::<String>(json).unwrap_or_else(|_| json.to_string())),
+                    };
+                    let _ = tx.send(res);
+                }
+                continue;
+            }
             let Ok(msg) = serde_json::from_str::<Value>(body) else { continue };
             match msg["t"].as_str() {
-                Some("result") => {
-                    let id = msg["id"].as_u64().unwrap_or(0);
-                    if let Some(tx) = self.pending.lock().unwrap().remove(&id) {
-                        let res = if msg["ok"].as_bool() == Some(true) {
-                            Ok(msg["value"].clone())
-                        } else {
-                            Err(msg["error"].as_str().unwrap_or("error").to_string())
-                        };
-                        let _ = tx.send(res);
-                    }
-                }
                 Some("event") => {
                     let _ = app.emit("mm", json!({ "channel": msg["channel"], "args": msg["args"] }));
                 }

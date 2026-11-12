@@ -53,6 +53,12 @@ Tauri command mm_invoke(channel, args)
 - Bytes cross both boundaries as `{ "$b64": "..." }`. An answer that is only bytes (a 3D
   preview slice, a video) leaves Rust raw (`tauri::ipc::Response`), and the page gets it as a
   `Uint8Array` without a second base64 pass.
+- The host writes an invoke's answer on a line of its own (`R <id> j|b|e <json>`, `writeResult` in
+  `host.ts`), and Rust hands the JSON text to the page without parsing it; only an answer with
+  bytes inside is decoded again in the page. For `cosmetics:slots` (3.8 MB, every start of the item
+  builder) that took the bridge from ~250 ms to ~50 ms on top of the host's own ~270 ms.
+  `MM_TRACE=1` prints each answer's work and send time on the host's stderr
+  (`tools/tauri-shot.mjs` passes it through).
 - So the Tauri build works in full from the first commit, and every channel moved to Rust is a
   channel the host no longer answers. When the count reaches all of them, the host, Node and
   `src/` go.
@@ -97,7 +103,8 @@ each block again at every level, and from reading the items on every core (rayon
 
 Known gaps of the Tauri build today (all inside the host, so they close as channels move):
 
-- `nativeImage` has no stand-in: mod pictures decoded through it come back empty.
+- `nativeImage` (`src-tauri/host/images.ts`) reads and writes PNG only, through `src/png-strip.ts`:
+  a palette PNG or a JPEG comes back empty, where Electron would decode it.
 - Catalog pictures are not redirected to the local cache (`session.webRequest` has no Tauri twin):
   the page loads them straight from the network.
 - Dropped files: `webUtils.getPathForFile` maps a dropped file to the path Tauri reported for the
