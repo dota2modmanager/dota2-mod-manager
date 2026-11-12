@@ -12,6 +12,11 @@
  */
 import { itemVisuals, type AssetModifier } from './item-visuals.ts';
 import { buildVpk, entryAt, sharedVpkIndex } from './vpk.ts';
+import { numberOf, readKv3, type Kv3Node } from './kv3.ts';
+import { writeKv3 } from './kv3-write.ts';
+import { resourceBlock, resourceBlocks } from './resource.ts';
+import { numberedAs } from './model-sequences.ts';
+import { attachedAs } from './model-attachments.ts';
 
 export type Side = 'radiant' | 'dire';
 
@@ -123,10 +128,63 @@ export function buildTowers({ pak01, text, radiant, dire }: { pak01: string; tex
   const index = sharedVpkIndex(pak01);
   const entries = [];
   const missing: string[] = [];
+  const towers = new Set(Object.values(DEFAULT_TOWER).map(compiled));
   for (const f of files) {
     const data = index.read(f.from);
-    if (data) entries.push(entryAt(f.at, data as Buffer));
+    const plain = towers.has(f.at) ? index.read(f.at) : null;
+    if (data) entries.push(entryAt(f.at, plain ? asTower(data, plain) : data));
     else missing.push(f.from);
   }
   return { vpk: buildVpk(entries), names, files: entries.length, missing, skipped: [...skipped] };
+}
+
+const member = (n: Kv3Node | undefined, key: string) => (n?.kind === 'object' ? n.members.get(key) : undefined);
+const items = (n: Kv3Node | undefined) => (n?.kind === 'array' ? n.items : []);
+const text = (n: Kv3Node | undefined) => (n?.kind === 'string' ? n.value : '');
+
+/** The activities a look's tower plays while the item is on, and the plain tower's for each. */
+const PLAIN_ACT: Record<string, string> = {
+  ACT_DOTA_CUSTOM_TOWER_IDLE: 'ACT_DOTA_IDLE', ACT_DOTA_CUSTOM_TOWER_IDLE_RARE: 'ACT_DOTA_IDLE_RARE',
+  ACT_DOTA_CUSTOM_TOWER_ATTACK: 'ACT_DOTA_ATTACK', ACT_DOTA_CUSTOM_TOWER_DIE: 'ACT_DOTA_DIE',
+};
+
+/**
+ * A look's tower model made to play as the plain tower (Discord, Stoneclaw Scavengers: the crab
+ * stood turned away and moved only its claws). The item's towers play activities of their own
+ * (ACT_DOTA_CUSTOM_TOWER_IDLE), which the tower asks for only while the item is on, and each of
+ * them is an aim matrix that turns the crab by a pose parameter the plain tower never sets. So the
+ * plain activity goes on the matrix's middle part (@idle_neutral, facing forward), the sequences are
+ * numbered as the plain tower's (the server sends the number), and so are the attachments its
+ * projectile leaves from. A model with none of those activities is only numbered.
+ */
+export function asTower(model: Buffer, plain: Buffer): Buffer {
+  const acted = plainActivities(model);
+  return attachedAs(numberedAs(acted, plain) ?? acted, plain);
+}
+
+function plainActivities(model: Buffer): Buffer {
+  try {
+    if (!resourceBlocks(model).some((b) => b.name === 'ASEQ')) return model;
+    const block = resourceBlock(model, 'ASEQ');
+    const kv = readKv3(block.data);
+    const names = items(member(kv.root, 'm_localSequenceNameArray')).map(text);
+    const descs = items(member(kv.root, 'm_localS1SeqDescArray'));
+    const byName = new Map(descs.map((d) => [text(member(d, 'm_sName')), d]));
+    let changed = false;
+    for (const d of descs) {
+      const acts = member(d, 'm_activityArray');
+      const first = items(acts).find((a) => Object.hasOwn(PLAIN_ACT, text(member(a, 'm_name'))));
+      if (acts?.kind !== 'array' || first?.kind !== 'object') continue;
+      const refs = items(member(member(d, 'm_fetch'), 'm_localReferenceArray'))
+        .map((r) => (r.kind === 'number' ? names[numberOf(kv, r)] ?? '' : ''));
+      const part = refs.length > 1 ? byName.get(refs.find((n) => /neutral/i.test(n)) ?? refs[Math.floor(refs.length / 2)]) : d;
+      if (part?.kind !== 'object') continue;
+      const act = { ...first, members: new Map(first.members).set('m_name', { kind: 'string', value: PLAIN_ACT[text(member(first, 'm_name'))] }) };
+      part.members.set('m_activityArray', { ...acts, items: [act] });
+      changed = true;
+    }
+    return changed ? block.replace(writeKv3(kv)) : model;
+  } catch {
+    return model;
+  }
 }
