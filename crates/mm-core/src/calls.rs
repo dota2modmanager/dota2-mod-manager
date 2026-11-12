@@ -10,8 +10,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use crate::kv::latin1;
 use crate::{
     cosmetic_names, hero_names, i18n, item_builder_donor as donor, item_builder_effects as effects,
-    item_builder_styles as styles, item_skin, item_sounds, item_visuals, model_attachments, model_cloth,
-    model_sequences, model_skin, unusual_effects,
+    item_builder_styles as styles, item_skin, item_sounds, item_visuals, material, model_attachments, model_cloth,
+    model_sequences, model_skin, recolor, unusual_effects,
 };
 
 /// A text argument as items_game's latin1 bytes: a string one byte per char, or {"$file": path}
@@ -48,6 +48,26 @@ fn n(args: &[Value], i: usize) -> f64 {
 fn sha(file: Option<Vec<u8>>) -> Value {
     use sha1::{Digest, Sha1};
     file.map_or(Value::Null, |f| json!(Sha1::digest(&f).iter().map(|b| format!("{b:02x}")).collect::<String>()))
+}
+
+fn hex(b: &[u8]) -> String {
+    b.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+fn unhex(v: &str) -> Vec<u8> {
+    (0..v.len() / 2).filter_map(|i| u8::from_str_radix(&v[2 * i..2 * i + 2], 16).ok()).collect()
+}
+
+fn floats(args: &[Value], i: usize) -> Vec<f64> {
+    args.get(i)
+        .and_then(Value::as_array)
+        .map(|a| a.iter().map(|v| v.as_f64().unwrap_or(f64::NAN)).collect())
+        .unwrap_or_default()
+}
+
+fn rgb(args: &[Value], i: usize) -> recolor::Rgb {
+    let f = floats(args, i);
+    [0, 1, 2].map(|c| f.get(c).copied().unwrap_or(f64::NAN))
 }
 
 fn kv_err(e: crate::kv::KvError) -> String {
@@ -207,6 +227,50 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 .into_iter()
                 .map(|(p, f)| json!([p, sha(Some(f))]))
                 .collect::<Vec<_>>())
+        }
+        "material.attributeToken" => json!(material::attribute_token(&s(args, 0))),
+        "material.constantExpression" => json!(hex(&material::constant_expression(&floats(args, 0)))),
+        "material.constantOf" => json!(material::constant_of(&unhex(&s(args, 0)))),
+        "material.withConstant" => {
+            json!(material::with_constant(&unhex(&s(args, 0)), n(args, 1) as u32, &floats(args, 2))?.map(|c| hex(&c)))
+        }
+        "material.materialExpressions" => {
+            json!(material::material_expressions(&b(args, 0)?)?
+                .iter()
+                .map(|e| json!({ "name": e.name, "code": hex(&e.code) }))
+                .collect::<Vec<_>>())
+        }
+        "material.rewriteWithConstant" => {
+            let (token, value) = (material::attribute_token(&s(args, 1)), floats(args, 2));
+            let (file, changed) =
+                material::rewrite_expressions(&b(args, 0)?, |e| material::with_constant(&e.code, token, &value))?;
+            json!([sha(Some(file)), changed])
+        }
+        "recolor.shade" => {
+            let from = args.get(2).filter(|v| v.is_array()).map(|_| rgb(args, 2));
+            json!(recolor::shade(rgb(args, 0), rgb(args, 1), from))
+        }
+        "recolor.recolorResource" => {
+            let o: recolor::Options =
+                serde_json::from_value(args.get(2).cloned().unwrap_or(json!({}))).map_err(|e| e.to_string())?;
+            let (file, n) = recolor::recolor_resource(&b(args, 0)?, rgb(args, 1), &o)?;
+            json!([sha(Some(file)), n.changed, n.skipped])
+        }
+        "recolor.recolorMaterial" => {
+            let bake = args.get(2).and_then(|o| o.get("bake")).and_then(Value::as_bool).unwrap_or(false);
+            let (file, changed) = recolor::recolor_material(&b(args, 0)?, rgb(args, 1), bake)?;
+            json!([sha(Some(file)), changed])
+        }
+        "recolor.liftForMod2x" => {
+            let share = args.get(1).and_then(Value::as_f64).unwrap_or(0.3);
+            let (file, changed) = recolor::lift_for_mod2x(&b(args, 0)?, share)?;
+            json!([sha(Some(file)), changed])
+        }
+        "recolor.buildRecolor" => {
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let (vpk, r) = recolor::build_recolor(&ix, &s(args, 1), rgb(args, 2), |_| false)?;
+            let failed: Vec<&str> = r.failed.iter().map(|f| f.path.as_str()).collect();
+            json!([sha(Some(vpk)), r.files.len(), r.changed, r.skipped, failed])
         }
         "item-visuals.itemVisuals" => json!(item_visuals::item_visuals(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?),
         "item-visuals.findItems" => json!(item_visuals::find_items(&b(args, 0)?, &s(args, 1))
