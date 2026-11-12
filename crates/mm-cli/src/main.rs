@@ -4,7 +4,7 @@
 use std::path::Path;
 use std::process::ExitCode;
 
-use mm_core::{schema, vpk};
+use mm_core::{schema, schema_merge, vpk};
 use serde_json::{json, Value};
 use std::time::Instant;
 
@@ -35,6 +35,32 @@ fn run(args: &[String]) -> Result<Value, String> {
                 Some(d) => json!({ "size": d.len(), "crc": vpk::crc32(&d) }),
                 None => Value::Null,
             })
+        }
+        // patches.json: [{id, block, source}] with blocks as latin1 strings; the merged table to `out`
+        "schema-merge" => {
+            let (base, _) = schema::read_game_schema(Path::new(arg(1)?))?;
+            let raw: Value = serde_json::from_str(&std::fs::read_to_string(arg(2)?).map_err(|x| x.to_string())?)
+                .map_err(|x| x.to_string())?;
+            let patches: Vec<schema_merge::Patch> = raw
+                .as_array()
+                .ok_or("patches: not a list")?
+                .iter()
+                .map(|p| schema_merge::Patch {
+                    id: p["id"].as_str().map(String::from).unwrap_or_else(|| p["id"].to_string()),
+                    block: p["block"].as_str().unwrap_or("").chars().map(|c| c as u32 as u8).collect(),
+                    source: p["source"].as_str().unwrap_or("").to_string(),
+                })
+                .collect();
+            let m = schema_merge::merge(&base, &patches).map_err(|x| x.to_string())?;
+            let checked = schema_merge::validate(&m.text, Some(&base)).map_err(|x| x.to_string());
+            std::fs::write(arg(3)?, &m.text).map_err(|x| x.to_string())?;
+            Ok(json!({ "applied": m.applied, "missing": m.missing, "conflicts": m.conflicts,
+                "validate": checked.map(|(items, bytes)| json!({ "items": items, "bytes": bytes })).unwrap_or_else(|e| json!({ "error": e })) }))
+        }
+        "schema-base-patch" => {
+            let (base, _) = schema::read_game_schema(Path::new(arg(1)?))?;
+            let block = schema_merge::base_item_patch(&base, arg(2)?, arg(3)?).map_err(|x| x.to_string())?;
+            Ok(json!(mm_core::kv::latin1(&block)))
         }
         // the game's table, every numbered item as the pickers read it
         "schema-items" => {

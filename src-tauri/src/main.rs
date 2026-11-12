@@ -32,6 +32,21 @@ fn args_of(v: Value) -> Vec<Value> {
     }
 }
 
+/// An answer for the page. One that is only bytes (a 3D preview's slice, a picture) goes back raw:
+/// the page gets an ArrayBuffer instead of a base64 string inside JSON, decoded twice.
+fn answer(v: Value) -> Result<tauri::ipc::Response, String> {
+    if let Value::Object(map) = &v {
+        if map.len() == 1 {
+            if let Some(Value::String(b64)) = map.get("$b64") {
+                use base64::Engine;
+                let bytes = base64::engine::general_purpose::STANDARD.decode(b64).map_err(|e| e.to_string())?;
+                return Ok(tauri::ipc::Response::new(bytes));
+            }
+        }
+    }
+    Ok(tauri::ipc::Response::new(serde_json::to_string(&v).map_err(|e| e.to_string())?))
+}
+
 /// ipcRenderer.invoke: Rust's answer when the channel is Rust's, the host's otherwise.
 #[tauri::command]
 async fn mm_invoke(
@@ -39,14 +54,15 @@ async fn mm_invoke(
     host: tauri::State<'_, Host>,
     channel: String,
     args: Value,
-) -> Result<Value, String> {
+) -> Result<tauri::ipc::Response, String> {
     let host = host.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let list = args_of(args);
-        if let Some(res) = native::handle(&app, &channel, &list) {
-            return res;
-        }
-        host.invoke(&channel, Value::Array(list))
+        let res = match native::handle(&app, &channel, &list) {
+            Some(res) => res,
+            None => host.invoke(&channel, Value::Array(list)),
+        };
+        answer(res?)
     })
     .await
     .map_err(|e| e.to_string())?
@@ -161,4 +177,19 @@ fn main() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tauri::ipc::{InvokeResponseBody, IpcResponse};
+
+    #[test]
+    fn bytes_alone_go_back_raw_and_the_rest_as_json() {
+        let raw = answer(json!({ "$b64": "AQID" })).unwrap().body().unwrap();
+        assert!(matches!(raw, InvokeResponseBody::Raw(ref b) if b == &[1, 2, 3]));
+        let nested = answer(json!({ "ok": true, "data": { "$b64": "AQID" } })).unwrap().body().unwrap();
+        assert!(matches!(nested, InvokeResponseBody::Json(ref s) if s.contains("\"$b64\"")));
+        assert!(answer(json!({ "$b64": "not base64!" })).is_err());
+    }
 }

@@ -50,7 +50,9 @@ Tauri command mm_invoke(channel, args)
   Electron on each use, so the host answers that `require` with its own `app`, `ipcMain`,
   `BrowserWindow`, `dialog`, `shell`... Dialogs, links and the window itself are asked of Rust
   (`src-tauri/src/shell.rs`). Wire format: top of `host.ts`.
-- Bytes cross both boundaries as `{ "$b64": "..." }`.
+- Bytes cross both boundaries as `{ "$b64": "..." }`. An answer that is only bytes (a 3D
+  preview slice, a video) leaves Rust raw (`tauri::ipc::Response`), and the page gets it as a
+  `Uint8Array` without a second base64 pass.
 - So the Tauri build works in full from the first commit, and every channel moved to Rust is a
   channel the host no longer answers. When the count reaches all of them, the host, Node and
   `src/` go.
@@ -70,11 +72,12 @@ been through the sandbox and the e2e run. Both build from the same `renderer/`.
 | `win:*` channels | done | yes | `native.rs` |
 | VPK read/write/fingerprint (`src/vpk-read.ts`, `vpk-write.ts`, `vpk-fingerprint.ts`) | done | no | `crates/mm-core/src/vpk.rs`, parity test `test/rust-parity.test.js` |
 | items_game reader (`src/schema-kv.ts`, `schema-items.ts`) | done | no | `crates/mm-core/src/kv.rs`, `schema.rs`; parity: all ~26 000 items equal, byte ranges included |
-| items_game merge and check (`schema-merge.ts`), KV3 | - | - | next: the item builder's hot path |
+| items_game merge and check (`schema-merge.ts`) | done | no | `crates/mm-core/src/schema_merge.rs`; parity: real patches merge to the same bytes, conflicts and `validate` agree |
+| KV3 (`src/kv3*.ts`) | - | - | next: the item builder's hot path |
 | settings, library/manifest, installer, patcher, gamelang | - | - | the `mods:*` channels |
 | catalog, network, previews (`mm-preview://`) | - | - | `reqwest`; the picture redirect (`src/preview-cache.ts`) has no Tauri twin yet |
 | item builder, arcana, Workshop editors | - | - | |
-| 3D preview (`preview3d:*`) | - | - | binary answers: use `tauri::ipc::Response`, not JSON |
+| 3D preview (`preview3d:*`) | - | - | binary answers already go back raw (`answer` in `src-tauri/src/main.rs`) |
 | tray, autostart, updater, deep links, uninstall | - | - | Tauri plugins: tray-icon, autostart, updater, deep-link |
 
 ### Speed so far

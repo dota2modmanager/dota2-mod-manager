@@ -6,7 +6,8 @@
  * Rust answers itself or hands to the TypeScript host; what the main process sends arrives as the
  * Tauri event "mm".
  *
- * Bytes travel as {$b64} both ways (src-tauri/host/wire.ts), and come out as Uint8Array here.
+ * Bytes travel as {$b64} both ways (src-tauri/host/wire.ts), and come out as Uint8Array here; an
+ * answer that is only bytes arrives raw, as an ArrayBuffer.
  */
 (function () {
   if (window.__mmBridge) return;
@@ -35,6 +36,7 @@
   };
   const decode = (v) => {
     if (v === null || typeof v !== 'object') return v;
+    if (v instanceof ArrayBuffer) return new Uint8Array(v);
     if (Array.isArray(v)) return v.map(decode);
     if (typeof v.$b64 === 'string' && Object.keys(v).length === 1) return fromB64(v.$b64);
     const out = {};
