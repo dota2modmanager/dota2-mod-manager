@@ -1445,7 +1445,7 @@ src/schema-build.ts is what they build).
 ### `createBackgroundBuilds`
 
 ```ts
-export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void)
+export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void, { slow = () => {}, slowMs = SLOW_MS, now = () => performance.now() }: { slow?: (ms: number, after: string) => void; slowMs?: number; now?: () => number } = {})
 ```
 
 Builds in the background, one at a time and in order. A build asked for while one runs stops
@@ -1456,7 +1456,17 @@ wrote. A build run in place in between (heal, the patch switch) does the same, t
 ```
 @param steps    a build of the table, a step at a time
 @param onBuild  each step of a build in the background, and null when it ends
+@param slow     a step that held the thread past `slowMs`, with what came before it: the log
+then names the piece to split, where "not responding" says nothing
 ```
+
+### `SLOW_MS`
+
+```ts
+export const SLOW_MS = 200
+```
+
+A step longer than this goes to the log: the window's budget is 100 ms (issue #286).
 
 ## src/background.ts
 
@@ -5749,6 +5759,14 @@ Read compiled asset bytes out of pak01 and stage them under the renamed path in 
 Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
 ```
 
+### `gameAssetEntriesSteps`
+
+```ts
+export function* gameAssetEntriesSteps(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): Generator<typeof PAUSE, VpkEntry[]>
+```
+
+gameAssetEntries, a pause before each file: an arcana is up to 20 MB, seconds on a cold hard disk after a Dota update.
+
 ## src/item-builder-details.ts
 
 What the item builder's window shows beside the items, out of the game's own files: each hero's
@@ -6685,7 +6703,7 @@ Hands on from [`src/item-builder-sets.ts`](#srcitem-builder-setsts): `itemSets`,
 
 Hands on from [`src/item-builder-effects.ts`](#srcitem-builder-effectsts): `itemEffects`.
 
-Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `summonModels`, `SummonModels`.
+Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `gameAssetEntries`, `gameAssetEntriesSteps`, `summonModels`, `SummonModels`.
 
 ### `setVisualsBlock`
 

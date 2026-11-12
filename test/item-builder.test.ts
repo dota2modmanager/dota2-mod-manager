@@ -866,6 +866,11 @@ test("an arcana's hero model goes in under the path the hero's script names, pla
     { from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_juggernaut', activities: ['arcana'] },
   ]);
   assert.deepEqual(entries.map((en) => vpk.entryPath(en)), ['models/heroes/juggernaut/juggernaut.vmdl_c'], 'once, at the hero path');
+  // a pause before each file read, so an arcana's 20 files are not one piece of the window's time
+  const steps = builder.gameAssetEntriesSteps(dir, [{ from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_juggernaut', activities: ['arcana'] }]);
+  let pauses = 0;
+  for (let r = steps.next(); !r.done; r = steps.next()) pauses++;
+  assert.equal(pauses, 1);
   assert.deepEqual(clips(entries[0].data), [['attack', ['ACT_DOTA_ATTACK']], ['attack_plain', []]],
     'the arcana attack is the one played with no item to switch it on');
   assert.throws(() => builder.gameAssetEntries(dir, [{ from: 'models/heroes/juggernaut/juggernaut_arcana.vmdl', hero: 'npc_dota_hero_nobody', activities: [] }]),

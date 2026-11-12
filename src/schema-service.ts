@@ -108,7 +108,7 @@ export function createSchemaService({ settings, library, installer, userDataDir,
   const patches = (vanillaText: string, game: string) => drain(table.buildSteps(vanillaText, game)).list;
 
   // builds in the background (refreshInBackground), and the Play button waiting on them (settled)
-  const builds = createBackgroundBuilds(() => refreshSteps(), onBuild);
+  const builds = createBackgroundBuilds(() => refreshSteps(), onBuild, { slow: (ms, after) => log(`schema: a build step after ${after} held the window ${ms} ms`) });
 
   // Rebuild and write the schema pak, or remove it when nothing needs one.
   function refresh() {

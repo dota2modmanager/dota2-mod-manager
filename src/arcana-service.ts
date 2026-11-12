@@ -203,8 +203,9 @@ export function createArcanaService({ gamePath, installer, library, log = () => 
     const c = code();
     if (same(under, was) && same(forms, g.forms || []) && (!c || c === g.code)) return false;
     try {
+      const t0 = Date.now();
       replace(rec, { ...g, under: under.length ? under : undefined, forms: forms.length ? forms : undefined }, true);
-      log(`arcana: built again around the item builder's picks, ${under.length} paths left to them, ${forms.length} forms carried`);
+      log(`arcana: built again around the item builder's picks, ${under.length} paths left to them, ${forms.length} forms carried, in ${Date.now() - t0} ms`);
       return true;
     } catch (err) {
       log(`arcana: could not give way to the item builder: ${(err as Error).message}`);

@@ -11,8 +11,11 @@ import type { BuildStep, BuildYield, Refreshed } from './schema-build.ts';
  * wrote. A build run in place in between (heal, the patch switch) does the same, through `ran`.
  * @param steps    a build of the table, a step at a time
  * @param onBuild  each step of a build in the background, and null when it ends
+ * @param slow     a step that held the thread past `slowMs`, with what came before it: the log
+ *                 then names the piece to split, where "not responding" says nothing
  */
-export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void) {
+export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refreshed, boolean | undefined>, onBuild: (step: BuildStep | null) => void,
+  { slow = () => {}, slowMs = SLOW_MS, now = () => performance.now() }: { slow?: (ms: number, after: string) => void; slowMs?: number; now?: () => number } = {}) {
   let generation = 0;
   let chain: Promise<void> = Promise.resolve();
   const waiting: { gen: number; resolve: (r: Refreshed) => void }[] = [];
@@ -38,9 +41,14 @@ export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refres
         if (gen !== generation) return; // a newer request is behind this one
         const run = steps();
         let wrote: boolean | undefined;
+        let after = 'start';
         try {
           for (;;) {
+            const t0 = now();
             const r = run.next(wrote);
+            const ms = now() - t0;
+            if (ms > slowMs) slow(Math.round(ms), after);
+            after = r.done ? after : stepName(r.value);
             wrote = undefined;
             if (r.done) { settle(gen, r.value); return; }
             const step = r.value;
@@ -82,4 +90,14 @@ export function createBackgroundBuilds(steps: () => Generator<BuildYield, Refres
       }
     },
   };
+}
+
+/** A step longer than this goes to the log: the window's budget is 100 ms (issue #286). */
+export const SLOW_MS = 200;
+
+function stepName(step: BuildYield): string {
+  if (step === PAUSE) return 'a pause';
+  if ('write' in step) return 'the write';
+  if ('stage' in step) return `stage ${step.stage}`;
+  return `pick ${step.done}/${step.total}`;
 }

@@ -15,6 +15,7 @@ import { numberedAs } from './model-sequences.ts';
 import { withSkin } from './model-skin.ts';
 import { clothDragger, withoutCloth } from './model-cloth.ts';
 import { firstStyleSkin } from './item-skin.ts';
+import { drain, PAUSE } from './steps.ts';
 export { firstStyleSkin, wornSkin } from './item-skin.ts';
 import type { SoundSwap, VoiceCue } from './item-sounds.ts';
 
@@ -264,6 +265,10 @@ function heroModelBytes(data: Buffer, activities: string[]): Buffer {
  *   Juggernaut's arcana body made the plain hero's is a quarter of a second for a file thrown away
  */
 export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): VpkEntry[] {
+  return drain(gameAssetEntriesSteps(gamePath, assetCopies, skip));
+}
+/** gameAssetEntries, a pause before each file: an arcana is up to 20 MB, seconds on a cold hard disk after a Dota update. */
+export function* gameAssetEntriesSteps(gamePath: string, assetCopies: AssetCopy[] | null | undefined, skip?: (to: string) => boolean): Generator<typeof PAUSE, VpkEntry[]> {
   const pak = path.join(gamePath, 'dota', 'pak01_dir.vpk');
   if (!fs.existsSync(pak)) throw new Error(t('Не найден {0}', pak));
   const ix = sharedVpkIndex(pak);
@@ -275,6 +280,7 @@ export function gameAssetEntries(gamePath: string, assetCopies: AssetCopy[] | nu
     // a hero's copy from nowhere is the hero's own model, with its modifiers off (src/item-builder-kinetic.ts)
     const from = 'hero' in copy && !copy.from ? to : compiledAssetPath(copy.from);
     if (!from || !to || seen.has(to) || skip?.(to.toLowerCase())) continue;
+    yield PAUSE;
     const data = ix.read(from);
     if (!data && 'optional' in copy && copy.optional) continue;
     if (!data) throw new Error(t('Не найден {0}', from));
