@@ -34,7 +34,7 @@ jobs:
       - name: Clippy
         run: cargo clippy -p mm-core -p mm-cli -- -D warnings
       - name: Parity with the TypeScript
-        run: cargo build -p mm-cli && node --test test/rust-parity.test.ts
+        run: cargo build -p mm-cli && node --test test/rust-parity.test.ts test/rust-parity-kv3.test.ts
 
   shell:
     name: Tauri shell on Windows

@@ -2,6 +2,9 @@
 //! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
 
 pub mod kv;
+pub mod kv3;
+pub mod lz4;
+pub mod resource;
 pub mod schema;
 pub mod schema_merge;
 pub mod vpk;

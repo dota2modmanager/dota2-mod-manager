@@ -4,8 +4,9 @@
 use std::path::Path;
 use std::process::ExitCode;
 
-use mm_core::{schema, schema_merge, vpk};
+use mm_core::{kv3, resource, schema, schema_merge, vpk};
 use serde_json::{json, Value};
+use sha1::{Digest, Sha1};
 use std::time::Instant;
 
 fn run(args: &[String]) -> Result<Value, String> {
@@ -68,6 +69,50 @@ fn run(args: &[String]) -> Result<Value, String> {
             let items = schema::list_items(&text).map_err(|x| x.to_string())?;
             Ok(json!({ "stamp": stamp, "items": items }))
         }
+        // list.json: block files (a resource's DATA block); each one's tree, and its bytes
+        // encoded back and written anew, as SHA-1s
+        "kv3-dump" => {
+            let list: Vec<String> = serde_json::from_str(&std::fs::read_to_string(arg(1)?).map_err(|x| x.to_string())?)
+                .map_err(|x| x.to_string())?;
+            Ok(json!(list
+                .iter()
+                .map(|f| {
+                    let bytes = std::fs::read(f).map_err(|x| x.to_string())?;
+                    let mut kv = kv3::read(&bytes).map_err(|x| x.to_string())?;
+                    let dump = kv.dump();
+                    let written = kv3::write(&kv).map(|b| sha(&b)).map_err(|x| x.to_string());
+                    let encoded = kv.encode().map_err(|x| x.to_string());
+                    // the bytes encoded back read as the same tree (zstd's bytes differ from Node's)
+                    let reread = encoded.as_ref().ok().map(|b| kv3::read(b).map(|k| k.dump() == dump).unwrap_or(false));
+                    let encoded = encoded.map(|b| sha(&b));
+                    Ok::<_, String>(
+                        json!({ "dump": dump, "encode": result(encoded), "write": result(written), "reread": reread }),
+                    )
+                })
+                .map(|r| r.unwrap_or_else(|e| json!({ "error": e })))
+                .collect::<Vec<_>>()))
+        }
+        // list.json: compiled resources; their blocks, the resources they name, and the file with
+        // one more reference added, as a SHA-1
+        "resource" => {
+            let list: Vec<String> = serde_json::from_str(&std::fs::read_to_string(arg(1)?).map_err(|x| x.to_string())?)
+                .map_err(|x| x.to_string())?;
+            Ok(json!(list
+                .iter()
+                .map(|f| {
+                    let file = std::fs::read(f).map_err(|x| x.to_string())?;
+                    let blocks = resource::blocks(&file).map_err(|x| x.to_string())?;
+                    let refs = resource::references(&file).map_err(|x| x.to_string())?;
+                    let ids: Vec<String> = refs.iter().map(|r| resource::resource_id(r).to_string()).collect();
+                    let added = resource::with_references(&file, &["particles/added/one.vpcf_c"]).map(|b| sha(&b)).map_err(|x| x.to_string());
+                    Ok::<_, String>(json!({
+                        "blocks": blocks.iter().map(|b| json!({ "name": b.name, "entry": b.entry, "at": b.at, "size": b.size })).collect::<Vec<_>>(),
+                        "references": refs, "ids": ids, "added": result(added),
+                    }))
+                })
+                .map(|r| r.unwrap_or_else(|e| json!({ "error": e })))
+                .collect::<Vec<_>>()))
+        }
         // how long each step takes here, for tools/rust-bench.mjs: best of `runs`
         "bench" => {
             let game = Path::new(arg(1)?);
@@ -94,6 +139,17 @@ fn run(args: &[String]) -> Result<Value, String> {
             )
         }
         _ => Err(format!("unknown command {cmd:?}")),
+    }
+}
+
+fn sha(b: &[u8]) -> String {
+    Sha1::digest(b).iter().map(|x| format!("{x:02x}")).collect()
+}
+
+fn result(r: Result<String, String>) -> Value {
+    match r {
+        Ok(v) => json!(v),
+        Err(e) => json!({ "error": e }),
     }
 }
 
