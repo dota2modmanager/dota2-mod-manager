@@ -39,6 +39,7 @@ const TABLE = ['"items_game"', '{', '\t"items"', '\t{',
   item('13786', 'The Toy Butcher', 'wearable', 'persona_selector', '', [
     modifier({ type: 'persona', persona: '1' }),
     modifier({ type: 'entity_model', asset: 'npc_dota_hero_pudge', modifier: 'models/heroes/pudge_cute/pudge_cute.vmdl' }),
+    modifier({ type: 'hero_scale', asset: 'npc_dota_hero_pudge', ModelScale: '1' }),
     modifier({ type: 'particle', asset: 'particles/units/heroes/hero_pudge/pudge_meathook.vpcf', modifier: 'particles/units/heroes/hero_pudge_cute/pudge_cute_meathook.vpcf' }),
     modifier({ type: 'icon_replacement_hero_minimap', asset: 'npc_dota_hero_pudge', modifier: 'npc_dota_hero_pudge_persona1' }),
     modifier({ type: 'ability_icon', asset: 'pudge_rot', modifier: 'pudge/persona_toy_butcher/pudge_rot_persona1' }),
@@ -159,6 +160,14 @@ test("a persona's pick is written over the plain hero's stock item, and the pers
   assert.doesNotMatch(persona.block, /"type"\s+"persona"/, 'switched, the game would put on the persona\'s own stock items');
   assert.doesNotMatch(persona.block, /entity_model/, 'the body is the base, under the plain path');
   assert.match(persona.block, /pudge_cute_meathook/, 'its particles stay');
+  // online the server draws the plain hero's size, and the base's body is compiled to stand at
+  // Valve's there; the item's size on top made the young Invoker a third taller in "Try out"
+  assert.doesNotMatch(persona.block, /hero_scale/, 'the persona stands at the size it has online');
+  const back = item('258', "Pudge's Back Rings and Apron", 'default_item', 'back', 'models/heroes/pudge/back.vmdl');
+  const sized = TABLE.replace(back, item('258', "Pudge's Back Rings and Apron", 'default_item', 'back', 'models/heroes/pudge/back.vmdl',
+    modifier({ type: 'hero_scale', asset: 'npc_dota_hero_pudge', ModelScale: '1.03' })));
+  assert.notEqual(sized, TABLE);
+  assert.match(itemEffectPatch(sized, '258', '', '258').block, /hero_scale/, 'an item that is no persona keeps its size: no body makes up for it');
 });
 
 test("a persona's pictures: its portrait in the top bar and the hero picker as well as the minimap, and its ability icons", () => {

@@ -6785,7 +6785,10 @@ stock paths the same files are loaded either way.
 
 A persona's switch to its own loadout ("persona") goes too: the persona is worn as the plain
 hero (src/item-builder-personas.ts), and switched it would put on the persona's stock items,
-which are not where the picks for its slots are.
+which are not where the picks for its slots are. So does its size ("hero_scale"): online the
+server draws the plain hero's ModelScale, and the base's body is compiled bigger to stand at
+Valve's size there; with the item's size on top the young Invoker stood a third taller than that
+in the hero screen and in "Try out" (Discord, 2026-11-12).
 
 ```
 @param units  the heroes whose own model the pick puts under their path, and the summons whose

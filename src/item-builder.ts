@@ -185,24 +185,32 @@ export function defaultItemForWearable(text: string, sourceId: string | number):
  *
  * A persona's switch to its own loadout ("persona") goes too: the persona is worn as the plain
  * hero (src/item-builder-personas.ts), and switched it would put on the persona's stock items,
- * which are not where the picks for its slots are.
+ * which are not where the picks for its slots are. So does its size ("hero_scale"): online the
+ * server draws the plain hero's ModelScale, and the base's body is compiled bigger to stand at
+ * Valve's size there; with the item's size on top the young Invoker stood a third taller than that
+ * in the hero screen and in "Try out" (Discord, 2026-11-12).
  * @param units  the heroes whose own model the pick puts under their path, and the summons whose
  *   model it puts under the unit's
  * @param stock  the stock models the pick puts another model under, as normalizeAssetPath writes them
  */
 export function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set<string>): string {
   const cut: { start: number; end: number }[] = [];
+  const sizes: { start: number; end: number }[] = [];
+  let persona = false;
   eachChild(visuals, blockBounds(visuals, 0), (c) => {
     if (!c.isBlock || !/^asset_modifier\d*$/i.test(c.key)) return;
     const fields = new Map<string, string>();
     eachChild(visuals, c.body, (f) => { if (!f.isBlock) fields.set(f.key.toLowerCase(), f.value); });
     const type = (fields.get('type') || '').toLowerCase();
     const asset = fields.get('asset') || '';
+    if (type === 'hero_scale') sizes.push(c);
+    if (type === 'persona') persona = true;
     if (type === 'persona' || (type === 'entity_model' && units.has(asset.toLowerCase()))
       || ((type === 'model' || type === 'hero_model_change') && stock.has(normalizeAssetPath(asset)))) cut.push(c);
   });
+  if (persona) cut.push(...sizes);
   let out = visuals;
-  for (const c of cut.reverse()) {
+  for (const c of cut.sort((a, b) => b.start - a.start)) {
     let start = c.start;
     while (start > 0 && /[ \t\r\n]/.test(out[start - 1])) start--;
     out = out.slice(0, start) + out.slice(c.end);
