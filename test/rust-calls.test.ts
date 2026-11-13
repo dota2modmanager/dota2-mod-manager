@@ -5231,3 +5231,142 @@ test('Steam\'s manifest and the repair after a patch in Rust read and put back t
   assert.ok(told.m1 && !told.g1, 'a mod the app builds again carries no mark');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the game watch, the quick exit after Play and the upkeep at start in Rust do what the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'gameinfo.gi'))) { t.skip('no sandbox'); return; }
+  const { createGameWatch } = await import('../src/game-watch.ts');
+  const { createCrashWatch } = await import('../src/crash-watch.ts');
+  const { createGameUpkeep } = await import('../src/game-upkeep.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { validateGamePath } = await import('../src/steam.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-upkeep-'));
+
+  // the watches: a run of answers from the system and the clock, Play pressed at some of them
+  const mods = [
+    { id: 'old', name: 'Old', enabled: true, installedAt: 100 },
+    { id: 'new', name: 'New', enabled: true, installedAt: 5000 },
+    { id: 'off', name: 'Off', enabled: false, installedAt: 6000 },
+    { id: 'bare', name: 'Bare' },
+  ];
+  const runs: unknown[][][] = [
+    [['answer', false, 0], ['answer', false, 1], ['play', 10], ['answer', true, 20], ['answer', true, 21], ['answer', false, 30000]],
+    [['answer', true, 0], ['answer', false, 90000], ['play', 100000], ['answer', true, 100500], ['answer', false, 120000], ['wait']],
+    [['play', 0], ['answer', true, 400000], ['answer', false, 410000]],
+    [['start'], ['answer', false, 0], ['start'], ['answer', false, 1], ['answer', true, 2], ['wait'], ['answer', false, 3], ['wait']],
+    [['play', 0], ['answer', true, 1000], ['answer', false, 1400], ['answer', true, 2000], ['answer', false, 2400]],
+  ];
+  const lastGoods = [null, 1000, 4000];
+  const want: unknown[] = [];
+  const asked: unknown[] = [];
+  for (const lg of lastGoods) {
+    for (const ops of runs) {
+      let clock = 0;
+      let good: number | null = lg;
+      const told: unknown[] = [];
+      const log: string[] = [];
+      let answer = false;
+      const crash = createCrashWatch({ lastGood: () => good, setLastGood: (at) => { good = at; }, mods: () => mods, now: () => clock });
+      const watch = createGameWatch({ isRunning: async () => answer, send: (running) => {
+        told.push(['game:running', running]);
+        const exit = crash.running(running);
+        if (exit) { log.push(`Dota closed ${exit.seconds}s after Play; new since the last game: ${exit.suspects.length}`); told.push(['game:quickExit', exit]); }
+      } });
+      let waited: number[] = [];
+      for (const op of ops) {
+        if (op[0] === 'play') { clock = op[1] as number; crash.launched(); }
+        else if (op[0] === 'answer') { answer = op[1] as boolean; clock = op[2] as number; await watch.check(); }
+        else if (op[0] === 'start') { watch.stop(); watch.start(); await new Promise((r) => setTimeout(r, 5)); watch.stop(); }
+        else { waited = [...waited, watch.running() ? 1000 : 5000]; await new Promise((r) => setTimeout(r, 5)); }
+      }
+      want.push({ told, log, lastGood: good, waited });
+      asked.push(['game-watch.script', lg, mods, ops]);
+    }
+  }
+  const list = path.join(tmp, 'watch.json');
+  fs.writeFileSync(list, JSON.stringify(asked));
+  const got = (JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok?: unknown; error?: string }[]).map((a) => { assert.ok('ok' in a, a.error); return a.ok; });
+  assert.deepEqual(got, want);
+  assert.ok(JSON.stringify(want).includes('game:quickExit') && JSON.stringify(want).includes('"New"'), 'a quick exit names the new mod');
+
+  // the upkeep at start: twin games set up five ways
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const pak = (file: string, files: Record<string, string>) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buildVpk(Object.entries(files).map(([p, b]) => entryAt(p, Buffer.from(b)))));
+  };
+  type Setup = { name: string; audio: string; seed: Record<string, unknown>; running?: boolean; mods: [string, string][]; folder: string; find?: 'game' | 'none' };
+  const setups: Setup[] = [
+    { name: 'english', audio: 'english', seed: {}, mods: [['pak90_dir.vpk', 'russian']], folder: 'russian' },
+    { name: 'korean', audio: 'koreana', seed: { langSuffix: 'russian' }, mods: [['pak90_dir.vpk', 'russian'], ['pak91_dir.vpk', 'russian']], folder: 'russian' },
+    { name: 'running', audio: 'english', seed: { slotZones: 0 }, running: true, mods: [['pak90_dir.vpk', 'russian']], folder: 'russian' },
+    { name: 'kept', audio: 'koreana', seed: { langFolderLock: 'russian', langSuffix: 'schinese', slotZones: 1 }, mods: [['pak90_dir.vpk', 'schinese']], folder: 'schinese' },
+    { name: 'moved', audio: 'russian', seed: { dotaGamePath: '<gone>' }, mods: [['pak90_dir.vpk', 'russian']], folder: 'russian', find: 'game' },
+    { name: 'lost', audio: 'russian', seed: { dotaGamePath: '<gone>' }, mods: [], folder: 'russian', find: 'none' },
+  ];
+  type Twin = { root: string; game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string, s: Setup): Twin => {
+    const root = path.join(tmp, `${s.name}-${side}`);
+    const game = path.join(root, 'game');
+    for (const f of ['bin/win64/dota.signatures', 'dota/gameinfo.gi', 'dota/gameinfo_branchspecific.gi', 'dota/steam.inf']) {
+      fs.mkdirSync(path.dirname(path.join(game, f)), { recursive: true });
+      fs.copyFileSync(path.join(sandboxGame, f), path.join(game, f));
+    }
+    fs.mkdirSync(path.join(game, 'dota', 'cfg'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'cfg', 'boot.vcfg'), `"boot"\n{\n\t"UILanguage"\t\t"english"\n\t"AudioLanguage"\t\t"${s.audio}"\n}\n`);
+    pak(path.join(game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one' });
+    for (const [at, folder] of s.mods) pak(path.join(game, `dota_${folder}`, at), { [`m/${at}.txt`]: at });
+    for (const d of ['lib', 'ud']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: s.mods.map(([at], i) => ({
+      id: `m${i}`, name: `Mod ${i}`, categoryId: 'heroes', styleLabel: null, enabled: true, files: [{ root: 'lang', relPath: at }],
+    })), presets: [] }, null, 2));
+    const seed = { dotaGamePath: game, schemaPatch: false, ...s.seed };
+    if (seed.dotaGamePath === '<gone>') seed.dotaGamePath = path.join(root, 'gone');
+    fs.writeFileSync(path.join(root, 'ud', 'settings.json'), JSON.stringify(seed));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const tree = (g: string) => (fs.existsSync(g) ? Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort()) : null);
+  const file = (x: Twin, f: string) => (fs.existsSync(path.join(x.root, f)) ? JSON.parse(fs.readFileSync(path.join(x.root, f), 'utf8')) : null);
+  for (const s of setups) {
+    const a = twin('ts', s);
+    const b = twin('rs', s);
+    const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(installedAt|updatedAt)$/.test(k) ? `<${k}>`
+      : typeof x === 'string' ? x.split(a.root).join('<root>').split(b.root).join('<root>') : x)));
+    const log: string[] = [];
+    let answers: unknown;
+    FileTx.journalDir = a.journal;
+    let up: ReturnType<typeof createGameUpkeep> | null = null;
+    try {
+      const settings = new Settings(a.ud);
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => settings.get('dotaGamePath'), getLangSuffix: () => up?.langFolder() ?? 'russian' });
+      const library = new Library(a.lib);
+      const real = createSchemaService({ settings: settings as never, library, installer: inst as never, userDataDir: a.ud, pak: inst as never,
+        modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+      const schemaService = { heal: real.heal, migrate: () => ({ changed: 0, scanned: 0, deltas: 0, freedMB: 0 }), migrateCosmeticSettings: () => {}, askForBases: () => {} };
+      up = createGameUpkeep({ settings: settings as never, installer: inst as never, library, schemaService: schemaService as never, reconcileCursors: () => {},
+        diag: (m) => log.push(m), send: () => {}, isRunning: async () => !!s.running, retryMs: 1e9, now: () => 0,
+        findGame: async () => (s.find === 'game' ? a.game : null), validGame: validateGamePath });
+      await up.atStart();
+      up.stop();
+      await real.settled?.();
+      answers = { folder: up.langFolder(), lang: up.takeLangMigration(), again: up.takeLangMigration(), slots: up.takeSlotMigration(), patch: up.patchRepair() };
+    } finally { FileTx.journalDir = null; }
+    const l = path.join(tmp, `${s.name}.json`);
+    fs.writeFileSync(l, JSON.stringify([['game-upkeep.script', b.journal, b.lib, b.ud, s.find === 'game' ? b.game : null, !!s.running]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8' })) as { ok?: { answers: unknown; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    assert.deepEqual(norm(r.ok.answers), norm(answers), s.name);
+    assert.deepEqual(norm(r.ok.log), norm(log), `${s.name}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `${s.name}: the game folder`);
+    for (const f of ['ud/settings.json', 'lib/manifest.json']) assert.deepEqual(norm(file(b, f)), norm(file(a, f)), `${s.name}: ${f}`);
+    if (s.name === 'korean') assert.ok((answers as { lang?: { moved: number } }).lang?.moved, 'the mods followed the Korean voice');
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

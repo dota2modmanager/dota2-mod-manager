@@ -26,6 +26,8 @@ pub mod emblem_ring;
 pub mod file_tx;
 pub mod fingerprints;
 pub mod game_repair;
+pub mod game_upkeep;
+pub mod game_watch;
 pub mod gamelang;
 pub mod generated_pak;
 pub mod hero_names;

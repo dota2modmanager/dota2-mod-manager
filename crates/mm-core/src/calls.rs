@@ -3004,6 +3004,77 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": diag })
         }
+        "game-watch.script" => {
+            // (lastGood, mods, ops): what the window is told, the log, the last good game, the waits
+            let mods = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut good = args.first().and_then(Value::as_f64);
+            let mut watch = crate::game_watch::GameWatch::default();
+            let mut crash = crate::game_watch::CrashWatch::default();
+            let (mut told, mut log, mut waited) = (Vec::new(), Vec::new(), Vec::new());
+            let (mut answer, mut clock) = (false, 0.0);
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let mut tell = |watch: &mut crate::game_watch::GameWatch, answer: bool, clock: f64| {
+                    let mut d = |m: String| log.push(m);
+                    for (c, v) in crate::game_watch::tell(watch, &mut crash, answer, clock, &mut good, &mods, &mut d) {
+                        told.push(json!([c, v]));
+                    }
+                };
+                match op[0].as_str().unwrap_or("") {
+                    "play" => {
+                        clock = crate::js::to_number(&op[1]);
+                        crash.launched(clock);
+                    }
+                    "answer" => {
+                        answer = crate::js::truthy(&op[1]);
+                        clock = crate::js::to_number(&op[2]);
+                        tell(&mut watch, answer, clock);
+                    }
+                    "start" => {
+                        watch.start();
+                        tell(&mut watch, answer, clock);
+                    }
+                    _ => waited.push(watch.wait_ms()),
+                }
+            }
+            json!({ "told": told, "log": log, "lastGood": good, "waited": waited })
+        }
+        "game-upkeep.script" => {
+            // (journalDir, libraryDir, userData, found, running): the start, as the app makes it
+            let ud = std::path::PathBuf::from(s(args, 2));
+            let mut st = crate::settings::Settings::new(&ud);
+            let found = args.get(3).and_then(Value::as_str).map(String::from);
+            let running = crate::js::truthy(args.get(4).unwrap_or(&Value::Null));
+            let mut diag: Vec<String> = Vec::new();
+            let mut up = crate::game_upkeep::GameUpkeep::default();
+            crate::game_upkeep::check_game_path(
+                &mut st,
+                &|p| crate::installer::validate_game_path(p),
+                &mut || found.clone(),
+                &mut |m| diag.push(m),
+            )?;
+            up.lang_folder_step(&mut st, &mut || running, &mut |m| diag.push(m));
+            let game = st.get("dotaGamePath").filter(|v| crate::js::truthy(v)).map(|v| std::path::PathBuf::from(crate::js::string(v)));
+            let mut inst = crate::installer::Installer::new(game, up.lang_folder()).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 0);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 1)));
+            let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+            let mut log = |m: String| diag.push(m);
+            let mut deployed = |_: std::collections::HashSet<String>| {};
+            let mut ctx = crate::schema_service::Ctx {
+                inst: &inst,
+                lib: &mut lib,
+                settings: &mut st,
+                bases: None,
+                log: &mut log,
+                on_deployed: &mut deployed,
+            };
+            up.start_steps(&mut svc, &mut ctx, &mut || running, None, None, &mut |_, _| Ok(()), 0.0);
+            let answers = json!({
+                "folder": up.lang_folder(), "lang": up.take_lang_migration(), "again": up.take_lang_migration(),
+                "slots": up.take_slot_migration(), "patch": up.repair.patch_repair(),
+            });
+            json!({ "answers": answers, "log": diag })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
