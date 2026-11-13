@@ -3498,6 +3498,16 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
     ['setMirrors', [at('good')]], ['download', RAW, 'resumed.zip', { expect: digest }],
     ['setMirrors', [at('whole')]], ['download', RAW, 'restarted.zip', {}],
     ['setMirrors', [at('down')]], ['download', RAW, 'e.zip', {}],
+    // a catalog mod's archive into the download cache: fetched, reused, fetched again when cut short or disowned
+    ['lang', 'en'],
+    ...[5, null, '', '  ', 'http://127.0.0.1:8080', ' HTTPS://Proxy.Example:3128/ ', 'http:///x', 'http://h:0', 'http://h:65535', 'http://h:65536', 'socks5://h:1', 'ftp://h',
+      'http://u:p@h:1', 'http://h:1/path', 'http://h:1/?', 'http://h:1/?q=1', 'http://h:1#x', 'http://h', 'https://h:443', 'http://[::1]:8080', 'http://h:12ab', 'http://', 'h:8080', 'http://h :1'].map((v) => ['proxy', v]),
+    ['setMirrors', [at('good', { origin: true })]], ['fetchMod', 'heroes', 'Mod.zip', 'Mod', {}], ['fetchMod', 'heroes', 'Mod.zip', null, {}],
+    ['cut', 'heroes/Mod.zip'], ['fetchMod', 'heroes', 'Mod.zip', 'Mod', {}],
+    ['fetchMod', 'heroes', 'Mod.zip', 'Mod', { 'heroes/Mod.zip': 'f'.repeat(64) }],
+    ['setMirrors', [at('wrong'), at('wrong', { host: 'other' })]], ['fetchMod', 'heroes', 'Other.zip', 'Other', { 'heroes/Other.zip': digest }],
+    ['setMirrors', [at('down')]], ['fetchMod', 'sounds', 'a%2F..%2Fb<c>.zip', '', {}],
+    ['fetchMod', 'skins', `http://127.0.0.1:${port.good}/direct/Thing%20(v2).zip?x=1`, 'Thing', {}],
     // the catalog signature
     ['sig', pf, sig, spki], ['sig', pf, sig.replace(/^./, (c) => (c === 'A' ? 'B' : 'A')), spki],
     ['sig', pf, ` ${sig.slice(0, 40)}\n${sig.slice(40)} `, spki], ['sig', pf, '', spki],
@@ -3510,7 +3520,12 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
     fs.writeFileSync(twin(side, 'resumed.zip.part'), data.subarray(0, 100000));
     fs.writeFileSync(twin(side, 'restarted.zip.part'), data.subarray(0, 100000));
   }
-  const local = (side: string, op: unknown[]) => (op[0] === 'download' ? [op[0], op[1], twin(side, op[2] as string), op[3]] : op);
+  const local = (side: string, op: unknown[]) => {
+    if (op[0] === 'download') return [op[0], op[1], twin(side, op[2] as string), op[3]];
+    if (op[0] === 'fetchMod') return [op[0], twin(side, 'ud'), ...op.slice(1)];
+    if (op[0] === 'cut') return [op[0], path.join(twin(side, 'ud'), 'downloads', op[1] as string)];
+    return op;
+  };
 
   const list = path.join(tmp, 'calls.json');
   fs.writeFileSync(list, JSON.stringify([['net.script', ops.map((op) => local('rs', op))],
@@ -3553,6 +3568,21 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
           const d = await net.downloadFile(op[1] as string, op[2] as string, { expectSha256: o.expect ?? null, fromPublishedList: !!o.published });
           return { bytes: d.bytes, sha256: d.sha256, resumedFrom: d.resumedFrom, unverified: !!d.unverified };
         } catch (e) { return plain(e); }
+        case 'lang': setLang(op[1] as string); return null;
+        case 'proxy': return (await import('../src/download-proxy.ts')).validateDownloadProxy(op[1]);
+        case 'cut': fs.truncateSync(op[1] as string, 5000); return null;
+        case 'fetchMod': {
+          const { Installer } = await import('../src/installer.ts');
+          const events: Record<string, unknown>[] = [];
+          const hashes = op[5] as Record<string, string>;
+          const inst = new Installer({ userDataDir: op[1] as string, getGamePath: () => null, getLangSuffix: () => '', onProgress: (e: Record<string, unknown>) => events.push(e), publishedHash: (c, f) => hashes[`${c}/${f}`] ?? null });
+          const a: Record<string, unknown> = {};
+          try { a.path = await inst.download(op[2] as string, op[3] as string, op[4] as string | null); } catch (e) { a.error = (e as Error).message; }
+          a.stages = events.filter((e) => e.type !== 'download');
+          a.last = events.filter((e) => e.type === 'download').pop() ?? null;
+          a.index = inst.downloadIndex();
+          return a;
+        }
         case 'sig': return signature.verify(fs.readFileSync(payloadFile), op[2], op.length > 3 ? op[3] as string : signature.CATALOG_PUBLIC_KEY);
       }
       throw new Error(`no step ${op[0]}`);
@@ -3569,14 +3599,193 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
   const worded = (s: unknown) => (typeof s === 'string' && /HTTP \d|checksum|no mirror|^timed out$/.test(s) ? s : '<socket>');
   const norm = (v: unknown, op: unknown[]): unknown => {
     if (op[0] === 'health') return (v as { why?: string; standingDownFor: number }[]).map((h) => ({ ...h, why: worded(h.why), standingDownFor: h.standingDownFor > 0 }));
+    if (op[0] === 'fetchMod') return JSON.parse(JSON.stringify(v).split(JSON.stringify(path.join(tmp, 'rs')).slice(1, -1)).join('<side>').split(JSON.stringify(path.join(tmp, 'ts')).slice(1, -1)).join('<side>'), (k, x) => (k === 'at' ? 'now' : x));
     if (v && typeof v === 'object' && 'error' in v) return { ...v, error: worded((v as { error: string }).error) };
     return v;
   };
   ops.forEach((op, i) => assert.deepEqual(norm(rs[i], op), norm(want[i], op), `${i} ${JSON.stringify(op).slice(0, 160)}`));
-  const tree = (side: string) => fs.readdirSync(path.join(tmp, side)).sort().map((f) => `${f} ${sha(fs.readFileSync(path.join(tmp, side, f)))}`);
+  // the download index carries the time each archive arrived; its entries are in the answers above
+  const tree = (side: string) => (fs.readdirSync(path.join(tmp, side), { recursive: true }) as string[]).filter((f) => fs.statSync(path.join(tmp, side, f)).isFile() && !f.endsWith('index.json'))
+    .sort().map((f) => `${f} ${sha(fs.readFileSync(path.join(tmp, side, f)))}`);
   assert.deepEqual(tree('rs'), tree('ts'));
   // a body that trickles in for longer than the wait for headers arrives; one that goes silent is cut
   assert.deepEqual(timed[2], { text: 'x'.repeat(120) });
   assert.equal((timed[5] as { timeout: boolean }).timeout, true, JSON.stringify(timed[5]));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the catalog, the remote config and the ready presets in Rust fetch, check and keep what the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { spawn } = await import('node:child_process');
+  const net = await import('../src/net.ts');
+  const mirrors = await import('../src/net-mirrors.ts');
+  const { Catalog, normalizeCatalog, RAW_BASE } = await import('../src/catalog.ts');
+  const remote = await import('../src/remote-config.ts');
+  const { createReadyPresets, READY_URL } = await import('../src/ready-presets.ts');
+
+  const catalogKey = crypto.generateKeyPairSync('ed25519');
+  const configKey = crypto.generateKeyPairSync('ed25519');
+  const spki = (k: { publicKey: import('node:crypto').KeyObject }) => k.publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  const signWith = (k: { privateKey: import('node:crypto').KeyObject }, text: string) => crypto.sign(null, Buffer.from(text), k.privateKey).toString('base64');
+
+  const mods = JSON.stringify({ modsData: {
+    heroes: { groups: [{ mods: [{ name: 'A', linkType: 'preview', linkUrl: 'https://p/a.png', senderName: 'Me' }, { name: 'B', links: [{ type: 'preview', url: 'https://p/b.png' }], linkType: 'preview', linkUrl: 'https://p/b.png' }] }, { mods: [{ name: 'C', links: [{ type: 'x', url: 'y' }], linkType: 'preview', linkUrl: 'https://p/c.png' }] }] },
+    sounds: [{ name: 'S', linkType: 'preview' }, null, 'x', { name: 'T', linkType: 'author', linkUrl: 'https://a', senderName: '' }],
+    misc: { mods: [{ name: 'M', linkType: 'preview', linkUrl: 'https://m' }] },
+    empty: null, n: 5,
+  }, extra: 'ж' });
+  const constants = JSON.stringify({ categories: [{ id: 'heroes' }], big: 1e21, frac: 2.5 });
+  const guides = JSON.stringify([{ title: 'g' }]);
+  const hashes = JSON.stringify({ 'heroes/A.zip': 'ABCDEF'.padEnd(64, '0'), 'heroes/B.zip': 'xyz', 'heroes/C.zip': 'a'.repeat(63) });
+  const day = (offset: number) => new Date(Date.UTC(2026, 10, 13) + offset * 86400000).toISOString().slice(0, 10);
+  const config = JSON.stringify({
+    version: 1,
+    features: { install: { off: false }, cosmetics: { off: true, ru: 'Выключено', en: 'Off for now' }, voice: { off: true, ru: 'Голос', en: '' }, other: { off: true } },
+    notices: [
+      { id: 'n1', date: '2026-11-01', level: 'warn', ru: 'Привет', en: 'Hello', url: 'HTTPS://example.com', until: day(3) },
+      { id: 'n2', date: '2026-11-10', ru: 'Только ру', url: 'http://x' },
+      { id: 'n3', date: '2026-10-01', en: 'Old', until: day(-1) },
+      { id: 'n4', date: '2026-11-05', en: 'For 3', minVersion: '3.0.0' },
+      { id: 'n5', date: '2026-11-06', en: 'Up to 2.10', maxVersion: '2.10.0', until: '2026-02-30' },
+      { id: '', en: 'no id' }, 'x', { id: 'n6', date: '2026-11-07', en: 'bad until', until: '2026-13-01' },
+    ],
+    blocks: [
+      { id: 'b1', feature: 'install', minVersion: '2.9.0', maxVersion: '2.9.9', until: day(5), ru: 'Блок', en: 'Blocked' },
+      { id: 'b2', feature: 'nope', until: day(5) }, { id: 'b3', feature: 'voice', until: 'soon' },
+    ],
+    beta: { salt: 's', ids: [` ${'AB'.repeat(32)} `, 'short', 5, 'c'.repeat(64)] },
+    mirrors: [
+      { id: 'g', base: 'https://gitlab.com/r/m/-/raw/main/assets/files/' }, { base: 'https://h.co/c/?' }, { base: 'https://h.co/c/' },
+      { base: 'http://plain/' }, { base: 'https://raw.githubusercontent.com/x/' }, { id: 'g', base: 'https://other/' },
+    ],
+    issues: [
+      { cat: 'heroes', mod: 'A', ru: 'Ломает', en: 'Breaks', until: day(10), revoked: true },
+      { cat: 'heroes', mod: 'B', en: 'Old', until: day(-2) }, { cat: 'heroes', mod: 'C' }, { cat: 'x', mod: 'Y', ru: 'Только', revoked: 'yes' },
+    ],
+  });
+  const presets = fs.readFileSync(path.join(root, 'config', 'presets.json'), 'utf8');
+
+  // each state of the world is a folder on one server: the raw paths, and the site's snapshot under /snap/
+  type Files = Record<string, string | null>;
+  const raw = (p: string) => p.replace(net.RAW_HOST, '/');
+  const cat = (name: string) => raw(`${RAW_BASE}/assets/data/${name}`);
+  const catSig = (name: string) => raw(`${RAW_BASE}/assets/signatures/${name}.sig`);
+  const signedCatalog = (k = catalogKey): Files => Object.fromEntries([['mods.json', mods], ['constants.json', constants], ['guides.json', guides], ['mod-hashes.json', hashes]]
+    .flatMap(([n, t]) => [[cat(n), t], [catSig(n), signWith(k, t)], [`/snap/${n}`, t], [`/snap/${n}.sig`, signWith(k, t)]]));
+  const configFiles = (text = config, k = configKey): Files => ({ [raw(remote.CONFIG_URL)]: text, [raw(`${remote.CONFIG_URL}.sig`)]: signWith(k, text), [raw(READY_URL)]: presets, [raw(`${READY_URL}.sig`)]: signWith(k, presets) });
+  const states: Record<string, Files> = {
+    good: { ...signedCatalog(), ...configFiles() },
+    // GitHub's cache handing over data and a signature from different moments: the snapshot is whole
+    torn: { ...signedCatalog(), [catSig('mods.json')]: signWith(catalogKey, '{}'), [raw(`${remote.CONFIG_URL}.sig`)]: signWith(configKey, '{}') },
+    forged: { ...signedCatalog(crypto.generateKeyPairSync('ed25519')), ...configFiles(config, crypto.generateKeyPairSync('ed25519')) },
+    nohash: { ...signedCatalog(), [cat('mod-hashes.json')]: null, ...configFiles('not json') },
+    badjson: { ...signedCatalog(), [cat('guides.json')]: '{bad', [catSig('guides.json')]: signWith(catalogKey, '{bad'), '/snap/guides.json': '{bad', '/snap/guides.json.sig': signWith(catalogKey, '{bad'), ...configFiles('[1,2]') },
+    down: {},
+  };
+  const server = http.createServer((req, res) => {
+    const [, state, ...rest] = (req.url || '').split('/');
+    const body = states[state]?.[`/${rest.join('/')}`];
+    if (state === 'down') { res.writeHead(503); res.end(); return; }
+    if (body == null) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, { 'content-length': Buffer.byteLength(body) }); res.end(body);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}/`;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-remote-'));
+  const NOW = Date.UTC(2026, 10, 13, 12);
+
+  const ops: unknown[][] = [
+    ['cmp', '2.0.0', '10.0.0'], ['cmp', '2.10', '2.9.9'], ['cmp', ' 3.x.1', '3.0.1'], ['cmp', '-1.0', '0'], ['cmp', '', '0.0.0'], ['cmp', '1.2.3.4', '1.2.3'], ['cmp', '+2', '2'],
+    ['normalize', null], ['normalize', [1]], ['normalize', JSON.parse(config)], ['normalize', { features: [], notices: {}, beta: [], mirrors: 'x' }],
+    ['normalizeCatalog', JSON.parse(mods)],
+    ['new', '2.9.5', NOW], ['state', 'down'], ['catalog.load', false], ['config.refresh'], ['ready.refresh'], ['ready.list'],
+    ['state', 'good'], ['catalog.load', false], ['catalog.hash', 'heroes', 'A.zip'], ['catalog.hash', 'heroes', 'B.zip'], ['catalog.hash', 'heroes', 'C.zip'], ['catalog.hash', '', 'A.zip'],
+    ['config.refresh'], ['ready.refresh'], ['ready.list'], ['ready.get', 'minimal'], ['ready.get', 'nope'],
+    ...['ru', 'en', 'de'].flatMap((l) => [['feature', 'install', l], ['feature', 'cosmetics', l], ['feature', 'voice', l], ['feature', 'other', l], ['notices', l], ['issues', l]]),
+    ['beta'], ['mirrors'],
+    ['state', 'torn'], ['catalog.load', true], ['config.refresh'],
+    ['state', 'forged'], ['catalog.load', true], ['config.refresh'], ['ready.refresh'],
+    ['state', 'nohash'], ['catalog.load', true], ['catalog.hash', 'heroes', 'A.zip'], ['config.refresh'],
+    ['state', 'badjson'], ['catalog.load', true], ['config.refresh'], ['notices', 'en'],
+    ['state', 'down'], ['catalog.load', true],
+    // a later build and a different day: the blocks and the dated notices move
+    ['new', '3.0.0', NOW + 4 * 86400000], ['state', 'good'], ['config.refresh'], ['feature', 'install', 'en'], ['feature', 'cosmetics', 'en'], ['notices', 'en'], ['issues', 'en'], ['catalog.load', false],
+  ];
+  const ud = (side: string, gen: number) => path.join(tmp, side, String(gen));
+
+  // the Rust side, in one run
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['remote.script', base, spki(catalogKey), spki(configKey), path.join(tmp, 'rs'), ops]]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+
+  // the TypeScript side, op for op
+  let gen = 0;
+  let cfgVersion = '';
+  let clock = 0;
+  let catalog: InstanceType<typeof Catalog> | null = null;
+  let cfg: ReturnType<typeof remote.createRemoteConfig> | null = null;
+  let ready: ReturnType<typeof createReadyPresets> | null = null;
+  let logs: string[] = [];
+  const want: unknown[] = [];
+  for (const op of ops) {
+    want.push(await (async () => {
+      switch (op[0]) {
+        case 'cmp': return remote.cmpVersion(op[1], op[2]);
+        case 'normalize': return remote.normalize(op[1]);
+        case 'normalizeCatalog': return normalizeCatalog(op[1] as never);
+        case 'new': {
+          const dir = ud('ts', gen++);
+          fs.mkdirSync(dir, { recursive: true });
+          cfgVersion = op[1] as string; clock = op[2] as number;
+          catalog = new Catalog(dir, { snapshotBase: '', publicKey: spki(catalogKey) });
+          cfg = remote.createRemoteConfig({ userDataDir: dir, appVersion: () => cfgVersion, publicKey: spki(configKey), now: () => clock, log: (m) => logs.push(m) });
+          ready = createReadyPresets({ userDataDir: dir, publicKey: spki(configKey), log: (m) => logs.push(m) });
+          return null;
+        }
+        case 'state': {
+          const prefix = `${base}${op[1]}/`;
+          mirrors.setMirrors([{ host: `state-${op[1]}`, map: (u: string) => u.replace(net.RAW_HOST, prefix), origin: true }]);
+          catalog!.snapshotBase = `${prefix}snap/`;
+          return null;
+        }
+        case 'catalog.load': try { return await catalog!.load({ forceRefresh: !!op[1] }); } catch (e) { return { error: (e as Error).message }; }
+        case 'catalog.hash': return catalog!.publishedHash(op[1] as string, op[2] as string);
+        case 'config.refresh': { logs = []; const v = await cfg!.refresh(); return { v, logs }; }
+        case 'ready.refresh': { logs = []; const v = await ready!.refresh(); return { v, logs }; }
+        case 'ready.list': return ready!.list();
+        case 'ready.get': return ready!.get(op[1] as string);
+        case 'feature': return cfg!.feature(op[1] as string, op[2] as string);
+        case 'notices': return cfg!.notices(op[1] as string);
+        case 'issues': return cfg!.issues(op[1] as string);
+        case 'beta': return cfg!.beta();
+        case 'mirrors': return cfg!.mirrors();
+      }
+      throw new Error(`no step ${op[0]}`);
+    })());
+  }
+  const [answer] = JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[];
+  server.closeAllConnections(); server.close();
+  mirrors.setMirrors(null);
+  assert.ok(answer.ok, JSON.stringify(answer).slice(0, 400));
+
+  // the time a catalog was fetched is the clock's; a socket's failure is worded by each side's own client
+  const why = (m: string) => (/signature|HTTP \d/.test(m) ? m : '<not JSON>');
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null), (k, x) => {
+    if (k === 'fetchedAt' && typeof x === 'number') return 'now';
+    if ((k === 'stale' || k === 'error') && typeof x === 'string') return why(x);
+    if (typeof x === 'string') { const m = /^(remote config|ready presets) not fetched: ([^]*)$/.exec(x); if (m) return `${m[1]} not fetched: ${why(m[2])}`; }
+    return x;
+  });
+  ops.forEach((op, i) => assert.deepEqual(norm(answer.ok![i]), norm(want[i]), `${i} ${JSON.stringify(op).slice(0, 120)}`));
+  const tree = (side: string) => (fs.readdirSync(path.join(tmp, side), { recursive: true }) as string[]).filter((f) => fs.statSync(path.join(tmp, side, f)).isFile())
+    .filter((f) => !f.endsWith('meta.json')).sort().map((f) => `${f} ${crypto.createHash('sha1').update(fs.readFileSync(path.join(tmp, side, f))).digest('hex')}`);
+  assert.deepEqual(tree('rs'), tree('ts'));
   fs.rmSync(tmp, { recursive: true, force: true });
 });

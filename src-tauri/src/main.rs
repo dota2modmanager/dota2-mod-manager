@@ -144,6 +144,7 @@ fn main() {
                 .or_else(|| std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("Dota 2 Mod Manager")))
                 .unwrap_or_else(|| app.path().app_data_dir().unwrap_or_default());
             let user_data = std::path::absolute(&user_data).unwrap_or(user_data);
+            app.manage(ported::UserData(user_data.clone()));
             let env = vec![
                 ("MM_USER_DATA".to_string(), user_data.to_string_lossy().into_owned()),
                 ("MM_APP_VERSION".to_string(), app.package_info().version.to_string()),

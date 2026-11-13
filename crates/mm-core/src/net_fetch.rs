@@ -454,3 +454,62 @@ pub struct Download {
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub unverified: bool,
 }
+
+/// The proxy setting as the user typed it, checked without putting the address into an error:
+/// `Ok(None)` is no proxy, `Ok(Some)` the address to use, `Err` the reason in Russian for `t`.
+pub fn validate_download_proxy(value: &serde_json::Value) -> Result<Option<String>, String> {
+    let Some(text) = value.as_str() else { return Err("Прокси должен быть адресом".into()) };
+    let text = crate::js::trim(text);
+    if text.is_empty() {
+        return Ok(None);
+    }
+    let lower = text.to_ascii_lowercase();
+    let rest = lower.strip_prefix("http://").or_else(|| lower.strip_prefix("https://"));
+    if rest.is_none_or(|r| r.starts_with('/')) {
+        return Err("Неверный адрес прокси".into());
+    }
+    let Ok(url) = url::Url::parse(text) else { return Err("Неверный адрес прокси".into()) };
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return Err("Прокси должен использовать HTTP или HTTPS".into());
+    }
+    if url.host_str().is_none_or(str::is_empty)
+        || !url.username().is_empty()
+        || url.password().is_some()
+        || url.query().is_some_and(|q| !q.is_empty())
+        || url.fragment().is_some_and(|f| !f.is_empty())
+        || url.path() != "/"
+    {
+        return Err("Укажи прокси в формате http://host:port".into());
+    }
+    if url.port() == Some(0) {
+        return Err("Порт прокси должен быть от 1 до 65535".into());
+    }
+    Ok(Some(text.to_string()))
+}
+
+/// Settings' "test" button: one HEAD request through the proxy the user typed, ten seconds at
+/// most. `{ ok: true }` or `{ error }`, the reason in Russian for the window's `t`.
+pub fn test_download_proxy(value: &serde_json::Value) -> serde_json::Value {
+    use serde_json::json;
+    let proxy = match validate_download_proxy(value) {
+        Err(e) => return json!({ "error": e }),
+        Ok(None) => return json!({ "ok": true }),
+        Ok(Some(p)) => p,
+    };
+    let Ok(p) = ureq::Proxy::new(&proxy) else {
+        return json!({ "error": "Не удалось подключиться через прокси" });
+    };
+    let tls = ureq::tls::TlsConfig::builder().provider(ureq::tls::TlsProvider::NativeTls).build();
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .timeout_global(Some(Duration::from_secs(10)))
+        .tls_config(tls)
+        .proxy(Some(p))
+        .build()
+        .into();
+    match agent.head("https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/README.md").call() {
+        Ok(r) if r.status().is_success() => json!({ "ok": true }),
+        Ok(_) => json!({ "error": "Прокси не ответил успешно" }),
+        Err(_) => json!({ "error": "Не удалось подключиться через прокси" }),
+    }
+}
