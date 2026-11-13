@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { CLI, SANDBOX_GAME, baseState, blind, readJson, startRs, startTs, tmpRoot, tree, twins, type Proc, type Reply, type Twin } from './helpers/owner-twins.ts';
+import { CLI, SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, startTs, tmpRoot, tree, twins, type Proc, type Reply, type Twin } from './helpers/owner-twins.ts';
 
 const skip = (!fs.existsSync(CLI) && 'mm-cli is not built (cargo build -p mm-cli)') || (!fs.existsSync(SANDBOX_GAME) && 'no sandbox (npm run sandbox:seed)');
 
@@ -80,4 +80,61 @@ test('settings, the beta switch, the support prompt and the account answer as th
     { call: ['settings:set', 'langFolderLock', 'russian'] },
     { call: ['settings:get'] },
   ]);
+});
+
+/** A state with mods installed the TypeScript way: heroes, shaders (they load first), a terrain, trees. */
+async function withMods(dir: string, settings: Record<string, unknown> = {}): Promise<Twin> {
+  const b = baseState(dir, { langFolderLock: 'russian', ...settings });
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const inst = new Installer({ userDataDir: b.ud, getGamePath: () => b.game, getLangSuffix: () => 'russian' });
+  const lib = new Library(b.ud);
+  const mods: [string, string, string][] = [
+    ['heroes', 'IO Purple', 'heroes__IO Purple.zip'], ['heroes', 'Bare Brewmaster', 'heroes__Bare Brewmaster.zip'],
+    ['shaders', 'Aghanim Labyrinth', 'shaders__pak07_dir.vpk'], ['shaders', 'Aghanim Purple', 'shaders__pak13_dir.vpk'],
+    ['terrains', 'Terrain', 'terrains__pak10_dir.vpk'], ['trees', 'Trees', 'trees__pak10_dir.vpk'],
+    ['versus-screens', 'Versus', 'versus-screens__pak10_dir.vpk'],
+  ];
+  for (const [cat, name, file] of mods) {
+    const files = FileTx.run((tx) => inst.installInto(tx, { categoryId: cat, modName: name, local: path.join(SANDBOX_MODS, file) }));
+    lib.add({ name, categoryId: cat, styleLabel: null, fileRef: file, files } as never);
+  }
+  return b;
+}
+
+const idsOf = (b: Twin) => ((readJson(path.join(b.ud, 'manifest.json')) as { installed: { id: string; name: string }[] }).installed)
+  .reduce<Record<string, string>>((m, r) => ({ ...m, [r.name]: r.id }), {});
+
+test('the master switch, a mod\'s switch, the load order and removal answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('library-base'), 'b'));
+  const id = idsOf(base);
+  await compare('library', base, [
+    { call: ['mods:masterState'] },
+    { call: ['mods:mapsOwner'] },
+    { call: ['mods:setEnabled', id['IO Purple'], false] },
+    { call: ['mods:setEnabled', id['IO Purple'], false], note: 'off again' },
+    { call: ['mods:setEnabled', 'nope', true], note: 'no such mod' },
+    { call: ['mods:setEnabledMany', [id['Trees'], id['Terrain'], 'nope'], false] },
+    { call: ['mods:setEnabledMany', [id['Trees'], id['IO Purple']], true] },
+    { call: ['mods:move', id['Bare Brewmaster'], -1] },
+    { call: ['mods:move', id['Bare Brewmaster'], -1], note: 'again' },
+    { call: ['mods:move', id['Aghanim Labyrinth'], 1], note: 'shaders stay among shaders' },
+    { call: ['mods:move', 'nope', 1] },
+    { call: ['mods:reorder', id['Versus'], 0] },
+    { call: ['mods:reorder', id['Aghanim Purple'], 99] },
+    { call: ['mods:reorder', id['IO Purple'], 'x'], note: 'not a number' },
+    { call: ['mods:setMaster', false] },
+    { call: ['mods:masterState'] },
+    { call: ['mods:setMaster', true] },
+    { call: ['mods:dropItemIcons', id['Bare Brewmaster']] },
+    { call: ['mods:remove', id['Terrain']] },
+    { call: ['mods:mapsOwner'] },
+    { call: ['mods:removeMany', [id['Trees'], 'nope', id['IO Purple']]] },
+  ]);
+});
+
+test('removing everything the app put into the game answers as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('everything-base'), 'b'));
+  await compare('everything', base, [{ call: ['mods:removeEverything'] }, { call: ['mods:masterState'] }]);
 });

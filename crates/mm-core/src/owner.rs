@@ -13,7 +13,7 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, MutexGuard};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, Weak};
 
 use serde_json::{json, Value};
 
@@ -71,6 +71,18 @@ pub struct Owner {
     core: Mutex<Core>,
     log: Mutex<Vec<String>>,
     started: AtomicBool,
+    me: Weak<Owner>,
+    /// the item table's builds in the background: the newest asked for, and how many have not answered
+    builds: Mutex<Builds>,
+    builds_done: Condvar,
+    /// one build at a time
+    build_turn: Mutex<()>,
+}
+
+#[derive(Default)]
+struct Builds {
+    generation: u64,
+    pending: usize,
 }
 
 pub type R = Result<Value, String>;
@@ -145,12 +157,16 @@ impl Owner {
             presence_view: "catalog".into(),
             made_for,
         };
-        let owner = Arc::new(Owner {
+        let owner = Arc::new_cyclic(|me| Owner {
             opts,
             shell,
             core: Mutex::new(core),
             log: Mutex::new(lines),
             started: AtomicBool::new(false),
+            me: me.clone(),
+            builds: Mutex::new(Builds::default()),
+            builds_done: Condvar::new(),
+            build_turn: Mutex::new(()),
         });
         owner.start_steps();
         owner.started.store(true, Ordering::SeqCst);
@@ -179,7 +195,7 @@ impl Owner {
                 &mut || running(),
                 None,
                 None,
-                &mut |_, _| Ok(()),
+                &mut |name, ctx| other_step(name, ctx),
                 (self.opts.now)(),
             );
         }
@@ -214,13 +230,131 @@ impl Owner {
 
     /// One of the window's channels, when it is the owner's.
     pub fn invoke(&self, channel: &str, args: &[Value]) -> Option<R> {
-        crate::owner_settings::handle(self, channel, args)
+        crate::owner_settings::handle(self, channel, args).or_else(|| crate::owner_library::handle(self, channel, args))
     }
 
     /// Every channel the owner answers.
     pub fn channels() -> Vec<&'static str> {
-        crate::owner_settings::CHANNELS.to_vec()
+        [crate::owner_settings::CHANNELS, crate::owner_library::CHANNELS].concat()
     }
+
+    /// The answer when a feature may not run now: Dota is open and holds its files, or the remote
+    /// config switched it off (src/feature-gate.ts).
+    pub fn blocked(&self, name: &str) -> Option<Value> {
+        let open = (self.opts.dota_running)();
+        let core = self.core();
+        let lang = crate::feature_gate::note_lang(&Value::Object(core.settings.all()));
+        crate::feature_gate::gate(open, || core.remote.feature(name, lang))
+    }
+
+    /// Build the item table again in the background (src/background-builds.ts): a build asked for
+    /// while one runs stops that one before it writes, and the newest builds from the library as it
+    /// is then. The receiver answers once this build, or the one that took over, is done.
+    pub fn refresh_schema_in_background(&self) -> std::sync::mpsc::Receiver<Value> {
+        let gen = {
+            let mut b = self.builds.lock().unwrap_or_else(|e| e.into_inner());
+            b.generation += 1;
+            b.pending += 1;
+            b.generation
+        };
+        let (tx, rx) = std::sync::mpsc::channel();
+        let Some(me) = self.me.upgrade() else { return rx };
+        std::thread::spawn(move || {
+            let turn = me.build_turn.lock().unwrap_or_else(|e| e.into_inner());
+            let newest = |o: &Owner| o.builds.lock().unwrap_or_else(|e| e.into_inner()).generation;
+            let out = if newest(&me) != gen {
+                json!({ "ok": true, "superseded": true })
+            } else {
+                me.refresh_schema(&|| newest(&me) != gen)
+            };
+            drop(turn);
+            let _ = tx.send(out);
+            let mut b = me.builds.lock().unwrap_or_else(|e| e.into_inner());
+            b.pending -= 1;
+            me.builds_done.notify_all();
+        });
+        rx
+    }
+
+    /// Wait until no build of the item table is running or asked for (the Play button waits on it).
+    pub fn settled(&self) {
+        let mut b = self.builds.lock().unwrap_or_else(|e| e.into_inner());
+        while b.pending > 0 {
+            b = self.builds_done.wait(b).unwrap_or_else(|e| e.into_inner());
+        }
+    }
+
+    /// One build of the item table, the bar at the bottom counting the picks built anew
+    /// (src/build-bar.ts: shown after 400 ms, and only when there are picks to build).
+    fn refresh_schema(&self, stop: &dyn Fn() -> bool) -> Value {
+        let label = crate::i18n::t("Сборка предметов", &[]);
+        let started = (self.opts.now)();
+        let mut shown = false;
+        let mut lines: Vec<String> = Vec::new();
+        let out = {
+            let mut core = self.core();
+            let c = &mut *core;
+            let mut log = |m: String| lines.push(m);
+            let mut deployed = |_: std::collections::HashSet<String>| {};
+            let mut ctx = crate::schema_service::Ctx {
+                inst: &c.installer,
+                lib: &mut c.library,
+                settings: &mut c.settings,
+                bases: None,
+                log: &mut log,
+                on_deployed: &mut deployed,
+            };
+            let mut progress = |done: usize, total: usize| {
+                if total == 0 || (!shown && (self.opts.now)() - started < 400.0) {
+                    return;
+                }
+                shown = true;
+                self.progress(
+                    json!({ "type": "count", "label": label, "done": done, "total": total, "cancel": "schema" }),
+                );
+            };
+            c.schema.refresh(&mut ctx, stop, &mut progress)
+        };
+        if shown {
+            self.progress(json!({ "type": "done" }));
+        }
+        for l in lines {
+            self.diag(&l);
+        }
+        serde_json::to_value(out).unwrap_or(Value::Null)
+    }
+}
+
+/// The start's steps that need more than the upkeep holds (src/game-upkeep.ts atStart).
+fn other_step(name: &str, ctx: &mut crate::schema_service::Ctx) -> Result<(), String> {
+    let game = game_of(ctx.settings);
+    match name {
+        "cursor reconcile" => crate::cursors::reconcile_cursors(ctx.inst, ctx.lib, game.is_some()),
+        "schema migrate" => {
+            let Some(game) = game.filter(|_| crate::schema_harvest::wants_migrate(ctx.lib)) else { return Ok(()) };
+            let (text, _) = crate::schema::read_game_schema(&game)?;
+            let m = crate::schema_harvest::migrate(ctx.inst, ctx.lib, &text);
+            if m.changed > 0 {
+                (ctx.log)(format!(
+                    "schema migrate: {}/{} mods cleaned, {} blocks, ~{} MB freed",
+                    m.changed,
+                    m.scanned,
+                    m.deltas,
+                    crate::js::number(m.freed_mb)
+                ));
+            }
+        }
+        "cosmetic migrate" => {
+            let Some(game) = game else { return Ok(()) };
+            let read = || crate::schema::read_game_schema(&game).map(|(t, _)| t);
+            let read: &dyn Fn() -> Result<Vec<u8>, String> = &read;
+            crate::schema_cosmetics::migrate_cosmetic_settings(ctx.lib, ctx.settings, Some(read));
+        }
+        // the arcana bases come with the arcana window's port; until then the build goes on from
+        // the game's own files, as it does while a base downloads
+        _ => {}
+    }
+    Ok(())
 }
 
 /// `args[i]`, or null.

@@ -128,6 +128,7 @@ pub mod net_mirrors;
 pub mod notice_text;
 pub mod overlays;
 pub mod owner;
+pub mod owner_library;
 pub mod owner_settings;
 pub mod pak_stamp;
 pub mod panorama_files;
