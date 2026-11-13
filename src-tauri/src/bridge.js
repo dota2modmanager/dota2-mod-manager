@@ -13,6 +13,22 @@
   if (window.__mmBridge) return;
   window.__mmBridge = true;
 
+  // Electron points the window's catalog pictures at mm-preview://, which answers from disk and
+  // from the mirror before GitHub (src/preview-cache.ts servePreviews). A webview has no request
+  // redirect, so an image's address is changed as the page sets it; Rust answers the scheme
+  // (Previews in src-tauri/src/ported.rs). WebView2 serves a custom scheme as http://<name>.localhost.
+  const RAW = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/';
+  const PICTURES = /Windows/.test(navigator.userAgent) ? 'http://mm-preview.localhost/' : 'mm-preview://catalog/';
+  const local = (v) => (typeof v === 'string' && v.startsWith(`${RAW}assets/previews/`) ? PICTURES + v.slice(RAW.length) : v);
+  const img = window.HTMLImageElement && Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  if (img && img.set) {
+    Object.defineProperty(HTMLImageElement.prototype, 'src', { ...img, set(v) { img.set.call(this, local(v)); } });
+    const setAttribute = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function (name, value) {
+      return setAttribute.call(this, name, this instanceof HTMLImageElement && String(name).toLowerCase() === 'src' ? local(value) : value);
+    };
+  }
+
   const toB64 = (bytes) => {
     let s = '';
     for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));

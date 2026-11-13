@@ -2424,6 +2424,119 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "download-stats.statKeysFor" => json!(crate::download_stats::stat_keys_for(args.first(), &s(args, 1), &s(args, 2), args.get(3))),
+        "download-stats.statStyleName" => json!(crate::download_stats::stat_style_name(args.first().unwrap_or(&Value::Null))),
+        "download-stats.buildToken" => json!(crate::download_stats::build_token(std::path::Path::new(&s(args, 0)))),
+        "download-stats.script" => {
+            // (api, cacheFile, token, ops): the counter on its own clock, each answer and the log after it
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let on = Arc::new(Mutex::new(true));
+            let logs = Arc::new(Mutex::new(Vec::<String>::new()));
+            let (c, e, l) = (clock.clone(), on.clone(), logs.clone());
+            let stats = crate::download_stats::DownloadStats::new(
+                std::path::Path::new(&s(args, 1)),
+                Box::new(move || *e.lock().unwrap()),
+                opt_s(args, 2),
+                Some(&s(args, 0)),
+                Arc::new(crate::net_fetch::Net::default()),
+                Box::new(move || *c.lock().unwrap()),
+                Box::new(move |m: &str| l.lock().unwrap().push(m.to_string())),
+            );
+            let mut out = Vec::new();
+            for op in args.get(3).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let v = match op[0].as_str().unwrap_or("") {
+                    "now" => {
+                        *clock.lock().unwrap() = op[1].as_f64().unwrap_or(0.0);
+                        Value::Null
+                    }
+                    "enabled" => {
+                        *on.lock().unwrap() = op[1].as_bool().unwrap_or(false);
+                        Value::Null
+                    }
+                    "get" => stats.get(),
+                    "track" => {
+                        let keys: Vec<String> = op[1].as_array().map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect()).unwrap_or_default();
+                        stats.track(&keys);
+                        Value::Null
+                    }
+                    "flush" => {
+                        stats.flush();
+                        Value::Null
+                    }
+                    "active" => json!(stats.active()),
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(json!({ "v": v, "logs": std::mem::take(&mut *logs.lock().unwrap()) }));
+            }
+            Value::Array(out)
+        }
+        "preview-cache.pictureOf" => json!(crate::preview_cache::picture_of(&s(args, 0))),
+        "preview-cache.redirectFor" => json!(crate::preview_cache::redirect_for(&s(args, 0))),
+        "preview-cache.pictureType" => {
+            let b: Vec<u8> = args.first().and_then(Value::as_array).map(|a| a.iter().map(|x| x.as_u64().unwrap_or(0) as u8).collect()).unwrap_or_default();
+            json!(crate::preview_cache::picture_type(&b))
+        }
+        "preview-cache.hostsFor" => json!(crate::preview_cache::hosts_for(&s(args, 0), &[])),
+        "preview-cache.picturesIn" => json!(crate::preview_cache::pictures_in(args.first().unwrap_or(&Value::Null), args.get(1).unwrap_or(&Value::Null))),
+        "preview-cache.script" => {
+            // (dir, {from: to}, stagger, ops): the store against hosts the map points elsewhere
+            let dir = std::path::PathBuf::from(s(args, 0));
+            let map: Vec<(String, String)> = args.get(1).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default();
+            let logs = Arc::new(Mutex::new(Vec::<String>::new()));
+            let l = logs.clone();
+            let store = crate::preview_cache::PreviewStore::new(
+                &dir,
+                Arc::new(crate::net_fetch::Net::default()),
+                args.get(2).and_then(Value::as_u64),
+                Some(Box::new(move |u: &str| map.iter().find_map(|(f, t)| u.strip_prefix(f.as_str()).map(|r| format!("{t}{r}"))).unwrap_or_else(|| u.to_string()))),
+                Box::new(move |m: &str| l.lock().unwrap().push(m.to_string())),
+            );
+            let pic = |p: Option<crate::preview_cache::Picture>| match p {
+                Some(p) => {
+                    use sha2::Digest;
+                    json!({ "type": p.kind, "sha": format!("{:x}", sha2::Sha256::digest(&p.bytes)) })
+                }
+                None => Value::Null,
+            };
+            let mut out = Vec::new();
+            for op in args.get(3).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let v = match op[0].as_str().unwrap_or("") {
+                    "get" => pic(store.get(&crate::js::string(&op[1]))),
+                    "both" => {
+                        // two asks at once share one fetch
+                        let (a, b) = (store.clone(), store.clone());
+                        let (r1, r2) = (crate::js::string(&op[1]), crate::js::string(&op[1]));
+                        let t = std::thread::spawn(move || a.get(&r1));
+                        let second = b.get(&r2);
+                        json!([pic(t.join().unwrap()), pic(second)])
+                    }
+                    "warm" => {
+                        let rels: Vec<String> = op[1].as_array().map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        json!(store.warm(&rels))
+                    }
+                    "age" => {
+                        let f = store.file_of(&crate::js::string(&op[1]));
+                        let at = std::time::SystemTime::now() - std::time::Duration::from_secs(op[2].as_u64().unwrap_or(0) * 86400);
+                        std::fs::File::options().write(true).open(&f).and_then(|h| h.set_modified(at)).map_err(|e| e.to_string())?;
+                        Value::Null
+                    }
+                    "settle" => {
+                        while store.rechecking() > 0 {
+                            std::thread::sleep(std::time::Duration::from_millis(20));
+                        }
+                        Value::Null
+                    }
+                    "files" => {
+                        let mut names = crate::js::dir_names(&dir);
+                        names.sort();
+                        json!(names)
+                    }
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(json!({ "v": v, "logs": std::mem::take(&mut *logs.lock().unwrap()) }));
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
