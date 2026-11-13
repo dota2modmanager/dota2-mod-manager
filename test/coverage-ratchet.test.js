@@ -35,6 +35,20 @@ test('lcov becomes hit and found counts per file', async () => {
   assert.deepEqual(files['src/a.js'], { lines: [80, 100], functions: [2, 4], branches: [5, 10] });
 });
 
+test('a line run more than 2^31 times is a line that ran, though node writes its count negative', async () => {
+  // node keeps merged counts in 32 bits: on 2026-11-13 five lines of src/schema-kv.ts came out
+  // at -1682136736 and its own LH left them out, which read as a file losing coverage
+  const { parseLcov } = await load();
+  const lcov = [
+    'SF:src/hot.js',
+    'FN:1,walk', 'FN:9,cold', 'FNDA:-5,walk', 'FNDA:0,cold', 'FNF:2', 'FNH:0',
+    'BRDA:2,0,0,-7', 'BRDA:2,0,1,0', 'BRDA:3,1,0,-', 'BRF:3', 'BRH:0',
+    'DA:1,3', 'DA:2,-1682136736', 'DA:3,0', 'LF:3', 'LH:1',
+    'end_of_record',
+  ].join('\n');
+  assert.deepEqual(parseLcov(lcov).files['src/hot.js'], { lines: [2, 3], functions: [1, 2], branches: [1, 3] });
+});
+
 test('nothing to cover counts as covered, so an empty file cannot fail a run', async () => {
   const { pct } = await load();
   assert.equal(pct(0, 0), 100);
