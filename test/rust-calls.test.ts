@@ -4845,3 +4845,115 @@ test('towers, trees and the map looks record in Rust build what the TypeScript b
   assert.equal(towers.enabled, false, 'the towers stay off through the rebuild');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the map without its decor in Rust finds and blanks the materials the TypeScript does', { skip }, async () => {
+  const md = await import('../src/map-decor.ts');
+  const { buildVpk, entryAt, openVpkIndex } = await import('../src/vpk.ts');
+  const { drain } = await import('../src/steps.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-decor-'));
+  const vpkAt = (file: string, files: [string, string | Buffer][]) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buildVpk(files.map(([p, b]) => entryAt(p, Buffer.isBuffer(b) ? b : Buffer.from(b, 'latin1')))));
+    return file;
+  };
+  // a map naming materials and models straight and in mixed case, models naming more of them
+  const mapFiles = (extra = ''): [string, string][] => [
+    ['maps/dota/world.vwrld_c', `\0materials/models/props_nature/grass_01.vmat\0Materials/Nature/Card_Grass_A.VMAT_c models/props_debris/rocks_01.vmdl\0${extra}`],
+    ['maps/dota/entities/default_ents.vents_c', 'models/props_tree/tree_pine_01.vmdl models/props_wildlife/frog.vmdl models/heroes/axe/axe.vmdl'],
+    ['maps/dota/nodes.vwnod_c', 'materials/overlays/blood/splat.vmat materials/overlays/leaves/pile.vmat materials/terrain/ground.vmat materials/models/props_bones/skull.vmaté'],
+  ];
+  const pakFiles: [string, string][] = [
+    [md.BLANK, 'blank material'],
+    ['models/props_debris/rocks_01.vmdl_c', 'x materials/models/props_rock/rock_02.vmat y materials/models/props_magic/orb.vmat'],
+    ['models/props_wildlife/frog.vmdl_c', 'materials/models/props_wildlife/frog_skin.vmat'],
+    ['models/props_tree/tree_pine_01.vmdl_c', 'materials/models/props_tree/pine.vmat'],
+    ...['materials/models/props_nature/grass_01.vmat_c', 'materials/nature/card_grass_a.vmat_c', 'materials/models/props_rock/rock_02.vmat_c',
+      'materials/models/props_wildlife/frog_skin.vmat_c', 'materials/overlays/blood/splat.vmat_c', 'materials/models/props_bones/skull.vmat_c',
+      'materials/terrain/ground.vmat_c', 'materials/models/props_tree/pine.vmat_c'].map((p) => [p, `material ${p}`] as [string, string]),
+  ];
+  const map = vpkAt(path.join(tmp, 'm', 'dota.vpk'), mapFiles());
+  const pak = vpkAt(path.join(tmp, 'p', 'pak01_dir.vpk'), pakFiles);
+  const real = fs.existsSync(GAME_PAK01) && fs.existsSync(path.join(path.dirname(GAME_PAK01), 'maps', 'dota.vpk'))
+    ? [[path.join(path.dirname(GAME_PAK01), 'maps', 'dota.vpk'), GAME_PAK01]] : [];
+  compare([
+    { name: 'map-decor.clampGroups', ts: md.clampGroups, inputs: [[null], ['plants'], [[]], [['debris', 'plants', 'plants', 'x']], [['debris']]] },
+    { name: 'map-decor.materials', ts: ((m: string, p: string) => drain(md.decorMaterialsSteps(openVpkIndex(m), openVpkIndex(p)))) as never, inputs: [[map, pak], ...real] },
+  ]);
+
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const r = path.join(tmp, side);
+    const game = path.join(r, 'game');
+    vpkAt(path.join(game, 'dota', 'maps', 'dota.vpk'), mapFiles());
+    vpkAt(path.join(game, 'dota', 'pak01_dir.vpk'), pakFiles);
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    return { game, lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const steps: unknown[][][] = [
+    [['state'], ['install', []], ['install', 'plants'], ['install', ['plants']], ['state'], ['install', ['debris', 'plants']], ['state'], ['rebuild', ['zzz']]],
+    // a whole-map terrain in the language folder, the record switched off, and an update
+    [['state'], ['rebuild', ['$id']], ['state']],
+    // no game folder
+    [['state'], ['install', ['debris']]],
+  ];
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const mineOf = (x: Twin) => manifest(x).installed.find((r: { generated?: { decor?: unknown } }) => Array.isArray(r.generated?.decor));
+  for (const [k, ops] of steps.entries()) {
+    if (k === 1) {
+      for (const x of [a, b]) {
+        vpkAt(path.join(x.game, 'dota_russian', 'maps', 'dota.vpk'), mapFiles('materials/overlays/petals/rose.vmat materials/models/props_rock/rock_02.vmat'));
+        FileTx.journalDir = x.journal;
+        const inst = new Installer({ userDataDir: x.ud, getGamePath: () => x.game, getLangSuffix: () => 'russian' });
+        const lib = new Library(x.lib);
+        const rec = lib.list().find((r) => Array.isArray((r.generated as { decor?: unknown } | undefined)?.decor))!;
+        inst.setEnabled(rec.files, false, rec.id);
+        lib.setEnabled(rec.id, false);
+        FileTx.journalDir = null;
+      }
+    }
+    const gameOf = (x: Twin) => (k === 2 ? '' : x.game);
+    const fill = (x: Twin) => ops.map((op) => op.map((v) => (Array.isArray(v) ? v.map((i) => (i === '$id' ? mineOf(x)?.id : i)) : v)));
+    const answers: unknown[] = [];
+    const log: string[] = [];
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => gameOf(a) || null, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      let rebuilt: string | null = null;
+      const svc = md.createMapDecor({ gamePath: () => gameOf(a) || null, installer: inst as never, library: lib, onRebuilt: (id) => { rebuilt = id; }, log: (m) => log.push(m) });
+      for (const [op, ...args] of fill(a)) {
+        try {
+          if (op === 'state') answers.push(snap(await svc.state()));
+          else if (op === 'install') answers.push(snap(await svc.install(args[0])));
+          else {
+            rebuilt = null;
+            const returned = svc.rebuild(args[0] as string[]);
+            await new Promise((r) => setTimeout(r, 100));
+            answers.push(snap({ returned, rebuilt }));
+          }
+        } catch (e) { answers.push(snap({ error: (e as Error).message })); }
+      }
+    } finally { FileTx.journalDir = null; }
+    const list = path.join(tmp, `steps-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['map-decor.service', gameOf(b), 'russian', b.journal, b.lib, b.ud, fill(b)]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }))[0] as { ok?: { answers: unknown; log: string[] }; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok.answers), norm(answers), `steps ${k}`);
+    assert.deepEqual(got.ok.log, log, `steps ${k}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `steps ${k}: the game folder`);
+    assert.deepEqual(norm(manifest(b)), norm(manifest(a)), `steps ${k}: the library`);
+  }
+  assert.equal(mineOf(a).enabled, false, 'a rebuilt record stays off');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

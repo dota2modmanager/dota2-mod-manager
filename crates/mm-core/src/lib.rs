@@ -66,6 +66,7 @@ pub mod kv;
 pub mod kv3;
 pub mod library;
 pub mod lz4;
+pub mod map_decor;
 pub mod map_looks_service;
 pub mod material;
 pub mod memo;

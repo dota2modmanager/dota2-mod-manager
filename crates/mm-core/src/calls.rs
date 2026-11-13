@@ -2844,6 +2844,42 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": out, "log": logged })
         }
+        "map-decor.clampGroups" => json!(crate::map_decor::clamp_groups(args.first().unwrap_or(&Value::Null))),
+        "map-decor.materials" => {
+            // (map vpk, pak01): each group's materials
+            let map = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let pak = crate::vpk::Index::open(std::path::Path::new(&s(args, 1))).map_err(|e| e.to_string())?;
+            let [plants, debris] = crate::map_decor::decor_materials(&map, &pak)?;
+            json!({ "plants": plants, "debris": debris })
+        }
+        "map-decor.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each op's answer ({error} for one that
+            // failed) and what was logged; a rebuild answers what the channel returns and the id built later
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let svc = crate::map_decor::MapDecor::new(opt_path(args, 0));
+            let mut logged = Vec::new();
+            let mut out = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let mut log = |m: String| logged.push(m);
+                let answer = match a.first().and_then(Value::as_str).unwrap_or("") {
+                    "state" => svc.state(&inst, &lib),
+                    "install" => svc.install(&inst, &mut lib, a.get(1).unwrap_or(&Value::Null), &mut log),
+                    "rebuild" => {
+                        let ids: Vec<String> =
+                            a.get(1).and_then(Value::as_array).map(|v| v.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        let rebuilt = crate::map_decor::MapDecor::due(&lib, &ids).and_then(|_| svc.rebuild_now(&inst, &mut lib, &mut log));
+                        Ok(json!({ "returned": [], "rebuilt": rebuilt }))
+                    }
+                    other => Err(format!("no op {other}")),
+                };
+                out.push(answer.unwrap_or_else(|e| json!({ "error": e })));
+            }
+            json!({ "answers": out, "log": logged })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
