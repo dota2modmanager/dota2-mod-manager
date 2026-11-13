@@ -1,6 +1,8 @@
 //! mm-core on the command line, for the parity tests (test/rust-parity.test.js): each command
 //! prints JSON the test compares with what the TypeScript module answers for the same input.
 
+mod owner_wire;
+
 use std::path::Path;
 use std::process::ExitCode;
 
@@ -161,6 +163,15 @@ fn result(r: Result<String, String>) -> Value {
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("owner") {
+        return match owner_wire::run(&args[1..]) {
+            Ok(()) => ExitCode::SUCCESS,
+            Err(err) => {
+                eprintln!("{err}");
+                ExitCode::FAILURE
+            }
+        };
+    }
     match run(&args) {
         Ok(v) => {
             println!("{v}");
