@@ -123,12 +123,17 @@ fn settings_set(o: &Owner, args: &[Value]) -> R {
         return match crate::net_fetch::validate_download_proxy(&value) {
             Err(e) => Ok(json!({ "error": e })),
             Ok(v) => {
+                c.net.set_proxy(v.as_deref());
                 set(&mut c, "downloadProxy", json!(v.unwrap_or_default()))?;
                 Ok(view(&mut c, false))
             }
         };
     }
     set(&mut c, &key, value)?;
+    if key == "countDownloads" {
+        c.counting
+            .store(c.settings.get("countDownloads") != Some(&Value::Bool(false)), std::sync::atomic::Ordering::SeqCst);
+    }
     if key == "langFolderLock" {
         let running = &o.opts.dota_running;
         let mut lines: Vec<String> = Vec::new();

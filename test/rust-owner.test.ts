@@ -23,6 +23,12 @@ const settingsOf = (t: Twin) => {
   return blind(s, t);
 };
 
+/** The ids of a state's records and presets, in the order its manifest holds them. */
+const recordIds = (t: Twin): string[] => {
+  const m = (readJson(path.join(t.ud, 'manifest.json')) ?? {}) as { installed?: { id: string }[]; presets?: { id: string }[] };
+  return [...(m.installed ?? []), ...(m.presets ?? [])].map((r) => r.id);
+};
+
 /** Run one script on both sides; compare each answer, what each asked, and the files after. */
 async function compare(name: string, base: Twin, steps: Step[]): Promise<void> {
   const [a, b] = twins(base, tmpRoot(name));
@@ -31,21 +37,38 @@ async function compare(name: string, base: Twin, steps: Step[]): Promise<void> {
     const [tsChannels, rsChannels] = await Promise.all(procs.map((p) => p.ready));
     for (const s of steps) assert.ok(rsChannels.includes(s.call[0]), `${s.call[0]} is not the owner's`);
     assert.ok(steps.every((s) => tsChannels.includes(s.call[0])), 'every channel is the host\'s too');
+    // a record made during the run has a random id on each side: <ID n> by the order it appeared in
+    const made = [new Map<string, string>(), new Map<string, string>()];
+    const known = new Set(recordIds(base));
+    const noteIds = (side: number, t: Twin) => {
+      for (const id of recordIds(t)) if (!known.has(id) && !made[side].has(id)) made[side].set(id, `<ID ${made[side].size}>`);
+    };
+    const named = (v: unknown, side: number) => {
+      let text = JSON.stringify(v ?? null);
+      for (const [id, tag] of made[side]) text = text.split(id).join(tag);
+      return JSON.parse(text);
+    };
     for (const [k, s] of steps.entries()) {
       const label = `${name} ${k} ${s.note ?? s.call[0]}`;
       const got = [];
-      for (const [p, t] of [[procs[0], a], [procs[1], b]] as const) {
+      for (const [side, [p, t]] of ([[procs[0], a], [procs[1], b]] as const).entries()) {
         p.asked = [];
-        // <ROOT> in a call or in the shell's answer is this copy's folder
-        const here = (v: unknown) => JSON.parse(JSON.stringify(v ?? null).split('<ROOT>').join(JSON.stringify(t.root).slice(1, -1)));
+        // <ROOT> in a call or in the shell's answer is this copy's folder; <ID n> the record made n-th
+        const here = (v: unknown) => {
+          let text = JSON.stringify(v ?? null).split('<ROOT>').join(JSON.stringify(t.root).slice(1, -1));
+          for (const [id, tag] of made[side]) text = text.split(tag).join(id);
+          return JSON.parse(text);
+        };
         p.reply = (m, x) => here((s.reply ?? (() => null))(m, x));
         const r = await p.invoke(s.call[0], here(s.call.slice(1)) as unknown[]);
-        got.push(blind({ answer: r, asked: p.asked }, t));
+        noteIds(side, t);
+        got.push(named(blind({ answer: r, asked: p.asked }, t), side));
       }
       assert.deepEqual(got[1], got[0], label);
     }
     assert.deepEqual(settingsOf(b), settingsOf(a), `${name}: settings.json`);
-    assert.deepEqual(readJson(path.join(b.ud, 'manifest.json')), readJson(path.join(a.ud, 'manifest.json')), `${name}: the library`);
+    const manifest = (t: Twin, side: number) => named(blind(readJson(path.join(t.ud, 'manifest.json')), t), side);
+    assert.deepEqual(manifest(b, 1), manifest(a, 0), `${name}: the library`);
     assert.deepEqual(tree(b.game), tree(a.game), `${name}: the game folder`);
   } finally {
     await Promise.all(procs.map((p) => p.stop()));
@@ -98,7 +121,8 @@ async function withMods(dir: string, settings: Record<string, unknown> = {}): Pr
   ];
   for (const [cat, name, file] of mods) {
     const files = FileTx.run((tx) => inst.installInto(tx, { categoryId: cat, modName: name, local: path.join(SANDBOX_MODS, file) }));
-    lib.add({ name, categoryId: cat, styleLabel: null, fileRef: file, files } as never);
+    // the name the catalog gives the file, as an install from it leaves on the record
+    lib.add({ name, categoryId: cat, styleLabel: null, fileRef: file.slice(cat.length + 2), files } as never);
   }
   return b;
 }
@@ -137,4 +161,47 @@ test('the master switch, a mod\'s switch, the load order and removal answer as t
 test('removing everything the app put into the game answers as the TypeScript does', { skip }, async () => {
   const base = await withMods(path.join(tmpRoot('everything-base'), 'b'));
   await compare('everything', base, [{ call: ['mods:removeEverything'] }, { call: ['mods:masterState'] }]);
+});
+
+/** The catalog's archives in the download cache, so an install needs no network. */
+function cacheDownloads(b: Twin, files: [string, string][]): void {
+  for (const [cat, file] of files) {
+    fs.mkdirSync(path.join(b.ud, 'downloads', cat), { recursive: true });
+    fs.copyFileSync(path.join(SANDBOX_MODS, `${cat}__${file}`), path.join(b.ud, 'downloads', cat, file));
+  }
+}
+
+/** Nothing reaches the network: every fetch goes through a proxy nobody listens on. */
+const OFFLINE = { downloadProxy: 'http://127.0.0.1:9', countDownloads: false };
+
+test('installing, exporting, importing and listing mods answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('mods-base'), 'b'), OFFLINE);
+  cacheDownloads(base, [['terrains', 'pak11_dir.vpk'], ['trees', 'pak11_dir.vpk'], ['emblems', 'pak28_dir.vpk'], ['ti-bp-effects', 'pak22_dir.vpk'], ['heroes', 'IO Purple.zip']]);
+  const id = idsOf(base);
+  const mod = (categoryId: string, name: string, fileRef: string) => ({ categoryId, name, styleLabel: null, fileRef, preview: null });
+  const save = (filePath: string | null) => (m: string) => (m === 'dialog.save' ? (filePath ? { canceled: false, filePath } : { canceled: true }) : null);
+  await compare('mods', base, [
+    { call: ['mods:list'] },
+    { call: ['mods:install', mod('terrains', 'Terrain Two', 'pak11_dir.vpk')] },
+    { call: ['mods:install', mod('terrains', 'Terrain Two', 'pak11_dir.vpk')], note: 'already there' },
+    { call: ['mods:install', mod('trees', 'Trees Two', 'pak11_dir.vpk')] },
+    { call: ['mods:install', mod('emblems', 'Emblem', 'pak28_dir.vpk')] },
+    { call: ['mods:install', mod('ti-bp-effects', 'Seasonal', 'pak22_dir.vpk')] },
+    { call: ['mods:list'] },
+    { call: ['mods:exportSingle', id['Bare Brewmaster']], reply: save(null), note: 'cancelled' },
+    { call: ['mods:exportSingle', id['Bare Brewmaster']], reply: save('<ROOT>/out.vpk') },
+    { call: ['mods:exportSingle', 'nope'] },
+    { call: ['mods:unpackToFolder', id['Aghanim Purple']], reply: open(['<ROOT>/unpacked']) },
+    { call: ['mods:unpackToFolder', id['Aghanim Purple']], reply: open(null), note: 'cancelled' },
+    { call: ['mods:remove', id['Bare Brewmaster']] },
+    { call: ['mods:importPaths', ['<ROOT>/out.vpk']] },
+    { call: ['mods:importDialog'], reply: open(null), note: 'cancelled' },
+    { call: ['mods:importBuffers', []] },
+    { call: ['mods:switchOffStaleTerrains'] },
+    { call: ['mods:clearPrePatch', id['IO Purple']] },
+    { call: ['mods:clearPrePatch', 'nope'] },
+    { call: ['mods:update', id['IO Purple']], note: 'from the download cache' },
+    { call: ['mods:update', 'nope'] },
+    { call: ['mods:list'] },
+  ]);
 });

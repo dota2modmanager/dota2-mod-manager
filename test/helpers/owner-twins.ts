@@ -134,7 +134,13 @@ export function blind(v: unknown, t: Twin): unknown {
 export function tree(dir: string): Record<string, string> {
   if (!fs.existsSync(dir)) return {};
   return Object.fromEntries((fs.readdirSync(dir, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
-    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(dir, f), createHash('sha1').update(fs.readFileSync(f)).digest('hex')]; })
+    .map((e) => {
+      const f = path.join(e.parentPath, e.name);
+      let data: Buffer | string = fs.readFileSync(f);
+      // the ownership note says when it was written: the moment differs, the list must not
+      if (e.name === 'dota2modmanager.json') data = JSON.stringify({ ...JSON.parse(data.toString('utf8')), updated: '<TIME>' });
+      return [path.relative(dir, f), createHash('sha1').update(data).digest('hex')];
+    })
     .sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 

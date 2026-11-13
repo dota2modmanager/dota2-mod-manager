@@ -433,3 +433,67 @@ mod tests {
         }
     }
 }
+
+/// Node's `path.join`: the parts joined with the platform's separator and normalized, `.` and
+/// `..` worked out, `/` written `\` on Windows. A path the app hands back says it as Node would.
+pub fn path_join(parts: &[&str]) -> String {
+    let sep = if cfg!(windows) { '\\' } else { '/' };
+    let joined = parts.iter().filter(|p| !p.is_empty()).copied().collect::<Vec<_>>().join(&sep.to_string());
+    if joined.is_empty() {
+        return ".".into();
+    }
+    let text = if cfg!(windows) { joined.replace('/', "\\") } else { joined };
+    // what stays as it is in front: a drive (C:), a UNC share's two separators, a root
+    let (head, rest) = if cfg!(windows) && text.len() >= 2 && text.as_bytes()[1] == b':' {
+        text.split_at(2)
+    } else {
+        ("", text.as_str())
+    };
+    let unc = cfg!(windows) && head.is_empty() && rest.starts_with("\\\\");
+    let rooted = rest.starts_with(sep);
+    let mut out: Vec<&str> = Vec::new();
+    for seg in rest.split(sep) {
+        match seg {
+            "" | "." => {}
+            ".." if out.last().is_some_and(|l| *l != "..") => {
+                out.pop();
+            }
+            ".." if rooted => {}
+            s => out.push(s),
+        }
+    }
+    let body = out.join(&sep.to_string());
+    let trailing = rest.ends_with(sep) && !body.is_empty();
+    let mut s = String::from(head);
+    if unc {
+        s.push(sep);
+    }
+    if rooted {
+        s.push(sep);
+    }
+    s.push_str(&body);
+    if trailing {
+        s.push(sep);
+    }
+    if s.is_empty() {
+        ".".into()
+    } else {
+        s
+    }
+}
+
+#[cfg(test)]
+mod path_join_tests {
+    #[test]
+    fn joins_as_node_does() {
+        if cfg!(windows) {
+            assert_eq!(super::path_join(&["C:/x/unpacked", "Mod"]), r"C:\x\unpacked\Mod");
+            assert_eq!(super::path_join(&[r"C:\a\..\b", ".", "c"]), r"C:\b\c");
+            assert_eq!(super::path_join(&[r"\\srv\share", "f"]), r"\\srv\share\f");
+            assert_eq!(super::path_join(&["a/", "b/"]), r"a\b\");
+        } else {
+            assert_eq!(super::path_join(&["/x//y", "../z"]), "/x/z");
+        }
+        assert_eq!(super::path_join(&["", ""]), ".");
+    }
+}

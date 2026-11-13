@@ -67,6 +67,12 @@ impl Answer {
         self.headers.iter().find(|(k, _)| k.eq_ignore_ascii_case(name)).map(|(_, v)| v.as_str())
     }
 
+    pub fn bytes(mut self) -> Result<Vec<u8>, NetError> {
+        let mut buf = Vec::new();
+        self.body.read_to_end(&mut buf).map_err(io_error)?;
+        Ok(buf)
+    }
+
     pub fn text(mut self) -> Result<String, NetError> {
         let mut buf = Vec::new();
         self.body.read_to_end(&mut buf).map_err(io_error)?;

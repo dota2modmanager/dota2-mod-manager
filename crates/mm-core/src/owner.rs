@@ -50,6 +50,7 @@ pub struct Options {
 
 /// The state the channels share.
 pub struct Core {
+    pub user_data: PathBuf,
     pub settings: Settings,
     pub library: Library,
     pub installer: Installer,
@@ -60,6 +61,17 @@ pub struct Core {
     pub launch_counted: bool,
     /// the tab the window shows, for the Discord status
     pub presence_view: String,
+    /// the network, through the user's proxy
+    pub net: Arc<crate::net_fetch::Net>,
+    pub catalog: crate::catalog::Catalog,
+    /// which catalog mod a file is, by what it hashes to
+    pub fingerprints: crate::fingerprints::Fingerprints,
+    /// the anti-cheat notice in plain words
+    pub notice: crate::notice_text::NoticeText,
+    /// how many times each catalog mod was downloaded
+    pub download_stats: Arc<crate::download_stats::DownloadStats>,
+    /// whether the download counter may count (settings countDownloads), read off the settings' thread
+    pub counting: Arc<AtomicBool>,
     /// the game folder and language folder the installer was made for
     made_for: (Option<PathBuf>, String),
 }
@@ -69,7 +81,7 @@ pub struct Owner {
     pub opts: Options,
     pub shell: Arc<dyn Shell>,
     core: Mutex<Core>,
-    log: Mutex<Vec<String>>,
+    log: Arc<Mutex<Vec<String>>>,
     started: AtomicBool,
     me: Weak<Owner>,
     /// the item table's builds in the background: the newest asked for, and how many have not answered
@@ -146,7 +158,34 @@ impl Owner {
         let mut installer = Installer::new(made_for.0.clone(), &made_for.1).with_user_data(&ud);
         installer.journal_dir = Some(tx);
         let schema = SchemaService::new(&ud, true);
+        let net = Arc::new(crate::net_fetch::Net::new(opts.now));
+        if let Ok(Some(p)) =
+            crate::net_fetch::validate_download_proxy(settings.get("downloadProxy").unwrap_or(&Value::Null))
+        {
+            net.set_proxy(Some(&p));
+        }
+        let now = opts.now;
+        let catalog = crate::catalog::Catalog::new(&ud, None, None, Box::new(now));
+        let counting = Arc::new(AtomicBool::new(settings.get("countDownloads") != Some(&Value::Bool(false))));
+        let on = counting.clone();
+        // the counter's token is written beside the build by CI, never committed
+        let token = std::fs::read_to_string(opts.app_root.join("src").join("download-stats.token"))
+            .ok()
+            .map(|t| t.trim().to_string())
+            .filter(|t| !t.is_empty());
+        let log = Arc::new(Mutex::new(Vec::<String>::new()));
+        let stats_log = log.clone();
+        let download_stats = crate::download_stats::DownloadStats::new(
+            &ud.join("download-counts.json"),
+            Box::new(move || on.load(Ordering::SeqCst)),
+            token,
+            None,
+            net.clone(),
+            Box::new(now),
+            Box::new(move |m: &str| stats_log.lock().unwrap_or_else(|e| e.into_inner()).push(m.to_string())),
+        );
         let core = Core {
+            user_data: ud.clone(),
             settings,
             library,
             installer,
@@ -155,13 +194,22 @@ impl Owner {
             remote,
             launch_counted: false,
             presence_view: "catalog".into(),
+            net,
+            catalog,
+            fingerprints: crate::fingerprints::Fingerprints::new(&ud),
+            notice: crate::notice_text::NoticeText::default(),
+            download_stats,
+            counting,
             made_for,
         };
         let owner = Arc::new_cyclic(|me| Owner {
             opts,
             shell,
             core: Mutex::new(core),
-            log: Mutex::new(lines),
+            log: {
+                log.lock().unwrap_or_else(|e| e.into_inner()).splice(0..0, lines);
+                log
+            },
             started: AtomicBool::new(false),
             me: me.clone(),
             builds: Mutex::new(Builds::default()),
@@ -230,12 +278,14 @@ impl Owner {
 
     /// One of the window's channels, when it is the owner's.
     pub fn invoke(&self, channel: &str, args: &[Value]) -> Option<R> {
-        crate::owner_settings::handle(self, channel, args).or_else(|| crate::owner_library::handle(self, channel, args))
+        crate::owner_settings::handle(self, channel, args)
+            .or_else(|| crate::owner_library::handle(self, channel, args))
+            .or_else(|| crate::owner_mods::handle(self, channel, args))
     }
 
     /// Every channel the owner answers.
     pub fn channels() -> Vec<&'static str> {
-        [crate::owner_settings::CHANNELS, crate::owner_library::CHANNELS].concat()
+        [crate::owner_settings::CHANNELS, crate::owner_library::CHANNELS, crate::owner_mods::CHANNELS].concat()
     }
 
     /// The answer when a feature may not run now: Dota is open and holds its files, or the remote
