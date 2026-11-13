@@ -18,6 +18,7 @@ pub mod courier_models;
 pub mod cursors;
 pub mod data;
 pub mod disk_space;
+pub mod download_stats;
 pub mod effect_edit;
 pub mod emblem_ring;
 pub mod file_tx;

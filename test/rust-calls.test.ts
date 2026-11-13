@@ -3789,3 +3789,113 @@ test('the catalog, the remote config and the ready presets in Rust fetch, check 
   assert.deepEqual(tree('rs'), tree('ts'));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('download counts and install hits in Rust send and keep what the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const stats = await import('../src/download-stats.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-stats-'));
+
+  // the pure half, through the ordinary case list
+  const modsData = {
+    heroes: { groups: [{ id: 'pudge', mods: [{ name: 'A', styles: [{}, {}] }, { name: 'B', styles: [{}] }] }, { id: 7, mods: [{ name: 'C' }] }, { mods: 'x' }] },
+    sounds: [{ name: 'S', styles: [1, 2, 3] }, null],
+    misc: { mods: [{ name: 'M' }] }, empty: null, odd: 5,
+  };
+  const tokens = ['', 'short', 'a'.repeat(16), ` ${'b'.repeat(40)}\n`, 'has space inside but long enough', 'ж'.repeat(20), 'c'.repeat(513), 'd'.repeat(512)].map((t, i) => {
+    const f = path.join(tmp, `token${i}`);
+    fs.writeFileSync(f, t);
+    return [f];
+  });
+  compare([
+    { name: 'download-stats.statKeysFor', ts: stats.statKeysFor as never, inputs: [
+      ...[['heroes', 'A', 'Style 2'], ['heroes', 'A', null], ['heroes', 'A', ''], ['heroes', 'A', 'Style '], ['heroes', 'B', 'Style 2'], ['heroes', 'C', 'x'], ['heroes', 'Z', null],
+        ['sounds', 'S', ' Red Style  '], ['misc', 'M', 'y'], ['empty', 'A', null], ['odd', 'A', null], ['none', 'A', null]].map((a) => [modsData, ...a]),
+      [null, 'heroes', 'A', null],
+    ] },
+    { name: 'download-stats.statStyleName', ts: stats.statStyleName as never, inputs: [['Style 2'], ['Style '], [''], [null], [5], ['  Golden Style Style  '], ['style 1'], [true]] },
+    { name: 'download-stats.buildToken', ts: stats.buildToken as never, inputs: [...tokens, [path.join(tmp, 'missing')]] },
+  ]);
+
+  // the counter itself, against a server that answers each side's requests in the same order
+  const counts = { 'heroes/pudge/A': 10, 'heroes/pudge/A/2': 4.7, bad: -1, str: '5', [`${'k'.repeat(401)}`]: 1, 12: 3 };
+  const plan = [
+    { status: 200, body: JSON.stringify(counts) }, { status: 204, body: '' }, { status: 503, body: '' }, { status: 200, body: '{nope' },
+    { status: 200, body: JSON.stringify({ 'heroes/pudge/A': 20 }) }, { status: 500, body: '' }, { status: 200, body: '[1]' },
+  ];
+  type Seen = { method?: string; url?: string; headers: Record<string, unknown>; body: string };
+  const seen: Record<string, Seen[]> = { ts: [], rs: [] };
+  const server = http.createServer((req, res) => {
+    const side = (req.url || '').split('/')[1];
+    let body = '';
+    req.on('data', (d) => { body += d; });
+    req.on('end', () => {
+      const got = seen[side];
+      const { 'content-type': type, 'x-source': source, 'x-app-token': token } = req.headers;
+      got.push({ method: req.method, url: (req.url || '').slice(side.length + 1), headers: { type, source, token }, body });
+      const a = plan[got.length - 1] ?? { status: 404, body: '' };
+      res.writeHead(a.status, { 'content-length': Buffer.byteLength(a.body) });
+      res.end(a.body);
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const TOKEN = 'T'.repeat(20);
+  const ops: unknown[][] = [
+    ['active'], ['now', 0], ['get'], ['now', 1000], ['get'], ['track', ['heroes/pudge/A/2', 'heroes/pudge/A', '']], ['get'], ['flush'],
+    ['now', 400000], ['get'], ['now', 800000], ['get'], ['track', ['x']], ['now', 1200000], ['get'], ['flush'], ['now', 1600000], ['get'],
+    ['track', Array(7).fill('heroes/pudge/A')], ['flush'], ['enabled', false], ['track', ['y']], ['flush'], ['enabled', true], ['flush'],
+    ['now', 2000000], ['get'], ['now', 2400000], ['get'],
+  ];
+  const offline = [['active'], ['now', 0], ['get'], ['track', ['z']], ['flush'], ['get']];
+  const file = (side: string) => path.join(tmp, side, 'counts.json');
+  for (const side of ['ts', 'rs']) fs.mkdirSync(path.join(tmp, side));
+  const gone = http.createServer();
+  await new Promise<void>((r) => gone.listen(0, '127.0.0.1', () => r()));
+  const goneApi = `http://127.0.0.1:${(gone.address() as import('node:net').AddressInfo).port}`;
+  await new Promise((r) => gone.close(r));
+
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([
+    ['download-stats.script', `${base}/rs`, file('rs'), TOKEN, ops],
+    ['download-stats.script', goneApi, file('rs'), null, offline],
+  ]));
+  // not execFileSync: the server above lives in this process and has to answer it
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async (api: string, cacheFile: string, token: string | null, steps: unknown[][]) => {
+    let clock = 0;
+    let on = true;
+    let logs: string[] = [];
+    const s = stats.createDownloadStats({ cacheFile, enabled: () => on, token: () => token, api, now: () => clock, log: (m) => logs.push(m) });
+    const out: unknown[] = [];
+    for (const op of steps) {
+      let v: unknown = null;
+      if (op[0] === 'now') clock = op[1] as number;
+      else if (op[0] === 'enabled') on = op[1] as boolean;
+      else if (op[0] === 'get') v = await s.get();
+      else if (op[0] === 'track') s.track(op[1] as string[]);
+      else if (op[0] === 'flush') await s.flush();
+      else if (op[0] === 'active') v = s.active();
+      out.push({ v, logs });
+      logs = [];
+    }
+    return out;
+  };
+  const want = [await run(`${base}/ts`, file('ts'), TOKEN, ops), await run(goneApi, file('ts'), null, offline)];
+  const got = (JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok!; });
+  server.closeAllConnections(); server.close();
+
+  // how a body that is not JSON, or a refused socket, is worded is each side's own
+  const norm = (v: unknown) => JSON.parse(JSON.stringify(v), (k, x) => (typeof x === 'string' && /^download (counts|hit): /.test(x) && !/HTTP \d/.test(x) ? x.replace(/: .*/s, ': <why>') : x));
+  for (const [i, steps] of [ops, offline].entries()) steps.forEach((op, j) => assert.deepEqual(norm(got[i][j]), norm(want[i][j]), `${i}.${j} ${JSON.stringify(op)}`));
+  assert.deepEqual(seen.rs, seen.ts);
+  assert.ok(seen.ts.some((r) => r.method === 'POST' && r.body.includes('"heroes/pudge/A":5')), JSON.stringify(seen.ts));
+  assert.equal(fs.readFileSync(file('rs'), 'utf8'), fs.readFileSync(file('ts'), 'utf8'));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

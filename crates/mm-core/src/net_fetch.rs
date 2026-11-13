@@ -202,6 +202,41 @@ impl Net {
         }
     }
 
+    /// One request to exactly this URL, no mirrors, through the user's proxy, bounded as a whole
+    /// by `timeout_ms`: the status and the body. For small calls to somebody else's service.
+    pub fn direct(
+        &self,
+        method: &str,
+        url: &str,
+        headers: &[(&str, &str)],
+        body: Option<&[u8]>,
+        timeout_ms: u64,
+    ) -> Result<(u16, Vec<u8>), NetError> {
+        let agent = self.agent.read().unwrap_or_else(|e| e.into_inner()).1.clone();
+        let timeout = Some(Duration::from_millis(timeout_ms));
+        let err = |e: ureq::Error| {
+            let timeout = matches!(e, ureq::Error::Timeout(_));
+            NetError { timeout, ..NetError::new(e.to_string()) }
+        };
+        let res = if method == "POST" {
+            let mut req = agent.post(url).config().timeout_global(timeout).build();
+            for (k, v) in headers {
+                req = req.header(*k, *v);
+            }
+            req.send(body.unwrap_or_default()).map_err(err)?
+        } else {
+            let mut req = agent.get(url).config().timeout_global(timeout).build();
+            for (k, v) in headers {
+                req = req.header(*k, *v);
+            }
+            req.call().map_err(err)?
+        };
+        let status = res.status().as_u16();
+        let mut buf = Vec::new();
+        res.into_body().into_reader().read_to_end(&mut buf).map_err(io_error)?;
+        Ok((status, buf))
+    }
+
     fn get(&self, url: &str, headers: &[(String, String)]) -> Result<Answer, NetError> {
         let agent = self.agent.read().unwrap_or_else(|e| e.into_inner()).1.clone();
         let idle = Duration::from_millis(self.timing.read().unwrap_or_else(|e| e.into_inner()).idle_ms);

@@ -2424,6 +2424,52 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "download-stats.statKeysFor" => json!(crate::download_stats::stat_keys_for(args.first(), &s(args, 1), &s(args, 2), args.get(3))),
+        "download-stats.statStyleName" => json!(crate::download_stats::stat_style_name(args.first().unwrap_or(&Value::Null))),
+        "download-stats.buildToken" => json!(crate::download_stats::build_token(std::path::Path::new(&s(args, 0)))),
+        "download-stats.script" => {
+            // (api, cacheFile, token, ops): the counter on its own clock, each answer and the log after it
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let on = Arc::new(Mutex::new(true));
+            let logs = Arc::new(Mutex::new(Vec::<String>::new()));
+            let (c, e, l) = (clock.clone(), on.clone(), logs.clone());
+            let stats = crate::download_stats::DownloadStats::new(
+                std::path::Path::new(&s(args, 1)),
+                Box::new(move || *e.lock().unwrap()),
+                opt_s(args, 2),
+                Some(&s(args, 0)),
+                Arc::new(crate::net_fetch::Net::default()),
+                Box::new(move || *c.lock().unwrap()),
+                Box::new(move |m: &str| l.lock().unwrap().push(m.to_string())),
+            );
+            let mut out = Vec::new();
+            for op in args.get(3).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let v = match op[0].as_str().unwrap_or("") {
+                    "now" => {
+                        *clock.lock().unwrap() = op[1].as_f64().unwrap_or(0.0);
+                        Value::Null
+                    }
+                    "enabled" => {
+                        *on.lock().unwrap() = op[1].as_bool().unwrap_or(false);
+                        Value::Null
+                    }
+                    "get" => stats.get(),
+                    "track" => {
+                        let keys: Vec<String> = op[1].as_array().map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect()).unwrap_or_default();
+                        stats.track(&keys);
+                        Value::Null
+                    }
+                    "flush" => {
+                        stats.flush();
+                        Value::Null
+                    }
+                    "active" => json!(stats.active()),
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(json!({ "v": v, "logs": std::mem::take(&mut *logs.lock().unwrap()) }));
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
