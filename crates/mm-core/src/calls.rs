@@ -51,6 +51,209 @@ fn sha(file: Option<Vec<u8>>) -> Value {
     file.map_or(Value::Null, |f| json!(Sha1::digest(&f).iter().map(|b| format!("{b:02x}")).collect::<String>()))
 }
 
+/// Files as [[path, bytes]]: the bytes latin1 text or {"$file": path}.
+fn entries_arg(v: Option<&Value>) -> Result<Vec<crate::vpk::Entry>, String> {
+    let mut out = Vec::new();
+    for e in v.and_then(Value::as_array).cloned().unwrap_or_default() {
+        let data = b(std::slice::from_ref(&e[1]), 0)?;
+        out.push(crate::vpk::entry_at(&crate::js::string(&e[0]), data.as_slice().into()));
+    }
+    Ok(out)
+}
+
+/// Arcana bases with their files, as [{base, entries}].
+fn ready_bases(v: Option<&Value>) -> Result<Vec<crate::item_builder_personas::ReadyBase>, String> {
+    let mut ready = Vec::new();
+    for r in v.and_then(Value::as_array).cloned().unwrap_or_default() {
+        let base: crate::arcana_notes::ArcanaBase =
+            serde_json::from_value(r["base"].clone()).map_err(|e| e.to_string())?;
+        ready.push(crate::item_builder_personas::ReadyBase::new(base, entries_arg(r.get("entries"))?));
+    }
+    Ok(ready)
+}
+
+/// A test script of FileTx steps under `root`: write, copy, move, remove, fail, and a savepoint
+/// that either lets its failure through or catches it.
+fn tx_ops(tx: &mut crate::file_tx::FileTx, root: &std::path::Path, ops: &Value) -> Result<(), String> {
+    let at = |v: &Value| root.join(crate::js::string(v));
+    for op in ops.as_array().cloned().unwrap_or_default() {
+        let e = |e: std::io::Error| e.to_string();
+        match op[0].as_str().unwrap_or("") {
+            "write" => drop(tx.write(&at(&op[1]), crate::js::string(&op[2]).as_bytes()).map_err(e)?),
+            "copy" => drop(tx.copy(&at(&op[1]), &at(&op[2])).map_err(e)?),
+            "move" => drop(tx.rename(&at(&op[1]), &at(&op[2])).map_err(e)?),
+            "remove" => drop(tx.remove(&at(&op[1])).map_err(e)?),
+            "fail" => return Err("fail".into()),
+            "savepoint" => {
+                let inner = op[1].clone();
+                let out = tx.savepoint(|tx| tx_ops(tx, root, &inner));
+                if op[2] != "catch" {
+                    out?;
+                }
+            }
+            other => return Err(format!("no step {other}")),
+        }
+    }
+    Ok(())
+}
+
+/// One step of a load order script; records are named by their place in the library.
+fn slots_step(
+    inst: &crate::installer::Installer,
+    lib: &mut crate::library::Library,
+    op: &Value,
+) -> Result<Value, String> {
+    use std::collections::HashSet;
+    let sorted = |u: &HashSet<String>| {
+        let mut v: Vec<&String> = u.iter().collect();
+        v.sort();
+        json!(v)
+    };
+    let list = |v: &Value| -> Vec<String> { v.as_array().into_iter().flatten().map(crate::js::string).collect() };
+    let used_of = |v: &Value| -> HashSet<String> { list(v).into_iter().collect() };
+    let rec = |lib: &crate::library::Library, i: &Value| {
+        i.as_u64().and_then(|i| lib.list().get(i as usize)).cloned().unwrap_or(json!({}))
+    };
+    let store = |lib: &mut crate::library::Library, id: &Value, files: &[Value]| {
+        lib.update(id, &json!({ "files": files }), None).map(|_| ()).map_err(|e| e.to_string())
+    };
+    Ok(match op[0].as_str().unwrap_or("") {
+        "usedPakNames" => sorted(&inst.used_pak_names()?),
+        "allocate" => {
+            let mut used = used_of(&op[1]);
+            let name = inst.allocate_pak(&mut used, op[2].as_bool().unwrap_or(false))?;
+            json!([name, sorted(&used)])
+        }
+        "plan" => {
+            let mut used = used_of(&op[2]);
+            let plan = inst.plan_pak_names(&list(&op[1]), &mut used, op[3].as_bool().unwrap_or(false))?;
+            json!([plan.into_iter().collect::<Vec<_>>(), sorted(&used)])
+        }
+        "slotBase" => json!(inst.slot_base(&op[1])),
+        "slotNumber" => json!(inst.slot_number(&op[1])),
+        "coverage" => {
+            let mods: Vec<crate::installer_slots::CoverageMod> = op[1]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|m| crate::installer_slots::CoverageMod {
+                    key: m["key"].clone(),
+                    name: m["name"].clone(),
+                    files: m["files"].as_array().cloned().unwrap_or_default(),
+                })
+                .collect();
+            json!(inst.coverage(&mods).into_iter().collect::<Vec<_>>())
+        }
+        "freeBelow" => json!(inst.free_slot_below(op[1].as_u64().unwrap_or(0) as u32, &used_of(&op[2]))),
+        "moveToSlot" => {
+            let r = rec(lib, &op[1]);
+            let files = inst.move_to_slot(&r, &crate::js::string(&op[2]), op.get(3).and_then(Value::as_str), None)?;
+            store(lib, &r["id"], &files)?;
+            json!(files)
+        }
+        "swap" => {
+            let out = inst.swap_slots(&rec(lib, &op[1]), &rec(lib, &op[2]))?;
+            for (id, files) in &out {
+                store(lib, id, files)?;
+            }
+            json!(out.into_iter().map(|(id, files)| json!({ "id": id, "files": files })).collect::<Vec<_>>())
+        }
+        "usedModSlots" => json!(inst.used_mod_slots()?),
+        "legacy" => {
+            inst.migrate_legacy_priority_paks(lib)?;
+            Value::Null
+        }
+        "moveToZone" => {
+            let r = rec(lib, &op[1]);
+            let files = crate::slot_zones::move_to_zone(inst, &r)?;
+            if let Some(f) = &files {
+                store(lib, &r["id"], f)?;
+            }
+            json!(files)
+        }
+        "migrateZones" => {
+            json!(crate::slot_zones::migrate_slot_zones(inst, lib)?.map(|moved| json!({ "moved": moved })))
+        }
+        "vacate" => json!(crate::slot_zones::vacate_app_pak(inst, lib)?),
+        "list" => json!(lib.list()),
+        other => return Err(format!("no step {other}")),
+    })
+}
+
+/// One step of a library script; records and presets are named by their place in the lists.
+fn library_step(lib: &mut crate::library::Library, op: &Value) -> Result<Value, String> {
+    let e = |e: std::io::Error| e.to_string();
+    let rec = |lib: &crate::library::Library, i: &Value| {
+        i.as_u64().and_then(|i| lib.list().get(i as usize)).and_then(|r| r.get("id")).cloned().unwrap_or(json!("nope"))
+    };
+    let pre = |lib: &crate::library::Library, i: &Value| {
+        i.as_u64()
+            .and_then(|i| lib.list_presets().get(i as usize))
+            .and_then(|r| r.get("id"))
+            .cloned()
+            .unwrap_or(json!("nope"))
+    };
+    let members = |m: Vec<crate::library::Member>| {
+        Value::Array(m.into_iter().map(|m| json!({ "identity": m.identity, "rec": m.rec })).collect())
+    };
+    Ok(match op[0].as_str().unwrap_or("") {
+        "add" => lib.add(&op[1], None).map_err(e)?,
+        "update" => json!(lib.update(&rec(lib, &op[1]), &op[2], None).map_err(e)?),
+        "setEnabled" => json!(lib.set_enabled(&rec(lib, &op[1]), op[2].as_bool().unwrap_or(false), None).map_err(e)?),
+        "remove" => {
+            lib.remove_record(&rec(lib, &op[1]), None).map_err(e)?;
+            Value::Null
+        }
+        "savePreset" => {
+            lib.save_preset(&op[1], None).map_err(e)?;
+            Value::Null
+        }
+        "updatePresetMods" => json!(lib.update_preset_mods(&pre(lib, &op[1]), None).map_err(e)?),
+        "addShared" => lib.add_shared_preset(&op[1], None).map_err(e)?,
+        "updatePreset" => json!(lib.update_preset(&pre(lib, &op[1]), &op[2], None).map_err(e)?),
+        "deletePreset" => {
+            lib.delete_preset(&pre(lib, &op[1]), None).map_err(e)?;
+            Value::Null
+        }
+        "find" => json!(lib.find(&rec(lib, &op[1]))),
+        "findByKey" => json!(lib.find_by_key(&op[1], &op[2], op.get(3))),
+        "list" => json!(lib.list()),
+        "knownLang" => json!(lib.known_lang_rel_paths()?),
+        "knownFiles" => json!(lib.known_files()?),
+        "picksOn" => json!(lib.picks_on()),
+        "members" => members(lib.preset_members(lib.get_preset(&pre(lib, &op[1])))?),
+        "membersOf" => members(lib.preset_members(op.get(1))?),
+        "modIds" => json!(lib.preset_mod_ids(lib.get_preset(&pre(lib, &op[1])))?),
+        "file" => json!(std::fs::read_to_string(&lib.file).ok()),
+        other => return Err(format!("no step {other}")),
+    })
+}
+
+/// A string argument that may be null.
+fn opt_s(args: &[Value], i: usize) -> Option<String> {
+    args.get(i).and_then(Value::as_str).map(String::from)
+}
+
+/// A path argument that may be null or empty (a falsy game path).
+fn opt_path(args: &[Value], i: usize) -> Option<std::path::PathBuf> {
+    opt_s(args, i).filter(|p| !p.is_empty()).map(std::path::PathBuf::from)
+}
+
+/// An argument read into the type it is.
+fn from_arg<T: serde::de::DeserializeOwned>(args: &[Value], i: usize) -> Result<T, String> {
+    serde_json::from_value(args.get(i).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())
+}
+
+/// An argument that is a list of strings.
+fn strings(args: &[Value], i: usize) -> Result<Vec<String>, String> {
+    from_arg(args, i)
+}
+
+/// Files made by a call, as [path, sha1] pairs in their order.
+fn shas(files: indexmap::IndexMap<String, Vec<u8>>) -> Value {
+    json!(files.into_iter().map(|(p, f)| json!([p, sha(Some(f))])).collect::<Vec<_>>())
+}
+
 fn hex(b: &[u8]) -> String {
     b.iter().map(|b| format!("{b:02x}")).collect()
 }
@@ -189,6 +392,21 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
         }
         "item-builder-unusual.unusualItemEffect" => {
             json!(unusual_effects::unusual_item_effect(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?)
+        }
+        "cosmetic-names.gameTokens" => {
+            let tokens = cosmetic_names::game_tokens(std::path::Path::new(&s(args, 0)), &s(args, 1));
+            json!(tokens.iter().collect::<Vec<_>>())
+        }
+        "cosmetic-names.styleNamer" => {
+            let tokens = cosmetic_names::game_tokens(std::path::Path::new(&s(args, 0)), &s(args, 1));
+            let asked: Vec<(String, usize)> = from_arg(args, 2)?;
+            json!(asked
+                .iter()
+                .map(|(token, i)| cosmetic_names::style_name(&tokens, token, || format!("style {i}")))
+                .collect::<Vec<_>>())
+        }
+        "cosmetic-names.chineseCosmeticNames" => {
+            json!(*cosmetic_names::chinese_cosmetic_names(std::path::Path::new(&s(args, 0)), &b(args, 1)?))
         }
         "cosmetic-names.localizationTokens" => {
             json!(cosmetic_names::localization_tokens(&b(args, 0)?).into_iter().collect::<Vec<_>>())
@@ -549,15 +767,322 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             crate::item_builder_refits::own_models_win(&mut picks);
             json!(picks.iter().map(|p| p.assets.as_ref().map(|a| a.iter().map(|(x, _)| x.clone()).collect::<Vec<_>>())).collect::<Vec<_>>())
         }
+        "file-tx.script" => {
+            // (root, journalDir|null, ops, "run"|"crash"): whether the change went through
+            let root = std::path::PathBuf::from(s(args, 0));
+            let journal = opt_path(args, 1);
+            let ops = args.get(2).cloned().unwrap_or(Value::Null);
+            if s(args, 3) == "crash" {
+                let mut tx = crate::file_tx::FileTx::new(journal.as_deref(), Box::new(|_| {}));
+                json!(tx_ops(&mut tx, &root, &ops).is_ok())
+            } else {
+                json!(crate::file_tx::FileTx::run(journal.as_deref(), Box::new(|_| {}), |tx| tx_ops(tx, &root, &ops)).is_ok())
+            }
+        }
+        "file-tx.readJournal" => {
+            let (steps, committed) = crate::file_tx::read_journal(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            json!({ "steps": steps, "committed": committed })
+        }
+        "file-tx.recoverJournals" => json!(crate::file_tx::recover_journals(opt_path(args, 0).as_deref(), &mut |_| {})),
+        "library.script" => {
+            // (dir, ops): each step's answer, a thrown step as {error}
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 0)));
+            let ops = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            Value::Array(ops.iter().map(|op| match library_step(&mut lib, op) {
+                Ok(v) => json!({ "ok": v }),
+                Err(e) => json!({ "error": e }),
+            }).collect())
+        }
+        "library.identityOf" => crate::library::Library::identity_of(&args[0]),
+        "library.sameMod" => json!(crate::library::Library::same_mod(args.first(), args.get(1))),
+        "library.inPreset" => json!(crate::library::Library::in_preset(args.first())),
+        "library.isPick" => json!(crate::library::Library::is_pick(args.first())),
+        "library.pickOf" => crate::library::Library::pick_of(&args[0]),
+        "installer-slots.script" => {
+            // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let ops = args.get(4).and_then(Value::as_array).cloned().unwrap_or_default();
+            Value::Array(
+                ops.iter()
+                    .map(|op| match slots_step(&inst, &mut lib, op) {
+                        Ok(v) => json!({ "ok": v }),
+                        Err(e) => json!({ "error": e }),
+                    })
+                    .collect(),
+            )
+        }
+        "settings.load" => Value::Object(crate::settings::Settings::new(std::path::Path::new(&s(args, 0))).all()),
+        "settings.set" => {
+            // (dir, [[key, value]...]): each set in turn, then the file as it is left
+            let mut st = crate::settings::Settings::new(std::path::Path::new(&s(args, 0)));
+            for kv in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                st.set(&crate::js::string(&kv[0]), kv[1].clone()).map_err(|e| e.to_string())?;
+            }
+            json!(std::fs::read_to_string(&st.file).ok())
+        }
+        "gamelang.modFolderFor" => json!(crate::gamelang::mod_folder_for(
+            opt_s(args, 0).as_deref(),
+            opt_s(args, 1).as_deref(),
+            opt_s(args, 2).as_deref()
+        )),
+        "gamelang.folderFor" => json!(crate::gamelang::folder_for(opt_s(args, 0).as_deref())),
+        "gamelang.readKey" => json!(crate::gamelang::read_key(&s(args, 0), &s(args, 1))),
+        "gamelang.bootLanguages" => {
+            json!(crate::gamelang::boot_languages(opt_path(args, 0).as_deref()).map(|(ui, audio)| json!({ "ui": ui, "audio": audio })))
+        }
+        "gamelang.langFolders" => json!(crate::gamelang::lang_folders(opt_path(args, 0).as_deref())),
+        "gamelang.detectLangSuffix" => json!(crate::gamelang::detect_lang_suffix(opt_path(args, 0).as_deref())),
+        "gamelang.launchLanguage" => json!(crate::gamelang::launch_language(opt_path(args, 0).as_deref())),
+        "gamelang.launchOptions" => json!(crate::gamelang::launch_options(opt_path(args, 0).as_deref())),
+        "gamelang.steamLanguage" => json!(crate::gamelang::steam_language(opt_path(args, 0).as_deref())),
+        "gamelang.steamAccountDir" => {
+            json!(crate::gamelang::steam_account_dir(opt_path(args, 0).as_deref()).map(|p| p.to_string_lossy().into_owned()))
+        }
+        "gamelang.voiceInstalled" => json!(crate::gamelang::voice_installed(std::path::Path::new(&s(args, 0)), &s(args, 1))),
+        "gamelang.writeBootLanguages" => {
+            crate::gamelang::write_boot_languages(
+                std::path::Path::new(&s(args, 0)),
+                opt_s(args, 1).as_deref(),
+                opt_s(args, 2).as_deref(),
+            )
+            .map_err(|e| e.to_string())?;
+            Value::Null
+        }
+        "gamelang.ensureLangFolder" => json!(crate::gamelang::ensure_lang_folder(std::path::Path::new(&s(args, 0)), &s(args, 1))
+            .map_err(|e| e.to_string())?
+            .to_string_lossy()),
+        "gamelang.moveLangFolder" => json!(crate::gamelang::move_lang_folder(
+            opt_path(args, 0).as_deref(),
+            opt_s(args, 1).as_deref(),
+            opt_s(args, 2).as_deref()
+        )),
+        "minify.isMinifyFile" => json!(crate::minify::is_minify_file(&s(args, 0))),
+        "minify.isMinifyPak" => json!(crate::minify::is_minify_pak(std::path::Path::new(&s(args, 0)))),
+        "minify.readConfig" => json!(crate::minify::read_config(std::path::Path::new(&s(args, 0)))),
+        "minify.prelaunchHook" => json!(crate::minify::prelaunch_hook(opt_s(args, 0).as_deref())),
+        "minify.readMinify" => {
+            // ({folders, audio, gameLanguages, ourFolder, ourMods, config, launchOptions}); a count per folder in `counts`
+            let o = args.first().cloned().unwrap_or(Value::Null);
+            let folders: Vec<(String, usize)> = o["folders"]
+                .as_array()
+                .map(|a| a.iter().map(|f| (crate::js::string(&f["suffix"]), f["modFiles"].as_u64().unwrap_or(0) as usize)).collect())
+                .unwrap_or_default();
+            let folders: Vec<crate::minify::FolderCount> =
+                folders.iter().map(|(s, n)| crate::minify::FolderCount { suffix: s, mod_files: *n }).collect();
+            let langs: Vec<String> = serde_json::from_value(o["gameLanguages"].clone()).unwrap_or_default();
+            let langs: Vec<&str> = langs.iter().map(String::as_str).collect();
+            let config = o.get("config").filter(|c| c.is_object()).map(|c| crate::minify::MinifyConfig {
+                output_path: c["outputPath"].as_str().map(String::from),
+                locale: c["locale"].as_str().map(String::from),
+                folder: c["folder"].as_str().map(String::from),
+            });
+            let counts: Option<std::collections::HashMap<String, usize>> = o.get("counts").filter(|c| c.is_object()).map(|c| {
+                c.as_object().unwrap().iter().map(|(k, v)| (k.clone(), v.as_u64().unwrap_or(0) as usize)).collect()
+            });
+            let count = counts.as_ref().map(|c| move |f: &str| c.get(f).copied().unwrap_or(0));
+            json!(crate::minify::read_minify(crate::minify::MinifyInput {
+                folders: &folders,
+                audio: o["audio"].as_str(),
+                game_languages: &langs,
+                our_folder: o["ourFolder"].as_str().unwrap_or(""),
+                our_mods: o["ourMods"].as_u64().unwrap_or(0) as usize,
+                config,
+                count_mods: count.as_ref().map(|c| c as &dyn Fn(&str) -> usize),
+                launch_options: o["launchOptions"].as_str(),
+            }))
+        }
+        "patcher-gameinfo.searchPathsBlock" => json!(crate::patcher_gameinfo::search_paths_block(&s(args, 0))?),
+        "patcher-gameinfo.withModFolder" => json!(crate::patcher_gameinfo::with_mod_folder(&s(args, 0), &s(args, 1))?),
+        "patcher-gameinfo.searchPathLines" => json!(crate::patcher_gameinfo::search_path_lines(&s(args, 0))),
+        "patcher-gameinfo.patchIsCurrent" => {
+            json!(crate::patcher_gameinfo::patch_is_current(&s(args, 0), &s(args, 1), &s(args, 2))?)
+        }
+        "patcher-gameinfo.patchedBranch" => json!(crate::patcher_gameinfo::patched_branch(&s(args, 0), &s(args, 1))?),
+        "patcher-gameinfo.stripPatch" => json!(crate::patcher_gameinfo::strip_patch(&s(args, 0))),
+        "patcher-gameinfo.restoreBranch" => {
+            let want: Option<crate::patcher_signatures::Hashes> = from_arg(args, 1)?;
+            let (text, verified) = crate::patcher_gameinfo::restore_branch(&s(args, 0), want.as_ref());
+            json!({ "text": text, "verified": verified })
+        }
+        "patcher-signatures.crc32" => json!(crate::patcher_signatures::crc32(&b(args, 0)?)),
+        "patcher-signatures.fileHashes" => json!(crate::patcher_signatures::file_hashes(&b(args, 0)?)),
+        "patcher-signatures.signatureLine" => json!(crate::patcher_signatures::signature_line(&b(args, 0)?)),
+        "patcher-signatures.vanillaBranchHashes" => json!(crate::patcher_signatures::vanilla_branch_hashes(&s(args, 0))),
+        "patcher-signatures.matchesVanilla" => {
+            let want: Option<crate::patcher_signatures::Hashes> = from_arg(args, 1)?;
+            json!(crate::patcher_signatures::matches_vanilla(&s(args, 0), want.as_ref()))
+        }
+        "patcher-signatures.hasSignaturePatch" => json!(crate::patcher_signatures::has_signature_patch(&s(args, 0))),
+        "patcher-signatures.stripSignatures" => json!(crate::patcher_signatures::strip_signatures(&s(args, 0))),
+        "vpk-analyze.analyzeVpkPaths" => json!(crate::vpk_analyze::analyze_vpk_paths(&strings(args, 0)?)),
+        "vpk-analyze.slotDisplayName" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::vpk_analyze::slot_display_name(&s(args, 1)))
+        }
+        "vpk-analyze.describeHero" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let h: crate::vpk_analyze::HeroHit = from_arg(args, 1)?;
+            json!(crate::vpk_analyze::describe_hero(&h))
+        }
+        "vpk-analyze.subjectHeroes" | "vpk-analyze.describeAnalysis" | "vpk-analyze.nameFromAnalysis" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let a = crate::vpk_analyze::analyze_vpk_paths(&strings(args, 1)?);
+            match name {
+                "vpk-analyze.subjectHeroes" => json!(crate::vpk_analyze::subject_heroes(&a)),
+                "vpk-analyze.describeAnalysis" => json!(crate::vpk_analyze::describe_analysis(&a)),
+                _ => json!(crate::vpk_analyze::name_from_analysis(&a)),
+            }
+        }
+        "pak-stamp.gameSchemaStamp" => {
+            json!(crate::pak_stamp::game_schema_stamp(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?)
+        }
         "item-builder-sets.itemSets" => {
             crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
             let text = b(args, 1)?;
             let slots = crate::item_builder_slots::item_slots(&text).map_err(kv_err)?;
             json!(crate::item_builder_sets::item_sets(&text, &slots).map_err(kv_err)?)
         }
+        "item-builder-everyone.everyoneWears" => {
+            // (pak, items_game, [{id, block, assets: [[path, latin1 bytes]]}], [[path, bytes]], heroes | null)
+            let ix = pak(&s(args, 0))?;
+            let entries = |v: &Value| -> Vec<crate::vpk::Entry> {
+                v.as_array()
+                    .map(|a| a.iter().map(|e| crate::vpk::entry_at(&crate::js::string(&e[0]), crate::kv::to_latin1(&crate::js::string(&e[1])).into())).collect())
+                    .unwrap_or_default()
+            };
+            let list: Vec<crate::item_builder_everyone::SchemaPatch> = args
+                .get(2)
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|p| crate::item_builder_everyone::SchemaPatch {
+                    id: crate::js::string(&p["id"]),
+                    block: crate::kv::to_latin1(&crate::js::string(&p["block"])),
+                    assets: entries(&p["assets"]),
+                    source: String::new(),
+                })
+                .collect();
+            let beneath = entries(args.get(3).unwrap_or(&Value::Null));
+            let heroes: Option<Vec<String>> = args.get(4).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect());
+            let out = crate::item_builder_everyone::everyone_wears(&b(args, 1)?, &list, &beneath, &|p: &str| ix.read(p).ok().flatten(), heroes.as_deref())
+                .map_err(kv_err)?;
+            json!(out
+                .into_iter()
+                .map(|p| json!([p.id, latin1(&p.block), p.assets.iter().map(|e| json!([e.path(), sha(Some(e.data.to_vec()))])).collect::<Vec<_>>(), p.source]))
+                .collect::<Vec<_>>())
+        }
+        "item-builder-personas.personasOn" => {
+            let records = args.first().and_then(Value::as_array).cloned().unwrap_or_default();
+            json!(crate::item_builder_personas::personas_on(&records).into_iter().collect::<Vec<_>>())
+        }
+        "item-builder-personas.leftOut" => {
+            // (record, [[hero, item]])
+            let on: indexmap::IndexMap<String, String> = args
+                .get(1)
+                .and_then(Value::as_array)
+                .map(|a| a.iter().map(|x| (crate::js::string(&x[0]), crate::js::string(&x[1]))).collect())
+                .unwrap_or_default();
+            json!(crate::item_builder_personas::left_out(args.first().unwrap_or(&Value::Null), &on))
+        }
+        "item-builder-personas.displaced" => {
+            let records = args.first().and_then(Value::as_array).cloned().unwrap_or_default();
+            json!(crate::item_builder_personas::displaced(&records))
+        }
+        "item-builder-personas.isSelectorSlot" => json!(crate::item_builder_personas::is_selector_slot(&s(args, 0))),
+        "item-builder-personas.personaRecords" => {
+            let records = args.first().and_then(Value::as_array).cloned().unwrap_or_default();
+            let (records, left) = crate::item_builder_personas::persona_records(&records, &b(args, 1)?).map_err(kv_err)?;
+            json!({ "records": records, "left": left.into_iter().map(|(rec, why)| json!({ "rec": rec, "why": why })).collect::<Vec<_>>() })
+        }
+        "item-builder-personas.personaScales" => {
+            // (pak, records, [{base, entries}]): the scales of the personas the records put on
+            let ix = pak(&s(args, 0))?;
+            let records: Vec<Value> = from_arg(args, 1)?;
+            let on = crate::item_builder_personas::personas_on(&records);
+            let scales = crate::item_builder_personas::persona_scales(&on, &ready_bases(args.get(2))?, &|p: &str| ix.read(p).ok().flatten());
+            json!(scales.into_iter().collect::<Vec<_>>())
+        }
+        "item-builder-personas.personaScaleOf" => {
+            let scales: Vec<(String, f64)> = from_arg(args, 1)?;
+            json!(crate::item_builder_personas::persona_scale_of(args.first().unwrap_or(&Value::Null), &scales.into_iter().collect()))
+        }
+        "meshopt.encodeVertexBuffer" => {
+            // (raw hex, count, size): version 0, as hex
+            json!(hex(&crate::meshopt::encode_vertex_buffer_v0(&unhex(&s(args, 0)), n(args, 1) as usize, n(args, 2) as usize)?))
+        }
+        "model-scale.scaleModel" => json!(sha(Some(crate::model_scale::scale_model(&b(args, 0)?, n(args, 1))?))),
+        "model-scale.modelScaleAgainst" => json!(crate::model_scale::model_scale_against(&b(args, 0)?, &b(args, 1)?)?),
+        "model-scale.scaledModels" => {
+            let scale = args.get(1).and_then(Value::as_f64);
+            let mut skipped = Vec::new();
+            let out = crate::model_scale::scaled_models(entries_arg(args.first())?, scale, &mut |p, _| skipped.push(json!(p)));
+            json!([out.iter().map(|e| json!([e.path(), sha(Some(e.data.to_vec()))])).collect::<Vec<_>>(), skipped])
+        }
+        "item-builder-personas.personaAssets" => {
+            // (record, [[path, latin1 bytes]], [{base, entries: [[path, bytes]]}]): the paths kept
+            let ready = ready_bases(args.get(2))?;
+            let kept = crate::item_builder_personas::persona_assets(args.first().unwrap_or(&Value::Null), entries_arg(args.get(1))?, &ready);
+            json!(kept.iter().map(crate::vpk::Entry::path).collect::<Vec<_>>())
+        }
+        "item-builder-ability-fx.namedFxSlots" => {
+            // (lang, pak, items_game): the whole offer's slots named
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let ix = pak(&s(args, 1))?;
+            let slots = crate::item_builder_slots::item_slots(&b(args, 2)?).map_err(kv_err)?;
+            json!(crate::item_builder_ability_fx::named_fx_slots(slots, &|p: &str| ix.read(p).ok().flatten(), &s(args, 0)))
+        }
+        "item-builder-ability-fx.mergeFxPatches" => {
+            // ([{id, block, assets: [[path, latin1 bytes]], source}]), a source starting "fx " an
+            // ability effects pick: [[id, block, [path], source]]
+            let list: Vec<crate::item_builder_everyone::SchemaPatch> = args
+                .first()
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|p| crate::item_builder_everyone::SchemaPatch {
+                    id: crate::js::string(&p["id"]),
+                    block: crate::kv::to_latin1(&crate::js::string(&p["block"])),
+                    assets: p["assets"]
+                        .as_array()
+                        .map(|a| a.iter().map(|e| crate::vpk::entry_at(&crate::js::string(&e[0]), crate::kv::to_latin1(&crate::js::string(&e[1])).into())).collect())
+                        .unwrap_or_default(),
+                    source: crate::js::string(&p["source"]),
+                })
+                .collect();
+            let out = crate::item_builder_ability_fx::merge_fx_patches(list, |p| p.source.starts_with("fx ")).map_err(kv_err)?;
+            json!(out
+                .iter()
+                .map(|p| json!([p.id, latin1(&p.block), p.assets.iter().map(crate::vpk::Entry::path).collect::<Vec<_>>(), p.source]))
+                .collect::<Vec<_>>())
+        }
         "arcana.asModel" => {
             let m = s(args, 1);
             json!(sha(Some(crate::arcana::as_model(&b(args, 0)?, Some(&m))?)))
+        }
+        "arcana.withChildren" => {
+            let children: Vec<crate::arcana::Child> =
+                serde_json::from_value(args.get(1).cloned().unwrap_or(json!([]))).map_err(|e| e.to_string())?;
+            json!(sha(Some(crate::arcana::with_children(&b(args, 0)?, &children)?)))
+        }
+        "arcana.withChildAt" => json!(sha(Some(crate::arcana::with_child_at(&b(args, 0)?, &s(args, 1), &s(args, 2))?))),
+        "arcana.arcanaPictures" => shas(crate::arcana::arcana_pictures(&*pak(&s(args, 0))?, &s(args, 1))?),
+        "arcana.arcanaSwaps" => shas(crate::arcana::arcana_swaps(&*pak(&s(args, 0))?, &s(args, 1), rgb(args, 2))?),
+        "arcana.arcanaForms" => {
+            let items: Vec<String> = serde_json::from_value(args.get(3).cloned().unwrap_or(json!([]))).map_err(|e| e.to_string())?;
+            let mut files = indexmap::IndexMap::new();
+            let mut log = Vec::new();
+            crate::arcana::arcana_forms(&*pak(&s(args, 0))?, &s(args, 1), rgb(args, 2), &items, &mut files, &mut |m| log.push(m))?;
+            json!([shas(files), log])
+        }
+        "arcana.buildArcana" => {
+            let forms: Vec<String> = serde_json::from_value(args.get(3).cloned().unwrap_or(json!([]))).map_err(|e| e.to_string())?;
+            let x = crate::arcana::build_arcana(&*pak(&s(args, 0))?, &s(args, 1), rgb(args, 2), &|_| false, &forms)?;
+            let failed: Vec<&str> = x.failed.iter().map(|f| f.path.as_str()).collect();
+            json!([sha(Some(x.vpk)), x.files, x.changed, failed])
         }
         "effect-edit.cleanEdits" => json!(effect_edit::clean_edits(args.first().unwrap_or(&Value::Null))),
         "effect-edit.systemsOf" => {
@@ -598,9 +1123,19 @@ pub fn call_all(list: &[Value]) -> Vec<Value> {
             let parts = c.as_array().map(Vec::as_slice).unwrap_or(&[]);
             let name = parts.first().and_then(Value::as_str).unwrap_or("");
             match call(name, parts.get(1..).unwrap_or(&[])) {
-                Ok(v) => json!({ "ok": v }),
+                Ok(v) => json!({ "ok": no_negative_zero(v) }),
                 Err(e) => json!({ "error": e }),
             }
         })
         .collect()
+}
+
+/// -0 as JSON.stringify writes it, 0: the TypeScript side of a comparison has been through it.
+fn no_negative_zero(v: Value) -> Value {
+    match v {
+        Value::Number(n) if n.as_f64() == Some(0.0) && n.as_f64().is_some_and(f64::is_sign_negative) => json!(0),
+        Value::Array(a) => Value::Array(a.into_iter().map(no_negative_zero).collect()),
+        Value::Object(o) => Value::Object(o.into_iter().map(|(k, v)| (k, no_negative_zero(v))).collect()),
+        other => other,
+    }
 }

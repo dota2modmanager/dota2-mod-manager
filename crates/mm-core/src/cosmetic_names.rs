@@ -74,3 +74,86 @@ pub fn cosmetic_name_table<'a>(
     }
     names
 }
+
+/// A language's tokens, shared.
+pub type Tokens = std::sync::Arc<IndexMap<String, String>>;
+
+/// Cosmetic names by schema name, shared.
+pub type Names = std::sync::Arc<BTreeMap<String, String>>;
+
+fn lang_file(lang: &str) -> &'static str {
+    match lang {
+        "ru" => "russian",
+        "zh-CN" => "schinese",
+        _ => "english",
+    }
+}
+
+fn game_index(game: &std::path::Path) -> Option<crate::vpk::Index> {
+    crate::vpk::Index::open(&game.join("dota").join("pak01_dir.vpk")).ok()
+}
+
+/// Every text token of the game in the app's language, dota_*.txt before items_*.txt, read once per
+/// game build and language; empty with no game to read. Style, rarity and event names are in
+/// dota_*.txt, and items_*.txt has a few more.
+pub fn game_tokens(game: &std::path::Path, lang: &str) -> std::sync::Arc<IndexMap<String, String>> {
+    use std::sync::{Arc, Mutex};
+    static CACHE: OnceLock<Mutex<IndexMap<String, Tokens>>> = OnceLock::new();
+    let Ok(stamp) = crate::pak_stamp::game_schema_stamp(game) else { return Arc::default() };
+    let build = format!("{}|{stamp}|", game.display());
+    let key = format!("{build}{lang}");
+    let cache = CACHE.get_or_init(Default::default);
+    if let Some(found) = cache.lock().unwrap().get(&key) {
+        return found.clone();
+    }
+    let Some(index) = game_index(game) else { return Arc::default() };
+    let mut found = IndexMap::new();
+    for file in ["dota", "items"] {
+        let Ok(data) = index.read(&format!("resource/localization/{file}_{}.txt", lang_file(lang))) else {
+            return Arc::default();
+        };
+        for (k, v) in data.map(|d| localization_tokens(&d)).unwrap_or_default() {
+            found.entry(k).or_insert(v);
+        }
+    }
+    let found = Arc::new(found);
+    let mut cache = cache.lock().unwrap();
+    cache.retain(|k, _| k.starts_with(&build));
+    cache.insert(key, found.clone());
+    found
+}
+
+/// An item style's name in the app's language, from the game's own localization by the style's
+/// token (#DOTA_Style_Bladeform_Legacy_1); `fallback` for a token the game has no text for.
+pub fn style_name(tokens: &IndexMap<String, String>, token: &str, fallback: impl FnOnce() -> String) -> String {
+    let key = token.strip_prefix('#').unwrap_or(token).to_lowercase();
+    match tokens.get(&key) {
+        Some(text) if !text.is_empty() && !text.starts_with('#') => text.clone(),
+        _ => fallback(),
+    }
+}
+
+/// The cosmetics' names in Chinese, by schema name: read-only, offline and refreshed after a game
+/// update; a missing language file keeps English (the name is left out).
+pub fn chinese_cosmetic_names(game: &std::path::Path, schema_text: &[u8]) -> std::sync::Arc<BTreeMap<String, String>> {
+    use std::sync::{Arc, Mutex};
+    static CACHE: OnceLock<Mutex<Option<(String, String, Names)>>> = OnceLock::new();
+    let Ok(stamp) = crate::pak_stamp::game_schema_stamp(game) else { return Arc::default() };
+    let at = game.display().to_string();
+    let cache = CACHE.get_or_init(Default::default);
+    if let Some((g, s, names)) = cache.lock().unwrap().as_ref() {
+        if *g == at && *s == stamp {
+            return names.clone();
+        }
+    }
+    let Some(index) = game_index(game) else { return Arc::default() };
+    let mut tokens = IndexMap::new();
+    for file in ["dota", "items"] {
+        let Ok(data) = index.read(&format!("resource/localization/{file}_schinese.txt")) else { return Arc::default() };
+        tokens.extend(data.map(|d| localization_tokens(&d)).unwrap_or_default());
+    }
+    let Ok(items) = crate::schema::items_of(schema_text) else { return Arc::default() };
+    let names = Arc::new(cosmetic_name_table(items.iter().map(|i| (i.name.as_str(), i.item_name.as_str())), &tokens));
+    *cache.lock().unwrap() = Some((at, stamp, names.clone()));
+    names
+}
