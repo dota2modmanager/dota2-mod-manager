@@ -72,6 +72,13 @@ fn ready_bases(v: Option<&Value>) -> Result<Vec<crate::item_builder_personas::Re
     Ok(ready)
 }
 
+/// Body group choices as [[group, value]].
+fn groups_arg(v: Option<&Value>) -> indexmap::IndexMap<String, f64> {
+    v.and_then(Value::as_array)
+        .map(|a| a.iter().map(|g| (crate::js::string(&g[0]), g[1].as_f64().unwrap_or(0.0))).collect())
+        .unwrap_or_default()
+}
+
 /// A store of arcana bases for a test: the files of each, or none yet, and the ones asked for.
 struct TestBases {
     held: HashMap<String, Option<Vec<crate::vpk::Entry>>>,
@@ -1231,6 +1238,44 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                     .collect(),
             )
         }
+        "model-particles.keyValuesWithParticles" => {
+            let paths = strings(args, 1)?;
+            let refs: Vec<&str> = paths.iter().map(String::as_str).collect();
+            json!(crate::model_particles::key_values_with_particles(&s(args, 0), &refs))
+        }
+        "model-particles.keyValueParticles" => json!(crate::model_particles::key_value_particles(&s(args, 0))),
+        "model-particles.modelParticleEntries" => {
+            let f = if args.first().is_none_or(Value::is_null) { None } else { Some(b(args, 0)?) };
+            json!(crate::model_particles::model_particle_entries(f.as_deref().map(Vec::as_slice)))
+        }
+        "model-particles.withParticles" => {
+            let paths = strings(args, 1)?;
+            let refs: Vec<&str> = paths.iter().map(String::as_str).collect();
+            sha(crate::model_particles::with_particles(&b(args, 0)?, &refs))
+        }
+        "model-bodygroups.withBodygroups" => {
+            sha(crate::model_bodygroups::with_bodygroups(&b(args, 0)?, &groups_arg(args.get(1)))?)
+        }
+        "model-bodygroups.withoutMeshes" => sha(crate::model_bodygroups::without_meshes(&b(args, 0)?)?),
+        "model-bodygroups.hiddenMeshes" => {
+            json!(crate::model_bodygroups::hidden_meshes(&b(args, 0)?, &groups_arg(args.get(1)))?)
+        }
+        "model-merge.mergedModel" => sha(crate::model_merge::merged_model(&b(args, 0)?, &b(args, 1)?)?),
+        "item-files.pickParts" => {
+            let own = args.get(1).and_then(Value::as_str);
+            let unplaced = args.get(2).is_some_and(crate::js::truthy);
+            json!(crate::item_files::pick_parts(&crate::kv::to_latin1(&s(args, 0)), own, unplaced).map_err(kv_err)?)
+        }
+        "item-files.extraPlaces" => {
+            let (under, merged) = crate::item_files::extra_places(&strings(args, 0)?, &strings(args, 1)?);
+            json!({ "under": under, "merged": merged })
+        }
+        "item-files.wornModel" => {
+            let systems = strings(args, 2)?;
+            let refs: Vec<&str> = systems.iter().map(String::as_str).collect();
+            let skin = args.get(1).map_or(0.0, crate::js::to_number);
+            sha(crate::item_files::worn_model(&b(args, 0)?, skin, &refs))
+        }
         "schema-build.script" => {
             // (game, items_game, steps): builds of one table, each {records, bases, forget}
             let game = std::path::PathBuf::from(s(args, 0));
@@ -1266,8 +1311,23 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                     json!(e.iter().map(|e| json!([e.path(), sha(Some(e.data.to_vec()))])).collect::<Vec<_>>())
                 };
                 let wanted = store.map(|s| s.wanted.into_inner().unwrap()).unwrap_or_default();
+                let item_files = match (&r, step.get("files").is_some_and(crate::js::truthy)) {
+                    (Ok(built), true) => {
+                        let ix = pak(&game.join("dota").join("pak01_dir.vpk").to_string_lossy())?;
+                        let read = |p: &str| ix.read(p).ok().flatten();
+                        match crate::item_files::item_files(&built.list, &built.beneath, &read, Some(&built.files_shared)) {
+                            Ok(f) => json!({
+                                "entries": f.entries.iter().map(|e| json!([e.path(), sha(Some(e.data.to_vec()))])).collect::<Vec<_>>(),
+                                "left": f.left,
+                            }),
+                            Err(e) => json!({ "error": e }),
+                        }
+                    }
+                    _ => Value::Null,
+                };
                 out.push(match r {
                     Ok(built) => json!({
+                        "itemFiles": item_files,
                         "list": built.list.iter().map(|p| json!({
                             "id": p.id, "block": latin1(&p.block), "source": p.source, "own": p.own, "added": p.added,
                             "unplaced": p.unplaced, "item": p.item, "assets": p.assets.as_deref().map(files),
@@ -1307,6 +1367,77 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                     })
                     .collect(),
             )
+        }
+        "build-undo.script" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): Cancel on the item table's bar
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(std::path::Path::new(&s(args, 4)));
+            let mut undo = crate::build_undo::BuildUndo::default();
+            let ops = args.get(5).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let r: Result<Value, String> = (|| {
+                    let io = |e: std::io::Error| e.to_string();
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "mark" => {
+                            undo.mark(&inst, &lib, &st);
+                            Value::Null
+                        }
+                        "marked" => json!(undo.marked()),
+                        "cancel" => {
+                            let running = crate::js::truthy(&op[1]);
+                            let mut logged = Vec::new();
+                            let r = undo.cancel(&inst, &mut lib, &mut st, || running, &mut |m| logged.push(m))?;
+                            json!({ "r": r, "log": logged })
+                        }
+                        "add" => {
+                            lib.push_record(op[1].clone(), None).map_err(io)?;
+                            Value::Null
+                        }
+                        "remove" => {
+                            lib.remove_record(&op[1], None).map_err(io)?;
+                            Value::Null
+                        }
+                        "update" => {
+                            lib.update(&op[1], &op[2], None).map_err(io)?;
+                            Value::Null
+                        }
+                        "enable" => {
+                            let on = crate::js::truthy(&op[2]);
+                            let rec = lib.find(&op[1]).cloned().unwrap_or(Value::Null);
+                            let files: Vec<crate::overlays::LibFile> = rec
+                                .get("files")
+                                .and_then(Value::as_array)
+                                .map(|a| a.iter().map(|f| crate::overlays::LibFile::new(&crate::js::string(&f["root"]), &crate::js::string(&f["relPath"]))).collect())
+                                .unwrap_or_default();
+                            if !files.is_empty() {
+                                inst.set_enabled(&files, on, Some(&crate::js::string(&op[1])))?;
+                            }
+                            lib.set_enabled(&op[1], on, None).map_err(io)?;
+                            Value::Null
+                        }
+                        "setting" => {
+                            st.set(&crate::js::string(&op[1]), op[2].clone()).map_err(io)?;
+                            Value::Null
+                        }
+                        "master" => json!({ "changed": inst.set_master_enabled(crate::js::truthy(&op[1]))? }),
+                        "state" => json!({
+                            "list": lib.list(),
+                            "everyone": st.get("everyoneWearsMine"),
+                            "pending": st.get("schemaPending"),
+                            "off": inst.master_is_off().ok(),
+                        }),
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
         }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}

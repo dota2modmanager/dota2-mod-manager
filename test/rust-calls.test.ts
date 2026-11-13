@@ -2219,6 +2219,11 @@ test('the listing in Rust, and the terrain ages, update impact, notice text and 
 test('the item table built in Rust is the one the TypeScript builds: picks, bases, personas, shared files', { skip }, async (t) => {
   if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
   const { createTableBuild } = await import('../src/schema-build.ts');
+  const { MeshoptDecoder } = await import('meshoptimizer');
+  // the app decodes long after the import; here the decoder is waited for, or the TypeScript reads no vertices
+  await MeshoptDecoder.ready;
+  const { itemFilesSteps } = await import('../src/item-files.ts');
+  const { drain } = await import('../src/steps.ts');
   const { openVpkIndex, entryAt, entryPath } = await import('../src/vpk.ts');
   const sl = await import('../src/item-builder-slots.ts');
   const ps = await import('../src/item-builder-personas.ts');
@@ -2272,9 +2277,9 @@ test('the item table built in Rust is the one the TypeScript builds: picks, base
   const arcanaWindow = { id: 'tb', name: 'arcana window', categoryId: 'model', files: [], generated: { set: 'terrorblade-arcana', color: [255, 40, 40] } };
   const everything = [...picks, ...fxPicks, ...personaPicks, ...theirs, ...looks, ...basePicks, mod, off, arcanaWindow];
   const steps = [
+    { records: everything, bases: store, files: true },
     { records: everything, bases: store },
-    { records: everything, bases: store },
-    { records: [...picks.slice(3), ...looks, ...basePicks, { ...arcanaWindow, generated: { set: 'terrorblade-arcana', color: [20, 200, 255] } }], bases: store },
+    { records: [...picks.slice(3), ...looks, ...basePicks, { ...arcanaWindow, generated: { set: 'terrorblade-arcana', color: [20, 200, 255] } }], bases: store, files: true },
     { records: everything, bases: {}, forget: true },
     { records: [...personaPicks, ...theirs], bases: store },
   ];
@@ -2303,7 +2308,15 @@ test('the item table built in Rust is the one the TypeScript builds: picks, base
         r = g.next();
       }
       const b = r.value;
+      let itemFiles: unknown = null;
+      if ((st as { files?: boolean }).files) {
+        try {
+          const f = drain(itemFilesSteps(b.list, b.beneath, game, b.filesShared));
+          itemFiles = { entries: files(f.entries), left: f.left };
+        } catch (e) { itemFiles = { error: (e as Error).message }; }
+      }
       return JSON.parse(JSON.stringify({
+        itemFiles,
         list: b.list.map((p) => ({ id: p.id, block: p.block, source: p.source, own: p.own ?? null, added: p.added ?? null, unplaced: p.unplaced ?? null, item: p.item ?? null, assets: p.assets ? files(p.assets) : null })),
         beneath: files(b.beneath), shared: { paths: b.filesShared.paths, entries: files(b.filesShared.entries) }, progress, log, wanted,
       }));
@@ -2324,13 +2337,196 @@ test('the item table built in Rust is the one the TypeScript builds: picks, base
       for (const [j, p] of want.list.entries()) assert.deepEqual(got.list[j], p, `step ${k} patch ${j} (${p.source})`);
       assert.deepEqual(got.beneath, want.beneath, `step ${k} beneath`);
       assert.deepEqual(got.shared, want.shared, `step ${k} shared files`);
+      if (want.itemFiles?.error) assert.ok(got.itemFiles?.error, `step ${k}: item files throw ${want.itemFiles.error}`);
+      else {
+        assert.deepEqual(got.itemFiles?.left, want.itemFiles?.left, `step ${k} item files left`);
+        assert.deepEqual(got.itemFiles?.entries, want.itemFiles?.entries, `step ${k} item files`);
+      }
     }
     // the build did something worth comparing: picks with files, a second build from what was kept
     // (only the picks the builder refused are tried again), bases
     assert.ok(ts[0].list.filter((p: { assets: unknown[] | null }) => p.assets?.length).length > 10);
     assert.ok(ts[1].progress.length < ts[0].progress.length / 3, `${ts[1].progress.length} of ${ts[0].progress.length} built again`);
     assert.ok(ts[0].log.some((m: string) => m.includes('not here yet')) && ts[0].wanted.length);
+    assert.ok(ts[0].itemFiles?.entries?.length > 100, `${ts[0].itemFiles?.entries?.length} item files`);
     assert.ok(fxPicks.length > 1 && ts[0].list.some((p: { source: string }) => p.source.includes(', ')), 'ability effects picks joined');
     assert.ok(ts[0].beneath.length > 0 && ts[0].shared.entries.length > 0);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test('a look as files alone in Rust is the one the TypeScript makes: model particles, body groups, merged models', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const mp = await import('../src/model-particles.ts');
+  const mb = await import('../src/model-bodygroups.ts');
+  const mm = await import('../src/model-merge.ts');
+  const itf = await import('../src/item-files.ts');
+  const { MeshoptDecoder } = await import('meshoptimizer');
+  // the app decodes long after the import; here the decoder is waited for, or the TypeScript reads no vertices
+  await MeshoptDecoder.ready;
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { createHash } = await import('node:crypto');
+  const sha = (f: Buffer | null | undefined) => (f ? createHash('sha1').update(f).digest('hex') : null);
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const index = openVpkIndex(GAME_PAK01);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-files-'));
+  let n = 0;
+  const put = (p: string) => {
+    const data = index.read(`${p.toLowerCase().replace(/_c$/, '')}_c`);
+    if (!data) return null;
+    const f = path.join(tmp, `${n++}.bin`);
+    fs.writeFileSync(f, data);
+    return { $file: f };
+  };
+  const spread = <T,>(a: T[], k: number) => a.filter((_, j) => j % Math.max(1, Math.floor(a.length / k)) === 0).slice(0, k);
+  const items = listItems(text).filter((i) => i.hasVisuals);
+  const blocks = items.map((i) => text.slice(i.start, i.end));
+  const field = (b: string, key: string) => new RegExp(`"${key}"\\s+"([^"]+)"`, 'i').exec(b)?.[1];
+  const modOf = (b: string, type: string) => [...b.matchAll(/"asset_modifier\d*"\s*\{([^{}]*)\}/gi)].map((m) => m[1]).filter((m) => new RegExp(`"type"\\s+"${type}"`, 'i').test(m));
+  // pairs of an item's model and the second model it wears
+  const pairs = spread(blocks.filter((b) => modOf(b, 'additional_wearable').length && field(b, 'model_player')), 60)
+    .flatMap((b) => modOf(b, 'additional_wearable').slice(0, 1).map((m) => [put(field(b, 'model_player')!), put(field(m, 'asset') ?? '')]))
+    .filter(([a, b2]) => a && b2);
+  // models and the body groups items set on them
+  const grouped = spread(blocks.filter((b) => modOf(b, 'bodygroup_visibility').length), 60).flatMap((b) => modOf(b, 'bodygroup_visibility').slice(0, 2).flatMap((m) => {
+    const f = put(field(m, 'asset') ?? '');
+    return f ? [[f, [[String(field(m, 'modifier')).toLowerCase(), Number(field(m, 'value')) || 0]]]] : [];
+  }));
+  const models = spread([...index.paths()].filter((p) => p.endsWith('.vmdl_c') && (p.startsWith('models/items/') || p.startsWith('models/heroes/'))), 80).map((p) => put(p)).filter(Boolean);
+  const withCfg = spread([...index.paths()].filter((p) => p.endsWith('.vmdl_c') && /pedestal|lycan|props_gameplay/.test(p)), 60).map((p) => put(p)).filter(Boolean);
+  const texts = ['', '{\n}\n', '<!-- kv3 -->\n{\n\tx = 1\n}\n', '{\n\tparticle_cfg_list = \n\t[\n\t\t{\n\t\t\tname = resource:"particles/a/b.vpcf"\n\t\t\tconfig = "preview"\n\t\t},\n\t]\n\ty = 2\n}\n',
+    '{ a = 1, particle_cfg_list = [ { name = "particles/X/Y.vpcf" config = "" } ], }', '{particle_cfg_list=[{NAME = resource : "PARTICLES/z.vpcf"}]}'];
+  const systems = [[], ['particles/econ/items/axe/a.vpcf'], ['particles/a.vpcf', 'particles/b/c.vpcf']];
+  const own = items.filter((i) => /"particle_create"|"activity"|"bodygroup_visibility"|"additional_wearable"|"model_skin"|"entity_scale"/i.test(text.slice(i.start, i.end)));
+  const parts = spread(own, 200).map((i) => text.slice(i.start, i.end));
+  const fromFile = (f: string) => buf(f);
+  const cases: Case[] = [
+    { name: 'model-particles.keyValuesWithParticles', ts: mp.keyValuesWithParticles as never, inputs: texts.flatMap((x) => systems.map((s) => [x, s])) },
+    { name: 'model-particles.keyValueParticles', ts: mp.keyValueParticles as never, inputs: texts.map((x) => [x]) },
+    { name: 'model-particles.modelParticleEntries', ts: ((f: string | null) => mp.modelParticleEntries(f === null ? null : fromFile(f))) as never, inputs: [...withCfg, ...models.slice(0, 20)].map((f) => [f]).concat([[null]]) },
+    { name: 'model-particles.withParticles', ts: ((f: string, s: string[]) => sha(mp.withParticles(fromFile(f), s))) as never, inputs: [...withCfg.slice(0, 20), ...models.slice(0, 30)].flatMap((f, k) => [[f, systems[k % 3]]]) },
+    { name: 'model-bodygroups.withBodygroups', ts: ((f: string, g: [string, number][]) => sha(mb.withBodygroups(fromFile(f), new Map(g)))) as never, inputs: [...grouped, ...models.slice(0, 20).map((f) => [f, [['head', 1], ['nope', 0]]])] },
+    { name: 'model-bodygroups.withoutMeshes', ts: ((f: string) => sha(mb.withoutMeshes(fromFile(f)))) as never, inputs: models.map((f) => [f]) },
+    { name: 'model-bodygroups.hiddenMeshes', ts: ((f: string, g: [string, number][]) => mb.hiddenMeshes(fromFile(f), new Map(g))) as never, inputs: grouped },
+    { name: 'model-merge.mergedModel', ts: ((a: string, b2: string) => sha(mm.mergedModel(fromFile(a), fromFile(b2)))) as never, inputs: [...pairs, ...models.slice(0, 10).map((f, k) => [f, models[(k + 1) % models.length]])] },
+    { name: 'item-files.pickParts', ts: ((b: string, o: string | null, u: boolean) => itf.pickParts({ block: b, own: o, unplaced: u })) as never, inputs: parts.flatMap((b, k) => [[b, k % 3 ? 'models/x.vmdl' : null, k % 5 === 0]]) },
+    { name: 'item-files.extraPlaces', ts: itf.extraPlaces as never, inputs: [[[], []], [['a'], ['a']], [['a', 'b'], ['c']], [['a', 'b'], ['b', 'c', 'd']], [[], ['x', 'y']], [['a'], []]] },
+    { name: 'item-files.wornModel', ts: ((f: string, skin: number, s: string[]) => sha(itf.wornModel(fromFile(f), skin, s))) as never, inputs: models.slice(0, 30).flatMap((f, k) => [[f, k % 3, systems[k % 3]]]) },
+  ];
+  try {
+    assert.ok(pairs.length > 10 && grouped.length > 10 && withCfg.length > 5, `${pairs.length} pairs, ${grouped.length} groups, ${withCfg.length} with a list`);
+    assert.ok(compare(cases) > 400);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test('Cancel on the item table bar in Rust puts back what the TypeScript puts back', { skip }, async () => {
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createBuildUndo } = await import('../src/build-undo.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk-write.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-undo-'));
+  const pak = (p: string) => buildVpk([entryAt(p, Buffer.from(p))]);
+  const lang = (f: string) => [{ root: 'lang', relPath: f }];
+  const block = '"1"\n{\n\t"name"\t"x"\n}\n';
+  const recs = [
+    { id: 'p1', name: 'Pick one', categoryId: 'cosmetic', styleLabel: null, files: [], enabled: true, slot: 'weapon', item: 'a' },
+    { id: 'p2', name: 'Pick two', categoryId: 'cosmetic', styleLabel: null, files: [], enabled: true, slot: 'head', item: 'b', effect: 'red' },
+    { id: 'm1', name: 'Mod one', categoryId: 'imported', styleLabel: null, files: lang('pak30_dir.vpk'), enabled: true, schema: [{ id: '1', block }] },
+    { id: 'm2', name: 'Mod two', categoryId: 'imported', styleLabel: null, files: lang('pak31_dir.vpk'), enabled: true, schema: [{ id: '2', block }] },
+    { id: 'm4', name: 'Mod four', categoryId: 'imported', styleLabel: null, files: lang('pak34_dir.vpk'), enabled: false, schema: [{ id: '4', block }] },
+    { id: 'plain', name: 'Plain mod', categoryId: 'imported', styleLabel: null, files: lang('pak32_dir.vpk'), enabled: true },
+    { id: 'w', name: 'Window', categoryId: 'arcana', styleLabel: null, files: [], enabled: true, generated: { set: 'terrorblade-arcana', color: [1, 2, 3] } },
+  ];
+  const twin = (side: string) => {
+    const root = path.join(tmp, side);
+    const dir = path.join(root, 'game', 'dota_russian');
+    fs.mkdirSync(dir, { recursive: true });
+    for (const f of ['pak30_dir.vpk', 'pak31_dir.vpk', 'pak32_dir.vpk', 'pak33_dir.vpk']) fs.writeFileSync(path.join(dir, f), pak(`${f}.txt`));
+    fs.writeFileSync(path.join(dir, 'pak34_dir.vpk.off'), pak('pak34.txt'));
+    fs.mkdirSync(path.join(root, 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'userdata'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: recs, presets: [] }, null, 2));
+    return { root, game: path.join(root, 'game'), lib: path.join(root, 'lib'), ud: path.join(root, 'userdata'), journal: path.join(root, 'journal') };
+  };
+  const ops: unknown[][] = [
+    ['marked'], ['cancel', true], ['mark'], ['marked'], ['cancel', false], ['state'],
+    // a build that a preset started: picks on and off, a look changed, mods switched, the switches flipped
+    ['add', { id: 'p3', name: 'Pick three', categoryId: 'cosmetic', styleLabel: null, files: [], enabled: true, slot: 'back', item: 'c' }],
+    ['remove', 'p1'], ['update', 'p2', { effect: 'blue', style: 2 }], ['enable', 'm1', false], ['enable', 'm4', true],
+    ['add', { id: 'm3', name: 'Mod three', categoryId: 'imported', styleLabel: null, files: lang('pak33_dir.vpk'), enabled: true, schema: [{ id: '3', block }] }],
+    ['remove', 'm2'], ['update', 'plain', { note: 'kept' }], ['update', 'w', { generated: { set: 'terrorblade-arcana', color: [9, 9, 9] } }],
+    ['setting', 'everyoneWearsMine', true], ['master', false], ['state'],
+    ['cancel', true], ['state'], ['cancel', true], ['state'],
+    // marked again: a cancel with nothing changed, then a pick only
+    ['mark'], ['cancel', true], ['add', { id: 'p4', name: 'Pick four', categoryId: 'cosmetic', styleLabel: null, files: [], enabled: true }],
+    ['setting', 'schemaPending', true], ['cancel', true], ['state'],
+  ];
+  const a = twin('ts');
+  const b = twin('rs');
+  const list = path.join(tmp, 'undo.json');
+  fs.writeFileSync(list, JSON.stringify([['build-undo.script', b.game, 'russian', b.journal, b.lib, b.ud, ops]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }));
+  const answers = rs.ok as { ok?: unknown; error?: unknown }[];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const lib = new Library(a.lib);
+    const st = new Settings(a.ud);
+    let running = false;
+    let logged: string[] = [];
+    const undo = createBuildUndo({ library: lib, installer: inst, settings: st as never, schema: { cancel: () => running }, log: (m) => logged.push(m) });
+    const find = (id: unknown) => lib.list().find((r) => r.id === id)!;
+    const cancelLines = (l: string[]) => l.filter((m) => m.startsWith('schema:'));
+    ops.forEach((op, k) => {
+      let want: unknown;
+      try {
+        const v = ((): unknown => {
+          switch (op[0]) {
+            case 'mark': undo.mark(); return null;
+            case 'marked': return undo.marked();
+            case 'cancel': {
+              running = !!op[1];
+              logged = [];
+              const r = undo.cancel();
+              return { r, log: cancelLines(logged) };
+            }
+            case 'add': lib.list().push(structuredClone(op[1]) as never); lib.save(); return null;
+            case 'remove': lib.removeRecord(op[1] as string); return null;
+            case 'update': lib.update(op[1] as string, op[2] as never); return null;
+            case 'enable': {
+              const r = find(op[1]);
+              if (r.files.length) inst.setEnabled(r.files, !!op[2], r.id);
+              lib.setEnabled(r.id, !!op[2]);
+              return null;
+            }
+            case 'setting': st.set(op[1] as never, op[2] as never); return null;
+            case 'master': return inst.setMasterEnabled(!!op[1]);
+            case 'state': return { list: lib.list(), everyone: st.get('everyoneWearsMine') ?? null, pending: st.get('schemaPending' as never) ?? null, off: inst.masterIsOff() };
+          }
+          throw new Error(`no step ${op[0]}`);
+        })();
+        want = { ok: JSON.parse(JSON.stringify(v ?? null)) };
+      } catch { want = { error: true }; }
+      const got = answers[k];
+      const norm = (g: { ok?: unknown; error?: unknown }) => {
+        if ('error' in g) return { error: true };
+        // the file transaction logs to its own sink: only the cancel line is compared
+        const o = g.ok as { log?: string[] } | null;
+        if (o && Array.isArray(o.log)) return { ok: { ...o, log: cancelLines(o.log) } };
+        return g;
+      };
+      assert.deepEqual(norm(got), want, `${k} ${JSON.stringify(op).slice(0, 200)}`);
+    });
+  } finally { FileTx.journalDir = null; }
+  const final = answers.at(-1)!.ok as { list: { id: string }[] };
+  assert.deepEqual(final.list.map((r) => r.id).sort(), ['m1', 'm3', 'm4', 'p1', 'p2', 'plain', 'w']);
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .filter((d) => d.isFile() && path.relative(g, d.parentPath).startsWith('game'))
+    .map((d) => { const p = path.join(d.parentPath, d.name); return `${path.relative(g, p)} ${fs.readFileSync(p).toString('base64')}`; }).sort();
+  assert.deepEqual(tree(b.root), tree(a.root));
+  fs.rmSync(tmp, { recursive: true, force: true });
 });
