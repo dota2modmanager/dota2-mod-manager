@@ -176,8 +176,19 @@ Known gaps of the Tauri build today (all inside the host, so they close as chann
 
 - `nativeImage` (`src-tauri/host/images.ts`) reads and writes PNG only, through `src/png-strip.ts`:
   a palette PNG or a JPEG comes back empty, where Electron would decode it.
-- Catalog pictures are not redirected to the local cache (`session.webRequest` has no Tauri twin):
-  the page loads them straight from the network.
+- Cosmetic pictures from the Dota wiki (`src/icons.ts`, `src/icon-wiki.ts`) do not arrive. Fandom
+  and its image host (static.wikia.nocookie.net) answer anything but a browser's network stack with
+  a Cloudflare challenge (403, "Just a moment"), whatever the User-Agent: checked 2026-11-13 with
+  Node's fetch, .NET (SChannel, the stack `ureq` uses here) and both a browser and our own agent.
+  The MediaWiki API itself still answers, so listings and searches work and only the bytes fail.
+  Electron gets through because `net.fetch` is Chromium's own stack; the host under Tauri has
+  plain fetch. The ways out, best first: fetch the bytes through the webview (WebView2 is Chromium,
+  a hidden page or `CoreWebView2` asked from Rust), a client with Chrome's TLS fingerprint (a
+  BoringSSL crate, so C in the build), or the game's own textures where the Source 2 toolchain is
+  installed (`src/game-icons.ts`, already the first choice there). Liquipedia, the second wiki,
+  answers our own agent and holds the same files (checked with Weather Rain, PNG and all), but its
+  terms allow one request every two seconds, too slow to be the main source for a picker of two
+  thousand loading screens. Porting `icon-wiki.ts` waits on this choice.
 - Dropped files: `webUtils.getPathForFile` maps a dropped file to the path Tauri reported for the
   last drop, by name.
 - The tray, autostart, the updater and the uninstaller are not wired.
