@@ -201,6 +201,98 @@ pub fn locale_compare(a: &str, b: &str) -> std::cmp::Ordering {
         .compare(a, b)
 }
 
+/// What /\s/ and String.prototype.trim take for white space: the ASCII gaps, line terminators,
+/// U+00A0, U+1680, U+2000-U+200A, U+2028, U+2029, U+202F, U+205F, U+3000 and U+FEFF.
+pub fn is_space(c: char) -> bool {
+    matches!(c, '\t'..='\r' | ' ' | '\u{a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}')
+}
+
+/// String.prototype.trim.
+pub fn trim(s: &str) -> &str {
+    s.trim_matches(is_space)
+}
+
+/// The class /\s/ matches, for a regex pattern.
+pub const SPACE_CLASS: &str =
+    r"[\t-\r \u{a0}\u{1680}\u{2000}-\u{200a}\u{2028}\u{2029}\u{202f}\u{205f}\u{3000}\u{feff}]";
+
+/// A string split as s.split(/\r?\n/) splits it.
+pub fn lines(s: &str) -> Vec<&str> {
+    s.split('\n').map(|l| l.strip_suffix('\r').unwrap_or(l)).collect()
+}
+
+/// A folder's entries in the order fs.readdirSync gives them: the system's own on Windows, and by
+/// bytes elsewhere, because libuv sorts what it lists there and the std listing does not.
+pub fn read_dir(dir: &std::path::Path) -> std::io::Result<Vec<std::fs::DirEntry>> {
+    let mut all: Vec<std::fs::DirEntry> = std::fs::read_dir(dir)?.collect::<std::io::Result<_>>()?;
+    if !cfg!(windows) {
+        all.sort_by(|a, b| a.file_name().as_encoded_bytes().cmp(b.file_name().as_encoded_bytes()));
+    }
+    Ok(all)
+}
+
+/// The names in a folder, in readdirSync's order; an unreadable folder has none.
+pub fn dir_names(dir: &std::path::Path) -> Vec<String> {
+    read_dir(dir).map(|d| d.iter().map(|e| e.file_name().to_string_lossy().into_owned()).collect()).unwrap_or_default()
+}
+
+/// Is this key an array index, which a JavaScript object lists first, in ascending order?
+fn index_key(k: &str) -> Option<u32> {
+    let n: u32 = k.parse().ok()?;
+    (n != u32::MAX && n.to_string() == k).then_some(n)
+}
+
+/// An object's keys in the order JavaScript walks them: array indexes ascending, then the rest as
+/// they were inserted.
+pub fn keys(o: &serde_json::Map<String, Value>) -> Vec<&String> {
+    let mut idx: Vec<(u32, &String)> = o.keys().filter_map(|k| index_key(k).map(|n| (n, k))).collect();
+    idx.sort_by_key(|(n, _)| *n);
+    idx.into_iter().map(|(_, k)| k).chain(o.keys().filter(|k| index_key(k).is_none())).collect()
+}
+
+/// JSON.stringify(v, null, indent): JavaScript's key order and its numbers.
+pub fn stringify(v: &Value, indent: &str) -> String {
+    fn go(v: &Value, indent: &str, at: &str, out: &mut String) {
+        let inner = format!("{at}{indent}");
+        let (nl, sep) = if indent.is_empty() { ("", ":") } else { ("\n", ": ") };
+        match v {
+            Value::Number(n) => out.push_str(&number(n.as_f64().unwrap_or(f64::NAN))),
+            Value::Array(a) if a.is_empty() => out.push_str("[]"),
+            Value::Array(a) => {
+                out.push('[');
+                for (i, x) in a.iter().enumerate() {
+                    out.push_str(if i > 0 { "," } else { "" });
+                    out.push_str(nl);
+                    out.push_str(&inner);
+                    go(x, indent, &inner, out);
+                }
+                out.push_str(nl);
+                out.push_str(at);
+                out.push(']');
+            }
+            Value::Object(o) if o.is_empty() => out.push_str("{}"),
+            Value::Object(o) => {
+                out.push('{');
+                for (i, k) in keys(o).into_iter().enumerate() {
+                    out.push_str(if i > 0 { "," } else { "" });
+                    out.push_str(nl);
+                    out.push_str(&inner);
+                    out.push_str(&serde_json::to_string(k).unwrap_or_default());
+                    out.push_str(sep);
+                    go(&o[k], indent, &inner, out);
+                }
+                out.push_str(nl);
+                out.push_str(at);
+                out.push('}');
+            }
+            other => out.push_str(&serde_json::to_string(other).unwrap_or_default()),
+        }
+    }
+    let mut out = String::new();
+    go(v, indent, "", &mut out);
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

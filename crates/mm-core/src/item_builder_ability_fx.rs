@@ -100,3 +100,141 @@ pub fn fx_target(items: &[SchemaItem], n: u64) -> Option<&SchemaItem> {
     let want = format!("ability_effects_{n}");
     items.iter().find(|i| i.prefab == "default_item" && inferred_item_slot(i).to_lowercase() == want)
 }
+
+fn lang_file(lang: &str) -> &'static str {
+    match lang {
+        "ru" => "russian",
+        "zh-CN" => "schinese",
+        _ => "english",
+    }
+}
+
+/// An ability effects slot's name: "Эффекты: Enchant Totem".
+pub fn fx_ability_label(ability: &str) -> String {
+    crate::i18n::t("Эффекты: {0}", &[serde_json::json!(ability)])
+}
+
+/// The ability effects slots named by their ability, as the hero's script and the game's text say,
+/// and without those of a hero whose script has no such slot. Without the game's files they keep
+/// their numbers. `read`: a file of pak01; `lang`: the app's language.
+pub fn named_fx_slots(
+    slots: Vec<crate::item_builder_slots::ItemSlot>,
+    read: &dyn Fn(&str) -> Option<Vec<u8>>,
+    lang: &str,
+) -> Vec<crate::item_builder_slots::ItemSlot> {
+    use std::collections::HashMap;
+    if !slots.iter().any(|s| s.ability_fx.is_some_and(|n| n != 0)) {
+        return slots;
+    }
+    static SLOT_TEXT: OnceLock<regex::Regex> = OnceLock::new();
+    let slot_text = SLOT_TEXT.get_or_init(|| {
+        regex::Regex::new(r#"(?i)"SlotName"\s+"(ability_effects_[0-9]+)"\s*"SlotText"\s+"([^"]+)""#).unwrap()
+    });
+    let mut ability_of: HashMap<String, Option<HashMap<String, String>>> = HashMap::new();
+    let mut words: Option<HashMap<String, String>> = None;
+    let mut out = Vec::new();
+    for s in slots {
+        let hero = s.hero_ids.first().filter(|h| !h.is_empty() && s.ability_fx.is_some_and(|n| n != 0));
+        let Some(hero) = hero else {
+            out.push(s);
+            continue;
+        };
+        let own = ability_of
+            .entry(hero.clone())
+            .or_insert_with(|| {
+                read(&format!("scripts/npc/heroes/npc_dota_hero_{hero}.txt")).map(|data| {
+                    let script = String::from_utf8_lossy(&data).into_owned();
+                    slot_text.captures_iter(&script).map(|m| (m[1].to_lowercase(), m[2].to_string())).collect()
+                })
+            })
+            .clone();
+        let Some(own) = own else {
+            out.push(s);
+            continue;
+        };
+        let Some(ability) = own.get(&s.equip_slot) else { continue };
+        let words = words.get_or_insert_with(|| {
+            let mut w = HashMap::new();
+            let mut langs = vec![lang_file(lang)];
+            if langs[0] != "english" {
+                langs.push("english");
+            }
+            for language in langs {
+                if let Some(data) = read(&format!("resource/localization/abilities_{language}.txt")) {
+                    for (k, v) in crate::cosmetic_names::localization_tokens(&data) {
+                        w.entry(k).or_insert(v);
+                    }
+                }
+            }
+            w
+        });
+        let Some(name) =
+            words.get(&format!("dota_tooltip_ability_{}", ability.to_lowercase())).filter(|n| !n.is_empty())
+        else {
+            out.push(s);
+            continue;
+        };
+        let slot_label = fx_ability_label(name);
+        let label = format!("{} · {slot_label}", s.hero_label);
+        out.push(crate::item_builder_slots::ItemSlot { slot_label, label, ..s });
+    }
+    out
+}
+
+fn visuals_of(block: &[u8]) -> Result<Option<(usize, usize)>, KvError> {
+    let mut out = None;
+    kv::each_child(block, kv::block_bounds(block, 0)?, |c| {
+        if out.is_none() && c.is_block() && c.key.eq_ignore_ascii_case(b"visuals") {
+            out = Some((c.start, c.end));
+        }
+        true
+    })?;
+    Ok(out)
+}
+
+/// The modifiers of a block's visuals, each as its text.
+fn modifiers_of(block: &[u8]) -> Result<Vec<Vec<u8>>, KvError> {
+    let Some((s, e)) = visuals_of(block)? else { return Ok(vec![]) };
+    let visuals = &block[s..e];
+    let mut out = Vec::new();
+    for c in kv::children(visuals, kv::block_bounds(visuals, 0)?)? {
+        let numbered = c.key.len() >= 14
+            && c.key[..14].eq_ignore_ascii_case(b"asset_modifier")
+            && c.key[14..].iter().all(u8::is_ascii_digit);
+        if c.is_block() && numbered {
+            out.push(visuals[c.start..c.end].to_vec());
+        }
+    }
+    Ok(out)
+}
+
+/// The patches with each ability effects slot's picks joined into one: the first pick's block with
+/// every other one's modifiers added, and all their files, the first pick's ahead.
+pub fn merge_fx_patches(
+    list: Vec<crate::item_builder_everyone::SchemaPatch>,
+    is_fx: impl Fn(&crate::item_builder_everyone::SchemaPatch) -> bool,
+) -> Result<Vec<crate::item_builder_everyone::SchemaPatch>, KvError> {
+    let mut out: Vec<crate::item_builder_everyone::SchemaPatch> = Vec::new();
+    let mut joined: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
+    for p in list {
+        if !is_fx(&p) {
+            out.push(p);
+            continue;
+        }
+        let Some(&at) = joined.get(&p.id) else {
+            joined.insert(p.id.clone(), out.len());
+            out.push(p);
+            continue;
+        };
+        let had = &mut out[at];
+        if let Some((s, e)) = visuals_of(&had.block)? {
+            let visuals = had.block[s..e].to_vec();
+            let start = memchr::memmem::find(&had.block, &visuals).unwrap_or(s);
+            let merged = with_modifiers(&visuals, &modifiers_of(&p.block)?);
+            had.block = [&had.block[..start], &merged[..], &had.block[start + visuals.len()..]].concat();
+        }
+        had.assets.extend(p.assets);
+        had.source = format!("{}, {}", had.source, p.source);
+    }
+    Ok(out)
+}

@@ -67,6 +67,12 @@ pub fn heroes_not_checked() -> &'static [String] {
     T.get_or_init(|| list(include_str!("../data/heroes-not-checked.json")))
 }
 
+/// The arcanas the app can build (src/arcana-sets.ts ARCANA_SETS), by name, in its order.
+pub fn arcana_sets() -> &'static [(String, crate::arcana::ArcanaSet)] {
+    static T: OnceLock<Vec<(String, crate::arcana::ArcanaSet)>> = OnceLock::new();
+    T.get_or_init(|| list(include_str!("../data/arcana-sets.json")))
+}
+
 /// What src/recolor.ts can recolour (src/recolor-sets.ts RECOLOR_SETS), by name, in its order.
 pub fn recolor_sets() -> &'static [(String, crate::recolor::RecolorSet)] {
     static T: OnceLock<Vec<(String, crate::recolor::RecolorSet)>> = OnceLock::new();

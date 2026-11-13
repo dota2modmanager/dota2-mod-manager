@@ -40,9 +40,9 @@ pub fn find_content_root(dir: &Path, depth: usize) -> Option<PathBuf> {
     if depth > 6 {
         return None;
     }
-    let dirs: Vec<String> = fs::read_dir(dir)
+    let dirs: Vec<String> = crate::js::read_dir(dir)
         .ok()?
-        .filter_map(Result::ok)
+        .into_iter()
         .filter(|e| e.file_type().is_ok_and(|t| t.is_dir()))
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .filter(|n| !junk(n))
@@ -56,8 +56,8 @@ pub fn find_content_root(dir: &Path, depth: usize) -> Option<PathBuf> {
 /// A folder of loose game files packed into a single self-contained VPK.
 pub fn pack_folder(root: &Path) -> Result<Vec<u8>, String> {
     fn walk(dir: &Path, prefix: &str, entries: &mut Vec<Entry>, total: &mut usize) -> Result<(), String> {
-        let Ok(names) = fs::read_dir(dir) else { return Ok(()) };
-        for e in names.filter_map(Result::ok) {
+        let Ok(names) = crate::js::read_dir(dir) else { return Ok(()) };
+        for e in names {
             let name = e.file_name().to_string_lossy().into_owned();
             let Ok(kind) = e.file_type() else { continue };
             // a symlink is somebody else's file, and following one can walk in a circle

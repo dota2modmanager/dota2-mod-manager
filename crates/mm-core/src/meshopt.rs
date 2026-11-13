@@ -206,3 +206,101 @@ pub fn decode_vertex_buffer(count: usize, size: usize, buffer: &[u8]) -> Result<
     }
     Ok(out)
 }
+
+// ---------- encoding, version 0 ----------
+//
+// What MeshoptEncoder.encodeVertexBufferLevel(data, count, size, level, 0) writes: version 0 has no
+// channel modes and no control bytes, so the level does not change the bytes. Each byte lane of a
+// block is the zigzagged deltas from the vertex before, padded to a whole group, and each group
+// takes the smallest of 0, 2, 4 or 8 bits (on a tie the width the group before took), its escapes
+// after it. Written after meshoptimizer's vertexcodec.cpp (MIT, Arseny Kapoulkine).
+
+fn zigzag8(v: u8) -> u8 {
+    (((v as i8) >> 7) as u8) ^ (v << 1)
+}
+
+/// How many bytes a group takes at `bits` bits; None where it cannot (0 bits for a group not all zero).
+fn group_measure(group: &[u8], bits: u8) -> Option<usize> {
+    match bits {
+        0 => group.iter().all(|&b| b == 0).then_some(0),
+        8 => Some(BYTE_GROUP),
+        _ => {
+            let sentinel = (1u8 << bits) - 1;
+            Some(BYTE_GROUP * bits as usize / 8 + group.iter().filter(|&&b| b >= sentinel).count())
+        }
+    }
+}
+
+fn encode_group(out: &mut Vec<u8>, group: &[u8], bits: u8) {
+    match bits {
+        0 => {}
+        8 => out.extend_from_slice(group),
+        _ => {
+            let per_byte = 8 / bits as usize;
+            let sentinel = (1u8 << bits) - 1;
+            for chunk in group.chunks(per_byte) {
+                let mut byte = 0u8;
+                for &v in chunk {
+                    byte = (byte << bits) | v.min(sentinel);
+                }
+                out.push(byte);
+            }
+            out.extend(group.iter().copied().filter(|&v| v >= sentinel));
+        }
+    }
+}
+
+fn encode_bytes(out: &mut Vec<u8>, buffer: &[u8]) {
+    let header_at = out.len();
+    out.resize(header_at + (buffer.len() / BYTE_GROUP).div_ceil(4), 0);
+    let mut last_bits = None;
+    for (g, group) in buffer.chunks(BYTE_GROUP).enumerate() {
+        let mut best = 3;
+        let mut best_size = group_measure(group, BITS_V0[3]).unwrap_or(usize::MAX);
+        for (k, &bits) in BITS_V0.iter().enumerate().take(3) {
+            let Some(size) = group_measure(group, bits) else { continue };
+            // a tie keeps the width the group before took, but never replaces whole bytes
+            if size < best_size || (size == best_size && last_bits == Some(bits) && BITS_V0[best] != 8) {
+                best = k;
+                best_size = size;
+            }
+        }
+        out[header_at + g / 4] |= (best as u8) << ((g % 4) * 2);
+        encode_group(out, group, BITS_V0[best]);
+        last_bits = Some(BITS_V0[best]);
+    }
+}
+
+/// `count` vertices of `size` bytes each, encoded as meshoptimizer's version 0.
+pub fn encode_vertex_buffer_v0(data: &[u8], count: usize, size: usize) -> Result<Vec<u8>, String> {
+    if size == 0 || size > 256 || !size.is_multiple_of(4) {
+        return Err(format!("meshopt: a vertex of {size} bytes"));
+    }
+    let mut out = vec![0xa0];
+    let first = data.get(..size).map(<[u8]>::to_vec).unwrap_or_else(|| vec![0; size]);
+    let mut last = first.clone();
+    let per_block = block_size(size);
+    let mut buffer = [0u8; 256];
+    let mut at = 0;
+    while at < count {
+        let n = per_block.min(count - at);
+        let aligned = n.div_ceil(BYTE_GROUP) * BYTE_GROUP;
+        let block = &data[at * size..(at + n) * size];
+        for (k, lane) in last.iter_mut().enumerate() {
+            let mut p = *lane;
+            for i in 0..n {
+                let v = block[i * size + k];
+                buffer[i] = zigzag8(v.wrapping_sub(p));
+                p = v;
+            }
+            // the group is filled out with zeros, as meshoptimizer 1.x does
+            buffer[n..aligned].fill(0);
+            encode_bytes(&mut out, &buffer[..aligned]);
+        }
+        last.copy_from_slice(&block[(n - 1) * size..]);
+        at += n;
+    }
+    out.resize(out.len() + 32usize.saturating_sub(size), 0);
+    out.extend_from_slice(&first);
+    Ok(out)
+}

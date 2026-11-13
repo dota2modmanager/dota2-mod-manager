@@ -22,3 +22,4 @@ ruzstd = "0.9.1"
 libm = "0.2"
 # String.prototype.localeCompare: the root collation of ICU, which V8 sorts names by
 icu_collator = "2"
+uuid = { version = "1", features = ["v4"] }

@@ -22,6 +22,7 @@ export const TABLES = [
   ['hero-alias.json', 'src/hero-names.ts', 'HERO_ALIAS'],
   ['item-effects.json', 'src/item-builder-effects.ts', 'ITEM_EFFECTS'],
   ['recolor-sets.json', 'src/recolor-sets.ts', 'RECOLOR_SETS'],
+  ['arcana-sets.json', 'src/arcana-sets.ts', 'ARCANA_SETS'],
   ['arcana-bases.json', 'src/arcana-bases.ts', 'ARCANA_BASES'],
   ['arcana-notes.json', 'src/arcana-notes.ts', 'ARCANA_NOTES'],
   ['arcanas-that-work.json', 'src/arcana-notes.ts', 'ARCANAS_THAT_WORK'],
