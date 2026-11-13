@@ -20,6 +20,7 @@ pub mod build_undo;
 pub mod calls;
 pub mod catalog;
 pub mod catalog_signature;
+pub mod channel_args;
 pub mod cosmetic_names;
 pub mod courier_models;
 pub mod cursors;

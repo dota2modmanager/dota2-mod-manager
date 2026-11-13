@@ -3951,6 +3951,20 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 minify_config: crate::minify::read_config(&crate::minify::config_path()),
             })
         }
+        "channel-args.check" => json!(crate::channel_args::check_args(
+            &s(args, 0),
+            args.get(1).and_then(Value::as_array).map(Vec::as_slice).unwrap_or(&[])
+        )),
+        "channel-args.channels" => {
+            let mut c: Vec<&str> = crate::channel_args::channel_args().keys().copied().collect();
+            c.sort();
+            json!(c)
+        }
+        "channel-args.windowSettings" => {
+            let mut c: Vec<&str> = crate::channel_args::window_settings().keys().copied().collect();
+            c.sort();
+            json!(c)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

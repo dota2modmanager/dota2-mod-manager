@@ -6690,3 +6690,78 @@ test('the settings view, the support window\'s timing and the beta gate in Rust 
   assert.ok(compare(cases) > 150);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('every channel\'s argument check in Rust refuses what the TypeScript refuses, in its words', { skip }, async () => {
+  const { CHANNEL_ARGS, WINDOW_SETTINGS, checkArgs } = await import('../src/channel-args.ts');
+  const call = (list: unknown[][]) => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-args-'));
+    fs.writeFileSync(path.join(tmp, 'c.json'), JSON.stringify(list));
+    const out = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'c.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }));
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return out as { ok: unknown }[];
+  };
+  const [chs, ws] = call([['channel-args.channels'], ['channel-args.windowSettings']]);
+  assert.deepEqual(chs.ok, Object.keys(CHANNEL_ARGS).sort(), 'the same channels');
+  assert.deepEqual(ws.ok, Object.keys(WINDOW_SETTINGS).sort(), 'the same settings');
+  const b64 = (n: number) => ({ $b64: Buffer.alloc(n, 1).toString('base64') });
+  const lens = [0, 1, 2, 7, 8, 12, 13, 16, 17, 20, 21, 40, 41, 60, 61, 64, 65, 80, 81, 100, 101, 120, 121, 160, 161, 200, 201, 260, 261, 300, 301, 500, 501, 520, 521, 1000, 1001, 4096, 4097, 5000, 5001];
+  const pool: unknown[] = [null, true, false, 0, -1, 0.04, 0.05, 0.25, 0.5, 0.9, 1, 5, 5.01, 11, 12, 20, 21, 59, 60, 64, 65, 100, 101, 130, 255, 256, 1920, -1921, 10000, 10001, 1e9, 1e9 + 1, 1e14, 1e15, 9007199254740991,
+    ...lens.map((n) => 'x'.repeat(n)), '😀'.repeat(30), '😀'.repeat(41), 'é'.repeat(41), 'koreana', 'later', 'done', 'towers', 'trees', 'plants', 'vpk', 'picture', 'replace', 'layer', 'mod', 'recolor', 'winrate',
+    'terrorblade-arcana', 'en', 'zh-CN', 'zh-cn', 'EN', 'eng', 'https://example.com/x', 'http://a', 'ftp://a', 'not a url', 'http://user:pw@proxy:8080', 'http://proxy:8080', 'http://proxy:99999', '#ff00ff',
+    {}, [], [1, 2, 3], ['a', 'b'], [1, 2, 3, 4], { a: 1 }, b64(0), b64(5), b64(4), { $b64: 'AA' }, { $b64: 'AAA=' }, { $b64: 5 }];
+  const valid: Record<string, unknown[][]> = {
+    'mods:install': [[{ categoryId: 'skins', name: 'n', styleLabel: null, fileRef: 'f', preview: 'p' }]],
+    'mods:importBuffers': [[[{ name: 'a.vpk', data: b64(3) }]]],
+    'packs:combine': [[{ name: 'pack', modIds: ['a', 'b'] }]],
+    'presets:export': [['id', { skip: ['x'], author: 'me', note: 'n' }]],
+    'cosmetics:pick': [['hero', 'slot', 'n', 5]], 'cosmetics:wearLook': [['look', [{ slot: 's', itemId: '1', name: 'n', effectId: 'e' }]]],
+    'preview:frame': [['k', b64(10)]],
+    'preview3d:warm': [['hero', [{ slot: 's', stock: '1' }]]], 'preview3d:prefetch': [['hero', [{ slot: 's', stock: '1' }], 'slot', ['1', '2']]],
+    'preview3d:models': [['hero', [{ slot: 's', stock: '1', tryOn: { itemId: '2', effectId: 'e' } }]]], 'preview3d:slice': [[1, 0]],
+    'sounds:add': [['axe', 'ev', 'replace', 0.5, b64(10), 'label']],
+    'hud:install': [[[{ id: 'minimap', scale: 100, x: 0, y: -10, opacity: 50, tint: '#ffffff', hidden: false }]]],
+    'fx:preview': [['p', { a: { x: 1 } }]], 'fx:install': [['p', { a: { x: 1 } }, true]],
+    'creator:save': [[null, { name: 'n', category: 'c', hero: 'h', description: 'd', author: 'a', replaces: { category: 'c', name: 'n' }, styles: [{ label: 'l' }] }]],
+    'creator:export': [['id', [b64(2), null]]], 'creator:attach': [['id', 3, 'vpk']],
+    'background:install': [[b64(4), 'look', 0.5, 10]], 'icons:set': [['hero', 'ability', 'icon']],
+    'paint:install': [['hero', { a: 1 }, 'label', ['x']]], 'map:install': [['towers', 'a', 'b']], 'arcana:install': [['razor-crest', [1, 2, 3], 'mod']],
+    'uninstall:run': [[{ revert: true, mods: false, data: true }]], 'misc:openExternal': [['https://github.com/']],
+    'grid:apply': [[['winrate', 'popular']]], 'decor:install': [[['plants']]],
+  };
+  const settingValues: Record<string, unknown[]> = {
+    itemLooks: [[{ id: 'l', hero: 'h', name: 'n', picks: [{ slot: 's', itemId: '1', name: 'n' }], at: 5 }], [{ id: 'l', hero: 'h', name: '', picks: [], at: 5 }]],
+    modLabels: [{ 'rec:a': 'x' }, { 'file:': 'x' }, { 'rec:a\nb': 'x' }, { ['rec:' + 'y'.repeat(500)]: 'x' }, { ['rec:' + 'y'.repeat(501)]: 'x' }, { 'mod:a': 'x' }, { 'rec:a': '' }, { 'rec:a': 'z'.repeat(81) }, { ['file:😀' + 'q'.repeat(70)]: 5 }],
+    panels: [null, { a: [1, 2] }, { big: 'x'.repeat(70000) }], downloadProxy: ['', '  ', 'http://proxy:8080', 'socks5://a', 'http://a/path', 'http://a:0', 'https://a?x=1'],
+    favorites: [['a', 'b'], ['x'.repeat(501)]],
+  };
+  // each argument replaced by each pool value, and a valid object's fields one at a time
+  const deep = (v: unknown): unknown[] => {
+    if (!v || typeof v !== 'object' || Array.isArray(v) || '$b64' in (v as object)) return [];
+    const o = v as Record<string, unknown>;
+    return [...Object.keys(o).flatMap((k) => [...pool.slice(0, 40).map((p) => ({ ...o, [k]: p })), Object.fromEntries(Object.entries(o).filter(([x]) => x !== k)), ...deep(o[k]).map((d) => ({ ...o, [k]: d }))]), { ...o, extra: 1 }];
+  };
+  const inputs: unknown[][] = [];
+  for (const [ch, checks] of Object.entries(CHANNEL_ARGS)) {
+    const bases = valid[ch] ?? [checks.map(() => 'x')];
+    inputs.push([ch, []], [ch, [...checks.map(() => null), 1]]);
+    for (const base of bases) {
+      inputs.push([ch, base]);
+      for (let i = 0; i < checks.length; i++) {
+        for (const p of pool) inputs.push([ch, base.map((x, j) => (j === i ? p : x))]);
+        for (const d of deep(base[i])) inputs.push([ch, base.map((x, j) => (j === i ? d : x))]);
+        if (Array.isArray(base[i])) for (const d of deep((base[i] as unknown[])[0])) inputs.push([ch, base.map((x, j) => (j === i ? [d] : x))]);
+        inputs.push([ch, base.slice(0, i)]);
+      }
+    }
+  }
+  inputs.push(['nope:channel', []], ['settings:set', [5, 1]], ['settings:set', [null]], ['settings:set', [['a', null]]], ['settings:set', [{}]], ['settings:set', ['x'.repeat(100)]], ['settings:set', ['dotaGamePath', 'c:/']]);
+  for (const k of Object.keys(WINDOW_SETTINGS)) for (const v of [...(settingValues[k] ?? []), ...pool]) inputs.push(['settings:set', [k, v]], ['settings:set', [k]]);
+  const bytesOf = (v: unknown): unknown => (Array.isArray(v) ? v.map(bytesOf) : v && typeof v === 'object' ? ('$b64' in v && typeof (v as { $b64: unknown }).$b64 === 'string' ? new Uint8Array(Buffer.from((v as { $b64: string }).$b64, 'base64')) : Object.fromEntries(Object.entries(v).map(([k, x]) => [k, bytesOf(x)]))) : v);
+  const rs = call(inputs.map(([ch, a]) => ['channel-args.check', ch, a]));
+  let k = 0;
+  for (const [ch, a] of inputs) {
+    const want = checkArgs(ch as string, bytesOf(a) as unknown[]);
+    assert.deepEqual(rs[k++].ok, want, `${ch} ${JSON.stringify(a).slice(0, 200)}`);
+  }
+  assert.ok(inputs.length > 20000, String(inputs.length));
+});
