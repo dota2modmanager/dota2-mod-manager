@@ -3004,6 +3004,162 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": diag })
         }
+        "game-watch.script" => {
+            // (lastGood, mods, ops): what the window is told, the log, the last good game, the waits
+            let mods = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut good = args.first().and_then(Value::as_f64);
+            let mut watch = crate::game_watch::GameWatch::default();
+            let mut crash = crate::game_watch::CrashWatch::default();
+            let (mut told, mut log, mut waited) = (Vec::new(), Vec::new(), Vec::new());
+            let (mut answer, mut clock) = (false, 0.0);
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let mut tell = |watch: &mut crate::game_watch::GameWatch, answer: bool, clock: f64| {
+                    let mut d = |m: String| log.push(m);
+                    for (c, v) in crate::game_watch::tell(watch, &mut crash, answer, clock, &mut good, &mods, &mut d) {
+                        told.push(json!([c, v]));
+                    }
+                };
+                match op[0].as_str().unwrap_or("") {
+                    "play" => {
+                        clock = crate::js::to_number(&op[1]);
+                        crash.launched(clock);
+                    }
+                    "answer" => {
+                        answer = crate::js::truthy(&op[1]);
+                        clock = crate::js::to_number(&op[2]);
+                        tell(&mut watch, answer, clock);
+                    }
+                    "start" => {
+                        watch.start();
+                        tell(&mut watch, answer, clock);
+                    }
+                    _ => waited.push(watch.wait_ms()),
+                }
+            }
+            json!({ "told": told, "log": log, "lastGood": good, "waited": waited })
+        }
+        "game-upkeep.script" => {
+            // (journalDir, libraryDir, userData, found, running): the start, as the app makes it
+            let ud = std::path::PathBuf::from(s(args, 2));
+            let mut st = crate::settings::Settings::new(&ud);
+            let found = args.get(3).and_then(Value::as_str).map(String::from);
+            let running = crate::js::truthy(args.get(4).unwrap_or(&Value::Null));
+            let mut diag: Vec<String> = Vec::new();
+            let mut up = crate::game_upkeep::GameUpkeep::default();
+            crate::game_upkeep::check_game_path(
+                &mut st,
+                &|p| crate::installer::validate_game_path(p),
+                &mut || found.clone(),
+                &mut |m| diag.push(m),
+            )?;
+            up.lang_folder_step(&mut st, &mut || running, &mut |m| diag.push(m));
+            let game = st.get("dotaGamePath").filter(|v| crate::js::truthy(v)).map(|v| std::path::PathBuf::from(crate::js::string(v)));
+            let mut inst = crate::installer::Installer::new(game, up.lang_folder()).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 0);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 1)));
+            let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+            let mut log = |m: String| diag.push(m);
+            let mut deployed = |_: std::collections::HashSet<String>| {};
+            let mut ctx = crate::schema_service::Ctx {
+                inst: &inst,
+                lib: &mut lib,
+                settings: &mut st,
+                bases: None,
+                log: &mut log,
+                on_deployed: &mut deployed,
+            };
+            up.start_steps(&mut svc, &mut ctx, &mut || running, None, None, &mut |_, _| Ok(()), 0.0);
+            let answers = json!({
+                "folder": up.lang_folder(), "lang": up.take_lang_migration(), "again": up.take_lang_migration(),
+                "slots": up.take_slot_migration(), "patch": up.repair.patch_repair(),
+            });
+            json!({ "answers": answers, "log": diag })
+        }
+        "loadout.material" => json!(crate::loadout_material::read_loadout_material(Some(&b(args, 0)?))),
+        "recolor-layers.abilities" => json!(crate::recolor_layers::hero_abilities(&s(args, 0))),
+        "recolor-layers.modelFolder" => json!(crate::recolor_layers::hero_model_folder(&s(args, 0))),
+        "recolor-layers.particleFolder" => {
+            let paths: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            json!(crate::recolor_layers::hero_particle_folder(paths.iter().map(String::as_str), &s(args, 1)))
+        }
+        "recolor-layers.layers" => {
+            // (paths, hero, abilities, items, model)
+            let paths: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let paths: Vec<&str> = paths.iter().map(String::as_str).collect();
+            let abilities: Vec<String> = serde_json::from_value(args[2].clone()).map_err(|e| e.to_string())?;
+            let items: Vec<crate::recolor_layers::WornItem> =
+                serde_json::from_value(args.get(3).cloned().filter(|v| !v.is_null()).unwrap_or(json!([]))).map_err(|e| e.to_string())?;
+            let model = args.get(4).and_then(Value::as_str);
+            json!(crate::recolor_layers::hero_layers(&paths, &s(args, 1), &abilities, &items, model))
+        }
+        "recolor-layers.withChildren" => {
+            // (roots, {path: [refs]})
+            let roots: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let refs = args.get(1).cloned().unwrap_or(json!({}));
+            json!(crate::recolor_layers::with_children(&roots, &mut |p| {
+                refs.get(p).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect()
+            }))
+        }
+        "recolor-layers.shadePixels" => {
+            let mut px = b(args, 0)?.as_ref().clone();
+            let bgra = args.get(2).and_then(|o| o.get("bgra")).is_some_and(crate::js::truthy);
+            let n = crate::recolor_layers::shade_pixels(&mut px, rgb(args, 1), bgra);
+            json!([px.iter().map(|&c| c as char).collect::<String>(), n])
+        }
+        "recolor-layers.modelColorTextures" => {
+            // (models, pak)
+            let models: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 1))).map_err(|e| e.to_string())?;
+            json!(crate::recolor_layers::model_color_textures(&models, &mut |p| ix.read(p).ok().flatten()))
+        }
+        "recolor-layers.withShares" => {
+            let layers: Vec<Value> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let layers: Vec<crate::recolor_layers::RecolorLayer> = layers
+                .iter()
+                .map(|l| crate::recolor_layers::RecolorLayer {
+                    id: crate::js::string(&l["id"]),
+                    kind: match l["kind"].as_str().unwrap_or("") {
+                        "ability" => "ability",
+                        "abilityIcon" => "abilityIcon",
+                        "effects" => "effects",
+                        "portrait" => "portrait",
+                        "body" => "body",
+                        "item" => "item",
+                        _ => "itemModel",
+                    },
+                    name: l.get("name").and_then(Value::as_str).map(String::from),
+                    files: l["files"].as_array().into_iter().flatten().map(crate::js::string).collect(),
+                })
+                .collect();
+            json!(crate::recolor_layers::with_shares(&layers))
+        }
+        "recolor-layers.itemModelPaths" => json!(crate::recolor_layers::item_model_paths(&crate::kv::latin1(&b(args, 0)?))),
+        "effect-finder.script" => {
+            // (pak, ops): ['ability', lang, hero, ability], ['variants', table, files], ['hero', lang, hero],
+            // ['abilities', lang, heroes, query]
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let mut f = crate::effect_finder::EffectFinder::default();
+            let mut out = Vec::new();
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let t = |i: usize| a.get(i).map(crate::js::string).unwrap_or_default();
+                let list = |i: usize| -> Vec<String> { a.get(i).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect() };
+                out.push(match t(0).as_str() {
+                    "ability" => json!(f.ability(&ix, &t(1), &t(2), &t(3))),
+                    "variants" => {
+                        let table = match a.get(1) {
+                            Some(Value::Null) | None => None,
+                            _ => Some(crate::kv::latin1(&b(&a, 1)?)),
+                        };
+                        json!(f.variants(&ix, table.as_deref(), &list(2)))
+                    }
+                    "hero" => json!(f.hero(&ix, &t(1), &t(2))),
+                    "abilities" => json!(f.abilities(&ix, &t(1), &list(2), &t(3))),
+                    other => json!({ "error": format!("no step {other}") }),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

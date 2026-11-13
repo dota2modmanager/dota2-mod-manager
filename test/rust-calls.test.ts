@@ -5231,3 +5231,283 @@ test('Steam\'s manifest and the repair after a patch in Rust read and put back t
   assert.ok(told.m1 && !told.g1, 'a mod the app builds again carries no mark');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the game watch, the quick exit after Play and the upkeep at start in Rust do what the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'gameinfo.gi'))) { t.skip('no sandbox'); return; }
+  const { createGameWatch } = await import('../src/game-watch.ts');
+  const { createCrashWatch } = await import('../src/crash-watch.ts');
+  const { createGameUpkeep } = await import('../src/game-upkeep.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { validateGamePath } = await import('../src/steam.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-upkeep-'));
+
+  // the watches: a run of answers from the system and the clock, Play pressed at some of them
+  const mods = [
+    { id: 'old', name: 'Old', enabled: true, installedAt: 100 },
+    { id: 'new', name: 'New', enabled: true, installedAt: 5000 },
+    { id: 'off', name: 'Off', enabled: false, installedAt: 6000 },
+    { id: 'bare', name: 'Bare' },
+  ];
+  const runs: unknown[][][] = [
+    [['answer', false, 0], ['answer', false, 1], ['play', 10], ['answer', true, 20], ['answer', true, 21], ['answer', false, 30000]],
+    [['answer', true, 0], ['answer', false, 90000], ['play', 100000], ['answer', true, 100500], ['answer', false, 120000], ['wait']],
+    [['play', 0], ['answer', true, 400000], ['answer', false, 410000]],
+    [['start'], ['answer', false, 0], ['start'], ['answer', false, 1], ['answer', true, 2], ['wait'], ['answer', false, 3], ['wait']],
+    [['play', 0], ['answer', true, 1000], ['answer', false, 1400], ['answer', true, 2000], ['answer', false, 2400]],
+  ];
+  const lastGoods = [null, 1000, 4000];
+  const want: unknown[] = [];
+  const asked: unknown[] = [];
+  for (const lg of lastGoods) {
+    for (const ops of runs) {
+      let clock = 0;
+      let good: number | null = lg;
+      const told: unknown[] = [];
+      const log: string[] = [];
+      let answer = false;
+      const crash = createCrashWatch({ lastGood: () => good, setLastGood: (at) => { good = at; }, mods: () => mods, now: () => clock });
+      const watch = createGameWatch({ isRunning: async () => answer, send: (running) => {
+        told.push(['game:running', running]);
+        const exit = crash.running(running);
+        if (exit) { log.push(`Dota closed ${exit.seconds}s after Play; new since the last game: ${exit.suspects.length}`); told.push(['game:quickExit', exit]); }
+      } });
+      let waited: number[] = [];
+      for (const op of ops) {
+        if (op[0] === 'play') { clock = op[1] as number; crash.launched(); }
+        else if (op[0] === 'answer') { answer = op[1] as boolean; clock = op[2] as number; await watch.check(); }
+        else if (op[0] === 'start') { watch.stop(); watch.start(); await new Promise((r) => setTimeout(r, 5)); watch.stop(); }
+        else { waited = [...waited, watch.running() ? 1000 : 5000]; await new Promise((r) => setTimeout(r, 5)); }
+      }
+      want.push({ told, log, lastGood: good, waited });
+      asked.push(['game-watch.script', lg, mods, ops]);
+    }
+  }
+  const list = path.join(tmp, 'watch.json');
+  fs.writeFileSync(list, JSON.stringify(asked));
+  const got = (JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok?: unknown; error?: string }[]).map((a) => { assert.ok('ok' in a, a.error); return a.ok; });
+  assert.deepEqual(got, want);
+  assert.ok(JSON.stringify(want).includes('game:quickExit') && JSON.stringify(want).includes('"New"'), 'a quick exit names the new mod');
+
+  // the upkeep at start: twin games set up five ways
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const pak = (file: string, files: Record<string, string>) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buildVpk(Object.entries(files).map(([p, b]) => entryAt(p, Buffer.from(b)))));
+  };
+  type Setup = { name: string; audio: string; seed: Record<string, unknown>; running?: boolean; mods: [string, string][]; folder: string; find?: 'game' | 'none' };
+  const setups: Setup[] = [
+    { name: 'english', audio: 'english', seed: {}, mods: [['pak90_dir.vpk', 'russian']], folder: 'russian' },
+    { name: 'korean', audio: 'koreana', seed: { langSuffix: 'russian' }, mods: [['pak90_dir.vpk', 'russian'], ['pak91_dir.vpk', 'russian']], folder: 'russian' },
+    { name: 'running', audio: 'english', seed: { slotZones: 0 }, running: true, mods: [['pak90_dir.vpk', 'russian']], folder: 'russian' },
+    { name: 'kept', audio: 'koreana', seed: { langFolderLock: 'russian', langSuffix: 'schinese', slotZones: 1 }, mods: [['pak90_dir.vpk', 'schinese']], folder: 'schinese' },
+    { name: 'moved', audio: 'russian', seed: { dotaGamePath: '<gone>' }, mods: [['pak90_dir.vpk', 'russian']], folder: 'russian', find: 'game' },
+    { name: 'lost', audio: 'russian', seed: { dotaGamePath: '<gone>' }, mods: [], folder: 'russian', find: 'none' },
+  ];
+  type Twin = { root: string; game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string, s: Setup): Twin => {
+    const root = path.join(tmp, `${s.name}-${side}`);
+    const game = path.join(root, 'game');
+    for (const f of ['bin/win64/dota.signatures', 'dota/gameinfo.gi', 'dota/gameinfo_branchspecific.gi', 'dota/steam.inf']) {
+      fs.mkdirSync(path.dirname(path.join(game, f)), { recursive: true });
+      fs.copyFileSync(path.join(sandboxGame, f), path.join(game, f));
+    }
+    fs.mkdirSync(path.join(game, 'dota', 'cfg'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'cfg', 'boot.vcfg'), `"boot"\n{\n\t"UILanguage"\t\t"english"\n\t"AudioLanguage"\t\t"${s.audio}"\n}\n`);
+    pak(path.join(game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one' });
+    for (const [at, folder] of s.mods) pak(path.join(game, `dota_${folder}`, at), { [`m/${at}.txt`]: at });
+    for (const d of ['lib', 'ud']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: s.mods.map(([at], i) => ({
+      id: `m${i}`, name: `Mod ${i}`, categoryId: 'heroes', styleLabel: null, enabled: true, files: [{ root: 'lang', relPath: at }],
+    })), presets: [] }, null, 2));
+    const seed = { dotaGamePath: game, schemaPatch: false, ...s.seed };
+    if (seed.dotaGamePath === '<gone>') seed.dotaGamePath = path.join(root, 'gone');
+    fs.writeFileSync(path.join(root, 'ud', 'settings.json'), JSON.stringify(seed));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const tree = (g: string) => (fs.existsSync(g) ? Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort()) : null);
+  const file = (x: Twin, f: string) => (fs.existsSync(path.join(x.root, f)) ? JSON.parse(fs.readFileSync(path.join(x.root, f), 'utf8')) : null);
+  for (const s of setups) {
+    const a = twin('ts', s);
+    const b = twin('rs', s);
+    const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(installedAt|updatedAt)$/.test(k) ? `<${k}>`
+      : typeof x === 'string' ? x.split(a.root).join('<root>').split(b.root).join('<root>') : x)));
+    const log: string[] = [];
+    let answers: unknown;
+    FileTx.journalDir = a.journal;
+    let up: ReturnType<typeof createGameUpkeep> | null = null;
+    try {
+      const settings = new Settings(a.ud);
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => settings.get('dotaGamePath'), getLangSuffix: () => up?.langFolder() ?? 'russian' });
+      const library = new Library(a.lib);
+      const real = createSchemaService({ settings: settings as never, library, installer: inst as never, userDataDir: a.ud, pak: inst as never,
+        modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+      const schemaService = { heal: real.heal, migrate: () => ({ changed: 0, scanned: 0, deltas: 0, freedMB: 0 }), migrateCosmeticSettings: () => {}, askForBases: () => {} };
+      up = createGameUpkeep({ settings: settings as never, installer: inst as never, library, schemaService: schemaService as never, reconcileCursors: () => {},
+        diag: (m) => log.push(m), send: () => {}, isRunning: async () => !!s.running, retryMs: 1e9, now: () => 0,
+        findGame: async () => (s.find === 'game' ? a.game : null), validGame: validateGamePath });
+      await up.atStart();
+      up.stop();
+      await real.settled?.();
+      answers = { folder: up.langFolder(), lang: up.takeLangMigration(), again: up.takeLangMigration(), slots: up.takeSlotMigration(), patch: up.patchRepair() };
+    } finally { FileTx.journalDir = null; }
+    const l = path.join(tmp, `${s.name}.json`);
+    fs.writeFileSync(l, JSON.stringify([['game-upkeep.script', b.journal, b.lib, b.ud, s.find === 'game' ? b.game : null, !!s.running]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8' })) as { ok?: { answers: unknown; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    assert.deepEqual(norm(r.ok.answers), norm(answers), s.name);
+    assert.deepEqual(norm(r.ok.log), norm(log), `${s.name}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `${s.name}: the game folder`);
+    for (const f of ['ud/settings.json', 'lib/manifest.json']) assert.deepEqual(norm(file(b, f)), norm(file(a, f)), `${s.name}: ${f}`);
+    if (s.name === 'korean') assert.ok((answers as { lang?: { moved: number } }).lang?.moved, 'the mods followed the Korean voice');
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('a hero\'s layers, a material\'s inputs and the effect finder in Rust read the game as the TypeScript does', { skip }, async () => {
+  const rl = await import('../src/recolor-layers.ts');
+  const lm = await import('../src/loadout-material.ts');
+  const { createEffectFinder } = await import('../src/effect-finder.ts');
+  const { buildVpk, entryAt, openVpkIndex } = await import('../src/vpk.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-layers-'));
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+
+  // a hand-built game: three heroes' scripts, their particles, icons, body textures and names
+  const hero = (name: string, model: string, abilities: string[]) => `"DOTAHeroes"\n{\n\t"npc_dota_hero_${name}"\n\t{\n\t\t"Model"\t\t"models/heroes/${model}/${model}.vmdl"\n${abilities.map((a, i) => `\t\t"Ability${i + 1}"\t\t"${a}"\n`).join('')}\t}\n}\n`;
+  const scripts: Record<string, string> = {
+    juggernaut: hero('juggernaut', 'Juggernaut', ['juggernaut_blade_fury', 'juggernaut_healing_ward', 'juggernaut_blade_dance', 'special_bonus_attack_speed_20', 'generic_hidden',
+      'juggernaut_omni_slash', 'juggernaut_omni_slash_ad', 'juggernaut_blade_fury', 'juggernaut_swift_slash', 'juggernaut_empty1']),
+    crystal_maiden: hero('crystal_maiden', 'crystal_maiden', ['crystal_maiden_crystal_nova', 'crystal_maiden_frostbite', 'crystal_maiden_brilliance_aura', 'crystal_maiden_freezing_field']),
+    drow_ranger: hero('drow_ranger', 'drow', ['drow_ranger_frost_arrows', 'drow_ranger_wave_of_silence', 'dota_empty_ability']),
+  };
+  const P = 'particles/units/heroes/';
+  const paths = [
+    `${P}hero_juggernaut/juggernaut_blade_fury.vpcf_c`, `${P}hero_juggernaut/juggernaut_blade_fury_glow.vpcf_c`, `${P}hero_juggernaut/juggernaut_omni_slash_tgt.vpcf_c`,
+    `${P}hero_juggernaut/juggernaut_omni_slash_scepter_trail.vpcf_c`, `${P}hero_juggernaut/juggernaut_crit_tgt.vpcf_c`, `${P}hero_juggernaut/juggernaut_swift_slash.vpcf_c`,
+    `${P}hero_juggernaut/juggernaut_healing_ward_eruption.vpcf_c`, `${P}hero_juggernaut/healing_ward.vmdl_c`,
+    `${P}hero_crystalmaiden/maiden_crystal_nova.vpcf_c`, `${P}hero_crystalmaiden/maiden_freezing_field_snow.vpcf_c`, `${P}hero_crystalmaiden/maiden_frostbite_buff.vpcf_c`,
+    `${P}hero_crystalmaiden/maiden_loadout.vpcf_c`, `${P}hero_drow/drow_frost_arrow.vpcf_c`, `${P}hero_drow/drow_silence_wave.vpcf_c`,
+    'panorama/images/spellicons/juggernaut_blade_fury_png.vtex_c', 'panorama/images/spellicons/juggernaut_omni_slash_png.vtex_c',
+    'panorama/images/heroes/npc_dota_hero_juggernaut_png.vtex_c', 'panorama/images/heroes/selection/npc_dota_hero_juggernaut_png.vtex_c',
+    'materials/models/heroes/juggernaut/juggernaut_color_psd_1a2b3c.vtex_c', 'materials/models/heroes/juggernaut/sub/sword_color_psd_aa.vtex_c',
+    'materials/models/heroes/juggernaut/juggernaut_normal_psd_1a.vtex_c', 'materials/models/heroes/juggernaut/mask_color_tga_ff00.vtex_c',
+    'particles/econ/items/juggernaut/bladekeeper/bladekeeper_spin.vpcf_c', 'particles/econ/items/juggernaut/fury.vpcf_c', 'particles/econ/items/crystalmaiden/x/long_name_effect.vpcf_c',
+    'particles/econ/items/juggernaut/fury_red.vpcf_c',
+  ];
+  const tokens = (lang: string, names: Record<string, string>) => `"lang"\n{\n\t"Language"\t\t"${lang}"\n\t"Tokens"\n\t{\n${Object.entries(names).map(([k, v]) => `\t\t"DOTA_Tooltip_ability_${k}"\t\t"${v}"\n`).join('')}\t}\n}\n`;
+  const files: [string, Buffer][] = [
+    ...Object.entries(scripts).map(([h, s]) => [`scripts/npc/heroes/npc_dota_hero_${h}.txt`, Buffer.from(s)] as [string, Buffer]),
+    ...paths.map((p) => [p, Buffer.from(`file ${p}`)] as [string, Buffer]),
+    ['resource/localization/abilities_english.txt', Buffer.from(tokens('English', { juggernaut_blade_fury: 'Blade Fury', juggernaut_omni_slash: 'Omnislash', crystal_maiden_crystal_nova: 'Crystal Nova', drow_ranger_frost_arrows: 'Frost Arrows', juggernaut_swift_slash: '' }))],
+    ['resource/localization/abilities_russian.txt', Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(tokens('Russian', { juggernaut_blade_fury: 'Вихрь клинков', crystal_maiden_frostbite: 'Обморожение', drow_ranger_frost_arrows: 'Ледяные стрелы' }), 'utf16le')])],
+  ];
+  const pak = path.join(tmp, 'pak01_dir.vpk');
+  fs.writeFileSync(pak, buildVpk(files.map(([p, b]) => entryAt(p, b))));
+  const items = [
+    { id: '1', name: 'Sword', particles: ['Particles/econ/items/juggernaut/fury.vpcf', 'particles/econ/items/juggernaut/fury.vpcf', 'particles/missing.vpcf'], textures: ['materials/models/heroes/juggernaut/juggernaut_color_psd_1a2b3c.vtex_c', 'materials/gone.vtex_c'] },
+    { id: '2', name: 'Mask', particles: [], textures: ['materials/models/heroes/juggernaut/juggernaut_color_psd_1a2b3c.vtex_c', 'materials/models/heroes/juggernaut/mask_color_tga_ff00.vtex_c'] },
+    { id: '3', name: 'Cape', particles: ['particles/econ/items/juggernaut/bladekeeper/bladekeeper_spin.vpcf'] },
+  ];
+  const blocks = [
+    `"model_player" "models/items/juggernaut/sword.vmdl" "model_player1" " Models/Items/Juggernaut/Mask.VMDL " "model_player2" "materials/x.vmat"`,
+    `"visuals" { "asset_modifier" { "type" "entity_model" "asset" "models/heroes/juggernaut/healing_ward.vmdl" "modifier" "models/items/juggernaut/ward/ward.vmdl" } "asset_modifier1" { "type" "particle" "asset" "a.vpcf" "modifier" "b.vpcf" }`
+      + ` "asset_modifier2" { "type" "additional_wearable" "asset" "models/items/x/extra.vmdl" "modifier" "models/items/x/no.vmdl" "offsets" { "type" "model" "modifier" "models/items/x/inner.vmdl" } }`
+      + ` "asset_modifier3" { "type" "Hero_Model_Change" "asset" "models/heroes/juggernaut/juggernaut.vmdl" "modifier" "models/heroes/juggernaut/arcana.vmdl" } "asset_modifier4" { "type" "pet" "modifier" "models/pets/x.vmdl" } }`,
+    '', `"model_player" "models/items/juggernaut/sword.vmdl" "model_player" "models/items/juggernaut/sword.vmdl"`,
+  ];
+  const layers = rl.heroLayers(paths, 'juggernaut', rl.heroAbilities(scripts.juggernaut), items, rl.heroModelFolder(scripts.juggernaut));
+  const pixels = Buffer.from(Array.from({ length: 64 * 4 }, (_, i) => (i * 37 + (i % 4 === 3 ? 0 : 11)) % 256)).toString('latin1');
+  compare([
+    { name: 'recolor-layers.abilities', ts: rl.heroAbilities, inputs: [...Object.values(scripts).map((s) => [s]), [''], ['"Ability1" "invoker_emp_ad" "Ability2" "invoker_emp" "Ability3" "x_ad"']] },
+    { name: 'recolor-layers.modelFolder', ts: rl.heroModelFolder as never, inputs: [...Object.values(scripts).map((s) => [s]), ['"Model" "models/creeps/x.vmdl"'], ['']] },
+    { name: 'recolor-layers.particleFolder', ts: rl.heroParticleFolder as never, inputs: ['juggernaut', 'crystal_maiden', 'drow_ranger', 'naga_siren', 'vengefulspirit', 'abyssal_underlord'].map((h) => [paths, h]) },
+    { name: 'recolor-layers.layers', ts: rl.heroLayers as never, inputs: [
+      ...Object.entries(scripts).map(([h, s]) => [paths, h, rl.heroAbilities(s), items, rl.heroModelFolder(s)]),
+      [paths, 'juggernaut', ['juggernaut_omni_slash', 'juggernaut_omni_slash_scepter', 'juggernaut_blade_fury'], [], null], [[], 'juggernaut', ['juggernaut_blade_fury'], items, 'juggernaut'],
+    ] },
+    { name: 'recolor-layers.withChildren', ts: ((roots: string[], refs: Record<string, string[]>) => rl.withChildren(roots, (p) => refs[p] ?? [])) as never, inputs: [
+      [['a.vpcf_c', 'b.vpcf_c'], { 'a.vpcf_c': ['c.vpcf_c', 'm.vmat_c', 'a.vpcf_c'], 'c.vpcf_c': ['b.vpcf_c', 'd.vpcf_c'], 'b.vpcf_c': ['e.vpcf_c'] }], [[], {}], [['x.vmat_c'], { 'x.vmat_c': ['y.vpcf_c'] }],
+    ] },
+    { name: 'recolor-layers.shadePixels', ts: ((px: string, c: [number, number, number], o: { bgra?: boolean }) => { const b = buf(px); const n = rl.shadePixels(b, c, o); return [b.toString('latin1'), n]; }) as never, inputs: [
+      [pixels, [255, 0, 0], {}], [pixels, [0, 128, 255], { bgra: true }], [pixels, [30, 200, 90], {}], ['abc', [255, 0, 0], {}], ['', [1, 2, 3], {}],
+    ] },
+    { name: 'recolor-layers.withShares', ts: rl.withShares as never, inputs: [[layers], [[]]] },
+    { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocks.map((x) => [x]) },
+  ]);
+  assert.ok(layers.some((l) => l.id === 'itemModel:2') && rl.withShares(layers).some((s) => s.shares.length), 'two items share a texture');
+
+  // the finder: names in two languages, a search, the swaps of an item table
+  const table = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(table, `"items_game" { "items" { "1" { "visuals" { "asset_modifier0" { "type" "particle" "asset" "Particles\\units\\heroes\\hero_juggernaut\\juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/fury.vpcf" }`
+    + ` "asset_modifier1" { "type" "particle" "asset" "particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/fury_red.vpcf" }`
+    + ` "asset_modifier2" { "type" "particle_create" "asset" "particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/bladekeeper/bladekeeper_spin.vpcf" }`
+    + ` "asset_modifier3" { "type" "particle" "asset" "particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/gone.vpcf" } } } } }`);
+  const heroes = ['juggernaut', 'crystal_maiden', 'drow_ranger', 'Bad Hero', 'nobody'];
+  const ops: unknown[][] = [
+    ['hero', 'en', 'juggernaut'], ['hero', 'ru', 'crystal_maiden'], ['hero', 'en', 'drow_ranger'], ['hero', 'en', 'nobody'], ['hero', 'en', '../x'],
+    ['ability', 'en', 'juggernaut', 'juggernaut_blade_fury'], ['ability', 'ru', 'juggernaut', 'juggernaut_omni_slash'], ['ability', 'en', 'juggernaut', 'juggernaut_blade_dance'],
+    ['abilities', 'en', heroes, 'blade'], ['abilities', 'en', heroes, 'FROST   arrow'], ['abilities', 'ru', heroes, 'ледяные'], ['abilities', 'ru', heroes, 'maiden'], ['abilities', 'en', heroes, '  '],
+    ['abilities', 'zh-CN', heroes, 'nova'],
+    ['variants', { $file: table }, ['particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf', 'x.vpcf']], ['variants', null, ['particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf']],
+  ];
+  const runFinder = (pakFile: string, list: unknown[][]) => {
+    const ix = openVpkIndex(pakFile);
+    let lang = 'en';
+    let tableText: string | null = null;
+    let hs: string[] = [];
+    const f = createEffectFinder({ index: () => ix, lang: () => lang, heroes: () => hs.map((h) => ({ hero: h, name: h })), table: () => tableText });
+    return list.map((op) => {
+      if (op[0] === 'variants') { tableText = op[1] ? fs.readFileSync((op[1] as { $file: string }).$file).toString('latin1') : null; return f.variants(op[2] as string[]); }
+      lang = op[1] as string;
+      if (op[0] === 'hero') return f.hero(op[2] as string);
+      if (op[0] === 'ability') return f.ability(op[2] as string, op[3] as string);
+      hs = op[2] as string[];
+      return f.abilities(op[3] as string);
+    });
+  };
+  const finder = (pakFile: string, list: unknown[][]) => {
+    const l = path.join(tmp, `finder-${path.basename(path.dirname(pakFile))}.json`);
+    fs.writeFileSync(l, JSON.stringify([['effect-finder.script', pakFile, list]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: unknown; error?: string }[];
+    assert.ok(r.ok, r.error);
+    return r.ok;
+  };
+  const want = JSON.parse(JSON.stringify(runFinder(pak, ops)));
+  assert.deepEqual(finder(pak, ops), want);
+  assert.ok(JSON.stringify(want).includes('Ледяные стрелы') && JSON.stringify(want).includes('fury_red'), JSON.stringify(want.slice(-2)));
+
+  // the game itself, when this machine has it: heroes, abilities, swaps, materials, models
+  if (fs.existsSync(GAME_PAK01)) {
+    const ix = openVpkIndex(GAME_PAK01);
+    const all = [...ix.paths()];
+    const real = path.join(tmp, 'items_game_real.txt');
+    fs.writeFileSync(real, ix.read('scripts/items/items_game.txt')!);
+    const many = ['juggernaut', 'crystal_maiden', 'invoker', 'drow_ranger', 'phantom_assassin', 'nevermore', 'pudge'];
+    const gameOps: unknown[][] = [
+      ...many.map((h) => ['hero', 'en', h]), ['hero', 'ru', 'juggernaut'],
+      ['ability', 'en', 'juggernaut', 'juggernaut_blade_fury'], ['ability', 'ru', 'invoker', 'invoker_sun_strike'], ['ability', 'en', 'pudge', 'pudge_meat_hook'],
+      ['abilities', 'en', many, 'blade'], ['abilities', 'ru', many, 'крюк'], ['abilities', 'en', many, 'ice wall'],
+    ];
+    const ab = runFinder(GAME_PAK01, [['ability', 'en', 'juggernaut', 'juggernaut_blade_fury'], ['ability', 'en', 'pudge', 'pudge_meat_hook']]) as { files: string[] }[];
+    gameOps.push(['variants', { $file: real }, ab.flatMap((a) => a?.files ?? [])]);
+    assert.deepEqual(finder(GAME_PAK01, gameOps), JSON.parse(JSON.stringify(runFinder(GAME_PAK01, gameOps))));
+    const write = (p: string, k: number) => { const at = path.join(tmp, `m${k}`); fs.writeFileSync(at, ix.read(p)!); return { $file: at }; };
+    const mats = spread(all.filter((p) => p.endsWith('.vmat_c')), 150).map(write);
+    const models = spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 25).map((p) => p.replace(/_c$/, ''));
+    const blocksReal = spread(fs.readFileSync(real, 'latin1').split(/\n\t\t"\d+"\n/), 60);
+    compare([
+      { name: 'loadout.material', ts: ((f: string) => lm.readLoadoutMaterial(buf(f)) && (({ gemParams, ...rest }) => rest)(lm.readLoadoutMaterial(buf(f))!)) as never, inputs: mats.map((m) => [m]) },
+      { name: 'recolor-layers.modelColorTextures', ts: ((m: string[]) => rl.modelColorTextures(m, (p) => ix.read(p))) as never, inputs: [[models], ...models.slice(0, 8).map((m) => [[m]])] },
+      { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocksReal.map((x) => [x]) },
+    ].map((c) => (c.name === 'recolor-layers.modelColorTextures' ? { ...c, inputs: c.inputs.map((i) => [...i, GAME_PAK01]) } : c)));
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
