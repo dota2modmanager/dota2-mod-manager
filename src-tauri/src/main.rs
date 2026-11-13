@@ -137,6 +137,15 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key])
+        // the catalog's pictures, which bridge.js points the page's images at
+        .register_asynchronous_uri_scheme_protocol(mm_core::preview_cache::SCHEME, |ctx, req, responder| {
+            let app = ctx.app_handle().clone();
+            let path = req.uri().path().to_string();
+            std::thread::spawn(move || {
+                let ud = app.state::<ported::UserData>().0.clone();
+                responder.respond(app.state::<ported::Previews>().answer(&ud, &path));
+            });
+        })
         .setup(move |app| {
             let handle = app.handle().clone();
             let user_data = flag(&argv, "user-data-dir")
@@ -145,6 +154,7 @@ fn main() {
                 .unwrap_or_else(|| app.path().app_data_dir().unwrap_or_default());
             let user_data = std::path::absolute(&user_data).unwrap_or(user_data);
             app.manage(ported::UserData(user_data.clone()));
+            app.manage(ported::Previews::new());
             let env = vec![
                 ("MM_USER_DATA".to_string(), user_data.to_string_lossy().into_owned()),
                 ("MM_APP_VERSION".to_string(), app.package_info().version.to_string()),

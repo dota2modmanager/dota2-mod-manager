@@ -3899,3 +3899,129 @@ test('download counts and install hits in Rust send and keep what the TypeScript
   assert.equal(fs.readFileSync(file('rs'), 'utf8'), fs.readFileSync(file('ts'), 'utf8'));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('catalog pictures in Rust are found, fetched, kept and rechecked as the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { spawn } = await import('node:child_process');
+  const pc = await import('../src/preview-cache.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-previews-'));
+  const RAW = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/';
+  const P = 'assets/previews/';
+
+  // the pure half
+  const urls = [
+    `${RAW}${P}heroes/a.png`, `${RAW}${P}heroes/a.PNG?x=1#y`, `mm-preview://catalog/${P}x/%D0%96%20b.webp`, `${RAW}${P}x/..%2F..%2Fevil.png`,
+    `${RAW}${P}x/%E0%A4%A.png`, `${RAW}${P}x/a.svg`, `${RAW}assets/other/a.png`, `${RAW}${P}x/a.jpeg`, `${RAW}${P}x/a.jpg.txt`,
+    'https://cdn.dota2modmanager.com/assets/previews/x/a.png', `${RAW}${P}..\\a.ico`, '', `${RAW}${P}`, `mm-preview://catalog/${P}a.gif`,
+  ];
+  const sig = (...b: number[]) => [...b, ...Array(12).fill(7)];
+  compare([
+    { name: 'preview-cache.pictureOf', ts: pc.pictureOf as never, inputs: urls.map((u) => [u]) },
+    { name: 'preview-cache.redirectFor', ts: pc.redirectFor as never, inputs: urls.map((u) => [u]) },
+    { name: 'preview-cache.pictureType', ts: ((b: number[]) => pc.pictureType(Uint8Array.from(b))) as never, inputs: [
+      [sig(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50)], [sig(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x41, 0x56, 0x49, 0x20)],
+      [sig(0x89, 0x50, 0x4e, 0x47)], [sig(0x47, 0x49, 0x46, 0x38)], [sig(0xff, 0xd8, 0xff)], [sig(0, 0, 1, 0)], [[0xff, 0xd8]], [[]], [sig(0x3c, 0x68)],
+    ] },
+    { name: 'preview-cache.hostsFor', ts: pc.hostsFor as never, inputs: [[`${P}heroes/a.png`], [`${P}x/%D0%96.webp`]] },
+    { name: 'preview-cache.picturesIn', ts: pc.picturesIn as never, inputs: [
+      [{ modsData: {
+        heroes: { groups: [{ id: 'p', mods: [{ name: 'A', preview: 'a.png', styles: [{ preview: 'Ж b.webp' }, { preview: '' }, { preview: 5 }] }] }] },
+        sounds: [{ preview: 'https://x/y.png' }, { preview: `${P}other/z.gif` }, null, { deep: { preview: 'a.png' } }, { preview: 'note.txt' }],
+        3: [{ preview: 'num.png' }], misc: { preview: { preview: 'inner.jpg' } }, again: [{ preview: 'a.png' }],
+      } }, { categories: [{ preview: 'heroes.png' }, { preview: '' }, {}, { preview: 'HTTPS://cdn/x.png' }] }],
+      [null, null], [{}, { categories: [] }], [{ modsData: null }, {}],
+    ] },
+  ]);
+
+  // the store, against one server that is each of the hosts in turn
+  const png = (n: number) => Buffer.from([0x89, 0x50, 0x4e, 0x47, n, n, n, n]);
+  const gif = Buffer.from([0x47, 0x49, 0x46, 0x38, 1, 2, 3]);
+  const ico = Buffer.from([0, 0, 1, 0, 9, 9]);
+  type Answer = { status: number; body?: Buffer | string; delay?: number };
+  const hosts: Record<string, Record<string, Answer | ((ims: boolean) => Answer)>> = {
+    mirror: {
+      'heroes/a.png': { status: 200, body: png(1) }, 'heroes/c.gif': { status: 200, body: '<html>blocked</html>' },
+      'heroes/e.ico': (ims) => (ims ? { status: 304 } : { status: 200, body: ico }),
+      'heroes/f.png': (ims) => ({ status: 200, body: png(ims ? 3 : 2) }), 'heroes/g.png': { status: 200, body: png(4), delay: 200 },
+      'heroes/h.png': { status: 200, body: png(5) }, '%D0%96%20b.png': { status: 200, body: png(6) },
+    },
+    raw: { 'heroes/b.webp': { status: 200, body: png(7), delay: 1500 }, 'heroes/c.gif': { status: 500 } },
+    jsd: { 'heroes/b.webp': { status: 200, body: png(8) }, 'heroes/c.gif': { status: 200, body: gif } },
+  };
+  const seen: Record<string, string[]> = { ts: [], rs: [] };
+  const server = http.createServer((req, res) => {
+    const [, side, host, ...rest] = (req.url || '').split('/');
+    const rel = rest.join('/').slice(P.length);
+    const ims = Boolean(req.headers['if-modified-since']);
+    seen[side]?.push(`${host} ${rel}${ims ? ' ims' : ''}`);
+    const entry = hosts[host]?.[rel];
+    const a: Answer = typeof entry === 'function' ? entry(ims) : entry ?? { status: 404 };
+    setTimeout(() => {
+      res.writeHead(a.status, a.body ? { 'content-length': Buffer.byteLength(a.body) } : {});
+      res.end(a.status === 304 ? undefined : a.body);
+    }, a.delay ?? 0);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const mapFor = (side: string) => ({
+    'https://cdn.dota2modmanager.com/': `${base}/${side}/mirror/`, [RAW]: `${base}/${side}/raw/`,
+    'https://cdn.jsdelivr.net/gh/h6rd/Dota2PornFxWeb@main/': `${base}/${side}/jsd/`,
+  });
+  const r = (n: string) => `${P}heroes/${n}`;
+  const ops: unknown[][] = [
+    ['get', r('a.png')], ['get', r('a.png')], ['get', r('b.webp')], ['get', r('c.gif')], ['get', r('d.jpg')], ['both', r('g.png')],
+    ['get', r('e.ico')], ['get', r('f.png')], ['age', r('e.ico'), 10], ['age', r('f.png'), 10], ['age', r('a.png'), 3],
+    ['get', r('e.ico')], ['get', r('f.png')], ['get', r('a.png')], ['settle'], ['get', r('f.png')],
+    ['warm', [r('a.png'), r('h.png'), r('d.jpg'), `${P}%D0%96%20b.png`, r('c.gif')]], ['warm', [r('h.png')]], ['files'],
+  ];
+  const dirFor = (side: string) => path.join(tmp, side);
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['preview-cache.script', dirFor('rs'), mapFor('rs'), 100, ops]]));
+  // not execFileSync: the server above lives in this process and has to answer it
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async () => {
+    const map = Object.entries(mapFor('ts'));
+    let logs: string[] = [];
+    const dir = dirFor('ts');
+    const store = pc.createPreviewStore({
+      dir, stagger: 100, log: (m) => logs.push(m),
+      fetchFn: (url, init) => { const m = map.find(([f]) => url.startsWith(f)); return fetch(m ? m[1] + url.slice(m[0].length) : url, init); },
+    });
+    const pic = (p: { bytes: Uint8Array; type: string } | null) => (p ? { type: p.type, sha: crypto.createHash('sha256').update(p.bytes).digest('hex') } : null);
+    const out: unknown[] = [];
+    for (const op of ops) {
+      let v: unknown = null;
+      const rel = op[1] as string;
+      if (op[0] === 'get') v = pic(await store.get(rel));
+      else if (op[0] === 'both') v = (await Promise.all([store.get(rel), store.get(rel)])).map(pic);
+      else if (op[0] === 'warm') v = await store.warm(op[1] as string[]);
+      else if (op[0] === 'age') {
+        const at = new Date(Date.now() - (op[2] as number) * 86400000);
+        fs.utimesSync(path.join(dir, crypto.createHash('sha1').update(rel).digest('hex')), at, at);
+      } else if (op[0] === 'settle') await new Promise((ok) => setTimeout(ok, 600));
+      else if (op[0] === 'files') v = fs.readdirSync(dir).sort();
+      out.push({ v, logs });
+      logs = [];
+    }
+    return out;
+  };
+  const want = await run();
+  const answers = JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[];
+  assert.ok(answers[0].ok, answers[0].error);
+  // a host left behind by a faster one may still be asked by the time the race is over
+  await new Promise((ok) => setTimeout(ok, 1700));
+  server.closeAllConnections(); server.close();
+  ops.forEach((op, j) => assert.deepEqual(answers[0].ok![j], want[j], `${j} ${JSON.stringify(op)}`));
+  assert.deepEqual([...seen.rs].sort(), [...seen.ts].sort());
+  assert.equal(seen.ts.filter((s) => s === 'mirror heroes/g.png').length, 1, 'two asks share one fetch');
+  assert.ok(seen.ts.includes('mirror heroes/e.ico ims') && !seen.ts.some((s) => s.includes('a.png ims')), JSON.stringify(seen.ts));
+  for (const f of fs.readdirSync(dirFor('ts'))) assert.deepEqual(fs.readFileSync(path.join(dirFor('rs'), f)), fs.readFileSync(path.join(dirFor('ts'), f)), f);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
