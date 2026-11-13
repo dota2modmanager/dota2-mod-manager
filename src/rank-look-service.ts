@@ -33,7 +33,8 @@ export interface RankGenerated { rank: RankLook; script?: string }
  * that app's script in its pak, so a new part of it (the level in a match) stays out of the game
  * until the record is built again; the app does that at start when the marks differ.
  */
-export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString() + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12);
+// the function's source has the line endings of the checkout it was built from: CRLF on Windows
+export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString().replace(/\r\n/g, '\n') + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12);
 
 /** What the window shows: the look on now, if any, the heroes of this patch, and whether ValveResourceFormat is there. */
 export interface RankState {

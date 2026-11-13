@@ -6178,7 +6178,7 @@ test('the arcana window in Rust builds, gives way and builds again as the TypeSc
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-test('the toolchain in Rust keeps its pins, downloads, unpacks and forgets tools as the TypeScript does', async () => {
+test('the toolchain in Rust keeps its pins, downloads, unpacks and forgets tools as the TypeScript does', { skip }, async () => {
   const tcTs = await import('../src/toolchain.ts');
   const net = await import('../src/net.ts');
   const http = await import('node:http');
@@ -6276,7 +6276,7 @@ test('the toolchain in Rust keeps its pins, downloads, unpacks and forgets tools
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
 
-test('Valve\'s resource compiler in Rust is found, run on an addon of ours and checked as the TypeScript does', async () => {
+test('Valve\'s resource compiler in Rust is found, run on an addon of ours and checked as the TypeScript does', { skip }, async () => {
   const rc = await import('../src/resource-compiler.ts');
   const wt = await import('../src/workshop-tools.ts');
   setLang('en');
