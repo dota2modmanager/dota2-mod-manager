@@ -151,6 +151,9 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 ` (`(?mR)`), as JavaScript's does; in the shell `app:notes` reads the build's changelogs (`ported::AppRoot`, the host's root) and only reads settings.json for lastSeenVersion, and `app:stars` owns repo-stars.json; `ported::Shared` holds one `Net` on the proxy in settings.json for the pictures and the stars; parity: the repository's own two changelogs and made-up ones with betas, four-part versions, a missing space, CRLF, a Russian file with gaps, the range for a line and for versions skipped, and the count against a server (a 500, not JSON, a fraction, null, a cache fresh, broken and not an object), every answer, the requests and the file kept; checked in the shell on the sandbox |
 | finding Steam and Dota: the registry's answer or the Linux roots, libraryfolders.vdf, steamapps spelled either way, the usual folders on every drive, the first library with a real install (`steam.ts`) | done | no | `steam.rs`, with `steam::join`, Node's `path.join` for either platform (`.` and `..`, drives, UNC shares, either slash); `reg query` runs without a console window; parity: ~14 joins on both platforms, registry output, three vdf texts, a Steam root listing a library a move left behind and one spelling SteamApps, a fallback, a Linux install, a vdf that is a folder, duplicates by case, nothing at all |
 | noticing a Dota patch while the app is open: the build stamp (ClientVersion and the signature list without our line), Steam's file check taking the search path out at the same build, a search path built from a gameinfo.gi since replaced, each reported once (`patch-watch.ts`) | done | no | `patch_watch.rs`; where the TypeScript listens with fs.watch on two folders and re-arms when Steam replaces one, Rust looks at the four files a patch rewrites every two seconds (modified time and length), which cannot go deaf; the first look is taken when the watch is armed, so a change right after arming is seen; parity: twin patched games through start, a second start, Steam's check, two patches (one with a handler that throws), the patch put back, a replaced gameinfo.gi, rearm to no game and back, a change found by the watch itself, and nothing after stop: every event and log line |
+| d2mm:// links: the first on a command line, a mod link read and written, where a link goes in the window, the Linux .desktop entry and icon (`deep-links.ts`) | done | no | `deep_links.rs`; `route` answers the window's channel and payload where the TypeScript sends them itself; parity: ~20 links (case, a trailing slash, a query, a fragment, a stray %, too few and too many parts, presets, other schemes), mod links written, the entry text, and installs into twin homes (written, left alone, rewritten for another program, the icon, off Linux, an icon gone, a home where the folder cannot be made), every log line and file |
+| which wiki file is an item's picture: names compared without spacing and case, numbers and roman numerals never forgiven, a typo of two letters at the same length, file names to try, listing prefixes (`icon-match.ts`) | done | no | `icon_match.rs`; word boundaries are ASCII and white space is JavaScript's `\s`, as in the TypeScript's patterns; edit distance over UTF-16 units; parity: ~23 item names (HUD skins, screens, numerals, typographic quotes, Cyrillic, a Turkish dotted I) against a listing of 14 titles, and every helper |
+| taking out everything the app put into the game: the patch first, then every mod the way My mods removes it, then the notice pak (`remove-everything.ts`) | done | no | `remove_everything.rs`; how one mod comes out can be handed in, as the TypeScript's `removeOne` (the app wraps it in a file transaction); parity: one sandbox game with three mods (one switched off), a record whose file is gone, the patch on and the notice written, copied into twins and emptied three ways (all, mods only, patch only): the answer, every file of the game by sha1, the library and the settings |
 | item builder, arcana, Workshop editors | - | - | |
 | 3D preview (`preview3d:*`) | - | - | binary answers already go back raw (`answer` in `src-tauri/src/main.rs`) |
 | tray, autostart, updater, deep links, uninstall | - | - | Tauri plugins: tray-icon, autostart, updater, deep-link |
@@ -174,11 +177,52 @@ Known gaps of the Tauri build today (all inside the host, so they close as chann
 
 - `nativeImage` (`src-tauri/host/images.ts`) reads and writes PNG only, through `src/png-strip.ts`:
   a palette PNG or a JPEG comes back empty, where Electron would decode it.
-- Catalog pictures are not redirected to the local cache (`session.webRequest` has no Tauri twin):
-  the page loads them straight from the network.
+- Cosmetic pictures from the Dota wiki (`src/icons.ts`, `src/icon-wiki.ts`) do not arrive. Fandom
+  and its image host (static.wikia.nocookie.net) answer anything but a browser's network stack with
+  a Cloudflare challenge (403, "Just a moment"), whatever the User-Agent: checked 2026-11-13 with
+  Node's fetch, .NET (SChannel, the stack `ureq` uses here) and both a browser and our own agent.
+  The MediaWiki API itself still answers, so listings and searches work and only the bytes fail.
+  Electron gets through because `net.fetch` is Chromium's own stack; the host under Tauri has
+  plain fetch. The ways out, best first: fetch the bytes through the webview (WebView2 is Chromium,
+  a hidden page or `CoreWebView2` asked from Rust), a client with Chrome's TLS fingerprint (a
+  BoringSSL crate, so C in the build), or the game's own textures where the Source 2 toolchain is
+  installed (`src/game-icons.ts`, already the first choice there). Liquipedia, the second wiki,
+  answers our own agent and holds the same files (checked with Weather Rain, PNG and all), but its
+  terms allow one request every two seconds, too slow to be the main source for a picker of two
+  thousand loading screens. Porting `icon-wiki.ts` waits on this choice.
 - Dropped files: `webUtils.getPathForFile` maps a dropped file to the path Tauri reported for the
   last drop, by name.
 - The tray, autostart, the updater and the uninstaller are not wired.
+
+## The switch: settings.json and the library
+
+Most channels left (`mods:*`, `presets:*`, `settings:*`, the item table, the look builders) read
+and write settings.json and the library's manifest.json. Those two files can have one owner only:
+two processes holding them in memory would each write over the other. And the host reads settings
+synchronously all over (`settings.get`), so it cannot ask Rust for them over its pipe instead.
+
+So they move in one step, the switch: Rust becomes their owner and answers every channel that
+touches them, and the host keeps none of those channels. Before that, every piece of the main
+process that writes either file has to be in Rust. On 2026-11-13 these are not yet:
+
+| Writes | Module | Lines | What it needs first |
+|---|---|---|---|
+| library | `menu-background-service.ts` | 115 | `menu-background.ts` |
+| library | `hud-scale-service.ts` | 117 | `hud-scale.ts`, `panorama-files.ts` |
+| library | `ability-sounds-service.ts` | 129 | `resource-compiler.ts` |
+| library | `map-looks-service.ts` | 156 | `tower-looks.ts`, `tree-sets.ts` |
+| library | `effect-edit-service.ts` | 161 | `effect-finder.ts` |
+| library | `map-decor.ts` | 167 | |
+| settings | `pumpkin.ts` | 165 | |
+| settings, library | `game-repair.ts`, `game-upkeep.ts`, `game-launch.ts` | 206, 259, 32 | `steam-appstate.ts`, `game-watch.ts`, `crash-watch.ts` |
+| library | `rank-look-service.ts` | 217 | `rank-look.ts`, `rank-look-script.ts`, `vtex.ts`, `toolchain.ts` |
+| library | `ability-icons-service.ts` | 243 | `ability-icons.ts`, `recolor-layers.ts`, `schema-items.ts` |
+| library | `hero-paint-service.ts` | 279 | `recolor-layers.ts`, `recolor-modes.ts`, `vtex.ts`, `toolchain.ts`, `resource-compiler.ts` |
+| library | `arcana-service.ts` | 300 | `gem-colors.ts`, `arcana-base-store.ts`, `vtex.ts` |
+| settings | `tray.ts`, `main-window.ts` | 124, 195 | Tauri's tray and window |
+
+What stays in the host after the switch has to live without the two files, or get what it reads
+pushed to it (a copy Rust sends whenever settings change: the host's reads are of settings only).
 
 ## Moving a piece
 
