@@ -7557,3 +7557,103 @@ test('animations and sprite sheets in Rust answer as the TypeScript ones do, on 
   ]);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('model exports in Rust run the toolchain and keep its files as the TypeScript does', { skip }, async () => {
+  const crypto = await import('node:crypto');
+  const mg = await import('../src/model-glb.ts');
+  const { decodePng, encodePng } = await import('../src/png-strip.ts');
+  const { CUBE_FACES } = await import('../src/png-strip.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-glbx-'));
+  const rgba = Buffer.from(Array.from({ length: 4 * 4 * 4 }, (_, i) => (i * 37) % 256));
+  const face = encodePng(4, 4, rgba);
+  const pngs = [face, encodePng(3, 2, Buffer.alloc(24, 9)), Buffer.from('nope')];
+  // a model with a second material set, out of the game when it is here
+  let skinFile: string | null = null;
+  let skinModel = 'models/items/axe/none.vmdl';
+  if (fs.existsSync(GAME_PAK01)) {
+    const { openVpkIndex } = await import('../src/vpk.ts');
+    const { modelSkinMaterials } = await import('../src/model-skin.ts');
+    const ix = openVpkIndex(GAME_PAK01);
+    const hit = [...ix.paths()].filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')).slice(0, 4000).find((p) => modelSkinMaterials(ix.read(p), 1).size > 0);
+    if (hit) { skinFile = path.join(tmp, 'skin.vmdl_c'); fs.writeFileSync(skinFile, ix.read(hit)!); skinModel = hit.replace(/_c$/, ''); }
+  }
+  // the stand-in toolchain, the same on both sides: it writes what an export would
+  const fakeRun = (runs: unknown[], rel: (p: string) => string) => async (exe: string, a: string[]) => {
+    runs.push([rel(exe), a.map(rel)]);
+    const at = (k: string) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : undefined; };
+    const out = at('-o') ?? '';
+    const list = at('-f')?.split(',') ?? [];
+    if (list.some((f) => f.includes('fail')) || (!list.length && out.includes('fail'))) throw new Error('fake failure');
+    const write = (p: string, b: Buffer | string) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, b); };
+    if (a.includes('--gltf_export_format')) {
+      if (list.length <= 1 && out.endsWith('.glb')) {
+        const name = list[0] ?? '';
+        if (name.includes('physics')) write(mg.glbAt(out, name), `glb ${name}`);
+        else if (!name.includes('absent')) write(out, `glb ${name}`);
+      } else for (const f of list.filter((x) => !x.includes('absent'))) write(mg.glbAt(out, f), `glb ${f}`);
+    } else {
+      for (const t of list) {
+        const tt = t.replace(/_c$/, '');
+        const base = `${out}/${tt.replace(/\.vtex$/, '')}`;
+        if (tt.includes('absent')) continue;
+        if (tt.includes('sheet')) { write(`${base}_seq0_0.png`, 'a'); write(`${base}_seq0_1.png`, 'bbb'); write(`${base}_seq3.png`, 'cc'); write(`${base}_SEQ10_2.png`, 'dddd'); }
+        else if (tt.includes('badcube')) for (const f of CUBE_FACES) write(`${base}_${f}.png`, 'not a png');
+        else if (tt.includes('cube')) for (const f of CUBE_FACES) write(`${base}_${f}.png`, face);
+        else write(`${base}.png`, `png ${tt}`);
+      }
+    }
+  };
+  const digest = (b: Buffer) => { const i = decodePng(b); return i ? `png ${i.width} ${i.height} ${sha(i.rgba)}` : sha(b); };
+  const tsScript = async (ud: string, game: string | null, vrf: string | null, ops: unknown[][]) => {
+    const runs: unknown[] = [], log: string[] = [];
+    const rel = (p: string) => { let q = p.replace(/\\/g, '/').replace(ud.replace(/\\/g, '/'), '<ud>'); if (game) q = q.replace(game.replace(/\\/g, '/'), '<game>'); return q; };
+    const m = mg.createModelGlb({ userDataDir: ud, toolchain: { pathOf: () => vrf }, getGamePath: () => game, run: fakeRun(runs, rel), log: (x) => log.push(x) });
+    const results: unknown[] = [];
+    for (const o of ops) {
+      if (o[0] === 'glbs') results.push(Object.fromEntries(Object.entries(await m.glbs(o[1] as string[], o[2] as never, !!o[3])).map(([k, v]) => [k, v && rel(v)])));
+      else if (o[0] === 'skinned') { const v = await m.skinned(o[1] as string, o[2] as number, o[3] ? fs.readFileSync(o[3] as string) : null, o[4] as string[]); results.push(v && rel(v)); }
+      else if (o[0] === 'sprites') results.push(Object.fromEntries(Object.entries(await m.sprites(o[1] as string[])).map(([k, v]) => [k, v && digest(v)])));
+      else if (o[0] === 'clear') { m.clear(); results.push(null); }
+      else if (o[0] === 'list') {
+        const root = path.join(ud, 'models3d');
+        results.push(fs.existsSync(root) ? fs.readdirSync(root, { recursive: true, withFileTypes: true }).filter((d) => d.isFile()).map((d) => rel(path.join(d.parentPath, d.name))).sort() : []);
+      }
+    }
+    return { results, runs, log };
+  };
+  const game = fs.existsSync(sandboxGame) ? sandboxGame : path.join(tmp, 'game');
+  const ops = [
+    ['glbs', ['models/heroes/axe/axe.vmdl', 'Models\\Items\\Axe\\A.vmdl_c', 'bad', 'models/items/x/absent.vmdl', 'models/items/axe/a.vmdl', 'models/../x.vmdl'], [], false],
+    ['glbs', ['models/heroes/axe/axe.vmdl', 'models/items/axe/a.vmdl'], [], false],
+    ['glbs', ['models/heroes/axe/axe_physics.vmdl'], ['idle', 'loadout anim!'], false],
+    ['glbs', ['models/heroes/x/fail.vmdl'], 'all', true],
+    ['glbs', ['models/heroes/axe/axe.vmdl'], 'all', false],
+    ['glbs', [], [], false],
+    ['sprites', ['materials/a/b.vtex', 'materials/a/sheet.vtex', 'materials/a/cube.vtex', 'materials/a/badcube.vtex', 'materials/a/absent.vtex', 'bad.vtex', 'materials/../x.vtex']],
+    ['sprites', ['materials/a/b.vtex', 'materials/a/cube.vtex']],
+    ['sprites', ['materials/a/fail.vtex']],
+    ['skinned', skinModel, 1, skinFile, []], ['skinned', skinModel, 1, skinFile, []], ['skinned', skinModel, 2, skinFile, ['idle']], ['skinned', skinModel, 0, skinFile, []], ['skinned', 'not a model', 1, skinFile, []], ['skinned', skinModel, 1, null, []],
+    ['list'], ['clear'], ['list'],
+  ];
+  const norm = (r: { results: unknown[]; runs: unknown[]; log: string[] }) => ({ ...r, log: r.log.map((l) => l.replace(/in \d+ ms/, 'in N ms')) });
+  const cases: [string | null, string | null][] = [['vrf.exe', game], [null, game], ['vrf.exe', null]];
+  for (const [vrf, g] of cases) {
+    const [a, b] = [path.join(tmp, 'ts'), path.join(tmp, 'rs')];
+    fs.rmSync(a, { recursive: true, force: true }); fs.rmSync(b, { recursive: true, force: true });
+    const want = norm(await tsScript(a, g, vrf && path.join(tmp, vrf), ops));
+    const list = [['model-glb.script', b, g, vrf && path.join(tmp, vrf), face.toString('base64'), ops]];
+    fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify(list));
+    const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0];
+    assert.deepEqual(norm(got.ok), JSON.parse(JSON.stringify(want)), `vrf ${vrf}, game ${g}`);
+    if (vrf && g) assert.ok(want.runs.length >= 5 && (want.results[6] as Record<string, string>)['materials/a/cube.vtex']?.startsWith('png 24 4'));
+    if (vrf && g && skinFile) assert.ok(want.results[9], 'a second material set exports');
+  }
+  compare([
+    { name: 'model-glb.modelFile', ts: mg.modelFile as never, inputs: ['models/heroes/axe/axe.vmdl', 'Models\\Heroes\\Axe\\AXE.VMDL_C', ' models/a.vmdl ', 'models/a/../b.vmdl', 'models/.vmdl', 'models/a b.vmdl', 'materials/a.vmdl', 'models/a.vmdl.vmdl', '', 'models/x.vmdlx'].map((m) => [m]) },
+    { name: 'model-glb.gameInfo', ts: mg.gameInfo as never, inputs: [['C:\\Games\\dota 2 beta\\game\\dota'], ['/x/y']] },
+    { name: 'model-glb.exportArgs', ts: mg.exportArgs as never, inputs: [['p', 'o', ['a', 'b'], 'all', true], ['p', 'o', ['a'], 'all', false], ['p', 'o', [], [], false], ['p', 'o', ['a'], ['idle', 'run'], true]] },
+    { name: 'png-strip.decodePng', ts: ((b: string) => { const i = decodePng(Buffer.from(b, 'base64')); return i && [i.width, i.height, sha(i.rgba)]; }) as never, inputs: pngs.map((p) => [p.toString('base64')]) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

@@ -4377,6 +4377,165 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let list = |i: usize| args.get(i).and_then(Value::as_array).cloned().unwrap_or_default();
             json!(crate::razor_crest_preview::merge_crest_attachments(&list(0), &list(1)))
         }
+        "model-glb.modelFile" => json!(crate::model_glb::model_file(&s(args, 0))),
+        "model-glb.gameInfo" => json!(crate::model_glb::game_info(&s(args, 0))),
+        // (pak, out, files, clips 'all' | [..], materials)
+        "model-glb.exportArgs" => {
+            let clips = match args.get(3) {
+                Some(Value::String(x)) if x == "all" => crate::model_glb::Clips::All,
+                _ => crate::model_glb::Clips::Some(strings(args, 3).unwrap_or_default()),
+            };
+            json!(crate::model_glb::export_args(&s(args, 0), &s(args, 1), &strings(args, 2)?, &clips, crate::js::truthy(args.get(4).unwrap_or(&Value::Null))))
+        }
+        // (png base64): its size and the sha256 of its RGBA, or null
+        "png-strip.decodePng" => {
+            use sha2::Digest;
+            let png = crate::js::base64_decode(&s(args, 0));
+            json!(crate::png_strip::decode_png(&png).map(|i| json!([i.width, i.height, format!("{:x}", sha2::Sha256::digest(&i.rgba))])))
+        }
+        // (userData, game | null, vrf | null, face png base64, ops): a stand-in toolchain that
+        // writes what each export would (model-glb.script in test/rust-calls.test.ts says how)
+        "model-glb.script" => {
+            use sha2::Digest;
+            let ud = std::path::PathBuf::from(s(args, 0));
+            let game = args.get(1).and_then(Value::as_str).map(std::path::PathBuf::from);
+            let vrf = args.get(2).and_then(Value::as_str).map(std::path::PathBuf::from);
+            let face = crate::js::base64_decode(&s(args, 3));
+            let ops = args.get(4).and_then(Value::as_array).cloned().unwrap_or_default();
+            let rel = {
+                let ud = ud.to_string_lossy().replace('\\', "/");
+                let game = game.as_ref().map(|g| g.to_string_lossy().replace('\\', "/"));
+                move |p: &str| {
+                    let p = p.replace('\\', "/").replace(&ud, "<ud>");
+                    match &game {
+                        Some(g) => p.replace(g.as_str(), "<game>"),
+                        None => p,
+                    }
+                }
+            };
+            let runs = std::sync::Arc::new(Mutex::new(Vec::<Value>::new()));
+            let logs = std::sync::Arc::new(Mutex::new(Vec::<String>::new()));
+            let (r1, rel1) = (runs.clone(), rel.clone());
+            let run: crate::model_glb::Run = Box::new(move |exe, a| {
+                r1.lock().unwrap().push(json!([rel1(&exe.to_string_lossy()), a.iter().map(|x| rel1(x)).collect::<Vec<_>>()]));
+                let at = |k: &str| a.iter().position(|x| x == k).and_then(|i| a.get(i + 1)).cloned();
+                let out = at("-o").unwrap_or_default();
+                let list: Vec<String> = at("-f").map(|f| f.split(',').map(String::from).collect()).unwrap_or_default();
+                if list.iter().any(|f| f.contains("fail")) || (list.is_empty() && out.contains("fail")) {
+                    return Err("fake failure".into());
+                }
+                let write = |p: &std::path::Path, b: &[u8]| {
+                    if let Some(d) = p.parent() {
+                        let _ = std::fs::create_dir_all(d);
+                    }
+                    let _ = std::fs::write(p, b);
+                };
+                let out_p = std::path::PathBuf::from(&out);
+                if a.iter().any(|x| x == "--gltf_export_format") {
+                    if list.len() <= 1 && out.ends_with(".glb") {
+                        let name = list.first().cloned().unwrap_or_default();
+                        if name.contains("physics") {
+                            write(&crate::model_glb::glb_at(&out_p, &name), format!("glb {name}").as_bytes());
+                        } else if !name.contains("absent") {
+                            write(&out_p, format!("glb {name}").as_bytes());
+                        }
+                    } else {
+                        for f in list.iter().filter(|f| !f.contains("absent")) {
+                            write(&crate::model_glb::glb_at(&out_p, f), format!("glb {f}").as_bytes());
+                        }
+                    }
+                } else {
+                    for t in &list {
+                        let tt = t.strip_suffix("_c").unwrap_or(t);
+                        let base = format!("{}/{}", out, tt.strip_suffix(".vtex").unwrap_or(tt));
+                        if tt.contains("absent") {
+                            continue;
+                        }
+                        let p = |suffix: &str| std::path::PathBuf::from(format!("{base}{suffix}"));
+                        if tt.contains("sheet") {
+                            write(&p("_seq0_0.png"), b"a");
+                            write(&p("_seq0_1.png"), b"bbb");
+                            write(&p("_seq3.png"), b"cc");
+                            write(&p("_SEQ10_2.png"), b"dddd");
+                        } else if tt.contains("badcube") {
+                            for f in crate::png_strip::CUBE_FACES {
+                                write(&p(&format!("_{f}.png")), b"not a png");
+                            }
+                        } else if tt.contains("cube") {
+                            for f in crate::png_strip::CUBE_FACES {
+                                write(&p(&format!("_{f}.png")), &face);
+                            }
+                        } else {
+                            write(&p(".png"), format!("png {tt}").as_bytes());
+                        }
+                    }
+                }
+                Ok(())
+            });
+            let l1 = logs.clone();
+            let (g1, v1) = (game.clone(), vrf.clone());
+            let mg = crate::model_glb::ModelGlb::new(
+                &ud,
+                Box::new(move || v1.clone()),
+                Box::new(move || g1.clone()),
+                run,
+                Box::new(move |m| l1.lock().unwrap().push(m.to_string())),
+            );
+            let clips_of = |v: Option<&Value>| match v {
+                Some(Value::String(x)) if x == "all" => crate::model_glb::Clips::All,
+                Some(Value::Array(a)) => crate::model_glb::Clips::Some(a.iter().map(crate::js::string).collect()),
+                _ => crate::model_glb::Clips::Some(vec![]),
+            };
+            let path_of = |p: Option<std::path::PathBuf>| p.map(|p| rel(&p.to_string_lossy()));
+            let digest = |b: &[u8]| match crate::png_strip::decode_png(b) {
+                Some(i) => format!("png {} {} {:x}", i.width, i.height, sha2::Sha256::digest(&i.rgba)),
+                None => format!("{:x}", sha2::Sha256::digest(b)),
+            };
+            let mut results = Vec::new();
+            for op in &ops {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let list = |i: usize| o.get(i).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect::<Vec<_>>()).unwrap_or_default();
+                results.push(match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "glbs" => {
+                        let r = mg.glbs(&list(1), &clips_of(o.get(2)), o.get(3).is_some_and(crate::js::truthy));
+                        json!(r.into_iter().map(|(k, v)| (k, json!(path_of(v)))).collect::<serde_json::Map<_, _>>())
+                    }
+                    "skinned" => {
+                        let bytes = o.get(3).and_then(Value::as_str).map(|f| std::fs::read(f).unwrap_or_default());
+                        let skin = crate::js::to_number(o.get(2).unwrap_or(&Value::Null)) as usize;
+                        json!(path_of(mg.skinned(&crate::js::string(o.get(1).unwrap_or(&Value::Null)), skin, bytes.as_deref(), &list(4))))
+                    }
+                    "sprites" => {
+                        let r = mg.sprites(&list(1));
+                        json!(r.into_iter().map(|(k, v)| (k, json!(v.map(|b| digest(&b))))).collect::<serde_json::Map<_, _>>())
+                    }
+                    "clear" => {
+                        mg.clear();
+                        Value::Null
+                    }
+                    "list" => {
+                        let mut files = Vec::new();
+                        let mut stack = vec![ud.join("models3d")];
+                        while let Some(d) = stack.pop() {
+                            for e in std::fs::read_dir(&d).into_iter().flatten().flatten() {
+                                let p = e.path();
+                                if p.is_dir() {
+                                    stack.push(p);
+                                } else {
+                                    files.push(rel(&p.to_string_lossy()));
+                                }
+                            }
+                        }
+                        files.sort();
+                        json!(files)
+                    }
+                    other => json!({ "error": format!("no op {other}") }),
+                });
+            }
+            let runs = runs.lock().unwrap().clone();
+            let logs = logs.lock().unwrap().clone();
+            json!({ "results": results, "runs": runs, "log": logs })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
