@@ -1633,6 +1633,59 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "schema-cosmetics.script" => {
+            // (lang, game, libraryDir, userData, itemsGameFile, ops): each answer, the library after it
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let lang = crate::i18n::lang().code();
+            let game = opt_path(args, 1);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 2)));
+            let mut st = crate::settings::Settings::new(std::path::Path::new(&s(args, 3)));
+            let file = std::path::PathBuf::from(s(args, 4));
+            let text = std::fs::read(&file).unwrap_or_default();
+            let ops = args.get(5).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let n = |v: &Value| v.as_f64().unwrap_or(0.0);
+                let r: Result<Value, String> = (|| {
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "slots" => crate::schema_cosmetics::cosmetic_slots(&lib, game.as_deref(), &text, lang),
+                        "pick" => json!(crate::schema_cosmetics::pick_cosmetic(
+                            &mut lib,
+                            &crate::js::string(&op[1]),
+                            &crate::js::string(&op[2]),
+                            op[3].as_str(),
+                            Some(&op[4])
+                        )?),
+                        "set" => {
+                            let (applied, pieces) =
+                                crate::schema_cosmetics::pick_set(&mut lib, &text, &crate::js::string(&op[1]), n(&op[2]))?;
+                            json!({ "applied": applied, "pieces": pieces })
+                        }
+                        "look" => {
+                            let (applied, picks) =
+                                crate::schema_cosmetics::wear_look(&mut lib, &crate::js::string(&op[1]), &op[2])?;
+                            json!({ "applied": applied, "picks": picks })
+                        }
+                        "settings" => {
+                            st.set(&crate::js::string(&op[1]), op[2].clone()).map_err(|e| e.to_string())?;
+                            Value::Null
+                        }
+                        "migrate" => {
+                            let read = || std::fs::read(&file).map_err(|e| e.to_string());
+                            let read: &dyn Fn() -> Result<Vec<u8>, String> = &read;
+                            json!(crate::schema_cosmetics::migrate_cosmetic_settings(&mut lib, &mut st, game.as_ref().map(|_| read)))
+                        }
+                        "list" => json!(lib.list()),
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));

@@ -2843,3 +2843,83 @@ test('the item table service in Rust keeps the game where the TypeScript keeps i
   assert.deepEqual(tree(b.game), tree(a.game));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the free cosmetics and the item builder\'s picks in Rust answer as the TypeScript ones do: slots, picks, sets, looks, the old settings', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox'); return; }
+  const { createCosmetics } = await import('../src/schema-cosmetics.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const sl = await import('../src/item-builder-slots.ts');
+  const ib = await import('../src/item-builder.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-cosmetics-'));
+  const slots = sl.itemSlots(text);
+  const plain = slots.filter((s) => !s.persona && !s.abilityFx && s.options.length > 1);
+  const [a, b, c] = [plain[0], plain[Math.floor(plain.length / 2)], plain[plain.length - 1]];
+  const sets = ib.itemSets(text, slots);
+  const set = sets.find((s) => s.styles > 2 && s.pieces.every((p) => !p.fits || (p.styles ?? 1) > 2)) ?? sets.find((s) => s.styles > 2)!;
+  const persona = slots.find((s) => s.persona && s.options.length);
+  const hero = a.slot.slice(0, a.slot.lastIndexOf(':') + 1);
+  const ops: unknown[][] = [
+    ['settings', 'cosmetics', { [a.slot]: a.options[0].id, nope: 5 }], ['migrate'], ['list'], ['settings', 'cosmetics', {}], ['migrate'],
+    ['pick', a.slot, a.options[0].id, 'A', null], ['pick', a.slot, a.options[0].id, 'A', ['fx-fire']], ['pick', a.slot, a.options[1].id, 'A1', 'style-1'],
+    ['pick', a.slot, a.options[0].id, null, ''], ['pick', b.slot, b.options[1].id, 'B', []], ['pick', 'weather', '5', 'Rain', null], ['pick', 'weather', '6', 'Snow', 'x'],
+    ['list'],
+    ...(persona ? [['pick', persona.slot, persona.options[0].id, 'P', null], ['list']] : []),
+    ['set', set.id, 2], ['list'], ['set', set.id, 1], ['list'], ['set', set.id, 0], ['set', 'no-such-set', 0],
+    ['look', hero, [{ slot: a.slot, itemId: a.options[1].id, name: 'L', effectId: '' }, { slot: c.slot, itemId: c.options[0].id }, { slot: 'item:other:x', itemId: '1' }, { slot: `${hero}bad slot`, itemId: '2' }]],
+    ['look', 'nope', []], ['list'],
+    ['slots'],
+  ];
+  const twin = (side: string) => {
+    const root = path.join(tmp, side);
+    for (const d of ['lib', 'userdata']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: [], presets: [] }, null, 2));
+    return { lib: path.join(root, 'lib'), ud: path.join(root, 'userdata') };
+  };
+  const ts = twin('ts');
+  const rs = twin('rs');
+  const list = path.join(tmp, 'cosmetics.json');
+  fs.writeFileSync(list, JSON.stringify([['schema-cosmetics.script', 'en', sandboxGame, rs.lib, rs.ud, file, ops]]));
+  const [res] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 }));
+  const answers = res.ok as { ok?: unknown; error?: unknown }[];
+  // the records' ids are each side's own: compared by the order they first appear
+  const plainOf = (v: unknown, ids: Map<string, string>) => JSON.parse(JSON.stringify(v ?? null), (k, x) => {
+    if ((k === 'id' || k === 'recordId') && typeof x === 'string' && /^[0-9a-f]{8}-[0-9a-f-]{27}$/.test(x)) { if (!ids.has(x)) ids.set(x, `#${ids.size}`); return ids.get(x); }
+    if (k === 'installedAt' || k === 'updatedAt') return typeof x;
+    return x;
+  });
+  setLang('en');
+  const lib = new Library(ts.lib);
+  const st = new Settings(ts.ud);
+  const cos = createCosmetics({ library: lib, settings: st as never, gamePath: () => sandboxGame, vanilla: () => text, refresh: () => {} });
+  const tsIds = new Map<string, string>();
+  const rsIds = new Map<string, string>();
+  ops.forEach((op, k) => {
+    let want: unknown;
+    try {
+      const v = ((): unknown => {
+        switch (op[0]) {
+          case 'slots': return cos.cosmeticSlots();
+          case 'pick': return cos.pickCosmetic(op[1] as string, op[2] as string, op[3] as string, op[4] as string, { write: false });
+          case 'set': return cos.pickSet(op[1] as string, { write: false, style: op[2] as number });
+          case 'look': return cos.wearLook(op[1] as string, op[2] as never, { write: false });
+          case 'settings': st.set(op[1] as never, op[2] as never); return null;
+          case 'migrate': cos.migrateCosmeticSettings(); return null;
+          case 'list': return lib.list();
+        }
+        throw new Error(`no step ${op[0]}`);
+      })();
+      want = { ok: plainOf(v, tsIds) };
+    } catch { want = { error: true }; }
+    const got = answers[k];
+    const norm = 'error' in got ? { error: true } : { ok: op[0] === 'migrate' ? null : plainOf(got.ok, rsIds) };
+    assert.deepEqual(norm, want, `${k} ${JSON.stringify(op).slice(0, 200)}`);
+  });
+  const picked = (answers.at(-2)!.ok as unknown[]).length;
+  assert.ok(picked >= 4, `the picks became records: ${picked}`);
+  const all = answers.at(-1)!.ok as { slots: unknown[]; sets: unknown[] };
+  assert.ok(all.slots.length > 100 && all.sets.length > 50, 'the slots and sets of the real table');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

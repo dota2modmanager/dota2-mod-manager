@@ -86,6 +86,7 @@ pub mod resource;
 pub mod safe_zip;
 pub mod schema;
 pub mod schema_build;
+pub mod schema_cosmetics;
 pub mod schema_deploy;
 pub mod schema_harvest;
 pub mod schema_merge;
