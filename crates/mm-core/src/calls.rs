@@ -1439,6 +1439,82 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "schema-harvest.script" => {
+            // (game, suffix, journalDir, libraryDir, userData, {$file vanilla}, ops): records named by name
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(std::path::Path::new(&s(args, 4)));
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let vanilla = b(args, 5)?;
+            let ops = args.get(6).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let r: Result<Value, String> = (|| {
+                    let io = |e: std::io::Error| e.to_string();
+                    let named = |lib: &crate::library::Library| lib.list().iter().find(|r| r.get("name") == op.get(1)).cloned();
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "harvest" => match named(&lib) {
+                            Some(rec) => json!(crate::schema_harvest::harvest(&inst, &mut lib, &rec, &vanilla)
+                                .map(|(d, st)| json!({ "deltas": d, "stripped": st }))),
+                            None => Value::Null,
+                        },
+                        "split" => match named(&lib) {
+                            Some(rec) => json!(crate::schema_harvest::split(&inst, &mut lib, &rec)?),
+                            None => Value::Null,
+                        },
+                        "migrate" => json!(crate::schema_harvest::migrate(&inst, &mut lib, &vanilla)),
+                        "list" => json!(lib.list()),
+                        "pakLeft" => crate::item_files_service::ItemFilesPak::left(&lib),
+                        "pakClear" => {
+                            crate::item_files_service::ItemFilesPak::clear(&inst, &mut lib)?;
+                            Value::Null
+                        }
+                        "pakWrite" => {
+                            let entries: Vec<crate::vpk::Entry> = op[1]
+                                .as_array()
+                                .map(|a| {
+                                    a.iter()
+                                        .map(|e| crate::vpk::entry_at(&crate::js::string(&e[0]), crate::js::string(&e[1]).into_bytes().into()))
+                                        .collect()
+                                })
+                                .unwrap_or_default();
+                            let left: Vec<crate::item_files::LeftBehind> =
+                                serde_json::from_value(op[3].clone()).map_err(|e| e.to_string())?;
+                            let mut logged = Vec::new();
+                            crate::item_files_service::ItemFilesPak::write(
+                                &inst,
+                                &mut lib,
+                                &entries,
+                                op[2].as_u64().unwrap_or(0) as usize,
+                                &left,
+                                &mut |m| logged.push(m),
+                            )?;
+                            json!(logged)
+                        }
+                        "enable" => {
+                            let rec = named(&lib).ok_or("no record")?;
+                            let on = crate::js::truthy(&op[2]);
+                            let files: Vec<crate::overlays::LibFile> = rec["files"]
+                                .as_array()
+                                .map(|a| {
+                                    a.iter()
+                                        .map(|f| crate::overlays::LibFile::new(&crate::js::string(&f["root"]), &crate::js::string(&f["relPath"])))
+                                        .collect()
+                                })
+                                .unwrap_or_default();
+                            inst.set_enabled(&files, on, Some(&crate::js::string(&rec["id"])))?;
+                            lib.set_enabled(&rec["id"], on, None).map_err(io)?;
+                            Value::Null
+                        }
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));

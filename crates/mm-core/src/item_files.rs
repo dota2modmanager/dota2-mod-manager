@@ -205,7 +205,7 @@ pub fn worn_model(model: &[u8], skin: f64, systems: &[&str]) -> Option<Vec<u8>> 
 }
 
 /// One source and what of it stays behind without the table.
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct LeftBehind {
     pub source: String,
     pub what: Vec<String>,

@@ -2530,3 +2530,134 @@ test('Cancel on the item table bar in Rust puts back what the TypeScript puts ba
   assert.deepEqual(tree(b.root), tree(a.root));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('a mod\'s own item blocks and the picks\' pak in Rust match the TypeScript: lifted, split, swept, written in a slot', { skip }, async () => {
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createHarvest } = await import('../src/schema-harvest.ts');
+  const { createItemFilesPak } = await import('../src/item-files-service.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk-write.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-harvest-'));
+  const pak = (files: Record<string, string>) => buildVpk(Object.entries(files).map(([p, d]) => entryAt(p, Buffer.from(d, 'latin1'))));
+  const lang = (f: string) => [{ root: 'lang', relPath: f }];
+  const item = (id: string, name: string, model: string) => [`\t\t"${id}"`, '\t\t{', `\t\t\t"name"\t"${name}"`, '\t\t\t"prefab"\t"wearable"', `\t\t\t"model_player"\t"${model}"`, '\t\t}'];
+  const table = (rows: string[][]) => ['"items_game"', '{', '\t"items"', '\t{', ...rows.flat(), '\t}', '}', ''].join('\n');
+  const jugg = 'models/heroes/juggernaut/juggernaut.vmdl';
+  const axe = 'models/items/axe/axe_helm.vmdl';
+  const vanilla = table([item('4100', 'Blade', jugg), item('4200', 'Helm', axe)]);
+  const modded = table([item('4100', 'Blade of the mod', jugg), item('4200', 'Helm', axe)]);
+  const both = table([item('4100', 'Blade of the pack', jugg), item('4200', 'Helm of the pack', axe)]);
+  const heroes = {
+    'models/heroes/juggernaut/juggernaut.vmdl_c': 'j', 'materials/models/heroes/juggernaut/j.vmat_c': 'jm',
+    'models/items/axe/axe_helm.vmdl_c': 'a', 'particles/units/heroes/hero_axe/x.vpcf_c': 'p',
+  };
+  const recs = [
+    { id: 'one', name: 'One hero', categoryId: 'heroes', styleLabel: null, fileRef: 'one.zip', enabled: true, files: lang('pak30_dir.vpk') },
+    { id: 'pack', name: 'Two heroes', categoryId: 'imported', styleLabel: null, fileRef: null, enabled: true, files: lang('pak31_dir.vpk') },
+    { id: 'clean', name: 'Clean', categoryId: 'heroes', styleLabel: null, fileRef: 'c.zip', enabled: true, files: lang('pak32_dir.vpk') },
+    { id: 'seen', name: 'Seen', categoryId: 'heroes', styleLabel: null, fileRef: 's.zip', enabled: true, schemaChecked: true, files: lang('pak33_dir.vpk') },
+    { id: 'loc', name: 'Old text', categoryId: 'heroes', styleLabel: null, fileRef: 'l.zip', enabled: true, files: lang('pak34_dir.vpk') },
+    { id: 'folder', name: 'Not a pak', categoryId: 'fonts', styleLabel: null, fileRef: 'f.zip', enabled: true, files: [{ root: 'game', relPath: 'panorama/fonts/x.otf' }] },
+  ];
+  const twin = (side: string) => {
+    const root = path.join(tmp, side);
+    const dir = path.join(root, 'game', 'dota_russian');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(path.join(root, 'game', 'dota'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'game', 'dota', 'pak01_dir.vpk'), pak({ 'scripts/items/items_game.txt': vanilla }));
+    fs.writeFileSync(path.join(dir, 'gameinfo.gi'), 'gi');
+    fs.writeFileSync(path.join(dir, 'pak30_dir.vpk'), pak({ 'models/heroes/juggernaut/juggernaut.vmdl_c': 'j', 'scripts/items/items_game.txt': modded, 'resource/localization/dota_english.txt': 'x'.repeat(4000) }));
+    fs.writeFileSync(path.join(dir, 'pak31_dir.vpk'), pak({ ...heroes, 'scripts/items/items_game.txt': both }));
+    fs.writeFileSync(path.join(dir, 'pak32_dir.vpk'), pak({ 'models/heroes/juggernaut/juggernaut.vmdl_c': 'j2' }));
+    fs.writeFileSync(path.join(dir, 'pak33_dir.vpk'), pak({ 'scripts/items/items_game.txt': modded }));
+    fs.writeFileSync(path.join(dir, 'pak34_dir.vpk'), pak({ 'resource/localization/dota_english.txt': 'y'.repeat(3 * 1024 * 1024), 'models/heroes/axe/axe.vmdl_c': 'a' }));
+    fs.mkdirSync(path.join(root, 'lib'), { recursive: true });
+    fs.mkdirSync(path.join(root, 'userdata'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: recs, presets: [] }, null, 2));
+    fs.writeFileSync(path.join(root, 'vanilla.txt'), vanilla, 'latin1');
+    return { root, game: path.join(root, 'game'), lib: path.join(root, 'lib'), ud: path.join(root, 'userdata'), journal: path.join(root, 'journal'), vanilla: path.join(root, 'vanilla.txt') };
+  };
+  const entries = (k: number) => [['models/items/axe/axe_helm.vmdl_c', `helm ${k}`], ['particles/x.vpcf_c', `fx ${k}`], ['scripts/npc/portraits.txt', `p ${k}`]];
+  const left = [{ source: 'Helm of Axe', what: ['its effect', 'a second model'] }];
+  // the record ids that library.add makes are random: the steps name records by name instead
+  const ops: unknown[][] = [
+    ['pakLeft'], ['pakClear'], ['harvest', 'One hero'], ['harvest', 'Clean'], ['harvest', 'Not a pak'], ['harvest', 'Nobody'], ['list'],
+    ['harvest', 'Two heroes'], ['split', 'Two heroes'], ['split', 'Clean'], ['split', 'Not a pak'], ['list'],
+    ['migrate'], ['migrate'], ['list'],
+    ['pakWrite', entries(1), 3, left], ['list'], ['pakLeft'], ['pakWrite', entries(2), 4, []], ['list'],
+    ['enable', 'Предметы героев: 4', false], ['pakWrite', entries(3), 5, left], ['list'], ['pakClear'], ['list'], ['pakClear'],
+  ];
+  const a = twin('ts');
+  const b = twin('rs');
+  const list = path.join(tmp, 'harvest.json');
+  fs.writeFileSync(list, JSON.stringify([['schema-harvest.script', b.game, 'russian', b.journal, b.lib, b.ud, { $file: b.vanilla }, ops]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }));
+  const answers = rs.ok as { ok?: unknown; error?: unknown }[];
+  const ids = new Map<string, string>();
+  // the same record on both sides by its place in the library, the generated ids aside
+  const plain = (v: unknown, idsOf: (id: string) => string): unknown => JSON.parse(JSON.stringify(v ?? null), (k, x) => {
+    if (k === 'id' && typeof x === 'string') return idsOf(x);
+    if (k === 'installedAt' || k === 'updatedAt') return typeof x;
+    return x;
+  });
+  const idOf = (side: Map<string, string>) => (id: string) => {
+    if (!side.has(id)) side.set(id, `#${side.size}`);
+    return side.get(id)!;
+  };
+  const rsIds = new Map<string, string>();
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const lib = new Library(a.lib);
+    const h = createHarvest({ library: lib, installer: inst as never, gamePath: () => a.game, vanilla: () => fs.readFileSync(a.vanilla, 'latin1') });
+    const logs: string[] = [];
+    const p = createItemFilesPak({ installer: inst as never, library: lib, log: (m) => logs.push(m) });
+    const named = (n: unknown) => lib.list().find((r) => r.name === n);
+    ops.forEach((op, k) => {
+      let want: unknown;
+      try {
+        const v = ((): unknown => {
+          switch (op[0]) {
+            case 'harvest': return h.harvest(named(op[1]));
+            case 'split': { const r = named(op[1]); return r ? h.split(r) : null; }
+            case 'migrate': return h.migrate();
+            case 'list': return lib.list();
+            case 'pakLeft': return p.left();
+            case 'pakClear': p.clear(); return null;
+            case 'pakWrite': {
+              logs.length = 0;
+              p.write((op[1] as [string, string][]).map(([q, d]) => entryAt(q, Buffer.from(d))), op[2] as number, op[3] as never);
+              return [...logs];
+            }
+            case 'enable': {
+              const r = named(op[1])!;
+              inst.setEnabled(r.files, !!op[2], r.id);
+              lib.setEnabled(r.id, !!op[2]);
+              return null;
+            }
+          }
+          throw new Error(`no step ${op[0]}`);
+        })();
+        want = { ok: plain(v, idOf(ids)) };
+      } catch { want = { error: true }; }
+      const got = answers[k];
+      assert.deepEqual('error' in got ? { error: true } : { ok: plain(got.ok, idOf(rsIds)) }, want, `${k} ${JSON.stringify(op).slice(0, 200)}`);
+    });
+  } finally { FileTx.journalDir = null; }
+  const split = answers[8].ok as unknown[];
+  assert.ok(Array.isArray(split) && split.length === 2, JSON.stringify(answers[8]).slice(0, 300));
+  // each kind of step did something: blocks lifted, a sweep that found mods, the pak written and swapped, its log
+  assert.deepEqual(answers[2].ok, { deltas: 1, stripped: 1 });
+  const swept = answers[12].ok as { scanned: number; changed: number };
+  assert.ok(swept.scanned >= 1 && swept.changed >= 1, JSON.stringify(swept));
+  assert.deepEqual(answers[13].ok, { scanned: 0, changed: 0, deltas: 0, freedMB: 0 });
+  assert.equal((answers[15].ok as string[]).length, 1);
+  const pakOf = (k: number) => (answers[k].ok as { generated?: { itemFiles?: boolean }; files: unknown }[]).find((r) => r.generated?.itemFiles);
+  assert.ok(pakOf(16) && pakOf(19) && pakOf(22) && !pakOf(24), 'the pak comes, is rebuilt in place, and goes');
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .filter((d) => d.isFile() && path.relative(g, d.parentPath).startsWith('game'))
+    .map((d) => { const q = path.join(d.parentPath, d.name); return `${path.relative(g, q)} ${fs.readFileSync(q).toString('base64')}`; }).sort();
+  assert.deepEqual(tree(b.root), tree(a.root));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
