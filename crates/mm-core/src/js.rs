@@ -312,6 +312,32 @@ pub fn slice_utf16(s: &str, n: usize) -> String {
     out
 }
 
+/// `Buffer.from(s, 'base64')`: both alphabets, anything else skipped, the first `=` ends it, a
+/// dangling sixth of a byte dropped. Node never throws on base64, it reads what it can.
+pub fn base64_decode(s: &str) -> Vec<u8> {
+    let mut out = Vec::with_capacity(s.len() * 3 / 4);
+    let (mut acc, mut bits) = (0u32, 0u32);
+    for c in s.bytes() {
+        let v = match c {
+            b'A'..=b'Z' => c - b'A',
+            b'a'..=b'z' => c - b'a' + 26,
+            b'0'..=b'9' => c - b'0' + 52,
+            b'+' | b'-' => 62,
+            b'/' | b'_' => 63,
+            b'=' => break,
+            _ => continue,
+        };
+        acc = (acc << 6) | u32::from(v);
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((acc >> bits) as u8);
+            acc &= (1 << bits) - 1;
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

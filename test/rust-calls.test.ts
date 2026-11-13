@@ -3401,3 +3401,182 @@ test('putting a preset on in Rust does what the TypeScript does: downloads, own 
   assert.ok(resolved.answer.ok && (resolved.answer.installed ?? 0) >= 3, JSON.stringify(resolved));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the mirror chain, requests, downloads and the catalog signature in Rust answer as the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { spawn } = await import('node:child_process');
+  const net = await import('../src/net.ts');
+  const mirrors = await import('../src/net-mirrors.ts');
+  const signature = await import('../src/catalog-signature.ts');
+  type Handler = (req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse) => void;
+
+  const data = crypto.randomBytes(300000);
+  const digest = crypto.createHash('sha256').update(data).digest('hex');
+  const sha = (b: Buffer) => crypto.createHash('sha1').update(b).digest('hex');
+  const ranged = (bytes: Buffer): Handler => (req, res) => {
+    const m = /^bytes=(\d+)-/.exec(req.headers.range || '');
+    if (!m) { res.writeHead(200, { 'content-length': bytes.length }); res.end(bytes); return; }
+    const from = Number(m[1]);
+    res.writeHead(206, { 'content-length': bytes.length - from, 'content-range': `bytes ${from}-${bytes.length - 1}/${bytes.length}` });
+    res.end(bytes.subarray(from));
+  };
+  const handlers: Record<string, Handler> = {
+    good: ranged(data),
+    whole: (req, res) => { res.writeHead(200, { 'content-length': data.length }); res.end(data); }, // ignores Range
+    wrong: ranged(crypto.randomBytes(1000)),
+    down: (req, res) => { res.writeHead(503); res.end('no'); },
+    lacking: (req, res) => { res.writeHead(404); res.end('none here'); },
+    json: (req, res) => { const t = JSON.stringify({ mods: [1, 2, 'ж'] }); res.writeHead(200, { 'content-length': Buffer.byteLength(t) }); res.end(t); },
+    trickle: (req, res) => {
+      res.writeHead(200, { 'content-length': 120 });
+      let sent = 0;
+      const tick = setInterval(() => { res.write('x'.repeat(10)); if (++sent === 12) { clearInterval(tick); res.end(); } }, 50);
+      res.on('close', () => clearInterval(tick));
+    },
+    stuck: (req, res) => { res.writeHead(200, { 'content-length': 100 }); res.write('x'); },
+  };
+  const servers: import('node:http').Server[] = [];
+  const port: Record<string, number> = {};
+  for (const [name, h] of Object.entries(handlers)) {
+    const s = http.createServer(h);
+    await new Promise<void>((r) => s.listen(0, '127.0.0.1', () => r()));
+    port[name] = (s.address() as import('node:net').AddressInfo).port;
+    servers.push(s);
+  }
+  // a port nothing listens on: one taken and given back
+  const gone = http.createServer();
+  await new Promise<void>((r) => gone.listen(0, '127.0.0.1', () => r()));
+  port.gone = (gone.address() as import('node:net').AddressInfo).port;
+  await new Promise((r) => gone.close(r));
+
+  type At = { host: string; prefix: string; origin?: boolean; smallOnly?: boolean };
+  const at = (name: string, extra: Partial<At> = {}): At => ({ host: `127.0.0.1:${port[name]}`, prefix: `http://127.0.0.1:${port[name]}/`, ...extra });
+  const tsMirror = (m: At) => ({ host: m.host, map: (u: string) => u.replace(net.RAW_HOST, m.prefix), origin: m.origin, smallOnly: m.smallOnly });
+  const RAW = `${net.RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/files/heroes/Mod.zip`;
+  const JSON_URL = `${net.RAW_HOST}h6rd/Dota2PornFxWeb/main/assets/data/mods.json`;
+  const RELEASE = 'https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v1/app.exe';
+  const keys = crypto.generateKeyPairSync('ed25519');
+  const spki = keys.publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  const payload = Buffer.from('{"mods":[]}\n');
+  const sig = crypto.sign(null, payload, keys.privateKey).toString('base64');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-net-'));
+  const payloadFile = path.join(tmp, 'payload.json');
+  fs.writeFileSync(payloadFile, payload);
+  const pf = { $file: payloadFile };
+  const twin = (side: string, f: string) => path.join(tmp, side, f);
+
+  const urls = [RAW, JSON_URL, RELEASE, 'https://example.com/x.zip', `${net.RAW_HOST}dota2modmanager/dota2-mod-manager/main/config/app.json`, `${net.RAW_HOST}a/b`];
+  const configured = [
+    { base: 'https://gitlab.com/r/m/-/raw/main/assets/files/', host: 'gitlab.com' },
+    { base: 'https://x.org:8443/a/', host: 'x.org:8443' }, { base: 'https://x.org:443/a/', host: 'x.org' },
+    { base: 'http://x.org/a/', host: 'x.org' }, { base: 'https://u:p@x.org/a/', host: 'x.org' }, { base: 'https://x.org/a/?q', host: 'x.org' },
+    { base: 'https://x.org/a/?', host: 'x.org' }, { base: 'https://x.org/a', host: 'x.org' }, { base: 'https://X.org/a/', host: 'X.ORG' },
+    { base: 'https://raw.githubusercontent.com/a/', host: 'raw.githubusercontent.com' }, { base: 'https://y.org/a/', host: 'x.org' },
+    { base: 'https://x.org/a/#h', host: 'x.org' }, { base: 5, host: 'x.org' }, null, 'x', { base: 'https://x.org/a/', host: 'x.org/' },
+  ];
+  const ops: unknown[][] = [
+    ...urls.flatMap((u) => [['mirrorsFor', u, false, false], ['mirrorsFor', u, true, false], ['entriesFor', u, true, true]]),
+    ...configured.map((m) => ['wellFormed', m]),
+    ['apply', [configured[0], { base: 'https://bad', host: 'x' }, { base: 'https://h.co/c/', host: 'h.co' }]],
+    ['mirrorsFor', RAW, true, false], ['pictures'], ['apply', []], ['mirrorsFor', RAW, false, false], ['pictures'],
+    ['fail', 'ghproxy.net', 'HTTP 500'], ['fail', 'ghproxy.net', 'HTTP 502'], ['stoodDown', 'ghproxy.net'], ['health'],
+    ['fail', 'ghproxy.net', 'HTTP 503'], ['stoodDown', 'ghproxy.net'], ['stall', 'cdn.jsdelivr.net', 'timed out'], ['health'],
+    ['live', JSON_URL, true], ['success', 'ghproxy.net'], ['health'], ['reset'], ['health'],
+    // the network itself
+    ['setMirrors', [at('down', { origin: true }), at('json')]], ['text', JSON_URL, {}], ['health'],
+    ['setMirrors', [at('lacking'), at('lacking', { host: 'second' }), at('json', { smallOnly: true })]], ['text', JSON_URL, {}],
+    ['setMirrors', [at('lacking', { origin: true }), at('json')]], ['text', JSON_URL, {}],
+    ['setMirrors', [at('lacking'), at('down')]], ['text', JSON_URL, {}], ['health'],
+    ['setMirrors', [at('gone'), at('down')]], ['text', JSON_URL, {}],
+    ['setMirrors', [at('gone')]], ['text', JSON_URL, {}],
+    ['setMirrors', [at('json')]], ['text', JSON_URL, { exclude: [`127.0.0.1:${port.json}`] }], ['text', `http://127.0.0.1:${port.json}/direct`, { trustedOnly: true }], ['text', JSON_URL.replace(net.RAW_HOST, `http://127.0.0.1:${port.down}/`), {}],
+    ['setMirrors', [at('good', { origin: true })]], ['download', RAW, 'a.zip', { expect: digest }],
+    ['setMirrors', [at('wrong'), at('good')]], ['download', RAW, 'b.zip', { expect: digest, published: true }], ['health'],
+    ['setMirrors', [at('wrong', { origin: true }), at('wrong', { host: 'other' })]], ['download', RAW, 'c.zip', { expect: digest, published: true }],
+    ['setMirrors', [at('wrong'), at('wrong', { host: 'other' })]], ['download', RAW, 'd.zip', { expect: digest, published: true }],
+    ['setMirrors', [at('good')]], ['download', RAW, 'resumed.zip', { expect: digest }],
+    ['setMirrors', [at('whole')]], ['download', RAW, 'restarted.zip', {}],
+    ['setMirrors', [at('down')]], ['download', RAW, 'e.zip', {}],
+    // the catalog signature
+    ['sig', pf, sig, spki], ['sig', pf, sig.replace(/^./, (c) => (c === 'A' ? 'B' : 'A')), spki],
+    ['sig', pf, ` ${sig.slice(0, 40)}\n${sig.slice(40)} `, spki], ['sig', pf, '', spki],
+    ['sig', pf, sig, ''], ['sig', pf, sig, 'garbage'], ['sig', pf, sig],
+    ['sig', pf, 'AAAA', spki], ['sig', pf, sig.replace(/=+$/, ''), spki],
+  ];
+  // downloads cut short, to be resumed: the first third of the file already on disk
+  for (const side of ['ts', 'rs']) {
+    fs.mkdirSync(path.join(tmp, side), { recursive: true });
+    fs.writeFileSync(twin(side, 'resumed.zip.part'), data.subarray(0, 100000));
+    fs.writeFileSync(twin(side, 'restarted.zip.part'), data.subarray(0, 100000));
+  }
+  const local = (side: string, op: unknown[]) => (op[0] === 'download' ? [op[0], op[1], twin(side, op[2] as string), op[3]] : op);
+
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['net.script', ops.map((op) => local('rs', op))],
+    // the body's own budget, in Rust alone
+    ['net.script', [['timing', 200, 300], ['setMirrors', [at('trickle')]], ['text', JSON_URL, {}],
+      ['timing', 200, 100], ['setMirrors', [at('stuck')]], ['text', JSON_URL, {}]]]]));
+  // not execFileSync: the servers above live in this process and have to answer it
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+
+  const plain = (e: unknown) => {
+    const err = e as Error & { offline?: boolean; checksum?: boolean };
+    return { error: err.message, offline: !!err.offline, timeout: err.name === 'TimeoutError', checksum: !!err.checksum };
+  };
+  const want: unknown[] = [];
+  for (const op of ops.map((o) => local('ts', o))) {
+    want.push(await (async () => {
+      switch (op[0]) {
+        case 'mirrorsFor': return mirrors.mirrorsFor(op[1] as string, { small: !!op[2], trustedOnly: !!op[3] });
+        case 'entriesFor': return mirrors.entriesFor(op[1] as string, { small: !!op[2], trustedOnly: !!op[3] });
+        case 'live': return mirrors.liveOrder(mirrors.entriesFor(op[1] as string, { small: !!op[2] }));
+        case 'wellFormed': return mirrors.wellFormedMirror(op[1]);
+        case 'apply': return mirrors.applyMirrors(op[1]);
+        case 'pictures': return mirrors.pictureBases();
+        case 'fail': mirrors.noteFailure(op[1] as string, op[2] as string); return null;
+        case 'stall': mirrors.noteStall(op[1] as string, op[2] as string); return null;
+        case 'success': mirrors.noteSuccess(op[1] as string); return null;
+        case 'stoodDown': return mirrors.stoodDown(op[1] as string);
+        case 'health': return mirrors.mirrorHealth();
+        case 'reset': mirrors.resetHealth(); return null;
+        case 'setMirrors': mirrors.setMirrors((op[1] as At[]).map(tsMirror)); return null;
+        case 'text': try { return { text: await net.fetchText(op[1] as string, op[2] as never) }; } catch (e) { return plain(e); }
+        case 'download': try {
+          const o = op[3] as { expect?: string; published?: boolean };
+          const d = await net.downloadFile(op[1] as string, op[2] as string, { expectSha256: o.expect ?? null, fromPublishedList: !!o.published });
+          return { bytes: d.bytes, sha256: d.sha256, resumedFrom: d.resumedFrom, unverified: !!d.unverified };
+        } catch (e) { return plain(e); }
+        case 'sig': return signature.verify(fs.readFileSync(payloadFile), op[2], op.length > 3 ? op[3] as string : signature.CATALOG_PUBLIC_KEY);
+      }
+      throw new Error(`no step ${op[0]}`);
+    })());
+  }
+  const answers = JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[];
+  for (const s of servers) { s.closeAllConnections(); s.close(); }
+  mirrors.setMirrors(null);
+  assert.ok(answers[0].ok && answers[1].ok, JSON.stringify(answers).slice(0, 400));
+  const [rs, timed] = [answers[0].ok!, answers[1].ok!];
+
+  /* How a socket failed is worded by each side's own HTTP client ("fetch failed", "Connection
+     refused"); what has to agree is the HTTP status, the checksum, and whether it reads as offline. */
+  const worded = (s: unknown) => (typeof s === 'string' && /HTTP \d|checksum|no mirror|^timed out$/.test(s) ? s : '<socket>');
+  const norm = (v: unknown, op: unknown[]): unknown => {
+    if (op[0] === 'health') return (v as { why?: string; standingDownFor: number }[]).map((h) => ({ ...h, why: worded(h.why), standingDownFor: h.standingDownFor > 0 }));
+    if (v && typeof v === 'object' && 'error' in v) return { ...v, error: worded((v as { error: string }).error) };
+    return v;
+  };
+  ops.forEach((op, i) => assert.deepEqual(norm(rs[i], op), norm(want[i], op), `${i} ${JSON.stringify(op).slice(0, 160)}`));
+  const tree = (side: string) => fs.readdirSync(path.join(tmp, side)).sort().map((f) => `${f} ${sha(fs.readFileSync(path.join(tmp, side, f)))}`);
+  assert.deepEqual(tree('rs'), tree('ts'));
+  // a body that trickles in for longer than the wait for headers arrives; one that goes silent is cut
+  assert.deepEqual(timed[2], { text: 'x'.repeat(120) });
+  assert.equal((timed[5] as { timeout: boolean }).timeout, true, JSON.stringify(timed[5]));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
