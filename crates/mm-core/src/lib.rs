@@ -2,6 +2,7 @@
 //! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
 
 pub mod ability_sounds;
+pub mod adopt;
 pub mod arcana;
 pub mod arcana_base_color;
 pub mod arcana_bases;
@@ -12,6 +13,7 @@ pub mod build_undo;
 pub mod calls;
 pub mod cosmetic_names;
 pub mod courier_models;
+pub mod cursors;
 pub mod data;
 pub mod disk_space;
 pub mod effect_edit;
@@ -81,6 +83,12 @@ pub mod patcher;
 pub mod patcher_gameinfo;
 pub mod patcher_signatures;
 pub mod persona_base_effects;
+pub mod preset_install;
+pub mod preset_link;
+pub mod preset_plan;
+pub mod preset_share;
+pub mod presets_service;
+pub mod ready_presets_format;
 pub mod recolor;
 pub mod resource;
 pub mod safe_zip;
