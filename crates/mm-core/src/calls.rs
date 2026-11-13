@@ -4536,6 +4536,82 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let logs = logs.lock().unwrap().clone();
             json!({ "results": results, "runs": runs, "log": logs })
         }
+        // (pak, {model: glb file}, sprites?, ops): a stand-in exporter that hands out these GLBs and
+        // `png <texture>` for each picture but those named "absent"; GLBs come back as sha256
+        "loadout-resources.script" => {
+            use sha2::Digest;
+            struct Fake {
+                glbs: indexmap::IndexMap<String, String>,
+                sprites: bool,
+                asked: Mutex<Vec<Value>>,
+            }
+            impl crate::loadout_resources::Exporter for Fake {
+                fn glbs(&self, models: &[String], clips: &crate::model_glb::Clips, materials: bool) -> indexmap::IndexMap<String, Option<std::path::PathBuf>> {
+                    let all = matches!(clips, crate::model_glb::Clips::All);
+                    self.asked.lock().unwrap().push(json!(["glbs", models, all, materials]));
+                    models.iter().map(|m| (m.clone(), self.glbs.get(m).map(std::path::PathBuf::from))).collect()
+                }
+                fn sprites(&self, textures: &[String]) -> Option<indexmap::IndexMap<String, Option<Vec<u8>>>> {
+                    if !self.sprites {
+                        return None;
+                    }
+                    self.asked.lock().unwrap().push(json!(["sprites", textures]));
+                    Some(textures.iter().map(|t| (t.clone(), (!t.contains("absent")).then(|| format!("png {t}").into_bytes()))).collect())
+                }
+            }
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let fake = Fake {
+                glbs: args.get(1).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default(),
+                sprites: args.get(2).is_some_and(crate::js::truthy),
+                asked: Mutex::new(Vec::new()),
+            };
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let defs = |v: Option<&Value>| v.and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut results = Vec::new();
+            for op in args.get(3).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let r: Result<Value, String> = match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "resourcePaths" => Ok(json!(crate::loadout_resources::resource_paths(o.get(1).unwrap_or(&Value::Null)))),
+                    "drawnModels" => Ok(json!(crate::loadout_resources::drawn_models(&defs(o.get(1))).into_iter().collect::<Vec<_>>())),
+                    "resources" => {
+                        let mut r = crate::loadout_resources::loadout_resources(&defs(o.get(1)), &read, &fake);
+                        if let Some(models) = r.get_mut("models").and_then(Value::as_object_mut) {
+                            for v in models.values_mut() {
+                                let b = crate::js::base64_decode(v["data"].as_str().unwrap_or(""));
+                                *v = json!(sha(&b));
+                            }
+                        }
+                        Ok(r)
+                    }
+                    "model" => crate::loadout_resources::loadout_model(std::path::Path::new(&crate::js::string(&o[1])), &crate::js::string(&o[2]), &read, &fake).map(|b| json!(sha(&b))),
+                    "models" => {
+                        let wanted: Vec<crate::loadout_resources::Wanted> = defs(o.get(1))
+                            .iter()
+                            .map(|w| crate::loadout_resources::Wanted {
+                                file: std::path::PathBuf::from(crate::js::string(&w["file"])),
+                                model: crate::js::string(&w["model"]),
+                                skin: crate::js::to_number(w.get("skin").unwrap_or(&Value::Null)).max(0.0) as usize,
+                            })
+                            .collect();
+                        let mut lost = Vec::new();
+                        let out = crate::loadout_resources::loadout_models(&wanted, &read, &fake, Some(&mut |m: &str| lost.push(m.to_string())))?;
+                        Ok(json!({ "out": out.iter().map(|b| b.as_ref().map(|b| sha(b))).collect::<Vec<_>>(), "lost": lost }))
+                    }
+                    "texturePaths" => {
+                        let models: Vec<String> = defs(o.get(1)).iter().map(crate::js::string).collect();
+                        Ok(json!(crate::loadout_resources::loadout_texture_paths(&models, &read)))
+                    }
+                    other => Err(format!("no op {other}")),
+                };
+                results.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            let asked = fake.asked.lock().unwrap().clone();
+            json!({ "results": results, "asked": asked })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

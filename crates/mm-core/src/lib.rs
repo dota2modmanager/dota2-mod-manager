@@ -89,6 +89,7 @@ pub mod kv;
 pub mod kv3;
 pub mod library;
 pub mod loadout_material;
+pub mod loadout_resources;
 pub mod loadout_sheet;
 pub mod lz4;
 pub mod main_window;

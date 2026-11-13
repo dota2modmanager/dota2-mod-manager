@@ -7657,3 +7657,75 @@ test('model exports in Rust run the toolchain and keep its files as the TypeScri
   ]);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the loadout runtime\'s resources in Rust gather what the TypeScript gathers, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const crypto = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const ps = await import('../src/particle-spec.ts');
+  const lr = await import('../src/loadout-resources.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const ix = openVpkIndex(GAME_PAK01);
+  const read = (p: string) => ix.read(p);
+  const { effects, blocks } = await realItems();
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const systems = spread([...new Set([...effects, ...blocks].flatMap((b) => ps.itemParticles(b.block)))], 40);
+  const defs = systems.map((s) => ps.particleDef(read, s)).filter(Boolean) as never[];
+  // the GLBs this machine has exported, by the model they are of
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const glbs: Record<string, string> = {};
+  if (fs.existsSync(real)) {
+    for (const d of fs.readdirSync(real, { recursive: true, withFileTypes: true })) {
+      if (!d.isFile() || !d.name.endsWith('.glb')) continue;
+      const file = path.join(d.parentPath, d.name);
+      const m = /[\\/](models[\\/].+)\.glb$/.exec(file);
+      if (m) glbs[`${m[1].replace(/\\/g, '/').toLowerCase()}.vmdl`] ??= file;
+    }
+  }
+  const drawn = [...lr.drawnModels(defs)];
+  const owned = Object.entries(glbs).slice(0, 12);
+  const asked: unknown[] = [];
+  const fake = (sprites: boolean) => ({
+    glbs: async (models: string[], clips: unknown, materials: boolean) => { asked.push(['glbs', models, clips === 'all', materials]); return Object.fromEntries(models.map((m) => [m, glbs[m] ?? null])); },
+    ...(sprites ? { sprites: async (ts: string[]) => { asked.push(['sprites', ts]); return Object.fromEntries(ts.map((x) => [x, x.includes('absent') ? null : Buffer.from(`png ${x}`)])); } } : {}),
+  });
+  const ops: unknown[][] = [
+    ['resourcePaths', { a: 'Particles/X.vpcf_c', b: ['materials/y.vmat', 'models/../z.vmdl', 'textures/q.vtex', 'materials/a b.vtex'], 2: 'models/n.vmdl', 1: 'models/m.vmesh', c: { d: 'particles/p.vsnap_c' } }],
+    ['drawnModels', defs],
+    ['resources', defs],
+    ['resources', [{ tree: { m_Renderers: [{ _class: 'C_OP_RenderModels', m_ModelList: owned.map(([m]) => ({ m_model: m })) }], m_hSnapshot: 'particles/none.vsnap' }, children: [] }]],
+    ['models', [...owned.map(([model, file], k) => ({ file, model, skin: k % 3 })), { file: path.join(real, 'none.glb'), model: 'models/none.vmdl' }]],
+    ['texturePaths', [...owned.map(([m]) => m), ...drawn.slice(0, 5)]],
+    ...owned.slice(0, 3).map(([m, f]) => ['model', f, m]),
+    ['model', path.join(real, 'none.glb'), 'models/none.vmdl'],
+  ];
+  const run = async (sprites: boolean) => {
+    asked.length = 0;
+    const g = fake(sprites) as never;
+    const results: unknown[] = [];
+    for (const o of ops) {
+      try {
+        let v: unknown;
+        if (o[0] === 'resourcePaths') v = lr.resourcePaths(o[1] as never);
+        else if (o[0] === 'drawnModels') v = [...lr.drawnModels(o[1] as never)];
+        else if (o[0] === 'resources') { const r = await lr.loadoutResources(o[1] as never, read, g); v = { ...r, models: Object.fromEntries(Object.entries(r.models).map(([k, x]) => [k, sha(Buffer.from((x as { data: string }).data, 'base64'))])) }; }
+        else if (o[0] === 'model') v = sha(await lr.loadoutModel(o[1] as string, o[2] as string, read, g));
+        else if (o[0] === 'models') { const lost: string[] = []; const out = await lr.loadoutModels(o[1] as never, read, g, (m) => lost.push(m)); v = { out: out.map((b) => b && sha(b)), lost }; }
+        else if (o[0] === 'texturePaths') v = lr.loadoutTexturePaths(o[1] as string[], read);
+        results.push({ ok: JSON.parse(JSON.stringify(v)) });
+      } catch (e) { results.push({ error: (e as Error).message }); }
+    }
+    return { results, asked: JSON.parse(JSON.stringify(asked)) };
+  };
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-lr-'));
+  for (const sprites of [true, false]) {
+    const want = await run(sprites);
+    fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['loadout-resources.script', GAME_PAK01, glbs, sprites, ops]]));
+    const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+    // an error is the same where both sides fail; the words are each runtime's own
+    const same = (r: { results: { error?: string }[] }) => ({ ...r, results: r.results.map((x) => ('error' in x ? { error: true } : x)) });
+    assert.deepEqual(same(got), same(want as never), `sprites ${sprites}`);
+    if (sprites && owned.length) assert.ok(Object.keys((want.results[3] as { ok: { models: object } }).ok.models).length, 'models dressed');
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
