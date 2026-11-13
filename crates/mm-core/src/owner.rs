@@ -72,6 +72,10 @@ pub struct Core {
     pub download_stats: Arc<crate::download_stats::DownloadStats>,
     /// whether the download counter may count (settings countDownloads), read off the settings' thread
     pub counting: Arc<AtomicBool>,
+    /// which of the game's items a mod's models are (src/mod-id.ts), for the game in the settings
+    pub mod_id: Arc<crate::mod_id::ModIdentity>,
+    /// the app's log, which the installer writes to as well
+    log: Arc<Mutex<Vec<String>>>,
     /// the game folder and language folder the installer was made for
     made_for: (Option<PathBuf>, String),
 }
@@ -99,6 +103,17 @@ struct Builds {
 
 pub type R = Result<Value, String>;
 
+/// A group of channels (one src/ipc-*.ts module): its names, and what answers them.
+type Group = (&'static [&'static str], fn(&Owner, &str, &[Value]) -> Option<R>);
+
+/// Every group the owner answers, in the order src/main.ts registers them.
+const GROUPS: &[Group] = &[
+    (crate::owner_settings::CHANNELS, crate::owner_settings::handle),
+    (crate::owner_library::CHANNELS, crate::owner_library::handle),
+    (crate::owner_mods::CHANNELS, crate::owner_mods::handle),
+    (crate::owner_foreign::CHANNELS, crate::owner_foreign::handle),
+];
+
 /// The app's game folder, when one is set.
 pub fn game_of(settings: &Settings) -> Option<PathBuf> {
     settings.get("dotaGamePath").filter(|v| crate::js::truthy(v)).map(|v| PathBuf::from(crate::js::string(v)))
@@ -112,9 +127,10 @@ impl Core {
         if now == self.made_for {
             return;
         }
-        let mut inst = Installer::new(now.0.clone(), &now.1).with_user_data(user_data);
-        inst.journal_dir = Some(user_data.join("tx"));
-        self.installer = inst;
+        if now.0 != self.made_for.0 {
+            self.mod_id = Arc::new(crate::mod_id::ModIdentity::new(now.0.clone()));
+        }
+        self.installer = make_installer(&now, user_data, &self.mod_id, &self.log);
         self.made_for = now;
     }
 
@@ -155,8 +171,9 @@ impl Owner {
         );
         upkeep.lang_folder_step(&mut settings, &mut || (opts.dota_running)(), &mut |m| lines.push(m));
         let made_for = (game_of(&settings), upkeep.lang_folder().to_string());
-        let mut installer = Installer::new(made_for.0.clone(), &made_for.1).with_user_data(&ud);
-        installer.journal_dir = Some(tx);
+        let log = Arc::new(Mutex::new(Vec::<String>::new()));
+        let mod_id = Arc::new(crate::mod_id::ModIdentity::new(made_for.0.clone()));
+        let installer = make_installer(&made_for, &ud, &mod_id, &log);
         let schema = SchemaService::new(&ud, true);
         let net = Arc::new(crate::net_fetch::Net::new(opts.now));
         if let Ok(Some(p)) =
@@ -173,7 +190,6 @@ impl Owner {
             .ok()
             .map(|t| t.trim().to_string())
             .filter(|t| !t.is_empty());
-        let log = Arc::new(Mutex::new(Vec::<String>::new()));
         let stats_log = log.clone();
         let download_stats = crate::download_stats::DownloadStats::new(
             &ud.join("download-counts.json"),
@@ -200,6 +216,8 @@ impl Owner {
             notice: crate::notice_text::NoticeText::default(),
             download_stats,
             counting,
+            mod_id,
+            log: log.clone(),
             made_for,
         };
         let owner = Arc::new_cyclic(|me| Owner {
@@ -278,14 +296,12 @@ impl Owner {
 
     /// One of the window's channels, when it is the owner's.
     pub fn invoke(&self, channel: &str, args: &[Value]) -> Option<R> {
-        crate::owner_settings::handle(self, channel, args)
-            .or_else(|| crate::owner_library::handle(self, channel, args))
-            .or_else(|| crate::owner_mods::handle(self, channel, args))
+        GROUPS.iter().find_map(|(_, handle)| handle(self, channel, args))
     }
 
     /// Every channel the owner answers.
     pub fn channels() -> Vec<&'static str> {
-        [crate::owner_settings::CHANNELS, crate::owner_library::CHANNELS, crate::owner_mods::CHANNELS].concat()
+        GROUPS.iter().flat_map(|(names, _)| names.iter().copied()).collect()
     }
 
     /// The answer when a feature may not run now: Dota is open and holds its files, or the remote
@@ -405,6 +421,26 @@ fn other_step(name: &str, ctx: &mut crate::schema_service::Ctx) -> Result<(), St
         _ => {}
     }
     Ok(())
+}
+
+/// The installer over a game folder and language folder, asking the game's item table what a mod's
+/// models are (src/services.ts).
+fn make_installer(
+    at: &(Option<PathBuf>, String),
+    user_data: &Path,
+    mod_id: &Arc<crate::mod_id::ModIdentity>,
+    log: &Arc<Mutex<Vec<String>>>,
+) -> Installer {
+    let mut inst = Installer::new(at.0.clone(), &at.1).with_user_data(user_data);
+    inst.journal_dir = Some(user_data.join("tx"));
+    let (mid, log) = (mod_id.clone(), log.clone());
+    inst.identify = Some(Box::new(move |paths: &[String]| {
+        let mut lines = Vec::new();
+        let g = mid.identify(paths.iter().map(String::as_str), &mut |l| lines.push(l));
+        log.lock().unwrap_or_else(|e| e.into_inner()).extend(lines);
+        g.map(|g| crate::installer_folder::Guess { items: g.items, slots: g.slots, hero_names: g.hero_names })
+    }));
+    inst
 }
 
 /// `args[i]`, or null.

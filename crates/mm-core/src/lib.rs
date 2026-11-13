@@ -128,6 +128,7 @@ pub mod net_mirrors;
 pub mod notice_text;
 pub mod overlays;
 pub mod owner;
+pub mod owner_foreign;
 pub mod owner_library;
 pub mod owner_mods;
 pub mod owner_settings;

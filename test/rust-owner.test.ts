@@ -205,3 +205,28 @@ test('installing, exporting, importing and listing mods answer as the TypeScript
     { call: ['mods:list'] },
   ]);
 });
+
+test('files put in the folder by hand answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('foreign-base'), 'b'), OFFLINE);
+  const lang = path.join(base.game, 'dota_russian');
+  for (const [from, to] of [['terrains__pak11_dir.vpk', 'pak40_dir.vpk'], ['trees__pak11_dir.vpk', 'pak41_dir.vpk.off'],
+    ['versus-screens__pak11_dir.vpk', 'pak42_dir.vpk'], ['emblems__pak29_dir.vpk', 'pak43_dir.vpk']]) fs.copyFileSync(path.join(SANDBOX_MODS, from), path.join(lang, to));
+  const id = idsOf(base);
+  await compare('foreign', base, [
+    { call: ['mods:list'] },
+    { call: ['mods:externalSetEnabled', 'pak40_dir.vpk', false] },
+    { call: ['mods:externalSetEnabled', 'pak40_dir.vpk.off', true] },
+    { call: ['mods:adoptExternal', 'pak41_dir.vpk.off', null], note: 'arrived switched off' },
+    { call: ['mods:adoptExternal', 'pak40_dir.vpk', 'x.png'] },
+    { call: ['mods:adoptExternal', 'pak99_dir.vpk', null], note: 'not there' },
+    { call: ['mods:externalRemove', 'pak42_dir.vpk'] },
+    { call: ['mods:splitMod', id['IO Purple']] },
+    { call: ['mods:splitMod', 'nope'] },
+    { call: ['mods:splitExternal', 'pak43_dir.vpk'] },
+    { call: ['mods:adoptMod', id['IO Purple'], null] },
+    { call: ['mods:adoptMod', 'nope', null] },
+    { call: ['mods:adoptFont', 'Some Font', null] },
+    { call: ['mods:adoptCursor', null] },
+    { call: ['mods:list'] },
+  ]);
+});
