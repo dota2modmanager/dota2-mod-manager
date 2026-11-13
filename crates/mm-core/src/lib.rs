@@ -102,6 +102,7 @@ pub mod ready_presets;
 pub mod ready_presets_format;
 pub mod recolor;
 pub mod remote_config;
+pub mod remove_everything;
 pub mod resource;
 pub mod safe_zip;
 pub mod schema;

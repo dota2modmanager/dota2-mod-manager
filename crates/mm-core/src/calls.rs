@@ -2679,6 +2679,20 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
         "icon-match.cosmeticFileNames" => json!(crate::icon_match::cosmetic_file_names(&s(args, 0))),
         "icon-match.prefixOf" => json!(crate::icon_match::prefix_of(&s(args, 0))),
         "icon-match.heroFileNames" => json!(crate::icon_match::hero_file_names(&s(args, 0))),
+        "remove-everything.run" => {
+            // (game, suffix, journalDir, libraryDir, userData, {revert, mods, notice}): what could not come out, and how many did
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+            let w = args.get(5).cloned().unwrap_or_default();
+            let flag = |k: &str, d: bool| w.get(k).and_then(Value::as_bool).unwrap_or(d);
+            let what = crate::remove_everything::What { revert: flag("revert", false), mods: flag("mods", false), notice: flag("notice", true) };
+            let (errors, removed) = crate::remove_everything::remove_everything(&inst, &mut lib, &mut st, &mut svc, None, what);
+            json!({ "errors": errors, "removed": removed })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

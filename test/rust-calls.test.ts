@@ -4344,3 +4344,86 @@ test('matching wiki pictures to item names in Rust picks what the TypeScript pic
     ]);
   }
 });
+
+test('removing everything in Rust takes out of the game what the TypeScript takes out', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { removeEverything } = await import('../src/remove-everything.ts');
+  const notice = await import('../src/notice-text.ts');
+  const patcher = await import('../src/patcher.ts');
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-everything-'));
+  const mods = path.join(root, 'sandbox', 'mods');
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const at = (r: string): Twin => ({ game: path.join(r, 'game'), lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') });
+  // one game with mods in it, one switched off, one whose file is gone, the patch on and the
+  // notice written; each run gets two copies of it
+  const baseRoot = path.join(tmp, 'base');
+  const b0 = at(baseRoot);
+  fs.cpSync(sandboxGame, b0.game, { recursive: true });
+  for (const d of [b0.lib, b0.ud]) fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(path.join(b0.ud, 'settings.json'), JSON.stringify({ dotaGamePath: b0.game }));
+  FileTx.journalDir = b0.journal;
+  try {
+    const inst = new Installer({ userDataDir: b0.ud, getGamePath: () => b0.game, getLangSuffix: () => 'russian' });
+    const lib = new Library(b0.lib);
+    for (const [cat, name, file] of [['heroes', 'IO Purple', 'heroes__IO Purple.zip'], ['emblems', 'Emblem', 'emblems__pak28_dir.vpk'], ['terrains', 'Terrain', 'terrains__pak10_dir.vpk']]) {
+      const src = path.join(mods, file);
+      if (!fs.existsSync(src)) { t.skip(`no ${file} (npm run sandbox:seed)`); return; }
+      const files = FileTx.run((tx) => inst.installInto(tx, { categoryId: cat, modName: name, local: src }));
+      lib.add({ name, categoryId: cat, styleLabel: null, fileRef: file, files } as never);
+    }
+    const off = lib.list()[1];
+    inst.setEnabled(off.files, false, off.id);
+    lib.setEnabled(off.id, false);
+    lib.add({ name: 'Gone', categoryId: 'heroes', styleLabel: null, fileRef: 'x', files: [{ root: 'lang', relPath: 'pak77_dir.vpk' }] } as never);
+    patcher.apply({ gamePath: b0.game, folder: patcher.FOLDER, backupDir: path.join(b0.ud, 'backups') });
+    new Settings(b0.ud).set('schemaPatch' as never, true as never);
+    notice.applyNotice({ gamePath: b0.game, langDir: inst.langFolder() });
+  } finally { FileTx.journalDir = null; }
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), createHash('sha1').update(fs.readFileSync(f)).digest('hex')]; }).sort());
+  const before = tree(b0.game);
+
+  const runs: [string, Record<string, boolean>][] = [
+    ['all', { revert: true, mods: true, notice: true }], ['mods', { revert: false, mods: true, notice: false }], ['patch', { revert: true, mods: false }],
+  ];
+  const calls: unknown[] = [];
+  const want: { name: string; a: Twin; b: Twin; out: unknown }[] = [];
+  for (const [name, what] of runs) {
+    const [a, b] = ['ts', 'rs'].map((side) => { const r = path.join(tmp, `${name}-${side}`); fs.cpSync(baseRoot, r, { recursive: true }); return at(r); });
+    for (const x of [a, b]) {
+      const sf = path.join(x.ud, 'settings.json');
+      fs.writeFileSync(sf, JSON.stringify({ ...JSON.parse(fs.readFileSync(sf, 'utf8')), dotaGamePath: x.game }));
+    }
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      const st = new Settings(a.ud);
+      const svc = createSchemaService({ settings: st as never, library: lib, installer: inst as never, userDataDir: a.ud, pak: inst as never, modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+      want.push({ name, a, b, out: removeEverything({ settings: st as never, library: lib as never, installer: inst as never, schemaService: svc as never }, what as never) });
+    } finally { FileTx.journalDir = null; }
+    calls.push(['remove-everything.run', b.game, 'russian', b.journal, b.lib, b.ud, what]);
+  }
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify(calls));
+  const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok?: unknown; error?: string }[];
+  const libOf = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const settingsOf = (x: Twin) => { const s = JSON.parse(fs.readFileSync(path.join(x.ud, 'settings.json'), 'utf8')); delete s.dotaGamePath; return s; };
+  for (const [k, w] of want.entries()) {
+    assert.ok(got[k].ok, got[k].error);
+    assert.deepEqual(got[k].ok, w.out, w.name);
+    assert.deepEqual(tree(w.b.game), tree(w.a.game), `${w.name}: the game folder`);
+    assert.deepEqual(libOf(w.b), libOf(w.a), `${w.name}: the library`);
+    assert.deepEqual(settingsOf(w.b), settingsOf(w.a), `${w.name}: the settings`);
+  }
+  // the run did take things out
+  assert.ok(Object.keys(before).length > Object.keys(tree(want[0].a.game)).length, 'mods came out');
+  assert.equal((want[0].out as { removed: number }).removed, 4);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
