@@ -2661,3 +2661,185 @@ test('a mod\'s own item blocks and the picks\' pak in Rust match the TypeScript:
   assert.deepEqual(tree(b.root), tree(a.root));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the item table written into the game by Rust is the one the TypeScript writes: merged, checked, packed, swapped, swept', { skip }, async (t) => {
+  const sandboxPak = path.join(sandboxGame, 'dota', 'pak01_dir.vpk');
+  if (!fs.existsSync(sandboxPak)) { t.skip('no sandbox'); return; }
+  const schema = await import('../src/schema.ts');
+  const { entryAt } = await import('../src/vpk-write.ts');
+  const { createHash } = await import('node:crypto');
+  const sha = (f: string) => (fs.existsSync(f) ? createHash('sha1').update(fs.readFileSync(f)).digest('hex') : null);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-deploy-'));
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const items = schema.listItems(text).filter((i) => i.hasVisuals);
+  const pick = items.filter((_, k) => k % Math.floor(items.length / 8) === 0).slice(0, 8);
+  const renamed = (i: (typeof items)[number], to: string) => text.slice(i.start, i.end).replace(/"name"(\s+)"[^"]*"/, `"name"$1"${to}"`);
+  const patches = [
+    ...pick.map((i, k) => ({ id: i.id, block: renamed(i, `Mine ${k}`), source: `mod ${k % 3}`, assets: [entryAt(`models/mine/${k}.vmdl_c`, Buffer.from(`model ${k}`))] })),
+    { id: pick[0].id, block: renamed(pick[0], 'Mine again'), source: 'later mod', assets: [entryAt('models/mine/0.vmdl_c', Buffer.from('later'))] },
+    { id: pick[1].id, block: renamed(pick[1], 'Mine 1'), source: 'same block', assets: [] },
+    { id: '99999999', block: '"99999999"\n{\n\t"name"\t"Nowhere"\n}', source: 'missing', assets: [] },
+  ];
+  const beneath = [entryAt('models/mine/0.vmdl_c', Buffer.from('base')), entryAt('models/base/body.vmdl_c', Buffer.from('body'))];
+  const twin = (side: string) => {
+    const g = path.join(tmp, side, 'game');
+    fs.mkdirSync(path.join(g, 'dota'), { recursive: true });
+    fs.copyFileSync(sandboxPak, path.join(g, 'dota', 'pak01_dir.vpk'));
+    const dir = path.join(g, 'dota_mods');
+    fs.mkdirSync(path.join(dir, 'rpt', 'empty'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'pak01_dir.vpk.111-1.mmtmp'), 'left by another run');
+    fs.writeFileSync(path.join(dir, `pak01_dir.vpk.${process.pid}-9.mmtmp`), 'this run');
+    return g;
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const wire = (ps: typeof patches) => ps.map((p) => ({ id: p.id, block: p.block, source: p.source, assets: p.assets.map((e) => [`${e.folder}/${e.name}.${e.ext}`, e.data.toString('latin1')]) }));
+  const ops = [
+    ['isDeployed'], ['sweep', 111], ['deploy', wire(patches), wire([{ id: '', block: '', source: '', assets: beneath }])[0].assets, false],
+    ['isDeployed'], ['sha'], ['deploy', wire(patches.slice(2, 5)), [], false], ['sha'], ['deploy', wire(patches), [], true], ['sha'],
+    ['deploy', wire([{ id: pick[2].id, block: '"x" { "name" "broken"', source: 'bad', assets: [] }]), [], false], ['sha'],
+    ['sweep', process.pid], ['sweep', 222], ['undeploy'], ['isDeployed'], ['undeploy'],
+  ];
+  const list = path.join(tmp, 'deploy.json');
+  fs.writeFileSync(list, JSON.stringify([['schema-deploy.script', b, 'dota_mods', ops]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 26 }));
+  const answers = rs.ok as { ok?: unknown; error?: unknown }[];
+  const base = schema.readGameSchema(a);
+  const unwire = (ps: { id: string; block: string; source: string; assets: [string, string][] }[]) => ps.map((p) => ({ ...p, assets: p.assets.map(([q, d]) => entryAt(q, Buffer.from(d, 'latin1'))) }));
+  ops.forEach((op, k) => {
+    let want: unknown;
+    try {
+      const v = ((): unknown => {
+        switch (op[0]) {
+          case 'isDeployed': return schema.isDeployed(a, 'dota_mods');
+          case 'sweep': return schema.sweepUnfinished(a, 'dota_mods', op[1] as number);
+          case 'sha': return sha(path.join(a, 'dota_mods', 'pak01_dir.vpk'));
+          case 'undeploy': schema.undeploy({ gamePath: a, folder: 'dota_mods' }); return null;
+          case 'deploy': {
+            if (op[3]) return null; // stopped before the write: the TypeScript's caller drops the generator there
+            const r = schema.deploy({ gamePath: a, folder: 'dota_mods', patches: unwire(op[1] as never) as never, base, beneath: (op[2] as [string, string][]).map(([q, d]) => entryAt(q, Buffer.from(d, 'latin1'))) });
+            const { text: _text, ...rest } = r;
+            return rest;
+          }
+        }
+        throw new Error(`no step ${op[0]}`);
+      })();
+      want = { ok: JSON.parse(JSON.stringify(v ?? null)) };
+    } catch { want = { error: true }; }
+    const got = answers[k];
+    assert.deepEqual('error' in got ? { error: true } : got, want, `${k} ${JSON.stringify(op).slice(0, 160)}`);
+  });
+  assert.ok((answers[2].ok as { applied: unknown[] }).applied.length === 8, JSON.stringify(answers[2]).slice(0, 300));
+  assert.equal(answers[1].ok, 1);
+  assert.ok(answers[4].ok && answers[4].ok !== answers[6].ok && answers[6].ok === answers[8].ok && answers[8].ok === answers[10].ok);
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .map((d) => path.relative(g, path.join(d.parentPath, d.name)) + (d.isDirectory() ? '/' : '')).filter((p) => !p.startsWith(`dota${path.sep}`)).sort();
+  assert.deepEqual(tree(b), tree(a));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the item table service in Rust keeps the game where the TypeScript keeps it: the patch, the table, the picks\' pak, heal', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox'); return; }
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { MeshoptDecoder } = await import('meshoptimizer');
+  await MeshoptDecoder.ready;
+  const sl = await import('../src/item-builder-slots.ts');
+  const schema = await import('../src/schema.ts');
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-service-'));
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const spread = <T,>(a: T[], k: number) => a.filter((_, j) => j % Math.max(1, Math.floor(a.length / k)) === 0).slice(0, k);
+  const plain = sl.itemSlots(text).filter((s) => !s.persona && !s.abilityFx && s.options.length);
+  const picks = spread(plain, 6).map((s, k) => ({ id: `p${k}`, name: `pick ${k}`, categoryId: 'cosmetic', styleLabel: null, files: [], enabled: true, slot: s.slot, itemId: s.options[k % s.options.length].id }));
+  const items = schema.listItems(text).filter((i) => i.hasVisuals);
+  const block = (i: (typeof items)[number], to: string) => text.slice(i.start, i.end).replace(/"name"(\s+)"[^"]*"/, `"name"$1"${to}"`);
+  const [i1, i2] = [items[100], items[200]];
+  const mods = [
+    { id: 'm1', name: 'Mod one', categoryId: 'heroes', styleLabel: null, files: [], enabled: true, schema: [{ id: i1.id, name: 'a', block: block(i1, 'From one') }, { id: i2.id, name: 'b', block: block(i2, 'Same') }] },
+    { id: 'm2', name: 'Mod two', categoryId: 'heroes', styleLabel: null, files: [], enabled: true, schema: [{ id: i1.id, name: 'a', block: block(i1, 'From two') }, { id: i2.id, name: 'b', block: block(i2, 'Same') }] },
+  ];
+  const twin = (side: string) => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.cpSync(sandboxGame, game, { recursive: true });
+    for (const d of ['lib', 'userdata']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: [...picks, ...mods], presets: [] }, null, 2));
+    fs.writeFileSync(path.join(root, 'userdata', 'settings.json'), JSON.stringify({ dotaGamePath: game, schemaPatch: false }));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'userdata'), journal: path.join(root, 'journal') };
+  };
+  const ops: unknown[][] = [
+    ['state'], ['refresh'], ['state'], ['settings'], ['list'], ['heal', false],
+    ['setEnabled', true], ['state'], ['settings'], ['list'], ['heal', false],
+    ['set', 'everyoneWearsMine', true], ['refresh'], ['set', 'schemaStamp', 'old'], ['heal', false], ['settings'],
+    ['master', false], ['refresh'], ['state'], ['master', true], ['refresh'],
+    ['setEnabled', false], ['state'], ['heal', false], ['settings'],
+    ['remove', 'p0'], ['remove', 'p1'], ['remove', 'p2'], ['remove', 'p3'], ['remove', 'p4'], ['remove', 'p5'], ['refresh'], ['list'], ['state'],
+  ];
+  const a = twin('ts');
+  const b = twin('rs');
+  const list = path.join(tmp, 'service.json');
+  fs.writeFileSync(list, JSON.stringify([['schema-service.script', b.game, 'russian', b.journal, b.lib, b.ud, ops]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 26 }));
+  const answers = rs.ok as { ok?: unknown; error?: unknown; filled?: string[] }[];
+  // the builder's stamp is each side's own code; the generated pak's id is random
+  const plainOf = (v: unknown, ids: Map<string, string>) => JSON.parse(JSON.stringify(v ?? null), (k, x) => {
+    if ((k === 'schemaStamp' || k === 'stamp') && typeof x === 'string') return x.split('|')[0];
+    if (k === 'id' && typeof x === 'string' && !/^[pm]\d$/.test(x)) { if (!ids.has(x)) ids.set(x, `#${ids.size}`); return ids.get(x); }
+    if (k === 'installedAt' || k === 'updatedAt') return typeof x;
+    if (typeof x === 'string') return x.split(a.root).join('<root>').split(b.root).join('<root>');
+    return x;
+  });
+  const tsIds = new Map<string, string>();
+  const rsIds = new Map<string, string>();
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const lib = new Library(a.lib);
+    const st = new Settings(a.ud);
+    let filled: string[] = [];
+    const svc = createSchemaService({ settings: st as never, library: lib, installer: inst as never, userDataDir: a.ud, pak: inst as never,
+      modsOff: () => inst.masterIsOff(), onDeployed: (s) => { filled = [...s].sort(); } });
+    ops.forEach((op, k) => {
+      let want: unknown;
+      filled = [];
+      try {
+        const v = ((): unknown => {
+          switch (op[0]) {
+            case 'state': return svc.state();
+            case 'refresh': return svc.refresh();
+            case 'heal': return svc.heal({ background: !!op[1] });
+            case 'setEnabled': return svc.setEnabled(!!op[1]);
+            case 'settings': { const all = JSON.parse(fs.readFileSync(path.join(a.ud, 'settings.json'), 'utf8')); return { patch: all.schemaPatch ?? null, stamp: all.schemaStamp ?? null, pending: all.schemaPending ?? null, everyone: all.everyoneWearsMine ?? null }; }
+            case 'list': return lib.list();
+            case 'set': st.set(op[1] as never, op[2] as never); return null;
+            case 'master': return inst.setMasterEnabled(!!op[1]);
+            case 'remove': lib.removeRecord(op[1] as string); return null;
+          }
+          throw new Error(`no step ${op[0]}`);
+        })();
+        want = { ok: plainOf(v, tsIds), filled };
+      } catch { want = { error: true }; }
+      const got = answers[k];
+      const norm = 'error' in got ? { error: true } : { ok: plainOf(got.ok, rsIds), filled: got.filled ?? [] };
+      // a heal in the background leaves the build to the caller: the Rust says so, the TypeScript starts it
+      if (op[0] === 'heal' && op[1]) { delete (norm as { ok?: { rebuild?: unknown } }).ok?.rebuild; }
+      assert.deepEqual(norm, want, `${k} ${JSON.stringify(op)}`);
+    });
+    await svc.settled();
+  } finally { FileTx.journalDir = null; }
+  const deployed = answers[6].ok as { deployed?: boolean; patches?: number };
+  assert.ok(deployed.deployed && (deployed.patches ?? 0) >= 3, JSON.stringify(deployed));
+  assert.ok((answers[1].ok as { deployed?: boolean }).deployed, 'the picks went as a pak with the patch off');
+  assert.ok(((answers[7].ok as { conflicts: unknown[] }).conflicts.length) === 1, 'two mods disagree on one block');
+  const sha = (f: string) => createHash('sha1').update(fs.readFileSync(f)).digest('hex');
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .filter((d) => d.isFile()).map((d) => { const q = path.join(d.parentPath, d.name); return `${path.relative(g, q)} ${sha(q)}`; }).sort();
+  assert.deepEqual(tree(b.game), tree(a.game));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
