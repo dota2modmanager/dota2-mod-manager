@@ -486,3 +486,30 @@ pub fn validate_download_proxy(value: &serde_json::Value) -> Result<Option<Strin
     }
     Ok(Some(text.to_string()))
 }
+
+/// Settings' "test" button: one HEAD request through the proxy the user typed, ten seconds at
+/// most. `{ ok: true }` or `{ error }`, the reason in Russian for the window's `t`.
+pub fn test_download_proxy(value: &serde_json::Value) -> serde_json::Value {
+    use serde_json::json;
+    let proxy = match validate_download_proxy(value) {
+        Err(e) => return json!({ "error": e }),
+        Ok(None) => return json!({ "ok": true }),
+        Ok(Some(p)) => p,
+    };
+    let Ok(p) = ureq::Proxy::new(&proxy) else {
+        return json!({ "error": "Не удалось подключиться через прокси" });
+    };
+    let tls = ureq::tls::TlsConfig::builder().provider(ureq::tls::TlsProvider::NativeTls).build();
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .http_status_as_error(false)
+        .timeout_global(Some(Duration::from_secs(10)))
+        .tls_config(tls)
+        .proxy(Some(p))
+        .build()
+        .into();
+    match agent.head("https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/README.md").call() {
+        Ok(r) if r.status().is_success() => json!({ "ok": true }),
+        Ok(_) => json!({ "error": "Прокси не ответил успешно" }),
+        Err(_) => json!({ "error": "Не удалось подключиться через прокси" }),
+    }
+}
