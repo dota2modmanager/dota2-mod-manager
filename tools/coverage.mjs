@@ -60,19 +60,40 @@ export function pct(hit, found) {
 
 /**
  * lcov as node --test writes it, into per-file counts.
+ *
+ * The hit and found totals are counted off the DA, FNDA and BRDA lines where there are any, not
+ * taken from LH, FNH and BRH. Node keeps each count in 32 bits when it merges the processes, so
+ * a line run more than 2^31 times in all comes out negative, and its own LH then leaves that line
+ * out (2026-11-13: five lines of src/schema-kv.ts at -1682136736, run by the Rust parity checks'
+ * walks of the real items_game). A count that is not 0 is a line that ran.
  * @param {string} text
  * @returns {{ files: Record<string, { lines: number[], functions: number[], branches: number[] }> }}
  */
 export function parseLcov(text) {
   const files = {};
   let cur = null;
+  let seen = null;
+  const ran = (count) => count !== '0' && count !== '-' && count !== '';
   for (const line of String(text).split(/\r?\n/)) {
     if (line.startsWith('SF:')) {
       // Windows writes the path with its own separator; the baseline is one spelling for both.
       const name = line.slice(3).split(SEP).join('/').replace(`${root.split(SEP).join('/')}/`, '');
       cur = { lines: [0, 0], functions: [0, 0], branches: [0, 0] };
+      seen = { lines: [0, 0], functions: [0, 0], branches: [0, 0] };
       files[name] = cur;
     } else if (!cur) continue;
+    else if (line.startsWith('end_of_record')) {
+      for (const kind of ['lines', 'functions', 'branches']) if (seen[kind][1]) cur[kind] = seen[kind];
+    } else if (line.startsWith('DA:')) {
+      seen.lines[1] += 1;
+      if (ran(line.slice(3).split(',')[1])) seen.lines[0] += 1;
+    } else if (line.startsWith('FNDA:')) {
+      seen.functions[1] += 1;
+      if (ran(line.slice(5).split(',')[0])) seen.functions[0] += 1;
+    } else if (line.startsWith('BRDA:')) {
+      seen.branches[1] += 1;
+      if (ran(line.slice(5).split(',')[3])) seen.branches[0] += 1;
+    }
     else if (line.startsWith('LH:')) cur.lines[0] = Number(line.slice(3));
     else if (line.startsWith('LF:')) cur.lines[1] = Number(line.slice(3));
     else if (line.startsWith('FNH:')) cur.functions[0] = Number(line.slice(4));

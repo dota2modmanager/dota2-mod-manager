@@ -518,6 +518,18 @@ test('hero sound events in Rust read and write back as the TypeScript ones do', 
     { name: 'ability-sounds.wavProblem', ts: ((m: string) => as.wavProblem(Buffer.from(m, 'latin1'))) as never, inputs: [
       [wav(1, 44100, 16)], [wav(1, 48000, 16, 20)], [wav(3, 44100, 32)], [wav(1, 44100, 24)], [wav(1, 32000, 16)], [{ $file: odd }], [{ $file: files[0].file.$file }],
     ] },
+    // String(n), on doubles and on floats widened to doubles, where two shortest strings can tie
+    { name: 'js.number', ts: String as never, inputs: (() => {
+      let seed = 7;
+      const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+      const bits = new DataView(new ArrayBuffer(8));
+      return Array.from({ length: 3000 }, (_, i) => {
+        if (i % 3 === 0) return [Math.fround((rnd() - 0.5) * 10 ** Math.floor(rnd() * 20 - 10))];
+        if (i % 3 === 1) return [(rnd() - 0.5) * 10 ** Math.floor(rnd() * 40 - 20)];
+        bits.setUint32(0, Math.floor(rnd() * 0x7fefffff)); bits.setUint32(4, Math.floor(rnd() * 0xffffffff));
+        return [bits.getFloat64(0)];
+      });
+    })() },
     { name: 'js.toFixed', ts: ((x: number, d: number) => x.toFixed(d)) as never, inputs: [
       [1 / 128, 6], [0.5, 0], [1.5, 0], [2.5, 0], [-2.5, 0], [-0.0001, 2], [1.005, 2], [0.125, 2], [123.456, 1], [1e20, 2], [1e21, 2], [-0, 2], [0.000001, 6], [99.995, 2], [9.9999999, 6], [0.8, 2],
     ] },
@@ -5507,7 +5519,12 @@ test('a hero\'s layers, a material\'s inputs and the effect finder in Rust read 
     const models = spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 25).map((p) => p.replace(/_c$/, ''));
     const blocksReal = spread(fs.readFileSync(real, 'latin1').split(/\n\t\t"\d+"\n/), 60);
     compare([
-      { name: 'loadout.material', ts: ((f: string) => lm.readLoadoutMaterial(buf(f)) && (({ gemParams, ...rest }) => rest)(lm.readLoadoutMaterial(buf(f))!)) as never, inputs: mats.map((m) => [m]) },
+      { name: 'loadout.material', ts: ((f: string) => lm.readLoadoutMaterial(buf(f))) as never, inputs: mats.map((m) => [m]) },
+      { name: 'loadout-material.loadoutDescriptor', ts: lm.loadoutDescriptor as never, inputs: [
+        ...mats.map((m) => lm.readLoadoutMaterial(fs.readFileSync(m.$file))).filter(Boolean).map((m) => [m]),
+        [{ shader: 'x', floats: { g_flAlphaTestReference: 0.25, g_flMaterialCloakFactor: -0 }, ints: { F_ALPHA_TEST: 1, F_ENABLE_CLOAK: 2, F_SELF_ILLUM: 0, F_DETAIL: 3, F_SPECULAR_CUBE_MAP: 1, F_TRANSLUCENT: 1 }, vectors: { g_vSpecularColor: [0.5, 0.25], g_vDetailTexCoordScale: [2, 3, 4, 5] }, textures: { g_tCubeMap: 'c' }, gemParams: ['g_vSpecularColor', 'g_vDetail1ColorTint'] }],
+        [{ shader: '', floats: {}, ints: { F_SPECULAR_CUBE_MAP: 1 }, vectors: {}, textures: { g_tCubeMap: '' }, gemParams: [] }],
+      ] },
       { name: 'recolor-layers.modelColorTextures', ts: ((m: string[]) => rl.modelColorTextures(m, (p) => ix.read(p))) as never, inputs: [[models], ...models.slice(0, 8).map((m) => [[m]])] },
       { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocksReal.map((x) => [x]) },
     ].map((c) => (c.name === 'recolor-layers.modelColorTextures' ? { ...c, inputs: c.inputs.map((i) => [...i, GAME_PAK01]) } : c)));
@@ -7377,4 +7394,1041 @@ test('signing in with Discord in Rust asks, waits and reads the profile as the T
   assert.deepEqual((await run('ru', 'ok')).error, lt('ru', 'Порт {0} занят — закрой другой вход и попробуй снова', port));
   busy.close();
   server.close();
+});
+
+test('GLB chunks, embedded pictures and the fallback snapshot in Rust answer as the TypeScript ones do', { skip }, async () => {
+  const crypto = await import('node:crypto');
+  const { readGlb, writeGlb, embedGlb } = await import('../src/glb-embed.ts');
+  const { snapshotFromModel } = await import('../src/model-snapshot-fallback.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-glb-'));
+  // a skinned triangle strip: positions, joints, weights (floats, bytes, normalised shorts)
+  const glb = (json: Record<string, unknown>, bin: Buffer) => writeGlb(json as never, bin);
+  const rows = 40;
+  const pos = Buffer.alloc(rows * 12), joints = Buffer.alloc(rows * 4), weights = Buffer.alloc(rows * 8);
+  for (let i = 0; i < rows; i++) {
+    pos.writeFloatLE(i * 0.01, i * 12); pos.writeFloatLE(i % 2 ? -0.5 : 0.25, i * 12 + 4); pos.writeFloatLE(i === 3 ? NaN : -0.0, i * 12 + 8);
+    joints.writeUInt8(i % 3, i * 4); joints.writeUInt8(2, i * 4 + 1); joints.writeUInt8(7, i * 4 + 2);
+    weights.writeUInt16LE(i < 20 ? 60000 : 5000, i * 8); weights.writeUInt16LE(65535 - (i < 20 ? 60000 : 5000), i * 8 + 2);
+  }
+  const bin = Buffer.concat([pos, joints, weights]);
+  const skinned = {
+    asset: { version: '2.0' },
+    nodes: [{ mesh: 0, skin: 0 }, { name: 'weapon_l' }, { name: 'Hand_R' }, { name: '' }, { mesh: null }],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0, JOINTS_0: 1, WEIGHTS_0: 2 } }, { attributes: {} }, {}] }],
+    skins: [{ joints: [1, 2, 3] }],
+    accessors: [
+      { bufferView: 0, componentType: 5126, type: 'VEC3', count: rows },
+      { bufferView: 1, componentType: 5121, type: 'VEC4', count: rows },
+      { bufferView: 2, componentType: 5123, type: 'VEC4', count: rows, normalized: true },
+    ],
+    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: pos.length }, { buffer: 0, byteOffset: pos.length, byteLength: joints.length }, { buffer: 0, byteOffset: pos.length + joints.length, byteLength: weights.length, byteStride: 8 }],
+    buffers: [{ byteLength: bin.length }],
+  };
+  const files: string[] = [];
+  const put = (name: string, b: Buffer) => { const f = path.join(tmp, name); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); files.push(f); return f; };
+  put('skinned.glb', glb(skinned, bin));
+  put('short.glb', glb({ ...skinned, accessors: [{ ...skinned.accessors[0], count: rows * 4 }] }, bin));
+  put('empty.glb', glb({ asset: { version: '2.0' } }, Buffer.alloc(0)));
+  put('odd.glb', glb({ asset: { version: '2.0' }, nodes: [{ mesh: 0 }], meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }], accessors: [{ bufferView: 0, componentType: 5122, type: 'VEC3', count: 6, normalized: true }], bufferViews: [{ byteOffset: 2 }] }, Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 200, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39])));
+  put('notglb.glb', Buffer.from('glTF but not really, no header here'));
+  put('nojson.glb', (() => { const b = glb({}, Buffer.from([1, 2, 3])); b.writeUInt32LE(0x11111111, 16); return b; })());
+  // pictures beside a GLB: present, missing, outside the folder, escaped, an unknown kind, already inside
+  put('pics/a b.png', Buffer.from('\x89PNG one'));
+  put('pics/c.JPG', Buffer.from('jpeg bytes!'));
+  put('secret.png', Buffer.from('\x89PNG outside'));
+  put('pics/t.tga', Buffer.from('tga'));
+  put('pics/model.glb', glb({ asset: { version: '2.0' }, images: [{ uri: 'a%20b.png' }, { uri: 'c.JPG' }, { uri: 'gone.png' }, { uri: '../secret.png' }, { uri: 't.tga' }, { uri: 'data:image/png;base64,AA' }, { bufferView: 0, mimeType: 'image/png' }, {}], bufferViews: [{ buffer: 0, byteLength: 3 }] }, Buffer.from([9, 9, 9])));
+  put('pics/plain.glb', glb({ asset: { version: '2.0' } }, Buffer.from([1])));
+  put('pics/badescape.glb', glb({ images: [{ uri: 'x%zz.png' }] }, Buffer.alloc(0)));
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const realGlbs = fs.existsSync(real) ? fs.readdirSync(real, { recursive: true, withFileTypes: true }).filter((d) => d.isFile() && d.name.endsWith('.glb')).map((d) => path.join(d.parentPath, d.name)).slice(0, 40) : [];
+  const all = [...files.filter((f) => f.endsWith('.glb')), ...realGlbs];
+  const chunks = (f: string) => { const { json, bin: b } = readGlb(fs.readFileSync(f)); return { json, bin: b.length, sha: sha(b) }; };
+  const compact = (s: ReturnType<typeof snapshotFromModel>) => s;
+  compare([
+    { name: 'glb-embed.readGlb', ts: chunks as never, inputs: all.map((f) => [f]) },
+    { name: 'glb-embed.writeGlb', ts: ((j: unknown, b: string) => writeGlb(j as never, Buffer.from(b, 'base64')).toString('base64')) as never, inputs: [
+      [{}, ''], [{ a: 1, ü: 'ÿ' }, 'AQID'], [{ x: [1.5, -0, 1e21] }, 'AQIDBAU='], [skinned, bin.toString('base64')],
+    ] },
+    { name: 'glb-embed.embedGlb', ts: ((f: string) => sha(embedGlb(f))) as never, inputs: all.map((f) => [f]) },
+    { name: 'model-snapshot-fallback.snapshotFromModel', ts: ((f: string, side: 'left' | 'right' | null, max: number) => compact(snapshotFromModel(fs.readFileSync(f), side, max))) as never, inputs: all.flatMap((f) => [[f, null, 192], [f, 'left', 50], [f, 'right', 7], [f, null, 0]]) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('style meshes, particle roots and the Crest preview in Rust answer as the TypeScript ones do', { skip }, async () => {
+  const crypto = await import('node:crypto');
+  const { writeGlb } = await import('../src/glb-embed.ts');
+  const sm = await import('../src/model-style-meshes.ts');
+  const hp = await import('../src/hero-particle-styles.ts');
+  const rc = await import('../src/razor-crest-preview.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-styles-'));
+  const put = (name: string, b: Buffer) => { const f = path.join(tmp, name); fs.writeFileSync(f, b); return f; };
+  const prim = (...m: (number | undefined)[]) => ({ primitives: m.map((material) => (material === undefined ? {} : { material })) });
+  const styled = (materials: string[], meshes: unknown[], nodes: unknown[]) => writeGlb({ asset: { version: '2.0' }, materials: materials.map((name) => ({ name })), meshes, nodes } as never, Buffer.from([1, 2, 3, 4]));
+  const glbs = [
+    put('pair.glb', styled(['Materials\\Items\\Cape.vmat', 'materials/items/cape_ALT.vmat', 'trim'], [prim(0), prim(1), { name: 'cape_copy2', ...prim(0) }, prim(0, 2), prim(0, 1), prim()], [{ mesh: 0 }, { mesh: 1, name: 'x' }, { mesh: 2 }, { mesh: 3 }, { mesh: 4 }, { mesh: 5 }, { mesh: 9 }, { mesh: null }, {}])),
+    put('nopair.glb', styled(['a', 'b_alt'], [prim(0), prim(1)], [{ mesh: 0 }, { mesh: 1 }])),
+    put('blades.glb', styled(['materials/models/spectre/landing_page_blade_dissolve.vmat', 'x/landing_page_foo_dissolve', 'Landing_Page_Blade', 'body', 'mylanding_page_blade'], [prim(0, 1), prim(2), prim(3), prim(0, 3), prim(4), prim()], [{ mesh: 0 }, { mesh: 1 }, { mesh: 2 }, { mesh: 3 }, { mesh: 4 }, { mesh: 5 }])),
+    put('bare.glb', styled([], [], [])),
+  ];
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const realGlbs = fs.existsSync(real) ? fs.readdirSync(real, { recursive: true, withFileTypes: true }).filter((d) => d.isFile() && d.name.endsWith('.glb')).map((d) => path.join(d.parentPath, d.name)).slice(0, 30) : [];
+  // the Crest: a normal look with its pictures in the binary chunk, and a gold rig beside it
+  const look = { asset: { version: '2.0' }, materials: [{ name: 'm0' }, { name: 'm1' }], meshes: [{ primitives: [{ material: 1 }, { material: 0 }, { material: 1 }] }], images: [{ bufferView: 0, mimeType: 'image/png' }, { uri: 'data:image/png;base64,AA' }], bufferViews: [{ buffer: 0, byteOffset: 2, byteLength: 3 }], samplers: [{}], textures: [{ source: 0 }], extras: { a: 1 }, extensionsUsed: ['KHR_a', 'KHR_b'] };
+  const gold = { asset: { version: '2.0' }, materials: [{ name: 'g0' }, { name: 'g1' }], meshes: [{ primitives: [{ material: 0 }, { material: 1 }] }], nodes: [{ mesh: 0 }], extensionsUsed: ['KHR_b', 'KHR_c'], samplers: [{ x: 1 }] };
+  const normal = put('normal.glb', writeGlb(look as never, Buffer.from([0, 0, 7, 8, 9, 0])));
+  const golden = put('golden.glb', writeGlb(gold as never, Buffer.from([5, 5, 5, 5])));
+  const noLook = put('nolook.glb', writeGlb({ ...look, images: undefined, extras: undefined } as never, Buffer.alloc(0)));
+  const badView = put('badview.glb', writeGlb({ ...look, images: [{ bufferView: 3, mimeType: 'image/png' }] } as never, Buffer.alloc(0)));
+  const otherSlots = put('slots.glb', writeGlb({ ...look, meshes: [{ primitives: [{ material: 0 }] }] } as never, Buffer.alloc(0)));
+  const fewer = put('fewer.glb', writeGlb({ ...look, materials: [{}] } as never, Buffer.alloc(0)));
+  const { file: items } = await realItems();
+  const text = fs.readFileSync(items).toString('latin1');
+  const crestModel = /"6646"[\s\S]*?"model_player"\s+"([^"]+)"/.exec(text)?.[1] ?? 'models/items/razor/x.vmdl';
+  const roots = [
+    { path: 'particles/econ/items/spectre/spectre_arcana/spectre_arcana_ambient_v2_style1.vpcf', config: 'a' },
+    { path: 'particles/econ/items/spectre/spectre_arcana/spectre_arcana_ambient.vpcf', config: 'b' },
+    { path: 'Particles\\Units\\Heroes\\Hero_Spectre\\spectre_ambient_v3.vpcf', config: '' },
+    { path: 'particles/x/blade_v2_v3_style2_glow.vpcf', config: 'c' },
+    { path: 'particles/x/blade_glow.vpcf', config: 'd' },
+    { path: 'particles/x/sword_v12x.vpcf', config: 'e' },
+  ];
+  const selected = [['particles/econ/items/spectre/spectre_arcana/spectre_arcana_ambient_style2.vpcf'], ['particles/units/heroes/hero_spectre/spectre_ambient.vpcf', 'particles/x/blade_glow.vpcf'], [], ['particles/x/BLADE_GLOW.vpcf']];
+  const def = { tree: { _class: 'C_X', m_hSnapshot: 'particles/stock.vsnap_c', other: 1 }, extra: true, children: [{ tree: { m_hSnapshot: 'PARTICLES/STOCK.VSNAP' }, children: [{ tree: { m_hSnapshot: 'particles/other.vsnap' }, children: [] }] }, { tree: {}, children: [] }] };
+  const blades = ['particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword.vpcf', 'PARTICLES/units/heroes/hero_terrorblade/terrorblade_ambient_sword_b.vpcf_c', 'particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword.vpcfx', 'particles/error/null.vpcf', 'particles/econ/tb/new.vpcf'];
+  compare([
+    { name: 'model-style-meshes.selectStyleMeshes', ts: ((f: string, st: number) => sha(sm.selectStyleMeshes(fs.readFileSync(f), st))) as never, inputs: [...glbs, ...realGlbs].flatMap((f) => [[f, 0], [f, 1], [f, 2]]) },
+    { name: 'model-style-meshes.hidePreviewOnlyMeshes', ts: ((f: string) => sha(sm.hidePreviewOnlyMeshes(fs.readFileSync(f)))) as never, inputs: [...glbs, ...realGlbs].map((f) => [f]) },
+    { name: 'model-style-meshes.styleFamily', ts: sm.styleFamily as never, inputs: ['models/items/pudge/hook/hook.vmdl', 'Models\\Items\\Pudge\\Hook\\a\\b.vmdl', 'models/items/pudge/hook', 'models/items//x/y', 'models/heroes/pudge/pudge.vmdl', ''].map((m) => [m]) },
+    { name: 'model-style-meshes.syncArcanaStyles', ts: ((parts: { model: string; style?: number }[]) => { sm.syncArcanaStyles(parts); return parts; }) as never, inputs: [[[
+      { model: 'models/items/pa/arcana/blade.vmdl', style: 2 }, { model: 'models/items/pa/arcana/cape.vmdl' }, { model: 'models/items/pa/arcana/belt.vmdl', explicitBaseStyle: true },
+      { model: 'Models/items/pa/arcana/head.vmdl' }, { model: 'models/items/pa/other/x.vmdl', style: 0 }, { model: 'models/heroes/pa/pa.vmdl', style: 1 }, { model: 'models/items/pa/arcana/two.vmdl', style: 1 },
+    ]], [[]]] },
+    { name: 'hero-particle-styles.styleParticleRoots', ts: ((m: typeof roots, s: string[], st: number) => [...hp.styleParticleRoots(m, s, st)]) as never, inputs: selected.flatMap((s) => [[roots, s, 0], [roots, s, 2]]) },
+    { name: 'hero-particle-styles.isStockTerrorbladeBlade', ts: hp.isStockTerrorbladeBlade as never, inputs: blades.map((b) => [b]) },
+    { name: 'hero-particle-styles.replaceTerrorbladeBladeFx', ts: hp.replaceTerrorbladeBladeFx as never, inputs: [
+      ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'models/items/tb/x.vmdl', blades], ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'models/items/tb/x.vmdl', blades.slice(0, 4)],
+      ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'models/heroes/terrorblade/weapon.vmdl', blades], ['models/heroes/terrorblade/terrorblade.vmdl', 'x', blades], ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'x', []],
+    ] },
+    { name: 'hero-particle-styles.bladeSnapshots', ts: ((d: never, r: [string, string][]) => hp.bladeSnapshots(d, new Map(r))) as never, inputs: [
+      [def, [['particles/stock.vsnap', 'particles/new.vsnap']]], [def, [['particles/stock.vsnap', 'particles/new.vmdl']]], [def, []], [def, [['particles/other.vsnap', 'a.vsnap']]],
+      [{ tree: { m_hSnapshot: 1 }, children: [] }, [['1', 'x.vsnap']]], [{ tree: {} }, [['a', 'b']]],
+    ] },
+    { name: 'razor-crest-preview.goldenCrestModel', ts: rc.goldenCrestModel as never, inputs: [[{ $file: items }, 'models/x.vmdl', '6646'], [{ $file: items }, crestModel.toLowerCase(), '6646'], [{ $file: items }, 'models/x.vmdl', '6916'], ['"items" { }', 'm', '6646']] },
+    { name: 'razor-crest-preview.crestActivities', ts: rc.crestActivities as never, inputs: [[{ $file: items }, '6646', ''], [{ $file: items }, '1', '"asset_modifier0" { "type" "activity" "modifier" "a" } "asset_modifier1" { "type" "activity" "modifier" "b" "style" "1" }']] },
+    { name: 'razor-crest-preview.normalCrestOnGoldenRig', ts: ((n: string, g: string) => { const b = rc.normalCrestOnGoldenRig(fs.readFileSync(n), g); return b && sha(b); }) as never, inputs: [normal, noLook, badView, otherSlots, fewer, golden].map((n) => [n, golden]).concat([[normal, path.join(tmp, 'none.glb')]]) },
+    { name: 'razor-crest-preview.mergeCrestAttachments', ts: rc.mergeCrestAttachments as never, inputs: [[[{ name: 'A', x: 1 }, { name: 'b', x: 2 }, { name: 'c' }], [{ name: 'a', x: 9 }, { name: 'D' }, { name: 'B', y: 1 }]], [[], []]] },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('animations and sprite sheets in Rust answer as the TypeScript ones do, on the game files', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const ml = await import('../src/model-loadout.ts');
+  const { loadoutSheet } = await import('../src/loadout-sheet.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const all = [...index.paths()];
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-anim-'));
+  let n = 0;
+  const save = (p: string) => { const at = path.join(tmp, `${n++}${path.extname(p)}`); fs.writeFileSync(at, index.read(p) ?? Buffer.alloc(0)); return at; };
+  const bodies = all.filter((p) => /^models\/heroes\/([^/]+)\/\1\.vmdl_c$/.test(p)).slice(0, 40);
+  const models = [...bodies, ...spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 60)].map(save);
+  const textures = [...spread(all.filter((p) => p.startsWith('materials/particle/') && p.endsWith('.vtex_c')), 80), ...spread(all.filter((p) => p.endsWith('.vtex_c')), 20)].map(save);
+  const { file: items, blocks } = await realItems();
+  const text = fs.readFileSync(items).toString('latin1');
+  const ofItems = [...ml.itemModifiers(text)];
+  const seqs = models.map((f) => ml.modelSequences(fs.readFileSync(f)));
+  const worn = [[], ['whalehook'], ofItems.slice(0, 6), ['LOADOUT', 'arcana'], ofItems];
+  const read = (f: string | null) => (f ? fs.readFileSync(f) : null);
+  compare([
+    { name: 'model-loadout.modelSequences', ts: ((f: string | null) => ml.modelSequences(read(f))) as never, inputs: [...models.map((f) => [f]), [null], [textures[0]]] },
+    { name: 'model-loadout.itemModifiers', ts: ((s: string) => [...ml.itemModifiers(s)].sort()) as never, inputs: [[{ $file: items }], ['"activity" "modifier" "A" }'], ['{ "activity" no close'], ['x "activity" { "modifier"  "Zed" } { "activity" "modifier" "b" }']] },
+    { name: 'model-loadout.motionList', ts: ((s: never, m: string[], o: string[]) => ml.motionList(s, m, new Set(o))) as never, inputs: seqs.flatMap((s) => worn.slice(0, 3).map((w) => [s, w, ofItems])) },
+    { name: 'model-loadout.idleSequence', ts: ml.idleSequence as never, inputs: seqs.map((s) => [s]) },
+    { name: 'model-loadout.loadoutSequence', ts: ml.loadoutSequence as never, inputs: seqs.flatMap((s) => worn.map((w) => [s, w])) },
+    { name: 'model-loadout.wearableClip', ts: ml.wearableClip as never, inputs: seqs.map((s) => [s]) },
+    { name: 'model-loadout.itemActivities', ts: ml.itemActivities as never, inputs: blocks.map((b) => [b.block]) },
+    { name: 'loadout-sheet.loadoutSheet', ts: ((f: string | null) => loadoutSheet(read(f))) as never, inputs: [...textures.map((f) => [f]), [null], [models[0]]] },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('model exports in Rust run the toolchain and keep its files as the TypeScript does', { skip }, async () => {
+  const crypto = await import('node:crypto');
+  const mg = await import('../src/model-glb.ts');
+  const { decodePng, encodePng } = await import('../src/png-strip.ts');
+  const { CUBE_FACES } = await import('../src/png-strip.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-glbx-'));
+  const rgba = Buffer.from(Array.from({ length: 4 * 4 * 4 }, (_, i) => (i * 37) % 256));
+  const face = encodePng(4, 4, rgba);
+  const pngs = [face, encodePng(3, 2, Buffer.alloc(24, 9)), Buffer.from('nope')];
+  // a model with a second material set, out of the game when it is here
+  let skinFile: string | null = null;
+  let skinModel = 'models/items/axe/none.vmdl';
+  if (fs.existsSync(GAME_PAK01)) {
+    const { openVpkIndex } = await import('../src/vpk.ts');
+    const { modelSkinMaterials } = await import('../src/model-skin.ts');
+    const ix = openVpkIndex(GAME_PAK01);
+    const hit = [...ix.paths()].filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')).slice(0, 4000).find((p) => modelSkinMaterials(ix.read(p), 1).size > 0);
+    if (hit) { skinFile = path.join(tmp, 'skin.vmdl_c'); fs.writeFileSync(skinFile, ix.read(hit)!); skinModel = hit.replace(/_c$/, ''); }
+  }
+  // the stand-in toolchain, the same on both sides: it writes what an export would
+  const fakeRun = (runs: unknown[], rel: (p: string) => string) => async (exe: string, a: string[]) => {
+    runs.push([rel(exe), a.map(rel)]);
+    const at = (k: string) => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : undefined; };
+    const out = at('-o') ?? '';
+    const list = at('-f')?.split(',') ?? [];
+    if (list.some((f) => f.includes('fail')) || (!list.length && out.includes('fail'))) throw new Error('fake failure');
+    const write = (p: string, b: Buffer | string) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, b); };
+    if (a.includes('--gltf_export_format')) {
+      if (list.length <= 1 && out.endsWith('.glb')) {
+        const name = list[0] ?? '';
+        if (name.includes('physics')) write(mg.glbAt(out, name), `glb ${name}`);
+        else if (!name.includes('absent')) write(out, `glb ${name}`);
+      } else for (const f of list.filter((x) => !x.includes('absent'))) write(mg.glbAt(out, f), `glb ${f}`);
+    } else {
+      for (const t of list) {
+        const tt = t.replace(/_c$/, '');
+        const base = `${out}/${tt.replace(/\.vtex$/, '')}`;
+        if (tt.includes('absent')) continue;
+        if (tt.includes('sheet')) { write(`${base}_seq0_0.png`, 'a'); write(`${base}_seq0_1.png`, 'bbb'); write(`${base}_seq3.png`, 'cc'); write(`${base}_SEQ10_2.png`, 'dddd'); }
+        else if (tt.includes('badcube')) for (const f of CUBE_FACES) write(`${base}_${f}.png`, 'not a png');
+        else if (tt.includes('cube')) for (const f of CUBE_FACES) write(`${base}_${f}.png`, face);
+        else write(`${base}.png`, `png ${tt}`);
+      }
+    }
+  };
+  const digest = (b: Buffer) => { const i = decodePng(b); return i ? `png ${i.width} ${i.height} ${sha(i.rgba)}` : sha(b); };
+  const tsScript = async (ud: string, game: string | null, vrf: string | null, ops: unknown[][]) => {
+    const runs: unknown[] = [], log: string[] = [];
+    const rel = (p: string) => { let q = p.replace(/\\/g, '/').replace(ud.replace(/\\/g, '/'), '<ud>'); if (game) q = q.replace(game.replace(/\\/g, '/'), '<game>'); return q; };
+    const m = mg.createModelGlb({ userDataDir: ud, toolchain: { pathOf: () => vrf }, getGamePath: () => game, run: fakeRun(runs, rel), log: (x) => log.push(x) });
+    const results: unknown[] = [];
+    for (const o of ops) {
+      if (o[0] === 'glbs') results.push(Object.fromEntries(Object.entries(await m.glbs(o[1] as string[], o[2] as never, !!o[3])).map(([k, v]) => [k, v && rel(v)])));
+      else if (o[0] === 'skinned') { const v = await m.skinned(o[1] as string, o[2] as number, o[3] ? fs.readFileSync(o[3] as string) : null, o[4] as string[]); results.push(v && rel(v)); }
+      else if (o[0] === 'sprites') results.push(Object.fromEntries(Object.entries(await m.sprites(o[1] as string[])).map(([k, v]) => [k, v && digest(v)])));
+      else if (o[0] === 'clear') { m.clear(); results.push(null); }
+      else if (o[0] === 'list') {
+        const root = path.join(ud, 'models3d');
+        results.push(fs.existsSync(root) ? fs.readdirSync(root, { recursive: true, withFileTypes: true }).filter((d) => d.isFile()).map((d) => rel(path.join(d.parentPath, d.name))).sort() : []);
+      }
+    }
+    return { results, runs, log };
+  };
+  const game = fs.existsSync(sandboxGame) ? sandboxGame : path.join(tmp, 'game');
+  const ops = [
+    ['glbs', ['models/heroes/axe/axe.vmdl', 'Models\\Items\\Axe\\A.vmdl_c', 'bad', 'models/items/x/absent.vmdl', 'models/items/axe/a.vmdl', 'models/../x.vmdl'], [], false],
+    ['glbs', ['models/heroes/axe/axe.vmdl', 'models/items/axe/a.vmdl'], [], false],
+    ['glbs', ['models/heroes/axe/axe_physics.vmdl'], ['idle', 'loadout anim!'], false],
+    ['glbs', ['models/heroes/x/fail.vmdl'], 'all', true],
+    ['glbs', ['models/heroes/axe/axe.vmdl'], 'all', false],
+    ['glbs', [], [], false],
+    ['sprites', ['materials/a/b.vtex', 'materials/a/sheet.vtex', 'materials/a/cube.vtex', 'materials/a/badcube.vtex', 'materials/a/absent.vtex', 'bad.vtex', 'materials/../x.vtex']],
+    ['sprites', ['materials/a/b.vtex', 'materials/a/cube.vtex']],
+    ['sprites', ['materials/a/fail.vtex']],
+    ['skinned', skinModel, 1, skinFile, []], ['skinned', skinModel, 1, skinFile, []], ['skinned', skinModel, 2, skinFile, ['idle']], ['skinned', skinModel, 0, skinFile, []], ['skinned', 'not a model', 1, skinFile, []], ['skinned', skinModel, 1, null, []],
+    ['list'], ['clear'], ['list'],
+  ];
+  const norm = (r: { results: unknown[]; runs: unknown[]; log: string[] }) => ({ ...r, log: r.log.map((l) => l.replace(/in \d+ ms/, 'in N ms')) });
+  const cases: [string | null, string | null][] = [['vrf.exe', game], [null, game], ['vrf.exe', null]];
+  for (const [vrf, g] of cases) {
+    const [a, b] = [path.join(tmp, 'ts'), path.join(tmp, 'rs')];
+    fs.rmSync(a, { recursive: true, force: true }); fs.rmSync(b, { recursive: true, force: true });
+    const want = norm(await tsScript(a, g, vrf && path.join(tmp, vrf), ops));
+    const list = [['model-glb.script', b, g, vrf && path.join(tmp, vrf), face.toString('base64'), ops]];
+    fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify(list));
+    const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0];
+    assert.deepEqual(norm(got.ok), JSON.parse(JSON.stringify(want)), `vrf ${vrf}, game ${g}`);
+    if (vrf && g) assert.ok(want.runs.length >= 5 && (want.results[6] as Record<string, string>)['materials/a/cube.vtex']?.startsWith('png 24 4'));
+    if (vrf && g && skinFile) assert.ok(want.results[9], 'a second material set exports');
+  }
+  compare([
+    { name: 'model-glb.modelFile', ts: mg.modelFile as never, inputs: ['models/heroes/axe/axe.vmdl', 'Models\\Heroes\\Axe\\AXE.VMDL_C', ' models/a.vmdl ', 'models/a/../b.vmdl', 'models/.vmdl', 'models/a b.vmdl', 'materials/a.vmdl', 'models/a.vmdl.vmdl', '', 'models/x.vmdlx'].map((m) => [m]) },
+    { name: 'model-glb.gameInfo', ts: mg.gameInfo as never, inputs: [['C:\\Games\\dota 2 beta\\game\\dota'], ['/x/y']] },
+    { name: 'model-glb.exportArgs', ts: mg.exportArgs as never, inputs: [['p', 'o', ['a', 'b'], 'all', true], ['p', 'o', ['a'], 'all', false], ['p', 'o', [], [], false], ['p', 'o', ['a'], ['idle', 'run'], true]] },
+    { name: 'png-strip.decodePng', ts: ((b: string) => { const i = decodePng(Buffer.from(b, 'base64')); return i && [i.width, i.height, sha(i.rgba)]; }) as never, inputs: pngs.map((p) => [p.toString('base64')]) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the loadout runtime\'s resources in Rust gather what the TypeScript gathers, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const crypto = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const ps = await import('../src/particle-spec.ts');
+  const lr = await import('../src/loadout-resources.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const ix = openVpkIndex(GAME_PAK01);
+  const read = (p: string) => ix.read(p);
+  const { effects, blocks } = await realItems();
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const systems = spread([...new Set([...effects, ...blocks].flatMap((b) => ps.itemParticles(b.block)))], 40);
+  const defs = systems.map((s) => ps.particleDef(read, s)).filter(Boolean) as never[];
+  // the GLBs this machine has exported, by the model they are of
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const glbs: Record<string, string> = {};
+  if (fs.existsSync(real)) {
+    for (const d of fs.readdirSync(real, { recursive: true, withFileTypes: true })) {
+      if (!d.isFile() || !d.name.endsWith('.glb')) continue;
+      const file = path.join(d.parentPath, d.name);
+      const m = /[\\/](models[\\/].+)\.glb$/.exec(file);
+      if (m) glbs[`${m[1].replace(/\\/g, '/').toLowerCase()}.vmdl`] ??= file;
+    }
+  }
+  const drawn = [...lr.drawnModels(defs)];
+  const owned = Object.entries(glbs).slice(0, 12);
+  const asked: unknown[] = [];
+  const fake = (sprites: boolean) => ({
+    glbs: async (models: string[], clips: unknown, materials: boolean) => { asked.push(['glbs', models, clips === 'all', materials]); return Object.fromEntries(models.map((m) => [m, glbs[m] ?? null])); },
+    ...(sprites ? { sprites: async (ts: string[]) => { asked.push(['sprites', ts]); return Object.fromEntries(ts.map((x) => [x, x.includes('absent') ? null : Buffer.from(`png ${x}`)])); } } : {}),
+  });
+  const ops: unknown[][] = [
+    ['resourcePaths', { a: 'Particles/X.vpcf_c', b: ['materials/y.vmat', 'models/../z.vmdl', 'textures/q.vtex', 'materials/a b.vtex'], 2: 'models/n.vmdl', 1: 'models/m.vmesh', c: { d: 'particles/p.vsnap_c' } }],
+    ['drawnModels', defs],
+    ['resources', defs],
+    ['resources', [{ tree: { m_Renderers: [{ _class: 'C_OP_RenderModels', m_ModelList: owned.map(([m]) => ({ m_model: m })) }], m_hSnapshot: 'particles/none.vsnap' }, children: [] }]],
+    ['models', [...owned.map(([model, file], k) => ({ file, model, skin: k % 3 })), { file: path.join(real, 'none.glb'), model: 'models/none.vmdl' }]],
+    ['texturePaths', [...owned.map(([m]) => m), ...drawn.slice(0, 5)]],
+    ...owned.slice(0, 3).map(([m, f]) => ['model', f, m]),
+    ['model', path.join(real, 'none.glb'), 'models/none.vmdl'],
+  ];
+  const run = async (sprites: boolean) => {
+    asked.length = 0;
+    const g = fake(sprites) as never;
+    const results: unknown[] = [];
+    for (const o of ops) {
+      try {
+        let v: unknown;
+        if (o[0] === 'resourcePaths') v = lr.resourcePaths(o[1] as never);
+        else if (o[0] === 'drawnModels') v = [...lr.drawnModels(o[1] as never)];
+        else if (o[0] === 'resources') { const r = await lr.loadoutResources(o[1] as never, read, g); v = { ...r, models: Object.fromEntries(Object.entries(r.models).map(([k, x]) => [k, sha(Buffer.from((x as { data: string }).data, 'base64'))])) }; }
+        else if (o[0] === 'model') v = sha(await lr.loadoutModel(o[1] as string, o[2] as string, read, g));
+        else if (o[0] === 'models') { const lost: string[] = []; const out = await lr.loadoutModels(o[1] as never, read, g, (m) => lost.push(m)); v = { out: out.map((b) => b && sha(b)), lost }; }
+        else if (o[0] === 'texturePaths') v = lr.loadoutTexturePaths(o[1] as string[], read);
+        results.push({ ok: JSON.parse(JSON.stringify(v)) });
+      } catch (e) { results.push({ error: (e as Error).message }); }
+    }
+    return { results, asked: JSON.parse(JSON.stringify(asked)) };
+  };
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-lr-'));
+  for (const sprites of [true, false]) {
+    const want = await run(sprites);
+    fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['loadout-resources.script', GAME_PAK01, glbs, sprites, ops]]));
+    const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+    // an error is the same where both sides fail; the words are each runtime's own
+    const same = (r: { results: { error?: string }[] }) => ({ ...r, results: r.results.map((x) => ('error' in x ? { error: true } : x)) });
+    assert.deepEqual(same(got), same(want as never), `sprites ${sprites}`);
+    if (sprites && owned.length) assert.ok(Object.keys((want.results[3] as { ok: { models: object } }).ok.models).length, 'models dressed');
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('a mod\'s picture in Rust is picked and judged as the TypeScript does', { skip }, async () => {
+  const { pickCandidate, worthShowing } = await import('../src/mod-preview-pick.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const lists: string[][] = [];
+  const mods = path.join(root, 'sandbox', 'mods');
+  if (fs.existsSync(mods)) for (const f of fs.readdirSync(mods).filter((n) => n.endsWith('_dir.vpk'))) lists.push([...openVpkIndex(path.join(mods, f)).paths()].map((p) => p.toLowerCase()));
+  if (fs.existsSync(GAME_PAK01)) { const all = [...openVpkIndex(GAME_PAK01).paths()]; for (let k = 0; k < 6; k++) lists.push(all.filter((_, i) => i % 97 === k * 13).slice(0, 3000)); }
+  lists.push([
+    'panorama/videos/heroes/npc_dota_hero_wisp.webm', 'panorama/videos/x/y.webm', 'panorama/images/heroes/a/b.vtex_c', 'panorama/images/econ/sets/a.vtex_c',
+    'materials/models/heroes/wisp/wisp_color.vtex_c', 'materials/models/heroes/wisp/wisp_normals.vtex_c', 'materials/default/default_color.vtex_c', 'materials/x/dev/y.vtex_c',
+    'materials/a_tcolor_b.vtex_c', 'materials/a_normal.vtex_c', 'materials/a_normalx.vtex_c', 'materials/models/a_albedo.vtex_c', 'materials/ao.vtex_c', 'materials/x_ao.vtex_c',
+  ]);
+  const pic = (w: number, h: number, f: (i: number) => number[]) => [w, h, Buffer.from(Array.from({ length: w * h }, (_, i) => f(i)).flat()).toString('base64')];
+  compare([
+    { name: 'mod-preview-pick.pickCandidate', ts: pickCandidate as never, inputs: lists.flatMap((l) => ['art', 'texture', 'video'].map((k) => [l, k])) },
+    { name: 'mod-preview-pick.worthShowing', ts: ((w: number, h: number, b: string) => worthShowing({ width: w, height: h, data: Buffer.from(b, 'base64') })) as never, inputs: [
+      pic(64, 64, (i) => [i % 256, (i * 7) % 256, 3, 255]), pic(64, 64, () => [9, 9, 9, 255]), pic(64, 64, (i) => [i % 256, 0, 0, i % 50 ? 0 : 255]),
+      pic(31, 64, (i) => [i % 256, 0, 0, 255]), pic(300, 200, (i) => [(i * 13) % 256, 0, 0, i % 3 ? 255 : 0]), [64, 64, 'AAAA'], pic(64, 64, (i) => [i % 12, 0, 0, 255]), pic(64, 64, (i) => [i % 13, 0, 0, 255]),
+    ] },
+  ]);
+});
+
+test('the hero preview\'s picks in Rust dress the hero as the TypeScript does, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const crypto = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const hp = await import('../src/hero-preview-picks.ts');
+  const ix = openVpkIndex(GAME_PAK01);
+  const { file, blocks, styled, effects } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  const byId = new Map(all.map((i) => [i.id, i]));
+  const defaults = all.filter((i) => i.prefab === 'default_item').map((item) => ({ item, heroes: itemHeroes(text, item) }));
+  const heroOf = (id: string) => { const i = byId.get(id); return (i && itemHeroes(text, i)[0]) || 'npc_dota_hero_axe'; };
+  const stockOf = (id: string) => {
+    const i = byId.get(id); if (!i) return null;
+    const h = heroOf(id);
+    return defaults.find((d) => d.item.slot === i.slot && d.item.model && d.heroes.includes(h))?.item.model ?? null;
+  };
+  const some = [...styled.slice(0, 20), ...effects.slice(0, 20), ...blocks.slice(0, 20)];
+  const every = [...new Set(defaults.flatMap((d) => d.heroes))];
+  // the heads apart from the body, and a spread of the rest
+  const split = ['arc_warden', 'faceless_void', 'invoker', 'phantom_lancer', 'tinker', 'monkey_king'].map((n) => 'npc_dota_hero_' + n);
+  const heroes = [...new Set([...split, ...every.filter((_, k) => k % Math.max(1, Math.floor(every.length / 20)) === 0)])];
+  const short = (h: string) => h.replace(/^npc_dota_hero_/, '');
+  const entries = (m: Map<string, string> | undefined | null) => m ? [...m] : null;
+  const reps = effects.slice(0, 20).map((b) => [...hp.previewParticleReplacements(b.visuals!, true)]).filter((r) => r.length);
+  const persona = all.filter((i) => /persona_selector/i.test(i.slot)).slice(0, 6);
+  const ops: unknown[][] = [
+    ...some.flatMap((b) => [
+      ['itemModel', b.id, '', heroOf(b.id), stockOf(b.id)],
+      ['itemModel', b.id, 'style-1', heroOf(b.id), null],
+      ['bodySkinFor', b.visuals, short(heroOf(b.id)), byId.get(b.id)?.model ?? '', false],
+      ['bodySkinFor', b.visuals, heroOf(b.id), '', true],
+      ['entityModel', b.block, heroOf(b.id)],
+      ['wornExtras', b.visuals],
+      ['particleReplacements', b.visuals, false],
+      ['particleReplacements', b.visuals, true],
+      ['bladeReplacements', null, b.visuals],
+      ['bladeReplacements', [['a.vpcf', 'b.vpcf']], b.id.length % 2 ? b.visuals : null],
+    ]),
+    ['itemModel', '99999999', '', 'npc_dota_hero_axe', null],
+    ['monkeyKingCrown', 'npc_dota_hero_monkey_king', [{ itemId: 9050 }]],
+    ['monkeyKingCrown', 'npc_dota_hero_monkey_king', [{ itemId: '9051' }, {}]],
+    ['monkeyKingCrown', 'npc_dota_hero_axe', [{ itemId: '9050' }]],
+    ...reps.flatMap((r, k) => r.slice(0, 3).flatMap(([from]) => [
+      ['particleRead', r, null, false, from + '_c'],
+      ['particleRead', [], k % 2 ? r : null, true, from + '_C'],
+      ['particleRead', r, [[from, 'particles/none.vpcf']], false, from + '_c'],
+    ])),
+    ['particleRead', [], null, true, 'particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword_blade.vpcf_c'],
+    ...heroes.flatMap((h) => [
+      ['stockHead', h, `models/heroes/${short(h)}/${short(h)}.vmdl`, false],
+      ['stockHead', h, `models/heroes/${short(h)}/${short(h)}.vmdl`, true],
+      ['heroParticles', `scripts/npc/heroes/${h}.txt`, h, true],
+    ]),
+    ['stockHead', 'npc_dota_hero_axe', 'models/x.vmdl', false],
+    ['heroParticles', null, 'npc_dota_hero_razor', true],
+    ['heroParticles', 'scripts/npc/heroes/npc_dota_hero_razor.txt', 'npc_dota_hero_razor', false],
+    ['equipment', [{ slot: 'a', itemId: '1' }, { slot: 'b' }, { itemId: 3 }],
+      [{ slot: 'b', tryOn: { itemId: some[0].id, effectId: 'x' } }, { slot: 'c', tryOn: { itemId: '99999999', effectId: '' } }, { slot: 'd' }, { slot: 'e', tryOn: { itemId: '', effectId: '' } }]],
+    ...[[], ['particles/econ/items/razor/razor_punctured_crest/x_ambient.vpcf']].flatMap((roots) => [
+      ['crestParticles', roots, 'models/items/razor/razor_helmet_blade/x.vmdl', '6646'],
+      ['crestParticles', roots, 'models/items/razor/other.vmdl', '6646'],
+    ]),
+    ...persona.flatMap((sel) => {
+      const h = itemHeroes(text, sel)[0] ?? '';
+      const at = 'h:';
+      const slots = [{ slot: at + sel.slot, stock: sel.id }, { slot: at + 'head', stock: '1' }, { slot: at + 'weapon', stock: '2' }, { slot: at + 'zzz', stock: '3' }];
+      const personas = all.filter((i) => i.slot === sel.slot && i.id !== sel.id && itemHeroes(text, i).includes(h)).slice(0, 2);
+      return [
+        ['personaSlots', h, slots, []],
+        ...personas.map((p) => ['personaSlots', h, slots, [{ slot: at + sel.slot, itemId: Number(p.id) }]]),
+      ];
+    }),
+    ['personaSlots', 'npc_dota_hero_axe', [{ slot: 'x', stock: '1' }], []],
+  ];
+  const sha = (b: Buffer | null) => b && crypto.createHash('sha256').update(b).digest('hex');
+  const want = ops.map((o) => {
+    try {
+      const a = o.slice(1) as never[];
+      let v: unknown;
+      switch (o[0]) {
+        case 'itemModel': { const r = hp.itemModel(text, a[0], a[1] || undefined, a[2], a[3]); v = { ...r, ...(r.replacements ? { replacements: Object.fromEntries(r.replacements) } : {}) }; break; }
+        case 'bodySkinFor': v = hp.bodySkinFor(a[0], a[1], a[2], a[3]) ?? null; break;
+        case 'entityModel': v = hp.entityModel(a[0], a[1]); break;
+        case 'wornExtras': v = hp.wornExtras(a[0]); break;
+        case 'monkeyKingCrown': v = hp.monkeyKingCrown(text, a[0], a[1]); break;
+        case 'particleReplacements': v = [...hp.previewParticleReplacements(a[0], a[1])]; break;
+        case 'bladeReplacements': v = entries(hp.previewBladeReplacements(a[0] ? new Map(a[0]) : undefined, a[1])); break;
+        case 'particleRead': v = sha(hp.previewParticleReader((p) => ix.read(p), new Map(a[0]), a[1] ? new Map(a[1]) : undefined, a[2])(a[3])); break;
+        case 'stockHead': v = hp.previewStockHead(text, a[0], a[1], ix, a[2]); break;
+        case 'equipment': v = hp.previewEquipment(text, a[0], a[1]); break;
+        case 'heroParticles': v = hp.previewHeroParticles(a[0] ? ix.read(a[0])?.toString('utf8') ?? null : null, a[1], a[2], ix); break;
+        case 'crestParticles': v = hp.previewCrestParticles(a[0], a[1], a[2], ix); break;
+        case 'personaSlots': v = hp.personaPreviewSlots(text, a[0], a[1], a[2]); break;
+      }
+      return { ok: JSON.parse(JSON.stringify(v ?? null)) };
+    } catch { return { error: true }; }
+  });
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hpp-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['hero-preview-picks.script', GAME_PAK01, { $file: file }, ops]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok
+    .map((x: { error?: string }) => ('error' in x ? { error: true } : x));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  for (let k = 0; k < ops.length; k++) assert.deepEqual(got[k], want[k], JSON.stringify(ops[k]).slice(0, 300));
+  assert.ok(want.some((w) => w.ok && typeof w.ok === 'string' && w.ok.startsWith('models/')), 'a stock head found');
+  assert.ok(want.some((w) => Array.isArray(w.ok) && w.ok.some((s: { slot?: string }) => s?.slot === 'h:head')), 'a persona dressed');
+});
+
+test('the hero preview\'s particles in Rust are the TypeScript ones, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const { itemParticles } = await import('../src/particle-spec.ts');
+  const { unusualEffects } = await import('../src/unusual-effects.ts');
+  const hp = await import('../src/hero-preview-picks.ts');
+  const fx = await import('../src/hero-preview-fx.ts');
+  const ix = openVpkIndex(GAME_PAK01);
+  const { file, effects } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  const unusual = unusualEffects(text);
+  const names = ['terrorblade', 'razor', 'wisp', 'monkey_king', 'juggernaut', 'pudge', 'crystal_maiden', 'invoker'];
+  const plans = names.map((name, k) => {
+    const hero = 'npc_dota_hero_' + name;
+    const mine = all.filter((i) => i.model && itemHeroes(text, i).includes(hero));
+    const stock = mine.filter((i) => i.prefab === 'default_item');
+    // a few of the hero's effect items in place of their slot's stock one
+    const worn = effects.map((e) => all.find((i) => i.id === e.id)!).filter((i) => i && itemHeroes(text, i).includes(hero)).slice(0, 3);
+    const parts = [
+      ...stock.filter((s) => !worn.some((w) => w.slot === s.slot)).map((s) => ({ slot: `${hero}:${s.slot}`, model: s.model, fx: [] as string[] })),
+      ...worn.map((w, j) => {
+        const e = effects.find((x) => x.id === w.id)!;
+        const replacements = hp.previewParticleReplacements(e.visuals!, true);
+        return { slot: `${hero}:${w.slot}`, model: w.model, style: j % 2, fx: itemParticles(e.block), replacements: replacements.size ? replacements : undefined };
+      }),
+    ];
+    const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
+    const heroFx = hp.previewHeroParticles(script, hero, true, ix);
+    const bindings = new Map(k % 2 ? unusual.slice(0, 40).map((u) => [u.system, u] as const) : []);
+    const replacements = new Map(k === 0 ? [[heroFx[0] ?? 'x', 'particles/none.vpcf']] as [string, string][] : []);
+    return { body: `models/heroes/${name}/${name}.vmdl`, bodyFx: k === 3 ? ['particles/econ/items/x/x.vpcf'] : [], heroFx, replacements, bindings, parts };
+  });
+  plans.push({ body: 'models/heroes/wisp/wisp.vmdl', bodyFx: [], heroFx: [], replacements: new Map(), bindings: new Map(), parts: [] });
+  const read = (p: string) => ix.read(p);
+  const want = plans.map((p) => fx.previewParticles({ ...p, read }));
+  const placed = plans[0].parts.map((_, i) => (i % 3 === 1 ? -1 : i % 3 === 2 ? Math.max(0, i - 1) : i));
+  const moved = fx.forParts(want[0], placed);
+  const wire = plans.map((p) => ({ ...p, replacements: [...p.replacements], bindings: Object.fromEntries(p.bindings),
+    parts: p.parts.map((x) => ({ ...x, replacements: 'replacements' in x && x.replacements ? [...(x.replacements as Map<string, string>)] : undefined })) }));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hpf-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['hero-preview-fx.script', GAME_PAK01, wire, placed]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+  fs.rmSync(tmp, { recursive: true, force: true });
+  const plain = (v: unknown) => JSON.parse(JSON.stringify(v));
+  for (let k = 0; k < plans.length; k++) assert.deepEqual(got.plans[k], plain(want[k]), plans[k].body);
+  assert.deepEqual(got.moved, plain(moved));
+  assert.ok(want.some((w) => w.some((x) => x.part >= 0)) && want.some((w) => w.some((x) => x.part === -2)), 'parts and the hero carry effects');
+  assert.equal(fx.forParts(want[1], want[1].map((_, i) => i)), want[1]);
+});
+
+test('the hero preview\'s plan in Rust is the TypeScript one, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const { createHeroPreview } = await import('../src/hero-preview.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  const heroesOf = new Map(all.map((i) => [i.id, itemHeroes(text, i)]));
+  type Slot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } };
+  const slotsOf = (hero: string) => {
+    const short = hero.replace(/^npc_dota_hero_/, '');
+    const seen = new Set<string>();
+    return all.filter((i) => i.prefab === 'default_item' && heroesOf.get(i.id)!.includes(hero) && !seen.has(i.slot) && seen.add(i.slot))
+      .map((i): Slot => ({ slot: `${short}:${i.slot}`, stock: i.id }));
+  };
+  const own = (hero: string, slot: string) => all.filter((i) => i.slot === slot && i.prefab !== 'default_item' && i.hasVisuals && heroesOf.get(i.id)!.includes(hero));
+  const library: unknown[] = [];
+  const cases: [string, Slot[]][] = [];
+  const names = ['juggernaut', 'terrorblade', 'razor', 'wisp', 'monkey_king', 'primal_beast', 'phantom_assassin', 'faceless_void'];
+  for (const [k, name] of names.entries()) {
+    const hero = 'npc_dota_hero_' + name;
+    const slots = slotsOf(hero);
+    if (k % 2 === 0) cases.push([name, slots]);
+    // each slot tries on one of its items, every other in its second style
+    cases.push([hero, slots.map((s, j) => {
+      const pick = own(hero, s.slot.split(':').pop()!)[(k + j) % 3];
+      return pick ? { ...s, tryOn: { itemId: pick.id, effectId: j % 2 ? 'style-1' : '' } } : s;
+    })]);
+    // and the library wears another in the first slot it has one for
+    const worn = slots.map((s) => [s, own(hero, s.slot.split(':').pop()!)[1]] as const).find(([, i]) => i);
+    if (worn) library.push({ categoryId: 'cosmetic', enabled: k % 3 !== 2, itemId: worn[1]!.id, slot: worn[0].slot, effectId: k % 2 ? 'style-0' : undefined, name: `Worn ${k}` });
+  }
+  const io = all.find((i) => /io_ti7|dark_carnival_io/i.test(i.model) && heroesOf.get(i.id)!.includes('npc_dota_hero_wisp'));
+  if (io) cases.push(['wisp', slotsOf('npc_dota_hero_wisp').map((s) => (s.slot.endsWith(':' + io.slot) ? { ...s, tryOn: { itemId: io.id, effectId: '' } } : s))]);
+  const crest = all.find((i) => i.id === '6646');
+  if (crest) cases.push(['razor', slotsOf('npc_dota_hero_razor').map((s) => (s.slot.endsWith(':' + crest.slot) ? { ...s, tryOn: { itemId: '6646', effectId: '' } } : s))]);
+  const reckoning = all.find((i) => i.id === '9050');
+  if (reckoning) library.push({ categoryId: 'cosmetic', itemId: 9050, slot: `monkey_king:${reckoning.slot}`, effectId: 'style-1' });
+  const tb = own('npc_dota_hero_terrorblade', 'weapon').slice(0, 2);
+  for (const w of tb) cases.push(['terrorblade', slotsOf('npc_dota_hero_terrorblade').map((s) => (s.slot.endsWith(':weapon') ? { ...s, tryOn: { itemId: w.id, effectId: '' } } : s))]);
+  // a persona tried on in its selector slot
+  for (const sel of all.filter((i) => /persona_selector/i.test(i.slot)).slice(0, 2)) {
+    const hero = heroesOf.get(sel.id)![0];
+    const persona = all.find((i) => i.slot === sel.slot && i.id !== sel.id && heroesOf.get(i.id)!.includes(hero));
+    const slots = slotsOf(hero);
+    if (persona) cases.push([hero, slots.map((s) => (s.slot.endsWith(':' + sel.slot) ? { ...s, tryOn: { itemId: persona.id, effectId: '' } } : s))]);
+  }
+  cases.push(['npc_dota_hero_nobody', []]);
+  const game = path.dirname(path.dirname(GAME_PAK01));
+  const preview = createHeroPreview({ glb: { glbs: async () => ({}) }, library: { list: () => library as never }, gamePath: () => game, vanilla: () => text });
+  const plain = (v: unknown) => JSON.parse(JSON.stringify(v));
+  const want = cases.map(([hero, slots]) => {
+    try {
+      const p = preview.plan(hero, slots)!;
+      const { read: _read, bindings, ...rest } = p;
+      return { ok: { ...plain(rest), replacements: Object.fromEntries(p.replacements), bindings: bindings.size,
+        parts: p.parts.map((x) => ({ ...plain(x), ...(x.replacements ? { replacements: Object.fromEntries(x.replacements) } : {}) })) } };
+    } catch { return { error: true }; }
+  });
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hp-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify(cases.map(([hero, slots]) => ['hero-preview.plan', GAME_PAK01, { $file: file }, library, hero, slots])));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))
+    .map((x: { error?: string }) => ('error' in x ? { error: true } : x));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  for (let k = 0; k < cases.length; k++) assert.deepEqual(got[k], want[k], `${cases[k][0]} ${JSON.stringify(cases[k][1].filter((s) => s.tryOn))}`);
+  assert.ok(want.filter((w) => 'ok' in w).length > cases.length - 3, 'plans made');
+  assert.ok(want.some((w) => 'ok' in w && w.ok.parts.some((x: { replacements?: object }) => x.replacements)), 'a part swaps its effects');
+});
+
+test('the hero preview\'s models in Rust are the TypeScript ones, through a stand-in exporter', { skip }, async (t) => {
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(real) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game, sandbox or exported models here'); return; }
+  const crypto = await import('node:crypto');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const { createHeroPreview } = await import('../src/hero-preview.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  // the GLBs this machine has exported, by the model they are of
+  const glbs: Record<string, string> = {};
+  for (const d of fs.readdirSync(real, { recursive: true, withFileTypes: true })) {
+    if (!d.isFile() || !d.name.endsWith('.glb')) continue;
+    const f = path.join(d.parentPath, d.name);
+    const m = /[\\/](models[\\/].+)\.glb$/.exec(f);
+    if (m) glbs[`${m[1].replace(/\\/g, '/').toLowerCase()}.vmdl`] ??= f;
+  }
+  const exported = (model: string) => model in glbs;
+  type Slot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } };
+  const slotsOf = (hero: string) => {
+    const short = hero.replace(/^npc_dota_hero_/, '');
+    const seen = new Set<string>();
+    return all.filter((i) => i.prefab === 'default_item' && itemHeroes(text, i).includes(hero) && !seen.has(i.slot) && seen.add(i.slot))
+      .map((i): Slot => ({ slot: `${short}:${i.slot}`, stock: i.id }));
+  };
+  const cases: [string, Slot[], boolean][] = [];
+  for (const name of ['abaddon', 'antimage']) {
+    const hero = 'npc_dota_hero_' + name;
+    const slots = slotsOf(hero);
+    cases.push([name, slots, true]);
+    // items whose models this machine has, tried on in their slots
+    const owned = all.filter((i) => i.prefab !== 'default_item' && exported(i.model.toLowerCase()) && itemHeroes(text, i).includes(hero));
+    for (const [k, i] of owned.slice(0, 2).entries()) {
+      cases.push([hero, slots.map((s) => (s.slot.endsWith(':' + i.slot) ? { ...s, tryOn: { itemId: i.id, effectId: k % 2 ? 'style-1' : '' } } : s)), true]);
+    }
+  }
+  cases.push(['phantom_assassin', slotsOf('npc_dota_hero_phantom_assassin'), true]);
+  cases.push(['abaddon', [], false]);
+  cases.push(['npc_dota_hero_nobody', [], true]);
+  const sha = (b: Uint8Array) => crypto.createHash('sha256').update(b).digest('hex');
+  const game = path.dirname(path.dirname(GAME_PAK01));
+  for (const sprites of [true, false]) {
+    const glb = {
+      glbs: async (models: string[]) => Object.fromEntries(models.map((m) => [m, glbs[m] ?? null])),
+      skinned: async (model: string, skin: number) => (skin % 2 === 1 ? glbs[model] ?? null : null),
+      ...(sprites ? { sprites: async (ts: string[]) => Object.fromEntries(ts.map((x) => [x, x.includes('absent') ? null : Buffer.from(`png ${x}`)])) } : {}),
+    };
+    const preview = createHeroPreview({ glb, library: { list: () => [] }, gamePath: () => game, vanilla: () => text });
+    // without pictures, the first hero alone
+    const run = sprites ? cases : cases.slice(0, 2);
+    const want: unknown[] = [];
+    for (const [hero, slots, tool] of run) {
+      for (let twice = 0; twice < 2; twice++) {
+        try {
+          const m = await preview.models(hero, slots, tool);
+          if (!m.ok) { want.push(m); continue; }
+          const res = JSON.parse(JSON.stringify(m.resources));
+          for (const k of Object.keys(res.models)) res.models[k] = sha(Buffer.from(res.models[k].data, 'base64'));
+          want.push(JSON.parse(JSON.stringify({
+            ok: true, body: sha(m.body), clip: m.clip, stage: m.stage, pedestal: m.pedestal && sha(m.pedestal), model: m.model, motions: m.motions,
+            missing: m.missing, hidden: m.hidden, attachments: m.attachments, parts: m.parts.map((x) => ({ ...x, glb: sha(x.glb) })),
+            particles: m.particles, sprites: Object.fromEntries(Object.entries(m.sprites).map(([k, v]) => [k, sha(v)])), resources: res,
+          })));
+        } catch { want.push({ error: true }); }
+      }
+    }
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hpm-'));
+    fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['hero-preview.models', GAME_PAK01, { $file: file }, [], glbs, sprites, run]]));
+    const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+    fs.rmSync(tmp, { recursive: true, force: true });
+    for (let k = 0; k < want.length; k++) assert.deepEqual(got[k], want[k], `sprites ${sprites}, ${run[k >> 1][0]} ${JSON.stringify(run[k >> 1][1].filter((s) => s.tryOn))}`);
+    assert.ok(want.filter((w) => (w as { ok: boolean }).ok).length >= (sprites ? 4 : 2), 'models made');
+  }
+});
+
+test('the builder\'s effect pictures and single models in Rust are the TypeScript ones', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const crypto = await import('node:crypto');
+  const { createHeroPreview } = await import('../src/hero-preview.ts');
+  const { ITEM_EFFECTS } = await import('../src/item-builder-effects.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const glbs: Record<string, string> = {};
+  if (fs.existsSync(real)) {
+    for (const d of fs.readdirSync(real, { recursive: true, withFileTypes: true })) {
+      if (!d.isFile() || !d.name.endsWith('.glb')) continue;
+      const f = path.join(d.parentPath, d.name);
+      const m = /[\\/](models[\\/].+)\.glb$/.exec(f);
+      if (m) glbs[`${m[1].replace(/\\/g, '/').toLowerCase()}.vmdl`] ??= f;
+    }
+  }
+  const ids = [...ITEM_EFFECTS.slice(0, 6).map((e) => e.id), 'unusual-4', 'unusual-13', 'unusual-46', 'unusual-999999', 'unusual-', 'nothing'];
+  const files = [...Object.keys(glbs).filter((m) => /^models\/(props_|items\/world\/)/.test(m)).slice(0, 3), Object.keys(glbs)[0] ?? 'models/heroes/x.vmdl',
+    'models/props_gameplay/none.vmdl', 'Models/Items/World/x.vmdl', 'models/props_x/../y.vmdl'];
+  const sha = (b: Uint8Array) => crypto.createHash('sha256').update(b).digest('hex');
+  const glb = {
+    glbs: async (models: string[]) => Object.fromEntries(models.map((m) => [m, glbs[m] ?? null])),
+    sprites: async (ts: string[]) => Object.fromEntries(ts.map((x) => [x, Buffer.from(`png ${x}`)])),
+  };
+  const preview = createHeroPreview({ glb, library: { list: () => [] }, gamePath: () => path.dirname(path.dirname(GAME_PAK01)), vanilla: () => text });
+  const effects: ({ ok: unknown } | { error: true })[] = [];
+  for (const id of ids) {
+    try {
+      const e = await preview.effect(id);
+      effects.push({ ok: e && JSON.parse(JSON.stringify({ ...e, sprites: Object.fromEntries(Object.entries(e.sprites).map(([k, v]) => [k, sha(v)])) })) });
+    } catch { effects.push({ error: true }); }
+  }
+  const models: ({ ok: unknown } | { error: true })[] = [];
+  for (const f of files) {
+    try { const m = await preview.model(f); models.push({ ok: m && sha(m) }); } catch { models.push({ error: true }); }
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hpe-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['hero-preview.pictures', GAME_PAK01, { $file: file }, glbs, ids, files]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+  fs.rmSync(tmp, { recursive: true, force: true });
+  ids.forEach((id, k) => assert.deepEqual(got.effects[k], effects[k], id));
+  files.forEach((f, k) => assert.deepEqual(got.models[k], models[k], f));
+  assert.ok(effects.filter((e) => 'ok' in e && e.ok).length >= 4, 'effects drawn');
+});
+
+test('a mod\'s own picture in Rust is made and kept as the TypeScript does it', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const crypto = await import('node:crypto');
+  const { openVpkIndex, buildVpk } = await import('../src/vpk.ts');
+  const { entry } = await import('./helpers/vpk-entry.ts');
+  const { createModPreviews } = await import('../src/mod-preview.ts');
+  const ix = openVpkIndex(GAME_PAK01);
+  const paths = [...ix.paths()];
+  const art = paths.filter((p) => /^panorama\/images\/heroes\/selection\/[^/]+\.vtex_c$/.test(p)).slice(0, 4);
+  const tex = paths.filter((p) => /^materials\/models\/heroes\/.+_color.*\.vtex_c$/.test(p)).slice(0, 4);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-mp-'));
+  const mods = path.join(tmp, 'mods');
+  fs.mkdirSync(path.join(mods, 'sub'), { recursive: true });
+  const put = (name: string, files: [string, Buffer][]) => fs.writeFileSync(path.join(mods, name), buildVpk(files.map(([p, b]) => entry(p, b))));
+  art.forEach((p, k) => put(`art${k}_dir.vpk`, [[p, ix.read(p)!], [tex[k] ?? 'materials/x_color.vtex_c', ix.read(tex[k] ?? '') ?? Buffer.from('xxxxxxxxxx')]]));
+  tex.forEach((p, k) => put(`tex${k}_dir.vpk`, [[p, ix.read(p)!], [p.replace('_color', '_normal'), Buffer.from('normal map bytes')]]));
+  put('fx_dir.vpk', [['particles/x.vpcf_c', Buffer.from('fx')]]);
+  put('sub/deep_dir.vpk', [[art[0] ?? 'panorama/images/heroes/selection/a.vtex_c', Buffer.from([7, 9, 9, 1, 2, 3, 4, 5, 6])]]);
+  // the tool makes nothing of one, the decoder sees through another
+  put('none_dir.vpk', [['panorama/images/heroes/selection/n.vtex_c', Buffer.from([10, 1, 2, 3, 4, 5, 6, 7, 8])]]);
+  put('clear_dir.vpk', [['panorama/images/heroes/selection/c.vtex_c', Buffer.from([11, 1, 2, 4, 4, 5, 6, 7, 8])]]);
+  // more than one call's worth
+  for (let k = 0; k < 44; k++) put(`many${k}_dir.vpk`, [[`panorama/images/econ/items/m${k}.vtex_c`, Buffer.from([k * 3 + 1, k, k * 7, k + 1, 1, 2, 3, 4, 5, 6])]]);
+  put('vid_dir.vpk', [['panorama/videos/heroes/npc_dota_hero_x.webm', Buffer.from('webm bytes, not a real clip')], [art[1] ?? 'panorama/images/a.vtex_c', Buffer.from([3, 3, 3, 3, 3, 3, 3, 3])]]);
+  put('vid2_dir.vpk', [['panorama/videos/heroes/npc_dota_hero_y.webm', Buffer.from('another clip')]]);
+  put('big_dir.vpk', [['panorama/videos/heroes/npc_dota_hero_z.webm', Buffer.alloc(25 * 1024 * 1024, 1)]]);
+  const names = fs.readdirSync(mods).filter((n) => n.endsWith('.vpk')).concat(['sub/deep_dir.vpk', 'missing_dir.vpk', '../mods/fx_dir.vpk', 'C:/x_dir.vpk', 'a\\b_dir.vpk']);
+  const keys = [...names.flatMap((n) => ['modart:' + n, 'modtex:' + n]), 'hero:Brewmaster', 'modvid:vid_dir.vpk', 42 as never];
+  const pic = (b: Buffer) => b.toString('base64');
+  const frame = (b3: number) => pic(Buffer.from([1, 20, 30, b3, 9, 8, 7, 6, 5, 4]));
+  const ops: unknown[][] = [
+    ['ready'], ['tool', false], ['getMany', keys], ['ready'], ['tool', true], ['getMany', keys], ['getMany', keys],
+    ['hasVideo', 'modvid:vid_dir.vpk'], ['hasVideo', 'modart:vid_dir.vpk'], ['videoBytes', 'modvid:vid_dir.vpk'], ['videoBytes', 'modvid:big_dir.vpk'],
+    ['hasVideo', 'modvid:big_dir.vpk'], ['videoBytes', 'modvid:fx_dir.vpk'], ['saveFrame', 'modvid:vid_dir.vpk', null], ['saveFrame', 'modvid:vid_dir.vpk', frame(4)],
+    ['hasVideo', 'modvid:vid_dir.vpk'], ['videoBytes', 'modvid:vid_dir.vpk'], ['saveFrame', 'modvid:vid2_dir.vpk', frame(5)], ['saveFrame', 'modart:vid2_dir.vpk', frame(5)],
+    ['getMany', ['modvid:vid2_dir.vpk', 'modvid:vid_dir.vpk']], ['size'], ['clear'], ['size'], ['tool', false], ['getMany', keys],
+  ];
+  const sha256 = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const images = {
+    read(file: string) {
+      const b = fs.readFileSync(file);
+      if (b.length < 8) return null;
+      const [w, h] = [32 + (b[1] % 64), 32 + (b[2] % 64)];
+      const a = b[3] % 4 === 0 ? 0 : 255;
+      const data = Buffer.alloc(w * h * 4);
+      for (let i = 0; i < w * h; i++) data.set([b[(i * 3) % b.length], b[(i * 5 + 1) % b.length], b[(i * 7 + 2) % b.length], a], i * 4);
+      return { width: w, height: h, data };
+    },
+    toSmallPng: (bmp: { width: number; height: number; data: Uint8Array }) => Buffer.from(`small ${bmp.width}x${bmp.height} ${crypto.createHash('sha1').update(bmp.data).digest('hex')}`),
+  };
+  let tool = true;
+  const previews = createModPreviews({
+    userDataDir: path.join(tmp, 'ts'), toolchain: { pathOf: () => (tool ? 'C:/fake/vrf.exe' : null) }, langFileOf: (rel) => path.join(mods, rel), images,
+    run: async (_exe, args) => {
+      for (const n of fs.readdirSync(args[1])) {
+        if (!n.endsWith('.vtex_c')) continue;
+        const data = fs.readFileSync(path.join(args[1], n));
+        if (data.length && data[0] % 5 !== 0) fs.writeFileSync(path.join(args[1], n.replace(/\.vtex_c$/, '.png')), data);
+      }
+    },
+  });
+  const want: unknown[] = [];
+  for (const o of ops) {
+    const a = o.slice(1) as never[];
+    switch (o[0]) {
+      case 'tool': tool = !!a[0]; want.push(null); break;
+      case 'getMany': want.push(await previews.getMany(a[0])); break;
+      case 'hasVideo': want.push(previews.hasVideo(a[0])); break;
+      case 'videoBytes': { const v = previews.videoBytes(a[0]); want.push(v && sha256(v.bytes)); break; }
+      case 'saveFrame': want.push(previews.saveFrame(a[0], a[1] ? Buffer.from(a[1], 'base64') : null)); break;
+      case 'size': want.push(previews.size()); break;
+      case 'clear': previews.clear(); want.push(null); break;
+      case 'ready': want.push(previews.ready()); break;
+    }
+  }
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['mod-preview.script', path.join(tmp, 'rs'), mods, ops]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+  fs.rmSync(tmp, { recursive: true, force: true });
+  ops.forEach((o, k) => assert.deepEqual(got[k], want[k], `${k} ${JSON.stringify(o).slice(0, 120)}`));
+  // 44 of one kind and the real mods' make more than one call's worth; the real textures' header
+  // reads as see-through to the stand-in decoder, so the pictures are the synthetic ones
+  assert.ok(Object.keys(want[5] as object).length >= 20, 'pictures made');
+});
+
+test('the removal in Rust stops on the same command lines and asks and removes as the TypeScript does', { skip }, async (t) => {
+  const args = await import('../src/uninstall-args.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { removeEverything } = await import('../src/remove-everything.ts');
+  const { folderSize } = await import('../src/folder-size.ts');
+  const patcher = await import('../src/patcher.ts');
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-uninstall-'));
+  const argvs = [
+    ['app.exe', '--uninstall'], ['app.exe', '--uninstall', '/S', '/KEEP_APP_DATA', '--updated', '_?=C:\\App'], ['--uninstall', '--UPDATED'],
+    ['--uninstall', '/s'], ['--uninstall', '/keep_app_data'], ['C:\\--updated\\app.exe', '--uninstall'], ['app.exe'], ['--UNINSTALL'], [], ['--uninstall', '/S '],
+  ];
+  // the window's exit codes are written in its source, not exported
+  const src = fs.readFileSync(path.join(root, 'src', 'uninstall-window.ts'), 'utf8');
+  const code = (n: string) => Number(new RegExp(`const ${n} = (\\d+)`).exec(src)?.[1]);
+  const wantArgs = { flags: args.UPDATE_FLAGS, codes: [code('UNINSTALL_CANCELLED'), code('UNINSTALL_WIPE_DATA')], runs: argvs.map((a) => ({ update: args.isUpdateRun(a), uninstall: args.isUninstallRun(a) })) };
+
+  const mods = path.join(root, 'sandbox', 'mods');
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const at = (r: string): Twin => ({ game: path.join(r, 'game'), lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') });
+  const baseRoot = path.join(tmp, 'base');
+  const b0 = at(baseRoot);
+  fs.cpSync(sandboxGame, b0.game, { recursive: true });
+  for (const d of [b0.lib, b0.ud]) fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(path.join(b0.ud, 'settings.json'), JSON.stringify({ dotaGamePath: b0.game, uiLang: 'zh-CN' }));
+  fs.writeFileSync(path.join(b0.ud, 'something.bin'), Buffer.alloc(3333, 1));
+  FileTx.journalDir = b0.journal;
+  try {
+    const inst = new Installer({ userDataDir: b0.ud, getGamePath: () => b0.game, getLangSuffix: () => 'russian' });
+    const lib = new Library(b0.lib);
+    for (const [cat, name, file] of [['heroes', 'IO Purple', 'heroes__IO Purple.zip'], ['terrains', 'Terrain', 'terrains__pak10_dir.vpk']]) {
+      const s = path.join(mods, file);
+      if (!fs.existsSync(s)) { t.skip(`no ${file} (npm run sandbox:seed)`); return; }
+      const files = FileTx.run((tx) => inst.installInto(tx, { categoryId: cat, modName: name, local: s }));
+      lib.add({ name, categoryId: cat, styleLabel: null, fileRef: file, files } as never);
+    }
+    // a cosmetic is not a mod, and one whose file is gone counts no bytes
+    lib.add({ name: 'Look', categoryId: 'cosmetic', styleLabel: null, fileRef: 'c', files: [{ root: 'lang', relPath: lib.list()[0].files[0].relPath }] } as never);
+    lib.add({ name: 'Gone', categoryId: 'heroes', styleLabel: null, fileRef: 'x', files: [{ root: 'lang', relPath: 'pak77_dir.vpk' }] } as never);
+    patcher.apply({ gamePath: b0.game, folder: patcher.FOLDER, backupDir: path.join(b0.ud, 'backups') });
+    new Settings(b0.ud).set('schemaPatch' as never, true as never);
+  } finally { FileTx.journalDir = null; }
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), createHash('sha1').update(fs.readFileSync(f)).digest('hex')]; }).sort());
+
+  const answers: [string, { revert: boolean; mods: boolean } | null][] = [['ask', null], ['all', { revert: true, mods: true }], ['none', { revert: false, mods: false }], ['mods', { revert: false, mods: true }]];
+  const calls: unknown[] = [['uninstall.args', argvs]];
+  const want: { name: string; a: Twin; b: Twin; out: Record<string, unknown> }[] = [];
+  for (const [name, answer] of answers) {
+    const [a, b] = ['ts', 'rs'].map((side) => { const r = path.join(tmp, `${name}-${side}`); fs.cpSync(baseRoot, r, { recursive: true }); return at(r); });
+    for (const x of [a, b]) {
+      const sf = path.join(x.ud, 'settings.json');
+      fs.writeFileSync(sf, JSON.stringify({ ...JSON.parse(fs.readFileSync(sf, 'utf8')), dotaGamePath: x.game }));
+    }
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      const st = new Settings(a.ud);
+      // the plan as src/uninstall-window.ts makes it, which needs Electron only for the folder's name
+      const list = lib.list().filter((r) => r.categoryId !== 'cosmetic');
+      let modBytes = 0;
+      for (const rec of list) { try { modBytes += inst.installedSize(rec); } catch { /* gone */ } }
+      const lang = st.get('uiLang' as never) as unknown;
+      const plan = {
+        mods: list.length, modBytes, patched: !!st.get('schemaPatch' as never), gamePath: st.get('dotaGamePath' as never) || null,
+        dataBytes: folderSize(a.ud), lang: lang === 'ru' ? 'ru' : lang === 'zh-CN' ? 'zh-CN' : 'en',
+      };
+      const out: Record<string, unknown> = { plan: JSON.parse(JSON.stringify({ ...plan, gamePath: plan.gamePath && 'GAME' })) };
+      if (answer) {
+        const svc = createSchemaService({ settings: st as never, library: lib, installer: inst as never, userDataDir: a.ud, pak: inst as never, modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+        const { errors } = removeEverything({ settings: st as never, library: lib as never, installer: inst as never, schemaService: svc as never }, answer);
+        Object.assign(out, { errors, log: [`uninstall: revert=${answer.revert} mods=${answer.mods} errors=${errors.length}`] });
+      }
+      want.push({ name, a, b, out });
+    } finally { FileTx.journalDir = null; }
+    calls.push(['uninstall.flow', b.game, 'russian', b.journal, b.lib, b.ud, answer]);
+  }
+  const file = path.join(tmp, 'calls.json');
+  fs.writeFileSync(file, JSON.stringify(calls));
+  const got = JSON.parse(execFileSync(cli, ['call', file], { encoding: 'utf8' })) as { ok?: Record<string, unknown>; error?: string }[];
+  assert.deepEqual(got[0].ok, wantArgs, 'the command lines');
+  const libOf = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const settingsOf = (x: Twin) => { const s = JSON.parse(fs.readFileSync(path.join(x.ud, 'settings.json'), 'utf8')); delete s.dotaGamePath; return s; };
+  for (const [k, w] of want.entries()) {
+    const g = got[k + 1];
+    assert.ok(g.ok, g.error);
+    const plan = g.ok.plan as Record<string, unknown>;
+    assert.equal(plan.gamePath, w.b.game, `${w.name}: the game path`);
+    // the two copies sit in different folders, so the game path is compared above, the rest here
+    assert.deepEqual({ ...g.ok, plan: { ...plan, gamePath: 'GAME' } }, w.out, w.name);
+    assert.deepEqual(tree(w.b.game), tree(w.a.game), `${w.name}: the game folder`);
+    assert.deepEqual(libOf(w.b), libOf(w.a), `${w.name}: the library`);
+    assert.deepEqual(settingsOf(w.b), settingsOf(w.a), `${w.name}: the settings`);
+  }
+  const asked = want[0].out.plan as { mods: number; modBytes: number; patched: boolean; lang: string };
+  assert.equal(asked.mods, 3, 'the cosmetic is not counted');
+  assert.ok(asked.modBytes > 0 && asked.patched && asked.lang === 'zh-CN');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the update driver in Rust aims, falls back and tells the window as the TypeScript one does', { skip }, async () => {
+  const { createUpdater, mirrorFor, EVERY } = await import('../src/updater.ts');
+  const ops: unknown[][] = [
+    ['available', '9.9.9'], ['error', 'before start'], ['start'], ['available', '2.7.0'], ['downloaded', '2.7.0'], ['error', 'getaddrinfo ENOTFOUND github.com'],
+    ['error', 'and again'], ['round'], ['channel', 'beta'], ['recheck'], ['error', 'x'.repeat(700)], ['round'], ['feedFails', true], ['round'],
+    ['error', 'down'], ['feedFails', false], ['channel', 'latest'], ['recheck'], ['error', 'Ошибка сети 🙃'], ['available', '2.8.0'],
+  ];
+  const want: unknown[] = [];
+  for (const portable of [false, true]) {
+    let said: unknown[] = []; let sent: unknown[] = []; let log: string[] = [];
+    let fails = false; let channel = 'latest';
+    const on = new Map<string, (a: unknown) => void>();
+    const fake = {
+      set channel(v: string) { said.push(['channel', v]); },
+      set allowPrerelease(v: boolean) { said.push(['allowPrerelease', v]); },
+      set autoDownload(v: boolean) { said.push(['autoDownload', v]); },
+      setFeedURL(f: Record<string, unknown>) { said.push(['feed', f]); if (fails) throw new Error('feed refused'); },
+      checkForUpdates() { said.push(['check']); },
+      on(evt: string, fn: (a: unknown) => void) { on.set(evt, fn); },
+    };
+    let tick = () => {};
+    const u = createUpdater({ autoUpdater: fake as never, isPortable: portable, channel: () => channel, send: (n) => sent.push(n), log: (m) => log.push(m), every: (_ms, fn) => { tick = fn; } });
+    const out = [];
+    for (const op of ops) {
+      let answer: unknown = null;
+      switch (op[0]) {
+        case 'start': u.start(); break;
+        case 'round': tick(); break;
+        case 'recheck': answer = u.recheck(); break;
+        case 'channel': channel = op[1] as string; break;
+        case 'feedFails': fails = !!op[1]; break;
+        case 'available': case 'downloaded': on.get(`update-${op[0]}`)?.({ version: op[1] }); break;
+        case 'error': on.get('error')?.(new Error(op[1] as string)); break;
+      }
+      out.push({ answer, said, sent, log, lastError: u.lastError(), portableVersion: u.portableVersion(), channel: u.channel() });
+      said = []; sent = []; log = [];
+    }
+    want.push({ mirror: mirrorFor(), every: EVERY, ops: out });
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-updater-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['updater.script', false, ops], ['updater.script', true, ops]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8' })) as { ok: { ops: unknown[] } }[];
+  fs.rmSync(tmp, { recursive: true, force: true });
+  for (const [k, w] of want.entries()) {
+    const g = got[k].ok;
+    (w as { ops: unknown[] }).ops.forEach((o, i) => assert.deepEqual(g.ops[i], o, `${k ? 'portable' : 'installed'} ${i} ${JSON.stringify(ops[i]).slice(0, 60)}`));
+    assert.deepEqual(g, w);
+  }
+});
+
+test('the portable update in Rust reads its manifest and fetches its build as the TypeScript does', { skip }, async (t) => {
+  const pu = await import('../src/portable-update.ts');
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { promisify } = await import('node:util');
+  const { execFile } = await import('node:child_process');
+  const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
+  const good = `a${'b'.repeat(63)}`;
+  const texts = [
+    `version: 2.7.0\nfile: Dota-2-Mod-Manager-Portable.exe\nsize: 120\nsha256: ${good}\n`,
+    `file: "x.exe"\r\nsize: '7'\r\nsha256: ${good.toUpperCase()}\r\n`, `file:\n  x.exe\nsize:   \nsize: 3\nsha256: ${good}`,
+    `file:   \nfile: x.exe\nsize: 3\nsha256: ${good}`, `file:\nfile: y.exe\nsize: 0x10\nsha256: ${good}`, `file: ../x.exe\nsize: 1\nsha256: ${good}`,
+    `file: x.EXE\nsize: 1\nsha256: ${good}`, `file: .exe\nsize: 1\nsha256: ${good}`, `file: x.exe\nsize: -1\nsha256: ${good}`, `file: x.exe\nsize: 1e3\nsha256: ${good}`,
+    `file: x.exe\nsize: Infinity\nsha256: ${good}`, `file: x.exe\nsize: 1\nsha256: ${good}0`, `file: x.exe\nsize: 1\nsha256: ${'g'.repeat(64)}`,
+    ` file: x.exe\nsize: 1\nsha256: ${good}`, `files: x.exe\nfile: z.exe\nsize: 2\nsha256: ${good}\nversion: '3.0.0"`, '', `file: ''x.exe''\nsize: 1\nsha256: ${good}`,
+  ];
+  const parsed = texts.map((x) => { try { return { ok: pu.parseManifest(x) }; } catch (e) { return { error: (e as Error).message }; } });
+  const urlArgs = ['2.7.0', 'a.exe', '1.0.0', pu.MANIFEST];
+  const urls = [pu.releaseUrl('2.7.0', 'a.exe'), pu.releaseUrl('1.0.0', pu.MANIFEST)];
+
+  // two publishers on one server, as test/portable-mirror.test.ts has them; which one is down,
+  // stale or lying is in the address, so both sides ask the same server for the same things
+  const BUILD = 'the new build, all 101 MB of it';
+  const manifest = (version: string, body: string) => `version: ${version}\nfile: Dota-2-Mod-Manager-Portable.exe\nsize: ${Buffer.byteLength(body)}\nsha256: ${sha(body)}\n`;
+  const asked: string[] = [];
+  const server = http.createServer((req, res) => {
+    const url = req.url || '';
+    asked.push(url);
+    const [, who, how, , file] = url.split('/');
+    const send = (code: number, body: string) => { res.writeHead(code, { 'content-length': Buffer.byteLength(body) }); res.end(body); };
+    if (how === 'down') return send(503, 'no');
+    if (file === 'portable.yml') return send(200, how === 'stale' ? manifest('2.6.4', 'old') : how === 'bad' ? 'file: nope' : manifest('2.7.0', BUILD));
+    send(200, how === 'lies' ? 'something else entirely' : BUILD);
+    void who;
+  });
+  server.listen(0, '127.0.0.1');
+  await new Promise((r) => server.on('listening', r));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+  const src = (name: string, how: string, trustedOnly = false) => ({ name, manifest: `${base}/${name}/${how}/`, asset: `${base}/${name}/${how}/`, trustedOnly });
+  const cases: [string, string | null, ReturnType<typeof src>[]][] = [
+    ['2.7.0', 'x', [src('github', 'ok', true), src('mirror', 'ok')]], ['2.7.0', 'x', [src('github', 'down', true), src('mirror', 'ok')]],
+    ['2.7.0', 'x', [src('github', 'down', true), src('mirror', 'stale')]], ['2.7.0', 'x', [src('github', 'down', true), src('mirror', 'lies')]],
+    ['2.7.0', 'x', [src('github', 'bad', true)]], ['2.7.0', 'x', []], ['2.7', 'x', [src('github', 'ok')]], ['2.7.0', null, [src('github', 'ok')]],
+    ['2.7.0', 'same', [src('github', 'ok')]],
+  ];
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-portable-'));
+  const run = async (side: string) => {
+    const out = [];
+    for (const [k, [version, dir, sources]] of cases.entries()) {
+      const d = dir && path.join(tmp, side, dir === 'same' ? 'same' : String(k));
+      if (d) fs.mkdirSync(d, { recursive: true });
+      if (dir === 'same') fs.writeFileSync(path.join(d!, 'Dota-2-Mod-Manager-Portable-2.7.0.exe'), BUILD);
+      asked.length = 0;
+      let got: Record<string, unknown>;
+      if (side === 'ts') {
+        const s = sources.map((x) => ({ name: x.name, manifest: (v: string) => `${x.manifest}${v}/portable.yml`, asset: (v: string, f: string) => `${x.asset}${v}/${f}`, trustedOnly: x.trustedOnly }));
+        try { got = { ok: await pu.fetchBeside(version, { dir: d, sources: s }) }; } catch (e) { got = { error: (e as Error).message }; }
+      } else {
+        const file = path.join(tmp, 'calls.json');
+        fs.writeFileSync(file, JSON.stringify([['portable-update.fetchBeside', version, d, sources]]));
+        const r = JSON.parse((await promisify(execFile)(cli, ['call', file], { encoding: 'utf8' })).stdout)[0].ok as Record<string, unknown>;
+        got = 'ok' in r ? { ok: r.ok } : { error: r.error };
+      }
+      const ok = got.ok as { path: string; bytes: number } | undefined;
+      out.push({
+        ok: ok && { ...ok, path: path.relative(path.join(tmp, side), ok.path), body: fs.readFileSync(ok.path, 'utf8') },
+        // the network's own words for a failure differ; what was refused and why is ours
+        error: got.error === undefined ? undefined : /has 2\.6\.4|not a portable|bad version|bad file name/.test(String(got.error)) ? got.error : 'failed',
+        asked: [...asked],
+        files: d ? fs.readdirSync(d).filter((n) => !n.endsWith('.part') && !n.endsWith('.origin')).sort() : null,
+      });
+    }
+    return out;
+  };
+  const want = await run('ts');
+  const file = path.join(tmp, 'calls.json');
+  fs.writeFileSync(file, JSON.stringify([['portable-update.parseManifest', texts], ['portable-update.urls', urlArgs]]));
+  const got = JSON.parse(execFileSync(cli, ['call', file], { encoding: 'utf8' })) as { ok: unknown }[];
+  texts.forEach((x, k) => assert.deepEqual((got[0].ok as unknown[])[k], parsed[k], JSON.stringify(x)));
+  assert.deepEqual(got[1].ok, urls);
+  const gotFetch = await run('rs');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  cases.forEach((c, k) => assert.deepEqual(gotFetch[k], want[k], `${k} ${JSON.stringify(c.slice(0, 2))}`));
+  assert.equal((want[1] as { ok: { body: string } }).ok.body, BUILD, 'the mirror carried it when GitHub was down');
 });

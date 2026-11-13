@@ -1033,6 +1033,8 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             json!({ "text": text, "gone": gone })
         }
         "ability-sounds.wavProblem" => json!(ability_sounds::wav_problem(&b(args, 0)?)),
+        // (n): String(n)
+        "js.number" => json!(crate::js::number(n(args, 0))),
         "js.toFixed" => json!(crate::js::to_fixed(n(args, 0), n(args, 1) as usize)),
         "hero-showcase.heroStage" => {
             let keys: Vec<String> = serde_json::from_value(args.get(2).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
@@ -3098,6 +3100,11 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             });
             json!({ "answers": answers, "log": diag })
         }
+        // (material as readLoadoutMaterial gives it)
+        "loadout-material.loadoutDescriptor" => {
+            let m: crate::loadout_material::NativeMaterial = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            crate::loadout_material::loadout_descriptor(&m)
+        }
         "loadout.material" => json!(crate::loadout_material::read_loadout_material(Some(&b(args, 0)?))),
         "recolor-layers.abilities" => json!(crate::recolor_layers::hero_abilities(&s(args, 0))),
         "recolor-layers.modelFolder" => json!(crate::recolor_layers::hero_model_folder(&s(args, 0))),
@@ -4238,6 +4245,828 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             match r {
                 Ok(v) => json!({ "ok": v, "url": url }),
                 Err(e) => json!({ "error": e, "url": url }),
+            }
+        }
+        // (file): the GLB's JSON, and its binary chunk's length and sha256
+        "glb-embed.readGlb" => {
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            let (json, bin) = crate::glb_embed::read_glb(&bytes)?;
+            use sha2::Digest;
+            json!({ "json": json, "bin": bin.len(), "sha": format!("{:x}", sha2::Sha256::digest(&bin)) })
+        }
+        // (json, bin base64): the GLB, base64
+        "glb-embed.writeGlb" => {
+            use base64::Engine;
+            let bin = crate::js::base64_decode(&s(args, 1));
+            json!(base64::engine::general_purpose::STANDARD.encode(crate::glb_embed::write_glb(args.first().unwrap_or(&Value::Null), &bin)))
+        }
+        // (file): the sha256 of the GLB with its pictures inside
+        "glb-embed.embedGlb" => {
+            use sha2::Digest;
+            json!(format!("{:x}", sha2::Sha256::digest(crate::glb_embed::embed_glb(std::path::Path::new(&s(args, 0)))?)))
+        }
+        // (file, side | null, max)
+        "model-snapshot-fallback.snapshotFromModel" => {
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            let side = args.get(1).and_then(Value::as_str).map(String::from);
+            crate::model_snapshot_fallback::snapshot_from_model(&bytes, side.as_deref(), crate::js::to_number(args.get(2).unwrap_or(&Value::Null)))?
+        }
+        // (file, style): the sha256 of the GLB the preview draws
+        "model-style-meshes.selectStyleMeshes" => {
+            use sha2::Digest;
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            let out = crate::model_style_meshes::select_style_meshes(&bytes, crate::js::to_number(args.get(1).unwrap_or(&Value::Null)))?;
+            json!(format!("{:x}", sha2::Sha256::digest(out)))
+        }
+        "model-style-meshes.hidePreviewOnlyMeshes" => {
+            use sha2::Digest;
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            json!(format!("{:x}", sha2::Sha256::digest(crate::model_style_meshes::hide_preview_only_meshes(&bytes)?)))
+        }
+        "model-style-meshes.styleFamily" => json!(crate::model_style_meshes::style_family(&s(args, 0))),
+        // (parts): the parts with their styles shared
+        "model-style-meshes.syncArcanaStyles" => {
+            let mut parts = args.first().and_then(Value::as_array).cloned().unwrap_or_default();
+            crate::model_style_meshes::sync_arcana_styles(&mut parts);
+            json!(parts)
+        }
+        // (model [{path, config}], selected, style): the roots as [path, config] pairs
+        "hero-particle-styles.styleParticleRoots" => {
+            let model: Vec<(String, String)> = args
+                .first()
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|m| (s(&[m.get("path").cloned().unwrap_or(Value::Null)], 0), s(&[m.get("config").cloned().unwrap_or(Value::Null)], 0)))
+                .collect();
+            let roots = crate::hero_particle_styles::style_particle_roots(&model, &strings(args, 1)?, crate::js::to_number(args.get(2).unwrap_or(&Value::Null)));
+            json!(roots.into_iter().map(|(k, v)| json!([k, v])).collect::<Vec<_>>())
+        }
+        "hero-particle-styles.isStockTerrorbladeBlade" => json!(crate::hero_particle_styles::is_stock_terrorblade_blade(&s(args, 0))),
+        "hero-particle-styles.replaceTerrorbladeBladeFx" => {
+            json!(crate::hero_particle_styles::replace_terrorblade_blade_fx(&s(args, 0), &s(args, 1), &strings(args, 2)?))
+        }
+        // (def, [[from, to]...])
+        "hero-particle-styles.bladeSnapshots" => {
+            let map: indexmap::IndexMap<String, String> = args
+                .get(1)
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|p| Some((p.get(0)?.as_str()?.to_string(), p.get(1)?.as_str()?.to_string())))
+                .collect();
+            crate::hero_particle_styles::blade_snapshots(args.first().unwrap_or(&Value::Null), &map)?
+        }
+        // (file | null)
+        "loadout-sheet.loadoutSheet" => {
+            let bytes = match args.first() {
+                Some(Value::String(f)) => Some(std::fs::read(f).map_err(|e| e.to_string())?),
+                _ => None,
+            };
+            crate::loadout_sheet::loadout_sheet(bytes.as_deref())
+        }
+        // (file | null)
+        "model-loadout.modelSequences" => {
+            let bytes = match args.first() {
+                Some(Value::String(f)) => Some(std::fs::read(f).map_err(|e| e.to_string())?),
+                _ => None,
+            };
+            json!(crate::model_loadout::model_sequences(bytes.as_deref()))
+        }
+        // (text): sorted, since a Set has no order to compare
+        "model-loadout.itemModifiers" => {
+            let mut v: Vec<String> = crate::model_loadout::item_modifiers(&b(args, 0)?.iter().map(|&c| c as char).collect::<String>()).into_iter().collect();
+            v.sort();
+            json!(v)
+        }
+        // (seqs, modifiers, ofItems)
+        "model-loadout.motionList" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let of: std::collections::HashSet<String> = strings(args, 2)?.into_iter().collect();
+            json!(crate::model_loadout::motion_list(&seqs, &strings(args, 1)?, &of))
+        }
+        "model-loadout.idleSequence" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::model_loadout::idle_sequence(&seqs))
+        }
+        "model-loadout.loadoutSequence" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::model_loadout::loadout_sequence(&seqs, &strings(args, 1)?))
+        }
+        "model-loadout.wearableClip" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::model_loadout::wearable_clip(&seqs))
+        }
+        "model-loadout.itemActivities" => json!(crate::model_loadout::item_activities(&b(args, 0)?.iter().map(|&c| c as char).collect::<String>())),
+        // (items_game, model, itemId)
+        "razor-crest-preview.goldenCrestModel" => {
+            let text = b(args, 0)?;
+            json!(crate::razor_crest_preview::golden_crest_model(&text, &s(args, 1), &s(args, 2))?)
+        }
+        "razor-crest-preview.crestActivities" => {
+            let text = b(args, 0)?;
+            json!(crate::razor_crest_preview::crest_activities(&text, &s(args, 1), &s(args, 2))?)
+        }
+        // (normal file, golden file): the sha256 of the joined GLB, or null
+        "razor-crest-preview.normalCrestOnGoldenRig" => {
+            use sha2::Digest;
+            let normal = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            json!(crate::razor_crest_preview::normal_crest_on_golden_rig(&normal, std::path::Path::new(&s(args, 1))).map(|b| format!("{:x}", sha2::Sha256::digest(b))))
+        }
+        "razor-crest-preview.mergeCrestAttachments" => {
+            let list = |i: usize| args.get(i).and_then(Value::as_array).cloned().unwrap_or_default();
+            json!(crate::razor_crest_preview::merge_crest_attachments(&list(0), &list(1)))
+        }
+        "model-glb.modelFile" => json!(crate::model_glb::model_file(&s(args, 0))),
+        "model-glb.gameInfo" => json!(crate::model_glb::game_info(&s(args, 0))),
+        // (pak, out, files, clips 'all' | [..], materials)
+        "model-glb.exportArgs" => {
+            let clips = match args.get(3) {
+                Some(Value::String(x)) if x == "all" => crate::model_glb::Clips::All,
+                _ => crate::model_glb::Clips::Some(strings(args, 3).unwrap_or_default()),
+            };
+            json!(crate::model_glb::export_args(&s(args, 0), &s(args, 1), &strings(args, 2)?, &clips, crate::js::truthy(args.get(4).unwrap_or(&Value::Null))))
+        }
+        // (png base64): its size and the sha256 of its RGBA, or null
+        "png-strip.decodePng" => {
+            use sha2::Digest;
+            let png = crate::js::base64_decode(&s(args, 0));
+            json!(crate::png_strip::decode_png(&png).map(|i| json!([i.width, i.height, format!("{:x}", sha2::Sha256::digest(&i.rgba))])))
+        }
+        // (userData, game | null, vrf | null, face png base64, ops): a stand-in toolchain that
+        // writes what each export would (model-glb.script in test/rust-calls.test.ts says how)
+        "model-glb.script" => {
+            use sha2::Digest;
+            let ud = std::path::PathBuf::from(s(args, 0));
+            let game = args.get(1).and_then(Value::as_str).map(std::path::PathBuf::from);
+            let vrf = args.get(2).and_then(Value::as_str).map(std::path::PathBuf::from);
+            let face = crate::js::base64_decode(&s(args, 3));
+            let ops = args.get(4).and_then(Value::as_array).cloned().unwrap_or_default();
+            let rel = {
+                let ud = ud.to_string_lossy().replace('\\', "/");
+                let game = game.as_ref().map(|g| g.to_string_lossy().replace('\\', "/"));
+                move |p: &str| {
+                    let p = p.replace('\\', "/").replace(&ud, "<ud>");
+                    match &game {
+                        Some(g) => p.replace(g.as_str(), "<game>"),
+                        None => p,
+                    }
+                }
+            };
+            let runs = std::sync::Arc::new(Mutex::new(Vec::<Value>::new()));
+            let logs = std::sync::Arc::new(Mutex::new(Vec::<String>::new()));
+            let (r1, rel1) = (runs.clone(), rel.clone());
+            let run: crate::model_glb::Run = Box::new(move |exe, a| {
+                r1.lock().unwrap().push(json!([rel1(&exe.to_string_lossy()), a.iter().map(|x| rel1(x)).collect::<Vec<_>>()]));
+                let at = |k: &str| a.iter().position(|x| x == k).and_then(|i| a.get(i + 1)).cloned();
+                let out = at("-o").unwrap_or_default();
+                let list: Vec<String> = at("-f").map(|f| f.split(',').map(String::from).collect()).unwrap_or_default();
+                if list.iter().any(|f| f.contains("fail")) || (list.is_empty() && out.contains("fail")) {
+                    return Err("fake failure".into());
+                }
+                let write = |p: &std::path::Path, b: &[u8]| {
+                    if let Some(d) = p.parent() {
+                        let _ = std::fs::create_dir_all(d);
+                    }
+                    let _ = std::fs::write(p, b);
+                };
+                let out_p = std::path::PathBuf::from(&out);
+                if a.iter().any(|x| x == "--gltf_export_format") {
+                    if list.len() <= 1 && out.ends_with(".glb") {
+                        let name = list.first().cloned().unwrap_or_default();
+                        if name.contains("physics") {
+                            write(&crate::model_glb::glb_at(&out_p, &name), format!("glb {name}").as_bytes());
+                        } else if !name.contains("absent") {
+                            write(&out_p, format!("glb {name}").as_bytes());
+                        }
+                    } else {
+                        for f in list.iter().filter(|f| !f.contains("absent")) {
+                            write(&crate::model_glb::glb_at(&out_p, f), format!("glb {f}").as_bytes());
+                        }
+                    }
+                } else {
+                    for t in &list {
+                        let tt = t.strip_suffix("_c").unwrap_or(t);
+                        let base = format!("{}/{}", out, tt.strip_suffix(".vtex").unwrap_or(tt));
+                        if tt.contains("absent") {
+                            continue;
+                        }
+                        let p = |suffix: &str| std::path::PathBuf::from(format!("{base}{suffix}"));
+                        if tt.contains("sheet") {
+                            write(&p("_seq0_0.png"), b"a");
+                            write(&p("_seq0_1.png"), b"bbb");
+                            write(&p("_seq3.png"), b"cc");
+                            write(&p("_SEQ10_2.png"), b"dddd");
+                        } else if tt.contains("badcube") {
+                            for f in crate::png_strip::CUBE_FACES {
+                                write(&p(&format!("_{f}.png")), b"not a png");
+                            }
+                        } else if tt.contains("cube") {
+                            for f in crate::png_strip::CUBE_FACES {
+                                write(&p(&format!("_{f}.png")), &face);
+                            }
+                        } else {
+                            write(&p(".png"), format!("png {tt}").as_bytes());
+                        }
+                    }
+                }
+                Ok(())
+            });
+            let l1 = logs.clone();
+            let (g1, v1) = (game.clone(), vrf.clone());
+            let mg = crate::model_glb::ModelGlb::new(
+                &ud,
+                Box::new(move || v1.clone()),
+                Box::new(move || g1.clone()),
+                run,
+                Box::new(move |m| l1.lock().unwrap().push(m.to_string())),
+            );
+            let clips_of = |v: Option<&Value>| match v {
+                Some(Value::String(x)) if x == "all" => crate::model_glb::Clips::All,
+                Some(Value::Array(a)) => crate::model_glb::Clips::Some(a.iter().map(crate::js::string).collect()),
+                _ => crate::model_glb::Clips::Some(vec![]),
+            };
+            let path_of = |p: Option<std::path::PathBuf>| p.map(|p| rel(&p.to_string_lossy()));
+            let digest = |b: &[u8]| match crate::png_strip::decode_png(b) {
+                Some(i) => format!("png {} {} {:x}", i.width, i.height, sha2::Sha256::digest(&i.rgba)),
+                None => format!("{:x}", sha2::Sha256::digest(b)),
+            };
+            let mut results = Vec::new();
+            for op in &ops {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let list = |i: usize| o.get(i).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect::<Vec<_>>()).unwrap_or_default();
+                results.push(match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "glbs" => {
+                        let r = mg.glbs(&list(1), &clips_of(o.get(2)), o.get(3).is_some_and(crate::js::truthy));
+                        json!(r.into_iter().map(|(k, v)| (k, json!(path_of(v)))).collect::<serde_json::Map<_, _>>())
+                    }
+                    "skinned" => {
+                        let bytes = o.get(3).and_then(Value::as_str).map(|f| std::fs::read(f).unwrap_or_default());
+                        let skin = crate::js::to_number(o.get(2).unwrap_or(&Value::Null)) as usize;
+                        json!(path_of(mg.skinned(&crate::js::string(o.get(1).unwrap_or(&Value::Null)), skin, bytes.as_deref(), &list(4))))
+                    }
+                    "sprites" => {
+                        let r = mg.sprites(&list(1));
+                        json!(r.into_iter().map(|(k, v)| (k, json!(v.map(|b| digest(&b))))).collect::<serde_json::Map<_, _>>())
+                    }
+                    "clear" => {
+                        mg.clear();
+                        Value::Null
+                    }
+                    "list" => {
+                        let mut files = Vec::new();
+                        let mut stack = vec![ud.join("models3d")];
+                        while let Some(d) = stack.pop() {
+                            for e in std::fs::read_dir(&d).into_iter().flatten().flatten() {
+                                let p = e.path();
+                                if p.is_dir() {
+                                    stack.push(p);
+                                } else {
+                                    files.push(rel(&p.to_string_lossy()));
+                                }
+                            }
+                        }
+                        files.sort();
+                        json!(files)
+                    }
+                    other => json!({ "error": format!("no op {other}") }),
+                });
+            }
+            let runs = runs.lock().unwrap().clone();
+            let logs = logs.lock().unwrap().clone();
+            json!({ "results": results, "runs": runs, "log": logs })
+        }
+        // (pak, {model: glb file}, sprites?, ops): a stand-in exporter that hands out these GLBs and
+        // `png <texture>` for each picture but those named "absent"; GLBs come back as sha256
+        "loadout-resources.script" => {
+            use sha2::Digest;
+            struct Fake {
+                glbs: indexmap::IndexMap<String, String>,
+                sprites: bool,
+                asked: Mutex<Vec<Value>>,
+            }
+            impl crate::loadout_resources::Exporter for Fake {
+                fn glbs(&self, models: &[String], clips: &crate::model_glb::Clips, materials: bool) -> indexmap::IndexMap<String, Option<std::path::PathBuf>> {
+                    let all = matches!(clips, crate::model_glb::Clips::All);
+                    self.asked.lock().unwrap().push(json!(["glbs", models, all, materials]));
+                    models.iter().map(|m| (m.clone(), self.glbs.get(m).map(std::path::PathBuf::from))).collect()
+                }
+                fn sprites(&self, textures: &[String]) -> Option<indexmap::IndexMap<String, Option<Vec<u8>>>> {
+                    if !self.sprites {
+                        return None;
+                    }
+                    self.asked.lock().unwrap().push(json!(["sprites", textures]));
+                    Some(textures.iter().map(|t| (t.clone(), (!t.contains("absent")).then(|| format!("png {t}").into_bytes()))).collect())
+                }
+            }
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let fake = Fake {
+                glbs: args.get(1).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default(),
+                sprites: args.get(2).is_some_and(crate::js::truthy),
+                asked: Mutex::new(Vec::new()),
+            };
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let defs = |v: Option<&Value>| v.and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut results = Vec::new();
+            for op in args.get(3).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let r: Result<Value, String> = match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "resourcePaths" => Ok(json!(crate::loadout_resources::resource_paths(o.get(1).unwrap_or(&Value::Null)))),
+                    "drawnModels" => Ok(json!(crate::loadout_resources::drawn_models(&defs(o.get(1))).into_iter().collect::<Vec<_>>())),
+                    "resources" => {
+                        let mut r = crate::loadout_resources::loadout_resources(&defs(o.get(1)), &read, &fake);
+                        if let Some(models) = r.get_mut("models").and_then(Value::as_object_mut) {
+                            for v in models.values_mut() {
+                                let b = crate::js::base64_decode(v["data"].as_str().unwrap_or(""));
+                                *v = json!(sha(&b));
+                            }
+                        }
+                        Ok(r)
+                    }
+                    "model" => crate::loadout_resources::loadout_model(std::path::Path::new(&crate::js::string(&o[1])), &crate::js::string(&o[2]), &read, &fake).map(|b| json!(sha(&b))),
+                    "models" => {
+                        let wanted: Vec<crate::loadout_resources::Wanted> = defs(o.get(1))
+                            .iter()
+                            .map(|w| crate::loadout_resources::Wanted {
+                                file: std::path::PathBuf::from(crate::js::string(&w["file"])),
+                                model: crate::js::string(&w["model"]),
+                                skin: crate::js::to_number(w.get("skin").unwrap_or(&Value::Null)).max(0.0) as usize,
+                            })
+                            .collect();
+                        let mut lost = Vec::new();
+                        let out = crate::loadout_resources::loadout_models(&wanted, &read, &fake, Some(&mut |m: &str| lost.push(m.to_string())))?;
+                        Ok(json!({ "out": out.iter().map(|b| b.as_ref().map(|b| sha(b))).collect::<Vec<_>>(), "lost": lost }))
+                    }
+                    "texturePaths" => {
+                        let models: Vec<String> = defs(o.get(1)).iter().map(crate::js::string).collect();
+                        Ok(json!(crate::loadout_resources::loadout_texture_paths(&models, &read)))
+                    }
+                    other => Err(format!("no op {other}")),
+                };
+                results.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            let asked = fake.asked.lock().unwrap().clone();
+            json!({ "results": results, "asked": asked })
+        }
+        // (paths, kind)
+        "mod-preview-pick.pickCandidate" => {
+            let kind = crate::mod_preview_pick::Kind::parse(&s(args, 1)).ok_or("no such kind")?;
+            let paths = strings(args, 0)?;
+            json!(crate::mod_preview_pick::pick_candidate(paths.iter().map(String::as_str), kind))
+        }
+        // (width, height, pixels base64)
+        "mod-preview-pick.worthShowing" => {
+            let px = crate::js::base64_decode(&s(args, 2));
+            json!(crate::mod_preview_pick::worth_showing(n(args, 0).max(0.0) as usize, n(args, 1).max(0.0) as usize, &px))
+        }
+        // (pak, items_game, ops): the hero preview's picks, against that pak's files; maps come and go
+        // as [key, value] entries and a particle read as the sha256 of what it gave
+        "hero-preview-picks.script" => {
+            use crate::hero_preview_picks as h;
+            use sha2::Digest;
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let text = b(args, 1)?;
+            let has = |p: &str| ix.has(p);
+            let map = |v: Option<&Value>| -> Option<indexmap::IndexMap<String, String>> {
+                v.and_then(Value::as_array).map(|a| {
+                    a.iter().filter_map(Value::as_array).map(|e| (crate::js::string(&e[0]), crate::js::string(&e[1]))).collect()
+                })
+            };
+            let entries = |m: &indexmap::IndexMap<String, String>| json!(m.iter().map(|(k, v)| json!([k, v])).collect::<Vec<_>>());
+            let opt = |v: Option<&Value>| v.filter(|x| !x.is_null()).map(crate::js::string);
+            let list = |v: Option<&Value>| v.and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut results = Vec::new();
+            for op in list(args.get(2)) {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let st = |i: usize| o.get(i).map(crate::js::string).unwrap_or_default();
+                let r: Result<Value, String> = match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "itemModel" => h::item_model(&text, &st(1), opt(o.get(2)).as_deref(), &st(3), opt(o.get(4)).as_deref()),
+                    "bodySkinFor" => h::body_skin_for(st(1).as_bytes(), &st(2), &st(3), o.get(4).is_some_and(crate::js::truthy))
+                        .map(|x| x.map_or(Value::Null, crate::js::json_number)),
+                    "entityModel" => Ok(json!(h::entity_model(&st(1), &st(2)))),
+                    "wornExtras" => Ok(h::worn_extras(&st(1))),
+                    "monkeyKingCrown" => h::monkey_king_crown(&text, &st(1), &list(o.get(2))),
+                    "particleReplacements" => h::preview_particle_replacements(st(1).as_bytes(), o.get(2).is_some_and(crate::js::truthy)).map(|m| entries(&m)),
+                    "bladeReplacements" => {
+                        let v = opt(o.get(2));
+                        h::preview_blade_replacements(map(o.get(1)).as_ref(), v.as_deref().map(str::as_bytes)).map(|m| m.map_or(Value::Null, |m| entries(&m)))
+                    }
+                    "particleRead" => {
+                        let read = |p: &str| ix.read(p).ok().flatten();
+                        let reps = map(o.get(1)).unwrap_or_default();
+                        let got = h::preview_particle_read(&read, &reps, map(o.get(2)).as_ref(), o.get(3).is_some_and(crate::js::truthy), &st(4));
+                        Ok(json!(got.map(|b| format!("{:x}", sha2::Sha256::digest(&b)))))
+                    }
+                    "stockHead" => h::preview_stock_head(&text, &st(1), &st(2), &has, o.get(3).is_some_and(crate::js::truthy)).map(|x| json!(x)),
+                    "equipment" => h::preview_equipment(&text, &list(o.get(1)), &list(o.get(2))).map(|x| json!(x)),
+                    "heroParticles" => {
+                        let script = opt(o.get(1)).and_then(|p| ix.read(&p).ok().flatten());
+                        h::preview_hero_particles(script.as_deref(), &st(2), o.get(3).is_some_and(crate::js::truthy), &has).map(|x| json!(x))
+                    }
+                    "crestParticles" => {
+                        let roots: Vec<String> = list(o.get(1)).iter().map(crate::js::string).collect();
+                        Ok(json!(h::preview_crest_particles(&roots, &st(2), &st(3), ix.paths())))
+                    }
+                    "personaSlots" => h::persona_preview_slots(&text, &st(1), &list(o.get(2)), &list(o.get(3))).map(|x| json!(x)),
+                    other => Err(format!("no op {other}")),
+                };
+                results.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!(results)
+        }
+        // (pak, plans, placed): each plan's preview particles from that pak's files, and forParts of
+        // the first with `placed`; maps come as [key, value] entries, bindings as {path: effect}
+        "hero-preview-fx.script" => {
+            use crate::hero_preview_fx as f;
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let map = |v: Option<&Value>| -> Option<indexmap::IndexMap<String, String>> {
+                v.and_then(Value::as_array).map(|a| {
+                    a.iter().filter_map(Value::as_array).map(|e| (crate::js::string(&e[0]), crate::js::string(&e[1]))).collect()
+                })
+            };
+            let strs = |v: Option<&Value>| -> Vec<String> { v.and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default() };
+            let mut out = Vec::new();
+            for plan in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let p = f::FxPlan {
+                    body: crate::js::string(&plan["body"]),
+                    body_fx: strs(plan.get("bodyFx")),
+                    hero_fx: strs(plan.get("heroFx")),
+                    replacements: map(plan.get("replacements")).unwrap_or_default(),
+                    bindings: plan.get("bindings").and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default(),
+                    read: &read,
+                    parts: plan
+                        .get("parts")
+                        .and_then(Value::as_array)
+                        .map(|a| {
+                            a.iter()
+                                .map(|x| f::FxPart {
+                                    slot: crate::js::string(&x["slot"]),
+                                    model: crate::js::string(&x["model"]),
+                                    style: x.get("style").filter(|v| !v.is_null()).map_or(0.0, crate::js::to_number),
+                                    fx: strs(x.get("fx")),
+                                    replacements: map(x.get("replacements")),
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                };
+                out.push(f::preview_particles(&p, None)?);
+            }
+            let placed: Vec<i64> = args.get(2).and_then(Value::as_array).map(|a| a.iter().map(|v| crate::js::to_number(v) as i64).collect()).unwrap_or_default();
+            let moved = out.first().cloned().map(|x| f::for_parts(x, &placed)).unwrap_or_default();
+            json!({ "plans": out, "moved": moved })
+        }
+        // (pak, items_game, library list, hero, slots): the preview's plan from that pak, its unusual
+        // effects as the count of systems bound
+        "hero-preview.plan" => {
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let has = |p: &str| ix.has(p);
+            let paths = || ix.paths().map(String::from).collect::<Vec<_>>();
+            let game = crate::hero_preview::Game { read: &read, has: &has, paths: &paths };
+            let list = |i: usize| args.get(i).and_then(Value::as_array).cloned().unwrap_or_default();
+            let p = crate::hero_preview::plan(&b(args, 1)?, &game, &list(2), &s(args, 3), &list(4), &|_| {})?;
+            let mut v = serde_json::to_value(&p).map_err(|e| e.to_string())?;
+            v["bindings"] = json!(p.bindings.len());
+            v
+        }
+        // (pak, items_game, library, {model: glb}, sprites?, cases [hero, slots, hasTool]): the preview's
+        // models through a stand-in exporter that hands out these GLBs whatever the clips, a model
+        // in an odd material group as its own GLB and none in an even one, and `png <texture>` for
+        // each picture; bytes come back as sha256, each case run twice to go through the cache
+        "hero-preview.models" => {
+            use sha2::Digest;
+            struct Fake {
+                glbs: indexmap::IndexMap<String, String>,
+                sprites: bool,
+            }
+            impl crate::loadout_resources::Exporter for Fake {
+                fn glbs(&self, models: &[String], _: &crate::model_glb::Clips, _: bool) -> indexmap::IndexMap<String, Option<std::path::PathBuf>> {
+                    models.iter().map(|m| (m.clone(), self.glbs.get(m).map(std::path::PathBuf::from))).collect()
+                }
+                fn sprites(&self, textures: &[String]) -> Option<indexmap::IndexMap<String, Option<Vec<u8>>>> {
+                    self.sprites.then(|| textures.iter().map(|t| (t.clone(), (!t.contains("absent")).then(|| format!("png {t}").into_bytes()))).collect())
+                }
+            }
+            impl crate::hero_preview::PreviewExporter for Fake {
+                fn skinned(&self, model: &str, skin: usize, _: Option<&[u8]>, _: &[String]) -> Option<std::path::PathBuf> {
+                    (skin % 2 == 1).then(|| self.glbs.get(model).map(std::path::PathBuf::from)).flatten()
+                }
+            }
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let has = |p: &str| ix.has(p);
+            let paths = || ix.paths().map(String::from).collect::<Vec<_>>();
+            let game = crate::hero_preview::Game { read: &read, has: &has, paths: &paths };
+            let text = b(args, 1)?;
+            let list = |v: Option<&Value>| v.and_then(Value::as_array).cloned().unwrap_or_default();
+            let fake = Fake {
+                glbs: args.get(3).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default(),
+                sprites: args.get(4).is_some_and(crate::js::truthy),
+            };
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let preview = crate::hero_preview::HeroPreview::new();
+            let mut out = Vec::new();
+            for c in list(args.get(5)) {
+                let hero = c.get(0).map(crate::js::string).unwrap_or_default();
+                for _ in 0..2 {
+                    let got = preview.models(&text, Some(&game), &list(args.get(2)), &fake, &hero, &list(c.get(1)), c.get(2).is_some_and(crate::js::truthy), &|_| {});
+                    out.push(match got {
+                        Err(_) => json!({ "error": true }),
+                        Ok(crate::hero_preview::HeroModels::Not(r)) => json!({ "ok": false, "reason": r }),
+                        Ok(crate::hero_preview::HeroModels::Shown(m)) => {
+                            let mut res = m.resources.clone();
+                            if let Some(models) = res.get_mut("models").and_then(Value::as_object_mut) {
+                                for v in models.values_mut() {
+                                    *v = json!(sha(&crate::js::base64_decode(v["data"].as_str().unwrap_or(""))));
+                                }
+                            }
+                            json!({
+                                "ok": true, "body": sha(&m.body), "clip": m.clip, "stage": m.stage, "pedestal": m.pedestal.as_deref().map(sha),
+                                "model": m.model, "motions": m.motions, "missing": m.missing, "hidden": m.hidden, "attachments": m.attachments,
+                                "parts": m.parts.iter().map(|x| json!({ "slot": x.slot, "name": x.name, "glb": sha(&x.glb), "attachments": x.attachments, "hidden": x.hidden })).collect::<Vec<_>>(),
+                                "particles": m.particles, "sprites": m.sprites.iter().map(|(k, v)| (k.clone(), json!(sha(v)))).collect::<serde_json::Map<_, _>>(), "resources": res,
+                            })
+                        }
+                    });
+                }
+            }
+            json!(out)
+        }
+        // (pak, items_game, {model: glb}, effect ids, model files): the builder's effects as their
+        // pictures and single models as GLB bytes, through the stand-in exporter of
+        // hero-preview.models; bytes as sha256
+        "hero-preview.pictures" => {
+            use sha2::Digest;
+            struct Fake(indexmap::IndexMap<String, String>);
+            impl crate::loadout_resources::Exporter for Fake {
+                fn glbs(&self, models: &[String], _: &crate::model_glb::Clips, _: bool) -> indexmap::IndexMap<String, Option<std::path::PathBuf>> {
+                    models.iter().map(|m| (m.clone(), self.0.get(m).map(std::path::PathBuf::from))).collect()
+                }
+                fn sprites(&self, textures: &[String]) -> Option<indexmap::IndexMap<String, Option<Vec<u8>>>> {
+                    Some(textures.iter().map(|t| (t.clone(), Some(format!("png {t}").into_bytes()))).collect())
+                }
+            }
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let text = b(args, 1)?;
+            let fake = Fake(args.get(2).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default());
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let effects: Vec<Value> = strings(args, 3)?
+                .iter()
+                .map(|id| match crate::hero_preview::effect(&text, Some(&read), &fake, id) {
+                    Ok(Some(e)) => json!({ "ok": { "def": e.def, "sprites": e.sprites.iter().map(|(k, v)| (k.clone(), json!(sha(v)))).collect::<serde_json::Map<_, _>>(), "resources": e.resources } }),
+                    Ok(None) => json!({ "ok": null }),
+                    Err(_) => json!({ "error": true }),
+                })
+                .collect();
+            let models: Vec<Value> = strings(args, 4)?
+                .iter()
+                .map(|f| match crate::hero_preview::model(&fake, f) {
+                    Ok(m) => json!({ "ok": m.as_deref().map(sha) }),
+                    Err(_) => json!({ "error": true }),
+                })
+                .collect();
+            json!({ "effects": effects, "models": models })
+        }
+        // (userData, mods folder, ops): a mod's own picture with a stand-in tool and decoder. The
+        // tool turns each staged texture into a "png" of its own bytes unless the first byte is a
+        // multiple of 5; the decoder reads a file of 8 bytes or more as a picture of
+        // (32 + b[1] % 64) x (32 + b[2] % 64) pixels sampled off its bytes, see-through where
+        // b[3] % 4 is 0, and a small png is "small WxH <sha1 of the pixels>". Ops: ["tool", on],
+        // ["getMany", keys], ["hasVideo", key], ["videoBytes", key] (as sha256), ["saveFrame", key,
+        // base64 | null], ["size"], ["clear"], ["ready"]
+        "mod-preview.script" => {
+            use sha2::Digest;
+            use std::sync::atomic::{AtomicBool, Ordering};
+            use std::sync::Arc;
+            struct Fake;
+            impl crate::mod_preview::Images for Fake {
+                fn read(&self, file: &std::path::Path) -> Option<crate::mod_preview::Bitmap> {
+                    let b = std::fs::read(file).ok()?;
+                    if b.len() < 8 {
+                        return None;
+                    }
+                    let (w, h) = (32 + b[1] as usize % 64, 32 + b[2] as usize % 64);
+                    let a = if b[3] % 4 == 0 { 0 } else { 255 };
+                    let n = b.len();
+                    let data = (0..w * h).flat_map(|i| [b[(i * 3) % n], b[(i * 5 + 1) % n], b[(i * 7 + 2) % n], a]).collect();
+                    Some(crate::mod_preview::Bitmap { width: w, height: h, data })
+                }
+                fn to_small_png(&self, bmp: &crate::mod_preview::Bitmap) -> Vec<u8> {
+                    use sha1::Digest as _;
+                    format!("small {}x{} {:x}", bmp.width, bmp.height, sha1::Sha1::digest(&bmp.data)).into_bytes()
+                }
+            }
+            let tool = Arc::new(AtomicBool::new(true));
+            let mods = std::path::PathBuf::from(s(args, 1));
+            let on = tool.clone();
+            let previews = crate::mod_preview::ModPreviews::new(
+                std::path::Path::new(&s(args, 0)),
+                Box::new(move || on.load(Ordering::SeqCst).then(|| std::path::PathBuf::from("C:/fake/vrf.exe"))),
+                Box::new(move |rel| Some(mods.join(rel))),
+                Box::new(Fake),
+                Box::new(|_, args| {
+                    let dir = std::path::PathBuf::from(&args[1]);
+                    for e in std::fs::read_dir(&dir).map_err(|e| e.to_string())?.flatten() {
+                        let name = e.file_name().to_string_lossy().to_string();
+                        let Some(stem) = name.strip_suffix(".vtex_c") else { continue };
+                        let data = std::fs::read(e.path()).map_err(|e| e.to_string())?;
+                        if data.first().is_some_and(|b| b % 5 != 0) {
+                            std::fs::write(dir.join(format!("{stem}.png")), data).map_err(|e| e.to_string())?;
+                        }
+                    }
+                    Ok(())
+                }),
+                Box::new(|_| {}),
+            );
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let st = |i: usize| o.get(i).map(crate::js::string).unwrap_or_default();
+                out.push(match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "tool" => {
+                        tool.store(o.get(1).is_some_and(crate::js::truthy), Ordering::SeqCst);
+                        Value::Null
+                    }
+                    "getMany" => {
+                        let keys: Vec<String> = o.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        json!(previews.get_many(&keys))
+                    }
+                    "hasVideo" => json!(previews.has_video(&st(1))),
+                    "videoBytes" => json!(previews.video_bytes(&st(1)).map(|b| sha(&b))),
+                    "saveFrame" => {
+                        let png = o.get(2).and_then(Value::as_str).map(crate::js::base64_decode);
+                        json!(previews.save_frame(&st(1), png.as_deref()))
+                    }
+                    "size" => json!(previews.size()),
+                    "clear" => {
+                        previews.clear();
+                        Value::Null
+                    }
+                    "ready" => json!(previews.ready()),
+                    other => json!({ "no op": other }),
+                });
+            }
+            json!(out)
+        }
+        // (argvs): for each command line, whether it is an update and whether it is a removal
+        "uninstall.args" => {
+            let out: Vec<Value> = args
+                .first()
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|a| {
+                    let argv: Vec<String> = a.as_array().map(|x| x.iter().map(crate::js::string).collect()).unwrap_or_default();
+                    json!({ "update": crate::uninstall::is_update_run(&argv), "uninstall": crate::uninstall::is_uninstall_run(&argv) })
+                })
+                .collect();
+            json!({ "flags": crate::uninstall::UPDATE_FLAGS, "codes": [crate::uninstall::UNINSTALL_CANCELLED, crate::uninstall::UNINSTALL_WIPE_DATA], "runs": out })
+        }
+        // (game, suffix, journalDir, libraryDir, userData, {revert, mods} | null): the plan the
+        // window shows, then with an answer what could not come out, the plan after and the log
+        "uninstall.flow" => {
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let before = crate::uninstall::plan(&inst, &lib, &st, &ud);
+            match args.get(5).filter(|v| !v.is_null()) {
+                None => json!({ "plan": before }),
+                Some(w) => {
+                    let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+                    let flag = |k: &str| w.get(k).is_some_and(crate::js::truthy);
+                    let log = std::cell::RefCell::new(Vec::<String>::new());
+                    let errors = crate::uninstall::run(&inst, &mut lib, &mut st, &mut svc, flag("revert"), flag("mods"), &|m| log.borrow_mut().push(m.to_string()));
+                    json!({ "plan": before, "errors": errors, "log": log.into_inner() })
+                }
+            }
+        }
+        // (portable, ops): the update driver over a stand-in that writes down what it is told.
+        // Ops: ["start"], ["round"], ["recheck"], ["channel", name], ["feedFails", on],
+        // ["available" | "downloaded" | "error", text]; each answers what the stand-in was told,
+        // what the window was sent, the log, the last error, the portable version and the channel
+        "updater.script" => {
+            use std::sync::{Arc, Mutex};
+            struct Fake {
+                said: Arc<Mutex<Vec<Value>>>,
+                fails: Arc<Mutex<bool>>,
+            }
+            impl crate::updater::UpdaterLike for Fake {
+                fn set_channel(&mut self, name: &str) {
+                    self.said.lock().unwrap().push(json!(["channel", name]));
+                }
+                fn set_allow_prerelease(&mut self, on: bool) {
+                    self.said.lock().unwrap().push(json!(["allowPrerelease", on]));
+                }
+                fn set_auto_download(&mut self, on: bool) {
+                    self.said.lock().unwrap().push(json!(["autoDownload", on]));
+                }
+                fn set_feed(&mut self, feed: crate::updater::Feed) -> Result<(), String> {
+                    self.said.lock().unwrap().push(json!(["feed", feed]));
+                    if *self.fails.lock().unwrap() {
+                        return Err("feed refused".into());
+                    }
+                    Ok(())
+                }
+                fn check(&mut self) {
+                    self.said.lock().unwrap().push(json!(["check"]));
+                }
+            }
+            let said = Arc::new(Mutex::new(Vec::new()));
+            let fails = Arc::new(Mutex::new(false));
+            let channel = Arc::new(Mutex::new("latest".to_string()));
+            let sent = Arc::new(Mutex::new(Vec::<Value>::new()));
+            let log = Arc::new(Mutex::new(Vec::<String>::new()));
+            let (c, se, lo) = (channel.clone(), sent.clone(), log.clone());
+            let mut up = crate::updater::Updater::new(
+                Fake { said: said.clone(), fails: fails.clone() },
+                args.first().is_some_and(crate::js::truthy),
+                Box::new(move || c.lock().unwrap().clone()),
+                Box::new(move |n| se.lock().unwrap().push(json!(n))),
+                Box::new(move |m| lo.lock().unwrap().push(m.to_string())),
+            );
+            let mut out = Vec::new();
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let st = |i: usize| op.get(i).map(crate::js::string).unwrap_or_default();
+                let mut answer = Value::Null;
+                match op.get(0).and_then(Value::as_str).unwrap_or("") {
+                    "start" => up.start(),
+                    "round" => up.round(),
+                    "recheck" => answer = json!(up.recheck()),
+                    "channel" => *channel.lock().unwrap() = st(1),
+                    "feedFails" => *fails.lock().unwrap() = op.get(1).is_some_and(crate::js::truthy),
+                    "available" => up.available(&st(1)),
+                    "downloaded" => up.downloaded(&st(1)),
+                    "error" => up.error(&st(1)),
+                    _ => answer = json!("no op"),
+                }
+                out.push(json!({
+                    "answer": answer,
+                    "said": std::mem::take(&mut *said.lock().unwrap()),
+                    "sent": std::mem::take(&mut *sent.lock().unwrap()),
+                    "log": std::mem::take(&mut *log.lock().unwrap()),
+                    "lastError": up.last_error(),
+                    "portableVersion": up.portable_version(),
+                    "channel": up.channel(),
+                }));
+            }
+            json!({ "mirror": crate::updater::mirror_for(), "every": crate::updater::EVERY, "ops": out })
+        }
+        // (texts): each portable.yml read as the portable update reads it, {error} when refused
+        "portable-update.parseManifest" => json!(strings(args, 0)?
+            .iter()
+            .map(|t| match crate::portable_update::parse_manifest(t) {
+                Ok(m) => json!({ "ok": m }),
+                Err(e) => json!({ "error": e }),
+            })
+            .collect::<Vec<_>>()),
+        // (versions and files): the release addresses
+        "portable-update.urls" => json!(strings(args, 0)?
+            .chunks(2)
+            .map(|p| crate::portable_update::release_url(&p[0], p.get(1).map_or("", |s| s.as_str())))
+            .collect::<Vec<_>>()),
+        // (version, dir | null, [{name, manifest, asset prefix, trustedOnly}]): the build fetched
+        // beside the current one from sources on a test server; the manifest's address is
+        // `<manifest><version>/portable.yml` and the binary's `<asset><version>/<file>`
+        "portable-update.fetchBeside" => {
+            let net = crate::net_fetch::Net::new(crate::net_fetch::now_ms);
+            net.chain().set_mirrors(Some(vec![]));
+            let sources: Vec<crate::portable_update::Source> = args
+                .get(2)
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|o| {
+                    let g = |k: &str| o.get(k).map(crate::js::string).unwrap_or_default();
+                    let (m, a) = (g("manifest"), g("asset"));
+                    crate::portable_update::Source {
+                        name: g("name"),
+                        manifest: Box::new(move |v| format!("{m}{v}/portable.yml")),
+                        asset: Box::new(move |v, f| format!("{a}{v}/{f}")),
+                        trusted_only: o.get("trustedOnly").is_some_and(crate::js::truthy),
+                    }
+                })
+                .collect();
+            let dir = opt_path(args, 1);
+            let mut log = Vec::<String>::new();
+            let got = crate::portable_update::fetch_beside(&net, &s(args, 0), dir.as_deref(), &sources, &mut |_, _| {}, &mut |m| log.push(m.to_string()));
+            match got {
+                Ok(f) => json!({ "ok": f, "log": log }),
+                Err(e) => json!({ "error": e, "log": log }),
             }
         }
         _ => return Err(format!("no function {name}")),
