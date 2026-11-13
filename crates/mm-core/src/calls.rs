@@ -4919,6 +4919,156 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!(out)
         }
+        // (argvs): for each command line, whether it is an update and whether it is a removal
+        "uninstall.args" => {
+            let out: Vec<Value> = args
+                .first()
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|a| {
+                    let argv: Vec<String> = a.as_array().map(|x| x.iter().map(crate::js::string).collect()).unwrap_or_default();
+                    json!({ "update": crate::uninstall::is_update_run(&argv), "uninstall": crate::uninstall::is_uninstall_run(&argv) })
+                })
+                .collect();
+            json!({ "flags": crate::uninstall::UPDATE_FLAGS, "codes": [crate::uninstall::UNINSTALL_CANCELLED, crate::uninstall::UNINSTALL_WIPE_DATA], "runs": out })
+        }
+        // (game, suffix, journalDir, libraryDir, userData, {revert, mods} | null): the plan the
+        // window shows, then with an answer what could not come out, the plan after and the log
+        "uninstall.flow" => {
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let before = crate::uninstall::plan(&inst, &lib, &st, &ud);
+            match args.get(5).filter(|v| !v.is_null()) {
+                None => json!({ "plan": before }),
+                Some(w) => {
+                    let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+                    let flag = |k: &str| w.get(k).is_some_and(crate::js::truthy);
+                    let log = std::cell::RefCell::new(Vec::<String>::new());
+                    let errors = crate::uninstall::run(&inst, &mut lib, &mut st, &mut svc, flag("revert"), flag("mods"), &|m| log.borrow_mut().push(m.to_string()));
+                    json!({ "plan": before, "errors": errors, "log": log.into_inner() })
+                }
+            }
+        }
+        // (portable, ops): the update driver over a stand-in that writes down what it is told.
+        // Ops: ["start"], ["round"], ["recheck"], ["channel", name], ["feedFails", on],
+        // ["available" | "downloaded" | "error", text]; each answers what the stand-in was told,
+        // what the window was sent, the log, the last error, the portable version and the channel
+        "updater.script" => {
+            use std::sync::{Arc, Mutex};
+            struct Fake {
+                said: Arc<Mutex<Vec<Value>>>,
+                fails: Arc<Mutex<bool>>,
+            }
+            impl crate::updater::UpdaterLike for Fake {
+                fn set_channel(&mut self, name: &str) {
+                    self.said.lock().unwrap().push(json!(["channel", name]));
+                }
+                fn set_allow_prerelease(&mut self, on: bool) {
+                    self.said.lock().unwrap().push(json!(["allowPrerelease", on]));
+                }
+                fn set_auto_download(&mut self, on: bool) {
+                    self.said.lock().unwrap().push(json!(["autoDownload", on]));
+                }
+                fn set_feed(&mut self, feed: crate::updater::Feed) -> Result<(), String> {
+                    self.said.lock().unwrap().push(json!(["feed", feed]));
+                    if *self.fails.lock().unwrap() {
+                        return Err("feed refused".into());
+                    }
+                    Ok(())
+                }
+                fn check(&mut self) {
+                    self.said.lock().unwrap().push(json!(["check"]));
+                }
+            }
+            let said = Arc::new(Mutex::new(Vec::new()));
+            let fails = Arc::new(Mutex::new(false));
+            let channel = Arc::new(Mutex::new("latest".to_string()));
+            let sent = Arc::new(Mutex::new(Vec::<Value>::new()));
+            let log = Arc::new(Mutex::new(Vec::<String>::new()));
+            let (c, se, lo) = (channel.clone(), sent.clone(), log.clone());
+            let mut up = crate::updater::Updater::new(
+                Fake { said: said.clone(), fails: fails.clone() },
+                args.first().is_some_and(crate::js::truthy),
+                Box::new(move || c.lock().unwrap().clone()),
+                Box::new(move |n| se.lock().unwrap().push(json!(n))),
+                Box::new(move |m| lo.lock().unwrap().push(m.to_string())),
+            );
+            let mut out = Vec::new();
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let st = |i: usize| op.get(i).map(crate::js::string).unwrap_or_default();
+                let mut answer = Value::Null;
+                match op.get(0).and_then(Value::as_str).unwrap_or("") {
+                    "start" => up.start(),
+                    "round" => up.round(),
+                    "recheck" => answer = json!(up.recheck()),
+                    "channel" => *channel.lock().unwrap() = st(1),
+                    "feedFails" => *fails.lock().unwrap() = op.get(1).is_some_and(crate::js::truthy),
+                    "available" => up.available(&st(1)),
+                    "downloaded" => up.downloaded(&st(1)),
+                    "error" => up.error(&st(1)),
+                    _ => answer = json!("no op"),
+                }
+                out.push(json!({
+                    "answer": answer,
+                    "said": std::mem::take(&mut *said.lock().unwrap()),
+                    "sent": std::mem::take(&mut *sent.lock().unwrap()),
+                    "log": std::mem::take(&mut *log.lock().unwrap()),
+                    "lastError": up.last_error(),
+                    "portableVersion": up.portable_version(),
+                    "channel": up.channel(),
+                }));
+            }
+            json!({ "mirror": crate::updater::mirror_for(), "every": crate::updater::EVERY, "ops": out })
+        }
+        // (texts): each portable.yml read as the portable update reads it, {error} when refused
+        "portable-update.parseManifest" => json!(strings(args, 0)?
+            .iter()
+            .map(|t| match crate::portable_update::parse_manifest(t) {
+                Ok(m) => json!({ "ok": m }),
+                Err(e) => json!({ "error": e }),
+            })
+            .collect::<Vec<_>>()),
+        // (versions and files): the release addresses
+        "portable-update.urls" => json!(strings(args, 0)?
+            .chunks(2)
+            .map(|p| crate::portable_update::release_url(&p[0], p.get(1).map_or("", |s| s.as_str())))
+            .collect::<Vec<_>>()),
+        // (version, dir | null, [{name, manifest, asset prefix, trustedOnly}]): the build fetched
+        // beside the current one from sources on a test server; the manifest's address is
+        // `<manifest><version>/portable.yml` and the binary's `<asset><version>/<file>`
+        "portable-update.fetchBeside" => {
+            let net = crate::net_fetch::Net::new(crate::net_fetch::now_ms);
+            net.chain().set_mirrors(Some(vec![]));
+            let sources: Vec<crate::portable_update::Source> = args
+                .get(2)
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default()
+                .iter()
+                .map(|o| {
+                    let g = |k: &str| o.get(k).map(crate::js::string).unwrap_or_default();
+                    let (m, a) = (g("manifest"), g("asset"));
+                    crate::portable_update::Source {
+                        name: g("name"),
+                        manifest: Box::new(move |v| format!("{m}{v}/portable.yml")),
+                        asset: Box::new(move |v, f| format!("{a}{v}/{f}")),
+                        trusted_only: o.get("trustedOnly").is_some_and(crate::js::truthy),
+                    }
+                })
+                .collect();
+            let dir = opt_path(args, 1);
+            let mut log = Vec::<String>::new();
+            let got = crate::portable_update::fetch_beside(&net, &s(args, 0), dir.as_deref(), &sources, &mut |_, _| {}, &mut |m| log.push(m.to_string()));
+            match got {
+                Ok(f) => json!({ "ok": f, "log": log }),
+                Err(e) => json!({ "error": e, "log": log }),
+            }
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

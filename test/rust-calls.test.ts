@@ -8190,3 +8190,245 @@ test('a mod\'s own picture in Rust is made and kept as the TypeScript does it', 
   // reads as see-through to the stand-in decoder, so the pictures are the synthetic ones
   assert.ok(Object.keys(want[5] as object).length >= 20, 'pictures made');
 });
+
+test('the removal in Rust stops on the same command lines and asks and removes as the TypeScript does', { skip }, async (t) => {
+  const args = await import('../src/uninstall-args.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { removeEverything } = await import('../src/remove-everything.ts');
+  const { folderSize } = await import('../src/folder-size.ts');
+  const patcher = await import('../src/patcher.ts');
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-uninstall-'));
+  const argvs = [
+    ['app.exe', '--uninstall'], ['app.exe', '--uninstall', '/S', '/KEEP_APP_DATA', '--updated', '_?=C:\\App'], ['--uninstall', '--UPDATED'],
+    ['--uninstall', '/s'], ['--uninstall', '/keep_app_data'], ['C:\\--updated\\app.exe', '--uninstall'], ['app.exe'], ['--UNINSTALL'], [], ['--uninstall', '/S '],
+  ];
+  // the window's exit codes are written in its source, not exported
+  const src = fs.readFileSync(path.join(root, 'src', 'uninstall-window.ts'), 'utf8');
+  const code = (n: string) => Number(new RegExp(`const ${n} = (\\d+)`).exec(src)?.[1]);
+  const wantArgs = { flags: args.UPDATE_FLAGS, codes: [code('UNINSTALL_CANCELLED'), code('UNINSTALL_WIPE_DATA')], runs: argvs.map((a) => ({ update: args.isUpdateRun(a), uninstall: args.isUninstallRun(a) })) };
+
+  const mods = path.join(root, 'sandbox', 'mods');
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const at = (r: string): Twin => ({ game: path.join(r, 'game'), lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') });
+  const baseRoot = path.join(tmp, 'base');
+  const b0 = at(baseRoot);
+  fs.cpSync(sandboxGame, b0.game, { recursive: true });
+  for (const d of [b0.lib, b0.ud]) fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(path.join(b0.ud, 'settings.json'), JSON.stringify({ dotaGamePath: b0.game, uiLang: 'zh-CN' }));
+  fs.writeFileSync(path.join(b0.ud, 'something.bin'), Buffer.alloc(3333, 1));
+  FileTx.journalDir = b0.journal;
+  try {
+    const inst = new Installer({ userDataDir: b0.ud, getGamePath: () => b0.game, getLangSuffix: () => 'russian' });
+    const lib = new Library(b0.lib);
+    for (const [cat, name, file] of [['heroes', 'IO Purple', 'heroes__IO Purple.zip'], ['terrains', 'Terrain', 'terrains__pak10_dir.vpk']]) {
+      const s = path.join(mods, file);
+      if (!fs.existsSync(s)) { t.skip(`no ${file} (npm run sandbox:seed)`); return; }
+      const files = FileTx.run((tx) => inst.installInto(tx, { categoryId: cat, modName: name, local: s }));
+      lib.add({ name, categoryId: cat, styleLabel: null, fileRef: file, files } as never);
+    }
+    // a cosmetic is not a mod, and one whose file is gone counts no bytes
+    lib.add({ name: 'Look', categoryId: 'cosmetic', styleLabel: null, fileRef: 'c', files: [{ root: 'lang', relPath: lib.list()[0].files[0].relPath }] } as never);
+    lib.add({ name: 'Gone', categoryId: 'heroes', styleLabel: null, fileRef: 'x', files: [{ root: 'lang', relPath: 'pak77_dir.vpk' }] } as never);
+    patcher.apply({ gamePath: b0.game, folder: patcher.FOLDER, backupDir: path.join(b0.ud, 'backups') });
+    new Settings(b0.ud).set('schemaPatch' as never, true as never);
+  } finally { FileTx.journalDir = null; }
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), createHash('sha1').update(fs.readFileSync(f)).digest('hex')]; }).sort());
+
+  const answers: [string, { revert: boolean; mods: boolean } | null][] = [['ask', null], ['all', { revert: true, mods: true }], ['none', { revert: false, mods: false }], ['mods', { revert: false, mods: true }]];
+  const calls: unknown[] = [['uninstall.args', argvs]];
+  const want: { name: string; a: Twin; b: Twin; out: Record<string, unknown> }[] = [];
+  for (const [name, answer] of answers) {
+    const [a, b] = ['ts', 'rs'].map((side) => { const r = path.join(tmp, `${name}-${side}`); fs.cpSync(baseRoot, r, { recursive: true }); return at(r); });
+    for (const x of [a, b]) {
+      const sf = path.join(x.ud, 'settings.json');
+      fs.writeFileSync(sf, JSON.stringify({ ...JSON.parse(fs.readFileSync(sf, 'utf8')), dotaGamePath: x.game }));
+    }
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      const st = new Settings(a.ud);
+      // the plan as src/uninstall-window.ts makes it, which needs Electron only for the folder's name
+      const list = lib.list().filter((r) => r.categoryId !== 'cosmetic');
+      let modBytes = 0;
+      for (const rec of list) { try { modBytes += inst.installedSize(rec); } catch { /* gone */ } }
+      const lang = st.get('uiLang' as never) as unknown;
+      const plan = {
+        mods: list.length, modBytes, patched: !!st.get('schemaPatch' as never), gamePath: st.get('dotaGamePath' as never) || null,
+        dataBytes: folderSize(a.ud), lang: lang === 'ru' ? 'ru' : lang === 'zh-CN' ? 'zh-CN' : 'en',
+      };
+      const out: Record<string, unknown> = { plan: JSON.parse(JSON.stringify({ ...plan, gamePath: plan.gamePath && 'GAME' })) };
+      if (answer) {
+        const svc = createSchemaService({ settings: st as never, library: lib, installer: inst as never, userDataDir: a.ud, pak: inst as never, modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+        const { errors } = removeEverything({ settings: st as never, library: lib as never, installer: inst as never, schemaService: svc as never }, answer);
+        Object.assign(out, { errors, log: [`uninstall: revert=${answer.revert} mods=${answer.mods} errors=${errors.length}`] });
+      }
+      want.push({ name, a, b, out });
+    } finally { FileTx.journalDir = null; }
+    calls.push(['uninstall.flow', b.game, 'russian', b.journal, b.lib, b.ud, answer]);
+  }
+  const file = path.join(tmp, 'calls.json');
+  fs.writeFileSync(file, JSON.stringify(calls));
+  const got = JSON.parse(execFileSync(cli, ['call', file], { encoding: 'utf8' })) as { ok?: Record<string, unknown>; error?: string }[];
+  assert.deepEqual(got[0].ok, wantArgs, 'the command lines');
+  const libOf = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const settingsOf = (x: Twin) => { const s = JSON.parse(fs.readFileSync(path.join(x.ud, 'settings.json'), 'utf8')); delete s.dotaGamePath; return s; };
+  for (const [k, w] of want.entries()) {
+    const g = got[k + 1];
+    assert.ok(g.ok, g.error);
+    const plan = g.ok.plan as Record<string, unknown>;
+    assert.equal(plan.gamePath, w.b.game, `${w.name}: the game path`);
+    // the two copies sit in different folders, so the game path is compared above, the rest here
+    assert.deepEqual({ ...g.ok, plan: { ...plan, gamePath: 'GAME' } }, w.out, w.name);
+    assert.deepEqual(tree(w.b.game), tree(w.a.game), `${w.name}: the game folder`);
+    assert.deepEqual(libOf(w.b), libOf(w.a), `${w.name}: the library`);
+    assert.deepEqual(settingsOf(w.b), settingsOf(w.a), `${w.name}: the settings`);
+  }
+  const asked = want[0].out.plan as { mods: number; modBytes: number; patched: boolean; lang: string };
+  assert.equal(asked.mods, 3, 'the cosmetic is not counted');
+  assert.ok(asked.modBytes > 0 && asked.patched && asked.lang === 'zh-CN');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the update driver in Rust aims, falls back and tells the window as the TypeScript one does', { skip }, async () => {
+  const { createUpdater, mirrorFor, EVERY } = await import('../src/updater.ts');
+  const ops: unknown[][] = [
+    ['available', '9.9.9'], ['error', 'before start'], ['start'], ['available', '2.7.0'], ['downloaded', '2.7.0'], ['error', 'getaddrinfo ENOTFOUND github.com'],
+    ['error', 'and again'], ['round'], ['channel', 'beta'], ['recheck'], ['error', 'x'.repeat(700)], ['round'], ['feedFails', true], ['round'],
+    ['error', 'down'], ['feedFails', false], ['channel', 'latest'], ['recheck'], ['error', 'Ошибка сети 🙃'], ['available', '2.8.0'],
+  ];
+  const want: unknown[] = [];
+  for (const portable of [false, true]) {
+    let said: unknown[] = []; let sent: unknown[] = []; let log: string[] = [];
+    let fails = false; let channel = 'latest';
+    const on = new Map<string, (a: unknown) => void>();
+    const fake = {
+      set channel(v: string) { said.push(['channel', v]); },
+      set allowPrerelease(v: boolean) { said.push(['allowPrerelease', v]); },
+      set autoDownload(v: boolean) { said.push(['autoDownload', v]); },
+      setFeedURL(f: Record<string, unknown>) { said.push(['feed', f]); if (fails) throw new Error('feed refused'); },
+      checkForUpdates() { said.push(['check']); },
+      on(evt: string, fn: (a: unknown) => void) { on.set(evt, fn); },
+    };
+    let tick = () => {};
+    const u = createUpdater({ autoUpdater: fake as never, isPortable: portable, channel: () => channel, send: (n) => sent.push(n), log: (m) => log.push(m), every: (_ms, fn) => { tick = fn; } });
+    const out = [];
+    for (const op of ops) {
+      let answer: unknown = null;
+      switch (op[0]) {
+        case 'start': u.start(); break;
+        case 'round': tick(); break;
+        case 'recheck': answer = u.recheck(); break;
+        case 'channel': channel = op[1] as string; break;
+        case 'feedFails': fails = !!op[1]; break;
+        case 'available': case 'downloaded': on.get(`update-${op[0]}`)?.({ version: op[1] }); break;
+        case 'error': on.get('error')?.(new Error(op[1] as string)); break;
+      }
+      out.push({ answer, said, sent, log, lastError: u.lastError(), portableVersion: u.portableVersion(), channel: u.channel() });
+      said = []; sent = []; log = [];
+    }
+    want.push({ mirror: mirrorFor(), every: EVERY, ops: out });
+  }
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-updater-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['updater.script', false, ops], ['updater.script', true, ops]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8' })) as { ok: { ops: unknown[] } }[];
+  fs.rmSync(tmp, { recursive: true, force: true });
+  for (const [k, w] of want.entries()) {
+    const g = got[k].ok;
+    (w as { ops: unknown[] }).ops.forEach((o, i) => assert.deepEqual(g.ops[i], o, `${k ? 'portable' : 'installed'} ${i} ${JSON.stringify(ops[i]).slice(0, 60)}`));
+    assert.deepEqual(g, w);
+  }
+});
+
+test('the portable update in Rust reads its manifest and fetches its build as the TypeScript does', { skip }, async (t) => {
+  const pu = await import('../src/portable-update.ts');
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { promisify } = await import('node:util');
+  const { execFile } = await import('node:child_process');
+  const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
+  const good = `a${'b'.repeat(63)}`;
+  const texts = [
+    `version: 2.7.0\nfile: Dota-2-Mod-Manager-Portable.exe\nsize: 120\nsha256: ${good}\n`,
+    `file: "x.exe"\r\nsize: '7'\r\nsha256: ${good.toUpperCase()}\r\n`, `file:\n  x.exe\nsize:   \nsize: 3\nsha256: ${good}`,
+    `file:   \nfile: x.exe\nsize: 3\nsha256: ${good}`, `file:\nfile: y.exe\nsize: 0x10\nsha256: ${good}`, `file: ../x.exe\nsize: 1\nsha256: ${good}`,
+    `file: x.EXE\nsize: 1\nsha256: ${good}`, `file: .exe\nsize: 1\nsha256: ${good}`, `file: x.exe\nsize: -1\nsha256: ${good}`, `file: x.exe\nsize: 1e3\nsha256: ${good}`,
+    `file: x.exe\nsize: Infinity\nsha256: ${good}`, `file: x.exe\nsize: 1\nsha256: ${good}0`, `file: x.exe\nsize: 1\nsha256: ${'g'.repeat(64)}`,
+    ` file: x.exe\nsize: 1\nsha256: ${good}`, `files: x.exe\nfile: z.exe\nsize: 2\nsha256: ${good}\nversion: '3.0.0"`, '', `file: ''x.exe''\nsize: 1\nsha256: ${good}`,
+  ];
+  const parsed = texts.map((x) => { try { return { ok: pu.parseManifest(x) }; } catch (e) { return { error: (e as Error).message }; } });
+  const urlArgs = ['2.7.0', 'a.exe', '1.0.0', pu.MANIFEST];
+  const urls = [pu.releaseUrl('2.7.0', 'a.exe'), pu.releaseUrl('1.0.0', pu.MANIFEST)];
+
+  // two publishers on one server, as test/portable-mirror.test.ts has them; which one is down,
+  // stale or lying is in the address, so both sides ask the same server for the same things
+  const BUILD = 'the new build, all 101 MB of it';
+  const manifest = (version: string, body: string) => `version: ${version}\nfile: Dota-2-Mod-Manager-Portable.exe\nsize: ${Buffer.byteLength(body)}\nsha256: ${sha(body)}\n`;
+  const asked: string[] = [];
+  const server = http.createServer((req, res) => {
+    const url = req.url || '';
+    asked.push(url);
+    const [, who, how, , file] = url.split('/');
+    const send = (code: number, body: string) => { res.writeHead(code, { 'content-length': Buffer.byteLength(body) }); res.end(body); };
+    if (how === 'down') return send(503, 'no');
+    if (file === 'portable.yml') return send(200, how === 'stale' ? manifest('2.6.4', 'old') : how === 'bad' ? 'file: nope' : manifest('2.7.0', BUILD));
+    send(200, how === 'lies' ? 'something else entirely' : BUILD);
+    void who;
+  });
+  server.listen(0, '127.0.0.1');
+  await new Promise((r) => server.on('listening', r));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+  const src = (name: string, how: string, trustedOnly = false) => ({ name, manifest: `${base}/${name}/${how}/`, asset: `${base}/${name}/${how}/`, trustedOnly });
+  const cases: [string, string | null, ReturnType<typeof src>[]][] = [
+    ['2.7.0', 'x', [src('github', 'ok', true), src('mirror', 'ok')]], ['2.7.0', 'x', [src('github', 'down', true), src('mirror', 'ok')]],
+    ['2.7.0', 'x', [src('github', 'down', true), src('mirror', 'stale')]], ['2.7.0', 'x', [src('github', 'down', true), src('mirror', 'lies')]],
+    ['2.7.0', 'x', [src('github', 'bad', true)]], ['2.7.0', 'x', []], ['2.7', 'x', [src('github', 'ok')]], ['2.7.0', null, [src('github', 'ok')]],
+    ['2.7.0', 'same', [src('github', 'ok')]],
+  ];
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-portable-'));
+  const run = async (side: string) => {
+    const out = [];
+    for (const [k, [version, dir, sources]] of cases.entries()) {
+      const d = dir && path.join(tmp, side, dir === 'same' ? 'same' : String(k));
+      if (d) fs.mkdirSync(d, { recursive: true });
+      if (dir === 'same') fs.writeFileSync(path.join(d!, 'Dota-2-Mod-Manager-Portable-2.7.0.exe'), BUILD);
+      asked.length = 0;
+      let got: Record<string, unknown>;
+      if (side === 'ts') {
+        const s = sources.map((x) => ({ name: x.name, manifest: (v: string) => `${x.manifest}${v}/portable.yml`, asset: (v: string, f: string) => `${x.asset}${v}/${f}`, trustedOnly: x.trustedOnly }));
+        try { got = { ok: await pu.fetchBeside(version, { dir: d, sources: s }) }; } catch (e) { got = { error: (e as Error).message }; }
+      } else {
+        const file = path.join(tmp, 'calls.json');
+        fs.writeFileSync(file, JSON.stringify([['portable-update.fetchBeside', version, d, sources]]));
+        const r = JSON.parse((await promisify(execFile)(cli, ['call', file], { encoding: 'utf8' })).stdout)[0].ok as Record<string, unknown>;
+        got = 'ok' in r ? { ok: r.ok } : { error: r.error };
+      }
+      const ok = got.ok as { path: string; bytes: number } | undefined;
+      out.push({
+        ok: ok && { ...ok, path: path.relative(path.join(tmp, side), ok.path), body: fs.readFileSync(ok.path, 'utf8') },
+        // the network's own words for a failure differ; what was refused and why is ours
+        error: got.error === undefined ? undefined : /has 2\.6\.4|not a portable|bad version|bad file name/.test(String(got.error)) ? got.error : 'failed',
+        asked: [...asked],
+        files: d ? fs.readdirSync(d).filter((n) => !n.endsWith('.part') && !n.endsWith('.origin')).sort() : null,
+      });
+    }
+    return out;
+  };
+  const want = await run('ts');
+  const file = path.join(tmp, 'calls.json');
+  fs.writeFileSync(file, JSON.stringify([['portable-update.parseManifest', texts], ['portable-update.urls', urlArgs]]));
+  const got = JSON.parse(execFileSync(cli, ['call', file], { encoding: 'utf8' })) as { ok: unknown }[];
+  texts.forEach((x, k) => assert.deepEqual((got[0].ok as unknown[])[k], parsed[k], JSON.stringify(x)));
+  assert.deepEqual(got[1].ok, urls);
+  const gotFetch = await run('rs');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  cases.forEach((c, k) => assert.deepEqual(gotFetch[k], want[k], `${k} ${JSON.stringify(c.slice(0, 2))}`));
+  assert.equal((want[1] as { ok: { body: string } }).ok.body, BUILD, 'the mirror carried it when GitHub was down');
+});

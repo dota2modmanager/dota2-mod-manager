@@ -187,6 +187,8 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | The 3D preview's file work: a GLB's chunks and its pictures put inside (`glb-embed.ts`), the snapshot sampled off a model (`model-snapshot-fallback.ts`), the style meshes (`model-style-meshes.ts`), the particle roots per style (`hero-particle-styles.ts`), the loadout animation (`model-loadout.ts`), sprite sheets (`loadout-sheet.ts`), the Crest on its golden rig (`razor-crest-preview.ts`) | done | no | `glb_embed.rs`, `model_snapshot_fallback.rs`, `model_style_meshes.rs`, `hero_particle_styles.rs`, `model_loadout.rs`, `loadout_sheet.rs`, `razor_crest_preview.rs`; parity: synthetic GLBs for every branch, the exported GLBs in userData when there, the game's models and textures. Found on the way: `js::number` broke a tie between two shortest strings the other way from V8 (`1.0396194458007812`); now nearest, then even, and checked on 3000 random numbers |
 | The rest of the 3D preview: model exports and the toolchain's arguments (`model-glb.ts`), cube strips (`png-strip.ts`), the loadout's resources (`loadout-resources.ts`), the loadout shader's descriptor and a material's gem tints (`loadout-material.ts`), what the hero wears (`hero-preview-picks.ts`), its particles (`hero-preview-fx.ts`), the plan and the models (`hero-preview.ts`) | done | no | `model_glb.rs`, `png_strip.rs`, `loadout_resources.rs`, `loadout_material.rs`, `hero_preview_picks.rs`, `hero_preview_fx.rs`, `hero_preview.rs`; the exports run side by side on scoped threads where the TypeScript awaits them together; parity: a stand-in toolchain with the same rules on both sides, the real items_game and pak01 (twelve heroes tried on and worn, Terrorblade's weapons, the Crest, Io's bodies, Monkey King's arcana, personas), and `models()` through a stand-in exporter on the GLBs this machine has exported, twice per case to go through the 256 MB cache |
 | A mod's own picture: which file and whether it is worth showing (`mod-preview-pick.ts`), decoded in batches and cached by CRC (`mod-preview.ts`) | done | no | `mod_preview_pick.rs`, `mod_preview.rs`; the decoder is PNG with a box-filtered shrink (Electron's `nativeImage` before), with unit tests; parity: a stand-in tool and decoder on mods made of the game's textures and synthetic ones, past one batch, videos and frames kept or refused |
+| The removal: an update told from a person removing the program by its command line (`uninstall-args.ts`), what the window shows and what its answer takes out, the exit codes the uninstaller reads (`uninstall-window.ts`) | done | no | `uninstall.rs`; the window itself is the shell's to draw; parity: ten command lines, twin sandbox games with mods, one switched off, a cosmetic, one whose file is gone and the patch on, asked and then answered four ways: the plan, the errors, the log line, the game folder, the library and the settings |
+| The updater: the channel and the feed it reads, GitHub first and the project's bucket after it fails, what the window is told (`updater.ts`); a portable copy's build fetched beside it and checked against portable.yml (`portable-update.ts`) | done | no | `updater.rs` drives any updater behind `UpdaterLike`, so Tauri's plugs in where electron-updater was; `portable_update.rs` on `Net`; parity: a stand-in updater through twenty steps, installed and portable, and seventeen manifests, and fetches from two publishers on a test server (down, stale, lying, unreadable, already there) |
 | item builder, arcana, Workshop editors | - | - | |
 | 3D preview (`preview3d:*`) | - | - | binary answers already go back raw (`answer` in `src-tauri/src/main.rs`) |
 | tray, autostart, updater, deep links, uninstall | - | - | Tauri plugins: tray-icon, autostart, updater, deep-link |
@@ -247,10 +249,12 @@ pushed to it (a copy Rust sends whenever settings change: the host's reads are o
 
 How it is done, so it can be built in steps without a release in between that half-works:
 
-1. The pieces with no Rust twin yet that the channels over the two files call. On 2026-11-13
-   these are left: the removal window (`uninstall-window.ts`) and the updater (`updater.ts`,
-   `portable-update.ts`), which becomes Tauri's own. The 3D preview's pieces are all in Rust;
-   its channels (`preview3d:*`) are answered when the owner takes them in step 2.
+1. The pieces with no Rust twin yet that the channels over the two files call. Done on
+   2026-11-13: the last were the removal (`uninstall.rs`) and the updater (`updater.rs`,
+   `portable_update.rs`). The 3D preview's channels (`preview3d:*`) and the removal window's
+   are answered when the owner takes them in step 2; the updater is wired to Tauri's plugin
+   then too, which needs its own signing key and a latest.json beside the release (see
+   "Updates and removal under Tauri" below).
 2. The owner in the shell: one state holding settings, the library, the installer and the
    services, built at start in the order `src/services.ts` builds them, and the channels
    answered over it group by group, each group checked on the sandbox's Tauri build. All of it
@@ -260,6 +264,26 @@ How it is done, so it can be built in steps without a release in between that ha
 
 Every call the shell takes is already checked against `channel_args.rs` before Rust or the host
 sees it.
+
+## Updates and removal under Tauri
+
+The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`); what is left is the
+wiring, and three parts of it are the maintainer's to decide, because they reach every copy out
+there:
+
+- Tauri's updater plugin installs only what is signed with its own key (minisign, not the code
+  signing certificate): a key pair made once with `tauri signer generate`, the private half a CI
+  secret, the public half in `tauri.conf.json`. Losing it means no copy can update again.
+- It reads a JSON manifest (`latest.json`, and one per channel for the testers) where
+  electron-updater reads `latest.yml`. CI writes both while the two builds overlap, and the bucket
+  mirror carries both (`tools/mirror-plan.js`). `Updater` takes the feed through `UpdaterLike`, so
+  the plugin's endpoints become the two feeds and the channel picks the file.
+- The way over: the last Electron release has to install the Tauri build, through
+  electron-updater's NSIS step, into the same folder and under the same app id, keeping userData
+  where it is (`%APPDATA%\Dota 2 Mod Manager`). The removal questions move from
+  `build/installer.nsh` to Tauri's NSIS hooks (`NSIS_HOOK_PREUNINSTALL`), with the same pair of
+  locks: the hook never starts the app on an update's command line, and `is_uninstall_run` says
+  no to one.
 
 ## Moving a piece
 
