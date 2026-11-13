@@ -30,6 +30,7 @@ pub mod generated_pak;
 pub mod hero_names;
 pub mod hero_showcase;
 pub mod i18n;
+pub mod icon_match;
 pub mod import;
 pub mod installer;
 pub mod installer_downloads;

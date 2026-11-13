@@ -4315,3 +4315,32 @@ test('d2mm:// links and the Linux desktop entry in Rust read and write what the 
   assert.ok(Object.keys(tree(homes.ts)).length === 2, JSON.stringify(Object.keys(tree(homes.ts))));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('matching wiki pictures to item names in Rust picks what the TypeScript picks', { skip }, async () => {
+  const im = await import('../src/icon-match.ts');
+  {
+    const names = [
+      'Alliance HUD Skin', 'Alliance HUD', 'Alliance HUD_skin', 'Loading Screen VI', 'Loading Screen IV', 'Mega-Kills: Axe', 'Weather Rain', 'The Ageless Witness - Loading Screen',
+      'Fiery Soul of the Slayer Versus Screen', 'Kunkka LS', 'LS', '  Spaced\u00a0 Name  ', 'Golden ‘Tiny’ Rock', 'Ж Ракета 2', 'Æon Disk', 'Axe', 'Big Bad Wolf', '', 'X-Men 10',
+      'Style III of IV', 'İstanbul HUD Skin', 'a_b.c-d', 'Wraith King',
+    ];
+    const titles = [
+      'File:Cosmetic icon Alliance HUD.png', 'Cosmetic_icon_Alliance_HUD_Bundle.png', 'File:Cosmetic_icon_Loading_Screen_IV.png', 'File:Cosmetic icon Loading Screen VI.jpeg',
+      'Cosmetic_icon_Mega-Kills-_Axe.webp', 'file:cosmetic icon mega-kills axe.PNG', 'Cosmetic icon Weather Rian.png', 'Cosmetic_icon_Weather_Rain.gif', 'Cosmetic_icon_.png',
+      'Cosmetic icon Big Bad Wulf.png', 'Cosmetic icon Big Bad Wolf.png', 'Cosmetic icon X-Men 11.png', 'Cosmetic icon X Men 10.png', 'Cosmetic icon Aeon Disk.png',
+    ];
+    compare([
+      { name: 'icon-match.plain', ts: im.plain as never, inputs: [...names.map((n) => [n]), [5], [null]] },
+      { name: 'icon-match.numbering', ts: im.numbering as never, inputs: [...names.map((n) => [n]), [12], ['MIX IVY xi II2 3d']] },
+      { name: 'icon-match.editDistance', ts: im.editDistance as never, inputs: [['kitten', 'sitting'], ['', 'abc'], ['abc', ''], ['same', 'same'], ['жук', 'жуки'], ['😀a', 'a']] },
+      { name: 'icon-match.stripScreenSuffix', ts: im.stripScreenSuffix as never, inputs: names.map((n) => [n]) },
+      { name: 'icon-match.titlePicker', ts: ((n: string, t: string[]) => im.titlePicker(n)(t)) as never, inputs: [...names.map((n) => [n, titles]), ['Alliance HUD', []]] },
+      { name: 'icon-match.sniff', ts: ((b: number[]) => im.sniff(Buffer.from(b))) as never, inputs: [
+        [[0x89, 0x50, 0x4e, 0x47, 0]], [[0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]], [[0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45]], [[0xff, 0xd8]], [[0xff]], [[]],
+      ] },
+      { name: 'icon-match.cosmeticFileNames', ts: im.cosmeticFileNames as never, inputs: names.map((n) => [n]) },
+      { name: 'icon-match.prefixOf', ts: im.prefixOf as never, inputs: [...names.map((n) => [n]), ['!!! ???'], ['Ab: Cd Ef']] },
+      { name: 'icon-match.heroFileNames', ts: im.heroFileNames as never, inputs: names.map((n) => [n]) },
+    ]);
+  }
+});

@@ -2664,6 +2664,21 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "icon-match.plain" => json!(crate::icon_match::plain(&crate::js::string(args.first().unwrap_or(&Value::Null)))),
+        "icon-match.numbering" => json!(crate::icon_match::numbering(&crate::js::string(args.first().unwrap_or(&Value::Null)))),
+        "icon-match.editDistance" => json!(crate::icon_match::edit_distance(&s(args, 0), &s(args, 1))),
+        "icon-match.stripScreenSuffix" => json!(crate::icon_match::strip_screen_suffix(&s(args, 0))),
+        "icon-match.titlePicker" => {
+            let titles: Vec<String> = args.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::icon_match::pick_title(&s(args, 0), &titles))
+        }
+        "icon-match.sniff" => {
+            let b: Vec<u8> = args.first().and_then(Value::as_array).map(|a| a.iter().map(|x| x.as_u64().unwrap_or(0) as u8).collect()).unwrap_or_default();
+            json!(crate::icon_match::sniff(&b))
+        }
+        "icon-match.cosmeticFileNames" => json!(crate::icon_match::cosmetic_file_names(&s(args, 0))),
+        "icon-match.prefixOf" => json!(crate::icon_match::prefix_of(&s(args, 0))),
+        "icon-match.heroFileNames" => json!(crate::icon_match::hero_file_names(&s(args, 0))),
         _ => return Err(format!("no function {name}")),
     })
 }
