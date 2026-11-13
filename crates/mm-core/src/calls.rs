@@ -4738,6 +4738,105 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             v["bindings"] = json!(p.bindings.len());
             v
         }
+        // (pak, items_game, library, {model: glb}, sprites?, cases [hero, slots, hasTool]): the preview's
+        // models through a stand-in exporter that hands out these GLBs whatever the clips, a model
+        // in an odd material group as its own GLB and none in an even one, and `png <texture>` for
+        // each picture; bytes come back as sha256, each case run twice to go through the cache
+        "hero-preview.models" => {
+            use sha2::Digest;
+            struct Fake {
+                glbs: indexmap::IndexMap<String, String>,
+                sprites: bool,
+            }
+            impl crate::loadout_resources::Exporter for Fake {
+                fn glbs(&self, models: &[String], _: &crate::model_glb::Clips, _: bool) -> indexmap::IndexMap<String, Option<std::path::PathBuf>> {
+                    models.iter().map(|m| (m.clone(), self.glbs.get(m).map(std::path::PathBuf::from))).collect()
+                }
+                fn sprites(&self, textures: &[String]) -> Option<indexmap::IndexMap<String, Option<Vec<u8>>>> {
+                    self.sprites.then(|| textures.iter().map(|t| (t.clone(), (!t.contains("absent")).then(|| format!("png {t}").into_bytes()))).collect())
+                }
+            }
+            impl crate::hero_preview::PreviewExporter for Fake {
+                fn skinned(&self, model: &str, skin: usize, _: Option<&[u8]>, _: &[String]) -> Option<std::path::PathBuf> {
+                    (skin % 2 == 1).then(|| self.glbs.get(model).map(std::path::PathBuf::from)).flatten()
+                }
+            }
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let has = |p: &str| ix.has(p);
+            let paths = || ix.paths().map(String::from).collect::<Vec<_>>();
+            let game = crate::hero_preview::Game { read: &read, has: &has, paths: &paths };
+            let text = b(args, 1)?;
+            let list = |v: Option<&Value>| v.and_then(Value::as_array).cloned().unwrap_or_default();
+            let fake = Fake {
+                glbs: args.get(3).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default(),
+                sprites: args.get(4).is_some_and(crate::js::truthy),
+            };
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let preview = crate::hero_preview::HeroPreview::new();
+            let mut out = Vec::new();
+            for c in list(args.get(5)) {
+                let hero = c.get(0).map(crate::js::string).unwrap_or_default();
+                for _ in 0..2 {
+                    let got = preview.models(&text, Some(&game), &list(args.get(2)), &fake, &hero, &list(c.get(1)), c.get(2).is_some_and(crate::js::truthy), &|_| {});
+                    out.push(match got {
+                        Err(_) => json!({ "error": true }),
+                        Ok(crate::hero_preview::HeroModels::Not(r)) => json!({ "ok": false, "reason": r }),
+                        Ok(crate::hero_preview::HeroModels::Shown(m)) => {
+                            let mut res = m.resources.clone();
+                            if let Some(models) = res.get_mut("models").and_then(Value::as_object_mut) {
+                                for v in models.values_mut() {
+                                    *v = json!(sha(&crate::js::base64_decode(v["data"].as_str().unwrap_or(""))));
+                                }
+                            }
+                            json!({
+                                "ok": true, "body": sha(&m.body), "clip": m.clip, "stage": m.stage, "pedestal": m.pedestal.as_deref().map(sha),
+                                "model": m.model, "motions": m.motions, "missing": m.missing, "hidden": m.hidden, "attachments": m.attachments,
+                                "parts": m.parts.iter().map(|x| json!({ "slot": x.slot, "name": x.name, "glb": sha(&x.glb), "attachments": x.attachments, "hidden": x.hidden })).collect::<Vec<_>>(),
+                                "particles": m.particles, "sprites": m.sprites.iter().map(|(k, v)| (k.clone(), json!(sha(v)))).collect::<serde_json::Map<_, _>>(), "resources": res,
+                            })
+                        }
+                    });
+                }
+            }
+            json!(out)
+        }
+        // (pak, items_game, {model: glb}, effect ids, model files): the builder's effects as their
+        // pictures and single models as GLB bytes, through the stand-in exporter of
+        // hero-preview.models; bytes as sha256
+        "hero-preview.pictures" => {
+            use sha2::Digest;
+            struct Fake(indexmap::IndexMap<String, String>);
+            impl crate::loadout_resources::Exporter for Fake {
+                fn glbs(&self, models: &[String], _: &crate::model_glb::Clips, _: bool) -> indexmap::IndexMap<String, Option<std::path::PathBuf>> {
+                    models.iter().map(|m| (m.clone(), self.0.get(m).map(std::path::PathBuf::from))).collect()
+                }
+                fn sprites(&self, textures: &[String]) -> Option<indexmap::IndexMap<String, Option<Vec<u8>>>> {
+                    Some(textures.iter().map(|t| (t.clone(), Some(format!("png {t}").into_bytes()))).collect())
+                }
+            }
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let text = b(args, 1)?;
+            let fake = Fake(args.get(2).and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect()).unwrap_or_default());
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let effects: Vec<Value> = strings(args, 3)?
+                .iter()
+                .map(|id| match crate::hero_preview::effect(&text, Some(&read), &fake, id) {
+                    Ok(Some(e)) => json!({ "ok": { "def": e.def, "sprites": e.sprites.iter().map(|(k, v)| (k.clone(), json!(sha(v)))).collect::<serde_json::Map<_, _>>(), "resources": e.resources } }),
+                    Ok(None) => json!({ "ok": null }),
+                    Err(_) => json!({ "error": true }),
+                })
+                .collect();
+            let models: Vec<Value> = strings(args, 4)?
+                .iter()
+                .map(|f| match crate::hero_preview::model(&fake, f) {
+                    Ok(m) => json!({ "ok": m.as_deref().map(sha) }),
+                    Err(_) => json!({ "error": true }),
+                })
+                .collect();
+            json!({ "effects": effects, "models": models })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

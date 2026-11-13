@@ -513,3 +513,504 @@ pub fn plan(text: &[u8], game: &Game, library: &[Value], name: &str, slots: &[Va
     let hero_fx = picks::preview_hero_particles(script.as_deref(), &hero, stock_weapon, game.has)?;
     Ok(Plan { body, body_skin, body_fx, replacements, clip, idle, motions, stage, hero_fx, bindings, parts, hidden })
 }
+
+// ---------------------------------------------------------------------------------------------
+// The models, exported and made ready for the window
+
+use std::path::PathBuf;
+use std::sync::Mutex;
+
+use crate::hero_preview_fx::{for_parts, preview_particles, FxPart, FxPlan, PlannedFx};
+use crate::loadout_resources::{loadout_models, loadout_resources, loadout_texture_paths, Exporter, Wanted};
+use crate::model_glb::Clips;
+use crate::particle_spec::{model_attachments, particle_textures};
+
+/// The exporter the preview asks: the loadout's, and a model in another material group.
+pub trait PreviewExporter: Exporter + Sync {
+    /// The model in material group `skin`, under these clips; None where it cannot be made.
+    fn skinned(&self, model: &str, skin: usize, bytes: Option<&[u8]>, clips: &[String]) -> Option<PathBuf>;
+    /// Whether this exporter makes other material groups at all.
+    fn can_skin(&self) -> bool {
+        true
+    }
+}
+
+impl PreviewExporter for crate::model_glb::ModelGlb {
+    fn skinned(&self, model: &str, skin: usize, bytes: Option<&[u8]>, clips: &[String]) -> Option<PathBuf> {
+        crate::model_glb::ModelGlb::skinned(self, model, skin, bytes, clips)
+    }
+}
+
+/// One worn model as the window takes it.
+#[derive(Debug, Clone, Serialize)]
+pub struct ShownPart {
+    pub slot: String,
+    pub name: String,
+    pub glb: Vec<u8>,
+    pub attachments: Vec<Value>,
+    pub hidden: Vec<String>,
+}
+
+/// What the window gets: each model's bytes, its clips and effects.
+#[derive(Debug, Clone, Serialize)]
+pub struct Shown {
+    pub body: Vec<u8>,
+    pub clip: String,
+    pub stage: Value,
+    pub pedestal: Option<Vec<u8>>,
+    /// the body's model path, for `motions`, and what else it can be shown doing
+    pub model: String,
+    pub motions: Vec<Motion>,
+    pub parts: Vec<ShownPart>,
+    pub missing: Vec<String>,
+    /// the body's meshes the items worn turn off
+    pub hidden: Vec<String>,
+    /// the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts`
+    pub attachments: Vec<Value>,
+    pub particles: Vec<PlannedFx>,
+    /// the particles' textures as PNG bytes, by the path they name
+    pub sprites: IndexMap<String, Vec<u8>>,
+    pub resources: Value,
+}
+
+/// The models, or why there are none: "no-game", "no-tool" or "no-body".
+#[derive(Debug, Clone)]
+pub enum HeroModels {
+    Shown(Box<Shown>),
+    Not(&'static str),
+}
+
+/// An effect's system with what it draws with, for its picture.
+#[derive(Debug, Clone)]
+pub struct EffectPicture {
+    pub def: Value,
+    pub sprites: IndexMap<String, Vec<u8>>,
+    pub resources: Value,
+}
+
+/// Models made ready once, kept up to this many bytes, oldest out first.
+const PREPARED_BYTES: usize = 256 * 1024 * 1024;
+
+fn fx_plan<'a>(p: &Plan, read: &'a dyn Fn(&str) -> Option<Vec<u8>>) -> FxPlan<'a> {
+    FxPlan {
+        body: p.body.clone(),
+        body_fx: p.body_fx.clone(),
+        hero_fx: p.hero_fx.clone(),
+        replacements: p.replacements.clone(),
+        bindings: p.bindings.clone(),
+        read,
+        parts: p
+            .parts
+            .iter()
+            .map(|x| FxPart {
+                slot: x.slot.clone(),
+                model: x.model.clone(),
+                style: x.style.unwrap_or(0.0),
+                fx: x.fx.clone(),
+                replacements: x.replacements.clone(),
+            })
+            .collect(),
+    }
+}
+
+fn unique(list: impl IntoIterator<Item = String>) -> Vec<String> {
+    let mut seen = std::collections::HashSet::new();
+    list.into_iter().filter(|x| seen.insert(x.clone())).collect()
+}
+
+/// The textures these systems draw with, as the window takes them.
+pub fn sprites_of(defs: &[Value], res: &Value, glb: &dyn Exporter) -> IndexMap<String, Vec<u8>> {
+    let mut wanted: Vec<String> = defs.iter().flat_map(particle_textures).collect();
+    wanted.extend(res.get("sheets").and_then(Value::as_object).into_iter().flat_map(|o| o.keys().cloned()));
+    for m in res.get("materials").and_then(Value::as_object).into_iter().flat_map(|o| o.values()) {
+        wanted.extend(
+            m.get("textures").and_then(Value::as_object).into_iter().flat_map(|t| t.values().map(crate::js::string)),
+        );
+    }
+    let wanted = unique(wanted);
+    if wanted.is_empty() {
+        return IndexMap::new();
+    }
+    glb.sprites(&wanted).unwrap_or_default().into_iter().filter_map(|(k, v)| v.map(|v| (k, v))).collect()
+}
+
+fn defs_of(particles: &[PlannedFx]) -> Vec<Value> {
+    particles.iter().map(|x| x.def.clone()).collect()
+}
+
+fn thread_error(e: Box<dyn std::any::Any + Send>) -> String {
+    e.downcast_ref::<String>()
+        .cloned()
+        .or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string()))
+        .unwrap_or_else(|| "export failed".into())
+}
+
+type Input = (PathBuf, String, f64);
+
+/// The 3D preview's models, made on demand, with the ones made ready kept between calls.
+#[derive(Default)]
+pub struct HeroPreview {
+    prepared: Mutex<IndexMap<String, Vec<u8>>>,
+}
+
+impl HeroPreview {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// The hero dressed in `slots` as the window shows it.
+    #[allow(clippy::too_many_arguments)]
+    pub fn models(
+        &self,
+        text: &[u8],
+        game: Option<&Game>,
+        library: &[Value],
+        glb: &dyn PreviewExporter,
+        hero: &str,
+        slots: &[Value],
+        has_tool: bool,
+        log: &dyn Fn(&str),
+    ) -> R<HeroModels> {
+        if !has_tool {
+            return Ok(HeroModels::Not("no-tool"));
+        }
+        let Some(game) = game else { return Ok(HeroModels::Not("no-game")) };
+        let p = match plan(text, game, library, hero, slots, log) {
+            Ok(p) => p,
+            Err(e) => {
+                log(&format!("preview 3d: {e}"));
+                return Ok(HeroModels::Not("no-body"));
+            }
+        };
+        let read = game.read;
+        let body_clips: Vec<String> = match &p.clip {
+            Some(c) if *c != p.idle => vec![c.clone(), p.idle.clone()],
+            _ => vec![p.idle.clone()],
+        };
+        // out of the game's files alone, so they fetch while the models export: the materials'
+        // pictures, and the particles with the models and pictures they name
+        let worn: Vec<String> =
+            std::iter::once(p.body.clone()).chain(p.parts.iter().map(|x| x.model.clone())).collect();
+        let materials = loadout_texture_paths(&worn, read);
+        let planned = preview_particles(&fx_plan(&p, read), Some(log))?;
+        let planned_defs = defs_of(&planned);
+        let textures = unique(planned_defs.iter().flat_map(particle_textures));
+        let pedestal = p.stage.get("pedestal").filter(|v| crate::js::truthy(v)).map(crate::js::string);
+        let mut files_wanted: Vec<String> =
+            p.parts.iter().filter(|x| x.clip.is_none()).map(|x| x.model.clone()).collect();
+        files_wanted.extend(p.parts.iter().filter_map(|x| x.crest_rig.clone().flatten()));
+        files_wanted.extend(pedestal.clone());
+        let clips = unique(p.parts.iter().filter_map(|x| x.clip.clone()));
+        let can_skin = glb.can_skin();
+        let body_skin = (p.body_skin > 0.0 && can_skin).then(|| (p.body_skin as usize, read(&compiled(&p.body))));
+        let skins: Vec<Option<(usize, Option<Vec<u8>>)>> = p
+            .parts
+            .iter()
+            .map(|x| (x.skin > 0.0 && can_skin).then(|| (x.skin as usize, read(&compiled(&x.model)))))
+            .collect();
+        let exported = std::thread::scope(|sc| {
+            let warm = [materials, textures].map(|list| sc.spawn(move || glb.sprites(&list).map(|_| ())));
+            let body = sc.spawn(|| glb.glbs(std::slice::from_ref(&p.body), &Clips::Some(body_clips.clone()), false));
+            let styled = sc.spawn(|| {
+                body_skin.as_ref().and_then(|(skin, bytes)| glb.skinned(&p.body, *skin, bytes.as_deref(), &body_clips))
+            });
+            let files = sc.spawn(|| glb.glbs(&files_wanted, &Clips::Some(vec![]), false));
+            let by_clip: Vec<_> = clips
+                .iter()
+                .map(|clip| {
+                    let models: Vec<String> =
+                        p.parts.iter().filter(|x| x.clip.as_ref() == Some(clip)).map(|x| x.model.clone()).collect();
+                    sc.spawn(move || glb.glbs(&models, &Clips::Some(vec![clip.clone()]), false))
+                })
+                .collect();
+            let skinned: Vec<_> = p
+                .parts
+                .iter()
+                .zip(&skins)
+                .map(|(x, s)| {
+                    sc.spawn(move || {
+                        let (skin, bytes) = s.as_ref()?;
+                        let clips: Vec<String> = x.clip.iter().cloned().collect();
+                        glb.skinned(&x.model, *skin, bytes.as_deref(), &clips)
+                    })
+                })
+                .collect();
+            let early = loadout_resources(&planned_defs, read, glb);
+            let early_sprites = sprites_of(&planned_defs, &early, glb);
+            for w in warm {
+                let _ = w.join();
+            }
+            let body = body.join().map_err(thread_error)?;
+            let styled = styled.join().map_err(thread_error)?;
+            let files = files.join().map_err(thread_error)?;
+            let by_clip = by_clip.into_iter().map(|h| h.join().map_err(thread_error)).collect::<R<Vec<_>>>()?;
+            let skinned = skinned.into_iter().map(|h| h.join().map_err(thread_error)).collect::<R<Vec<_>>>()?;
+            Ok::<_, String>((body, styled, files, by_clip, skinned, early, early_sprites))
+        });
+        let (body_files, styled_body, files, clip_files, skinned, early, early_sprites) = exported?;
+        let Some(body_file) = body_files.get(&p.body).cloned().flatten() else { return Ok(HeroModels::Not("no-body")) };
+        let mut missing = Vec::new();
+        let mut parts: Vec<ShownPart> = Vec::new();
+        let mut inputs: Vec<Input> = vec![(styled_body.unwrap_or(body_file), p.body.clone(), p.body_skin)];
+        let mut styles: Vec<f64> = vec![];
+        let mut rigs: IndexMap<usize, (PathBuf, String)> = IndexMap::new();
+        // each part of the plan's place among those that exported, -1 for one that did not
+        let mut placed: Vec<i64> = Vec::new();
+        for (i, x) in p.parts.iter().enumerate() {
+            let found = skinned[i]
+                .clone()
+                .or_else(|| files.get(&x.model).cloned().flatten())
+                .or_else(|| clip_files.iter().find_map(|got| got.get(&x.model).cloned().flatten()));
+            let Some(f) = found else {
+                missing.push(if x.name.is_empty() { x.model.clone() } else { x.name.clone() });
+                placed.push(-1);
+                continue;
+            };
+            let attachments = model_attachments(read(&compiled(&x.model)).as_deref());
+            inputs.push((f, x.model.clone(), x.skin));
+            styles.push(x.style.unwrap_or(0.0));
+            if let Some(rig) = x.crest_rig.clone().flatten() {
+                if let Some(file) = files.get(&rig).cloned().flatten() {
+                    rigs.insert(parts.len(), (file, rig));
+                }
+            }
+            parts.push(ShownPart {
+                slot: x.slot.clone(),
+                name: x.name.clone(),
+                glb: vec![],
+                attachments,
+                hidden: x.hidden.clone(),
+            });
+            placed.push(parts.len() as i64 - 1);
+        }
+        let same = placed.iter().enumerate().all(|(i, &at)| at == i as i64);
+        let particles = for_parts(planned, &placed);
+        let stand = pedestal.as_ref().and_then(|ped| files.get(ped).cloned().flatten());
+        let key_of = |(file, model, skin): &Input| {
+            crate::js::stringify(&json!([file.to_string_lossy(), model, crate::js::json_number(*skin)]), "")
+        };
+        let mut cached: IndexMap<String, Vec<u8>> = IndexMap::new();
+        let mut pending: IndexMap<String, &Input> = IndexMap::new();
+        {
+            let prepared = self.prepared.lock().map_err(err)?;
+            for input in &inputs {
+                let key = key_of(input);
+                match prepared.get(&key) {
+                    Some(b) => {
+                        cached.insert(key, b.clone());
+                    }
+                    None => {
+                        pending.insert(key, input);
+                    }
+                }
+            }
+        }
+        // with every part in, the resources fetched early are these; else they are made again for those that came
+        let wanted: Vec<Wanted> = pending
+            .values()
+            .map(|(file, model, skin)| Wanted {
+                file: file.clone(),
+                model: model.clone(),
+                skin: if *skin > 0.0 { *skin as usize } else { 0 },
+            })
+            .collect();
+        let fresh = loadout_models(&wanted, read, glb, None)?;
+        let mut resources = if same { early } else { loadout_resources(&defs_of(&particles), read, glb) };
+        for (key, model) in pending.keys().zip(fresh) {
+            cached.insert(key.clone(), model.ok_or("no model")?);
+        }
+        let ready: Vec<Vec<u8>> = {
+            let mut prepared = self.prepared.lock().map_err(err)?;
+            let ready = inputs
+                .iter()
+                .map(|input| {
+                    let key = key_of(input);
+                    let model = cached.get(&key).cloned().unwrap_or_default();
+                    prepared.shift_remove(&key);
+                    prepared.insert(key, model.clone());
+                    model
+                })
+                .collect();
+            let mut bytes: usize = prepared.values().map(Vec::len).sum();
+            while bytes > PREPARED_BYTES {
+                let Some((_, m)) = prepared.shift_remove_index(0) else { break };
+                bytes -= m.len();
+            }
+            ready
+        };
+        let (body, wearables) = ready.split_first().ok_or("no body")?;
+        for (index, part) in parts.iter_mut().enumerate() {
+            let model = crate::model_style_meshes::select_style_meshes(&wearables[index], styles[index])?;
+            let rig = rigs.get(&index);
+            let on_rig = rig.and_then(|(file, _)| crate::razor_crest_preview::normal_crest_on_golden_rig(&model, file));
+            let applied = on_rig.is_some();
+            part.glb = on_rig.unwrap_or(model);
+            if let Some((_, rig_model)) = rig {
+                if std::env::var_os("MM_PREVIEW_FX").is_some_and(|v| !v.is_empty()) {
+                    log(&format!("razor preview donor: {rig_model}, applied={applied}"));
+                }
+                if applied {
+                    let donor = model_attachments(read(&format!("{rig_model}_c")).as_deref());
+                    part.attachments = crate::razor_crest_preview::merge_crest_attachments(&part.attachments, &donor);
+                }
+            }
+        }
+        if hero.strip_prefix("npc_dota_hero_").unwrap_or(hero) == "phantom_assassin" {
+            let weapon = parts.iter().find(|x| x.slot.ends_with(":weapon")).map(|x| x.glb.as_slice());
+            recover_arcana_snapshots(&mut resources, body, weapon)?;
+        }
+        let sprites = if same { early_sprites } else { sprites_of(&defs_of(&particles), &resources, glb) };
+        let pedestal = stand.map(|s| crate::glb_embed::embed_glb(&s)).transpose()?;
+        Ok(HeroModels::Shown(Box::new(Shown {
+            body: crate::model_style_meshes::hide_preview_only_meshes(body)?,
+            clip: p.clip.clone().unwrap_or_else(|| p.idle.clone()),
+            model: p.body.clone(),
+            motions: p.motions.clone(),
+            stage: p.stage.clone(),
+            pedestal,
+            parts,
+            missing,
+            hidden: p.hidden.clone(),
+            attachments: model_attachments(read(&compiled(&p.body)).as_deref()),
+            particles,
+            sprites,
+            resources,
+        })))
+    }
+}
+
+/// Phantom Assassin's arcana snapshots, which the game ships under names it has not got: sampled
+/// off her body and her blades instead.
+fn recover_arcana_snapshots(resources: &mut Value, body: &[u8], weapon: Option<&[u8]>) -> R<()> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| {
+        Regex::new(r"^particles/models/heroes/phantom_assassin/pa_arcana(?:_weapon_[ab])?\.vsnap$").unwrap()
+    });
+    let missing: Vec<String> = resources
+        .get("missing")
+        .and_then(Value::as_array)
+        .map(|a| a.iter().map(crate::js::string).collect())
+        .unwrap_or_default();
+    let mut recovered = std::collections::HashSet::new();
+    for m in &missing {
+        let key = m.to_lowercase();
+        if !re.is_match(&key) {
+            continue;
+        }
+        let from = if key.ends_with("pa_arcana.vsnap") { Some(body) } else { weapon };
+        let Some(from) = from else { continue };
+        let side = if key.ends_with("_weapon_a.vsnap") {
+            Some("right")
+        } else if key.ends_with("_weapon_b.vsnap") {
+            Some("left")
+        } else {
+            None
+        };
+        let snapshot = crate::model_snapshot_fallback::snapshot_from_model(from, side, 192.0)?;
+        if !snapshot.is_null() {
+            if let Some(s) = resources.get_mut("snapshots").and_then(Value::as_object_mut) {
+                s.insert(m.clone(), snapshot);
+            }
+            recovered.insert(m.clone());
+        }
+    }
+    if !recovered.is_empty() {
+        resources["missing"] = json!(missing.into_iter().filter(|m| !recovered.contains(m)).collect::<Vec<_>>());
+    }
+    Ok(())
+}
+
+/// Every clip of a body, as GLB bytes; None where it did not export.
+pub fn motions(glb: &dyn Exporter, body: &str) -> Option<Vec<u8>> {
+    let got = glb.glbs(&[body.to_string()], &Clips::All, false).get(body).cloned().flatten()?;
+    std::fs::read(got).ok()
+}
+
+/// One model alone, a map prop's or a tower look's, as GLB bytes with its pictures inside; None
+/// where the game has none.
+pub fn model(glb: &dyn Exporter, file: &str) -> R<Option<Vec<u8>>> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| Regex::new(r"(?i)^models/(props_|items/world/)[\w/.-]+\.vmdl$").unwrap());
+    if !re.is_match(file) {
+        return Ok(None);
+    }
+    match glb.glbs(&[file.to_string()], &Clips::Some(vec![]), false).get(file).cloned().flatten() {
+        Some(f) => crate::glb_embed::embed_glb(&f).map(Some),
+        None => Ok(None),
+    }
+}
+
+/// An effect the builder offers (one of its own, or the game's unusual-<n>) as its particle
+/// system, with what it draws with, for its picture.
+pub fn effect(
+    text: &[u8],
+    read: Option<crate::loadout_resources::Read>,
+    glb: &dyn Exporter,
+    id: &str,
+) -> R<Option<EffectPicture>> {
+    let modifier = match crate::data::item_effects().iter().find(|e| e.id == id) {
+        Some(e) => Some(e.modifier.clone()),
+        None => crate::unusual_effects::unusual_item_effect(text, id).map_err(err)?.map(|e| e.modifier),
+    };
+    let (Some(read), Some(modifier)) = (read, modifier) else { return Ok(None) };
+    let mut r = |p: &str| read(p);
+    let Some(def) =
+        crate::particle_spec::particle_def(&mut r, &modifier.to_lowercase(), &mut 128, 0, &Default::default())
+    else {
+        return Ok(None);
+    };
+    let resources = loadout_resources(std::slice::from_ref(&def), read, glb);
+    let sprites = sprites_of(std::slice::from_ref(&def), &resources, glb);
+    Ok(Some(EffectPicture { def, sprites, resources }))
+}
+
+/// A slot's options exported ahead as trying each on will ask for them (its model under the same
+/// clips, in one run, and its materials' pictures), so a try-on finds them cached. At most 40.
+#[allow(clippy::too_many_arguments)]
+pub fn prefetch(
+    text: &[u8],
+    game: &Game,
+    library: &[Value],
+    glb: &(dyn Exporter + Sync),
+    hero: &str,
+    slots: &[Value],
+    slot: &str,
+    items: &[String],
+) -> usize {
+    let mut by_clip: IndexMap<String, Vec<String>> = IndexMap::new();
+    let mut all: Vec<String> = Vec::new();
+    for item in items.iter().take(40) {
+        let tried: Vec<Value> = slots
+            .iter()
+            .map(|s| {
+                let mut s = s.clone();
+                if s.get("slot").and_then(Value::as_str) == Some(slot) {
+                    s["tryOn"] = json!({ "itemId": item, "effectId": "" });
+                }
+                s
+            })
+            .collect();
+        let Ok(p) = plan(text, game, library, hero, &tried, &|_| {}) else { continue };
+        for x in p.parts.iter().filter(|x| x.slot == slot) {
+            let models = by_clip.entry(x.clip.clone().unwrap_or_default()).or_default();
+            if !models.contains(&x.model) {
+                models.push(x.model.clone());
+            }
+            if !all.contains(&x.model) {
+                all.push(x.model.clone());
+            }
+        }
+    }
+    if all.is_empty() {
+        return 0;
+    }
+    let pictures = loadout_texture_paths(&all, game.read);
+    std::thread::scope(|sc| {
+        for (clip, models) in &by_clip {
+            let clips = if clip.is_empty() { vec![] } else { vec![clip.clone()] };
+            sc.spawn(move || glb.glbs(models, &Clips::Some(clips), false));
+        }
+        glb.sprites(&pictures);
+    });
+    all.len()
+}
