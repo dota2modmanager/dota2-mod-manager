@@ -172,16 +172,34 @@ function cells(points: { bone: string; at: number[] }[], size: number): SurfaceB
   return [...boxes.values()];
 }
 
-/** The boxes for a model's surface: as fine as MAX_BOXES lets them be. None for a model with no vertices. */
-export function surfaceBoxes(file: Buffer): SurfaceBox[] {
-  const ctrl = readKv3(resourceBlock(file, 'CTRL').data);
-  const points = surface(file, ctrl, readKv3(resourceBlock(file, 'DATA').data));
+/**
+ * Vertices as boxes, as fine as MAX_BOXES lets them be: the cells grow until there are few enough.
+ * Once a cell is wider than the model reaches from its origin, growing it changes nothing more, so
+ * the boxes go straight to one per bone, where the growing would have ended. It used to take
+ * the long way there: the game of 2026-11-13 has wearables with a few hundred bones, and
+ * growing the cells 1.3 times at a time up to the largest number a double holds took 2700 passes
+ * over 300 000 vertices, 30 seconds on the main process. A model with more bones than MAX_BOXES
+ * never got there and hung; it keeps a box per bone.
+ */
+export function fitBoxes(points: { bone: string; at: number[] }[]): SurfaceBox[] {
   if (!points.length) return [];
   const span = (c: number) => { const v = points.map((p) => p.at[c]); return Math.max(...v.slice(0, 200000)) - Math.min(...v.slice(0, 200000)); };
   let size = Math.max(Math.hypot(span(0), span(1), span(2)) / 24, 2);
+  let reach = 0;
+  for (const { at } of points) reach = Math.max(reach, Math.abs(at[0]), Math.abs(at[1]), Math.abs(at[2]));
   let boxes = cells(points, size);
-  while (boxes.length > MAX_BOXES) { size *= 1.3; boxes = cells(points, size); }
+  while (boxes.length > MAX_BOXES) {
+    if (size > reach) { boxes = cells(points, Infinity); break; }
+    size *= 1.3;
+    boxes = cells(points, size);
+  }
   return boxes.map((b) => ({ bone: b.bone, min: b.min.map((v) => v - SHELL), max: b.max.map((v) => v + SHELL) }));
+}
+
+/** The boxes for a model's surface: as fine as MAX_BOXES lets them be. None for a model with no vertices. */
+export function surfaceBoxes(file: Buffer): SurfaceBox[] {
+  const ctrl = readKv3(resourceBlock(file, 'CTRL').data);
+  return fitBoxes(surface(file, ctrl, readKv3(resourceBlock(file, 'DATA').data)));
 }
 
 // numbers in the oldest types a block can have, since a wearable's block can be version 2

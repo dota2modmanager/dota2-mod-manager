@@ -975,6 +975,20 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             json!(particle_snapshot::snapshot_points(&file, &Value::Object(data))?)
         }
         "model-hitboxes.nameHash" => json!(model_hitboxes::name_hash(&s(args, 0))),
+        "model-hitboxes.fit" => {
+            // ([[bone, [x, y, z]], ...])
+            let points: Vec<(String, [f64; 3])> = args
+                .first()
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|p| {
+                    let at = floats(p.as_array().map_or(&[][..], Vec::as_slice), 1);
+                    (p.get(0).map(crate::js::string).unwrap_or_default(), [0, 1, 2].map(|c| at.get(c).copied().unwrap_or(f64::NAN)))
+                })
+                .collect();
+            json!(model_hitboxes::fit_boxes(&points))
+        }
         "model-hitboxes.surfaceBoxes" => json!(model_hitboxes::surface_boxes(&b(args, 0)?)?
             .iter()
             .map(|b| json!({ "bone": b.bone, "min": b.min.map(crate::js::json_number), "max": b.max.map(crate::js::json_number) }))
@@ -3159,6 +3173,128 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 });
             }
             Value::Array(out)
+        }
+        "effect-edit.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, table, ops): each answer, and the log.
+            // The finder speaks English; `rebuild` is `due` and then `rebuild_now` for each.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let table = opt_b(args, 5)?.map(|b| crate::kv::latin1(&b));
+            let svc = crate::effect_edit_service::EffectEdit::new(inst.game.clone());
+            let mut svc = svc;
+            let mut finder = crate::effect_finder::EffectFinder::default();
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(6).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let arg = |i: usize| a.get(i).cloned().unwrap_or(Value::Null);
+                let f = Some(crate::effect_edit_service::Finder { finder: &mut finder, lang: "en", table: table.as_deref() });
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "search" => svc.search(&crate::js::string(&arg(1))).map(|v| json!(v)),
+                    "saved" => Ok(json!(crate::effect_edit_service::EffectEdit::saved(&lib))),
+                    "load" => svc.load(&lib, &arg(1), f),
+                    "preview" => svc.preview(&arg(1), &arg(2), f).map(|v| json!(v)),
+                    "install" => svc.install(&inst, &mut lib, (&arg(1), &arg(2), crate::js::truthy(&arg(3))), f, &mut d),
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1).as_array().into_iter().flatten().map(crate::js::string).collect();
+                        let mut done = Vec::new();
+                        let mut f = f;
+                        for id in crate::effect_edit_service::EffectEdit::due(&lib, &ids) {
+                            let again = f.as_mut().map(|x| crate::effect_edit_service::Finder { finder: &mut *x.finder, lang: x.lang, table: x.table });
+                            if svc.rebuild_now(&inst, &mut lib, &id, again, &mut d) {
+                                done.push(id);
+                            }
+                        }
+                        Ok(json!(done))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log })
+        }
+        "ability-icons.modifiers" => json!(crate::ability_icons::icon_modifiers(&b(args, 0)?)),
+        "ability-icons.setLabel" => json!(crate::ability_icons::set_label(&s(args, 0))),
+        "ability-icons.sets" => json!(crate::ability_icons::modifier_sets(&b(args, 0)?).map_err(|e| e.to_string())?),
+        "ability-icons.forced" => {
+            let text = b(args, 2)?;
+            json!(crate::ability_icons::forced_files(&s(args, 0), &s(args, 1), &crate::ability_icons::icon_modifiers(&text)))
+        }
+        "ability-icons.choices" => {
+            // (table, hero, order, files the game has)
+            let text = b(args, 0)?;
+            let mut sources: Vec<crate::ability_icons::IconSource> = crate::schema::list_items(&text)
+                .map_err(|e| e.to_string())?
+                .into_iter()
+                .map(|i| crate::ability_icons::IconSource { id: i.id, name: i.name, start: i.start, end: i.end, shared: false, loc_key: None })
+                .collect();
+            sources.extend(crate::ability_icons::modifier_sets(&text).map_err(|e| e.to_string())?);
+            let order: Vec<String> = args.get(2).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            let files: std::collections::HashSet<String> =
+                args.get(3).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            let has = |f: &str| files.contains(f);
+            let mods = crate::ability_icons::icon_modifiers(&text);
+            json!(crate::ability_icons::hero_icon_choices(&text, &sources, &s(args, 1), &order, &has, &mods).map_err(|e| e.to_string())?)
+        }
+        "ability-icons.entries" => {
+            // (pak01 path, picks, table): each file with its data's sha1, and the picks gone
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let picks: indexmap::IndexMap<String, String> = args
+                .get(1)
+                .and_then(Value::as_object)
+                .map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect())
+                .unwrap_or_default();
+            let mods = crate::ability_icons::icon_modifiers(&b(args, 2)?);
+            let mut read = |f: &str| ix.read(f).ok().flatten();
+            let has = |f: &str| ix.has(f);
+            let (entries, gone) = crate::ability_icons::icon_entries(&mut read, &picks, &mods, &has);
+            let files: Vec<Value> = entries
+                .iter()
+                .map(|(p, e)| json!([p, hex(&<sha1::Sha1 as sha1::Digest>::digest(&e.data[..]))]))
+                .collect();
+            json!({ "entries": files, "gone": gone })
+        }
+        "ability-icons.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, table, lang, vrf, ops): each answer, and the log
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let table = opt_b(args, 5)?.map(|t| t.to_vec()).unwrap_or_default();
+            let vrf = args.get(7).is_some_and(crate::js::truthy);
+            let mut svc = crate::ability_icons_service::AbilityIconsService::new(inst.game.clone(), table, &s(args, 6), vrf)?;
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(8).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let arg = |i: usize| a.get(i).map(crate::js::string).unwrap_or_default();
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str() {
+                    "heroes" => svc.heroes().map(|v| json!(v)),
+                    "hero" => svc.hero(&lib, &arg(1)),
+                    "set" => {
+                        let icon = a.get(3).and_then(Value::as_str).map(str::to_string);
+                        svc.set(&inst, &mut lib, (&arg(1), &arg(2), icon.as_deref()), &mut d)
+                    }
+                    "clear" => svc.clear(&inst, &mut lib, &arg(1), &mut d),
+                    "rebuild" => {
+                        let ids: Vec<String> = a.get(1).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+                        Ok(json!(svc.rebuild(&inst, &mut lib, &ids, &mut d)))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log })
         }
         _ => return Err(format!("no function {name}")),
     })

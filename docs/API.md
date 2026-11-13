@@ -8799,6 +8799,20 @@ export function nameHash(name: string): number
 
 The 32-bit MurmurHash2 the game keeps its names by: a lowercase name, seed 0x31415926.
 
+### `fitBoxes`
+
+```ts
+export function fitBoxes(points: { bone: string; at: number[] }[]): SurfaceBox[]
+```
+
+Vertices as boxes, as fine as MAX_BOXES lets them be: the cells grow until there are few enough.
+Once a cell is wider than the model reaches from its origin, growing it changes nothing more, so
+the boxes go straight to one per bone, where the growing would have ended. It used to take
+the long way there: the game of 2026-11-13 has wearables with a few hundred bones, and
+growing the cells 1.3 times at a time up to the largest number a double holds took 2700 passes
+over 300 000 vertices, 30 seconds on the main process. A model with more bones than MAX_BOXES
+never got there and hung; it keeps a box per bone.
+
 ### `surfaceBoxes`
 
 ```ts

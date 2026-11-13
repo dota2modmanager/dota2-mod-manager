@@ -430,6 +430,9 @@ test('surface hitboxes and the effects that spread over them in Rust make what t
   const systems = [...new Set(unusualEffects(text).map((e) => e.system))].slice(0, 80);
   const cases: Case[] = [
     { name: 'model-hitboxes.nameHash', ts: h.nameHash as never, inputs: ['mm_surface', 'Bip01_Head', '', 'a', 'abcde'].map((n) => [n]) },
+    { name: 'model-hitboxes.fit', ts: ((p: [string, number[]][]) => h.fitBoxes(p.map(([bone, at]) => ({ bone, at })))) as never, inputs: [
+      [[-1, 1].flatMap((x) => [-1, 1].flatMap((y) => [-1, 1].map((z) => [x * 40, y * 40, z * 40]))).flatMap((at) => Array.from({ length: 120 }, (_, b) => [`b${b}`, at]))],
+      [Array.from({ length: 300 }, (_, b) => [`b${b}`, [b, -b / 3, 0.5]])], [[['a', [0, 0, 0]], ['a', [100, 0, 0]], ['b', [-7.25, 3, 1e-3]]]], [[]]] },
     { name: 'model-hitboxes.surfaceBoxes', ts: ((m: string) => h.surfaceBoxes(buf(m))) as never, inputs: models.map((m) => [m]) },
     { name: 'model-hitboxes.withSurfaceHitboxes', ts: ((m: string, names?: string[]) => sha(h.withSurfaceHitboxes(buf(m), names))) as never, inputs: models.flatMap((m) => [[m], [m, ['mm_surface', 'Default', 'second']]]) },
     { name: 'particle-surface.surfaceSystem', ts: ((pak: string, s: string) => {
@@ -5508,6 +5511,272 @@ test('a hero\'s layers, a material\'s inputs and the effect finder in Rust read 
       { name: 'recolor-layers.modelColorTextures', ts: ((m: string[]) => rl.modelColorTextures(m, (p) => ix.read(p))) as never, inputs: [[models], ...models.slice(0, 8).map((m) => [[m]])] },
       { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocksReal.map((x) => [x]) },
     ].map((c) => (c.name === 'recolor-layers.modelColorTextures' ? { ...c, inputs: c.inputs.map((i) => [...i, GAME_PAK01]) } : c)));
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the effect editor\'s service in Rust finds, previews and puts in My mods what the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { createEffectEdit } = await import('../src/effect-edit-service.ts');
+  const { createEffectFinder } = await import('../src/effect-finder.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, openVpkIndex, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { references } = await import('../src/resource.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-fxsvc-'));
+  // a game of the real Juggernaut: his particles and those they create, his items', his script
+  const real = openVpkIndex(GAME_PAK01);
+  const all = [...real.paths()];
+  const want = new Set<string>(all.filter((p) => p.endsWith('.vpcf_c') && (p.startsWith('particles/units/heroes/hero_juggernaut/') || p.startsWith('particles/econ/items/juggernaut/bladekeeper'))));
+  for (const p of [...want]) {
+    const walk = (f: string, depth: number) => {
+      if (depth > 6) return;
+      let refs: string[] = [];
+      try { refs = references(real.read(f)!); } catch { return; }
+      for (const r of refs.map((x) => `${x.toLowerCase().replace(/_c$/, '')}_c`)) if (r.endsWith('.vpcf_c') && !want.has(r) && real.read(r)) { want.add(r); walk(r, depth + 1); }
+    };
+    walk(p, 0);
+  }
+  const extra = ['scripts/npc/heroes/npc_dota_hero_juggernaut.txt', 'resource/localization/abilities_english.txt'];
+  const entries = [...want, ...extra].sort().map((p) => entryAt(p, real.read(p)!));
+  const fury = 'particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf';
+  const swap = all.find((p) => p.startsWith('particles/econ/items/juggernaut/bladekeeper') && p.endsWith('.vpcf_c'))!.replace(/_c$/, '');
+  const table = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(table, `"items_game" { "items" { "1" { "visuals" { "asset_modifier" { "type" "particle" "asset" "${fury}" "modifier" "${swap}" } } } } }`);
+  type Twin = { root: string; game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk(entries));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const ops: unknown[][] = [
+    ['search', 'juggernaut blade'], ['search', '  '], ['search', 'hero_juggernaut/juggernaut_omni'], ['saved'],
+    ['load', fury], ['load', 'ability:juggernaut/juggernaut_blade_fury'], ['load', 'particles/nope.vpcf'], ['load', '../x.vpcf'], ['load', 'ability:juggernaut/juggernaut_nothing'],
+    ['preview', fury, { '*': { size: 150, tint: '#ff0000' } }],
+    ['install', fury, {}], ['install', fury, { '*': { size: 150 } }, false],
+    ['install', 'ability:juggernaut/juggernaut_blade_fury', { '*': { count: 50, tint: '#3366ff' } }, true], ['saved'],
+    ['install', fury, { '*': { size: 200, speed: 30 } }, true], ['load', fury], ['saved'],
+    ['rebuild', ['$fury', 'nobody']], ['saved'],
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const furyId = (x: Twin) => manifest(x).installed.find((r: { generated?: { effect?: string } }) => r.generated?.effect === fury)?.id;
+  // the TypeScript, op by op; ids are filled in as each side made them
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    const tableText = fs.readFileSync(table).toString('latin1');
+    const finder = createEffectFinder({ index: () => sharedVpkIndex(path.join(a.game, 'dota', 'pak01_dir.vpk')), lang: () => 'en', heroes: () => [], table: () => tableText });
+    const rebuilt: string[] = [];
+    const svc = createEffectEdit({ gamePath: () => a.game, installer: inst as never, library, sprites: async () => ({}), finder, onRebuilt: (id) => rebuilt.push(id), log: (m) => log.push(m) });
+    for (const op of ops) {
+      try {
+        let v: unknown;
+        if (op[0] === 'search') v = svc.search(op[1] as string);
+        else if (op[0] === 'saved') v = svc.saved();
+        else if (op[0] === 'load') { const { sprites, ...rest } = await svc.load(op[1]); void sprites; v = rest; }
+        else if (op[0] === 'preview') v = svc.preview(op[1], op[2]);
+        else if (op[0] === 'install') v = svc.install(op[1], op[2], op[3] as boolean | undefined);
+        else {
+          rebuilt.length = 0;
+          svc.rebuild((op[1] as string[]).map((i) => (i === '$fury' ? furyId(a) : i)));
+          await new Promise((r) => setTimeout(r, 200));
+          v = [...rebuilt];
+        }
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  // the Rust: the rebuild's id is its own record's, which exists only after the installs, so it
+  // runs as two scripts over the same folders
+  const cut = ops.findIndex((o) => o[0] === 'rebuild');
+  const run = (list: unknown[][]) => {
+    const l = path.join(tmp, `ops-${list.length}.json`);
+    fs.writeFileSync(l, JSON.stringify([['effect-edit.service', b.game, 'russian', b.journal, b.lib, b.ud, { $file: table }, list]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    return r.ok;
+  };
+  const first = run(ops.slice(0, cut));
+  const second = run(ops.slice(cut).map((o) => (o[0] === 'rebuild' ? ['rebuild', (o[1] as string[]).map((i) => (i === '$fury' ? furyId(b) : i))] : o)));
+  // the rebuilt ids are each side's own
+  const got = [...first.answers, ...second.answers].map((x, k) => (ops[k][0] === 'rebuild' ? { ok: (x as { ok: string[] }).ok.map(() => '<id>') } : x));
+  const wanted = answers.map((x, k) => (ops[k][0] === 'rebuild' ? { ok: (x as { ok: string[] }).ok.map(() => '<id>') } : x));
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(got[k]), norm(wanted[k]), `${k} ${JSON.stringify(op).slice(0, 120)}`);
+  assert.deepEqual([...first.log, ...second.log], log, 'the log');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok((wanted[ops.length - 2] as { ok: string[] }).ok.length === 1, 'the record was built again');
+  const okAt = (k: number) => (wanted[k] as { ok?: { defs?: unknown[] } }).ok;
+  assert.ok((okAt(4)?.defs?.length ?? 0) > 0 && (okAt(5)?.defs?.length ?? 0) > 0 && okAt(11) && okAt(12) && 'error' in (wanted[10] as object), 'loads, installs and a refusal');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('a hero\'s ability icons in Rust are offered, picked and put in My mods as the TypeScript does', { skip }, async () => {
+  const ai = await import('../src/ability-icons.ts');
+  const { createAbilityIcons } = await import('../src/ability-icons-service.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { buildVpk, entryAt, entryPath, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-icons-'));
+  const icon = (n: string) => `panorama/images/spellicons/${n}_png.vtex_c`;
+  // two heroes' items, one of them twice with a picture another already gives, a style, a
+  // backslash, "modifier" before "asset", one not his, one with no picture, and two shared sets
+  const table = [
+    '"items_game"', '{', '\t"items"', '\t{', '\t\t// a comment, as the game\'s table has them',
+    '\t\t"7001"', '\t\t{', '\t\t\t"name"\t"Bracers of the Cavern Luminar"', '\t\t\t"used_by_heroes"\t{ "npc_dota_hero_earthshaker"\t"1" }',
+    '\t\t\t"visuals"', '\t\t\t{',
+    '\t\t\t\t"asset_modifier0"\t{ "type"\t"ability_icon"\t"asset"\t"earthshaker_enchant_totem"\t"modifier"\t"earthshaker/bracers/earthshaker_enchant_totem" }',
+    '\t\t\t\t"asset_modifier1"\t{ "type"\t"ability_icon"\t"asset"\t"Earthshaker_Fissure"\t"modifier"\t"earthshaker\\bracers\\fissure"\t"style"\t"1" }',
+    '\t\t\t\t"asset_modifier2"\t{ "type"\t"ability_icon"\t"asset"\t"earthshaker_fissure"\t"modifier"\t"earthshaker/gone_fissure" }',
+    '\t\t\t}', '\t\t}',
+    '\t\t"7002"', '\t\t{', '\t\t\t"name"\t"Totem of Deep Magma"', '\t\t\t"used_by_heroes"\t{ "npc_dota_hero_earthshaker"\t"1" }',
+    '\t\t\t"visuals"\t{ "asset_modifier"\t{ "modifier"\t"earthshaker/magma/fissure"\t"type"\t"ability_icon"\t"asset"\t"earthshaker_fissure"\t"style"\t"x" } "asset_modifier1"\t{ "type"\t"ability_icon"\t"asset"\t"earthshaker_enchant_totem"\t"modifier"\t"earthshaker/bracers/earthshaker_enchant_totem" } }',
+    '\t\t}',
+    '\t\t"7003"', '\t\t{', '\t\t\t"name"\t"Not His"', '\t\t\t"used_by_heroes"\t{ "npc_dota_hero_axe"\t"1" }',
+    '\t\t\t"visuals"\t{ "asset_modifier"\t{ "type"\t"ability_icon"\t"asset"\t"axe_berserkers_call"\t"modifier"\t"axe/red/call" } "asset_modifier1"\t{ "type"\t"ability_icon"\t"asset"\t"earthshaker_fissure"\t"modifier"\t"axe/red/fissure" } }',
+    '\t\t}',
+    '\t}',
+    '\t"asset_modifiers"', '\t{',
+    '\t\t"sltv_ability_icons"\t{ "name"\t"sltv_ability_icons" "loc_key"\t"#DOTA_Set_SLTV" "asset_modifier"\t{ "type"\t"ability_icon"\t"asset"\t"earthshaker_echo_slam"\t"modifier"\t"earthshaker/sltv/echo" } }',
+    '\t\t"tine_of_the_behemoth_icons"\t{ "asset_modifier"\t{ "type"\t"ability_icon"\t"asset"\t"axe_culling_blade"\t"modifier"\t"axe/tine/cull" } }',
+    '\t}', '}', '',
+  ].join('\n');
+  const tableFile = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(tableFile, table, 'latin1');
+  const pic = (n: string) => Buffer.from(`picture ${n}`);
+  const has = ['earthshaker_fissure', 'earthshaker_enchant_totem', 'earthshaker_echo_slam', 'axe_berserkers_call', 'axe_culling_blade',
+    'earthshaker/bracers/earthshaker_enchant_totem', 'earthshaker/bracers/fissure', 'earthshaker/magma/fissure', 'earthshaker/sltv/echo', 'axe/red/call', 'axe/tine/cull', 'axe/red/fissure'];
+  const script = (abilities: string[]) => Buffer.from(`"DOTAHeroes" { "npc_dota_hero_x" { ${abilities.map((x, i) => `"Ability${i + 1}"\t"${x}"`).join(' ')} } }`);
+  const pak = buildVpk([
+    ...has.map((n) => entryAt(icon(n), pic(n))),
+    entryAt('scripts/npc/heroes/npc_dota_hero_earthshaker.txt', script(['earthshaker_fissure', 'earthshaker_enchant_totem', 'earthshaker_aftershock', 'earthshaker_echo_slam'])),
+    entryAt('scripts/npc/heroes/npc_dota_hero_axe.txt', script(['axe_berserkers_call', 'axe_culling_blade'])),
+    entryAt('resource/localization/abilities_english.txt', Buffer.from('"lang" { "Tokens" { "DOTA_Tooltip_ability_earthshaker_fissure" "Fissure" "DOTA_Set_SLTV" "SLTV" } }')),
+  ]);
+  // the pure parts
+  const mods = ai.iconModifiers(table);
+  assert.throws(() => ai.modifierSets('x\n\t"asset_modifiers" { "a" { '), /block/, 'a table cut short');
+  const sources = [...listItems(table), ...ai.modifierSets(table)];
+  const hasSet = has.map(icon);
+  const order = ['earthshaker_fissure', 'earthshaker_enchant_totem', 'earthshaker_aftershock', 'earthshaker_echo_slam'];
+  const pakFile = path.join(tmp, 'pak01_dir.vpk');
+  fs.writeFileSync(pakFile, pak);
+  const entriesOf = (picks: Record<string, string>) => {
+    const ix = sharedVpkIndex(pakFile);
+    const r = ai.iconEntries((f) => ix.read(f), picks, mods, (f) => ix.has(f));
+    return { entries: r.entries.map((e) => [entryPath(e), sha(e.data)]), gone: r.gone };
+  };
+  compare([
+    { name: 'ability-icons.modifiers', ts: () => snap(mods), inputs: [[{ $file: tableFile }]] },
+    { name: 'ability-icons.setLabel', ts: ai.setLabel as never, inputs: [['tine_of_the_behemoth_icons'], ['sltv_ability_icons'], ['_icons'], ['of_the_icon'], ['Ravening__wings'], ['ß_x']] },
+    { name: 'ability-icons.sets', ts: () => snap(ai.modifierSets(table)), inputs: [[{ $file: tableFile }]] },
+    { name: 'ability-icons.forced', ts: ((x: string, i: string) => ai.forcedFiles(x, i, mods)) as never, inputs: [['earthshaker_fissure', 'earthshaker/magma/fissure', { $file: tableFile }], ['earthshaker_echo_slam', 'x', { $file: tableFile }]] },
+    { name: 'ability-icons.choices', ts: ((_t: string, hero: string, o: string[], f: string[]) => snap(ai.heroIconChoices(table, sources, hero, o, (x) => f.includes(x), mods))) as never,
+      inputs: [[{ $file: tableFile }, 'earthshaker', order, hasSet], [{ $file: tableFile }, 'earthshaker', [], hasSet], [{ $file: tableFile }, 'axe', ['axe_culling_blade'], hasSet], [{ $file: tableFile }, 'earthshaker', order, hasSet.slice(1)]] },
+    { name: 'ability-icons.entries', ts: ((_p: string, picks: Record<string, string>) => entriesOf(picks)) as never,
+      inputs: [[pakFile, { earthshaker_fissure: 'earthshaker/magma/fissure', earthshaker_enchant_totem: 'earthshaker/bracers/earthshaker_enchant_totem', nope: 'x', 'BAD NAME': 'y' }, { $file: tableFile }],
+        [pakFile, { earthshaker_echo_slam: 'earthshaker/sltv/echo', earthshaker_fissure: 'earthshaker/gone_fissure' }, { $file: tableFile }]] },
+  ]);
+  // the service on twin games; a mod in a lower slot already carries Fissure's icon, so the pick moves ahead of it
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    fs.writeFileSync(path.join(game, 'dota_russian', 'pak02_dir.vpk'), buildVpk([entryAt(icon('earthshaker_fissure'), Buffer.from('a catalog mod'))]));
+    const lib = new Library(path.join(root, 'lib'));
+    lib.add({ name: 'A catalog mod', categoryId: 'imported', styleLabel: null, fileRef: null, preview: null, files: [{ root: 'lang', relPath: 'pak02_dir.vpk' }] });
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const ops: unknown[][] = [
+    ['heroes'], ['hero', 'earthshaker'], ['hero', 'axe'], ['hero', 'Bad Hero'], ['hero', 'pudge'],
+    ['set', 'earthshaker', 'earthshaker_fissure', 'earthshaker/magma/fissure'],
+    ['set', 'earthshaker', 'earthshaker_fissure', 'axe/red/fissure'], ['set', 'earthshaker', 'earthshaker_aftershock', 'x'], ['set', 'earthshaker', 'BAD', 'x'],
+    ['set', 'earthshaker', 'earthshaker_echo_slam', 'earthshaker/sltv/echo'], ['hero', 'earthshaker'],
+    ['set', 'axe', 'axe_culling_blade', 'axe/tine/cull'],
+    ['rebuild', ['$earthshaker', 'nobody']],
+    ['set', 'earthshaker', 'earthshaker_fissure', null], ['hero', 'earthshaker'],
+    ['clear', 'axe'], ['clear', 'Bad'], ['set', 'earthshaker', 'earthshaker_echo_slam', null], ['hero', 'earthshaker'],
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|recId|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const esId = (x: Twin) => manifest(x).installed.find((r: { generated?: { abilityIcons?: string } }) => r.generated?.abilityIcons === 'earthshaker')?.id;
+  const cut = ops.findIndex((o) => o[0] === 'rebuild');
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    const svc = createAbilityIcons({ gamePath: () => a.game, installer: inst as never, library, vanilla: () => table, vrf: () => 'vrf', lang: () => 'en', log: (m) => log.push(m) });
+    for (const op of ops) {
+      try {
+        const v = op[0] === 'heroes' ? svc.heroes() : op[0] === 'hero' ? svc.hero(op[1] as string)
+          : op[0] === 'set' ? svc.set(op[1] as string, op[2] as string, op[3] as string | null) : op[0] === 'clear' ? svc.clear(op[1] as string)
+            : svc.rebuild((op[1] as string[]).map((i) => (i === '$earthshaker' ? esId(a) : i)));
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const run = (list: unknown[][]) => {
+    const l = path.join(tmp, `ops-${list.length}.json`);
+    fs.writeFileSync(l, JSON.stringify([['ability-icons.service', b.game, 'russian', b.journal, b.lib, b.ud, { $file: tableFile }, 'en', true, list]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    return r.ok;
+  };
+  const first = run(ops.slice(0, cut));
+  const second = run(ops.slice(cut).map((o) => (o[0] === 'rebuild' ? ['rebuild', (o[1] as string[]).map((i) => (i === '$earthshaker' ? esId(b) : i))] : o)));
+  const got = [...first.answers, ...second.answers];
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(got[k]), norm(answers[k]), `${k} ${JSON.stringify(op)}`);
+  assert.deepEqual([...first.log, ...second.log], log, 'the log');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok(log.some((m) => m.includes('moving ahead')), 'the pick moved ahead of the catalog mod');
+  assert.equal((answers[cut] as { ok: string[] }).ok.length, 1, 'the record was built again');
+  // the real game: the heroes there are and two heroes' icons, in Russian
+  if (fs.existsSync(GAME_PAK01)) {
+    const realGame = path.dirname(path.dirname(GAME_PAK01));
+    const realTable = sharedVpkIndex(GAME_PAK01).read('scripts/items/items_game.txt')!;
+    const realFile = path.join(tmp, 'real_items_game.txt');
+    fs.writeFileSync(realFile, realTable);
+    const svc = createAbilityIcons({ gamePath: () => realGame, installer: {} as never, library: new Library(path.join(tmp, 'real-lib')), vanilla: () => realTable.toString('latin1'), lang: () => 'ru' });
+    // not the TypeScript's hero list: it walks the 50 MB table once a hero, and the walks counted
+    // past 2^31 overflow node's merged line counts into lines it calls missed
+    const want = [snap(svc.hero('earthshaker')), snap(svc.hero('keeper_of_the_light'))];
+    const l = path.join(tmp, 'real.json');
+    fs.writeFileSync(l, JSON.stringify([['ability-icons.service', realGame, 'russian', null, path.join(tmp, 'real-lib-rs'), path.join(tmp, 'real-ud'), { $file: realFile }, 'ru', false,
+      [['hero', 'earthshaker'], ['hero', 'keeper_of_the_light'], ['heroes']]]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok: { answers: { ok: unknown }[] } }[];
+    assert.deepEqual(r.ok.answers.slice(0, 2).map((x) => x.ok), want, 'the real game');
+    const heroes = r.ok.answers[2].ok as { hero: string }[];
+    assert.ok(heroes.length > 50 && heroes.some((h) => h.hero === 'earthshaker'), 'heroes with a choice of icons');
   }
   fs.rmSync(tmp, { recursive: true, force: true });
 });

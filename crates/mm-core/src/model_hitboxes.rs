@@ -261,9 +261,16 @@ pub fn surface_boxes(file: &[u8]) -> Result<Vec<SurfaceBox>, String> {
         kv3::read(resource::data(file, name, 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())
     };
     let ctrl = read("CTRL")?;
-    let points = surface(file, &ctrl, &read("DATA")?)?;
+    Ok(fit_boxes(&surface(file, &ctrl, &read("DATA")?)?))
+}
+
+/// Vertices as boxes, as fine as MAX_BOXES lets them be: the cells grow until there are few
+/// enough, and once a cell is wider than the model reaches from its origin, growing it changes
+/// nothing more, so the boxes go straight to one per bone (src/model-hitboxes.ts fitBoxes says
+/// what the long way there cost). A model with more bones than MAX_BOXES keeps a box per bone.
+pub fn fit_boxes(points: &[(String, [f64; 3])]) -> Vec<SurfaceBox> {
     if points.is_empty() {
-        return Ok(vec![]);
+        return vec![];
     }
     // the span of the first 200 000 points, as the TypeScript measures it
     let span = |c: usize| {
@@ -271,15 +278,25 @@ pub fn surface_boxes(file: &[u8]) -> Result<Vec<SurfaceBox>, String> {
         v.clone().fold(f64::NEG_INFINITY, f64::max) - v.fold(f64::INFINITY, f64::min)
     };
     let mut size = (crate::js::hypot(&[span(0), span(1), span(2)]) / 24.0).max(2.0);
-    let mut boxes = cells(&points, size);
+    // Math.max: a NaN anywhere makes it NaN, and no size is past it
+    let reach =
+        points
+            .iter()
+            .flat_map(|p| p.1)
+            .fold(0.0, |m: f64, c| if m.is_nan() || c.is_nan() { f64::NAN } else { m.max(c.abs()) });
+    let mut boxes = cells(points, size);
     while boxes.len() > MAX_BOXES {
+        if size > reach {
+            boxes = cells(points, f64::INFINITY);
+            break;
+        }
         size *= 1.3;
-        boxes = cells(&points, size);
+        boxes = cells(points, size);
     }
-    Ok(boxes
+    boxes
         .into_iter()
         .map(|b| SurfaceBox { bone: b.bone, min: b.min.map(|v| v - SHELL), max: b.max.map(|v| v + SHELL) })
-        .collect())
+        .collect()
 }
 
 fn raw_number(ty: u8, bytes: Vec<u8>) -> Node {

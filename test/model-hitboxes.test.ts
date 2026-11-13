@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MeshoptEncoder } from 'meshoptimizer';
 
-import { nameHash, surfaceBoxes, withSurfaceHitboxes } from '../src/model-hitboxes.ts';
+import { fitBoxes, nameHash, surfaceBoxes, withSurfaceHitboxes } from '../src/model-hitboxes.ts';
 import { modelScaleReady } from '../src/model-scale.ts';
 import { readKv3, numberOf, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
@@ -99,4 +99,20 @@ test('a set the model has stays, and a model with no vertices is refused', () =>
   assert.equal((at(kv.root, 'm_hitboxsets') as Extract<Kv3Node, { kind: 'array' }>).items.length, 1);
   assert.equal(withSurfaceHitboxes(model([])), null);
   assert.equal(withSurfaceHitboxes(Buffer.from('not a model')), null);
+});
+
+test('a model of many bones gets a box per bone at once, and one of more bones than boxes does not hang', () => {
+  // 120 bones, each with a vertex in all eight corners round the origin: 960 cells however big they grow
+  const corners = [-1, 1].flatMap((x) => [-1, 1].flatMap((y) => [-1, 1].map((z) => [x * 40, y * 40, z * 40])));
+  const many = Array.from({ length: 120 }, (_, b) => corners.map((at) => ({ bone: `b${b}`, at }))).flat();
+  const t = Date.now();
+  const boxes = fitBoxes(many);
+  assert.equal(boxes.length, 120);
+  assert.deepEqual(boxes[7], { bone: 'b7', min: [-41.5, -41.5, -41.5], max: [41.5, 41.5, 41.5] });
+  // more bones than MAX_BOXES (256): the old loop never ended
+  const lots = Array.from({ length: 300 }, (_, b) => ({ bone: `b${b}`, at: [b, 0, 0] }));
+  assert.equal(fitBoxes(lots).length, 300);
+  assert.ok(Date.now() - t < 2000, 'quickly');
+  // a model that fits stays as fine as before
+  assert.equal(fitBoxes([{ bone: 'a', at: [0, 0, 0] }, { bone: 'a', at: [100, 0, 0] }]).length, 2);
 });
