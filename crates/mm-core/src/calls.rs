@@ -2693,6 +2693,157 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let (errors, removed) = crate::remove_everything::remove_everything(&inst, &mut lib, &mut st, &mut svc, None, what);
             json!({ "errors": errors, "removed": removed })
         }
+        "menu-background.veil" => json!(crate::menu_background::veil(n(args, 0))),
+        "menu-background.webmProblem" => {
+            let max = args.get(1).and_then(Value::as_f64).map_or(crate::menu_background::MAX, |m| m as usize);
+            json!(crate::menu_background::webm_problem(&b(args, 0)?, max))
+        }
+        "menu-background.layouts" => {
+            // (pak01_dir.vpk, {dim, blur}): each layout's path and the sha1 of its bytes
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |f: &str| ix.read(f).map_err(|e| e.to_string());
+            let num = |k: &str| args.get(1).and_then(|o| o.get(k)).and_then(Value::as_f64).unwrap_or(0.0);
+            let look = crate::menu_background::Look { dim: num("dim"), blur: num("blur") };
+            let out = crate::menu_background::background_layouts(&read, look)?;
+            json!(out.iter().map(|(p, d)| json!({ "path": p, "sha1": hex(&<sha1::Sha1 as sha1::Digest>::digest(d)) })).collect::<Vec<_>>())
+        }
+        "menu-background.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each op's answer, {error} for one that failed
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let svc = crate::menu_background_service::MenuBackground::new(&ud, opt_path(args, 0));
+            let mut log = |_: String| {};
+            let mut out = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let answer = match a.first().and_then(Value::as_str).unwrap_or("") {
+                    "state" => Ok(crate::menu_background_service::MenuBackground::state(&lib)),
+                    "install" => {
+                        let webm = opt_b(&a, 1)?;
+                        let none = Value::Null;
+                        let at = |i: usize| a.get(i).unwrap_or(&none);
+                        svc.install(&inst, &mut lib, webm.as_deref().map(Vec::as_slice), (at(2), at(3), at(4)), &mut log)
+                    }
+                    "rebuild" => {
+                        let ids: Vec<String> = a.get(1).and_then(Value::as_array).map(|v| v.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        Ok(json!(svc.rebuild(&inst, &mut lib, &ids, &mut log)))
+                    }
+                    other => Err(format!("no op {other}")),
+                };
+                out.push(answer.unwrap_or_else(|e| json!({ "error": e })));
+            }
+            json!(out)
+        }
+        "panorama.readStyle" => {
+            let (images, css) = crate::panorama_files::read_style(&b(args, 0)?)?;
+            json!({ "images": images, "css": css })
+        }
+        "panorama.cssImages" => json!(crate::panorama_files::css_images(&s(args, 0))),
+        "panorama.writeStyle" => {
+            // (style, css, [styles whose pictures are known], {texture path: bytes}): the style as latin1
+            let others: Vec<Arc<Vec<u8>>> = match args.get(2).and_then(Value::as_array) {
+                Some(list) => list.iter().map(|v| b(std::slice::from_ref(v), 0)).collect::<Result<_, _>>()?,
+                None => vec![],
+            };
+            let refs: Vec<&[u8]> = others.iter().map(|o| o.as_slice()).collect();
+            let known = crate::panorama_files::images_of(&refs);
+            let textures = args.get(3).and_then(Value::as_object).cloned().unwrap_or_default();
+            let texture = |p: &str| textures.get(p).and_then(|v| b(std::slice::from_ref(v), 0).ok()).map(|x| x.to_vec());
+            let out = crate::panorama_files::write_style(&b(args, 0)?, &s(args, 1), &known, &texture)?;
+            json!(out.iter().map(|&c| c as char).collect::<String>())
+        }
+        "panorama.writeScript" => {
+            let out = crate::panorama_files::write_script(&b(args, 0)?, &s(args, 1))?;
+            json!(out.iter().map(|&c| c as char).collect::<String>())
+        }
+        "hud.clampScale" => crate::js::json_number(crate::hud_scale::clamp_scale(args.first().unwrap_or(&Value::Null))),
+        "hud.cleanParts" => json!(crate::hud_scale::clean_parts(args.first().unwrap_or(&Value::Null))),
+        "hud.withLayout" => json!(crate::hud_scale::with_layout(&s(args, 0), args.get(1).unwrap_or(&Value::Null))),
+        "hud.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each op's answer, {error} for one that failed;
+            // a rebuild answers what the channel returns and the id the later build reported
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let svc = crate::hud_scale_service::HudScale::new(opt_path(args, 0));
+            let mut logged = Vec::new();
+            let mut out = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let mut log = |m: String| logged.push(m);
+                let answer = match a.first().and_then(Value::as_str).unwrap_or("") {
+                    "state" => Ok(svc.state(&inst, &lib)),
+                    "install" => svc.install(&inst, &mut lib, a.get(1).unwrap_or(&Value::Null), &mut log),
+                    "rebuild" => {
+                        let ids: Vec<String> =
+                            a.get(1).and_then(Value::as_array).map(|v| v.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        let rebuilt = crate::hud_scale_service::HudScale::due(&lib, &ids)
+                            .and_then(|_| svc.rebuild_now(&inst, &mut lib, &mut log));
+                        Ok(json!({ "returned": [], "rebuilt": rebuilt }))
+                    }
+                    other => Err(format!("no op {other}")),
+                };
+                out.push(answer.unwrap_or_else(|e| json!({ "error": e })));
+            }
+            json!({ "answers": out, "log": logged })
+        }
+        "tower-looks.ids" => json!(crate::tower_looks::tower_look_ids(&b(args, 0)?)),
+        "tower-looks.looks" => json!(crate::tower_looks::tower_looks(&b(args, 0)?)?),
+        "tower-looks.plan" => {
+            // (items_game, item id, side): the plan of that item's visuals
+            let v = crate::item_visuals::item_visuals(&b(args, 0)?, &s(args, 1)).map_err(kv_err)?;
+            let (files, skipped) = crate::tower_looks::tower_plan(v.as_ref().map_or(&[][..], |v| &v.modifiers), &s(args, 2));
+            json!({ "files": files, "skipped": skipped })
+        }
+        "tower-looks.build" => {
+            // (pak01, items_game, radiant, dire): the pak's sha1 and what the build says
+            let r = crate::tower_looks::build_towers(std::path::Path::new(&s(args, 0)), &b(args, 1)?, opt_s(args, 2).as_deref(), opt_s(args, 3).as_deref())?;
+            json!({ "vpk": hex(&<sha1::Sha1 as sha1::Digest>::digest(&r.vpk)), "names": r.names, "files": r.files, "missing": r.missing, "skipped": r.skipped })
+        }
+        "tower-looks.asTower" => {
+            let out = crate::tower_looks::as_tower(&b(args, 0)?, &b(args, 1)?);
+            json!(hex(&<sha1::Sha1 as sha1::Digest>::digest(&out)))
+        }
+        "tree-sets.plan" => {
+            let sets = crate::tree_sets::tree_sets();
+            let set = sets.iter().find(|x| x.id == s(args, 1)).ok_or("no set")?;
+            json!(crate::tree_sets::tree_plan(&s(args, 0), set))
+        }
+        "tree-sets.build" => {
+            let (vpk, files, missing) = crate::tree_sets::build_trees(std::path::Path::new(&s(args, 0)), opt_s(args, 1).as_deref(), opt_s(args, 2).as_deref())?;
+            json!({ "vpk": hex(&<sha1::Sha1 as sha1::Digest>::digest(&vpk)), "files": files, "missing": missing })
+        }
+        "map-looks.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each op's answer ({error} for one that
+            // failed) and what was logged
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let svc = crate::map_looks_service::MapLooks::new(opt_path(args, 0));
+            let mut logged = Vec::new();
+            let mut out = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let mut log = |m: String| logged.push(m);
+                let none = Value::Null;
+                let at = |i: usize| a.get(i).unwrap_or(&none);
+                let answer = match a.first().and_then(Value::as_str).unwrap_or("") {
+                    "state" => Ok(svc.state(&lib, &mut log)),
+                    "install" => svc.install(&inst, &mut lib, (at(1), at(2), at(3)), &mut log),
+                    "rebuild" => {
+                        let ids: Vec<String> = at(1).as_array().map(|v| v.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        Ok(json!(svc.rebuild(&inst, &mut lib, &ids, &mut log)))
+                    }
+                    other => Err(format!("no op {other}")),
+                };
+                out.push(answer.unwrap_or_else(|e| json!({ "error": e })));
+            }
+            json!({ "answers": out, "log": logged })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

@@ -338,6 +338,16 @@ pub fn base64_decode(s: &str) -> Vec<u8> {
     out
 }
 
+/// Math.round: to the nearest whole number, a half going up (-2.5 to -2).
+pub fn round(x: f64) -> f64 {
+    let f = x.floor();
+    if x - f >= 0.5 {
+        f + 1.0
+    } else {
+        f
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

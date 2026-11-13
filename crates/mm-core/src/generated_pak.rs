@@ -63,3 +63,52 @@ pub fn swap_pak(inst: &Installer, rec: &Value, vpk: &[u8], off: bool) -> Result<
 pub fn files_json(files: &[LibFile]) -> Value {
     as_json(files)
 }
+
+fn pak_number(rel: &str) -> f64 {
+    let re = regex::Regex::new(r"(?i)pak(\d+)_").expect("a fixed pattern");
+    re.captures(rel).and_then(|c| c[1].parse::<f64>().ok()).unwrap_or(f64::INFINITY)
+}
+
+/// A file's bytes and the record whose pak they came from, None for the game's own.
+pub type InForce = (Vec<u8>, Option<Value>);
+
+/// The copy of a game file in force before a generated pak of ours: the first switched-on mod's,
+/// in load order (the first copy wins, as in the game), else the game's own in pak01; None when
+/// neither has it. `own` is the generated record itself, which never counts. A mod's copy that
+/// `usable` refuses is passed over and named to `passed_over`.
+pub fn file_in_force(
+    game: &std::path::Path,
+    lang_folder: &std::path::Path,
+    records: &[Value],
+    own: Option<&str>,
+    file: &str,
+    usable: &dyn Fn(&[u8]) -> bool,
+    passed_over: &mut dyn FnMut(&Value),
+) -> Result<Option<InForce>, String> {
+    let dir_vpk = regex::Regex::new(r"(?i)_dir\.vpk$").expect("a fixed pattern");
+    let mut paks: Vec<(&Value, String)> = records
+        .iter()
+        .filter(|r| {
+            r.get("id").map(crate::js::string).as_deref() != own && r.get("enabled") != Some(&Value::Bool(false))
+        })
+        .flat_map(|r| {
+            files_of(r)
+                .into_iter()
+                .filter(|f| f.root == "lang" && dir_vpk.is_match(&f.rel_path))
+                .map(move |f| (r, f.rel_path))
+        })
+        .collect();
+    paks.sort_by(|a, b| pak_number(&a.1).partial_cmp(&pak_number(&b.1)).unwrap_or(std::cmp::Ordering::Equal));
+    for (r, rel) in paks {
+        // a pak that cannot be read is not the one in force either
+        let Ok(ix) = crate::vpk_shared::shared_index(&lang_folder.join(&rel)) else { continue };
+        if let Ok(Some(data)) = ix.read(file) {
+            if usable(&data) {
+                return Ok(Some((data, Some(r.clone()))));
+            }
+            passed_over(r);
+        }
+    }
+    let ix = crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
+    Ok(ix.read(file).map_err(|e| e.to_string())?.map(|d| (d, None)))
+}
