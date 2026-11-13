@@ -4025,3 +4025,238 @@ test('catalog pictures in Rust are found, fetched, kept and rechecked as the Typ
   for (const f of fs.readdirSync(dirFor('ts'))) assert.deepEqual(fs.readFileSync(path.join(dirFor('rs'), f)), fs.readFileSync(path.join(dirFor('ts'), f)), f);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('release notes and the star count in Rust read and keep what the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const notes = await import('../src/release-notes.ts');
+  const starsMod = await import('../src/repo-stars.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-info-'));
+
+  // the changelogs: the repository's own two, and made-up ones with the odd headings
+  const real = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
+  const realRu = fs.readFileSync(path.join(root, 'CHANGELOG.ru.md'), 'utf8');
+  const odd = [
+    '# Changelog', '', '## 3.1.0-beta.1', 'beta', '', '## 3.1.0 (2026-11-01)', '- one', '- two', '', '## 3.0.2', '', '## 3.0.1 - hotfix', 'fix',
+    '## 3.0.0', '- big', '## 2.9.9.1', 'four parts', '## 2.9.0', 'old', '## 10.0.0', 'far', '##3.0.0', 'no space',
+  ].join('\n');
+  const crlf = odd.replace(/\n/g, '\r\n');
+  const oddRu = '## 3.1.0\n- один\n## 3.0.0\r\n\r\n- большой\r\n';
+  const dirs: Record<string, string> = {};
+  for (const [name, en, ru] of [['real', real, realRu], ['odd', odd, oddRu], ['crlf', crlf, null], ['none', null, null]] as const) {
+    const d = path.join(tmp, name);
+    fs.mkdirSync(d);
+    if (en != null) fs.writeFileSync(path.join(d, 'CHANGELOG.md'), en);
+    if (ru != null) fs.writeFileSync(path.join(d, 'CHANGELOG.ru.md'), ru);
+    dirs[name] = d;
+  }
+  const realVersions = notes.changelogVersions(real);
+  const versionsOf = ['3.1.0', '3.1.0-beta.1', '3.0.2', '3.0.1', '3.0.0', '2.9.9.1', '2.9.0', '10.0.0', '4.0.0', '3', '', 'x.y'];
+  compare([
+    { name: 'release-notes.changelogSection', ts: notes.changelogSection as never, inputs: [
+      ...[odd, crlf, oddRu, ''].flatMap((t) => versionsOf.map((v) => [t, v])),
+      ...realVersions.slice(0, 6).map((v) => [real, v]), ...realVersions.slice(0, 3).map((v) => [realRu, v]),
+    ] },
+    { name: 'release-notes.changelogVersions', ts: notes.changelogVersions as never, inputs: [[odd], [crlf], [oddRu], [real], [realRu], ['']] },
+    { name: 'release-notes.notesRange', ts: notes.notesRange as never, inputs: [
+      ...[['3.1.0', null], ['3.1.0', '2.9.0'], ['3.0.2', '3.0.0'], ['3.1.0-beta.1', null], ['4.0.0', '3.0.1'], ['3', null], ['3.0.1', '3.0.1']]
+        .map(([v, s]) => [notes.changelogVersions(odd), v, s]),
+      [realVersions, realVersions[0], null], [realVersions, realVersions[0], realVersions[5]], [[], '1.0.0', null],
+    ] },
+    { name: 'release-notes.releaseNotes', ts: notes.releaseNotes as never, inputs: [
+      ...[['3.1.0', 'en', null], ['3.1.0', 'ru', null], ['3.0.2', 'ru', '2.9.0'], ['3.1.0-beta.1', 'en', null], ['9.9.9', 'en', null], ['3.0.0', 'ru', '3.0.0']]
+        .flatMap(([v, l, s]) => ['odd', 'crlf', 'none'].map((d) => [v, l, dirs[d], s])),
+      [realVersions[0], 'en', dirs.real, null], [realVersions[0], 'ru', dirs.real, realVersions[4]], [realVersions[2], 'ru', dirs.real, null],
+    ] },
+  ]);
+
+  // the star count, against a server that answers each side in the same order
+  const plan = [
+    { status: 200, body: JSON.stringify({ stargazers_count: 262, name: 'x' }) }, { status: 500, body: '' }, { status: 200, body: 'nope' },
+    { status: 200, body: JSON.stringify({ stargazers_count: 2.5 }) }, { status: 200, body: 'null' }, { status: 200, body: '{"stargazers_count":300}' },
+  ];
+  const seen: Record<string, string[]> = { ts: [], rs: [] };
+  const server = http.createServer((req, res) => {
+    const side = (req.url || '').split('/')[1];
+    seen[side].push(`${req.method} ${req.url} ${req.headers.accept}`);
+    const a = plan[seen[side].length - 1] ?? { status: 404, body: '' };
+    res.writeHead(a.status, { 'content-length': Buffer.byteLength(a.body) });
+    res.end(a.body);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const H = 3600 * 1000;
+  const ops: unknown[][] = [['now', 1000], ['get'], ['now', 2 * H], ['get'], ['now', 7 * H], ['get'], ['get'], ['get'], ['get'], ['get'], ['now', 20 * H], ['get']];
+  const caches: [string, string | null][] = [['plain', null], ['fresh', '{"stars":5,"at":0}'], ['broken', '{"stars":"5","at":0}'], ['odd', '[1]']];
+  const fileFor = (side: string, c: string) => path.join(tmp, `${side}-${c}.json`);
+  for (const side of ['ts', 'rs']) for (const [c, body] of caches) if (body != null) fs.writeFileSync(fileFor(side, c), body);
+  const list = path.join(tmp, 'calls.json');
+  // the first cache runs the whole plan; the rest only look at what they start from
+  const short: unknown[][] = [['now', 1000], ['get']];
+  fs.writeFileSync(list, JSON.stringify(caches.map(([c], i) => ['repo-stars.script', `${base}/rs`, fileFor('rs', c), i ? short : ops])));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async (cacheFile: string, steps: unknown[][]) => {
+    let clock = 0;
+    const s = starsMod.createRepoStars({ cacheFile, now: () => clock, fetch: ((_u: string, init: RequestInit) => fetch(`${base}/ts`, init)) as typeof fetch });
+    const out: unknown[] = [];
+    for (const op of steps) {
+      if (op[0] === 'now') { clock = op[1] as number; out.push(null); } else out.push(await s.get());
+    }
+    return out;
+  };
+  const want: unknown[] = [];
+  for (const [i, [c]] of caches.entries()) want.push(await run(fileFor('ts', c), i ? short : ops));
+  const got = (JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok!; });
+  server.closeAllConnections(); server.close();
+  assert.deepEqual(got, want);
+  assert.deepEqual(seen.rs, seen.ts.map((s) => s.replace('/ts', '/rs')));
+  for (const [c] of caches) assert.equal(fs.readFileSync(fileFor('rs', c), 'utf8'), fs.readFileSync(fileFor('ts', c), 'utf8'), c);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('finding Steam and Dota in Rust looks where the TypeScript looks', { skip }, async () => {
+  const steam = await import('../src/steam.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-steam-'));
+  const mk = (...p: string[]) => { const f = path.join(tmp, ...p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, ''); };
+  // Steam's root lists two more libraries; the first is what a moved library leaves behind, the
+  // second spells SteamApps the old way and has the game; a fallback has it too
+  const lib = (n: string) => path.join(tmp, n);
+  fs.mkdirSync(path.join(lib('root'), 'steamapps', 'common', 'dota 2 beta', 'game', 'dota'), { recursive: true });
+  const vdf = `"libraryfolders"\n{\n\t"0"\n\t{\n\t\t"path"\t\t"${lib('root').replace(/\\/g, '\\\\')}"\n\t}\n\t"1"\n\t{\n\t\t"path"  "${lib('moved').replace(/\\/g, '\\\\')}"\n\t}\n\t"2" { "path" "${lib('real').replace(/\\/g, '\\\\')}" }\n}\n`;
+  fs.writeFileSync(path.join(lib('root'), 'steamapps', 'libraryfolders.vdf'), vdf);
+  fs.mkdirSync(path.join(lib('moved'), 'steamapps', 'common', 'dota 2 beta', 'game', 'dota'), { recursive: true });
+  mk('real', 'SteamApps', 'common', 'dota 2 beta', 'game', 'bin', 'win64', 'dota2.exe');
+  mk('fallback', 'steamapps', 'common', 'dota 2 beta', 'game', 'dota', 'pak01_dir.vpk');
+  mk('linux', 'steamapps', 'common', 'dota 2 beta', 'game', 'bin', 'linuxsteamrt64', 'dota2');
+  fs.mkdirSync(lib('broken-vdf/steamapps/libraryfolders.vdf'), { recursive: true });
+
+  const joins: [boolean, string[]][] = [
+    [true, ['C:\\Steam', 'steamapps']], [true, ['C:/Steam/', 'steamapps', 'common']], [true, ['C:', 'x']], [true, ['a', '..', '..', 'b']],
+    [true, ['\\\\server\\share', 'x', '..', 'y']], [true, ['C:\\a\\.\\b\\', '']], [true, ['', '']], [true, ['/a//b/', 'c/']], [true, ['C:\\..\\x']],
+    [false, ['/home/u', '.steam', 'steam']], [false, ['a/', '../..', 'b']], [false, ['/', '..', 'x']], [false, ['x//', './y/']], [false, []],
+  ];
+  const win = process.platform === 'win32';
+  const reg = [
+    '\r\nHKEY_CURRENT_USER\\SOFTWARE\\Valve\\Steam\r\n    SteamPath    REG_SZ    c:/program files (x86)/steam\r\n\r\n', 'REG_SZ\tD:\\Steam  \n', 'REG_DWORD 0x1', '', 'REG_SZ    \r\n',
+  ];
+  compare([
+    { name: 'steam.join', ts: ((w: boolean, parts: string[]) => (w ? path.win32 : path.posix).join(...parts)) as never, inputs: joins },
+    { name: 'steam.regValue', ts: steam.regValue as never, inputs: reg.map((r) => [r]) },
+    { name: 'steam.parseLibraryFolders', ts: steam.parseLibraryFolders as never, inputs: [[vdf], [''], ['"path" "C:\\\\a\\\\b" "PATH" "x" "path"\n"y" "path" ""']] },
+    { name: 'steam.linuxSteamRoots', ts: ((h: string, x: string | null) => steam.linuxSteamRoots(h, x == null ? {} : { XDG_DATA_HOME: x })) as never, inputs: [['/home/u', null], ['/home/u', '/data'], ['/home/u', '']] },
+    { name: 'steam.steamappsDir', ts: steam.steamappsDir as never, inputs: ['root', 'real', 'nothing'].map((n) => [lib(n)]) },
+    { name: 'steam.pickSteamRoot', ts: steam.pickSteamRoot as never, inputs: [
+      [[null, '', lib('nope'), lib('real').replace(/\\/g, '/'), lib('root')], win], [[null, null], win], [[lib('real').replace(/\\/g, '/')], false],
+    ] },
+    { name: 'steam.fallbackLibraries', ts: ((w: boolean, h: string, x: string | null) => (x == null ? steam.fallbackLibraries(w, h) : (() => {
+      const was = process.env.XDG_DATA_HOME; process.env.XDG_DATA_HOME = x;
+      try { return steam.fallbackLibraries(w, h); } finally { if (was === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = was; }
+    })())) as never, inputs: [[true, '/home/u', null], [false, '/home/u', null], [false, '/home/u', '/data']] },
+    { name: 'steam.findDotaIn', ts: steam.findDotaIn as never, inputs: [
+      [lib('root'), [lib('fallback')]], [null, [lib('moved'), lib('MOVED'), lib('fallback')]], [lib('broken-vdf'), [lib('linux')]],
+      [lib('nope'), []], ['', ['', lib('real')]], [null, []],
+    ] },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the patch watcher in Rust notices what the TypeScript one notices', { skip }, async (t) => {
+  const patcher = await import('../src/patcher.ts');
+  const sg = await import('../src/patcher-signatures.ts');
+  const pw = await import('../src/patch-watch.ts');
+  const { spawn } = await import('node:child_process');
+  const src = path.join(sandboxGame, 'dota');
+  if (!fs.existsSync(path.join(src, 'gameinfo_branchspecific.gi'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const branch = fs.readFileSync(path.join(src, 'gameinfo_branchspecific.gi'));
+  const bin = process.platform === 'linux' ? ['bin', 'linuxsteamrt64'] : ['bin', 'win64'];
+  const sigs = `...\\..\\..\\bin\\win64\\dota2.exe~SHA1:${'A'.repeat(40)};CRC:01234567\r\n${sg.signatureLine(branch)}\r\nDIGEST:ABCDEF\r\n`;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pwatch-'));
+  const twin = (side: string) => {
+    const g = path.join(tmp, side, 'game');
+    fs.mkdirSync(path.join(g, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(g, ...bin), { recursive: true });
+    for (const f of ['gameinfo.gi', 'gameinfo_branchspecific.gi']) fs.copyFileSync(path.join(src, f), path.join(g, 'dota', f));
+    fs.writeFileSync(path.join(g, 'dota', 'steam.inf'), 'ClientVersion=6900\r\nServerVersion=6900\r\n');
+    fs.writeFileSync(path.join(g, ...bin, 'dota.signatures'), sigs);
+    fs.copyFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), path.join(g, 'dota', 'branch.orig'));
+    patcher.apply({ gamePath: g, folder: patcher.FOLDER, backupDir: path.join(tmp, side, 'backups') });
+    fs.copyFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), path.join(g, 'dota', 'branch.patched'));
+    return g;
+  };
+  const games = { ts: twin('ts'), rs: twin('rs') };
+  const empty = path.join(tmp, 'empty');
+  const onlyInf = path.join(tmp, 'inf');
+  fs.mkdirSync(path.join(onlyInf, 'dota'), { recursive: true });
+  fs.writeFileSync(path.join(onlyInf, 'dota', 'steam.inf'), 'x\nClientVersion=12abc\n');
+  compare([
+    { name: 'patch-watch.clientVersion', ts: pw.clientVersion as never, inputs: [[games.ts], [empty], [onlyInf]] },
+    { name: 'patch-watch.gameStamp', ts: pw.gameStamp as never, inputs: [[games.ts], [empty], [onlyInf], [null], ['']] },
+  ]);
+
+  const inf = (n: number) => `ClientVersion=${n}\r\n`;
+  const ops: unknown[][] = [
+    ['current'], ['start'], ['check'], ['start'], ['expects', true], ['check'],
+    ['copy', 'dota/branch.orig', 'dota/gameinfo_branchspecific.gi'], ['check'], ['check'],
+    ['write', 'dota/steam.inf', inf(6901)], ['check'], ['fail', true], ['write', 'dota/steam.inf', inf(6902)], ['check'], ['fail', false],
+    ['copy', 'dota/branch.patched', 'dota/gameinfo_branchspecific.gi'], ['check'],
+    ['write', 'dota/gameinfo.gi', `${fs.readFileSync(path.join(src, 'gameinfo.gi'), 'latin1').replace(/Game_LowViolence/, 'Game_LowViolence2')}\n`], ['check'], ['check'],
+    ['game', null], ['rearm'], ['current'], ['game', 'self'], ['rearm'], ['current'],
+    ['write', 'dota/steam.inf', inf(6903)], ['wait', 3000], ['current'],
+    ['stop'], ['write', 'dota/steam.inf', inf(6904)], ['wait', 1200], ['check'], ['current'],
+  ];
+  const sideOps = (side: 'ts' | 'rs') => ops.map((op) => (op[0] === 'game' && op[1] === 'self' ? ['game', games[side]] : op));
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['patch-watch.script', games.rs, 300, sideOps('rs')]]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async () => {
+    let game: string | null = games.ts;
+    let expects = false;
+    let fail = false;
+    let logs: unknown[] = [];
+    const w = pw.createPatchWatcher({
+      getGamePath: () => game, expectsPatch: () => expects, log: (m) => logs.push(m), debounceMs: 300,
+      onPatch: (e) => { logs.push({ patch: e }); if (fail) throw new Error('no'); },
+    });
+    const out: unknown[] = [];
+    for (const op of sideOps('ts')) {
+      let v: unknown = null;
+      const at = (rel: unknown) => path.join(games.ts, rel as string);
+      if (op[0] === 'start') w.start(op[1] as string | undefined);
+      else if (op[0] === 'check') w.check();
+      else if (op[0] === 'current') v = w.current();
+      else if (op[0] === 'rearm') w.rearm();
+      else if (op[0] === 'stop') w.stop();
+      else if (op[0] === 'expects') expects = op[1] as boolean;
+      else if (op[0] === 'fail') fail = op[1] as boolean;
+      else if (op[0] === 'game') game = op[1] as string | null;
+      else if (op[0] === 'write') fs.writeFileSync(at(op[1]), op[2] as string);
+      else if (op[0] === 'copy') fs.copyFileSync(at(op[1]), at(op[2]));
+      else if (op[0] === 'wait') await new Promise((ok) => setTimeout(ok, op[1] as number));
+      out.push({ v, logs });
+      logs = [];
+    }
+    w.stop();
+    return out;
+  };
+  const want = await run();
+  const got = JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[];
+  assert.ok(got[0].ok, got[0].error);
+  const norm = (v: unknown, side: 'ts' | 'rs') => JSON.parse(JSON.stringify(v).split(JSON.stringify(games[side]).slice(1, -1)).join('<game>'));
+  ops.forEach((op, j) => assert.deepEqual(norm(got[0].ok![j], 'rs'), norm(want[j], 'ts'), `${j} ${JSON.stringify(op)}`));
+  // the run went where it was meant to: Steam's check, a patch, a handler that threw, the polled change
+  const all = JSON.stringify(want);
+  for (const s of ['files-restored', '6901', 'patch handler failed: no', '6903']) assert.ok(all.includes(s), s);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

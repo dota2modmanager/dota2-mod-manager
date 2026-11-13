@@ -3,6 +3,7 @@
 
 pub mod ability_sounds;
 pub mod adopt;
+pub mod app_info;
 pub mod arcana;
 pub mod arcana_base_color;
 pub mod arcana_bases;
@@ -84,6 +85,7 @@ pub mod pak_stamp;
 pub mod particle_snapshot;
 pub mod particle_spec;
 pub mod particle_surface;
+pub mod patch_watch;
 pub mod patcher;
 pub mod patcher_gameinfo;
 pub mod patcher_signatures;
@@ -110,6 +112,7 @@ pub mod schema_service;
 pub mod scream_guard;
 pub mod settings;
 pub mod slot_zones;
+pub mod steam;
 pub mod terrain_age;
 pub mod unusual_effects;
 pub mod update_impact;

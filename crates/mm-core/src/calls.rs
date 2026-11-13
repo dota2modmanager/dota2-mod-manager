@@ -2537,6 +2537,102 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "release-notes.changelogSection" => json!(crate::app_info::changelog_section(&s(args, 0), &s(args, 1))),
+        "release-notes.changelogVersions" => json!(crate::app_info::changelog_versions(&s(args, 0))),
+        "release-notes.notesRange" => {
+            let versions: Vec<String> = args.first().and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::app_info::notes_range(&versions, &s(args, 1), opt_s(args, 2).as_deref()))
+        }
+        "release-notes.releaseNotes" => json!(crate::app_info::release_notes(&s(args, 0), &s(args, 1), std::path::Path::new(&s(args, 2)), opt_s(args, 3).as_deref())),
+        "repo-stars.script" => {
+            // (api, cacheFile, ops): the count on its own clock, each answer in turn
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let c = clock.clone();
+            let stars = crate::app_info::RepoStars::new(
+                std::path::Path::new(&s(args, 1)),
+                Some(&s(args, 0)),
+                Arc::new(crate::net_fetch::Net::default()),
+                Box::new(move || *c.lock().unwrap()),
+            );
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                out.push(match op[0].as_str().unwrap_or("") {
+                    "now" => {
+                        *clock.lock().unwrap() = op[1].as_f64().unwrap_or(0.0);
+                        Value::Null
+                    }
+                    "get" => stars.get().map_or(Value::Null, crate::js::json_number),
+                    other => return Err(format!("no step {other}")),
+                });
+            }
+            Value::Array(out)
+        }
+        "steam.join" => {
+            let parts: Vec<String> = args.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::steam::join(args.first().and_then(Value::as_bool).unwrap_or(false), &parts.iter().map(String::as_str).collect::<Vec<_>>()))
+        }
+        "steam.regValue" => json!(crate::steam::reg_value(&s(args, 0))),
+        "steam.parseLibraryFolders" => json!(crate::steam::parse_library_folders(&s(args, 0))),
+        "steam.linuxSteamRoots" => json!(crate::steam::linux_steam_roots(&s(args, 0), opt_s(args, 1).as_deref())),
+        "steam.steamappsDir" => json!(crate::steam::steamapps_dir(cfg!(windows), &s(args, 0))),
+        "steam.pickSteamRoot" => {
+            let c: Vec<Option<String>> = args.first().and_then(Value::as_array).map(|a| a.iter().map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+            json!(crate::steam::pick_steam_root(&c, args.get(1).and_then(Value::as_bool).unwrap_or(false)))
+        }
+        "steam.fallbackLibraries" => json!(crate::steam::fallback_libraries(args.first().and_then(Value::as_bool).unwrap_or(false), &s(args, 1), opt_s(args, 2).as_deref())),
+        "steam.findDotaIn" => {
+            let f: Vec<String> = args.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::steam::find_dota_in(cfg!(windows), opt_s(args, 0).as_deref(), &f))
+        }
+        "patch-watch.clientVersion" => json!(crate::patch_watch::client_version(std::path::Path::new(&s(args, 0)))),
+        "patch-watch.gameStamp" => json!(crate::patch_watch::game_stamp(opt_s(args, 0).as_deref().map(std::path::Path::new))),
+        "patch-watch.script" => {
+            // (game, debounceMs, ops): the watcher over a game folder the script itself changes
+            let game = Arc::new(Mutex::new(opt_s(args, 0)));
+            let expects = Arc::new(Mutex::new(false));
+            let fail = Arc::new(Mutex::new(false));
+            let logs = Arc::new(Mutex::new(Vec::<Value>::new()));
+            let (g, e, f, l, l2) = (game.clone(), expects.clone(), fail.clone(), logs.clone(), logs.clone());
+            let w = crate::patch_watch::PatchWatcher::new(
+                Box::new(move || g.lock().unwrap().clone().map(std::path::PathBuf::from)),
+                Box::new(move |ev| {
+                    l.lock().unwrap().push(json!({ "patch": ev }));
+                    if *f.lock().unwrap() { Err("no".into()) } else { Ok(()) }
+                }),
+                Box::new(move || *e.lock().unwrap()),
+                Box::new(move |m: &str| l2.lock().unwrap().push(json!(m))),
+                args.get(1).and_then(Value::as_u64),
+            );
+            let base = || std::path::PathBuf::from(game.lock().unwrap().clone().unwrap_or_default());
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let v = match op[0].as_str().unwrap_or("") {
+                    "start" => { w.start(op.get(1).and_then(Value::as_str).map(String::from)); Value::Null }
+                    "check" => { w.check(); Value::Null }
+                    "current" => json!(w.current()),
+                    "rearm" => { w.rearm(); Value::Null }
+                    "stop" => { w.stop(); Value::Null }
+                    "expects" => { *expects.lock().unwrap() = op[1].as_bool().unwrap_or(false); Value::Null }
+                    "fail" => { *fail.lock().unwrap() = op[1].as_bool().unwrap_or(false); Value::Null }
+                    "game" => { *game.lock().unwrap() = op[1].as_str().map(String::from); Value::Null }
+                    "write" => {
+                        let f = base().join(crate::js::string(&op[1]));
+                        std::fs::create_dir_all(f.parent().unwrap()).map_err(|e| e.to_string())?;
+                        std::fs::write(&f, crate::js::string(&op[2])).map_err(|e| e.to_string())?;
+                        Value::Null
+                    }
+                    "copy" => {
+                        std::fs::copy(base().join(crate::js::string(&op[1])), base().join(crate::js::string(&op[2]))).map_err(|e| e.to_string())?;
+                        Value::Null
+                    }
+                    "wait" => { std::thread::sleep(std::time::Duration::from_millis(op[1].as_u64().unwrap_or(0))); Value::Null }
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(json!({ "v": v, "logs": std::mem::take(&mut *logs.lock().unwrap()) }));
+            }
+            w.stop();
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
