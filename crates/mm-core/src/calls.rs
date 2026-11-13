@@ -4044,6 +4044,51 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "creator-premod.catalogProblems" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::creator::catalog_problems(args.get(1).unwrap_or(&Value::Null)))
+        }
+        "creator.missing" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::creator::Creator::missing(args.get(1).unwrap_or(&Value::Null)))
+        }
+        "creator.script" => {
+            // (lang, userData, ops): drafts by the order they were made ($k: the k-th new one), each answer or error
+            use base64::Engine;
+            let b64 = base64::engine::general_purpose::STANDARD;
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let c = crate::creator::Creator::new(std::path::Path::new(&s(args, 1)));
+            let mut made: Vec<String> = Vec::new();
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let id = |v: &Value| match v {
+                    Value::Number(k) => made.get(k.as_u64().unwrap_or(0) as usize).cloned().unwrap_or_default(),
+                    other => crate::js::string(other),
+                };
+                let r: Result<Value, String> = match op[0].as_str().unwrap_or("") {
+                    "save" => {
+                        let r = c.save(if op[1].is_null() { None } else { Some(id(&op[1])) }.as_deref(), &op[2]);
+                        if let (Ok(d), true) = (&r, op[1].is_null()) {
+                            made.push(crate::js::string(&d["id"]));
+                        }
+                        r.map(|d| c.shown(&d))
+                    }
+                    "attach" => c.attach(&id(&op[1]), &op[2], op[3].as_str().unwrap_or(""), std::path::Path::new(op[4].as_str().unwrap_or(""))).map(|d| c.shown(&d)),
+                    "remove" => c.remove(&id(&op[1])).map(|_| json!({})),
+                    "list" => Ok(Value::Array(c.list().iter().map(|d| c.shown(d)).collect())),
+                    "bundle" => {
+                        let previews: Vec<Option<Vec<u8>>> = op[2].as_array().cloned().unwrap_or_default().iter().map(|p| p.as_str().map(|x| b64.decode(x).unwrap_or_default())).collect();
+                        c.bundle(&id(&op[1]), &previews).map(|(name, zip)| json!({ "name": name, "zip": b64.encode(zip) }))
+                    }
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

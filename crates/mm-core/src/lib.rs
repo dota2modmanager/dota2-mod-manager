@@ -23,6 +23,7 @@ pub mod catalog_signature;
 pub mod channel_args;
 pub mod cosmetic_names;
 pub mod courier_models;
+pub mod creator;
 pub mod cursors;
 pub mod data;
 pub mod deep_links;

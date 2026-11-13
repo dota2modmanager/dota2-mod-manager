@@ -6931,3 +6931,106 @@ test('hero grids for the pick screen in Rust are built, merged and written as th
   assert.ok(tree(path.join(tmp, 'ts')).some(([f]) => f.endsWith('backup.json')));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('an author\'s drafts and the archive for the catalog in Rust are the TypeScript ones', { skip }, async () => {
+  const { createCreator } = await import('../src/creator.ts');
+  const { catalogProblems } = await import('../src/creator-premod.ts');
+  const AdmZip = (await import('adm-zip')).default;
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-creator-'));
+  const src = path.join(tmp, 'src');
+  fs.mkdirSync(src);
+  const put = (name: string, data: Buffer) => { fs.writeFileSync(path.join(src, name), data); return path.join(src, name); };
+  const vpk = Buffer.alloc(64); vpk.writeUInt32LE(0x55aa1234, 0); vpk.write('payload', 20);
+  const webp = Buffer.concat([Buffer.from('RIFF\x10\x00\x00\x00WEBPVP8 ', 'latin1'), Buffer.alloc(20, 7)]);
+  const files = {
+    vpk: put('mod.vpk', vpk), vpk2: put('other.VPK', Buffer.concat([vpk, Buffer.from('2')])), short: put('short.vpk', Buffer.from([0x34, 0x12])), notVpk: put('fake.vpk', Buffer.alloc(10, 1)),
+    webp: put('pic.webp', webp), png: put('pic.PNG', Buffer.from('\x89PNG fake', 'latin1')), mp4: put('clip.mp4', Buffer.alloc(30, 3)), txt: put('notes.txt', Buffer.from('x')),
+    dot: put('.png', Buffer.from('dot')), gone: path.join(src, 'missing.vpk'),
+  };
+  const drawn = webp.toString('base64');
+  const ops: unknown[][] = [
+    ['list'], ['save', null, {}], ['save', null, { name: '  Arcana Pudge  ', category: 'heroes', hero: 'pudge', author: 'https://x.y/z', description: 'd'.repeat(2100) }],
+    ['save', 0, { name: 'Zeus  Bolt', category: 'packs', hero: 'zuus', styles: [{ label: 'Red' }, { label: '' }, { label: 'A very long label' }, { label: 'four' }] }],
+    ['attach', 0, 0, 'vpk', files.vpk], ['attach', 0, 1, 'picture', files.png], ['attach', 0, 1, 'picture', files.webp], ['attach', 0, 2, 'vpk', files.vpk2],
+    ['attach', 0, 3, 'vpk', files.vpk], ['attach', 0, 0, 'vpk', files.notVpk], ['attach', 0, 0, 'vpk', files.short], ['attach', 0, 0, 'picture', files.txt],
+    ['attach', 0, 0, 'picture', files.dot], ['attach', 'not-an-id', 0, 'vpk', files.vpk], ['attach', 0, -1, 'vpk', files.vpk], ['attach', 0, 1.5, 'vpk', files.vpk],
+    ['bundle', 0, []], ['save', 0, { styles: [{ label: 'Only' }] }], ['list'],
+    ['attach', 1, 0, 'vpk', files.vpk], ['bundle', 1, []], ['attach', 1, 0, 'picture', files.mp4], ['bundle', 1, [null]], ['bundle', 1, [drawn]],
+    ['save', 1, { name: 'Arcana Pudge', replaces: { category: 'hero-items', name: 'Old Pudge' } }], ['bundle', 1, [drawn]],
+    ['save', 1, { styles: [{ label: 'Red' }, { label: 'Blue/Green' }], replaces: { category: '', name: 'x' }, hero: '', author: 'Me' }],
+    ['attach', 1, 1, 'vpk', files.vpk2], ['attach', 1, 1, 'picture', files.webp], ['bundle', 1, [drawn, null]],
+    ['save', 1, { name: 'Bolt', category: 'heroes', hero: 'Zeus', replaces: null, description: null }], ['bundle', 1, []],
+    ['save', null, { name: 7, author: ['x'], styles: [] }], ['list'], ['remove', 2], ['remove', 'bad'], ['list'], ['save', 'ffffffff-ffff-ffff-ffff-ffffffffffff', {}],
+  ];
+  const norm = (out: unknown[], ids: string[]) => {
+    let s = JSON.stringify(out);
+    ids.forEach((id, k) => { s = s.split(id).join(`$${k}`); });
+    return JSON.parse(s, (k, v) => {
+      if (k === 'updatedAt') return typeof v === 'number' && v > 0;
+      if (k === 'error' && /ENOENT|os error|no such file/i.test(v)) return '<io>';
+      if (k === 'zip') {
+        // the archive's bytes are each zip library's own: what is in it, and that the hash names the inner zip
+        const unpack = (b: Buffer): unknown[] => new AdmZip(b).getEntries().sort((x, y) => (x.entryName < y.entryName ? -1 : 1)).map((e) => {
+          const data = e.getData();
+          if (e.entryName.endsWith('.zip')) return [e.entryName, unpack(data)];
+          if (e.entryName.endsWith('.json')) return [e.entryName, data.toString('utf8')];
+          return [e.entryName, data.toString('base64')];
+        });
+        const b = Buffer.from(v, 'base64');
+        const zip = new AdmZip(b);
+        const hash = JSON.parse(zip.readAsText('hash.json'));
+        // AdmZip writes its entries sorted by name; which one is first is mod.json's to say
+        const first = zip.getEntry(JSON.parse(zip.readAsText('mod.json')).file)!;
+        assert.equal(hash.vpk_zip_hash, createHash('sha256').update(first.getData()).digest('hex'));
+        return (unpack(b) as unknown[][]).map((e) => (e[0] === 'hash.json' ? ['hash.json', JSON.stringify({ ...hash, vpk_zip_hash: 'x' })] : e));
+      }
+      return typeof v === 'string' ? v.replace(/-[0-9a-f]{6}(\.|"|$)/g, '-XXXXXX$1') : v;
+    });
+  };
+  const run = (l: string, ud: string) => {
+    setLang(l);
+    const c = createCreator({ userDataDir: ud });
+    const shown = (d: ReturnType<typeof c.save>) => ({ ...d, pictures: d.styles.map((s) => {
+      if (!s.picture || !/\.(png|jpe?g|webp|gif)$/i.test(s.picture)) return null;
+      const mime: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
+      return `data:${mime[path.extname(s.picture).toLowerCase()]};base64,${fs.readFileSync(path.join(c.folder(d.id), s.picture)).toString('base64')}`;
+    }), missing: c.missing(d), problems: catalogProblems(d) });
+    const made: string[] = [];
+    const id = (v: unknown) => (typeof v === 'number' ? made[v] ?? '' : String(v));
+    const out = ops.map((op) => {
+      try {
+        if (op[0] === 'list') return { ok: c.list().map(shown) };
+        if (op[0] === 'save') { const d = c.save(op[1] === null ? null : id(op[1]), op[2] as never); if (op[1] === null) made.push(d.id); return { ok: shown(d) }; }
+        if (op[0] === 'attach') return { ok: shown(c.attach(id(op[1]), op[2] as number, op[3] as 'vpk', op[4] as string)) };
+        if (op[0] === 'remove') { c.remove(id(op[1])); return { ok: {} }; }
+        if (op[0] === 'bundle') { const r = c.bundle(id(op[1]), (op[2] as (string | null)[]).map((p) => (p === null ? null : Buffer.from(p, 'base64')))); return { ok: { name: r.name, zip: r.zip.toString('base64') } }; }
+      } catch (e) { return { error: (e as Error).message }; }
+      return null;
+    });
+    setLang('en');
+    return { out, made };
+  };
+  for (const l of ['en', 'ru']) {
+    const want = run(l, path.join(tmp, `ts-${l}`));
+    const list = path.join(tmp, `calls-${l}.json`);
+    fs.writeFileSync(list, JSON.stringify([['creator.script', l, path.join(tmp, `rs-${l}`), ops]]));
+    const [got] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: unknown[]; error?: string }[];
+    assert.ok(got.ok, got.error);
+    const rsIds = (got.ok as { ok?: { id?: string } }[]).filter((_, i) => ops[i][0] === 'save' && ops[i][1] === null).map((a) => a.ok?.id ?? '');
+    const a = norm(got.ok!, rsIds) as unknown[];
+    const b = norm(want.out, want.made) as unknown[];
+    ops.forEach((op, i) => assert.deepEqual(a[i], b[i], `${l} ${i} ${JSON.stringify(op).slice(0, 120)}`));
+    assert.ok(b.filter((x, i) => ops[i][0] === 'bundle' && (x as { ok?: unknown }).ok).length >= 3, 'archives were made');
+  }
+  const drafts = [
+    { name: 'Arcana Pudge', category: 'heroes', hero: 'pudge', styles: [{ label: 'x' }] }, { name: 'Light', category: 'heroes', hero: 'keeper_of_the_light', styles: [] },
+    { name: 'K'.repeat(35), category: 'herofx', hero: 'Keeper of the Light', styles: [] }, { name: 'Ж', category: 'cursors', hero: '', styles: [{ label: 'a' }, { label: 'b'.repeat(13) }, {}, {}] },
+    { name: '', category: 'hero-sounds', hero: 'Axe', styles: [] }, { name: 'Axe2', category: 'hero-sounds', hero: 'Axe', styles: [{ label: 'é'.repeat(12) }, { label: '😀'.repeat(7) }] },
+  ];
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  compare([
+    { name: 'creator-premod.catalogProblems', ts: ((l: string, d: never) => lang(l, () => catalogProblems(d))) as never, inputs: ['ru', 'en'].flatMap((l) => drafts.map((d) => [l, d])) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
