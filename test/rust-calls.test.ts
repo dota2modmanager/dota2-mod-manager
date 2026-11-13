@@ -5370,3 +5370,144 @@ test('the game watch, the quick exit after Play and the upkeep at start in Rust 
   }
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('a hero\'s layers, a material\'s inputs and the effect finder in Rust read the game as the TypeScript does', { skip }, async () => {
+  const rl = await import('../src/recolor-layers.ts');
+  const lm = await import('../src/loadout-material.ts');
+  const { createEffectFinder } = await import('../src/effect-finder.ts');
+  const { buildVpk, entryAt, openVpkIndex } = await import('../src/vpk.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-layers-'));
+  const buf = (s: string) => Buffer.from(s, 'latin1');
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+
+  // a hand-built game: three heroes' scripts, their particles, icons, body textures and names
+  const hero = (name: string, model: string, abilities: string[]) => `"DOTAHeroes"\n{\n\t"npc_dota_hero_${name}"\n\t{\n\t\t"Model"\t\t"models/heroes/${model}/${model}.vmdl"\n${abilities.map((a, i) => `\t\t"Ability${i + 1}"\t\t"${a}"\n`).join('')}\t}\n}\n`;
+  const scripts: Record<string, string> = {
+    juggernaut: hero('juggernaut', 'Juggernaut', ['juggernaut_blade_fury', 'juggernaut_healing_ward', 'juggernaut_blade_dance', 'special_bonus_attack_speed_20', 'generic_hidden',
+      'juggernaut_omni_slash', 'juggernaut_omni_slash_ad', 'juggernaut_blade_fury', 'juggernaut_swift_slash', 'juggernaut_empty1']),
+    crystal_maiden: hero('crystal_maiden', 'crystal_maiden', ['crystal_maiden_crystal_nova', 'crystal_maiden_frostbite', 'crystal_maiden_brilliance_aura', 'crystal_maiden_freezing_field']),
+    drow_ranger: hero('drow_ranger', 'drow', ['drow_ranger_frost_arrows', 'drow_ranger_wave_of_silence', 'dota_empty_ability']),
+  };
+  const P = 'particles/units/heroes/';
+  const paths = [
+    `${P}hero_juggernaut/juggernaut_blade_fury.vpcf_c`, `${P}hero_juggernaut/juggernaut_blade_fury_glow.vpcf_c`, `${P}hero_juggernaut/juggernaut_omni_slash_tgt.vpcf_c`,
+    `${P}hero_juggernaut/juggernaut_omni_slash_scepter_trail.vpcf_c`, `${P}hero_juggernaut/juggernaut_crit_tgt.vpcf_c`, `${P}hero_juggernaut/juggernaut_swift_slash.vpcf_c`,
+    `${P}hero_juggernaut/juggernaut_healing_ward_eruption.vpcf_c`, `${P}hero_juggernaut/healing_ward.vmdl_c`,
+    `${P}hero_crystalmaiden/maiden_crystal_nova.vpcf_c`, `${P}hero_crystalmaiden/maiden_freezing_field_snow.vpcf_c`, `${P}hero_crystalmaiden/maiden_frostbite_buff.vpcf_c`,
+    `${P}hero_crystalmaiden/maiden_loadout.vpcf_c`, `${P}hero_drow/drow_frost_arrow.vpcf_c`, `${P}hero_drow/drow_silence_wave.vpcf_c`,
+    'panorama/images/spellicons/juggernaut_blade_fury_png.vtex_c', 'panorama/images/spellicons/juggernaut_omni_slash_png.vtex_c',
+    'panorama/images/heroes/npc_dota_hero_juggernaut_png.vtex_c', 'panorama/images/heroes/selection/npc_dota_hero_juggernaut_png.vtex_c',
+    'materials/models/heroes/juggernaut/juggernaut_color_psd_1a2b3c.vtex_c', 'materials/models/heroes/juggernaut/sub/sword_color_psd_aa.vtex_c',
+    'materials/models/heroes/juggernaut/juggernaut_normal_psd_1a.vtex_c', 'materials/models/heroes/juggernaut/mask_color_tga_ff00.vtex_c',
+    'particles/econ/items/juggernaut/bladekeeper/bladekeeper_spin.vpcf_c', 'particles/econ/items/juggernaut/fury.vpcf_c', 'particles/econ/items/crystalmaiden/x/long_name_effect.vpcf_c',
+    'particles/econ/items/juggernaut/fury_red.vpcf_c',
+  ];
+  const tokens = (lang: string, names: Record<string, string>) => `"lang"\n{\n\t"Language"\t\t"${lang}"\n\t"Tokens"\n\t{\n${Object.entries(names).map(([k, v]) => `\t\t"DOTA_Tooltip_ability_${k}"\t\t"${v}"\n`).join('')}\t}\n}\n`;
+  const files: [string, Buffer][] = [
+    ...Object.entries(scripts).map(([h, s]) => [`scripts/npc/heroes/npc_dota_hero_${h}.txt`, Buffer.from(s)] as [string, Buffer]),
+    ...paths.map((p) => [p, Buffer.from(`file ${p}`)] as [string, Buffer]),
+    ['resource/localization/abilities_english.txt', Buffer.from(tokens('English', { juggernaut_blade_fury: 'Blade Fury', juggernaut_omni_slash: 'Omnislash', crystal_maiden_crystal_nova: 'Crystal Nova', drow_ranger_frost_arrows: 'Frost Arrows', juggernaut_swift_slash: '' }))],
+    ['resource/localization/abilities_russian.txt', Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(tokens('Russian', { juggernaut_blade_fury: 'Вихрь клинков', crystal_maiden_frostbite: 'Обморожение', drow_ranger_frost_arrows: 'Ледяные стрелы' }), 'utf16le')])],
+  ];
+  const pak = path.join(tmp, 'pak01_dir.vpk');
+  fs.writeFileSync(pak, buildVpk(files.map(([p, b]) => entryAt(p, b))));
+  const items = [
+    { id: '1', name: 'Sword', particles: ['Particles/econ/items/juggernaut/fury.vpcf', 'particles/econ/items/juggernaut/fury.vpcf', 'particles/missing.vpcf'], textures: ['materials/models/heroes/juggernaut/juggernaut_color_psd_1a2b3c.vtex_c', 'materials/gone.vtex_c'] },
+    { id: '2', name: 'Mask', particles: [], textures: ['materials/models/heroes/juggernaut/juggernaut_color_psd_1a2b3c.vtex_c', 'materials/models/heroes/juggernaut/mask_color_tga_ff00.vtex_c'] },
+    { id: '3', name: 'Cape', particles: ['particles/econ/items/juggernaut/bladekeeper/bladekeeper_spin.vpcf'] },
+  ];
+  const blocks = [
+    `"model_player" "models/items/juggernaut/sword.vmdl" "model_player1" " Models/Items/Juggernaut/Mask.VMDL " "model_player2" "materials/x.vmat"`,
+    `"visuals" { "asset_modifier" { "type" "entity_model" "asset" "models/heroes/juggernaut/healing_ward.vmdl" "modifier" "models/items/juggernaut/ward/ward.vmdl" } "asset_modifier1" { "type" "particle" "asset" "a.vpcf" "modifier" "b.vpcf" }`
+      + ` "asset_modifier2" { "type" "additional_wearable" "asset" "models/items/x/extra.vmdl" "modifier" "models/items/x/no.vmdl" "offsets" { "type" "model" "modifier" "models/items/x/inner.vmdl" } }`
+      + ` "asset_modifier3" { "type" "Hero_Model_Change" "asset" "models/heroes/juggernaut/juggernaut.vmdl" "modifier" "models/heroes/juggernaut/arcana.vmdl" } "asset_modifier4" { "type" "pet" "modifier" "models/pets/x.vmdl" } }`,
+    '', `"model_player" "models/items/juggernaut/sword.vmdl" "model_player" "models/items/juggernaut/sword.vmdl"`,
+  ];
+  const layers = rl.heroLayers(paths, 'juggernaut', rl.heroAbilities(scripts.juggernaut), items, rl.heroModelFolder(scripts.juggernaut));
+  const pixels = Buffer.from(Array.from({ length: 64 * 4 }, (_, i) => (i * 37 + (i % 4 === 3 ? 0 : 11)) % 256)).toString('latin1');
+  compare([
+    { name: 'recolor-layers.abilities', ts: rl.heroAbilities, inputs: [...Object.values(scripts).map((s) => [s]), [''], ['"Ability1" "invoker_emp_ad" "Ability2" "invoker_emp" "Ability3" "x_ad"']] },
+    { name: 'recolor-layers.modelFolder', ts: rl.heroModelFolder as never, inputs: [...Object.values(scripts).map((s) => [s]), ['"Model" "models/creeps/x.vmdl"'], ['']] },
+    { name: 'recolor-layers.particleFolder', ts: rl.heroParticleFolder as never, inputs: ['juggernaut', 'crystal_maiden', 'drow_ranger', 'naga_siren', 'vengefulspirit', 'abyssal_underlord'].map((h) => [paths, h]) },
+    { name: 'recolor-layers.layers', ts: rl.heroLayers as never, inputs: [
+      ...Object.entries(scripts).map(([h, s]) => [paths, h, rl.heroAbilities(s), items, rl.heroModelFolder(s)]),
+      [paths, 'juggernaut', ['juggernaut_omni_slash', 'juggernaut_omni_slash_scepter', 'juggernaut_blade_fury'], [], null], [[], 'juggernaut', ['juggernaut_blade_fury'], items, 'juggernaut'],
+    ] },
+    { name: 'recolor-layers.withChildren', ts: ((roots: string[], refs: Record<string, string[]>) => rl.withChildren(roots, (p) => refs[p] ?? [])) as never, inputs: [
+      [['a.vpcf_c', 'b.vpcf_c'], { 'a.vpcf_c': ['c.vpcf_c', 'm.vmat_c', 'a.vpcf_c'], 'c.vpcf_c': ['b.vpcf_c', 'd.vpcf_c'], 'b.vpcf_c': ['e.vpcf_c'] }], [[], {}], [['x.vmat_c'], { 'x.vmat_c': ['y.vpcf_c'] }],
+    ] },
+    { name: 'recolor-layers.shadePixels', ts: ((px: string, c: [number, number, number], o: { bgra?: boolean }) => { const b = buf(px); const n = rl.shadePixels(b, c, o); return [b.toString('latin1'), n]; }) as never, inputs: [
+      [pixels, [255, 0, 0], {}], [pixels, [0, 128, 255], { bgra: true }], [pixels, [30, 200, 90], {}], ['abc', [255, 0, 0], {}], ['', [1, 2, 3], {}],
+    ] },
+    { name: 'recolor-layers.withShares', ts: rl.withShares as never, inputs: [[layers], [[]]] },
+    { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocks.map((x) => [x]) },
+  ]);
+  assert.ok(layers.some((l) => l.id === 'itemModel:2') && rl.withShares(layers).some((s) => s.shares.length), 'two items share a texture');
+
+  // the finder: names in two languages, a search, the swaps of an item table
+  const table = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(table, `"items_game" { "items" { "1" { "visuals" { "asset_modifier0" { "type" "particle" "asset" "Particles\\units\\heroes\\hero_juggernaut\\juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/fury.vpcf" }`
+    + ` "asset_modifier1" { "type" "particle" "asset" "particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/fury_red.vpcf" }`
+    + ` "asset_modifier2" { "type" "particle_create" "asset" "particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/bladekeeper/bladekeeper_spin.vpcf" }`
+    + ` "asset_modifier3" { "type" "particle" "asset" "particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf" "modifier" "particles/econ/items/juggernaut/gone.vpcf" } } } } }`);
+  const heroes = ['juggernaut', 'crystal_maiden', 'drow_ranger', 'Bad Hero', 'nobody'];
+  const ops: unknown[][] = [
+    ['hero', 'en', 'juggernaut'], ['hero', 'ru', 'crystal_maiden'], ['hero', 'en', 'drow_ranger'], ['hero', 'en', 'nobody'], ['hero', 'en', '../x'],
+    ['ability', 'en', 'juggernaut', 'juggernaut_blade_fury'], ['ability', 'ru', 'juggernaut', 'juggernaut_omni_slash'], ['ability', 'en', 'juggernaut', 'juggernaut_blade_dance'],
+    ['abilities', 'en', heroes, 'blade'], ['abilities', 'en', heroes, 'FROST   arrow'], ['abilities', 'ru', heroes, 'ледяные'], ['abilities', 'ru', heroes, 'maiden'], ['abilities', 'en', heroes, '  '],
+    ['abilities', 'zh-CN', heroes, 'nova'],
+    ['variants', { $file: table }, ['particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf', 'x.vpcf']], ['variants', null, ['particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf']],
+  ];
+  const runFinder = (pakFile: string, list: unknown[][]) => {
+    const ix = openVpkIndex(pakFile);
+    let lang = 'en';
+    let tableText: string | null = null;
+    let hs: string[] = [];
+    const f = createEffectFinder({ index: () => ix, lang: () => lang, heroes: () => hs.map((h) => ({ hero: h, name: h })), table: () => tableText });
+    return list.map((op) => {
+      if (op[0] === 'variants') { tableText = op[1] ? fs.readFileSync((op[1] as { $file: string }).$file).toString('latin1') : null; return f.variants(op[2] as string[]); }
+      lang = op[1] as string;
+      if (op[0] === 'hero') return f.hero(op[2] as string);
+      if (op[0] === 'ability') return f.ability(op[2] as string, op[3] as string);
+      hs = op[2] as string[];
+      return f.abilities(op[3] as string);
+    });
+  };
+  const finder = (pakFile: string, list: unknown[][]) => {
+    const l = path.join(tmp, `finder-${path.basename(path.dirname(pakFile))}.json`);
+    fs.writeFileSync(l, JSON.stringify([['effect-finder.script', pakFile, list]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: unknown; error?: string }[];
+    assert.ok(r.ok, r.error);
+    return r.ok;
+  };
+  const want = JSON.parse(JSON.stringify(runFinder(pak, ops)));
+  assert.deepEqual(finder(pak, ops), want);
+  assert.ok(JSON.stringify(want).includes('Ледяные стрелы') && JSON.stringify(want).includes('fury_red'), JSON.stringify(want.slice(-2)));
+
+  // the game itself, when this machine has it: heroes, abilities, swaps, materials, models
+  if (fs.existsSync(GAME_PAK01)) {
+    const ix = openVpkIndex(GAME_PAK01);
+    const all = [...ix.paths()];
+    const real = path.join(tmp, 'items_game_real.txt');
+    fs.writeFileSync(real, ix.read('scripts/items/items_game.txt')!);
+    const many = ['juggernaut', 'crystal_maiden', 'invoker', 'drow_ranger', 'phantom_assassin', 'nevermore', 'pudge'];
+    const gameOps: unknown[][] = [
+      ...many.map((h) => ['hero', 'en', h]), ['hero', 'ru', 'juggernaut'],
+      ['ability', 'en', 'juggernaut', 'juggernaut_blade_fury'], ['ability', 'ru', 'invoker', 'invoker_sun_strike'], ['ability', 'en', 'pudge', 'pudge_meat_hook'],
+      ['abilities', 'en', many, 'blade'], ['abilities', 'ru', many, 'крюк'], ['abilities', 'en', many, 'ice wall'],
+    ];
+    const ab = runFinder(GAME_PAK01, [['ability', 'en', 'juggernaut', 'juggernaut_blade_fury'], ['ability', 'en', 'pudge', 'pudge_meat_hook']]) as { files: string[] }[];
+    gameOps.push(['variants', { $file: real }, ab.flatMap((a) => a?.files ?? [])]);
+    assert.deepEqual(finder(GAME_PAK01, gameOps), JSON.parse(JSON.stringify(runFinder(GAME_PAK01, gameOps))));
+    const write = (p: string, k: number) => { const at = path.join(tmp, `m${k}`); fs.writeFileSync(at, ix.read(p)!); return { $file: at }; };
+    const mats = spread(all.filter((p) => p.endsWith('.vmat_c')), 150).map(write);
+    const models = spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 25).map((p) => p.replace(/_c$/, ''));
+    const blocksReal = spread(fs.readFileSync(real, 'latin1').split(/\n\t\t"\d+"\n/), 60);
+    compare([
+      { name: 'loadout.material', ts: ((f: string) => lm.readLoadoutMaterial(buf(f)) && (({ gemParams, ...rest }) => rest)(lm.readLoadoutMaterial(buf(f))!)) as never, inputs: mats.map((m) => [m]) },
+      { name: 'recolor-layers.modelColorTextures', ts: ((m: string[]) => rl.modelColorTextures(m, (p) => ix.read(p))) as never, inputs: [[models], ...models.slice(0, 8).map((m) => [[m]])] },
+      { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocksReal.map((x) => [x]) },
+    ].map((c) => (c.name === 'recolor-layers.modelColorTextures' ? { ...c, inputs: c.inputs.map((i) => [...i, GAME_PAK01]) } : c)));
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

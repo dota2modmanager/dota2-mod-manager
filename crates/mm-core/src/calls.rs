@@ -3075,6 +3075,91 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             });
             json!({ "answers": answers, "log": diag })
         }
+        "loadout.material" => json!(crate::loadout_material::read_loadout_material(Some(&b(args, 0)?))),
+        "recolor-layers.abilities" => json!(crate::recolor_layers::hero_abilities(&s(args, 0))),
+        "recolor-layers.modelFolder" => json!(crate::recolor_layers::hero_model_folder(&s(args, 0))),
+        "recolor-layers.particleFolder" => {
+            let paths: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            json!(crate::recolor_layers::hero_particle_folder(paths.iter().map(String::as_str), &s(args, 1)))
+        }
+        "recolor-layers.layers" => {
+            // (paths, hero, abilities, items, model)
+            let paths: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let paths: Vec<&str> = paths.iter().map(String::as_str).collect();
+            let abilities: Vec<String> = serde_json::from_value(args[2].clone()).map_err(|e| e.to_string())?;
+            let items: Vec<crate::recolor_layers::WornItem> =
+                serde_json::from_value(args.get(3).cloned().filter(|v| !v.is_null()).unwrap_or(json!([]))).map_err(|e| e.to_string())?;
+            let model = args.get(4).and_then(Value::as_str);
+            json!(crate::recolor_layers::hero_layers(&paths, &s(args, 1), &abilities, &items, model))
+        }
+        "recolor-layers.withChildren" => {
+            // (roots, {path: [refs]})
+            let roots: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let refs = args.get(1).cloned().unwrap_or(json!({}));
+            json!(crate::recolor_layers::with_children(&roots, &mut |p| {
+                refs.get(p).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect()
+            }))
+        }
+        "recolor-layers.shadePixels" => {
+            let mut px = b(args, 0)?.as_ref().clone();
+            let bgra = args.get(2).and_then(|o| o.get("bgra")).is_some_and(crate::js::truthy);
+            let n = crate::recolor_layers::shade_pixels(&mut px, rgb(args, 1), bgra);
+            json!([px.iter().map(|&c| c as char).collect::<String>(), n])
+        }
+        "recolor-layers.modelColorTextures" => {
+            // (models, pak)
+            let models: Vec<String> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 1))).map_err(|e| e.to_string())?;
+            json!(crate::recolor_layers::model_color_textures(&models, &mut |p| ix.read(p).ok().flatten()))
+        }
+        "recolor-layers.withShares" => {
+            let layers: Vec<Value> = serde_json::from_value(args[0].clone()).map_err(|e| e.to_string())?;
+            let layers: Vec<crate::recolor_layers::RecolorLayer> = layers
+                .iter()
+                .map(|l| crate::recolor_layers::RecolorLayer {
+                    id: crate::js::string(&l["id"]),
+                    kind: match l["kind"].as_str().unwrap_or("") {
+                        "ability" => "ability",
+                        "abilityIcon" => "abilityIcon",
+                        "effects" => "effects",
+                        "portrait" => "portrait",
+                        "body" => "body",
+                        "item" => "item",
+                        _ => "itemModel",
+                    },
+                    name: l.get("name").and_then(Value::as_str).map(String::from),
+                    files: l["files"].as_array().into_iter().flatten().map(crate::js::string).collect(),
+                })
+                .collect();
+            json!(crate::recolor_layers::with_shares(&layers))
+        }
+        "recolor-layers.itemModelPaths" => json!(crate::recolor_layers::item_model_paths(&crate::kv::latin1(&b(args, 0)?))),
+        "effect-finder.script" => {
+            // (pak, ops): ['ability', lang, hero, ability], ['variants', table, files], ['hero', lang, hero],
+            // ['abilities', lang, heroes, query]
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let mut f = crate::effect_finder::EffectFinder::default();
+            let mut out = Vec::new();
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let t = |i: usize| a.get(i).map(crate::js::string).unwrap_or_default();
+                let list = |i: usize| -> Vec<String> { a.get(i).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect() };
+                out.push(match t(0).as_str() {
+                    "ability" => json!(f.ability(&ix, &t(1), &t(2), &t(3))),
+                    "variants" => {
+                        let table = match a.get(1) {
+                            Some(Value::Null) | None => None,
+                            _ => Some(crate::kv::latin1(&b(&a, 1)?)),
+                        };
+                        json!(f.variants(&ix, table.as_deref(), &list(2)))
+                    }
+                    "hero" => json!(f.hero(&ix, &t(1), &t(2))),
+                    "abilities" => json!(f.abilities(&ix, &t(1), &list(2), &t(3))),
+                    other => json!({ "error": format!("no step {other}") }),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
