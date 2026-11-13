@@ -2537,6 +2537,36 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "release-notes.changelogSection" => json!(crate::app_info::changelog_section(&s(args, 0), &s(args, 1))),
+        "release-notes.changelogVersions" => json!(crate::app_info::changelog_versions(&s(args, 0))),
+        "release-notes.notesRange" => {
+            let versions: Vec<String> = args.first().and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::app_info::notes_range(&versions, &s(args, 1), opt_s(args, 2).as_deref()))
+        }
+        "release-notes.releaseNotes" => json!(crate::app_info::release_notes(&s(args, 0), &s(args, 1), std::path::Path::new(&s(args, 2)), opt_s(args, 3).as_deref())),
+        "repo-stars.script" => {
+            // (api, cacheFile, ops): the count on its own clock, each answer in turn
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let c = clock.clone();
+            let stars = crate::app_info::RepoStars::new(
+                std::path::Path::new(&s(args, 1)),
+                Some(&s(args, 0)),
+                Arc::new(crate::net_fetch::Net::default()),
+                Box::new(move || *c.lock().unwrap()),
+            );
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                out.push(match op[0].as_str().unwrap_or("") {
+                    "now" => {
+                        *clock.lock().unwrap() = op[1].as_f64().unwrap_or(0.0);
+                        Value::Null
+                    }
+                    "get" => stars.get().map_or(Value::Null, crate::js::json_number),
+                    other => return Err(format!("no step {other}")),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

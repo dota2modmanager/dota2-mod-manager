@@ -4025,3 +4025,97 @@ test('catalog pictures in Rust are found, fetched, kept and rechecked as the Typ
   for (const f of fs.readdirSync(dirFor('ts'))) assert.deepEqual(fs.readFileSync(path.join(dirFor('rs'), f)), fs.readFileSync(path.join(dirFor('ts'), f)), f);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('release notes and the star count in Rust read and keep what the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const notes = await import('../src/release-notes.ts');
+  const starsMod = await import('../src/repo-stars.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-info-'));
+
+  // the changelogs: the repository's own two, and made-up ones with the odd headings
+  const real = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8');
+  const realRu = fs.readFileSync(path.join(root, 'CHANGELOG.ru.md'), 'utf8');
+  const odd = [
+    '# Changelog', '', '## 3.1.0-beta.1', 'beta', '', '## 3.1.0 (2026-11-01)', '- one', '- two', '', '## 3.0.2', '', '## 3.0.1 - hotfix', 'fix',
+    '## 3.0.0', '- big', '## 2.9.9.1', 'four parts', '## 2.9.0', 'old', '## 10.0.0', 'far', '##3.0.0', 'no space',
+  ].join('\n');
+  const crlf = odd.replace(/\n/g, '\r\n');
+  const oddRu = '## 3.1.0\n- один\n## 3.0.0\r\n\r\n- большой\r\n';
+  const dirs: Record<string, string> = {};
+  for (const [name, en, ru] of [['real', real, realRu], ['odd', odd, oddRu], ['crlf', crlf, null], ['none', null, null]] as const) {
+    const d = path.join(tmp, name);
+    fs.mkdirSync(d);
+    if (en != null) fs.writeFileSync(path.join(d, 'CHANGELOG.md'), en);
+    if (ru != null) fs.writeFileSync(path.join(d, 'CHANGELOG.ru.md'), ru);
+    dirs[name] = d;
+  }
+  const realVersions = notes.changelogVersions(real);
+  const versionsOf = ['3.1.0', '3.1.0-beta.1', '3.0.2', '3.0.1', '3.0.0', '2.9.9.1', '2.9.0', '10.0.0', '4.0.0', '3', '', 'x.y'];
+  compare([
+    { name: 'release-notes.changelogSection', ts: notes.changelogSection as never, inputs: [
+      ...[odd, crlf, oddRu, ''].flatMap((t) => versionsOf.map((v) => [t, v])),
+      ...realVersions.slice(0, 6).map((v) => [real, v]), ...realVersions.slice(0, 3).map((v) => [realRu, v]),
+    ] },
+    { name: 'release-notes.changelogVersions', ts: notes.changelogVersions as never, inputs: [[odd], [crlf], [oddRu], [real], [realRu], ['']] },
+    { name: 'release-notes.notesRange', ts: notes.notesRange as never, inputs: [
+      ...[['3.1.0', null], ['3.1.0', '2.9.0'], ['3.0.2', '3.0.0'], ['3.1.0-beta.1', null], ['4.0.0', '3.0.1'], ['3', null], ['3.0.1', '3.0.1']]
+        .map(([v, s]) => [notes.changelogVersions(odd), v, s]),
+      [realVersions, realVersions[0], null], [realVersions, realVersions[0], realVersions[5]], [[], '1.0.0', null],
+    ] },
+    { name: 'release-notes.releaseNotes', ts: notes.releaseNotes as never, inputs: [
+      ...[['3.1.0', 'en', null], ['3.1.0', 'ru', null], ['3.0.2', 'ru', '2.9.0'], ['3.1.0-beta.1', 'en', null], ['9.9.9', 'en', null], ['3.0.0', 'ru', '3.0.0']]
+        .flatMap(([v, l, s]) => ['odd', 'crlf', 'none'].map((d) => [v, l, dirs[d], s])),
+      [realVersions[0], 'en', dirs.real, null], [realVersions[0], 'ru', dirs.real, realVersions[4]], [realVersions[2], 'ru', dirs.real, null],
+    ] },
+  ]);
+
+  // the star count, against a server that answers each side in the same order
+  const plan = [
+    { status: 200, body: JSON.stringify({ stargazers_count: 262, name: 'x' }) }, { status: 500, body: '' }, { status: 200, body: 'nope' },
+    { status: 200, body: JSON.stringify({ stargazers_count: 2.5 }) }, { status: 200, body: 'null' }, { status: 200, body: '{"stargazers_count":300}' },
+  ];
+  const seen: Record<string, string[]> = { ts: [], rs: [] };
+  const server = http.createServer((req, res) => {
+    const side = (req.url || '').split('/')[1];
+    seen[side].push(`${req.method} ${req.url} ${req.headers.accept}`);
+    const a = plan[seen[side].length - 1] ?? { status: 404, body: '' };
+    res.writeHead(a.status, { 'content-length': Buffer.byteLength(a.body) });
+    res.end(a.body);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const H = 3600 * 1000;
+  const ops: unknown[][] = [['now', 1000], ['get'], ['now', 2 * H], ['get'], ['now', 7 * H], ['get'], ['get'], ['get'], ['get'], ['get'], ['now', 20 * H], ['get']];
+  const caches: [string, string | null][] = [['plain', null], ['fresh', '{"stars":5,"at":0}'], ['broken', '{"stars":"5","at":0}'], ['odd', '[1]']];
+  const fileFor = (side: string, c: string) => path.join(tmp, `${side}-${c}.json`);
+  for (const side of ['ts', 'rs']) for (const [c, body] of caches) if (body != null) fs.writeFileSync(fileFor(side, c), body);
+  const list = path.join(tmp, 'calls.json');
+  // the first cache runs the whole plan; the rest only look at what they start from
+  const short: unknown[][] = [['now', 1000], ['get']];
+  fs.writeFileSync(list, JSON.stringify(caches.map(([c], i) => ['repo-stars.script', `${base}/rs`, fileFor('rs', c), i ? short : ops])));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async (cacheFile: string, steps: unknown[][]) => {
+    let clock = 0;
+    const s = starsMod.createRepoStars({ cacheFile, now: () => clock, fetch: ((_u: string, init: RequestInit) => fetch(`${base}/ts`, init)) as typeof fetch });
+    const out: unknown[] = [];
+    for (const op of steps) {
+      if (op[0] === 'now') { clock = op[1] as number; out.push(null); } else out.push(await s.get());
+    }
+    return out;
+  };
+  const want: unknown[] = [];
+  for (const [i, [c]] of caches.entries()) want.push(await run(fileFor('ts', c), i ? short : ops));
+  const got = (JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok!; });
+  server.closeAllConnections(); server.close();
+  assert.deepEqual(got, want);
+  assert.deepEqual(seen.rs, seen.ts.map((s) => s.replace('/ts', '/rs')));
+  for (const [c] of caches) assert.equal(fs.readFileSync(fileFor('rs', c), 'utf8'), fs.readFileSync(fileFor('ts', c), 'utf8'), c);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

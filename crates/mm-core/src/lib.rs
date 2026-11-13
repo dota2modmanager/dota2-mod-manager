@@ -3,6 +3,7 @@
 
 pub mod ability_sounds;
 pub mod adopt;
+pub mod app_info;
 pub mod arcana;
 pub mod arcana_base_color;
 pub mod arcana_bases;

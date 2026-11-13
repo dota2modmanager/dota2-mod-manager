@@ -143,7 +143,7 @@ fn main() {
             let path = req.uri().path().to_string();
             std::thread::spawn(move || {
                 let ud = app.state::<ported::UserData>().0.clone();
-                responder.respond(app.state::<ported::Previews>().answer(&ud, &path));
+                responder.respond(app.state::<ported::Shared>().picture(&ud, &path));
             });
         })
         .setup(move |app| {
@@ -154,7 +154,7 @@ fn main() {
                 .unwrap_or_else(|| app.path().app_data_dir().unwrap_or_default());
             let user_data = std::path::absolute(&user_data).unwrap_or(user_data);
             app.manage(ported::UserData(user_data.clone()));
-            app.manage(ported::Previews::new());
+            app.manage(ported::Shared::new());
             let env = vec![
                 ("MM_USER_DATA".to_string(), user_data.to_string_lossy().into_owned()),
                 ("MM_APP_VERSION".to_string(), app.package_info().version.to_string()),
@@ -163,7 +163,9 @@ fn main() {
             ];
             // the switches src/main.ts reads off its own command line (--write-jail, --background...)
             let pass: Vec<String> = argv.iter().skip(1).filter(|a| a.starts_with("--")).cloned().collect();
-            let host = Sidecar::start(handle.clone(), host_paths(app), env, pass)?;
+            let paths = host_paths(app);
+            app.manage(ported::AppRoot(paths.root.clone()));
+            let host = Sidecar::start(handle.clone(), paths, env, pass)?;
             app.manage(Host(host));
 
             let win = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
