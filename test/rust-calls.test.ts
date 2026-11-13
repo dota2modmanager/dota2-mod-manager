@@ -2023,3 +2023,195 @@ test('the patch in Rust goes in, signs, comes out and backs up as the TypeScript
   });
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the listing in Rust, and the terrain ages, update impact, notice text and scream guard behind it, match the TypeScript', { skip }, async () => {
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { Fingerprints } = await import('../src/fingerprints.ts');
+  const ta = await import('../src/terrain-age.ts');
+  const ui = await import('../src/update-impact.ts');
+  const nt = await import('../src/notice-text.ts');
+  const { createScreamGuard } = await import('../src/scream-guard.ts');
+  const { createModsListing } = await import('../src/mods-listing.ts');
+  const { listVpkPathsFile } = await import('../src/vpk-read.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk-write.ts');
+  const { fingerprintVpk } = await import('../src/vpk-fingerprint.ts');
+  const AdmZip = (await import('adm-zip')).default;
+  const crypto = await import('node:crypto');
+  const sha1 = (b: Buffer) => crypto.createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-svc-'));
+  const pak = (files: Record<string, string | Buffer>) => buildVpk(Object.entries(files).map(([p, d]) => entryAt(p, Buffer.from(d))));
+  // a zip whose entries carry the dates given, as a packer's clock wrote them
+  const zip = (files: Record<string, [string | Buffer, Date]>) => {
+    const z = new AdmZip();
+    for (const [n, [d, when]] of Object.entries(files)) { z.addFile(n, Buffer.from(d)); z.getEntries().at(-1)!.header.time = when; }
+    return z.toBuffer();
+  };
+  const chat = ['"lang"', '{', '\t"Language"\t"russian"', '\t"Tokens"', '\t{', '\t\t"chat_hi"\t"Привет { }"', '\t\t"DOTA_VAC_Verification_Header"\t"old"', '\t}', '}', ''].join('\r\n');
+  const day = (y: number, m: number, d: number) => new Date(y, m - 1, d, 12, 0, 0);
+  const valve = { 'resource/localization/chat_russian.txt': chat, 'models/a.vmdl_c': 'v1', 'models/b.vmdl_c': 'v1', 'models/gone.vmdl_c': 'g' };
+  const modA = { 'models/a.vmdl_c': 'mine', 'models/b.vmdl_c': 'mine', 'models/gone.vmdl_c': 'mine', 'models/new.vmdl_c': 'mine' };
+  const rec = (id: string, name: string, categoryId: string, relPaths: string[], extra: Record<string, unknown> = {}) =>
+    ({ id, name, categoryId, enabled: true, files: relPaths.map((relPath) => ({ root: 'lang', relPath })), ...extra });
+  const inputs: Record<string, string | Buffer> = {
+    'game/dota/pak01_dir.vpk': pak(valve), 'game/dota/maps/dota.vpk': 'valve map',
+    // build 6946: one of the mod's files changed, one gone, one shipped new
+    'in/pak01_6946.vpk': pak({ ...Object.fromEntries(Object.entries(valve).filter(([k]) => k !== 'models/gone.vmdl_c')), 'models/a.vmdl_c': 'v2', 'models/new.vmdl_c': 'n' }),
+    'in/pak01_6950.vpk': pak({ ...valve, 'models/b.vmdl_c': 'v3' }),
+    'game/dota/cfg/boot.vcfg': '"config"\n{\n\t"UILanguage"\t\t"russian"\n}\n',
+    'game/dota_russian/gameinfo.gi': 'gi',
+    'game/dota_russian/pak02_dir.vpk': pak(modA),
+    'game/dota_russian/maps/dota.vpk': 'old map',
+    'game/dota_russian/pak04_dir.vpk': pak({ 'materials/scream_fx/a.vmat_c': 's' }),
+    'game/dota_russian/pak05_dir.vpk': pak({ 'models/heroes/juggernaut/juggernaut.vmdl_c': 'j', 'materials/models/heroes/juggernaut/j.vmat_c': 'jm' }),
+    'game/dota_russian/pak06_dir.vpk': pak({ 'models/foreign.vmdl_c': 'f' }),
+    'game/dota_russian/pak07_dir.vpk': pak(modA),
+    'game/dota_russian/pak08_dir.vpk': pak({ 'materials/emblem/e.vmat_c': 'e' }),
+    'ud/downloads/terrains/old.zip': zip({ 'T/readme.txt': ['r', day(2026, 9, 1)], 'T/maps/dota.vpk': ['m', day(2026, 8, 19)] }),
+    'in/new.zip': zip({ 'maps\\dota.vpk': ['m', day(2026, 9, 20)] }),
+    'in/nomap.zip': zip({ 'x.txt': ['x', day(2026, 9, 20)] }),
+    'in/notzip.bin': 'not a zip',
+    'lib/manifest.json': JSON.stringify({ installed: [
+      rec('ma', 'Mod A', 'heroes', ['pak02_dir.vpk'], { fileRef: 'a.zip' }),
+      { ...rec('tr', 'Dota+ Autumn', 'terrains', ['maps/dota.vpk'], { fileRef: 'old.zip' }) },
+      rec('sc', 'Scream', 'heroes', ['pak04_dir.vpk']),
+      rec('im', 'pak05', 'imported', ['pak05_dir.vpk'], { schema: [{ id: '1' }, { id: '2' }] }),
+      rec('em', 'Emblem', 'emblems', ['pak08_dir.vpk']),
+      rec('gone', 'Deleted by hand', 'heroes', ['pak30_dir.vpk']),
+    ], presets: [] }),
+  };
+  const twin = (side: string) => {
+    const r = path.join(tmp, side);
+    for (const [f, d] of Object.entries(inputs)) {
+      fs.mkdirSync(path.dirname(path.join(r, f)), { recursive: true });
+      fs.writeFileSync(path.join(r, f), d);
+    }
+    return r;
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const at = (p: unknown) => (String(p).startsWith('@/') ? path.join(a, ...String(p).slice(2).split('/')) : String(p));
+  FileTx.journalDir = path.join(a, 'journal');
+  const game = path.join(a, 'game');
+  const inst = new Installer({ userDataDir: path.join(a, 'ud'), getGamePath: () => game, getLangSuffix: () => 'russian' });
+  const lib = new Library(path.join(a, 'lib'));
+  const fp = new Fingerprints(path.join(a, 'ud'));
+  let tails: Record<string, string | null> = {};
+  const terrain = ta.createTerrainAges({
+    downloadsDir: inst.downloadsDir, gamePath: () => game, storeFile: path.join(a, 'ud', 'terrain-ages.json'),
+    fetchTail: async (_c, f) => { const t = tails[f]; if (typeof t !== 'string') throw new Error('offline'); return fs.readFileSync(at(t)); },
+  });
+  let build: string | null = null;
+  const mods = () => ui.impactMods(lib.list(), (r) => inst.langFileOnDisk(r));
+  const impact = ui.createUpdateImpact({ file: path.join(a, 'ud', 'update-impact.json'), gamePath: () => game, mods, build: () => build });
+  const notice = nt.createNoticeText({ gamePath: () => game, langDir: () => inst.langFolder(), diag: () => {} });
+  const guardFor = (key: unknown) => createScreamGuard({
+    library: lib, settings: { get: () => key },
+    pathsOf: (r) => {
+      const dir = (r.files || []).find((f) => f.root === 'lang' && /_dir\.vpk$/i.test(f.relPath));
+      if (!dir) return [];
+      try { return listVpkPathsFile(inst.langFileOnDisk(dir.relPath)); } catch { return null; }
+    },
+    switchOff: (r) => { inst.setEnabled(r.files, false, r.id); lib.setEnabled(r.id, false); },
+  });
+  const run = async (op: unknown[]): Promise<unknown> => {
+    switch (op[0]) {
+      case 'copy': fs.copyFileSync(at(op[1]), at(op[2])); return null;
+      case 'setMtime': { const when = new Date(op[2] as number); fs.utimesSync(at(op[1]), when, when); return null; }
+      case 'zipTime': return ta.mapTimeInArchive(at(op[1]));
+      case 'zipTimeBytes': return ta.mapTimeInZip(fs.readFileSync(at(op[1])));
+      case 'stale': return ta.isStale(op[1], op[2]);
+      case 'ages': return Object.fromEntries(terrain.forRecords(lib.list()));
+      case 'terrainOff': { const off: string[] = []; const names = terrain.switchOffStale(lib.list(), (r) => off.push(r.id)); return { names, off }; }
+      case 'terrainCatalog': {
+        const hashes = op[2] as Record<string, string>;
+        tails = op[3] as Record<string, string | null>;
+        return terrain.forCatalog(op[1] as never, (f) => hashes[f] || null);
+      }
+      case 'scream': return guardFor(op[1])();
+      case 'impactCheck': build = op[1] as string; return impact.check();
+      case 'impactMarked': return Object.fromEntries(impact.marked());
+      case 'impactClear': return impact.clear(op[1] as string);
+      case 'uiLang': return nt.uiLanguage(game);
+      case 'declared': return nt.declaredLanguage(op[1] as string);
+      case 'withTokens': return nt.withTokens(op[1] as string, op[2] as Record<string, string>);
+      case 'noticePlan': {
+        const p = nt.plan({ gamePath: game, langDir: inst.langFolder() });
+        return p.action === 'write' ? { action: p.action, sha1: sha1(p.bytes), language: p.language } : p;
+      }
+      case 'noticeApply': return nt.applyNotice({ gamePath: game, langDir: inst.langFolder() });
+      case 'noticeRefresh': return notice.refresh();
+      case 'noticeOwned': return notice.ownedFiles();
+      case 'fpStore': { fp.apply(JSON.parse(op[1] as string)); fs.writeFileSync(fp.file, op[1] as string); return null; }
+      case 'libList': return lib.list();
+      case 'listMods': {
+        const listing = createModsListing({
+          installer: inst, library: lib, fingerprints: fp, schemaService: { state: () => ({ enabled: false }) } as never,
+          diag: () => {}, refreshPresence: () => {}, verifyStuck: () => false, updateImpact: impact, terrainAges: terrain,
+          notice: { ownedFiles: () => notice.ownedFiles(), refresh: () => null } as never, guard: guardFor(op[1]),
+        } as never);
+        const out = listing();
+        await new Promise((r) => setImmediate(r));
+        return out;
+      }
+    }
+    throw new Error(`no step ${op[0]}`);
+  };
+  // the map Valve shipped on 3 September, and the mods' own files on fixed dates
+  const ms = (y: number, m: number, d: number) => Date.UTC(y, m - 1, d, 10, 0, 0);
+  const steps: unknown[][] = [
+    ['setMtime', '@/game/dota/maps/dota.vpk', ms(2026, 9, 3)], ['setMtime', '@/game/dota/pak01_dir.vpk', ms(2026, 9, 3)],
+    ...['02', '04', '05', '06', '07', '08'].map((n) => ['setMtime', `@/game/dota_russian/pak${n}_dir.vpk`, ms(2026, 9, 1)]),
+    ['zipTime', '@/ud/downloads/terrains/old.zip'], ['zipTime', '@/in/new.zip'], ['zipTime', '@/in/nomap.zip'], ['zipTime', '@/in/notzip.bin'], ['zipTime', '@/in/missing.zip'],
+    ['zipTimeBytes', '@/ud/downloads/terrains/old.zip'],
+    ['stale', ms(2026, 8, 19), ms(2026, 9, 3)], ['stale', ms(2026, 9, 3), ms(2026, 9, 3)], ['stale', ms(2026, 9, 2) + 1, ms(2026, 9, 3)], ['stale', null, ms(2026, 9, 3)], ['stale', 5, 'x'],
+    ['ages'], ['terrainOff'], ['terrainOff'], ['libList'],
+    ['terrainCatalog', [{ file: 'old.zip' }, { file: 'new.zip' }, { file: 'nomap.zip' }, { file: 'x.txt' }, null, {}], { 'old.zip': 'h1' }, { 'old.zip': '@/ud/downloads/terrains/old.zip', 'new.zip': '@/in/new.zip', 'nomap.zip': '@/in/nomap.zip' }],
+    ['terrainCatalog', [{ file: 'old.zip' }, { file: 'new.zip' }], { 'old.zip': 'h1' }, {}],
+    ['terrainCatalog', [{ file: 'old.zip' }], { 'old.zip': 'h2' }, {}],
+    ['impactMarked'], ['impactCheck', '6900'], ['impactCheck', '6900'], ['impactMarked'],
+    ['copy', '@/in/pak01_6946.vpk', '@/game/dota/pak01_dir.vpk'], ['setMtime', '@/game/dota/pak01_dir.vpk', ms(2026, 10, 7)], ['impactCheck', '6946'], ['impactMarked'], ['impactCheck', '6946'],
+    ['impactClear', 'ma'], ['impactClear', 'ma'], ['impactMarked'], ['setMtime', '@/game/dota_russian/pak02_dir.vpk', ms(2026, 10, 8)], ['impactMarked'],
+    ['copy', '@/in/pak01_6950.vpk', '@/game/dota/pak01_dir.vpk'], ['setMtime', '@/game/dota/pak01_dir.vpk', ms(2026, 10, 9)], ['impactCheck', '6950'], ['impactMarked'],
+    ['uiLang'], ['declared', '"lang"\n{\n\t"Language"\t"Dutch"\n'], ['declared', 'no header'], ['declared', `${' '.repeat(600)}"Language" "x"`],
+    ['withTokens', chat, { DOTA_VAC_Verification_Header: 'new', K2: 'two' }], ['withTokens', '"lang" { "Tokens" { "a" "}" // }\n } }', { K: 'v' }],
+    ['withTokens', 'no block', { K: 'v' }], ['withTokens', '"lang"\n{\n"Tokens"\n{\n"a"\t"b"}\n}\n', { K: 'v' }],
+    ['noticePlan'], ['noticeApply'], ['noticeApply'], ['noticeOwned'], ['noticeRefresh'], ['noticeRefresh'],
+    ['scream', ''], ['libList'], ['scream', 'key'], ['libList'],
+    // the foreign pak is a catalog mod, and the imported one is too
+    ['fpStore', JSON.stringify({ mods: {
+      [fingerprintVpk(inputs['game/dota_russian/pak06_dir.vpk'] as Buffer)]: [{ name: 'Foreign HUD', categoryId: 'hud' }],
+      [fingerprintVpk(inputs['game/dota_russian/pak02_dir.vpk'] as Buffer)]: { name: 'Mod A', categoryId: 'heroes' },
+      other: { name: 'Mod A', categoryId: 'heroes' },
+    } })],
+    ['listMods', ''], ['libList'],
+  ];
+  const ops: unknown[][] = [];
+  const want: unknown[] = [];
+  try {
+    for (const op of steps) {
+      ops.push(op);
+      try { want.push({ ok: JSON.parse(JSON.stringify((await run(structuredClone(op))) ?? null)) }); } catch { want.push({ error: true }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'svc.json');
+  fs.writeFileSync(list, JSON.stringify([['services.script', b, path.join(b, 'game'), 'russian', path.join(b, 'journal'), path.join(b, 'ud'), path.join(b, 'lib'), ops]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 }));
+  // the side's own folder appears in a few answers
+  const same = (v: unknown) => JSON.parse(JSON.stringify(v).replaceAll(JSON.stringify(b).slice(1, -1), JSON.stringify(a).slice(1, -1)));
+  (rs.ok as { ok?: unknown; error?: unknown }[]).forEach((g, k) => {
+    assert.deepEqual('error' in g ? { error: true } : same(g), want[k], `${k} ${JSON.stringify(ops[k]).slice(0, 200)}`);
+  });
+  // the ownership note carries the time it was written
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .map((d) => {
+      const p = path.join(d.parentPath, d.name);
+      if (!d.isFile()) return `${path.relative(g, p)}/`;
+      let body = fs.readFileSync(p);
+      if (d.name === 'dota2modmanager.json') { const j = JSON.parse(body.toString()); delete j.updated; body = Buffer.from(JSON.stringify(j)); }
+      return `${path.relative(g, p)} ${sha1(body)}`;
+    }).sort();
+  assert.deepEqual(tree(b).filter((l) => !l.startsWith('svc.json')), tree(a));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

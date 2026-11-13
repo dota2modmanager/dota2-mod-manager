@@ -27,6 +27,8 @@ export const TABLES = [
   ['arcana-notes.json', 'src/arcana-notes.ts', 'ARCANA_NOTES'],
   ['arcanas-that-work.json', 'src/arcana-notes.ts', 'ARCANAS_THAT_WORK'],
   ['heroes-not-checked.json', 'src/arcana-notes.ts', 'HEROES_NOT_CHECKED'],
+  ['notice-texts.json', 'src/notice-texts.ts', 'NOTICE_TEXTS'],
+  ['notice-keys.json', 'src/notice-texts.ts', 'NOTICE_KEYS'],
 ];
 
 /** Every table as the text its file should hold. */

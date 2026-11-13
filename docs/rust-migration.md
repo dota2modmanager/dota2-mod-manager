@@ -123,6 +123,11 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | the fingerprint index without the fetch (`fingerprints.ts`) | done | no | `fingerprints.rs`; parity: no cache, a stored map, lists and single identities, prints by mod, font matching, a broken file. Found and fixed in the TypeScript: `printsOf` on a fresh index lost the map it was building |
 | updating a catalog mod in its slot (`mod-update.ts`) | done | no | `mod_update.rs`; the download is the caller's; parity: what can update, behind or current, a repacked pak, a mod the index does not know, an update in place of a split pak |
 | the emblem ring line in autoexec (`emblem-ring.ts`) | done | no | `emblem_ring.rs`; parity: empty, CRLF, a line of ours, the user's own line, added and removed on disk |
+| whole-map terrains and the game's map (`terrain-age.ts`) | done | no | `terrain_age.rs`; a zip's DOS time is read as local time with the same roll-over as `new Date(...)` (`chrono`); parity: archives with and without a map, a tail, the margin, the once-per-map switch-off, the catalog cache by hash |
+| which mods a Dota update reached (`update-impact.ts`) | done | no | `update_impact.rs`; parity: the first note, a patch that changes, removes and adds files under a mod, the mark cleared and set again by the next patch |
+| the anti-cheat notice pak (`notice-text.ts`, texts in `data/notice-texts.json`) | done | no | `notice_text.rs`; parity: the language, the tokens put in and replaced, the plan, the write, up to date, the refresh |
+| the pumpkin's mod guard (`scream-guard.ts`) | done | no | `scream_guard.rs` |
+| the mods:list answer (`mods-listing.ts`) | done | no | `mods_listing.rs`; the work after the answer (notice refresh, Discord, ring line) is the caller's; parity: a record deleted by hand, a stale terrain, a copy of the pumpkin's mod, an import named by its content, a foreign pak the catalog knows, a leftover copy, a mod an update reached, the ownership note |
 | the `mods:*` channels in the Tauri shell | - | - | next |
 | catalog, network, previews (`mm-preview://`) | - | - | `reqwest`; the picture redirect (`src/preview-cache.ts`) has no Tauri twin yet |
 | item builder, arcana, Workshop editors | - | - | |

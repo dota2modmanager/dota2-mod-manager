@@ -97,6 +97,183 @@ fn tx_ops(tx: &mut crate::file_tx::FileTx, root: &std::path::Path, ops: &Value) 
     Ok(())
 }
 
+/// What the services' parity script keeps between its steps.
+struct Services {
+    fp: crate::fingerprints::Fingerprints,
+    terrain: crate::terrain_age::TerrainAges,
+    impact: crate::update_impact::UpdateImpact,
+    notice: crate::notice_text::NoticeText,
+}
+
+/// One step of the services behind mods:list (terrain ages, update impact, the notice text, the
+/// scream guard and the listing itself); anything else is a step of `write_step`.
+fn services_step(
+    root: &std::path::Path,
+    inst: &crate::installer::Installer,
+    lib: &mut crate::library::Library,
+    sv: &mut Services,
+    op: &Value,
+) -> Result<Value, String> {
+    use std::path::PathBuf;
+    let at = |v: &Value| -> PathBuf {
+        let p = crate::js::string(v);
+        match p.strip_prefix("@/") {
+            Some(rest) => rest.split('/').fold(root.to_path_buf(), |p, s| p.join(s)),
+            None => PathBuf::from(p),
+        }
+    };
+    let text = |v: &Value| crate::js::string(v);
+    let lang = inst.lang_folder().ok();
+    let mods_of = |lib: &crate::library::Library| {
+        crate::update_impact::impact_mods(lib.list(), &|r| inst.lang_file_on_disk(r).unwrap_or_default())
+    };
+    let num = |n: Option<f64>| n.map_or(Value::Null, crate::js::json_number);
+    Ok(match op[0].as_str().unwrap_or("") {
+        "copy" => {
+            std::fs::copy(at(&op[1]), at(&op[2])).map_err(|e| e.to_string())?;
+            Value::Null
+        }
+        "setMtime" => {
+            let f = std::fs::File::options().write(true).open(at(&op[1])).map_err(|e| e.to_string())?;
+            let ms = op[2].as_u64().unwrap_or(0);
+            f.set_modified(std::time::UNIX_EPOCH + std::time::Duration::from_millis(ms)).map_err(|e| e.to_string())?;
+            Value::Null
+        }
+        "zipTime" => num(crate::terrain_age::map_time_in_archive(&at(&op[1]))),
+        "zipTimeBytes" => {
+            num(crate::terrain_age::map_time_in_zip(&std::fs::read(at(&op[1])).map_err(|e| e.to_string())?))
+        }
+        "stale" => json!(crate::terrain_age::is_stale(op[1].as_f64(), op[2].as_f64())),
+        "ages" => {
+            let ages = sv.terrain.for_records(lib.list());
+            Value::Object(
+                ages.into_iter().map(|(id, a)| (id, json!({ "builtAt": num(a.built_at), "stale": a.stale }))).collect(),
+            )
+        }
+        "terrainOff" => {
+            let mut off = Vec::new();
+            let names = sv.terrain.switch_off_stale(lib.list(), &mut |r| off.push(r["id"].clone()));
+            json!({ "names": names, "off": off })
+        }
+        "terrainCatalog" => {
+            let terrains = op[1].as_array().cloned().unwrap_or_default();
+            let hashes = op[2].clone();
+            let tails = op[3].clone();
+            let hash_of = |f: &str| hashes.get(f).and_then(Value::as_str).map(String::from);
+            let mut fetch = |_: &str, f: &str| -> Result<Option<Vec<u8>>, String> {
+                match tails.get(f) {
+                    Some(v) if v.is_string() => std::fs::read(at(v)).map(Some).map_err(|e| e.to_string()),
+                    _ => Err("offline".into()),
+                }
+            };
+            sv.terrain.for_catalog(&terrains, &hash_of, &mut fetch)
+        }
+        "scream" => {
+            let key = op[1].clone();
+            let mut log = |_: String| {};
+            json!(crate::scream_guard::guard(
+                lib,
+                &key,
+                &mut |rec| {
+                    let dir = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null))
+                        .into_iter()
+                        .find(|f| f.root == "lang" && f.rel_path.to_lowercase().ends_with("_dir.vpk"));
+                    let Some(dir) = dir else { return Some(Vec::new()) };
+                    let p = inst.lang_file_on_disk(&dir.rel_path).ok()?;
+                    crate::vpk::read_index_file(&p).and_then(|b| crate::vpk::list_paths(&b)).ok()
+                },
+                &mut |lib, rec| {
+                    let files = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null));
+                    inst.set_enabled(&files, false, rec.get("id").and_then(Value::as_str))?;
+                    lib.set_enabled(&rec["id"], false, None).map_err(|e| e.to_string())?;
+                    Ok(())
+                },
+                &mut log,
+            )?)
+        }
+        "impactCheck" => {
+            let mods = mods_of(lib);
+            sv.impact.check(&mods, op[1].as_str().map(String::from), &mut |_| {})?
+        }
+        "impactMarked" => Value::Object(sv.impact.marked(&mods_of(lib)).into_iter().collect()),
+        "impactClear" => json!(sv.impact.clear(&text(&op[1]))?),
+        "uiLang" => json!(crate::notice_text::ui_language(inst.game.as_deref().unwrap_or(std::path::Path::new("")))),
+        "declared" => json!(crate::notice_text::declared_language(&text(&op[1]))),
+        "withTokens" => {
+            let tokens: indexmap::IndexMap<String, String> =
+                op[2].as_object().map(|o| o.iter().map(|(k, v)| (k.clone(), text(v))).collect()).unwrap_or_default();
+            json!(crate::notice_text::with_tokens(&text(&op[1]), &tokens))
+        }
+        "noticePlan" => crate::notice_text::plan_value(&crate::notice_text::plan(
+            inst.game.as_deref().unwrap_or(std::path::Path::new("")),
+            lang.as_deref().unwrap_or(std::path::Path::new("")),
+        )),
+        "noticeApply" => json!(crate::notice_text::apply_notice(inst.game.as_deref(), lang.as_deref())?),
+        "noticeRefresh" => {
+            json!(sv.notice.refresh(
+                inst.game.as_deref(),
+                lang.as_deref().unwrap_or(std::path::Path::new("")),
+                &mut |_| {}
+            ))
+        }
+        "noticeOwned" => {
+            json!(crate::notice_text::NoticeText::owned_files(lang.as_deref().unwrap_or(std::path::Path::new(""))))
+        }
+        "fpStore" => {
+            sv.fp.store(&text(&op[1]))?;
+            Value::Null
+        }
+        "listMods" => {
+            let key = op[1].clone();
+            let impact = &sv.impact;
+            let marked = |lib: &crate::library::Library| Ok(impact.marked(&mods_of(lib)));
+            let mut guard = |lib: &mut crate::library::Library| -> Result<(), String> {
+                crate::scream_guard::guard(
+                    lib,
+                    &key,
+                    &mut |rec| {
+                        let dir = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null))
+                            .into_iter()
+                            .find(|f| f.root == "lang" && f.rel_path.to_lowercase().ends_with("_dir.vpk"));
+                        let Some(dir) = dir else { return Some(Vec::new()) };
+                        let p = inst.lang_file_on_disk(&dir.rel_path).ok()?;
+                        crate::vpk::read_index_file(&p).and_then(|b| crate::vpk::list_paths(&b)).ok()
+                    },
+                    &mut |lib, rec| {
+                        let files = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null));
+                        inst.set_enabled(&files, false, rec.get("id").and_then(Value::as_str))?;
+                        lib.set_enabled(&rec["id"], false, None).map_err(|e| e.to_string())?;
+                        Ok(())
+                    },
+                    &mut |_| {},
+                )
+                .map(|_| ())
+            };
+            let owned =
+                crate::notice_text::NoticeText::owned_files(lang.as_deref().unwrap_or(std::path::Path::new("")));
+            let (answer, after) = crate::mods_listing::list_mods(
+                inst,
+                lib,
+                crate::mods_listing::ListingDeps {
+                    fingerprints: &mut sv.fp,
+                    terrain_ages: &sv.terrain,
+                    marked: Some(&marked),
+                    guard: Some(&mut guard),
+                    notice_owned: owned,
+                    schema_on: false,
+                    verify_stuck: json!(false),
+                    diag: &mut |_| {},
+                },
+            );
+            if let (Some(on), Some(game)) = (after.ring_on, inst.game.as_deref()) {
+                crate::emblem_ring::keep_ring(game, on)?;
+            }
+            answer
+        }
+        _ => write_step(root, inst, lib, op)?,
+    })
+}
+
 /// One step of the writing half of the installer, for its parity script.
 fn write_step(
     root: &std::path::Path,
@@ -1033,6 +1210,33 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             Value::Array(
                 ops.iter()
                     .map(|op| match write_step(&root, &inst, &mut lib, op) {
+                        Ok(v) => json!({ "ok": v }),
+                        Err(e) => json!({ "error": e }),
+                    })
+                    .collect(),
+            )
+        }
+        "services.script" => {
+            // (root, game, suffix, journalDir, userData, libraryDir, ops), as installer.script
+            let root = std::path::PathBuf::from(s(args, 0));
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 1), &s(args, 2)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 3);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 5)));
+            let mut sv = Services {
+                fp: crate::fingerprints::Fingerprints::new(&ud),
+                terrain: crate::terrain_age::TerrainAges {
+                    downloads_dir: Some(inst.downloads_dir()),
+                    game: inst.game.clone(),
+                    store_file: Some(ud.join("terrain-ages.json")),
+                },
+                impact: crate::update_impact::UpdateImpact { file: ud.join("update-impact.json"), game: inst.game.clone() },
+                notice: crate::notice_text::NoticeText::default(),
+            };
+            let ops = args.get(6).and_then(Value::as_array).cloned().unwrap_or_default();
+            Value::Array(
+                ops.iter()
+                    .map(|op| match services_step(&root, &inst, &mut lib, &mut sv, op) {
                         Ok(v) => json!({ "ok": v }),
                         Err(e) => json!({ "error": e }),
                     })
