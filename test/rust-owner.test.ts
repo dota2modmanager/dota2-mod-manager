@@ -25,8 +25,10 @@ const settingsOf = (t: Twin) => {
 
 /** The ids of a state's records and presets, in the order its manifest holds them. */
 const recordIds = (t: Twin): string[] => {
-  const m = (readJson(path.join(t.ud, 'manifest.json')) ?? {}) as { installed?: { id: string }[]; presets?: { id: string }[] };
-  return [...(m.installed ?? []), ...(m.presets ?? [])].map((r) => r.id);
+  type Rec = { id: string; members?: { id: string }[] };
+  const m = (readJson(path.join(t.ud, 'manifest.json')) ?? {}) as { installed?: Rec[]; presets?: Rec[] };
+  // a pack's members have ids of their own, made as randomly
+  return [...(m.installed ?? []), ...(m.presets ?? [])].flatMap((r) => [r.id, ...(r.members ?? []).map((x) => x.id)]);
 };
 
 /** Run one script on both sides; compare each answer, what each asked, and the files after. */
@@ -227,6 +229,27 @@ test('files put in the folder by hand answer as the TypeScript does', { skip }, 
     { call: ['mods:adoptMod', 'nope', null] },
     { call: ['mods:adoptFont', 'Some Font', null] },
     { call: ['mods:adoptCursor', null] },
+    { call: ['mods:list'] },
+  ]);
+});
+
+test('combined packs answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('packs-base'), 'b'), OFFLINE);
+  const id = idsOf(base);
+  await compare('packs', base, [
+    { call: ['packs:combine', { modIds: [id['IO Purple']] }], note: 'one is not enough' },
+    { call: ['packs:combine', { modIds: [id['IO Purple'], id['Bare Brewmaster'], id['Trees']], name: '  My pack ' }] },
+    { call: ['packs:combine', { modIds: [id['Terrain'], id['Versus']] }], note: 'a second pack' },
+    { call: ['mods:list'] },
+    { call: ['packs:addMembers', 'nope', [id['Aghanim Purple']]] },
+    { call: ['packs:setMemberEnabled', '<ID 0>', 'nope', false] },
+    { call: ['packs:setMemberEnabled', '<ID 0>', '<ID 1>', false] },
+    { call: ['packs:combine', { modIds: ['<ID 0>', '<ID 4>'] }], note: 'two packs into one' },
+    { call: ['packs:extractMembers', '<ID 0>', ['<ID 1>']] },
+    { call: ['packs:removeMember', '<ID 0>', '<ID 2>'] },
+    { call: ['mods:list'] },
+    { call: ['packs:disband', '<ID 0>'] },
+    { call: ['packs:disband', 'nope'] },
     { call: ['mods:list'] },
   ]);
 });

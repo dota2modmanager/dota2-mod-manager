@@ -112,6 +112,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_library::CHANNELS, crate::owner_library::handle),
     (crate::owner_mods::CHANNELS, crate::owner_mods::handle),
     (crate::owner_foreign::CHANNELS, crate::owner_foreign::handle),
+    (crate::owner_packs::CHANNELS, crate::owner_packs::handle),
 ];
 
 /// The app's game folder, when one is set.

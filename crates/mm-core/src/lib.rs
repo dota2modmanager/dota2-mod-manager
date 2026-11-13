@@ -131,6 +131,7 @@ pub mod owner;
 pub mod owner_foreign;
 pub mod owner_library;
 pub mod owner_mods;
+pub mod owner_packs;
 pub mod owner_settings;
 pub mod pak_stamp;
 pub mod panorama_files;
