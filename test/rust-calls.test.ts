@@ -5780,3 +5780,280 @@ test('a hero\'s ability icons in Rust are offered, picked and put in My mods as 
   }
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the paint modes, the gem colours and the PNG inside a texture in Rust are the TypeScript\'s', { skip }, async () => {
+  const rm = await import('../src/recolor-modes.ts');
+  const gc = await import('../src/gem-colors.ts');
+  const { pngFromVtex } = await import('../src/vtex.ts');
+  const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-gems-'));
+  const file = (name: string, data: Buffer) => { const f = path.join(tmp, name); fs.writeFileSync(f, data); return { $file: f }; };
+  const latin = (s: string) => Buffer.from(s, 'latin1');
+  const dataUrl = (b: Buffer | null) => (b ? `data:image/png;base64,${b.toString('base64')}` : null);
+  // a texture: a header whose first field is where the PNG starts, then the PNG, ending on IEND
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from('IHDR some pixels IEND'), Buffer.from([0xae, 0x42, 0x60, 0x82])]);
+  const head = (n: number) => { const h = Buffer.alloc(n); h.writeUInt32LE(n, 0); return h; };
+  const vtex = Buffer.concat([head(40), png]);
+  const textures = [vtex, Buffer.concat([vtex, Buffer.from('x')]), Buffer.concat([head(40), Buffer.from('not a png at all, nope nope')]), Buffer.alloc(8), Buffer.alloc(40), head(20),
+    Buffer.concat([head(40), png.subarray(0, 12)]), Buffer.concat([head(16), png, png])];
+  // a table with a colors section near the top: gems with and without a colour, one not a gem, a bad hex
+  const table = ['"items_game"', '{', '\t"game_info"\t{ "x" "1" }', '\t"colors"', '\t{',
+    '\t\t"unusual_creators_light"\t{ "color_name"\t"UnusualCreatorsLight" "hex_color"\t"#FFAF00" }',
+    '\t\t"unusual_international_2012"\t{ "color_name"\t"UnusualInternational2012" "hex_color"\t" 7f3fbf " }',
+    '\t\t"unusual_bad"\t{ "color_name"\t"UnusualBad" "hex_color"\t"#12345" }',
+    '\t\t"unusual_nameless"\t{ "hex_color"\t"#000000" }',
+    '\t\t"desc_common"\t{ "color_name"\t"ItemRarityCommon" "hex_color"\t"#b0c3d9" }',
+    '\t\t"unusual_ethereal_flame"\t{ "hex_color"\t"#ff0000" "color_name"\t"UnusualEtherealFlameXRay" }',
+    '\t}', '\t"items"\t{ }', '}', ''].join('\n');
+  const tf = file('items_game.txt', latin(table));
+  const pakFile = path.join(tmp, 'pak01_dir.vpk');
+  fs.writeFileSync(pakFile, buildVpk([
+    entryAt('panorama/images/econ/sockets/gem_color_png.vtex_c', vtex),
+    entryAt('panorama/images/econ/sockets/gem_color_creators_light_png.vtex_c', Buffer.concat([head(24), png])),
+    entryAt('panorama/images/econ/sockets/gem_color_unusual_international_2012_png.vtex_c', Buffer.alloc(30)),
+  ]));
+  const colors = [[255, 175, 0], [0, 0, 0], [128, 128, 128], [12, 200, 90], [255, 255, 255], [3, 1, 2]];
+  const target = (c: number[]) => rm.hsv(c as never);
+  const pixels = Buffer.from(Array.from({ length: 4 * 37 }, (_, i) => (i * 73 + (i >> 2) * 31) % 256));
+  for (let i = 3; i < pixels.length; i += 20) pixels[i] = 0;
+  const pf = file('pixels.bin', pixels);
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  compare([
+    { name: 'vtex.png', ts: ((s: string) => dataUrl(pngFromVtex(latin(s)))) as never, inputs: textures.map((t, i) => [file(`t${i}.vtex_c`, t)]) },
+    { name: 'gem-colors.name', ts: gc.gemName as never, inputs: [['UnusualCreatorsLight'], ['UnusualInternational2012'], ['Unusual'], ['aB1cD'], ['  UnusualXRayVision '], ['International2012Fall']] },
+    { name: 'gem-colors.rgb', ts: gc.rgbOf as never, inputs: [['#FFAF00'], ['ffaf00'], [' #7f3fbf '], ['#12345'], ['#gggggg'], [''], ['#FFAF001']] },
+    { name: 'gem-colors.colors', ts: ((s: string) => gc.gemColors(s)) as never, inputs: [[tf], [file('none.txt', latin('"items_game" { "items" { } }'))]] },
+    { name: 'gem-colors.find', ts: ((s: string, w: string) => gc.findGem(gc.gemColors(s), w)) as never,
+      inputs: [[tf, 'Creator’s Light'], [tf, 'creators_light'], [tf, 'unusual_international_2012'], [tf, 'International 2012'], [tf, 'nope'], [tf, '']] },
+    { name: 'gem-colors.art', ts: ((p: string, s: string) => { const ix = sharedVpkIndex(p); return snap({ art: gc.prismaticGemArt(ix), gems: gc.prismaticGemPictures(gc.gemColors(s), ix) }); }) as never, inputs: [[pakFile, tf]] },
+    { name: 'recolor-modes.parse', ts: rm.parsePaint as never, inputs: [['#FFAA00'], ['#ffaa00:KEEP'], ['#ffaa00:rgb'], ['#ffaa00:none'], ['ffaa00'], [42], [null]] },
+    { name: 'recolor-modes.value', ts: rm.paintValue as never, inputs: [['#FFAA00'], ['#FFAA00', 'full'], ['#abcdef', 'tint']] },
+    { name: 'recolor-modes.rgbOfHex', ts: ((h: string) => snap(rm.rgbOfHex(h))) as never, inputs: [['#ffaa00'], ['#1g2h3i'], ['#12'], ['']] },
+    { name: 'recolor-modes.hsv', ts: rm.hsv as never, inputs: colors.map((c) => [c]) },
+    { name: 'recolor-modes.fromHsv', ts: rm.fromHsv as never, inputs: [[[0, 0, 0]], [[0.5, 1, 1]], [[0.999, 0.3, 0.7]], [[0.1234, 0.5, 0.25]], [[1, 1, 1]]] },
+    { name: 'recolor-modes.pixel', ts: rm.paintPixel as never,
+      inputs: rm.PAINT_MODES.flatMap((mode) => colors.flatMap((from) => [[from, target([12, 200, 90]), mode, 0.3, 0.9], [from, target([255, 175, 0]), mode, 1.5, 0.25]])) },
+    { name: 'recolor-modes.pixels', ts: ((s: string, w: number, c: number[], mode: string, bgra: boolean) => { const px = latin(s); const changed = rm.paintPixels(px, w, c as never, mode as never, { bgra }); return { changed, sha1: sha(px) }; }) as never,
+      inputs: rm.PAINT_MODES.flatMap((mode) => [[pf, 7, [255, 175, 0], mode, false], [pf, 5, [12, 200, 90], mode, true]]) },
+  ]);
+  // the real game: its gems, their art, and a spread of its textures
+  if (fs.existsSync(GAME_PAK01)) {
+    const ix = sharedVpkIndex(GAME_PAK01);
+    const real = file('real_items_game.txt', ix.read('scripts/items/items_game.txt')!);
+    const all = [...ix.paths()].filter((p) => p.endsWith('.vtex_c') && p.startsWith('panorama/images/'));
+    const pick = all.filter((_, i) => i % Math.max(1, Math.floor(all.length / 30)) === 0).slice(0, 30);
+    compare([
+      { name: 'gem-colors.colors', ts: ((s: string) => gc.gemColors(s)) as never, inputs: [[real]] },
+      { name: 'gem-colors.art', ts: ((p: string, s: string) => snap({ art: gc.prismaticGemArt(sharedVpkIndex(p)), gems: gc.prismaticGemPictures(gc.gemColors(s), sharedVpkIndex(p)) })) as never, inputs: [[GAME_PAK01, real]] },
+      { name: 'vtex.png', ts: ((s: string) => dataUrl(pngFromVtex(latin(s)))) as never, inputs: pick.map((p, i) => [file(`r${i}.vtex_c`, ix.read(p)!)]) },
+    ]);
+    assert.ok(gc.gemColors(ix.read('scripts/items/items_game.txt')!.toString('latin1')).length > 10, 'the game has gems');
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the arcana bases\' store in Rust takes, checks and keeps what the TypeScript does', { skip }, async () => {
+  const st = await import('../src/arcana-base-store.ts');
+  const { entryPath } = await import('../src/vpk.ts');
+  const crypto = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-bases-'));
+  const keys = crypto.generateKeyPairSync('ed25519');
+  const key = keys.publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  const other = crypto.generateKeyPairSync('ed25519');
+  const sign = (k: typeof keys, text: string) => crypto.sign(null, Buffer.from(text), k.privateKey).toString('base64');
+  const sha1 = (b: Buffer) => crypto.createHash('sha1').update(b).digest('hex');
+  const raw = (rel: string, ref = 'main') => `https://raw.githubusercontent.com/${st.BASES_REPO}/${ref}/${rel}`;
+  const file = (s: string) => Buffer.from(`file ${s}`);
+  const filesOf = (names: string[]) => Object.fromEntries(names.map((n) => [n, st.blobSha(file(n))]));
+  const jugg = filesOf(['models/heroes/juggernaut/body.vmdl_c', 'materials/models/heroes/juggernaut/body.vmat_c', 'particles/jugg/a b.vpcf_c']);
+  const pa = filesOf(['models/heroes/pa/body.vmdl_c', 'materials/models/heroes/juggernaut/body.vmat_c']);
+  // one base with a file that is not what the list names, one with a file the server lacks: one
+  // failure each, since which of two comes first is the promises' timing
+  const broken = filesOf(['models/heroes/x/one.vmdl_c', 'models/heroes/x/fine.vmdl_c']);
+  const gone = filesOf(['models/heroes/y/two.vmdl_c']);
+  // a listing with what a mirror could slip in: a script, a step out of the base, a bad hash, a bad id
+  const bases = { juggernaut: jugg, pa, broken, gone, 'bad id': { 'models/x.vmdl_c': st.blobSha(file('x')) },
+    sly: { 'scripts/npc/x.txt': st.blobSha(file('s')), 'models/../x.vmdl_c': st.blobSha(file('s')), 'models/y.vmdl_c': 'nothex', 'models\\z.vmdl_c': st.blobSha(file('z')) } };
+  const manifest = JSON.stringify({ bases });
+  const pinned = { commit: 'abc123', files: { 'models/heroes/pa/body.vmdl_c': st.blobSha(file('pinned body')) } };
+  const pins = { pa: pinned };
+  // what the network serves: the files, one of them wrong and one missing
+  type Served = Record<string, { status?: number; body?: string } | { error: string }>;
+  const body = (b: Buffer) => ({ status: 200, body: b.toString('base64') });
+  const fileUrl = (id: string, rel: string, ref = 'main') => raw(`src/${id}/${rel.split('/').map(encodeURIComponent).join('/')}`, ref);
+  const served = (manifestText: string, sig: string): Served => ({
+    [raw('manifest.json')]: body(Buffer.from(manifestText)), [raw('manifest.json.sig')]: body(Buffer.from(sig)),
+    ...Object.fromEntries(Object.keys(jugg).map((r) => [fileUrl('juggernaut', r), body(file(r))])),
+    [fileUrl('pa', 'materials/models/heroes/juggernaut/body.vmat_c')]: body(file('materials/models/heroes/juggernaut/body.vmat_c')),
+    [fileUrl('pa', 'models/heroes/pa/body.vmdl_c', 'abc123')]: body(file('pinned body')),
+    [fileUrl('broken', 'models/heroes/x/one.vmdl_c')]: body(Buffer.from('not it')),
+    [fileUrl('broken', 'models/heroes/x/fine.vmdl_c')]: body(file('models/heroes/x/fine.vmdl_c')),
+    [fileUrl('gone', 'models/heroes/y/two.vmdl_c')]: { status: 404 },
+  });
+  // the runs: a good list; then the same store dir with a list signed by another key and the network gone
+  const runs: { name: string; served: Served; ops: unknown[][] }[] = [
+    { name: 'good', served: served(manifest, sign(keys, manifest)), ops: [['entries', 'juggernaut'], ['want', 'juggernaut'], ['want', 'juggernaut'], ['entries', 'juggernaut'], ['want', 'pa'], ['entries', 'pa'], ['want', 'broken'], ['want', 'broken'], ['want', 'gone'], ['want', 'nobody'], ['ready']] },
+    { name: 'forged', served: { ...served(manifest, sign(other, manifest)) }, ops: [['want', 'juggernaut'], ['want', 'pa'], ['entries', 'pa'], ['ready']] },
+    { name: 'offline', served: {}, ops: [['want', 'juggernaut'], ['entries', 'juggernaut']] },
+    { name: 'unsigned empty', served: served(JSON.stringify({ bases: {} }), sign(keys, JSON.stringify({ bases: {} }))), ops: [['want', 'pa']] },
+  ];
+  compare([
+    { name: 'arcana-bases.safe', ts: st.safeListing as never, inputs: [[bases], [null], [[1, 2]], [{ a: 5 }]] },
+    { name: 'arcana-bases.signed', ts: st.signedListing as never, inputs: [[manifest, sign(keys, manifest), key], [manifest, sign(other, manifest), key], ['{bad', sign(keys, '{bad'), key], [manifest, 'nope', key]] },
+    { name: 'arcana-bases.blobSha', ts: ((s: string) => st.blobSha(Buffer.from(s, 'latin1'))) as never, inputs: [[{ $file: (fs.writeFileSync(path.join(tmp, 'b'), file('q')), path.join(tmp, 'b')) }]] },
+  ]);
+  const tree = (d: string) => (fs.existsSync(d) ? Object.fromEntries((fs.readdirSync(d, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(d, f), sha1(fs.readFileSync(f))]; }).sort()) : {});
+  const tsDir = path.join(tmp, 'ts');
+  const rsDir = path.join(tmp, 'rs');
+  for (const run of runs) {
+    const log: string[] = [];
+    const store = st.createBaseStore({
+      dir: tsDir, key, pins, log: (m) => log.push(m),
+      fetchUrl: async (url) => {
+        const a = run.served[url];
+        if (!a) throw new Error(`not served: ${url}`);
+        if ('error' in a) throw new Error(a.error);
+        return new Response(a.status === 404 ? null : Buffer.from(a.body ?? '', 'base64'), { status: a.status ?? 200 });
+      },
+    });
+    const want: unknown[] = [];
+    for (const op of run.ops) {
+      if (op[0] === 'want') want.push(await store.want(op[1] as string));
+      else if (op[0] === 'entries') want.push(store.entries(op[1] as string)?.map((e) => [entryPath(e), sha1(e.data)]) ?? null);
+      else want.push(JSON.parse(fs.readFileSync(path.join(tsDir, 'ready.json'), 'utf8')));
+    }
+    const l = path.join(tmp, `${run.name}.json`);
+    fs.writeFileSync(l, JSON.stringify([['arcana-bases.store', rsDir, key, pins, run.served, run.ops]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8' })) as { ok?: { answers: unknown[]; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    assert.deepEqual(r.ok.answers, want, `${run.name}: the answers`);
+    assert.deepEqual(r.ok.log, log, `${run.name}: the log`);
+    assert.deepEqual(tree(rsDir), tree(tsDir), `${run.name}: the store on disk`);
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the rank medal and hero levels in Rust are clamped, written and put in My mods as the TypeScript does', { skip }, async () => {
+  const rl = await import('../src/rank-look.ts');
+  const { levelsScript } = await import('../src/rank-look-script.ts');
+  const { createRankLook, SCRIPT_MARK } = await import('../src/rank-look-service.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-rank-'));
+  const looks: unknown[] = [
+    { medal: { tier: 5, stars: 3 }, levels: { pudge: 30, axe: '12', 'Bad Hero': 4, sven: 0, lina: 31, 10: 5, zz: 2.5 }, every: 7 },
+    { medal: { tier: 8, stars: 2, top: 100 } }, { medal: { tier: 8, top: 5000 } }, { medal: { tier: 8, top: 7 } }, { medal: { tier: 0, stars: 9 } },
+    { medal: { tier: '3', stars: true } }, { medal: [] }, { medal: null, every: '30' }, { levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] }, null, [], 'x', { every: -1 },
+    { medal: { tier: 9 } }, { medal: { tier: 1.5 } }, { medal: { tier: 7, stars: 5 }, every: null },
+  ];
+  const css = [
+    '/* Source 2 Viewer 9.1 - https://valveresourceformat.github.io */\n.RankTier3 .RankTierImage { background-image: url("s2r://panorama/images/rank_tier_icons/rank3_psd.vtex"); }\n',
+    '.Minimal .RankTierImage { background-image: url("s2r://panorama/images/rank_tier_icons/mini/rank1_psd.vtex"); width: 10px; }\n.RankPips2 .RankPipImage { background-image: url("s2r://panorama/images/rank_tier_icons/pip2_psd.vtex"); }\n.RankPipImage { visibility: collapse; }\n@media x { }\n/* a */ .x { y: 1 }\n.Other { color: red; }\n\n/* d2mm: rank medal */\n.old { }',
+    '', '.RankPipImageX { a: b }\n.y{background:url(rank_tier_icons/rank8_mini_psd.vtex)}',
+  ];
+  const medals = [{ tier: 5, stars: 3, top: 0 }, { tier: 8, stars: 1, top: 10 }, { tier: 0, stars: 1, top: 0 }, { tier: 7, stars: 5, top: 0 }];
+  compare([
+    { name: 'rank-look.clamp', ts: rl.clampLook as never, inputs: looks.map((l) => [l]) },
+    { name: 'rank-look.tierOf', ts: rl.tierOf as never, inputs: [[0], [1], [5], [6], [11], [12], [17], [18], [24], [25], [29], [30], [31]] },
+    { name: 'rank-look.medalImage', ts: rl.medalImage as never, inputs: medals.flatMap((m) => [[m, false], [m, true]]) },
+    { name: 'rank-look.withMedal', ts: rl.withMedal as never, inputs: css.flatMap((c) => medals.map((m) => [c, m])) },
+    { name: 'rank-look.levelsScript', ts: ((l: unknown, ids: Record<number, string>) => levelsScript(rl.clampLook(l), ids)) as never,
+      inputs: [[looks[0], { 14: 'pudge', 2: 'axe' }], [looks[1], {}], [looks[4], { 1: 'antimage' }], [{}, {}]] },
+    { name: 'rank-look.mark', ts: (() => SCRIPT_MARK) as never, inputs: [[]] },
+  ]);
+  if (!fs.existsSync(GAME_PAK01)) { fs.rmSync(tmp, { recursive: true, force: true }); return; }
+  // twin games of the real styles, layouts, a script, the medals' and badges' textures and some heroes
+  const real = sharedVpkIndex(GAME_PAK01);
+  const all = [...real.paths()];
+  const want = all.filter((p) => p.startsWith('panorama/styles/') || rl.LAYOUTS.includes(p) || p === 'panorama/scripts/popups/popup_settings.vjs_c'
+    || p.startsWith('panorama/images/rank_tier_icons/') || p.startsWith('panorama/images/hero_badges/')
+    || /^scripts\/npc\/heroes\/npc_dota_hero_(pudge|axe|antimage|lina|base)\.txt$/.test(p));
+  const pak = buildVpk(want.map((p) => entryAt(p, real.read(p)!)));
+  const layouts = rl.LAYOUTS.filter((p) => real.has(p)).map((p, k) => { const f = path.join(tmp, `layout${k}`); fs.writeFileSync(f, real.read(p)!); return { $file: f }; });
+  compare([
+    { name: 'rank-look.takesScript', ts: ((s: string) => rl.takesScript(Buffer.from(s, 'latin1'))) as never, inputs: layouts.map((f) => [f]) },
+    { name: 'rank-look.withScript', ts: ((s: string) => sha(rl.withScript(Buffer.from(s, 'latin1')))) as never, inputs: layouts.map((f) => [f]) },
+  ]);
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    // a catalog mod carrying the first style: the copy in force is the mod's
+    const style = rl.STYLES[1].compiled;
+    fs.writeFileSync(path.join(game, 'dota_russian', 'pak05_dir.vpk'), buildVpk([entryAt(style, real.read(style)!)]));
+    new Library(path.join(root, 'lib')).add({ name: 'A rank mod', categoryId: 'ranks', styleLabel: null, fileRef: null, preview: null, files: [{ root: 'lang', relPath: 'pak05_dir.vpk' }] });
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const png = (s: string) => Buffer.from(`\x89PNG ${s}`).toString('base64');
+  const ops: unknown[][] = [
+    ['state', true], ['install', {}], ['install', looks[0]], ['state', false],
+    ['pictures', null, {}], ['pictures', 'vrf.exe', { rank3: png('3'), rank8a: png('8a') }],
+    ['install', looks[1]], ['refresh'], ['rebuild', ['$rank', 'nobody']], ['rebuild', ['nobody']], ['state', true],
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const rankId = (x: Twin) => manifest(x).installed.find((r: { generated?: { rank?: unknown } }) => r.generated?.rank)?.id;
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    let exe: string | null = null;
+    let made: Record<string, string> = {};
+    const built: string[] = [];
+    const svc = createRankLook({
+      gamePath: () => a.game, installer: inst as never, library, vrf: () => exe, log: (m) => log.push(m), onRebuilt: (id) => built.push(id),
+      run: async (_exe, args) => {
+        const dir = path.join(args[3], 'panorama', 'images', 'rank_tier_icons');
+        fs.mkdirSync(dir, { recursive: true });
+        for (const [n, data] of Object.entries(made)) fs.writeFileSync(path.join(dir, `${n}_psd.png`), Buffer.from(data, 'base64'));
+      },
+    });
+    const settle = () => new Promise((r) => setTimeout(r, 300));
+    for (const op of ops) {
+      try {
+        let v: unknown;
+        if (op[0] === 'state') { exe = op[1] ? 'vrf.exe' : null; v = svc.state(); }
+        else if (op[0] === 'pictures') { exe = op[1] as string | null; made = op[2] as Record<string, string>; v = await svc.pictures(); }
+        else if (op[0] === 'install') v = await svc.install(op[1]);
+        else if (op[0] === 'refresh') { built.length = 0; v = svc.refreshScript(); await settle(); }
+        else { built.length = 0; svc.rebuild((op[1] as string[]).map((i) => (i === '$rank' ? rankId(a) : i))); await settle(); v = [...built]; }
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  // the rebuild's id is each side's own record's, so the Rust runs as two scripts over the same folders
+  const cut = ops.findIndex((o) => o[0] === 'refresh');
+  const run = (list: unknown[][]) => {
+    const l = path.join(tmp, `ops-${list.length}.json`);
+    fs.writeFileSync(l, JSON.stringify([['rank-look.service', b.game, 'russian', b.journal, b.lib, b.ud, list]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    return r.ok;
+  };
+  const first = run(ops.slice(0, cut));
+  const second = run(ops.slice(cut).map((o) => (o[0] === 'rebuild' ? ['rebuild', (o[1] as string[]).map((i) => (i === '$rank' ? rankId(b) : i))] : o)));
+  const got = [...first.answers, ...second.answers];
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(got[k]), norm(answers[k]), `${k} ${JSON.stringify(op).slice(0, 100)}`);
+  assert.deepEqual([...first.log, ...second.log], log, 'the log');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.equal((answers[ops.findIndex((o) => o[0] === 'rebuild')] as { ok: string[] }).ok.length, 1, 'the record was built again');
+  assert.ok(log.some((m) => m.includes('rank look: on')), 'installed');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
