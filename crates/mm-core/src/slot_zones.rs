@@ -19,7 +19,8 @@ pub const NORMAL_FIRST: u32 = 30;
 pub const APP_PAK: u32 = 64;
 
 /// The two ranges a pak can sit in.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Zone {
     Priority,
     Normal,

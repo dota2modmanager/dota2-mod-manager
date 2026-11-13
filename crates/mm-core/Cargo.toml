@@ -27,3 +27,5 @@ uuid = { version = "1", features = ["v4"] }
 zip = { version = "2", default-features = false, features = ["deflate"] }
 # free space on the drive a mod is about to be written to
 fs4 = "0.13"
+# local time for a zip's dates, and the ISO time in the ownership note
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }

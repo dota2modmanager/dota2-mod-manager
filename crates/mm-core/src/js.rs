@@ -293,6 +293,11 @@ pub fn stringify(v: &Value, indent: &str) -> String {
     out
 }
 
+/// The order `Array.prototype.sort` puts strings in: by UTF-16 code units.
+pub fn cmp_utf16(a: &str, b: &str) -> std::cmp::Ordering {
+    a.encode_utf16().cmp(b.encode_utf16())
+}
+
 /// String.prototype.slice(0, n): the first n UTF-16 units (a pair cut in half is dropped whole).
 pub fn slice_utf16(s: &str, n: usize) -> String {
     let mut units = 0;
