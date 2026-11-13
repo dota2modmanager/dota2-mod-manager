@@ -7729,3 +7729,135 @@ test('the loadout runtime\'s resources in Rust gather what the TypeScript gather
   }
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('a mod\'s picture in Rust is picked and judged as the TypeScript does', { skip }, async () => {
+  const { pickCandidate, worthShowing } = await import('../src/mod-preview-pick.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const lists: string[][] = [];
+  const mods = path.join(root, 'sandbox', 'mods');
+  if (fs.existsSync(mods)) for (const f of fs.readdirSync(mods).filter((n) => n.endsWith('_dir.vpk'))) lists.push([...openVpkIndex(path.join(mods, f)).paths()].map((p) => p.toLowerCase()));
+  if (fs.existsSync(GAME_PAK01)) { const all = [...openVpkIndex(GAME_PAK01).paths()]; for (let k = 0; k < 6; k++) lists.push(all.filter((_, i) => i % 97 === k * 13).slice(0, 3000)); }
+  lists.push([
+    'panorama/videos/heroes/npc_dota_hero_wisp.webm', 'panorama/videos/x/y.webm', 'panorama/images/heroes/a/b.vtex_c', 'panorama/images/econ/sets/a.vtex_c',
+    'materials/models/heroes/wisp/wisp_color.vtex_c', 'materials/models/heroes/wisp/wisp_normals.vtex_c', 'materials/default/default_color.vtex_c', 'materials/x/dev/y.vtex_c',
+    'materials/a_tcolor_b.vtex_c', 'materials/a_normal.vtex_c', 'materials/a_normalx.vtex_c', 'materials/models/a_albedo.vtex_c', 'materials/ao.vtex_c', 'materials/x_ao.vtex_c',
+  ]);
+  const pic = (w: number, h: number, f: (i: number) => number[]) => [w, h, Buffer.from(Array.from({ length: w * h }, (_, i) => f(i)).flat()).toString('base64')];
+  compare([
+    { name: 'mod-preview-pick.pickCandidate', ts: pickCandidate as never, inputs: lists.flatMap((l) => ['art', 'texture', 'video'].map((k) => [l, k])) },
+    { name: 'mod-preview-pick.worthShowing', ts: ((w: number, h: number, b: string) => worthShowing({ width: w, height: h, data: Buffer.from(b, 'base64') })) as never, inputs: [
+      pic(64, 64, (i) => [i % 256, (i * 7) % 256, 3, 255]), pic(64, 64, () => [9, 9, 9, 255]), pic(64, 64, (i) => [i % 256, 0, 0, i % 50 ? 0 : 255]),
+      pic(31, 64, (i) => [i % 256, 0, 0, 255]), pic(300, 200, (i) => [(i * 13) % 256, 0, 0, i % 3 ? 255 : 0]), [64, 64, 'AAAA'], pic(64, 64, (i) => [i % 12, 0, 0, 255]), pic(64, 64, (i) => [i % 13, 0, 0, 255]),
+    ] },
+  ]);
+});
+
+test('the hero preview\'s picks in Rust dress the hero as the TypeScript does, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const crypto = await import('node:crypto');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const hp = await import('../src/hero-preview-picks.ts');
+  const ix = openVpkIndex(GAME_PAK01);
+  const { file, blocks, styled, effects } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  const byId = new Map(all.map((i) => [i.id, i]));
+  const defaults = all.filter((i) => i.prefab === 'default_item').map((item) => ({ item, heroes: itemHeroes(text, item) }));
+  const heroOf = (id: string) => { const i = byId.get(id); return (i && itemHeroes(text, i)[0]) || 'npc_dota_hero_axe'; };
+  const stockOf = (id: string) => {
+    const i = byId.get(id); if (!i) return null;
+    const h = heroOf(id);
+    return defaults.find((d) => d.item.slot === i.slot && d.item.model && d.heroes.includes(h))?.item.model ?? null;
+  };
+  const some = [...styled.slice(0, 20), ...effects.slice(0, 20), ...blocks.slice(0, 20)];
+  const every = [...new Set(defaults.flatMap((d) => d.heroes))];
+  // the heads apart from the body, and a spread of the rest
+  const split = ['arc_warden', 'faceless_void', 'invoker', 'phantom_lancer', 'tinker', 'monkey_king'].map((n) => 'npc_dota_hero_' + n);
+  const heroes = [...new Set([...split, ...every.filter((_, k) => k % Math.max(1, Math.floor(every.length / 20)) === 0)])];
+  const short = (h: string) => h.replace(/^npc_dota_hero_/, '');
+  const entries = (m: Map<string, string> | undefined | null) => m ? [...m] : null;
+  const reps = effects.slice(0, 20).map((b) => [...hp.previewParticleReplacements(b.visuals!, true)]).filter((r) => r.length);
+  const persona = all.filter((i) => /persona_selector/i.test(i.slot)).slice(0, 6);
+  const ops: unknown[][] = [
+    ...some.flatMap((b) => [
+      ['itemModel', b.id, '', heroOf(b.id), stockOf(b.id)],
+      ['itemModel', b.id, 'style-1', heroOf(b.id), null],
+      ['bodySkinFor', b.visuals, short(heroOf(b.id)), byId.get(b.id)?.model ?? '', false],
+      ['bodySkinFor', b.visuals, heroOf(b.id), '', true],
+      ['entityModel', b.block, heroOf(b.id)],
+      ['wornExtras', b.visuals],
+      ['particleReplacements', b.visuals, false],
+      ['particleReplacements', b.visuals, true],
+      ['bladeReplacements', null, b.visuals],
+      ['bladeReplacements', [['a.vpcf', 'b.vpcf']], b.id.length % 2 ? b.visuals : null],
+    ]),
+    ['itemModel', '99999999', '', 'npc_dota_hero_axe', null],
+    ['monkeyKingCrown', 'npc_dota_hero_monkey_king', [{ itemId: 9050 }]],
+    ['monkeyKingCrown', 'npc_dota_hero_monkey_king', [{ itemId: '9051' }, {}]],
+    ['monkeyKingCrown', 'npc_dota_hero_axe', [{ itemId: '9050' }]],
+    ...reps.flatMap((r, k) => r.slice(0, 3).flatMap(([from]) => [
+      ['particleRead', r, null, false, from + '_c'],
+      ['particleRead', [], k % 2 ? r : null, true, from + '_C'],
+      ['particleRead', r, [[from, 'particles/none.vpcf']], false, from + '_c'],
+    ])),
+    ['particleRead', [], null, true, 'particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword_blade.vpcf_c'],
+    ...heroes.flatMap((h) => [
+      ['stockHead', h, `models/heroes/${short(h)}/${short(h)}.vmdl`, false],
+      ['stockHead', h, `models/heroes/${short(h)}/${short(h)}.vmdl`, true],
+      ['heroParticles', `scripts/npc/heroes/${h}.txt`, h, true],
+    ]),
+    ['stockHead', 'npc_dota_hero_axe', 'models/x.vmdl', false],
+    ['heroParticles', null, 'npc_dota_hero_razor', true],
+    ['heroParticles', 'scripts/npc/heroes/npc_dota_hero_razor.txt', 'npc_dota_hero_razor', false],
+    ['equipment', [{ slot: 'a', itemId: '1' }, { slot: 'b' }, { itemId: 3 }],
+      [{ slot: 'b', tryOn: { itemId: some[0].id, effectId: 'x' } }, { slot: 'c', tryOn: { itemId: '99999999', effectId: '' } }, { slot: 'd' }, { slot: 'e', tryOn: { itemId: '', effectId: '' } }]],
+    ...[[], ['particles/econ/items/razor/razor_punctured_crest/x_ambient.vpcf']].flatMap((roots) => [
+      ['crestParticles', roots, 'models/items/razor/razor_helmet_blade/x.vmdl', '6646'],
+      ['crestParticles', roots, 'models/items/razor/other.vmdl', '6646'],
+    ]),
+    ...persona.flatMap((sel) => {
+      const h = itemHeroes(text, sel)[0] ?? '';
+      const at = 'h:';
+      const slots = [{ slot: at + sel.slot, stock: sel.id }, { slot: at + 'head', stock: '1' }, { slot: at + 'weapon', stock: '2' }, { slot: at + 'zzz', stock: '3' }];
+      const personas = all.filter((i) => i.slot === sel.slot && i.id !== sel.id && itemHeroes(text, i).includes(h)).slice(0, 2);
+      return [
+        ['personaSlots', h, slots, []],
+        ...personas.map((p) => ['personaSlots', h, slots, [{ slot: at + sel.slot, itemId: Number(p.id) }]]),
+      ];
+    }),
+    ['personaSlots', 'npc_dota_hero_axe', [{ slot: 'x', stock: '1' }], []],
+  ];
+  const sha = (b: Buffer | null) => b && crypto.createHash('sha256').update(b).digest('hex');
+  const want = ops.map((o) => {
+    try {
+      const a = o.slice(1) as never[];
+      let v: unknown;
+      switch (o[0]) {
+        case 'itemModel': { const r = hp.itemModel(text, a[0], a[1] || undefined, a[2], a[3]); v = { ...r, ...(r.replacements ? { replacements: Object.fromEntries(r.replacements) } : {}) }; break; }
+        case 'bodySkinFor': v = hp.bodySkinFor(a[0], a[1], a[2], a[3]) ?? null; break;
+        case 'entityModel': v = hp.entityModel(a[0], a[1]); break;
+        case 'wornExtras': v = hp.wornExtras(a[0]); break;
+        case 'monkeyKingCrown': v = hp.monkeyKingCrown(text, a[0], a[1]); break;
+        case 'particleReplacements': v = [...hp.previewParticleReplacements(a[0], a[1])]; break;
+        case 'bladeReplacements': v = entries(hp.previewBladeReplacements(a[0] ? new Map(a[0]) : undefined, a[1])); break;
+        case 'particleRead': v = sha(hp.previewParticleReader((p) => ix.read(p), new Map(a[0]), a[1] ? new Map(a[1]) : undefined, a[2])(a[3])); break;
+        case 'stockHead': v = hp.previewStockHead(text, a[0], a[1], ix, a[2]); break;
+        case 'equipment': v = hp.previewEquipment(text, a[0], a[1]); break;
+        case 'heroParticles': v = hp.previewHeroParticles(a[0] ? ix.read(a[0])?.toString('utf8') ?? null : null, a[1], a[2], ix); break;
+        case 'crestParticles': v = hp.previewCrestParticles(a[0], a[1], a[2], ix); break;
+        case 'personaSlots': v = hp.personaPreviewSlots(text, a[0], a[1], a[2]); break;
+      }
+      return { ok: JSON.parse(JSON.stringify(v ?? null)) };
+    } catch { return { error: true }; }
+  });
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hpp-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['hero-preview-picks.script', GAME_PAK01, { $file: file }, ops]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok
+    .map((x: { error?: string }) => ('error' in x ? { error: true } : x));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  for (let k = 0; k < ops.length; k++) assert.deepEqual(got[k], want[k], JSON.stringify(ops[k]).slice(0, 300));
+  assert.ok(want.some((w) => w.ok && typeof w.ok === 'string' && w.ok.startsWith('models/')), 'a stock head found');
+  assert.ok(want.some((w) => Array.isArray(w.ok) && w.ok.some((s: { slot?: string }) => s?.slot === 'h:head')), 'a persona dressed');
+});

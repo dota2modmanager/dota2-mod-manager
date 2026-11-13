@@ -4612,6 +4612,75 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let asked = fake.asked.lock().unwrap().clone();
             json!({ "results": results, "asked": asked })
         }
+        // (paths, kind)
+        "mod-preview-pick.pickCandidate" => {
+            let kind = crate::mod_preview_pick::Kind::parse(&s(args, 1)).ok_or("no such kind")?;
+            let paths = strings(args, 0)?;
+            json!(crate::mod_preview_pick::pick_candidate(paths.iter().map(String::as_str), kind))
+        }
+        // (width, height, pixels base64)
+        "mod-preview-pick.worthShowing" => {
+            let px = crate::js::base64_decode(&s(args, 2));
+            json!(crate::mod_preview_pick::worth_showing(n(args, 0).max(0.0) as usize, n(args, 1).max(0.0) as usize, &px))
+        }
+        // (pak, items_game, ops): the hero preview's picks, against that pak's files; maps come and go
+        // as [key, value] entries and a particle read as the sha256 of what it gave
+        "hero-preview-picks.script" => {
+            use crate::hero_preview_picks as h;
+            use sha2::Digest;
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let text = b(args, 1)?;
+            let has = |p: &str| ix.has(p);
+            let map = |v: Option<&Value>| -> Option<indexmap::IndexMap<String, String>> {
+                v.and_then(Value::as_array).map(|a| {
+                    a.iter().filter_map(Value::as_array).map(|e| (crate::js::string(&e[0]), crate::js::string(&e[1]))).collect()
+                })
+            };
+            let entries = |m: &indexmap::IndexMap<String, String>| json!(m.iter().map(|(k, v)| json!([k, v])).collect::<Vec<_>>());
+            let opt = |v: Option<&Value>| v.filter(|x| !x.is_null()).map(crate::js::string);
+            let list = |v: Option<&Value>| v.and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut results = Vec::new();
+            for op in list(args.get(2)) {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let st = |i: usize| o.get(i).map(crate::js::string).unwrap_or_default();
+                let r: Result<Value, String> = match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "itemModel" => h::item_model(&text, &st(1), opt(o.get(2)).as_deref(), &st(3), opt(o.get(4)).as_deref()),
+                    "bodySkinFor" => h::body_skin_for(st(1).as_bytes(), &st(2), &st(3), o.get(4).is_some_and(crate::js::truthy))
+                        .map(|x| x.map_or(Value::Null, crate::js::json_number)),
+                    "entityModel" => Ok(json!(h::entity_model(&st(1), &st(2)))),
+                    "wornExtras" => Ok(h::worn_extras(&st(1))),
+                    "monkeyKingCrown" => h::monkey_king_crown(&text, &st(1), &list(o.get(2))),
+                    "particleReplacements" => h::preview_particle_replacements(st(1).as_bytes(), o.get(2).is_some_and(crate::js::truthy)).map(|m| entries(&m)),
+                    "bladeReplacements" => {
+                        let v = opt(o.get(2));
+                        h::preview_blade_replacements(map(o.get(1)).as_ref(), v.as_deref().map(str::as_bytes)).map(|m| m.map_or(Value::Null, |m| entries(&m)))
+                    }
+                    "particleRead" => {
+                        let read = |p: &str| ix.read(p).ok().flatten();
+                        let reps = map(o.get(1)).unwrap_or_default();
+                        let got = h::preview_particle_read(&read, &reps, map(o.get(2)).as_ref(), o.get(3).is_some_and(crate::js::truthy), &st(4));
+                        Ok(json!(got.map(|b| format!("{:x}", sha2::Sha256::digest(&b)))))
+                    }
+                    "stockHead" => h::preview_stock_head(&text, &st(1), &st(2), &has, o.get(3).is_some_and(crate::js::truthy)).map(|x| json!(x)),
+                    "equipment" => h::preview_equipment(&text, &list(o.get(1)), &list(o.get(2))).map(|x| json!(x)),
+                    "heroParticles" => {
+                        let script = opt(o.get(1)).and_then(|p| ix.read(&p).ok().flatten());
+                        h::preview_hero_particles(script.as_deref(), &st(2), o.get(3).is_some_and(crate::js::truthy), &has).map(|x| json!(x))
+                    }
+                    "crestParticles" => {
+                        let roots: Vec<String> = list(o.get(1)).iter().map(crate::js::string).collect();
+                        Ok(json!(h::preview_crest_particles(&roots, &st(2), &st(3), ix.paths())))
+                    }
+                    "personaSlots" => h::persona_preview_slots(&text, &st(1), &list(o.get(2)), &list(o.get(3))).map(|x| json!(x)),
+                    other => Err(format!("no op {other}")),
+                };
+                results.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!(results)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
