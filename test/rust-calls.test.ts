@@ -3580,3 +3580,179 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
   assert.equal((timed[5] as { timeout: boolean }).timeout, true, JSON.stringify(timed[5]));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the catalog, the remote config and the ready presets in Rust fetch, check and keep what the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const { spawn } = await import('node:child_process');
+  const net = await import('../src/net.ts');
+  const mirrors = await import('../src/net-mirrors.ts');
+  const { Catalog, normalizeCatalog, RAW_BASE } = await import('../src/catalog.ts');
+  const remote = await import('../src/remote-config.ts');
+  const { createReadyPresets, READY_URL } = await import('../src/ready-presets.ts');
+
+  const catalogKey = crypto.generateKeyPairSync('ed25519');
+  const configKey = crypto.generateKeyPairSync('ed25519');
+  const spki = (k: { publicKey: import('node:crypto').KeyObject }) => k.publicKey.export({ type: 'spki', format: 'der' }).toString('base64');
+  const signWith = (k: { privateKey: import('node:crypto').KeyObject }, text: string) => crypto.sign(null, Buffer.from(text), k.privateKey).toString('base64');
+
+  const mods = JSON.stringify({ modsData: {
+    heroes: { groups: [{ mods: [{ name: 'A', linkType: 'preview', linkUrl: 'https://p/a.png', senderName: 'Me' }, { name: 'B', links: [{ type: 'preview', url: 'https://p/b.png' }], linkType: 'preview', linkUrl: 'https://p/b.png' }] }, { mods: [{ name: 'C', links: [{ type: 'x', url: 'y' }], linkType: 'preview', linkUrl: 'https://p/c.png' }] }] },
+    sounds: [{ name: 'S', linkType: 'preview' }, null, 'x', { name: 'T', linkType: 'author', linkUrl: 'https://a', senderName: '' }],
+    misc: { mods: [{ name: 'M', linkType: 'preview', linkUrl: 'https://m' }] },
+    empty: null, n: 5,
+  }, extra: 'ж' });
+  const constants = JSON.stringify({ categories: [{ id: 'heroes' }], big: 1e21, frac: 2.5 });
+  const guides = JSON.stringify([{ title: 'g' }]);
+  const hashes = JSON.stringify({ 'heroes/A.zip': 'ABCDEF'.padEnd(64, '0'), 'heroes/B.zip': 'xyz', 'heroes/C.zip': 'a'.repeat(63) });
+  const day = (offset: number) => new Date(Date.UTC(2026, 10, 13) + offset * 86400000).toISOString().slice(0, 10);
+  const config = JSON.stringify({
+    version: 1,
+    features: { install: { off: false }, cosmetics: { off: true, ru: 'Выключено', en: 'Off for now' }, voice: { off: true, ru: 'Голос', en: '' }, other: { off: true } },
+    notices: [
+      { id: 'n1', date: '2026-11-01', level: 'warn', ru: 'Привет', en: 'Hello', url: 'HTTPS://example.com', until: day(3) },
+      { id: 'n2', date: '2026-11-10', ru: 'Только ру', url: 'http://x' },
+      { id: 'n3', date: '2026-10-01', en: 'Old', until: day(-1) },
+      { id: 'n4', date: '2026-11-05', en: 'For 3', minVersion: '3.0.0' },
+      { id: 'n5', date: '2026-11-06', en: 'Up to 2.10', maxVersion: '2.10.0', until: '2026-02-30' },
+      { id: '', en: 'no id' }, 'x', { id: 'n6', date: '2026-11-07', en: 'bad until', until: '2026-13-01' },
+    ],
+    blocks: [
+      { id: 'b1', feature: 'install', minVersion: '2.9.0', maxVersion: '2.9.9', until: day(5), ru: 'Блок', en: 'Blocked' },
+      { id: 'b2', feature: 'nope', until: day(5) }, { id: 'b3', feature: 'voice', until: 'soon' },
+    ],
+    beta: { salt: 's', ids: [` ${'AB'.repeat(32)} `, 'short', 5, 'c'.repeat(64)] },
+    mirrors: [
+      { id: 'g', base: 'https://gitlab.com/r/m/-/raw/main/assets/files/' }, { base: 'https://h.co/c/?' }, { base: 'https://h.co/c/' },
+      { base: 'http://plain/' }, { base: 'https://raw.githubusercontent.com/x/' }, { id: 'g', base: 'https://other/' },
+    ],
+    issues: [
+      { cat: 'heroes', mod: 'A', ru: 'Ломает', en: 'Breaks', until: day(10), revoked: true },
+      { cat: 'heroes', mod: 'B', en: 'Old', until: day(-2) }, { cat: 'heroes', mod: 'C' }, { cat: 'x', mod: 'Y', ru: 'Только', revoked: 'yes' },
+    ],
+  });
+  const presets = fs.readFileSync(path.join(root, 'config', 'presets.json'), 'utf8');
+
+  // each state of the world is a folder on one server: the raw paths, and the site's snapshot under /snap/
+  type Files = Record<string, string | null>;
+  const raw = (p: string) => p.replace(net.RAW_HOST, '/');
+  const cat = (name: string) => raw(`${RAW_BASE}/assets/data/${name}`);
+  const catSig = (name: string) => raw(`${RAW_BASE}/assets/signatures/${name}.sig`);
+  const signedCatalog = (k = catalogKey): Files => Object.fromEntries([['mods.json', mods], ['constants.json', constants], ['guides.json', guides], ['mod-hashes.json', hashes]]
+    .flatMap(([n, t]) => [[cat(n), t], [catSig(n), signWith(k, t)], [`/snap/${n}`, t], [`/snap/${n}.sig`, signWith(k, t)]]));
+  const configFiles = (text = config, k = configKey): Files => ({ [raw(remote.CONFIG_URL)]: text, [raw(`${remote.CONFIG_URL}.sig`)]: signWith(k, text), [raw(READY_URL)]: presets, [raw(`${READY_URL}.sig`)]: signWith(k, presets) });
+  const states: Record<string, Files> = {
+    good: { ...signedCatalog(), ...configFiles() },
+    // GitHub's cache handing over data and a signature from different moments: the snapshot is whole
+    torn: { ...signedCatalog(), [catSig('mods.json')]: signWith(catalogKey, '{}'), [raw(`${remote.CONFIG_URL}.sig`)]: signWith(configKey, '{}') },
+    forged: { ...signedCatalog(crypto.generateKeyPairSync('ed25519')), ...configFiles(config, crypto.generateKeyPairSync('ed25519')) },
+    nohash: { ...signedCatalog(), [cat('mod-hashes.json')]: null, ...configFiles('not json') },
+    badjson: { ...signedCatalog(), [cat('guides.json')]: '{bad', [catSig('guides.json')]: signWith(catalogKey, '{bad'), '/snap/guides.json': '{bad', '/snap/guides.json.sig': signWith(catalogKey, '{bad'), ...configFiles('[1,2]') },
+    down: {},
+  };
+  const server = http.createServer((req, res) => {
+    const [, state, ...rest] = (req.url || '').split('/');
+    const body = states[state]?.[`/${rest.join('/')}`];
+    if (state === 'down') { res.writeHead(503); res.end(); return; }
+    if (body == null) { res.writeHead(404); res.end(); return; }
+    res.writeHead(200, { 'content-length': Buffer.byteLength(body) }); res.end(body);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}/`;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-remote-'));
+  const NOW = Date.UTC(2026, 10, 13, 12);
+
+  const ops: unknown[][] = [
+    ['cmp', '2.0.0', '10.0.0'], ['cmp', '2.10', '2.9.9'], ['cmp', ' 3.x.1', '3.0.1'], ['cmp', '-1.0', '0'], ['cmp', '', '0.0.0'], ['cmp', '1.2.3.4', '1.2.3'], ['cmp', '+2', '2'],
+    ['normalize', null], ['normalize', [1]], ['normalize', JSON.parse(config)], ['normalize', { features: [], notices: {}, beta: [], mirrors: 'x' }],
+    ['normalizeCatalog', JSON.parse(mods)],
+    ['new', '2.9.5', NOW], ['state', 'down'], ['catalog.load', false], ['config.refresh'], ['ready.refresh'], ['ready.list'],
+    ['state', 'good'], ['catalog.load', false], ['catalog.hash', 'heroes', 'A.zip'], ['catalog.hash', 'heroes', 'B.zip'], ['catalog.hash', 'heroes', 'C.zip'], ['catalog.hash', '', 'A.zip'],
+    ['config.refresh'], ['ready.refresh'], ['ready.list'], ['ready.get', 'minimal'], ['ready.get', 'nope'],
+    ...['ru', 'en', 'de'].flatMap((l) => [['feature', 'install', l], ['feature', 'cosmetics', l], ['feature', 'voice', l], ['feature', 'other', l], ['notices', l], ['issues', l]]),
+    ['beta'], ['mirrors'],
+    ['state', 'torn'], ['catalog.load', true], ['config.refresh'],
+    ['state', 'forged'], ['catalog.load', true], ['config.refresh'], ['ready.refresh'],
+    ['state', 'nohash'], ['catalog.load', true], ['catalog.hash', 'heroes', 'A.zip'], ['config.refresh'],
+    ['state', 'badjson'], ['catalog.load', true], ['config.refresh'], ['notices', 'en'],
+    ['state', 'down'], ['catalog.load', true],
+    // a later build and a different day: the blocks and the dated notices move
+    ['new', '3.0.0', NOW + 4 * 86400000], ['state', 'good'], ['config.refresh'], ['feature', 'install', 'en'], ['feature', 'cosmetics', 'en'], ['notices', 'en'], ['issues', 'en'], ['catalog.load', false],
+  ];
+  const ud = (side: string, gen: number) => path.join(tmp, side, String(gen));
+
+  // the Rust side, in one run
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['remote.script', base, spki(catalogKey), spki(configKey), path.join(tmp, 'rs'), ops]]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+
+  // the TypeScript side, op for op
+  let gen = 0;
+  let cfgVersion = '';
+  let clock = 0;
+  let catalog: InstanceType<typeof Catalog> | null = null;
+  let cfg: ReturnType<typeof remote.createRemoteConfig> | null = null;
+  let ready: ReturnType<typeof createReadyPresets> | null = null;
+  let logs: string[] = [];
+  const want: unknown[] = [];
+  for (const op of ops) {
+    want.push(await (async () => {
+      switch (op[0]) {
+        case 'cmp': return remote.cmpVersion(op[1], op[2]);
+        case 'normalize': return remote.normalize(op[1]);
+        case 'normalizeCatalog': return normalizeCatalog(op[1] as never);
+        case 'new': {
+          const dir = ud('ts', gen++);
+          fs.mkdirSync(dir, { recursive: true });
+          cfgVersion = op[1] as string; clock = op[2] as number;
+          catalog = new Catalog(dir, { snapshotBase: '', publicKey: spki(catalogKey) });
+          cfg = remote.createRemoteConfig({ userDataDir: dir, appVersion: () => cfgVersion, publicKey: spki(configKey), now: () => clock, log: (m) => logs.push(m) });
+          ready = createReadyPresets({ userDataDir: dir, publicKey: spki(configKey), log: (m) => logs.push(m) });
+          return null;
+        }
+        case 'state': {
+          const prefix = `${base}${op[1]}/`;
+          mirrors.setMirrors([{ host: `state-${op[1]}`, map: (u: string) => u.replace(net.RAW_HOST, prefix), origin: true }]);
+          catalog!.snapshotBase = `${prefix}snap/`;
+          return null;
+        }
+        case 'catalog.load': try { return await catalog!.load({ forceRefresh: !!op[1] }); } catch (e) { return { error: (e as Error).message }; }
+        case 'catalog.hash': return catalog!.publishedHash(op[1] as string, op[2] as string);
+        case 'config.refresh': { logs = []; const v = await cfg!.refresh(); return { v, logs }; }
+        case 'ready.refresh': { logs = []; const v = await ready!.refresh(); return { v, logs }; }
+        case 'ready.list': return ready!.list();
+        case 'ready.get': return ready!.get(op[1] as string);
+        case 'feature': return cfg!.feature(op[1] as string, op[2] as string);
+        case 'notices': return cfg!.notices(op[1] as string);
+        case 'issues': return cfg!.issues(op[1] as string);
+        case 'beta': return cfg!.beta();
+        case 'mirrors': return cfg!.mirrors();
+      }
+      throw new Error(`no step ${op[0]}`);
+    })());
+  }
+  const [answer] = JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[];
+  server.closeAllConnections(); server.close();
+  mirrors.setMirrors(null);
+  assert.ok(answer.ok, JSON.stringify(answer).slice(0, 400));
+
+  // the time a catalog was fetched is the clock's; a socket's failure is worded by each side's own client
+  const why = (m: string) => (/signature|HTTP \d/.test(m) ? m : '<not JSON>');
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null), (k, x) => {
+    if (k === 'fetchedAt' && typeof x === 'number') return 'now';
+    if ((k === 'stale' || k === 'error') && typeof x === 'string') return why(x);
+    if (typeof x === 'string') { const m = /^(remote config|ready presets) not fetched: ([^]*)$/.exec(x); if (m) return `${m[1]} not fetched: ${why(m[2])}`; }
+    return x;
+  });
+  ops.forEach((op, i) => assert.deepEqual(norm(answer.ok![i]), norm(want[i]), `${i} ${JSON.stringify(op).slice(0, 120)}`));
+  const tree = (side: string) => (fs.readdirSync(path.join(tmp, side), { recursive: true }) as string[]).filter((f) => fs.statSync(path.join(tmp, side, f)).isFile())
+    .filter((f) => !f.endsWith('meta.json')).sort().map((f) => `${f} ${crypto.createHash('sha1').update(fs.readFileSync(path.join(tmp, side, f))).digest('hex')}`);
+  assert.deepEqual(tree('rs'), tree('ts'));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

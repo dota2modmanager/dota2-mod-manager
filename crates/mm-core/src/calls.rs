@@ -2332,6 +2332,73 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "remote.script" => {
+            // (serverBase, catalogKey, configKey, userDataRoot, ops): the catalog, the remote config and the
+            // ready presets on one network, each answer in turn; `state` points the chain at a folder of the server
+            use crate::net_mirrors::{Map, Mirror};
+            let net = crate::net_fetch::Net::default();
+            let (base, cat_key, cfg_key, root) = (s(args, 0), s(args, 1), s(args, 2), std::path::PathBuf::from(s(args, 3)));
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let mut gen = 0;
+            let mut catalog: Option<crate::catalog::Catalog> = None;
+            let mut cfg: Option<crate::remote_config::RemoteConfig> = None;
+            let mut ready: Option<crate::ready_presets::ReadyPresets> = None;
+            let mut out = Vec::new();
+            for op in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let st = |i: usize| crate::js::string(&op[i]);
+                let mut logs: Vec<String> = Vec::new();
+                let mut log = |m: &str| logs.push(m.to_string());
+                let none = || "no catalog yet".to_string();
+                out.push(match op[0].as_str().unwrap_or("") {
+                    "cmp" => json!(crate::remote_config::cmp_version(&st(1), &st(2))),
+                    "normalize" => crate::remote_config::normalize(&op[1]),
+                    "normalizeCatalog" => {
+                        let mut m = op[1].clone();
+                        crate::catalog::normalize_catalog(&mut m);
+                        m
+                    }
+                    "new" => {
+                        let dir = root.join(gen.to_string());
+                        gen += 1;
+                        std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+                        *clock.lock().unwrap() = op[2].as_f64().unwrap_or(0.0);
+                        let c = clock.clone();
+                        catalog = Some(crate::catalog::Catalog::new(&dir, Some(""), Some(&cat_key), Box::new(crate::net_fetch::now_ms)));
+                        cfg = Some(crate::remote_config::RemoteConfig::new(&dir, &st(1), Some(&cfg_key), Box::new(move || *c.lock().unwrap())));
+                        ready = Some(crate::ready_presets::ReadyPresets::new(&dir, Some(&cfg_key)));
+                        Value::Null
+                    }
+                    "state" => {
+                        let prefix = format!("{base}{}/", st(1));
+                        net.chain().set_mirrors(Some(vec![Mirror { host: format!("state-{}", st(1)), map: Map::Prefix(prefix.clone()), origin: true, small_only: false, pictures: None }]));
+                        catalog.as_mut().ok_or_else(none)?.snapshot_base = format!("{prefix}snap/");
+                        Value::Null
+                    }
+                    "catalog.load" => catalog.as_ref().ok_or_else(none)?.load(&net, op[1].as_bool().unwrap_or(false)).unwrap_or_else(|e| json!({ "error": e })),
+                    "catalog.hash" => json!(catalog.as_ref().ok_or_else(none)?.published_hash(&st(1), &st(2))),
+                    "config.refresh" => {
+                        let v = cfg.as_ref().ok_or_else(none)?.refresh(&net, &mut log);
+                        json!({ "v": v, "logs": logs })
+                    }
+                    "ready.refresh" => {
+                        let v = ready.as_ref().ok_or_else(none)?.refresh(&net, &mut log);
+                        json!({ "v": v, "logs": logs })
+                    }
+                    "ready.list" => json!(ready.as_ref().ok_or_else(none)?.list()),
+                    "ready.get" => json!(ready.as_ref().ok_or_else(none)?.get(&st(1))),
+                    "feature" => {
+                        let (off, note) = cfg.as_ref().ok_or_else(none)?.feature(&st(1), &st(2));
+                        json!({ "off": off, "note": note })
+                    }
+                    "notices" => json!(cfg.as_ref().ok_or_else(none)?.notices(&st(1))),
+                    "issues" => json!(cfg.as_ref().ok_or_else(none)?.issues(&st(1))),
+                    "beta" => cfg.as_ref().ok_or_else(none)?.beta(),
+                    "mirrors" => cfg.as_ref().ok_or_else(none)?.mirrors(),
+                    other => return Err(format!("no step {other}")),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
