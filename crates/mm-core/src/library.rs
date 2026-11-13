@@ -201,6 +201,23 @@ impl Library {
         Ok(Some(self.installed()[i].clone()))
     }
 
+    /// Drop fields from a record (TypeScript sets them undefined, and JSON leaves them out).
+    pub fn drop_fields(
+        &mut self,
+        id: &Value,
+        keys: &[&str],
+        tx: Option<&mut FileTx>,
+    ) -> std::io::Result<Option<Value>> {
+        let Some(i) = self.index_of(id) else { return Ok(None) };
+        if let Some(rec) = self.installed_mut()[i].as_object_mut() {
+            for k in keys {
+                rec.shift_remove(*k);
+            }
+        }
+        self.save(tx)?;
+        Ok(Some(self.installed()[i].clone()))
+    }
+
     pub fn set_enabled(
         &mut self,
         id: &Value,
