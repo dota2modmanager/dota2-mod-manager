@@ -975,6 +975,20 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             json!(particle_snapshot::snapshot_points(&file, &Value::Object(data))?)
         }
         "model-hitboxes.nameHash" => json!(model_hitboxes::name_hash(&s(args, 0))),
+        "model-hitboxes.fit" => {
+            // ([[bone, [x, y, z]], ...])
+            let points: Vec<(String, [f64; 3])> = args
+                .first()
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|p| {
+                    let at = floats(p.as_array().map_or(&[][..], Vec::as_slice), 1);
+                    (p.get(0).map(crate::js::string).unwrap_or_default(), [0, 1, 2].map(|c| at.get(c).copied().unwrap_or(f64::NAN)))
+                })
+                .collect();
+            json!(model_hitboxes::fit_boxes(&points))
+        }
         "model-hitboxes.surfaceBoxes" => json!(model_hitboxes::surface_boxes(&b(args, 0)?)?
             .iter()
             .map(|b| json!({ "bone": b.bone, "min": b.min.map(crate::js::json_number), "max": b.max.map(crate::js::json_number) }))

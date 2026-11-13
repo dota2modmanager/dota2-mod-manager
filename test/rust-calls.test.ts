@@ -430,6 +430,9 @@ test('surface hitboxes and the effects that spread over them in Rust make what t
   const systems = [...new Set(unusualEffects(text).map((e) => e.system))].slice(0, 80);
   const cases: Case[] = [
     { name: 'model-hitboxes.nameHash', ts: h.nameHash as never, inputs: ['mm_surface', 'Bip01_Head', '', 'a', 'abcde'].map((n) => [n]) },
+    { name: 'model-hitboxes.fit', ts: ((p: [string, number[]][]) => h.fitBoxes(p.map(([bone, at]) => ({ bone, at })))) as never, inputs: [
+      [[-1, 1].flatMap((x) => [-1, 1].flatMap((y) => [-1, 1].map((z) => [x * 40, y * 40, z * 40]))).flatMap((at) => Array.from({ length: 120 }, (_, b) => [`b${b}`, at]))],
+      [Array.from({ length: 300 }, (_, b) => [`b${b}`, [b, -b / 3, 0.5]])], [[['a', [0, 0, 0]], ['a', [100, 0, 0]], ['b', [-7.25, 3, 1e-3]]]], [[]]] },
     { name: 'model-hitboxes.surfaceBoxes', ts: ((m: string) => h.surfaceBoxes(buf(m))) as never, inputs: models.map((m) => [m]) },
     { name: 'model-hitboxes.withSurfaceHitboxes', ts: ((m: string, names?: string[]) => sha(h.withSurfaceHitboxes(buf(m), names))) as never, inputs: models.flatMap((m) => [[m], [m, ['mm_surface', 'Default', 'second']]]) },
     { name: 'particle-surface.surfaceSystem', ts: ((pak: string, s: string) => {
