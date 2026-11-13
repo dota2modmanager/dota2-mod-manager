@@ -161,6 +161,9 @@ pub fn request(app: &AppHandle, method: &str, args: &[Value]) -> Result<Value, S
         "win.devtools" => Ok(Value::Null),
         "win.progress" => Ok(Value::Null),
         "app.quit" | "app.exit" => {
+            if let Some(s) = app.try_state::<std::sync::Arc<crate::window::Shell>>() {
+                s.quitting();
+            }
             app.exit(args.first().and_then(|v| v.as_i64()).unwrap_or(0) as i32);
             Ok(Value::Null)
         }

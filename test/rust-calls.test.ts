@@ -6583,3 +6583,454 @@ test('a hero painted part by part in Rust is built, compiled and put in My mods 
   assert.ok(log.some((m) => m.includes('no ValveResourceFormat')), 'without the reader the pictures stay');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the window\'s size, scale and zoom keys and the tray\'s doings in Rust are the TypeScript ones', { skip }, async () => {
+  const mw = await import('../src/main-window.ts');
+  const tray = await import('../src/tray.ts');
+  const nums = [0, -1, 0.5, 0.69, 0.7, 1, 1.04, 1.3, 2.5, 2.51, 9, NaN, '1.5', '', ' 2 ', 'x', null, true, false, [], [2], {}, '1e1', '0x2'];
+  const areas = [null, { width: 0, height: 900 }, { width: 1366, height: 728 }, { width: 1280, height: 680 }, { width: 1920, height: 1040 }, { width: 2000, height: 1100 },
+    { width: 2001, height: 1100 }, { width: 2560, height: 1400 }, { width: 3840, height: 2100 }, { width: 5120, height: 1400 }, { width: 7680, height: 4300 }, { width: -5, height: 10 }];
+  const keys = ['=', '+', '-', '_', '0', '1', 'a', 'Enter', ''];
+  const cases: Case[] = [
+    { name: 'main-window.clampZoom', ts: mw.clampZoom as never, inputs: nums.map((v) => [v]) },
+    { name: 'main-window.windowFit', ts: ((a: never, s: number) => mw.windowFit(a, s)) as never, inputs: areas.flatMap((a) => [1, 1.3, 2.5, 0.8].map((s) => [a, s])) },
+    { name: 'main-window.startScale', ts: mw.startScale as never, inputs: areas.map((a) => [a]) },
+    { name: 'main-window.workAreaFrom', ts: mw.workAreaFrom as never, inputs: ['1366x728', '1366X728', 'x', '10x', 'x10', ' 1x1', '1x1 ', '0x0', '12345x6', '1.5x2', null, ''].map((v) => [v]) },
+    { name: 'main-window.zoomFor', ts: ((kind: string, key: string, control: boolean, alt: boolean, cur: number) => (kind !== 'keyDown' || !control || alt ? null : mw.zoomFor(key, cur))) as never,
+      inputs: [...keys.flatMap((k) => [0.7, 1, 1.95, 2.5].map((c) => ['keyDown', k, true, false, c])), ['keyUp', '=', true, false, 1], ['keyDown', '=', false, false, 1], ['keyDown', '=', true, true, 1]] },
+    { name: 'tray.startedHidden', ts: tray.startedHidden as never, inputs: [[[]], [['app.exe']], [['app.exe', '--background']], [['--background=1']], [['--BACKGROUND']]] },
+  ];
+  assert.ok(compare(cases) > 100);
+  // the keeper over fakes that write down what it does, the Rust's TrayKeeper over the same steps
+  const script = (lang: string, ops: unknown[][]) => {
+    setLang(lang);
+    const out: unknown[] = [];
+    let cur: Record<string, unknown> = {};
+    let close: ((e: { preventDefault(): void }) => void) | null = null;
+    let beforeQuit = () => {};
+    let keeper: { sync(): void } | null = null;
+    const settings = { get: (k: string) => cur[k], set: (k: string, v: unknown) => { out.push(['set', k, v]); } };
+    for (const [kind, arg] of ops) {
+      if (kind === 'lang') { setLang(arg as string); continue; }
+      if (kind === 'quit') { beforeQuit(); continue; }
+      cur = (arg as Record<string, unknown>) ?? {};
+      if (kind === 'close') { let kept = false; close!({ preventDefault: () => { kept = true; } }); if (!kept) out.push(['close']); continue; }
+      if (keeper) { keeper.sync(); continue; }
+      keeper = tray.keepInTray({
+        app: { on: (_e, fn) => { beforeQuit = fn; }, quit: () => out.push(['quit']) },
+        win: { on: (_e, fn) => { close = fn; }, hide: () => out.push(['hide']), show() {}, focus() {}, restore() {}, isMinimized: () => false, isDestroyed: () => false },
+        settings: settings as never, t, play: () => {},
+        makeTray: () => ({ setToolTip: (s) => out.push(['make', s]), setContextMenu: (m) => out.push(['menu', m]), on() {}, displayBalloon: (o) => out.push(['balloon', o.title, o.content]), destroy: () => out.push(['destroy']) }),
+        menu: (items) => items.map((i) => i.label ?? null),
+      });
+    }
+    setLang('en');
+    return out;
+  };
+  const on = {}; const off = { runInBackground: false }; const seen = { trayHintSeen: true }; const odd = { runInBackground: 0, trayHintSeen: 'yes' };
+  const scripts: unknown[][][] = [
+    [['sync', on], ['close', on], ['close', on], ['close', seen], ['quit'], ['close', on]],
+    [['sync', off], ['close', off], ['sync', on], ['lang', 'ru'], ['sync', on], ['close', on], ['sync', off], ['close', on], ['sync', odd], ['close', odd]],
+    [['sync', on], ['sync', off], ['close', on], ['sync', on], ['lang', 'zh-CN'], ['sync', seen], ['close', { runInBackground: null }], ['close', { runInBackground: 'false' }]],
+  ];
+  const langs = ['en', 'ru', 'zh-CN'];
+  const list = langs.flatMap((l) => scripts.map((s) => ['tray.script', l, s]));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-tray-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify(list));
+  const rs = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8' })) as { ok: unknown }[];
+  let k = 0;
+  for (const l of langs) for (const s of scripts) assert.deepEqual(rs[k++].ok, script(l, s), `${l} ${JSON.stringify(s)}`);
+  for (const args of [[true, true, false, false], [false, true, false, false], [true, false, false, false], [true, true, true, false], [true, true, false, true]]) {
+    const [r] = JSON.parse((fs.writeFileSync(path.join(tmp, 'c.json'), JSON.stringify([['tray.loginItemAllowed', ...args]])), execFileSync(cli, ['call', path.join(tmp, 'c.json')], { encoding: 'utf8' })));
+    assert.equal(r.ok, args[0] && args[1] && !args[2] && !args[3]);
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the settings view, the support window\'s timing and the beta gate in Rust are the TypeScript ones', { skip }, async () => {
+  const { settingsViewFor } = await import('../src/settings-view.ts');
+  const sp = await import('../src/support-prompt.ts');
+  const beta = await import('../src/beta.ts');
+  const { validateGamePath } = await import('../src/steam.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-view-'));
+  // a game with our folder, Minify's in its own folder and in a borrowed one, and mods stranded
+  const game = path.join(tmp, 'steamapps', 'common', 'dota 2 beta', 'game');
+  const put = (rel: string, data: Buffer = Buffer.from('x')) => { const f = path.join(game, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, data); };
+  const marked = buildVpk([entryAt('minify_version.txt', Buffer.from('1'))]);
+  put('dota/pak01_dir.vpk', buildVpk([entryAt('a.txt', Buffer.from('a'))]));
+  put('dota_russian/pak01_dir.vpk'); put('dota_russian/pak02_dir.vpk'); put('dota_russian/pak03_dir.vpk.off');
+  put('dota_minify/pak66_dir.vpk'); put('dota_minify/pak10_dir.vpk', marked); put('dota_minify/other.txt');
+  put('dota_koreana/pak05_dir.vpk'); put('dota_dutch/pak66_dir.vpk.moff');
+  const bare = path.join(tmp, 'bare', 'game');
+  fs.mkdirSync(bare, { recursive: true });
+  const recs = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, files: i % 2 ? [{ root: 'lang', name: 'x' }] : [{ root: 'game', name: 'y' }] }));
+  const games = [game, sandboxGame, bare, '', null, path.join(tmp, 'nope')];
+  const views: unknown[][] = [];
+  for (const g of games) for (const folder of ['russian', 'minify', 'koreana']) for (const n of [0, 3]) {
+    views.push([{ dotaGamePath: g, uiLang: 'en', minify: 'kept?', zeta: 1 }, recs(n), n > 0, folder, n ? { moved: 2 } : null, n ? null : { laidOut: true }]);
+  }
+  const prompts = [null, 5, 'x', [], {}, { launches: 2 }, { launches: 3 }, { launches: 3, until: 1e15 }, { launches: '9', state: 'done' }, { launches: 7, state: 'later', until: 100, later: 2 },
+    { launches: 4, state: 'later', later: 3 }, { launches: -1, until: NaN, later: Infinity }, { state: 'bogus', launches: 1e300 }];
+  const salt = 'pepper';
+  const list = { salt, ids: [beta.idHash('42', salt).toUpperCase(), 7, null, beta.idHash(' 99 ', salt)] };
+  const cases: Case[] = [
+    { name: 'settings-view.view', ts: ((st: Record<string, unknown>, records: unknown[], dc: boolean, folder: string, mig: unknown, slot: unknown) => {
+      const settings = { get: (k: string) => st[k], all: () => ({ ...st }) };
+      return settingsViewFor({ settings: settings as never, library: { list: () => records as never }, discordAuth: { isConfigured: () => dc }, validateGamePath, langFolder: () => folder, takeMigration: () => mig, takeSlotMigration: () => slot })({ consumeMigration: true });
+    }) as never, inputs: views },
+    { name: 'support-prompt.readPrompt', ts: sp.readPrompt as never, inputs: prompts.map((p) => [p]) },
+    { name: 'support-prompt.counted', ts: ((p: unknown) => sp.counted(sp.readPrompt(p))) as never, inputs: prompts.map((p) => [p]) },
+    { name: 'support-prompt.due', ts: ((p: unknown, now: number) => sp.due(sp.readPrompt(p), now)) as never, inputs: prompts.flatMap((p) => [0, 100, 1e15, 2e15].map((t) => [p, t])) },
+    { name: 'support-prompt.choose', ts: ((p: unknown, c: string, now: number) => sp.choose(sp.readPrompt(p), c as never, now)) as never, inputs: prompts.flatMap((p) => ['later', 'done'].map((c) => [p, c, 1000])) },
+    { name: 'beta.idHash', ts: beta.idHash as never, inputs: [['42', salt], [' 42 ', ''], ['', 'x'], ['айди', 'соль']] },
+    { name: 'beta.betaState', ts: ((id: string | null, b: unknown, wanted: unknown) => beta.betaState({ discordId: id, beta: b as never, wanted: wanted as boolean })) as never,
+      inputs: ['42', '99', '7', '', null].flatMap((id) => [list, { ids: [] }, null, { salt, ids: 'x' }, []].flatMap((b) => [true, false].map((w) => [id, b, w]))) },
+  ];
+  assert.ok(compare(cases) > 150);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('every channel\'s argument check in Rust refuses what the TypeScript refuses, in its words', { skip }, async () => {
+  const { CHANNEL_ARGS, WINDOW_SETTINGS, checkArgs } = await import('../src/channel-args.ts');
+  const call = (list: unknown[][]) => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-args-'));
+    fs.writeFileSync(path.join(tmp, 'c.json'), JSON.stringify(list));
+    const out = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'c.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }));
+    fs.rmSync(tmp, { recursive: true, force: true });
+    return out as { ok: unknown }[];
+  };
+  const [chs, ws] = call([['channel-args.channels'], ['channel-args.windowSettings']]);
+  assert.deepEqual(chs.ok, Object.keys(CHANNEL_ARGS).sort(), 'the same channels');
+  assert.deepEqual(ws.ok, Object.keys(WINDOW_SETTINGS).sort(), 'the same settings');
+  const b64 = (n: number) => ({ $b64: Buffer.alloc(n, 1).toString('base64') });
+  const lens = [0, 1, 2, 7, 8, 12, 13, 16, 17, 20, 21, 40, 41, 60, 61, 64, 65, 80, 81, 100, 101, 120, 121, 160, 161, 200, 201, 260, 261, 300, 301, 500, 501, 520, 521, 1000, 1001, 4096, 4097, 5000, 5001];
+  const pool: unknown[] = [null, true, false, 0, -1, 0.04, 0.05, 0.25, 0.5, 0.9, 1, 5, 5.01, 11, 12, 20, 21, 59, 60, 64, 65, 100, 101, 130, 255, 256, 1920, -1921, 10000, 10001, 1e9, 1e9 + 1, 1e14, 1e15, 9007199254740991,
+    ...lens.map((n) => 'x'.repeat(n)), '😀'.repeat(30), '😀'.repeat(41), 'é'.repeat(41), 'koreana', 'later', 'done', 'towers', 'trees', 'plants', 'vpk', 'picture', 'replace', 'layer', 'mod', 'recolor', 'winrate',
+    'terrorblade-arcana', 'en', 'zh-CN', 'zh-cn', 'EN', 'eng', 'https://example.com/x', 'http://a', 'ftp://a', 'not a url', 'http://user:pw@proxy:8080', 'http://proxy:8080', 'http://proxy:99999', '#ff00ff',
+    {}, [], [1, 2, 3], ['a', 'b'], [1, 2, 3, 4], { a: 1 }, b64(0), b64(5), b64(4), { $b64: 'AA' }, { $b64: 'AAA=' }, { $b64: 5 }];
+  const valid: Record<string, unknown[][]> = {
+    'mods:install': [[{ categoryId: 'skins', name: 'n', styleLabel: null, fileRef: 'f', preview: 'p' }]],
+    'mods:importBuffers': [[[{ name: 'a.vpk', data: b64(3) }]]],
+    'packs:combine': [[{ name: 'pack', modIds: ['a', 'b'] }]],
+    'presets:export': [['id', { skip: ['x'], author: 'me', note: 'n' }]],
+    'cosmetics:pick': [['hero', 'slot', 'n', 5]], 'cosmetics:wearLook': [['look', [{ slot: 's', itemId: '1', name: 'n', effectId: 'e' }]]],
+    'preview:frame': [['k', b64(10)]],
+    'preview3d:warm': [['hero', [{ slot: 's', stock: '1' }]]], 'preview3d:prefetch': [['hero', [{ slot: 's', stock: '1' }], 'slot', ['1', '2']]],
+    'preview3d:models': [['hero', [{ slot: 's', stock: '1', tryOn: { itemId: '2', effectId: 'e' } }]]], 'preview3d:slice': [[1, 0]],
+    'sounds:add': [['axe', 'ev', 'replace', 0.5, b64(10), 'label']],
+    'hud:install': [[[{ id: 'minimap', scale: 100, x: 0, y: -10, opacity: 50, tint: '#ffffff', hidden: false }]]],
+    'fx:preview': [['p', { a: { x: 1 } }]], 'fx:install': [['p', { a: { x: 1 } }, true]],
+    'creator:save': [[null, { name: 'n', category: 'c', hero: 'h', description: 'd', author: 'a', replaces: { category: 'c', name: 'n' }, styles: [{ label: 'l' }] }]],
+    'creator:export': [['id', [b64(2), null]]], 'creator:attach': [['id', 3, 'vpk']],
+    'background:install': [[b64(4), 'look', 0.5, 10]], 'icons:set': [['hero', 'ability', 'icon']],
+    'paint:install': [['hero', { a: 1 }, 'label', ['x']]], 'map:install': [['towers', 'a', 'b']], 'arcana:install': [['razor-crest', [1, 2, 3], 'mod']],
+    'uninstall:run': [[{ revert: true, mods: false, data: true }]], 'misc:openExternal': [['https://github.com/']],
+    'grid:apply': [[['winrate', 'popular']]], 'decor:install': [[['plants']]],
+  };
+  const settingValues: Record<string, unknown[]> = {
+    itemLooks: [[{ id: 'l', hero: 'h', name: 'n', picks: [{ slot: 's', itemId: '1', name: 'n' }], at: 5 }], [{ id: 'l', hero: 'h', name: '', picks: [], at: 5 }]],
+    modLabels: [{ 'rec:a': 'x' }, { 'file:': 'x' }, { 'rec:a\nb': 'x' }, { ['rec:' + 'y'.repeat(500)]: 'x' }, { ['rec:' + 'y'.repeat(501)]: 'x' }, { 'mod:a': 'x' }, { 'rec:a': '' }, { 'rec:a': 'z'.repeat(81) }, { ['file:😀' + 'q'.repeat(70)]: 5 }],
+    panels: [null, { a: [1, 2] }, { big: 'x'.repeat(70000) }], downloadProxy: ['', '  ', 'http://proxy:8080', 'socks5://a', 'http://a/path', 'http://a:0', 'https://a?x=1'],
+    favorites: [['a', 'b'], ['x'.repeat(501)]],
+  };
+  // each argument replaced by each pool value, and a valid object's fields one at a time
+  const deep = (v: unknown): unknown[] => {
+    if (!v || typeof v !== 'object' || Array.isArray(v) || '$b64' in (v as object)) return [];
+    const o = v as Record<string, unknown>;
+    return [...Object.keys(o).flatMap((k) => [...pool.slice(0, 40).map((p) => ({ ...o, [k]: p })), Object.fromEntries(Object.entries(o).filter(([x]) => x !== k)), ...deep(o[k]).map((d) => ({ ...o, [k]: d }))]), { ...o, extra: 1 }];
+  };
+  const inputs: unknown[][] = [];
+  for (const [ch, checks] of Object.entries(CHANNEL_ARGS)) {
+    const bases = valid[ch] ?? [checks.map(() => 'x')];
+    inputs.push([ch, []], [ch, [...checks.map(() => null), 1]]);
+    for (const base of bases) {
+      inputs.push([ch, base]);
+      for (let i = 0; i < checks.length; i++) {
+        for (const p of pool) inputs.push([ch, base.map((x, j) => (j === i ? p : x))]);
+        for (const d of deep(base[i])) inputs.push([ch, base.map((x, j) => (j === i ? d : x))]);
+        if (Array.isArray(base[i])) for (const d of deep((base[i] as unknown[])[0])) inputs.push([ch, base.map((x, j) => (j === i ? [d] : x))]);
+        inputs.push([ch, base.slice(0, i)]);
+      }
+    }
+  }
+  inputs.push(['nope:channel', []], ['settings:set', [5, 1]], ['settings:set', [null]], ['settings:set', [['a', null]]], ['settings:set', [{}]], ['settings:set', ['x'.repeat(100)]], ['settings:set', ['dotaGamePath', 'c:/']]);
+  for (const k of Object.keys(WINDOW_SETTINGS)) for (const v of [...(settingValues[k] ?? []), ...pool]) inputs.push(['settings:set', [k, v]], ['settings:set', [k]]);
+  const bytesOf = (v: unknown): unknown => (Array.isArray(v) ? v.map(bytesOf) : v && typeof v === 'object' ? ('$b64' in v && typeof (v as { $b64: unknown }).$b64 === 'string' ? new Uint8Array(Buffer.from((v as { $b64: string }).$b64, 'base64')) : Object.fromEntries(Object.entries(v).map(([k, x]) => [k, bytesOf(x)]))) : v);
+  const rs = call(inputs.map(([ch, a]) => ['channel-args.check', ch, a]));
+  let k = 0;
+  for (const [ch, a] of inputs) {
+    const want = checkArgs(ch as string, bytesOf(a) as unknown[]);
+    assert.deepEqual(rs[k++].ok, want, `${ch} ${JSON.stringify(a).slice(0, 200)}`);
+  }
+  assert.ok(inputs.length > 20000, String(inputs.length));
+});
+
+test('what a mod replaces, asked of the item table, in Rust is the TypeScript answer', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { createModIdentity } = await import('../src/mod-id.ts');
+  const { readGameSchema, listItems } = await import('../src/schema.ts');
+  const { sharedVpkIndex } = await import('../src/vpk.ts');
+  const { text } = readGameSchema(sandboxGame);
+  const models = listItems(text).map((i) => /"model_player"\s+"([^"]+)"/i.exec(text.slice(i.start, i.end))?.[1]).filter((m): m is string => !!m);
+  const pick = (n: number, from: number) => models.slice(from, from + n);
+  const lists: string[][] = [
+    [], ['readme.txt', 'models/heroes/axe/axe.vmdl_c'],
+    pick(5, 0).map((m) => `${m}_c`), pick(40, 300).map((m) => `${m}_c`), pick(3, 900).map((m) => m),
+    pick(3, 1200).map((m) => `${m.toUpperCase()}_c`), pick(3, 1500).map((m) => `${m.toLowerCase().replace(/\//g, '\\')}_c`),
+    models.filter((_, i) => i % 97 === 0).map((m) => `${m.toLowerCase()}_c`), models.map((m) => `${m.toLowerCase()}_c`),
+  ];
+  const mods = path.join(root, 'sandbox', 'mods');
+  for (const f of fs.existsSync(mods) ? fs.readdirSync(mods) : []) {
+    if (f.endsWith('_dir.vpk')) lists.push([...sharedVpkIndex(path.join(mods, f)).paths()]);
+  }
+  const run = (game: string | null) => {
+    const log: string[] = [];
+    const id = createModIdentity({ getGamePath: () => game, log: (m) => log.push(m) });
+    const answers = lists.map((l) => JSON.parse(JSON.stringify(id.identify(l) ?? null)));
+    return { answers, log, ready: id.ready() };
+  };
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-modid-'));
+  const games = [sandboxGame, null, empty];
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-modid-calls-'));
+  fs.writeFileSync(path.join(tmp, 'c.json'), JSON.stringify(games.map((g) => ['mod-id.identify', g, ...lists])));
+  const rs = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'c.json')], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok: ReturnType<typeof run> }[];
+  for (const [k, g] of games.entries()) {
+    const want = run(g);
+    for (const [i, a] of want.answers.entries()) assert.deepEqual(rs[k].ok.answers[i], a, `${g} list ${i}`);
+    assert.deepEqual(rs[k].ok.log, want.log, `${g} log`);
+    assert.equal(rs[k].ok.ready, want.ready);
+  }
+  assert.ok(run(sandboxGame).answers.filter(Boolean).length >= 6, 'the table speaks for most lists');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  fs.rmSync(empty, { recursive: true, force: true });
+});
+
+test('the first start\'s language, a folder\'s size and a closed feature in Rust are the TypeScript ones', { skip }, async () => {
+  const { uiLangFor } = await import('../src/ui-lang.ts');
+  const { folderSize } = await import('../src/folder-size.ts');
+  const { createGate } = await import('../src/feature-gate.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-size-'));
+  const put = (rel: string, n: number) => { const f = path.join(tmp, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, Buffer.alloc(n)); };
+  put('a.bin', 10); put('x/b.bin', 2000); put('x/y/z/c.bin', 123456); put('x/y/empty.txt', 0); fs.mkdirSync(path.join(tmp, 'hollow'));
+  const cases: Case[] = [
+    { name: 'ui-lang.uiLangFor', ts: uiLangFor as never, inputs: [[[]], [['ru-RU']], [['uk_UA']], [['KK']], [['zh-Hans-CN']], [['zh_TW']], [['de-DE', 'fr']], [['de', 'hy-AM', 'en']], [['en-GB', 'ru']], [['']], [['-ru']], [['RU-ru']], [['ka']], [['ja', 'zh']]] },
+    { name: 'folder-size.folderSize', ts: folderSize as never, inputs: [[tmp], [path.join(tmp, 'x')], [path.join(tmp, 'hollow')], [path.join(tmp, 'nope')], [path.join(tmp, 'a.bin')]] },
+    { name: 'feature-gate.gate', ts: ((lang: string, open: boolean, off: boolean, note: string) => {
+      setLang(lang);
+      return createGate({ remoteConfig: { feature: () => ({ off, note }) }, settings: { get: () => lang } as never, gameOpen: () => open })('x');
+    }) as never, inputs: ['ru', 'en', 'zh-CN'].flatMap((l) => [[l, true, true, 'n'], [l, false, true, 'closed for now'], [l, false, true, ''], [l, false, false, 'n']]) },
+  ];
+  assert.ok(compare(cases) > 25);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('hero grids for the pick screen in Rust are built, merged and written as the TypeScript ones', { skip }, async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const grid = await import('../src/hero-grid.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-grid-'));
+  // heroStats as OpenDota sends it: old-style totals for some, per-bracket numbers for the rest
+  let seed = 7;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const attrs = ['str', 'agi', 'int', 'all', 'universal', null, ['str']];
+  const raw: Record<string, unknown>[] = Array.from({ length: 130 }, (_, i) => {
+    const h: Record<string, unknown> = { id: i + 1, localized_name: `Hero ${i}`, primary_attr: attrs[i % attrs.length], img: '/x.png' };
+    if (i % 5 === 0) { const p = Math.floor(rnd() * 90000) + 10; h.pub_pick = p; h.pub_win = Math.floor(p * (0.42 + rnd() * 0.16)); }
+    for (let b = 1; b <= 8; b++) { const p = Math.floor(rnd() * 5000); h[`${b}_pick`] = i % 7 === 3 ? String(p) : p; h[`${b}_win`] = Math.floor(p * (0.4 + rnd() * 0.2)); }
+    return h;
+  });
+  raw.push({ id: 0, '1_pick': 9 }, { id: -3 }, { id: 'x' }, { id: 4.5, pub_pick: 3.7, pub_win: -1 }, null as never, 5 as never, { id: '200', '1_pick': '12', '1_win': 'ab' }, { id: 201 });
+  const kept = grid.keepNumbers(raw);
+  const odd = [...kept.slice(0, 20), { id: 300 }, { id: 2.5, pub_pick: 10, pub_win: 6 }, { id: '301', pub_pick: 10, pub_win: 6 }, { id: 302, pub_pick: 0, '1_pick': 4, '1_win': 4 }, { id: 303, pub_pick: 4, pub_win: 2, primary_attr: 'agi' }];
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  const files = [
+    null, '', '{"version":3,"configs":[]}', '{"version":3,"configs":[{"config_name":"Mine","categories":[]},{"config_name":"D2MM · Old","categories":[1]},{"config_name":5},{"x":1},"s",7]}',
+    '{"configs":{}}', '[1,2]', '{"z":1,"configs":[],"2":"two","1":"one","version":4}', 'nope', '"str"', 'null', '{"configs":"abc"}', '{"configs":[null]}', '{"configs":0}',
+  ];
+  const ours = [grid.buildGrid(kept, 'winrate'), { config_name: 'D2MM · x', categories: [] }];
+  const cases: Case[] = [
+    { name: 'hero-grid.keepNumbers', ts: grid.keepNumbers as never, inputs: [[raw], [null], [{}], [[]], ['abc']] },
+    { name: 'hero-grid.gridName', ts: ((l: string, k: string) => lang(l, () => grid.gridName(k as never))) as never, inputs: ['ru', 'en', 'zh-CN'].flatMap((l) => ['winrate', 'attribute', 'popular', 'other'].map((k) => [l, k])) },
+    { name: 'hero-grid.buildGrid', ts: ((l: string, s: never, k: string) => lang(l, () => grid.buildGrid(s, k as never))) as never, inputs: ['ru', 'en'].flatMap((l) => ['winrate', 'attribute', 'popular'].flatMap((k) => [[l, kept, k], [l, odd, k], [l, [], k], [l, kept.slice(0, 3), k]])) },
+    { name: 'hero-grid.mergeGrids', ts: grid.mergeGrids as never, inputs: files.flatMap((f) => [[f, ours], [f, []]]) },
+    { name: 'hero-grid.gridsIn', ts: grid.gridsIn as never, inputs: [...files.map((f) => [f]), [grid.mergeGrids(files[3], ours)]] },
+    { name: 'hero-grid.gridFile', ts: grid.gridFile as never, inputs: [[path.join(tmp, 'userdata', '123')]] },
+  ];
+  assert.ok(compare(cases) > 50);
+
+  // the service, against a server that answers each side's requests in the same order
+  const plan = [
+    { status: 200, body: JSON.stringify(raw) }, { status: 503, body: '' }, { status: 200, body: '[{"id":1}]' }, { status: 200, body: '{nope' },
+    { status: 200, body: JSON.stringify(raw.slice(10)) },
+  ];
+  const seen: Record<string, number> = { ts: 0, rs: 0 };
+  const server = http.createServer((req, res) => {
+    const side = (req.url || '').split('/')[1];
+    const a = plan[seen[side]++] ?? { status: 404, body: '' };
+    res.writeHead(a.status, { 'content-length': Buffer.byteLength(a.body) });
+    res.end(a.body);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const ops: unknown[][] = [
+    ['state'], ['remove'], ['now', 1000], ['apply', ['popular', 'winrate', 'bogus']], ['state'], ['now', 2000], ['apply', ['attribute']], ['state'],
+    ['apply', []], ['apply', ['winrate']], ['now', 3000], ['apply', ['winrate', 'attribute', 'popular']], ['state'], ['remove'], ['state'], ['remove'],
+  ];
+  const sides = ['ts', 'rs'];
+  const dirs = Object.fromEntries(sides.map((side) => {
+    const d = { data: path.join(tmp, side, 'hero-grid'), account: path.join(tmp, side, 'userdata', '4242') };
+    const f = grid.gridFile(d.account);
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, '{"version":3,"configs":[{"config_name":"Mine","categories":[{"category_name":"a","x_position":1,"y_position":2,"width":3,"height":4,"hero_ids":[1]}]}]}');
+    return [side, d];
+  }));
+  const noAccount = path.join(tmp, 'none');
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([
+    ['hero-grid.script', 'en', `${base}/rs`, dirs.rs.data, dirs.rs.account, ops],
+    ['hero-grid.script', 'ru', `${base}/rs`, noAccount, null, [['state'], ['apply', ['winrate']], ['remove']]],
+  ]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async (l: string, api: string, dataDir: string, account: string | null, steps: unknown[][]) => {
+    setLang(l);
+    let clock = 0;
+    const g = grid.createHeroGrids({ dataDir, accountDir: () => account, now: () => clock, fetch: ((u: string, o: RequestInit) => fetch(api, o)) as never });
+    const out: unknown[] = [];
+    for (const op of steps) {
+      try {
+        let v: unknown = null;
+        if (op[0] === 'now') clock = op[1] as number;
+        else if (op[0] === 'state') v = g.state();
+        else if (op[0] === 'apply') v = await g.apply(op[1] as never);
+        else if (op[0] === 'remove') v = g.remove();
+        out.push({ ok: JSON.parse(JSON.stringify(v)) });
+      } catch (e) { out.push({ error: (e as Error).message }); }
+    }
+    setLang('en');
+    return out;
+  };
+  const want = [await run('en', `${base}/ts`, dirs.ts.data, dirs.ts.account, ops), await run('ru', `${base}/ts`, noAccount, null, [['state'], ['apply', ['winrate']], ['remove']])];
+  const got = (JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok!; });
+  server.closeAllConnections(); server.close();
+  // how a body that is not JSON is worded is each side's own
+  const norm = (v: unknown) => JSON.parse(JSON.stringify(v), (k, x) => (typeof x === 'string' && /OpenDota: /.test(x) && !/HTTP \d|OpenDota (sent|прислал)/.test(x) ? x.replace(/: .*/s, ': <why>') : x));
+  assert.deepEqual(norm(got), norm(want));
+  // the same files on disk: the cache, the backup and the grid file
+  const tree = (d: string) => fs.readdirSync(d, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => {
+    const f = path.join(e.parentPath, e.name);
+    return [path.relative(d, f), fs.readFileSync(f, 'utf8')];
+  }).sort();
+  assert.deepEqual(tree(path.join(tmp, 'rs')), tree(path.join(tmp, 'ts')));
+  assert.ok(tree(path.join(tmp, 'ts')).some(([f]) => f.endsWith('backup.json')));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('an author\'s drafts and the archive for the catalog in Rust are the TypeScript ones', { skip }, async () => {
+  const { createCreator } = await import('../src/creator.ts');
+  const { catalogProblems } = await import('../src/creator-premod.ts');
+  const AdmZip = (await import('adm-zip')).default;
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-creator-'));
+  const src = path.join(tmp, 'src');
+  fs.mkdirSync(src);
+  const put = (name: string, data: Buffer) => { fs.writeFileSync(path.join(src, name), data); return path.join(src, name); };
+  const vpk = Buffer.alloc(64); vpk.writeUInt32LE(0x55aa1234, 0); vpk.write('payload', 20);
+  const webp = Buffer.concat([Buffer.from('RIFF\x10\x00\x00\x00WEBPVP8 ', 'latin1'), Buffer.alloc(20, 7)]);
+  const files = {
+    vpk: put('mod.vpk', vpk), vpk2: put('other.VPK', Buffer.concat([vpk, Buffer.from('2')])), short: put('short.vpk', Buffer.from([0x34, 0x12])), notVpk: put('fake.vpk', Buffer.alloc(10, 1)),
+    webp: put('pic.webp', webp), png: put('pic.PNG', Buffer.from('\x89PNG fake', 'latin1')), mp4: put('clip.mp4', Buffer.alloc(30, 3)), txt: put('notes.txt', Buffer.from('x')),
+    dot: put('.png', Buffer.from('dot')), gone: path.join(src, 'missing.vpk'),
+  };
+  const drawn = webp.toString('base64');
+  const ops: unknown[][] = [
+    ['list'], ['save', null, {}], ['save', null, { name: '  Arcana Pudge  ', category: 'heroes', hero: 'pudge', author: 'https://x.y/z', description: 'd'.repeat(2100) }],
+    ['save', 0, { name: 'Zeus  Bolt', category: 'packs', hero: 'zuus', styles: [{ label: 'Red' }, { label: '' }, { label: 'A very long label' }, { label: 'four' }] }],
+    ['attach', 0, 0, 'vpk', files.vpk], ['attach', 0, 1, 'picture', files.png], ['attach', 0, 1, 'picture', files.webp], ['attach', 0, 2, 'vpk', files.vpk2],
+    ['attach', 0, 3, 'vpk', files.vpk], ['attach', 0, 0, 'vpk', files.notVpk], ['attach', 0, 0, 'vpk', files.short], ['attach', 0, 0, 'picture', files.txt],
+    ['attach', 0, 0, 'picture', files.dot], ['attach', 'not-an-id', 0, 'vpk', files.vpk], ['attach', 0, -1, 'vpk', files.vpk], ['attach', 0, 1.5, 'vpk', files.vpk],
+    ['bundle', 0, []], ['save', 0, { styles: [{ label: 'Only' }] }], ['list'],
+    ['attach', 1, 0, 'vpk', files.vpk], ['bundle', 1, []], ['attach', 1, 0, 'picture', files.mp4], ['bundle', 1, [null]], ['bundle', 1, [drawn]],
+    ['save', 1, { name: 'Arcana Pudge', replaces: { category: 'hero-items', name: 'Old Pudge' } }], ['bundle', 1, [drawn]],
+    ['save', 1, { styles: [{ label: 'Red' }, { label: 'Blue/Green' }], replaces: { category: '', name: 'x' }, hero: '', author: 'Me' }],
+    ['attach', 1, 1, 'vpk', files.vpk2], ['attach', 1, 1, 'picture', files.webp], ['bundle', 1, [drawn, null]],
+    ['save', 1, { name: 'Bolt', category: 'heroes', hero: 'Zeus', replaces: null, description: null }], ['bundle', 1, []],
+    ['save', null, { name: 7, author: ['x'], styles: [] }], ['list'], ['remove', 2], ['remove', 'bad'], ['list'], ['save', 'ffffffff-ffff-ffff-ffff-ffffffffffff', {}],
+  ];
+  const norm = (out: unknown[], ids: string[]) => {
+    let s = JSON.stringify(out);
+    ids.forEach((id, k) => { s = s.split(id).join(`$${k}`); });
+    return JSON.parse(s, (k, v) => {
+      if (k === 'updatedAt') return typeof v === 'number' && v > 0;
+      if (k === 'error' && /ENOENT|os error|no such file/i.test(v)) return '<io>';
+      if (k === 'zip') {
+        // the archive's bytes are each zip library's own: what is in it, and that the hash names the inner zip
+        const unpack = (b: Buffer): unknown[] => new AdmZip(b).getEntries().sort((x, y) => (x.entryName < y.entryName ? -1 : 1)).map((e) => {
+          const data = e.getData();
+          if (e.entryName.endsWith('.zip')) return [e.entryName, unpack(data)];
+          if (e.entryName.endsWith('.json')) return [e.entryName, data.toString('utf8')];
+          return [e.entryName, data.toString('base64')];
+        });
+        const b = Buffer.from(v, 'base64');
+        const zip = new AdmZip(b);
+        const hash = JSON.parse(zip.readAsText('hash.json'));
+        // AdmZip writes its entries sorted by name; which one is first is mod.json's to say
+        const first = zip.getEntry(JSON.parse(zip.readAsText('mod.json')).file)!;
+        assert.equal(hash.vpk_zip_hash, createHash('sha256').update(first.getData()).digest('hex'));
+        return (unpack(b) as unknown[][]).map((e) => (e[0] === 'hash.json' ? ['hash.json', JSON.stringify({ ...hash, vpk_zip_hash: 'x' })] : e));
+      }
+      return typeof v === 'string' ? v.replace(/-[0-9a-f]{6}(\.|"|$)/g, '-XXXXXX$1') : v;
+    });
+  };
+  const run = (l: string, ud: string) => {
+    setLang(l);
+    const c = createCreator({ userDataDir: ud });
+    const shown = (d: ReturnType<typeof c.save>) => ({ ...d, pictures: d.styles.map((s) => {
+      if (!s.picture || !/\.(png|jpe?g|webp|gif)$/i.test(s.picture)) return null;
+      const mime: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif' };
+      return `data:${mime[path.extname(s.picture).toLowerCase()]};base64,${fs.readFileSync(path.join(c.folder(d.id), s.picture)).toString('base64')}`;
+    }), missing: c.missing(d), problems: catalogProblems(d) });
+    const made: string[] = [];
+    const id = (v: unknown) => (typeof v === 'number' ? made[v] ?? '' : String(v));
+    const out = ops.map((op) => {
+      try {
+        if (op[0] === 'list') return { ok: c.list().map(shown) };
+        if (op[0] === 'save') { const d = c.save(op[1] === null ? null : id(op[1]), op[2] as never); if (op[1] === null) made.push(d.id); return { ok: shown(d) }; }
+        if (op[0] === 'attach') return { ok: shown(c.attach(id(op[1]), op[2] as number, op[3] as 'vpk', op[4] as string)) };
+        if (op[0] === 'remove') { c.remove(id(op[1])); return { ok: {} }; }
+        if (op[0] === 'bundle') { const r = c.bundle(id(op[1]), (op[2] as (string | null)[]).map((p) => (p === null ? null : Buffer.from(p, 'base64')))); return { ok: { name: r.name, zip: r.zip.toString('base64') } }; }
+      } catch (e) { return { error: (e as Error).message }; }
+      return null;
+    });
+    setLang('en');
+    return { out, made };
+  };
+  for (const l of ['en', 'ru']) {
+    const want = run(l, path.join(tmp, `ts-${l}`));
+    const list = path.join(tmp, `calls-${l}.json`);
+    fs.writeFileSync(list, JSON.stringify([['creator.script', l, path.join(tmp, `rs-${l}`), ops]]));
+    const [got] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: unknown[]; error?: string }[];
+    assert.ok(got.ok, got.error);
+    const rsIds = (got.ok as { ok?: { id?: string } }[]).filter((_, i) => ops[i][0] === 'save' && ops[i][1] === null).map((a) => a.ok?.id ?? '');
+    const a = norm(got.ok!, rsIds) as unknown[];
+    const b = norm(want.out, want.made) as unknown[];
+    ops.forEach((op, i) => assert.deepEqual(a[i], b[i], `${l} ${i} ${JSON.stringify(op).slice(0, 120)}`));
+    assert.ok(b.filter((x, i) => ops[i][0] === 'bundle' && (x as { ok?: unknown }).ok).length >= 3, 'archives were made');
+  }
+  const drafts = [
+    { name: 'Arcana Pudge', category: 'heroes', hero: 'pudge', styles: [{ label: 'x' }] }, { name: 'Light', category: 'heroes', hero: 'keeper_of_the_light', styles: [] },
+    { name: 'K'.repeat(35), category: 'herofx', hero: 'Keeper of the Light', styles: [] }, { name: 'Ж', category: 'cursors', hero: '', styles: [{ label: 'a' }, { label: 'b'.repeat(13) }, {}, {}] },
+    { name: '', category: 'hero-sounds', hero: 'Axe', styles: [] }, { name: 'Axe2', category: 'hero-sounds', hero: 'Axe', styles: [{ label: 'é'.repeat(12) }, { label: '😀'.repeat(7) }] },
+  ];
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  compare([
+    { name: 'creator-premod.catalogProblems', ts: ((l: string, d: never) => lang(l, () => catalogProblems(d))) as never, inputs: ['ru', 'en'].flatMap((l) => drafts.map((d) => [l, d])) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

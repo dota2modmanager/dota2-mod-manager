@@ -13,12 +13,13 @@ mod native;
 mod ported;
 mod shell;
 mod sidecar;
+mod window;
 
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use serde_json::{json, Value};
-use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri::Manager;
 
 use sidecar::{Answer, HostPaths, Sidecar};
 
@@ -64,20 +65,44 @@ async fn mm_invoke(
     let host = host.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let list = args_of(args);
+        // what the channel may be handed, before Rust or the host acts on it (src/window-guard.ts)
+        if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
+            eprintln!("[mm-shell] ipc: refused {channel}: {why}");
+            return Err(format!("refused: {why}"));
+        }
         let res = match native::handle(&app, &channel, &list) {
             Some(res) => res.map(|v| Answer::Json(v.to_string())),
-            None => host.invoke(&channel, Value::Array(list)),
+            None => host.invoke(&channel, Value::Array(list.clone())),
         };
+        after(&app, &channel, &list, res.is_ok());
         answer(res?)
     })
     .await
     .map_err(|e| e.to_string())?
 }
 
+/// What the shell does after the host answered a channel it also cares about: the scale the page
+/// set, and the tray after its switch or the language changed (the host wrote settings.json).
+fn after(app: &tauri::AppHandle, channel: &str, args: &[Value], ok: bool) {
+    let Some(shell) = app.try_state::<Arc<window::Shell>>() else { return };
+    match channel {
+        "ui:setZoom" if ok => shell.set_zoom(mm_core::main_window::clamp_zoom(args.first().unwrap_or(&Value::Null))),
+        "settings:set" if ok && matches!(args.first().and_then(Value::as_str), Some("runInBackground" | "uiLang")) => {
+            shell.sync(app)
+        }
+        _ => {}
+    }
+}
+
 /// ipcRenderer.send: no answer.
 #[tauri::command]
 fn mm_send(host: tauri::State<'_, Host>, channel: String, args: Value) {
-    host.0.send(&channel, Value::Array(args_of(args)));
+    let list = args_of(args);
+    if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
+        eprintln!("[mm-shell] ipc: refused {channel}: {why}");
+        return;
+    }
+    host.0.send(&channel, Value::Array(list));
 }
 
 /// The page has loaded: the host's 'did-finish-load' listeners run (the game watch, a cold link).
@@ -88,8 +113,8 @@ fn mm_loaded(host: tauri::State<'_, Host>) {
 
 /// A Ctrl key the page passed on: Electron's before-input-event, which scales the content.
 #[tauri::command]
-fn mm_key(host: tauri::State<'_, Host>, key: String, control: bool, alt: bool) {
-    host.0.notify(json!({ "t": "key", "input": { "type": "keyDown", "key": key, "control": control, "alt": alt } }));
+fn mm_key(app: tauri::AppHandle, shell: tauri::State<'_, Arc<window::Shell>>, key: String, control: bool, alt: bool) {
+    shell.key(&app, &key, control, alt);
 }
 
 /// `--name=value` from the command line.
@@ -127,13 +152,30 @@ fn main() {
     let argv: Vec<String> = std::env::args().collect();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            // the uninstaller's run: a copy in the tray gives way to it (src/tray.ts lockOnceFreed)
+            if argv.iter().any(|a| a == "--uninstall") {
+                if let Some(shell) = app.try_state::<Arc<window::Shell>>() {
+                    shell.quitting();
+                }
+                app.exit(0);
+                return;
+            }
             if let Some(w) = app.get_webview_window("main") {
                 let _ = w.unminimize();
                 let _ = w.show();
                 let _ = w.set_focus();
             }
+            // a preset or mod link clicked while the app runs (src/deep-links.ts, the host's)
+            if let Some(host) = app.try_state::<Host>() {
+                host.0.notify(json!({ "t": "second", "argv": argv }));
+            }
         }))
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![mm_core::tray::BACKGROUND_ARG]),
+        ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key])
@@ -155,36 +197,43 @@ fn main() {
             let user_data = std::path::absolute(&user_data).unwrap_or(user_data);
             app.manage(ported::UserData(user_data.clone()));
             app.manage(ported::Shared::new());
-            let env = vec![
+            let first_run = !user_data.join("settings.json").exists();
+            let area = window::work_area(app);
+            let mut env = vec![
                 ("MM_USER_DATA".to_string(), user_data.to_string_lossy().into_owned()),
                 ("MM_APP_VERSION".to_string(), app.package_info().version.to_string()),
                 ("MM_PACKAGED".to_string(), if cfg!(debug_assertions) { "0" } else { "1" }.to_string()),
                 ("MM_SHELL".to_string(), "tauri".to_string()),
             ];
+            // the host's screen stand-in picks a first run's scale from these, as Electron's would
+            if let Some(a) = area {
+                env.push(("MM_WORK_W".to_string(), a.width.to_string()));
+                env.push(("MM_WORK_H".to_string(), a.height.to_string()));
+            }
             // the switches src/main.ts reads off its own command line (--write-jail, --background...)
             let pass: Vec<String> = argv.iter().skip(1).filter(|a| a.starts_with("--")).cloned().collect();
             let paths = host_paths(app);
             app.manage(ported::AppRoot(paths.root.clone()));
             let host = Sidecar::start(handle.clone(), paths, env, pass)?;
-            app.manage(Host(host));
-
-            let win = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-                .title("Dota 2 Mod Manager")
-                .inner_size(1440.0, 900.0)
-                .min_inner_size(1020.0, 640.0)
-                .decorations(false)
-                .background_color(tauri::window::Color(5, 5, 6, 255))
-                .initialization_script(init_script())
-                .center()
-                .build()?;
-            let events = handle.clone();
-            let w = win.clone();
-            win.on_window_event(move |e| {
-                if let WindowEvent::Resized(_) = e {
-                    let max = w.is_maximized().unwrap_or(false);
-                    let _ = events.emit("mm", json!({ "channel": "win:maximized", "args": [max] }));
-                }
-            });
+            app.manage(Host(host.clone()));
+            let jailed = flag(&argv, "write-jail").is_some();
+            window::open(
+                app,
+                host,
+                window::Open {
+                    user_data,
+                    area,
+                    first_run,
+                    quiet: std::env::var_os("MM_QUIET").is_some() || mm_core::tray::started_hidden(&argv),
+                    login_allowed: mm_core::tray::login_item_allowed(
+                        cfg!(windows),
+                        !cfg!(debug_assertions),
+                        false,
+                        jailed,
+                    ),
+                    init_script: init_script(),
+                },
+            )?;
             Ok(())
         })
         .build(tauri::generate_context!())

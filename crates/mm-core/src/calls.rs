@@ -731,6 +731,15 @@ fn kv_err(e: crate::kv::KvError) -> String {
     e.to_string()
 }
 
+/// A work area as {width, height}, or none.
+fn area_arg(args: &[Value], i: usize) -> Option<crate::main_window::Area> {
+    let a = args.get(i)?.as_object()?;
+    Some(crate::main_window::Area {
+        width: crate::js::to_number(a.get("width").unwrap_or(&Value::Null)),
+        height: crate::js::to_number(a.get("height").unwrap_or(&Value::Null)),
+    })
+}
+
 fn s(args: &[Value], i: usize) -> String {
     match args.get(i) {
         Some(Value::String(s)) => s.clone(),
@@ -3840,6 +3849,245 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 });
             }
             json!({ "answers": answers, "log": log, "jobs": jobs })
+        }
+        "main-window.clampZoom" => json!(crate::main_window::clamp_zoom(args.first().unwrap_or(&Value::Null))),
+        "main-window.windowFit" => {
+            json!(crate::main_window::window_fit(area_arg(args, 0), crate::js::to_number(args.get(1).unwrap_or(&Value::Null))))
+        }
+        "main-window.startScale" => json!(crate::main_window::start_scale(area_arg(args, 0))),
+        "main-window.workAreaFrom" => {
+            json!(crate::main_window::work_area_from(args.first().and_then(Value::as_str))
+                .map(|a| json!({ "width": a.width, "height": a.height })))
+        }
+        "main-window.zoomFor" => json!(crate::main_window::zoom_for_input(
+            &s(args, 0),
+            &s(args, 1),
+            args.get(2).is_some_and(crate::js::truthy),
+            args.get(3).is_some_and(crate::js::truthy),
+            n(args, 4)
+        )),
+        "tray.startedHidden" => {
+            let argv: Vec<String> = args.first().and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            json!(crate::tray::started_hidden(&argv))
+        }
+        "tray.loginItemAllowed" => json!(crate::tray::login_item_allowed(
+            args.first().is_some_and(crate::js::truthy),
+            args.get(1).is_some_and(crate::js::truthy),
+            args.get(2).is_some_and(crate::js::truthy),
+            args.get(3).is_some_and(crate::js::truthy)
+        )),
+        "tray.script" => {
+            // (lang, ops): each step's doings, as the test's fakes record them in the TypeScript.
+            // ['sync', settings] | ['close', settings] | ['quit'] | ['lang', l]
+            let mut keeper = crate::tray::TrayKeeper::default();
+            let mut out: Vec<Value> = Vec::new();
+            let fill = |out: &mut Vec<Value>, icon: bool| {
+                if icon {
+                    let items: Vec<Value> = crate::tray::menu().into_iter().map(|(_, l)| json!(l)).collect();
+                    out.push(json!(["menu", items]));
+                }
+            };
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let st = op.get(1).cloned().unwrap_or(Value::Null);
+                match op.get(0).and_then(Value::as_str).unwrap_or("") {
+                    "sync" => {
+                        match keeper.sync(&st) {
+                            crate::tray::Icon::Make => out.push(json!(["make", crate::tray::TITLE])),
+                            crate::tray::Icon::Destroy => out.push(json!(["destroy"])),
+                            crate::tray::Icon::Keep => {}
+                        }
+                        fill(&mut out, keeper.icon);
+                    }
+                    "close" => match keeper.close(&st) {
+                        crate::tray::Close::Close => out.push(json!(["close"])),
+                        crate::tray::Close::Hide { hint } => {
+                            out.push(json!(["hide"]));
+                            if hint {
+                                if keeper.icon {
+                                    out.push(json!(["balloon", crate::tray::TITLE, crate::tray::hint()]));
+                                }
+                                out.push(json!(["set", "trayHintSeen", true]));
+                            }
+                        }
+                    },
+                    "quit" => keeper.quitting = true,
+                    "lang" => crate::i18n::set_lang(crate::i18n::Lang::parse(&crate::js::string(&st))),
+                    other => out.push(json!(["no step", other])),
+                }
+            }
+            json!(out)
+        }
+        "support-prompt.readPrompt" => json!(crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null)).to_json()),
+        "support-prompt.counted" => {
+            json!(crate::support_prompt::counted(&crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null))).to_json())
+        }
+        "support-prompt.due" => {
+            json!(crate::support_prompt::due(&crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null)), n(args, 1)))
+        }
+        "support-prompt.choose" => json!(crate::support_prompt::choose(
+            &crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null)),
+            &s(args, 1),
+            n(args, 2)
+        )
+        .to_json()),
+        "beta.idHash" => json!(crate::beta::id_hash(&s(args, 0), &s(args, 1))),
+        "beta.betaState" => json!(crate::beta::beta_state(
+            args.first().and_then(Value::as_str),
+            args.get(1).unwrap_or(&Value::Null),
+            args.get(2) == Some(&Value::Bool(true))
+        )),
+        "settings-view.view" => {
+            // (settings, records, discordConfigured, langFolder, migration, slotMigration)
+            let records = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            let lang_folder = s(args, 3);
+            crate::settings_view::settings_view(crate::settings_view::ViewInput {
+                settings: args.first().and_then(Value::as_object).cloned().unwrap_or_default(),
+                records: &records,
+                discord_configured: args.get(2).is_some_and(crate::js::truthy),
+                lang_folder: &lang_folder,
+                migration: args.get(4).cloned().unwrap_or(Value::Null),
+                slot_migration: args.get(5).cloned().unwrap_or(Value::Null),
+                minify_config: crate::minify::read_config(&crate::minify::config_path()),
+            })
+        }
+        "channel-args.check" => json!(crate::channel_args::check_args(
+            &s(args, 0),
+            args.get(1).and_then(Value::as_array).map(Vec::as_slice).unwrap_or(&[])
+        )),
+        "channel-args.channels" => {
+            let mut c: Vec<&str> = crate::channel_args::channel_args().keys().copied().collect();
+            c.sort();
+            json!(c)
+        }
+        "channel-args.windowSettings" => {
+            let mut c: Vec<&str> = crate::channel_args::window_settings().keys().copied().collect();
+            c.sort();
+            json!(c)
+        }
+        "mod-id.identify" => {
+            // (game|null, [paths...]...): each list's answer, then the log
+            let id = crate::mod_id::ModIdentity::new(opt_path(args, 0));
+            let mut log: Vec<String> = Vec::new();
+            let answers: Vec<Value> = args
+                .iter()
+                .skip(1)
+                .map(|list| {
+                    let paths: Vec<String> = list.as_array().into_iter().flatten().map(crate::js::string).collect();
+                    json!(id.identify(paths.iter().map(String::as_str), &mut |m| log.push(m)))
+                })
+                .collect();
+            json!({ "answers": answers, "log": log, "ready": id.ready() })
+        }
+        "ui-lang.uiLangFor" => {
+            let l: Vec<String> = args.first().and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            json!(crate::ui_lang::ui_lang_for(&l))
+        }
+        "folder-size.folderSize" => json!(crate::folder_size::folder_size(std::path::Path::new(&s(args, 0)))),
+        "feature-gate.gate" => {
+            // (lang, gameOpen, off, note)
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let r = crate::feature_gate::gate(args.get(1).is_some_and(crate::js::truthy), || {
+                (args.get(2).is_some_and(crate::js::truthy), s(args, 3))
+            });
+            crate::i18n::set_lang(crate::i18n::Lang::parse("en"));
+            json!(r)
+        }
+        "hero-grid.gridName" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::hero_grid::grid_name(&s(args, 1)))
+        }
+        "hero-grid.buildGrid" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let stats = args.get(1).and_then(Value::as_array).cloned().ok_or("stats.filter is not a function")?;
+            crate::hero_grid::build_grid(&stats, &s(args, 2))
+        }
+        "hero-grid.mergeGrids" => {
+            let ours = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            json!(crate::hero_grid::merge_grids(args.first().and_then(Value::as_str), ours)?)
+        }
+        "hero-grid.gridsIn" => json!(crate::hero_grid::grids_in(args.first().and_then(Value::as_str))),
+        "hero-grid.keepNumbers" => json!(crate::hero_grid::keep_numbers(args.first().unwrap_or(&Value::Null))),
+        "hero-grid.gridFile" => json!(crate::hero_grid::grid_file(std::path::Path::new(&s(args, 0))).to_string_lossy()),
+        "hero-grid.script" => {
+            // (lang, api, dataDir, accountDir, ops): the grids on their own clock, each answer or error
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let c = clock.clone();
+            let account = opt_s(args, 3).map(std::path::PathBuf::from);
+            let grids = crate::hero_grid::HeroGrids {
+                data_dir: std::path::PathBuf::from(s(args, 2)),
+                account_dir: Box::new(move || account.clone()),
+                net: Arc::new(crate::net_fetch::Net::default()),
+                api: s(args, 1),
+                now: Box::new(move || *c.lock().unwrap()),
+            };
+            let mut out = Vec::new();
+            for op in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let r = match op[0].as_str().unwrap_or("") {
+                    "now" => {
+                        *clock.lock().unwrap() = op[1].as_f64().unwrap_or(0.0);
+                        Ok(Value::Null)
+                    }
+                    "state" => Ok(grids.state()),
+                    "apply" => {
+                        let kinds: Vec<String> = op[1].as_array().map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect()).unwrap_or_default();
+                        grids.apply(&kinds)
+                    }
+                    "remove" => grids.remove(),
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
+        "creator-premod.catalogProblems" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::creator::catalog_problems(args.get(1).unwrap_or(&Value::Null)))
+        }
+        "creator.missing" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::creator::Creator::missing(args.get(1).unwrap_or(&Value::Null)))
+        }
+        "creator.script" => {
+            // (lang, userData, ops): drafts by the order they were made ($k: the k-th new one), each answer or error
+            use base64::Engine;
+            let b64 = base64::engine::general_purpose::STANDARD;
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let c = crate::creator::Creator::new(std::path::Path::new(&s(args, 1)));
+            let mut made: Vec<String> = Vec::new();
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let id = |v: &Value| match v {
+                    Value::Number(k) => made.get(k.as_u64().unwrap_or(0) as usize).cloned().unwrap_or_default(),
+                    other => crate::js::string(other),
+                };
+                let r: Result<Value, String> = match op[0].as_str().unwrap_or("") {
+                    "save" => {
+                        let r = c.save(if op[1].is_null() { None } else { Some(id(&op[1])) }.as_deref(), &op[2]);
+                        if let (Ok(d), true) = (&r, op[1].is_null()) {
+                            made.push(crate::js::string(&d["id"]));
+                        }
+                        r.map(|d| c.shown(&d))
+                    }
+                    "attach" => c.attach(&id(&op[1]), &op[2], op[3].as_str().unwrap_or(""), std::path::Path::new(op[4].as_str().unwrap_or(""))).map(|d| c.shown(&d)),
+                    "remove" => c.remove(&id(&op[1])).map(|_| json!({})),
+                    "list" => Ok(Value::Array(c.list().iter().map(|d| c.shown(d)).collect())),
+                    "bundle" => {
+                        let previews: Vec<Option<Vec<u8>>> = op[2].as_array().cloned().unwrap_or_default().iter().map(|p| p.as_str().map(|x| b64.decode(x).unwrap_or_default())).collect();
+                        c.bundle(&id(&op[1]), &previews).map(|(name, zip)| json!({ "name": name, "zip": b64.encode(zip) }))
+                    }
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
         }
         _ => return Err(format!("no function {name}")),
     })
