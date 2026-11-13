@@ -18,6 +18,7 @@ pub mod cosmetic_names;
 pub mod courier_models;
 pub mod cursors;
 pub mod data;
+pub mod deep_links;
 pub mod disk_space;
 pub mod download_stats;
 pub mod effect_edit;

@@ -2633,6 +2633,37 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             w.stop();
             Value::Array(out)
         }
+        "deep-links.firstLink" => json!(crate::deep_links::first_link(args.first().and_then(Value::as_array).map(Vec::as_slice).unwrap_or(&[]))),
+        "deep-links.parseModLink" => json!(crate::deep_links::parse_mod_link(&s(args, 0))),
+        "deep-links.modLinkUrl" => {
+            let m: crate::deep_links::ModLink = serde_json::from_value(args.first().cloned().unwrap_or_default()).map_err(|e| e.to_string())?;
+            json!(crate::deep_links::mod_link_url(&m))
+        }
+        "deep-links.route" => {
+            let got = crate::deep_links::route(opt_s(args, 0).as_deref(), &mut |code| json!({ "parked": code }));
+            got.map_or(json!("nothing"), |(channel, payload)| json!([channel, payload]))
+        }
+        "deep-links.desktopEntry" => json!(crate::deep_links::desktop_entry(&s(args, 0))),
+        "deep-links.installScript" => {
+            // (home, [[platform, exe, icon]]): each install's log lines and the folders it refreshed
+            let home = std::path::PathBuf::from(s(args, 0));
+            let mut out = Vec::new();
+            for step in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let logs = std::cell::RefCell::new(Vec::<String>::new());
+                let refreshed = std::cell::RefCell::new(Vec::<String>::new());
+                let icon = step[2].as_str().map(std::path::PathBuf::from);
+                crate::deep_links::install_desktop_entry(
+                    &crate::js::string(&step[0]),
+                    &crate::js::string(&step[1]),
+                    &home,
+                    icon.as_deref(),
+                    &|m| logs.borrow_mut().push(m.to_string()),
+                    &|d| refreshed.borrow_mut().push(d.to_string_lossy().into_owned()),
+                );
+                out.push(json!({ "logs": logs.into_inner(), "refreshed": refreshed.into_inner() }));
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

@@ -4260,3 +4260,58 @@ test('the patch watcher in Rust notices what the TypeScript one notices', { skip
   for (const s of ['files-restored', '6901', 'patch handler failed: no', '6903']) assert.ok(all.includes(s), s);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('d2mm:// links and the Linux desktop entry in Rust read and write what the TypeScript does', { skip }, async () => {
+  const dl = await import('../src/deep-links.ts');
+  const links = [
+    'd2mm://mod/heroes/Pudge%20Arcana', 'd2mm://mod/heroes/Pudge%20Arcana/Style%202/', 'D2MM://MOD/a/b', 'd2mm://mod', 'd2mm://mod/', 'd2mm://mod/a',
+    'd2mm://mod/a/b/c/d', 'd2mm://mod/a/b?x=1#y', 'd2mm://mod/a/%E0%A4%A', 'd2mm://mod/%20/b', 'd2mm://mod/a/%2F%2F', 'd2mm://modx/a/b', 'd2mm://mod//a//b//',
+    'd2mm://mod/a/b#frag/c', 'd2mm://preset/abc', 'd2mm://preset/', 'd2mm://x', 'https://x', '', 'd2mm://mod/a/b?q\nz', 'd2mm://mod/caf%C3%A9/n%20/%20s%20',
+  ];
+  compare([
+    { name: 'deep-links.firstLink', ts: dl.firstLink as never, inputs: [[['app.exe', '--flag', 'd2mm://preset/a', 'd2mm://mod/b/c']], [[5, null, 'D2MM://x']], [[]], [null]] },
+    { name: 'deep-links.parseModLink', ts: dl.parseModLink as never, inputs: links.map((l) => [l]) },
+    { name: 'deep-links.modLinkUrl', ts: dl.modLinkUrl as never, inputs: [
+      [{ cat: 'heroes', name: 'Pudge / Arcana', style: null }], [{ cat: 'a b', name: 'é?#', style: 'Style 2' }], [{ cat: 'c', name: 'n', style: '' }],
+    ] },
+    { name: 'deep-links.route', ts: ((url: string | null) => {
+      let got: unknown = 'nothing';
+      dl.handleDeepLink(url, {
+        importPresetLink: (code) => ({ parked: code }),
+        win: () => ({ isDestroyed: () => false, show() {}, focus() {}, webContents: { send: (channel: string, payload: unknown) => { got = [channel, payload]; } } }),
+      });
+      return got;
+    }) as never, inputs: [...links.map((l) => [l]), [null]] },
+    { name: 'deep-links.desktopEntry', ts: dl.desktopEntry as never, inputs: [['/opt/My Apps/D2MM.AppImage'], ['']] },
+  ]);
+
+  // the entry on disk: written, left alone when it says the same, rewritten for another program,
+  // the icon beside it, nothing off Linux, and a home where the folder cannot be made
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-desktop-'));
+  const icon = path.join(tmp, 'icon.png');
+  fs.writeFileSync(icon, Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]));
+  const steps: [string, string, string | null][] = [
+    ['linux', '/opt/a.AppImage', icon], ['linux', '/opt/a.AppImage', icon], ['linux', '/opt/b.AppImage', null], ['win32', '/x', icon], ['linux', '/opt/c', path.join(tmp, 'gone.png')],
+  ];
+  const runTs = (home: string) => steps.map(([platform, exe, ic]) => {
+    const logs: string[] = [];
+    const refreshed: string[] = [];
+    dl.installDesktopEntry({ platform, exe, home, icon: ic ?? undefined, diag: (m) => logs.push(m), refresh: (d) => refreshed.push(d) });
+    return { logs, refreshed };
+  });
+  const homes = { ts: path.join(tmp, 'ts'), rs: path.join(tmp, 'rs') };
+  const blocked = { ts: path.join(tmp, 'bts'), rs: path.join(tmp, 'brs') };
+  for (const h of Object.values(blocked)) { fs.mkdirSync(path.join(h, '.local'), { recursive: true }); fs.writeFileSync(path.join(h, '.local', 'share'), 'not a folder'); }
+  const want = [runTs(homes.ts), runTs(blocked.ts)];
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['deep-links.installScript', homes.rs, steps], ['deep-links.installScript', blocked.rs, steps]]));
+  const got = (JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok?: unknown; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok; });
+  const norm = (v: unknown, side: 'ts' | 'rs') => JSON.parse(JSON.stringify(v)
+    .split(JSON.stringify(homes[side]).slice(1, -1)).join('<home>').split(JSON.stringify(blocked[side]).slice(1, -1)).join('<home>')
+    .split(JSON.stringify(tmp).slice(1, -1)).join('<tmp>'), (_k, x) => (typeof x === 'string' && / skipped: /.test(x) ? x.replace(/: .*/s, ': <why>') : x));
+  assert.deepEqual(norm(got, 'rs'), norm(want, 'ts'));
+  const tree = (h: string) => { const out: Record<string, string> = {}; const walk = (d: string) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else out[path.relative(h, f)] = fs.readFileSync(f, 'base64'); } }; walk(h); return out; };
+  assert.deepEqual(tree(homes.rs), tree(homes.ts));
+  assert.ok(Object.keys(tree(homes.ts)).length === 2, JSON.stringify(Object.keys(tree(homes.ts))));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
