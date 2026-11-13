@@ -7914,3 +7914,73 @@ test('the hero preview\'s particles in Rust are the TypeScript ones, on the game
   assert.ok(want.some((w) => w.some((x) => x.part >= 0)) && want.some((w) => w.some((x) => x.part === -2)), 'parts and the hero carry effects');
   assert.equal(fx.forParts(want[1], want[1].map((_, i) => i)), want[1]);
 });
+
+test('the hero preview\'s plan in Rust is the TypeScript one, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const { createHeroPreview } = await import('../src/hero-preview.ts');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  const heroesOf = new Map(all.map((i) => [i.id, itemHeroes(text, i)]));
+  type Slot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } };
+  const slotsOf = (hero: string) => {
+    const short = hero.replace(/^npc_dota_hero_/, '');
+    const seen = new Set<string>();
+    return all.filter((i) => i.prefab === 'default_item' && heroesOf.get(i.id)!.includes(hero) && !seen.has(i.slot) && seen.add(i.slot))
+      .map((i): Slot => ({ slot: `${short}:${i.slot}`, stock: i.id }));
+  };
+  const own = (hero: string, slot: string) => all.filter((i) => i.slot === slot && i.prefab !== 'default_item' && i.hasVisuals && heroesOf.get(i.id)!.includes(hero));
+  const library: unknown[] = [];
+  const cases: [string, Slot[]][] = [];
+  const names = ['juggernaut', 'terrorblade', 'razor', 'wisp', 'monkey_king', 'primal_beast', 'phantom_assassin', 'faceless_void'];
+  for (const [k, name] of names.entries()) {
+    const hero = 'npc_dota_hero_' + name;
+    const slots = slotsOf(hero);
+    if (k % 2 === 0) cases.push([name, slots]);
+    // each slot tries on one of its items, every other in its second style
+    cases.push([hero, slots.map((s, j) => {
+      const pick = own(hero, s.slot.split(':').pop()!)[(k + j) % 3];
+      return pick ? { ...s, tryOn: { itemId: pick.id, effectId: j % 2 ? 'style-1' : '' } } : s;
+    })]);
+    // and the library wears another in the first slot it has one for
+    const worn = slots.map((s) => [s, own(hero, s.slot.split(':').pop()!)[1]] as const).find(([, i]) => i);
+    if (worn) library.push({ categoryId: 'cosmetic', enabled: k % 3 !== 2, itemId: worn[1]!.id, slot: worn[0].slot, effectId: k % 2 ? 'style-0' : undefined, name: `Worn ${k}` });
+  }
+  const io = all.find((i) => /io_ti7|dark_carnival_io/i.test(i.model) && heroesOf.get(i.id)!.includes('npc_dota_hero_wisp'));
+  if (io) cases.push(['wisp', slotsOf('npc_dota_hero_wisp').map((s) => (s.slot.endsWith(':' + io.slot) ? { ...s, tryOn: { itemId: io.id, effectId: '' } } : s))]);
+  const crest = all.find((i) => i.id === '6646');
+  if (crest) cases.push(['razor', slotsOf('npc_dota_hero_razor').map((s) => (s.slot.endsWith(':' + crest.slot) ? { ...s, tryOn: { itemId: '6646', effectId: '' } } : s))]);
+  const reckoning = all.find((i) => i.id === '9050');
+  if (reckoning) library.push({ categoryId: 'cosmetic', itemId: 9050, slot: `monkey_king:${reckoning.slot}`, effectId: 'style-1' });
+  const tb = own('npc_dota_hero_terrorblade', 'weapon').slice(0, 2);
+  for (const w of tb) cases.push(['terrorblade', slotsOf('npc_dota_hero_terrorblade').map((s) => (s.slot.endsWith(':weapon') ? { ...s, tryOn: { itemId: w.id, effectId: '' } } : s))]);
+  // a persona tried on in its selector slot
+  for (const sel of all.filter((i) => /persona_selector/i.test(i.slot)).slice(0, 2)) {
+    const hero = heroesOf.get(sel.id)![0];
+    const persona = all.find((i) => i.slot === sel.slot && i.id !== sel.id && heroesOf.get(i.id)!.includes(hero));
+    const slots = slotsOf(hero);
+    if (persona) cases.push([hero, slots.map((s) => (s.slot.endsWith(':' + sel.slot) ? { ...s, tryOn: { itemId: persona.id, effectId: '' } } : s))]);
+  }
+  cases.push(['npc_dota_hero_nobody', []]);
+  const game = path.dirname(path.dirname(GAME_PAK01));
+  const preview = createHeroPreview({ glb: { glbs: async () => ({}) }, library: { list: () => library as never }, gamePath: () => game, vanilla: () => text });
+  const plain = (v: unknown) => JSON.parse(JSON.stringify(v));
+  const want = cases.map(([hero, slots]) => {
+    try {
+      const p = preview.plan(hero, slots)!;
+      const { read: _read, bindings, ...rest } = p;
+      return { ok: { ...plain(rest), replacements: Object.fromEntries(p.replacements), bindings: bindings.size,
+        parts: p.parts.map((x) => ({ ...plain(x), ...(x.replacements ? { replacements: Object.fromEntries(x.replacements) } : {}) })) } };
+    } catch { return { error: true }; }
+  });
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hp-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify(cases.map(([hero, slots]) => ['hero-preview.plan', GAME_PAK01, { $file: file }, library, hero, slots])));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))
+    .map((x: { error?: string }) => ('error' in x ? { error: true } : x));
+  fs.rmSync(tmp, { recursive: true, force: true });
+  for (let k = 0; k < cases.length; k++) assert.deepEqual(got[k], want[k], `${cases[k][0]} ${JSON.stringify(cases[k][1].filter((s) => s.tryOn))}`);
+  assert.ok(want.filter((w) => 'ok' in w).length > cases.length - 3, 'plans made');
+  assert.ok(want.some((w) => 'ok' in w && w.ok.parts.some((x: { replacements?: object }) => x.replacements)), 'a part swaps its effects');
+});

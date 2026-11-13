@@ -4724,6 +4724,20 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let moved = out.first().cloned().map(|x| f::for_parts(x, &placed)).unwrap_or_default();
             json!({ "plans": out, "moved": moved })
         }
+        // (pak, items_game, library list, hero, slots): the preview's plan from that pak, its unusual
+        // effects as the count of systems bound
+        "hero-preview.plan" => {
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let has = |p: &str| ix.has(p);
+            let paths = || ix.paths().map(String::from).collect::<Vec<_>>();
+            let game = crate::hero_preview::Game { read: &read, has: &has, paths: &paths };
+            let list = |i: usize| args.get(i).and_then(Value::as_array).cloned().unwrap_or_default();
+            let p = crate::hero_preview::plan(&b(args, 1)?, &game, &list(2), &s(args, 3), &list(4), &|_| {})?;
+            let mut v = serde_json::to_value(&p).map_err(|e| e.to_string())?;
+            v["bindings"] = json!(p.bindings.len());
+            v
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
