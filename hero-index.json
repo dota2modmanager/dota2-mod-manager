@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1770,
+  "mods": 1795,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -9,7 +9,8 @@
         {"name":"Abaddon Calavera","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Endless Night Reborn","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
         {"name":"Abaddon Sayaka Miki","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","mount","shoulder","weapon","wings"]},
-        {"name":"Red Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]}
+        {"name":"Red Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon"]},
+        {"name":"Warcraft 3 Abaddon","categoryId":"heroes","styleLabel":null,"slots":["back","head","mount","shoulder","weapon","misc","wings"]}
       ]
     },
     "abyssal_underlord": {"name":"Underlord","mods":[{"name":"Underlord Immortal Ravenous","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc"]}]},
@@ -21,6 +22,7 @@
         {"name":"Alchemist Taur Rider","categoryId":"heroes","styleLabel":null,"slots":["head","misc","shoulder"]},
         {"name":"Cosmic Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder"]},
         {"name":"Frostivus Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder","weapon"]},
+        {"name":"Warcraft 3 Alchemist","categoryId":"heroes","styleLabel":null,"slots":["misc","head","shoulder","arms","back","weapon","offhand","base"]},
         {"name":"Wraith King Radiance","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
       ]
     },
@@ -42,6 +44,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Ancient Apparition","categoryId":"heroes","styleLabel":null,"slots":["shoulder","tail","misc","arms","head"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -107,7 +110,8 @@
         {"name":"Axe Immortal Rampage","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","back","misc"]},
         {"name":"Axe Kratos","categoryId":"heroes","styleLabel":null,"slots":["weapon","tail","head","belt","arms"]},
         {"name":"Axe Molten Fist","categoryId":"heroes","styleLabel":null,"slots":["arms","tail","belt","weapon","legs","misc"]},
-        {"name":"Axe Unleashed","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]}
+        {"name":"Axe Unleashed","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head"]},
+        {"name":"Warcraft 3 Axe","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","tail","weapon","misc","head","shoulder","back","base","legs","shield"]}
       ]
     },
     "bane": {
@@ -125,6 +129,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Bane","categoryId":"heroes","styleLabel":null,"slots":["head","shoulder","arms","back","misc"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -150,6 +155,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Batrider","categoryId":"heroes","styleLabel":null,"slots":["belt","back","head","mount","misc","shoulder","arms"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -166,7 +172,8 @@
         {"name":"Beastmaster Prismatic Bone","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon"]},
         {"name":"Beastmaster Yuuki Yuuna","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon","legs","back"]},
         {"name":"Centaur Immortal Emerald","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
-        {"name":"Immortal Beastmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","shoulder","weapon"]}
+        {"name":"Immortal Beastmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","shoulder","weapon"]},
+        {"name":"Warcraft 3 Beastmaster","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head","shoulder","weapon","legs","back"]}
       ]
     },
     "blood_seeker": {
@@ -176,7 +183,8 @@
         {"name":"Bloodseeker Immortal","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand"]},
         {"name":"Bloodseeker Made In Heaven","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand","shoulder","legs"]},
         {"name":"Bloodseeker Strygwyr","categoryId":"heroes","styleLabel":null,"slots":["misc","back","head","weapon","offhand"]},
-        {"name":"Bloodseeker Thirst of Eztzhok","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]}
+        {"name":"Bloodseeker Thirst of Eztzhok","categoryId":"hero-items","styleLabel":null,"slots":["weapon","offhand"]},
+        {"name":"Warcraft 3 Bloodseeker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","back","head","misc","weapon","offhand","shoulder","legs"]}
       ]
     },
     "bounty_hunter": {
@@ -190,7 +198,8 @@
         {"name":"Bounty Hunter Old Man","categoryId":"heroes","styleLabel":"Night","slots":["back","misc","weapon"]},
         {"name":"Bounty Hunter Old Man","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon"]},
         {"name":"Bounty Hunter Old Verminator","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon"]},
-        {"name":"Bounty Hunter Tines of Tybara","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+        {"name":"Bounty Hunter Tines of Tybara","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Warcraft 3 Bounty Hunter","categoryId":"heroes","styleLabel":null,"slots":["back","misc","weapon","arms","head","shoulder","offhand"]}
       ]
     },
     "brewmaster": {
@@ -211,6 +220,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Brewmaster","categoryId":"heroes","styleLabel":null,"slots":["back","misc","arms","shoulder","weapon","head","offhand"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -220,7 +230,8 @@
       "mods": [
         {"name":"Bristleback Automaton","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","weapon","misc"]},
         {"name":"Bristleback Crimson Ring","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","misc","weapon"]},
-        {"name":"Crystal Bristleback","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","head","arms"]}
+        {"name":"Crystal Bristleback","categoryId":"heroes","styleLabel":null,"slots":["misc","back","weapon","head","arms"]},
+        {"name":"Warcraft 3 Bristleback","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","misc","weapon","shoulder"]}
       ]
     },
     "broodmother": {
@@ -242,7 +253,8 @@
         {"name":"Broodmother White Widow","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Goffren Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
         {"name":"Reverse Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs"]},
-        {"name":"SF Broodmother","categoryId":"heroes","styleLabel":null,"slots":["legs"]}
+        {"name":"SF Broodmother","categoryId":"heroes","styleLabel":null,"slots":["legs"]},
+        {"name":"Warcraft 3 Broodmother","categoryId":"heroes","styleLabel":null,"slots":["misc","head","legs","back"]}
       ]
     },
     "centaur": {
@@ -259,7 +271,8 @@
         {"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]},
         {"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":"Golden","slots":["head"]},
         {"name":"Centaur Infernal Chieftain","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
-        {"name":"Centaur Infernal Menace","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]}
+        {"name":"Centaur Infernal Menace","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
+        {"name":"Warcraft 3 Centaur","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shield","shoulder","tail","weapon","back","misc"]}
       ]
     },
     "chaos_knight": {
@@ -268,7 +281,8 @@
         {"name":"Chaos Knight Celestial Sentine","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
         {"name":"Chaos Knight Flandre Scarlet","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder","arms","offhand","weapon","legs"]},
         {"name":"Chaos Knight Unities Of Discord","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
-        {"name":"Endless Storm Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]}
+        {"name":"Endless Storm Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder"]},
+        {"name":"Warcraft 3 Chaos Knight","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","shield","shoulder","arms","offhand","weapon","legs"]}
       ]
     },
     "chen": {
@@ -288,6 +302,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Chen","categoryId":"heroes","styleLabel":null,"slots":["arms","head","mount","shoulder","weapon","misc"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -310,6 +325,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Clinkz","categoryId":"heroes","styleLabel":null,"slots":["back","weapon","arms","head","misc","shoulder"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -325,7 +341,8 @@
         {"name":"Crystal Maiden Tamamo no Mae","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head","arms","tail","legs"]},
         {"name":"Crystal Maiden Yulsarias Glacier","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Crystal Maiden Yulsarias Mantle","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
-        {"name":"Sherman Crystal Maiden","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head"]}
+        {"name":"Sherman Crystal Maiden","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head"]},
+        {"name":"Warcraft 3 Crystal Maiden","categoryId":"heroes","styleLabel":null,"slots":["misc","back","shoulder","weapon","head","arms","tail"]}
       ]
     },
     "crystalmaiden": {
@@ -351,7 +368,8 @@
         {"name":"Dark Seer Forlorn Precipice","categoryId":"hero-items","styleLabel":null,"slots":["arms"]},
         {"name":"Dark Seer Oloxicams Glass","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","shoulder"]},
         {"name":"Immortal Dark Seer","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head"]},
-        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]}
+        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["head"]},
+        {"name":"Warcraft 3 Dark Seer","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","misc","belt","legs","shoulder","base"]}
       ]
     },
     "dark_willow": {
@@ -370,6 +388,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Dark Willow","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","offhand","wings","back","belt","weapon"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
@@ -387,6 +406,7 @@
         {"name":"Pink Spell Radius","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Purple Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"Red Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Dawnbreaker","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","misc"]},
         {"name":"White Radius Texture","categoryId":"other","styleLabel":null,"slots":[]},
         {"name":"White Spell Radius","categoryId":"other","styleLabel":null,"slots":[]}
       ]
@@ -411,6 +431,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Dazzle","categoryId":"heroes","styleLabel":null,"slots":["misc","shoulder","weapon","arms","back","legs","head"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -433,6 +454,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Death Prophet","categoryId":"heroes","styleLabel":null,"slots":["misc","head","arms","belt","legs","weapon"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -785,6 +807,7 @@
         {"name":"Invoker Ronaldo","categoryId":"hero-items","styleLabel":null,"slots":["head"]},
         {"name":"Invoker True Form","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Wyrdwing Exort","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Invoker ZXC","categoryId":"heroes","styleLabel":null,"slots":["arms","back","misc","head","shoulder"]},
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
@@ -1595,7 +1618,8 @@
         {"name":"Clockwerk Rabid Watchcog","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Clockwerk Rocketbunny","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
         {"name":"Clockwerk Seadog Stash","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
-        {"name":"Nuclear Clockwerk","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]}
+        {"name":"Nuclear Clockwerk","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]},
+        {"name":"Warcraft 3 Clockwerk","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon"]}
       ]
     },
     "razor": {
@@ -2098,6 +2122,7 @@
         {"name":"Tinker Lite Machines","categoryId":"optimization","styleLabel":null,"slots":[]},
         {"name":"Tinker Sakuya","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder","legs"]},
         {"name":"Tinker Submerged Hazard","categoryId":"heroes","styleLabel":null,"slots":["back","head","arms","shoulder","weapon"]},
+        {"name":"Tinker Warcraft","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","shoulder","legs","weapon","offhand"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
