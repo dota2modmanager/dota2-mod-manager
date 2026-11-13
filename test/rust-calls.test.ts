@@ -5642,7 +5642,7 @@ test('a hero\'s ability icons in Rust are offered, picked and put in My mods as 
   // two heroes' items, one of them twice with a picture another already gives, a style, a
   // backslash, "modifier" before "asset", one not his, one with no picture, and two shared sets
   const table = [
-    '"items_game"', '{', '\t"items"', '\t{',
+    '"items_game"', '{', '\t"items"', '\t{', '\t\t// a comment, as the game\'s table has them',
     '\t\t"7001"', '\t\t{', '\t\t\t"name"\t"Bracers of the Cavern Luminar"', '\t\t\t"used_by_heroes"\t{ "npc_dota_hero_earthshaker"\t"1" }',
     '\t\t\t"visuals"', '\t\t\t{',
     '\t\t\t\t"asset_modifier0"\t{ "type"\t"ability_icon"\t"asset"\t"earthshaker_enchant_totem"\t"modifier"\t"earthshaker/bracers/earthshaker_enchant_totem" }',
@@ -5675,6 +5675,7 @@ test('a hero\'s ability icons in Rust are offered, picked and put in My mods as 
   ]);
   // the pure parts
   const mods = ai.iconModifiers(table);
+  assert.throws(() => ai.modifierSets('x\n\t"asset_modifiers" { "a" { '), /block/, 'a table cut short');
   const sources = [...listItems(table), ...ai.modifierSets(table)];
   const hasSet = has.map(icon);
   const order = ['earthshaker_fissure', 'earthshaker_enchant_totem', 'earthshaker_aftershock', 'earthshaker_echo_slam'];
