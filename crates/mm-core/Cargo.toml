@@ -39,3 +39,7 @@ sha2 = "0.10"
 # the catalog's signatures
 ed25519-dalek = "2"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+# how much Discord sent on its pipe, so one thread can read and write it (discord_presence.rs)
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_Pipes", "Win32_Foundation"] }

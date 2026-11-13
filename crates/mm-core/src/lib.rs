@@ -28,6 +28,7 @@ pub mod cursors;
 pub mod data;
 pub mod deep_links;
 pub mod diagnostics;
+pub mod discord_presence;
 pub mod disk_space;
 pub mod download_stats;
 pub mod effect_edit;

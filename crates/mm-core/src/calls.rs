@@ -4171,6 +4171,24 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "bytes": all.len(), "frames": out })
         }
+        "discord-presence.script" => {
+            // (clientId, ops): the status driven by start/stop/set/wait, and what it logged
+            let logs = Arc::new(Mutex::new(Vec::<String>::new()));
+            let l = logs.clone();
+            let p = crate::discord_presence::Presence::new(&s(args, 0), Box::new(move |m: &str| l.lock().unwrap().push(m.to_string())));
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                match op[0].as_str().unwrap_or("") {
+                    "start" => p.start(),
+                    "stop" => p.stop(),
+                    "set" => p.set(op[1].clone()),
+                    "wait" => std::thread::sleep(std::time::Duration::from_millis(op[1].as_u64().unwrap_or(0))),
+                    other => return Err(format!("no step {other}")),
+                }
+            }
+            drop(p);
+            let out = logs.lock().unwrap().clone();
+            json!(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

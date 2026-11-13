@@ -7243,3 +7243,77 @@ test('the Discord status in Rust says and frames what the TypeScript one does', 
     { name: 'presence-status.frames', ts: framed as never, inputs: [1, 3, 8, 1000].map((c) => [c, frames]) },
   ]);
 });
+
+test('the Discord status in Rust talks to Discord as the TypeScript one does', { skip }, async () => {
+  const net = await import('node:net');
+  const { spawn } = await import('node:child_process');
+  const { DiscordPresence } = await import('../src/discord-presence.ts');
+  const name = (side: string) => (process.platform === 'win32' ? `\\\\.\\pipe\\mm-test-discord-${process.pid}-${side}` : path.join(os.tmpdir(), `mm-test-discord-${process.pid}-${side}`));
+  // a stand-in Discord: READY on the handshake, a ping and a refusal of the first activity
+  const seen: Record<string, unknown[]> = { ts: [], rs: [] };
+  const servers = ['ts', 'rs'].map((side) => {
+    if (process.platform !== 'win32') fs.rmSync(name(side), { force: true });
+    const server = net.createServer((sock) => {
+      let buf = Buffer.alloc(0);
+      let sets = 0;
+      const send = (op: number, data: unknown) => {
+        const json = Buffer.from(JSON.stringify(data));
+        const head = Buffer.alloc(8);
+        head.writeInt32LE(op, 0);
+        head.writeInt32LE(json.length, 4);
+        sock.write(Buffer.concat([head, json]));
+      };
+      sock.on('error', () => {});
+      sock.on('data', (d) => {
+        buf = Buffer.concat([buf, d]);
+        while (buf.length >= 8 && buf.length >= 8 + buf.readInt32LE(4)) {
+          const op = buf.readInt32LE(0);
+          const len = buf.readInt32LE(4);
+          const msg = JSON.parse(buf.subarray(8, 8 + len).toString());
+          buf = buf.subarray(8 + len);
+          // the pid, the nonce and the start time are each process's own
+          if (msg?.args) { msg.args.pid = typeof msg.args.pid; msg.nonce = typeof msg.nonce; msg.args.activity.timestamps.start = typeof msg.args.activity.timestamps.start; }
+          seen[side].push([op, msg]);
+          if (op === 0) send(1, { evt: 'READY', data: { v: 1 } });
+          if (op === 1 && msg.cmd === 'SET_ACTIVITY' && ++sets === 1) { send(3, { n: 1 }); send(1, { evt: 'ERROR', data: { code: 4000, message: 'bad buttons' } }); }
+        }
+      });
+    });
+    server.listen(name(side));
+    return server;
+  });
+  const buttons = [{ label: 'a', url: 'https://a/' }, { label: 'b', url: 'https://b/' }, { label: 'c', url: 'https://c/' }];
+  const ops: unknown[][] = [
+    ['start'], ['wait', 400], ['set', { details: 'one', state: 'mods', buttons }], ['wait', 600],
+    ['set', { details: 'two', state: '' }], ['wait', 100], ['set', { details: 'three', state: 's' }], ['wait', 4600],
+    ['stop'], ['set', { details: 'gone' }], ['wait', 200], ['start'], ['wait', 600],
+  ];
+  const list = path.join(os.tmpdir(), `mm-discord-${process.pid}.json`);
+  fs.writeFileSync(list, JSON.stringify([['discord-presence.script', '1529830456697163867', ops]]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list], { env: { ...process.env, MM_DISCORD_PIPE: name('rs') } });
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const logs: string[] = [];
+  const before = process.env.MM_DISCORD_PIPE;
+  process.env.MM_DISCORD_PIPE = name('ts');
+  const p = new DiscordPresence({ clientId: '1529830456697163867', onDiag: (m) => logs.push(m) });
+  try {
+    for (const op of ops) {
+      if (op[0] === 'start') p.start();
+      else if (op[0] === 'stop') p.stop();
+      else if (op[0] === 'set') p.set(op[1] as never);
+      else await new Promise((r) => setTimeout(r, op[1] as number));
+    }
+    p.stop();
+  } finally { if (before === undefined) delete process.env.MM_DISCORD_PIPE; else process.env.MM_DISCORD_PIPE = before; }
+  const [rs] = JSON.parse(await rsRun) as { ok?: string[]; error?: string }[];
+  for (const s of servers) s.close();
+  fs.rmSync(list, { force: true });
+  assert.deepEqual(rs.ok, logs);
+  assert.deepEqual(seen.rs, seen.ts);
+  assert.ok(seen.ts.length >= 6, `Discord heard the handshakes, the pong and the activities: ${JSON.stringify(seen.ts)}`);
+});
