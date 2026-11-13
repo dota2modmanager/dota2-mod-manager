@@ -3160,6 +3160,51 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "effect-edit.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, table, ops): each answer, and the log.
+            // The finder speaks English; `rebuild` is `due` and then `rebuild_now` for each.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let table = opt_b(args, 5)?.map(|b| crate::kv::latin1(&b));
+            let svc = crate::effect_edit_service::EffectEdit::new(inst.game.clone());
+            let mut svc = svc;
+            let mut finder = crate::effect_finder::EffectFinder::default();
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(6).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let arg = |i: usize| a.get(i).cloned().unwrap_or(Value::Null);
+                let f = Some(crate::effect_edit_service::Finder { finder: &mut finder, lang: "en", table: table.as_deref() });
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "search" => svc.search(&crate::js::string(&arg(1))).map(|v| json!(v)),
+                    "saved" => Ok(json!(crate::effect_edit_service::EffectEdit::saved(&lib))),
+                    "load" => svc.load(&lib, &arg(1), f),
+                    "preview" => svc.preview(&arg(1), &arg(2), f).map(|v| json!(v)),
+                    "install" => svc.install(&inst, &mut lib, (&arg(1), &arg(2), crate::js::truthy(&arg(3))), f, &mut d),
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1).as_array().into_iter().flatten().map(crate::js::string).collect();
+                        let mut done = Vec::new();
+                        let mut f = f;
+                        for id in crate::effect_edit_service::EffectEdit::due(&lib, &ids) {
+                            let again = f.as_mut().map(|x| crate::effect_edit_service::Finder { finder: &mut *x.finder, lang: x.lang, table: x.table });
+                            if svc.rebuild_now(&inst, &mut lib, &id, again, &mut d) {
+                                done.push(id);
+                            }
+                        }
+                        Ok(json!(done))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

@@ -5511,3 +5511,114 @@ test('a hero\'s layers, a material\'s inputs and the effect finder in Rust read 
   }
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the effect editor\'s service in Rust finds, previews and puts in My mods what the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { createEffectEdit } = await import('../src/effect-edit-service.ts');
+  const { createEffectFinder } = await import('../src/effect-finder.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, openVpkIndex, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { references } = await import('../src/resource.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-fxsvc-'));
+  // a game of the real Juggernaut: his particles and those they create, his items', his script
+  const real = openVpkIndex(GAME_PAK01);
+  const all = [...real.paths()];
+  const want = new Set<string>(all.filter((p) => p.endsWith('.vpcf_c') && (p.startsWith('particles/units/heroes/hero_juggernaut/') || p.startsWith('particles/econ/items/juggernaut/bladekeeper'))));
+  for (const p of [...want]) {
+    const walk = (f: string, depth: number) => {
+      if (depth > 6) return;
+      let refs: string[] = [];
+      try { refs = references(real.read(f)!); } catch { return; }
+      for (const r of refs.map((x) => `${x.toLowerCase().replace(/_c$/, '')}_c`)) if (r.endsWith('.vpcf_c') && !want.has(r) && real.read(r)) { want.add(r); walk(r, depth + 1); }
+    };
+    walk(p, 0);
+  }
+  const extra = ['scripts/npc/heroes/npc_dota_hero_juggernaut.txt', 'resource/localization/abilities_english.txt'];
+  const entries = [...want, ...extra].sort().map((p) => entryAt(p, real.read(p)!));
+  const fury = 'particles/units/heroes/hero_juggernaut/juggernaut_blade_fury.vpcf';
+  const swap = all.find((p) => p.startsWith('particles/econ/items/juggernaut/bladekeeper') && p.endsWith('.vpcf_c'))!.replace(/_c$/, '');
+  const table = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(table, `"items_game" { "items" { "1" { "visuals" { "asset_modifier" { "type" "particle" "asset" "${fury}" "modifier" "${swap}" } } } } }`);
+  type Twin = { root: string; game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk(entries));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const ops: unknown[][] = [
+    ['search', 'juggernaut blade'], ['search', '  '], ['search', 'hero_juggernaut/juggernaut_omni'], ['saved'],
+    ['load', fury], ['load', 'ability:juggernaut/juggernaut_blade_fury'], ['load', 'particles/nope.vpcf'], ['load', '../x.vpcf'], ['load', 'ability:juggernaut/juggernaut_nothing'],
+    ['preview', fury, { '*': { size: 150, tint: '#ff0000' } }],
+    ['install', fury, {}], ['install', fury, { '*': { size: 150 } }, false],
+    ['install', 'ability:juggernaut/juggernaut_blade_fury', { '*': { count: 50, tint: '#3366ff' } }, true], ['saved'],
+    ['install', fury, { '*': { size: 200, speed: 30 } }, true], ['load', fury], ['saved'],
+    ['rebuild', ['$fury', 'nobody']], ['saved'],
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const furyId = (x: Twin) => manifest(x).installed.find((r: { generated?: { effect?: string } }) => r.generated?.effect === fury)?.id;
+  // the TypeScript, op by op; ids are filled in as each side made them
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    const tableText = fs.readFileSync(table).toString('latin1');
+    const finder = createEffectFinder({ index: () => sharedVpkIndex(path.join(a.game, 'dota', 'pak01_dir.vpk')), lang: () => 'en', heroes: () => [], table: () => tableText });
+    const rebuilt: string[] = [];
+    const svc = createEffectEdit({ gamePath: () => a.game, installer: inst as never, library, sprites: async () => ({}), finder, onRebuilt: (id) => rebuilt.push(id), log: (m) => log.push(m) });
+    for (const op of ops) {
+      try {
+        let v: unknown;
+        if (op[0] === 'search') v = svc.search(op[1] as string);
+        else if (op[0] === 'saved') v = svc.saved();
+        else if (op[0] === 'load') { const { sprites, ...rest } = await svc.load(op[1]); void sprites; v = rest; }
+        else if (op[0] === 'preview') v = svc.preview(op[1], op[2]);
+        else if (op[0] === 'install') v = svc.install(op[1], op[2], op[3] as boolean | undefined);
+        else {
+          rebuilt.length = 0;
+          svc.rebuild((op[1] as string[]).map((i) => (i === '$fury' ? furyId(a) : i)));
+          await new Promise((r) => setTimeout(r, 200));
+          v = [...rebuilt];
+        }
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  // the Rust: the rebuild's id is its own record's, which exists only after the installs, so it
+  // runs as two scripts over the same folders
+  const cut = ops.findIndex((o) => o[0] === 'rebuild');
+  const run = (list: unknown[][]) => {
+    const l = path.join(tmp, `ops-${list.length}.json`);
+    fs.writeFileSync(l, JSON.stringify([['effect-edit.service', b.game, 'russian', b.journal, b.lib, b.ud, { $file: table }, list]]));
+    const [r] = JSON.parse(execFileSync(cli, ['call', l], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[] }; error?: string }[];
+    assert.ok(r.ok, r.error);
+    return r.ok;
+  };
+  const first = run(ops.slice(0, cut));
+  const second = run(ops.slice(cut).map((o) => (o[0] === 'rebuild' ? ['rebuild', (o[1] as string[]).map((i) => (i === '$fury' ? furyId(b) : i))] : o)));
+  // the rebuilt ids are each side's own
+  const got = [...first.answers, ...second.answers].map((x, k) => (ops[k][0] === 'rebuild' ? { ok: (x as { ok: string[] }).ok.map(() => '<id>') } : x));
+  const wanted = answers.map((x, k) => (ops[k][0] === 'rebuild' ? { ok: (x as { ok: string[] }).ok.map(() => '<id>') } : x));
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(got[k]), norm(wanted[k]), `${k} ${JSON.stringify(op).slice(0, 120)}`);
+  assert.deepEqual([...first.log, ...second.log], log, 'the log');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok((wanted[ops.length - 2] as { ok: string[] }).ok.length === 1, 'the record was built again');
+  const okAt = (k: number) => (wanted[k] as { ok?: { defs?: unknown[] } }).ok;
+  assert.ok((okAt(4)?.defs?.length ?? 0) > 0 && (okAt(5)?.defs?.length ?? 0) > 0 && okAt(11) && okAt(12) && 'error' in (wanted[10] as object), 'loads, installs and a refusal');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

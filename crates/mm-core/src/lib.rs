@@ -22,6 +22,7 @@ pub mod deep_links;
 pub mod disk_space;
 pub mod download_stats;
 pub mod effect_edit;
+pub mod effect_edit_service;
 pub mod effect_finder;
 pub mod emblem_ring;
 pub mod file_tx;
