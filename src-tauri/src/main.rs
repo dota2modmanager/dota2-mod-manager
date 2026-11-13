@@ -65,6 +65,11 @@ async fn mm_invoke(
     let host = host.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let list = args_of(args);
+        // what the channel may be handed, before Rust or the host acts on it (src/window-guard.ts)
+        if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
+            eprintln!("[mm-shell] ipc: refused {channel}: {why}");
+            return Err(format!("refused: {why}"));
+        }
         let res = match native::handle(&app, &channel, &list) {
             Some(res) => res.map(|v| Answer::Json(v.to_string())),
             None => host.invoke(&channel, Value::Array(list.clone())),
@@ -92,7 +97,12 @@ fn after(app: &tauri::AppHandle, channel: &str, args: &[Value], ok: bool) {
 /// ipcRenderer.send: no answer.
 #[tauri::command]
 fn mm_send(host: tauri::State<'_, Host>, channel: String, args: Value) {
-    host.0.send(&channel, Value::Array(args_of(args)));
+    let list = args_of(args);
+    if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
+        eprintln!("[mm-shell] ipc: refused {channel}: {why}");
+        return;
+    }
+    host.0.send(&channel, Value::Array(list));
 }
 
 /// The page has loaded: the host's 'did-finish-load' listeners run (the game watch, a cold link).

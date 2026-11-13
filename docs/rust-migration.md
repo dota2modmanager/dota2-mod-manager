@@ -142,6 +142,7 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | `settings:testProxy`, `misc:cacheSize`, `misc:cacheList` in the Tauri shell | done | yes | `src-tauri/src/ported.rs`; none of them holds state the host also holds: the proxy test is one request, the cache is read off the disk on each call as the TypeScript does; `ported::UserData` is the userData folder main.rs settled on; checked in the shell on the sandbox with `tools/tauri-shot.mjs --eval` |
 | the window and the tray: the size on the screen it opens on and a first run's scale, Ctrl +/-/0, the page locked to itself, closing into the tray with a hint the first time, the menu, Windows starting it hidden at sign-in, a second start handing its link over or making way for the uninstaller (`main-window.ts`, `tray.ts`, `background.ts`) | done | yes | `main_window.rs`, `tray.rs` (the logic), `src-tauri/src/window.rs` (Tauri's tray, `tauri-plugin-autostart` for the Run entry, `tauri-plugin-notification` for the hint); parity: the scale and size over a dozen work areas and odd values, every zoom key, and the keeper's doings over three scripts in three languages against `keepInTray` over fakes; checked on the sandbox's Tauri build: Ctrl+= twice gives 1.1, a close hides into the tray and the hint is marked seen, with the setting off a close quits |
 | what each channel may be handed and which settings the window may set (`channel-args.ts`); the Settings screen's answer, the support window's timing and the beta gate (`settings-view.ts`, `support-prompt.ts`, `beta.ts`) | done | no | `channel_args.rs`, `settings_view.rs`, `support_prompt.rs`, `beta.rs`; an argument the page did not send is `None` and bytes are `{$b64}`, read as the `Uint8Array` the page sent (its keys are its indexes, `String()` of it its numbers); parity: every channel's arguments swapped one at a time for ~110 values (lengths at each limit in UTF-16, numbers at each bound, bytes, objects with a field missing, wrong or extra), every window setting set to each, more than 20 000 calls with the same refusal word for word; the settings view over a game with our folder, Minify's own and a borrowed one and mods stranded, the sandbox's game, a bare one and none |
+| what a mod replaces by the item table, the first start's language, a folder's size, a feature switched off (`mod-id.ts`, `ui-lang.ts`, `folder-size.ts`, `feature-gate.ts`) | done | no | `mod_id.rs`, `ui_lang.rs`, `folder_size.rs`, `feature_gate.rs`; `schema::read_game_schema` now refuses in the TypeScript's words; parity: every model path of the sandbox's table in lists of several sizes and spellings, the sandbox's mods, no game and a game with no pak (the complaint said once), locales, a tree of files, the gate in three languages |
 | the `mods:*` channels in the Tauri shell | - | - | next |
 | the mirror chain, requests and downloads, the catalog signature (`net-mirrors.ts`, `net-fetch.ts`, `net-download.ts`, `catalog-signature.ts`) | done | no | `net_mirrors.rs`, `net_fetch.rs`, `catalog_signature.rs`; `ureq` with native-tls (SChannel on Windows, nothing compiled from C), `ed25519-dalek`; one `Net` holds the chain, the health and the proxy where the TypeScript keeps module globals; the wait for an answer's headers is bounded and the body is cut after 30 seconds of silence (read on its own thread, so a read that never returns can be given up on); parity on local servers: the chain for raw, release, outside and our-site URLs, configured hosts well formed or not, health and standing down, a 503 origin, mirrors with no copy, a refused port, excluded and trusted-only requests, downloads that verify, fall through a wrong copy, take the origin's copy, fail the checksum, resume, restart when Range is ignored, and signatures good, damaged, wrapped in whitespace, empty and unkeyed; the body budget is checked in Rust alone |
 | the catalog (three signed files, the site's snapshot when GitHub's copies disagree, the last good copy, the published archive hashes), the remote config (its format and checks, switches, blocks by version, dated notices, the beta list, extra mirrors, marked mods) and the ready presets (`catalog.ts`, `remote-config.ts`, `remote-config-format.ts`, `ready-presets.ts`) | done | no | `catalog.rs`, `remote_config.rs`, `ready_presets.rs`; the clock is handed in; parity on one local server whose folders are states of the world (all good, torn between commits, forged, no hash list with a config that is not JSON, data that is signed but not JSON, down), two builds on two days: every load, refresh, log line, switch, notice, issue, the beta list, the mirrors, the hashes and the files kept on disk; a parse error's wording is each JSON reader's own |
@@ -235,6 +236,26 @@ hide (`{t:'hidden'}`). The switch takes those detours out.
 
 What stays in the host after the switch has to live without the two files, or get what it reads
 pushed to it (a copy Rust sends whenever settings change: the host's reads are of settings only).
+
+How it is done, so it can be built in steps without a release in between that half-works:
+
+1. The pieces with no Rust twin yet that the channels over the two files call. On 2026-11-13
+   these are left: the 3D preview (`model-glb.ts`, `model-loadout.ts`, `hero-preview*.ts`,
+   `mod-preview*.ts`, `glb-embed.ts`, `loadout-*.ts`, `model-style-meshes.ts`,
+   `hero-particle-styles.ts`, `model-snapshot-fallback.ts`, `razor-crest-preview.ts`), the hero
+   grid (`hero-grid.ts`), the author's drafts (`creator.ts`, `creator-premod.ts`), the mod
+   doctor (`mod-doctor.ts`), diagnostics (`diagnostics*.ts`), Discord (`discord-presence.ts`,
+   `presence-status.ts`, `discord-auth.ts`), the removal window (`uninstall-window.ts`), and
+   the updater (`updater.ts`, `portable-update.ts`), which becomes Tauri's own.
+2. The owner in the shell: one state holding settings, the library, the installer and the
+   services, built at start in the order `src/services.ts` builds them, and the channels
+   answered over it group by group, each group checked on the sandbox's Tauri build. All of it
+   behind `MM_RUST_OWNS=1`, so main keeps working on the host while it grows.
+3. When every channel that touches either file is answered there, the flag becomes the default
+   and the host loses those channels in the same change.
+
+Every call the shell takes is already checked against `channel_args.rs` before Rust or the host
+sees it.
 
 ## Moving a piece
 

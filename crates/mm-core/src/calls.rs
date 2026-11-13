@@ -3965,6 +3965,34 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             c.sort();
             json!(c)
         }
+        "mod-id.identify" => {
+            // (game|null, [paths...]...): each list's answer, then the log
+            let id = crate::mod_id::ModIdentity::new(opt_path(args, 0));
+            let mut log: Vec<String> = Vec::new();
+            let answers: Vec<Value> = args
+                .iter()
+                .skip(1)
+                .map(|list| {
+                    let paths: Vec<String> = list.as_array().into_iter().flatten().map(crate::js::string).collect();
+                    json!(id.identify(paths.iter().map(String::as_str), &mut |m| log.push(m)))
+                })
+                .collect();
+            json!({ "answers": answers, "log": log, "ready": id.ready() })
+        }
+        "ui-lang.uiLangFor" => {
+            let l: Vec<String> = args.first().and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            json!(crate::ui_lang::ui_lang_for(&l))
+        }
+        "folder-size.folderSize" => json!(crate::folder_size::folder_size(std::path::Path::new(&s(args, 0)))),
+        "feature-gate.gate" => {
+            // (lang, gameOpen, off, note)
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let r = crate::feature_gate::gate(args.get(1).is_some_and(crate::js::truthy), || {
+                (args.get(2).is_some_and(crate::js::truthy), s(args, 3))
+            });
+            crate::i18n::set_lang(crate::i18n::Lang::parse("en"));
+            json!(r)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

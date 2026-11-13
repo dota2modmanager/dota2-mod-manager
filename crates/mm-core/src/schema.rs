@@ -247,11 +247,11 @@ pub fn cosmetic_options(items: &[SchemaItem], slot: &str) -> Vec<(String, String
 pub fn read_game_schema(game_path: &Path) -> Result<(Vec<u8>, String), String> {
     let pak = game_path.join("dota").join("pak01_dir.vpk");
     if !pak.exists() {
-        return Err(format!("not found: {}", pak.display()));
+        return Err(crate::i18n::t("Не найден {0}", &[serde_json::json!(pak.to_string_lossy())]));
     }
     let (data, crc) = vpk::read_entry_file(&pak, SCHEMA_REL)
         .map_err(|e| e.to_string())?
-        .ok_or_else(|| "items_game.txt is not in the game's pak01".to_string())?;
+        .ok_or_else(|| crate::i18n::t("items_game.txt не найден в pak01 игры", &[]))?;
     let stamp = format!("{}:{}", data.len(), crc);
     Ok((data, stamp))
 }

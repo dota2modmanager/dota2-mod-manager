@@ -6765,3 +6765,62 @@ test('every channel\'s argument check in Rust refuses what the TypeScript refuse
   }
   assert.ok(inputs.length > 20000, String(inputs.length));
 });
+
+test('what a mod replaces, asked of the item table, in Rust is the TypeScript answer', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const { createModIdentity } = await import('../src/mod-id.ts');
+  const { readGameSchema, listItems } = await import('../src/schema.ts');
+  const { sharedVpkIndex } = await import('../src/vpk.ts');
+  const { text } = readGameSchema(sandboxGame);
+  const models = listItems(text).map((i) => /"model_player"\s+"([^"]+)"/i.exec(text.slice(i.start, i.end))?.[1]).filter((m): m is string => !!m);
+  const pick = (n: number, from: number) => models.slice(from, from + n);
+  const lists: string[][] = [
+    [], ['readme.txt', 'models/heroes/axe/axe.vmdl_c'],
+    pick(5, 0).map((m) => `${m}_c`), pick(40, 300).map((m) => `${m}_c`), pick(3, 900).map((m) => m),
+    pick(3, 1200).map((m) => `${m.toUpperCase()}_c`), pick(3, 1500).map((m) => `${m.toLowerCase().replace(/\//g, '\\')}_c`),
+    models.filter((_, i) => i % 97 === 0).map((m) => `${m.toLowerCase()}_c`), models.map((m) => `${m.toLowerCase()}_c`),
+  ];
+  const mods = path.join(root, 'sandbox', 'mods');
+  for (const f of fs.existsSync(mods) ? fs.readdirSync(mods) : []) {
+    if (f.endsWith('_dir.vpk')) lists.push([...sharedVpkIndex(path.join(mods, f)).paths()]);
+  }
+  const run = (game: string | null) => {
+    const log: string[] = [];
+    const id = createModIdentity({ getGamePath: () => game, log: (m) => log.push(m) });
+    const answers = lists.map((l) => JSON.parse(JSON.stringify(id.identify(l) ?? null)));
+    return { answers, log, ready: id.ready() };
+  };
+  const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-modid-'));
+  const games = [sandboxGame, null, empty];
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-modid-calls-'));
+  fs.writeFileSync(path.join(tmp, 'c.json'), JSON.stringify(games.map((g) => ['mod-id.identify', g, ...lists])));
+  const rs = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'c.json')], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok: ReturnType<typeof run> }[];
+  for (const [k, g] of games.entries()) {
+    const want = run(g);
+    for (const [i, a] of want.answers.entries()) assert.deepEqual(rs[k].ok.answers[i], a, `${g} list ${i}`);
+    assert.deepEqual(rs[k].ok.log, want.log, `${g} log`);
+    assert.equal(rs[k].ok.ready, want.ready);
+  }
+  assert.ok(run(sandboxGame).answers.filter(Boolean).length >= 6, 'the table speaks for most lists');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  fs.rmSync(empty, { recursive: true, force: true });
+});
+
+test('the first start\'s language, a folder\'s size and a closed feature in Rust are the TypeScript ones', { skip }, async () => {
+  const { uiLangFor } = await import('../src/ui-lang.ts');
+  const { folderSize } = await import('../src/folder-size.ts');
+  const { createGate } = await import('../src/feature-gate.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-size-'));
+  const put = (rel: string, n: number) => { const f = path.join(tmp, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, Buffer.alloc(n)); };
+  put('a.bin', 10); put('x/b.bin', 2000); put('x/y/z/c.bin', 123456); put('x/y/empty.txt', 0); fs.mkdirSync(path.join(tmp, 'hollow'));
+  const cases: Case[] = [
+    { name: 'ui-lang.uiLangFor', ts: uiLangFor as never, inputs: [[[]], [['ru-RU']], [['uk_UA']], [['KK']], [['zh-Hans-CN']], [['zh_TW']], [['de-DE', 'fr']], [['de', 'hy-AM', 'en']], [['en-GB', 'ru']], [['']], [['-ru']], [['RU-ru']], [['ka']], [['ja', 'zh']]] },
+    { name: 'folder-size.folderSize', ts: folderSize as never, inputs: [[tmp], [path.join(tmp, 'x')], [path.join(tmp, 'hollow')], [path.join(tmp, 'nope')], [path.join(tmp, 'a.bin')]] },
+    { name: 'feature-gate.gate', ts: ((lang: string, open: boolean, off: boolean, note: string) => {
+      setLang(lang);
+      return createGate({ remoteConfig: { feature: () => ({ off, note }) }, settings: { get: () => lang } as never, gameOpen: () => open })('x');
+    }) as never, inputs: ['ru', 'en', 'zh-CN'].flatMap((l) => [[l, true, true, 'n'], [l, false, true, 'closed for now'], [l, false, true, ''], [l, false, false, 'n']]) },
+  ];
+  assert.ok(compare(cases) > 25);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
