@@ -1515,6 +1515,124 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "schema-deploy.script" => {
+            // (game, folder, ops): the table written, checked for, swept and taken away
+            let game = std::path::PathBuf::from(s(args, 0));
+            let folder = s(args, 1);
+            let base = crate::schema::read_game_schema(&game)?;
+            let entries = |v: &Value| -> Vec<crate::vpk::Entry> {
+                v.as_array()
+                    .map(|a| {
+                        a.iter()
+                            .map(|e| {
+                                crate::vpk::entry_at(&crate::js::string(&e[0]), crate::kv::to_latin1(&crate::js::string(&e[1])).into())
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default()
+            };
+            let ops = args.get(2).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let r: Result<Value, String> = (|| {
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "isDeployed" => json!(crate::schema_deploy::is_deployed(&game, &folder)),
+                        "sweep" => json!(crate::schema_deploy::sweep_unfinished(&game, &folder, op[1].as_u64().unwrap_or(0) as u32)),
+                        "sha" => {
+                            let f = game.join(&folder).join(crate::schema_deploy::SCHEMA_VPK);
+                            sha(std::fs::read(f).ok())
+                        }
+                        "undeploy" => {
+                            crate::schema_deploy::undeploy(&game, &folder).map_err(|e| e.to_string())?;
+                            Value::Null
+                        }
+                        "deploy" => {
+                            let list = op[1].as_array().cloned().unwrap_or_default();
+                            let patches: Vec<crate::schema_merge::Patch> = list
+                                .iter()
+                                .map(|p| crate::schema_merge::Patch {
+                                    id: crate::js::string(&p["id"]),
+                                    block: crate::kv::to_latin1(&crate::js::string(&p["block"])),
+                                    source: crate::js::string(&p["source"]),
+                                })
+                                .collect();
+                            let own: Vec<Vec<crate::vpk::Entry>> = list.iter().map(|p| entries(&p["assets"])).collect();
+                            let beneath = entries(&op[2]);
+                            let mut assets: Vec<&[crate::vpk::Entry]> = own.iter().map(Vec::as_slice).collect();
+                            assets.push(&beneath);
+                            let stop = crate::js::truthy(&op[3]);
+                            json!(crate::schema_deploy::deploy(&game, &folder, &patches, &assets, (&base.0, &base.1), &|| stop)?)
+                        }
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
+        "schema-service.script" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each answer, with the paths a written table fills
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+            let ops = args.get(5).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let mut filled: Vec<String> = Vec::new();
+                let r: Result<Value, String> = (|| {
+                    let io = |e: std::io::Error| e.to_string();
+                    let mut log = |_: String| {};
+                    let mut deployed = |s: std::collections::HashSet<String>| {
+                        filled = s.into_iter().collect();
+                        filled.sort();
+                    };
+                    let mut ctx = crate::schema_service::Ctx {
+                        inst: &inst,
+                        lib: &mut lib,
+                        settings: &mut st,
+                        bases: None,
+                        log: &mut log,
+                        on_deployed: &mut deployed,
+                    };
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "state" => crate::schema_service::state(&inst, ctx.lib, ctx.settings, true),
+                        "refresh" => json!(svc.refresh(&mut ctx, &|| false, &mut |_, _| {})),
+                        "heal" => json!(svc.heal(&mut ctx, crate::js::truthy(&op[1]))),
+                        "setEnabled" => svc.set_enabled(&mut ctx, crate::js::truthy(&op[1])),
+                        "settings" => {
+                            let all: Value = std::fs::read_to_string(ud.join("settings.json"))
+                                .ok()
+                                .and_then(|t| serde_json::from_str(&t).ok())
+                                .unwrap_or(Value::Null);
+                            let g = |k: &str| all.get(k).cloned().unwrap_or(Value::Null);
+                            json!({ "patch": g("schemaPatch"), "stamp": g("schemaStamp"), "pending": g("schemaPending"), "everyone": g("everyoneWearsMine") })
+                        }
+                        "list" => json!(ctx.lib.list()),
+                        "set" => {
+                            ctx.settings.set(&crate::js::string(&op[1]), op[2].clone()).map_err(io)?;
+                            Value::Null
+                        }
+                        "master" => json!({ "changed": inst.set_master_enabled(crate::js::truthy(&op[1]))? }),
+                        "remove" => {
+                            ctx.lib.remove_record(&op[1], None).map_err(io)?;
+                            Value::Null
+                        }
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v, "filled": filled }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));
