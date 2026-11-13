@@ -1033,6 +1033,8 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             json!({ "text": text, "gone": gone })
         }
         "ability-sounds.wavProblem" => json!(ability_sounds::wav_problem(&b(args, 0)?)),
+        // (n): String(n)
+        "js.number" => json!(crate::js::number(n(args, 0))),
         "js.toFixed" => json!(crate::js::to_fixed(n(args, 0), n(args, 1) as usize)),
         "hero-showcase.heroStage" => {
             let keys: Vec<String> = serde_json::from_value(args.get(2).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
@@ -4239,6 +4241,136 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 Ok(v) => json!({ "ok": v, "url": url }),
                 Err(e) => json!({ "error": e, "url": url }),
             }
+        }
+        // (file): the GLB's JSON, and its binary chunk's length and sha256
+        "glb-embed.readGlb" => {
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            let (json, bin) = crate::glb_embed::read_glb(&bytes)?;
+            use sha2::Digest;
+            json!({ "json": json, "bin": bin.len(), "sha": format!("{:x}", sha2::Sha256::digest(&bin)) })
+        }
+        // (json, bin base64): the GLB, base64
+        "glb-embed.writeGlb" => {
+            use base64::Engine;
+            let bin = crate::js::base64_decode(&s(args, 1));
+            json!(base64::engine::general_purpose::STANDARD.encode(crate::glb_embed::write_glb(args.first().unwrap_or(&Value::Null), &bin)))
+        }
+        // (file): the sha256 of the GLB with its pictures inside
+        "glb-embed.embedGlb" => {
+            use sha2::Digest;
+            json!(format!("{:x}", sha2::Sha256::digest(crate::glb_embed::embed_glb(std::path::Path::new(&s(args, 0)))?)))
+        }
+        // (file, side | null, max)
+        "model-snapshot-fallback.snapshotFromModel" => {
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            let side = args.get(1).and_then(Value::as_str).map(String::from);
+            crate::model_snapshot_fallback::snapshot_from_model(&bytes, side.as_deref(), crate::js::to_number(args.get(2).unwrap_or(&Value::Null)))?
+        }
+        // (file, style): the sha256 of the GLB the preview draws
+        "model-style-meshes.selectStyleMeshes" => {
+            use sha2::Digest;
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            let out = crate::model_style_meshes::select_style_meshes(&bytes, crate::js::to_number(args.get(1).unwrap_or(&Value::Null)))?;
+            json!(format!("{:x}", sha2::Sha256::digest(out)))
+        }
+        "model-style-meshes.hidePreviewOnlyMeshes" => {
+            use sha2::Digest;
+            let bytes = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            json!(format!("{:x}", sha2::Sha256::digest(crate::model_style_meshes::hide_preview_only_meshes(&bytes)?)))
+        }
+        "model-style-meshes.styleFamily" => json!(crate::model_style_meshes::style_family(&s(args, 0))),
+        // (parts): the parts with their styles shared
+        "model-style-meshes.syncArcanaStyles" => {
+            let mut parts = args.first().and_then(Value::as_array).cloned().unwrap_or_default();
+            crate::model_style_meshes::sync_arcana_styles(&mut parts);
+            json!(parts)
+        }
+        // (model [{path, config}], selected, style): the roots as [path, config] pairs
+        "hero-particle-styles.styleParticleRoots" => {
+            let model: Vec<(String, String)> = args
+                .first()
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|m| (s(&[m.get("path").cloned().unwrap_or(Value::Null)], 0), s(&[m.get("config").cloned().unwrap_or(Value::Null)], 0)))
+                .collect();
+            let roots = crate::hero_particle_styles::style_particle_roots(&model, &strings(args, 1)?, crate::js::to_number(args.get(2).unwrap_or(&Value::Null)));
+            json!(roots.into_iter().map(|(k, v)| json!([k, v])).collect::<Vec<_>>())
+        }
+        "hero-particle-styles.isStockTerrorbladeBlade" => json!(crate::hero_particle_styles::is_stock_terrorblade_blade(&s(args, 0))),
+        "hero-particle-styles.replaceTerrorbladeBladeFx" => {
+            json!(crate::hero_particle_styles::replace_terrorblade_blade_fx(&s(args, 0), &s(args, 1), &strings(args, 2)?))
+        }
+        // (def, [[from, to]...])
+        "hero-particle-styles.bladeSnapshots" => {
+            let map: indexmap::IndexMap<String, String> = args
+                .get(1)
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|p| Some((p.get(0)?.as_str()?.to_string(), p.get(1)?.as_str()?.to_string())))
+                .collect();
+            crate::hero_particle_styles::blade_snapshots(args.first().unwrap_or(&Value::Null), &map)?
+        }
+        // (file | null)
+        "loadout-sheet.loadoutSheet" => {
+            let bytes = match args.first() {
+                Some(Value::String(f)) => Some(std::fs::read(f).map_err(|e| e.to_string())?),
+                _ => None,
+            };
+            crate::loadout_sheet::loadout_sheet(bytes.as_deref())
+        }
+        // (file | null)
+        "model-loadout.modelSequences" => {
+            let bytes = match args.first() {
+                Some(Value::String(f)) => Some(std::fs::read(f).map_err(|e| e.to_string())?),
+                _ => None,
+            };
+            json!(crate::model_loadout::model_sequences(bytes.as_deref()))
+        }
+        // (text): sorted, since a Set has no order to compare
+        "model-loadout.itemModifiers" => {
+            let mut v: Vec<String> = crate::model_loadout::item_modifiers(&b(args, 0)?.iter().map(|&c| c as char).collect::<String>()).into_iter().collect();
+            v.sort();
+            json!(v)
+        }
+        // (seqs, modifiers, ofItems)
+        "model-loadout.motionList" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            let of: std::collections::HashSet<String> = strings(args, 2)?.into_iter().collect();
+            json!(crate::model_loadout::motion_list(&seqs, &strings(args, 1)?, &of))
+        }
+        "model-loadout.idleSequence" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::model_loadout::idle_sequence(&seqs))
+        }
+        "model-loadout.loadoutSequence" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::model_loadout::loadout_sequence(&seqs, &strings(args, 1)?))
+        }
+        "model-loadout.wearableClip" => {
+            let seqs: Vec<crate::model_loadout::Sequence> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            json!(crate::model_loadout::wearable_clip(&seqs))
+        }
+        "model-loadout.itemActivities" => json!(crate::model_loadout::item_activities(&b(args, 0)?.iter().map(|&c| c as char).collect::<String>())),
+        // (items_game, model, itemId)
+        "razor-crest-preview.goldenCrestModel" => {
+            let text = b(args, 0)?;
+            json!(crate::razor_crest_preview::golden_crest_model(&text, &s(args, 1), &s(args, 2))?)
+        }
+        "razor-crest-preview.crestActivities" => {
+            let text = b(args, 0)?;
+            json!(crate::razor_crest_preview::crest_activities(&text, &s(args, 1), &s(args, 2))?)
+        }
+        // (normal file, golden file): the sha256 of the joined GLB, or null
+        "razor-crest-preview.normalCrestOnGoldenRig" => {
+            use sha2::Digest;
+            let normal = std::fs::read(s(args, 0)).map_err(|e| e.to_string())?;
+            json!(crate::razor_crest_preview::normal_crest_on_golden_rig(&normal, std::path::Path::new(&s(args, 1))).map(|b| format!("{:x}", sha2::Sha256::digest(b))))
+        }
+        "razor-crest-preview.mergeCrestAttachments" => {
+            let list = |i: usize| args.get(i).and_then(Value::as_array).cloned().unwrap_or_default();
+            json!(crate::razor_crest_preview::merge_crest_attachments(&list(0), &list(1)))
         }
         _ => return Err(format!("no function {name}")),
     })

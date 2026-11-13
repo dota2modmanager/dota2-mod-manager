@@ -518,6 +518,18 @@ test('hero sound events in Rust read and write back as the TypeScript ones do', 
     { name: 'ability-sounds.wavProblem', ts: ((m: string) => as.wavProblem(Buffer.from(m, 'latin1'))) as never, inputs: [
       [wav(1, 44100, 16)], [wav(1, 48000, 16, 20)], [wav(3, 44100, 32)], [wav(1, 44100, 24)], [wav(1, 32000, 16)], [{ $file: odd }], [{ $file: files[0].file.$file }],
     ] },
+    // String(n), on doubles and on floats widened to doubles, where two shortest strings can tie
+    { name: 'js.number', ts: String as never, inputs: (() => {
+      let seed = 7;
+      const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+      const bits = new DataView(new ArrayBuffer(8));
+      return Array.from({ length: 3000 }, (_, i) => {
+        if (i % 3 === 0) return [Math.fround((rnd() - 0.5) * 10 ** Math.floor(rnd() * 20 - 10))];
+        if (i % 3 === 1) return [(rnd() - 0.5) * 10 ** Math.floor(rnd() * 40 - 20)];
+        bits.setUint32(0, Math.floor(rnd() * 0x7fefffff)); bits.setUint32(4, Math.floor(rnd() * 0xffffffff));
+        return [bits.getFloat64(0)];
+      });
+    })() },
     { name: 'js.toFixed', ts: ((x: number, d: number) => x.toFixed(d)) as never, inputs: [
       [1 / 128, 6], [0.5, 0], [1.5, 0], [2.5, 0], [-2.5, 0], [-0.0001, 2], [1.005, 2], [0.125, 2], [123.456, 1], [1e20, 2], [1e21, 2], [-0, 2], [0.000001, 6], [99.995, 2], [9.9999999, 6], [0.8, 2],
     ] },
@@ -7377,4 +7389,166 @@ test('signing in with Discord in Rust asks, waits and reads the profile as the T
   assert.deepEqual((await run('ru', 'ok')).error, lt('ru', 'Порт {0} занят — закрой другой вход и попробуй снова', port));
   busy.close();
   server.close();
+});
+
+test('GLB chunks, embedded pictures and the fallback snapshot in Rust answer as the TypeScript ones do', { skip }, async () => {
+  const crypto = await import('node:crypto');
+  const { readGlb, writeGlb, embedGlb } = await import('../src/glb-embed.ts');
+  const { snapshotFromModel } = await import('../src/model-snapshot-fallback.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-glb-'));
+  // a skinned triangle strip: positions, joints, weights (floats, bytes, normalised shorts)
+  const glb = (json: Record<string, unknown>, bin: Buffer) => writeGlb(json as never, bin);
+  const rows = 40;
+  const pos = Buffer.alloc(rows * 12), joints = Buffer.alloc(rows * 4), weights = Buffer.alloc(rows * 8);
+  for (let i = 0; i < rows; i++) {
+    pos.writeFloatLE(i * 0.01, i * 12); pos.writeFloatLE(i % 2 ? -0.5 : 0.25, i * 12 + 4); pos.writeFloatLE(i === 3 ? NaN : -0.0, i * 12 + 8);
+    joints.writeUInt8(i % 3, i * 4); joints.writeUInt8(2, i * 4 + 1); joints.writeUInt8(7, i * 4 + 2);
+    weights.writeUInt16LE(i < 20 ? 60000 : 5000, i * 8); weights.writeUInt16LE(65535 - (i < 20 ? 60000 : 5000), i * 8 + 2);
+  }
+  const bin = Buffer.concat([pos, joints, weights]);
+  const skinned = {
+    asset: { version: '2.0' },
+    nodes: [{ mesh: 0, skin: 0 }, { name: 'weapon_l' }, { name: 'Hand_R' }, { name: '' }, { mesh: null }],
+    meshes: [{ primitives: [{ attributes: { POSITION: 0, JOINTS_0: 1, WEIGHTS_0: 2 } }, { attributes: {} }, {}] }],
+    skins: [{ joints: [1, 2, 3] }],
+    accessors: [
+      { bufferView: 0, componentType: 5126, type: 'VEC3', count: rows },
+      { bufferView: 1, componentType: 5121, type: 'VEC4', count: rows },
+      { bufferView: 2, componentType: 5123, type: 'VEC4', count: rows, normalized: true },
+    ],
+    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: pos.length }, { buffer: 0, byteOffset: pos.length, byteLength: joints.length }, { buffer: 0, byteOffset: pos.length + joints.length, byteLength: weights.length, byteStride: 8 }],
+    buffers: [{ byteLength: bin.length }],
+  };
+  const files: string[] = [];
+  const put = (name: string, b: Buffer) => { const f = path.join(tmp, name); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, b); files.push(f); return f; };
+  put('skinned.glb', glb(skinned, bin));
+  put('short.glb', glb({ ...skinned, accessors: [{ ...skinned.accessors[0], count: rows * 4 }] }, bin));
+  put('empty.glb', glb({ asset: { version: '2.0' } }, Buffer.alloc(0)));
+  put('odd.glb', glb({ asset: { version: '2.0' }, nodes: [{ mesh: 0 }], meshes: [{ primitives: [{ attributes: { POSITION: 0 } }] }], accessors: [{ bufferView: 0, componentType: 5122, type: 'VEC3', count: 6, normalized: true }], bufferViews: [{ byteOffset: 2 }] }, Buffer.from([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 200, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39])));
+  put('notglb.glb', Buffer.from('glTF but not really, no header here'));
+  put('nojson.glb', (() => { const b = glb({}, Buffer.from([1, 2, 3])); b.writeUInt32LE(0x11111111, 16); return b; })());
+  // pictures beside a GLB: present, missing, outside the folder, escaped, an unknown kind, already inside
+  put('pics/a b.png', Buffer.from('\x89PNG one'));
+  put('pics/c.JPG', Buffer.from('jpeg bytes!'));
+  put('secret.png', Buffer.from('\x89PNG outside'));
+  put('pics/t.tga', Buffer.from('tga'));
+  put('pics/model.glb', glb({ asset: { version: '2.0' }, images: [{ uri: 'a%20b.png' }, { uri: 'c.JPG' }, { uri: 'gone.png' }, { uri: '../secret.png' }, { uri: 't.tga' }, { uri: 'data:image/png;base64,AA' }, { bufferView: 0, mimeType: 'image/png' }, {}], bufferViews: [{ buffer: 0, byteLength: 3 }] }, Buffer.from([9, 9, 9])));
+  put('pics/plain.glb', glb({ asset: { version: '2.0' } }, Buffer.from([1])));
+  put('pics/badescape.glb', glb({ images: [{ uri: 'x%zz.png' }] }, Buffer.alloc(0)));
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const realGlbs = fs.existsSync(real) ? fs.readdirSync(real, { recursive: true, withFileTypes: true }).filter((d) => d.isFile() && d.name.endsWith('.glb')).map((d) => path.join(d.parentPath, d.name)).slice(0, 40) : [];
+  const all = [...files.filter((f) => f.endsWith('.glb')), ...realGlbs];
+  const chunks = (f: string) => { const { json, bin: b } = readGlb(fs.readFileSync(f)); return { json, bin: b.length, sha: sha(b) }; };
+  const compact = (s: ReturnType<typeof snapshotFromModel>) => s;
+  compare([
+    { name: 'glb-embed.readGlb', ts: chunks as never, inputs: all.map((f) => [f]) },
+    { name: 'glb-embed.writeGlb', ts: ((j: unknown, b: string) => writeGlb(j as never, Buffer.from(b, 'base64')).toString('base64')) as never, inputs: [
+      [{}, ''], [{ a: 1, ü: 'ÿ' }, 'AQID'], [{ x: [1.5, -0, 1e21] }, 'AQIDBAU='], [skinned, bin.toString('base64')],
+    ] },
+    { name: 'glb-embed.embedGlb', ts: ((f: string) => sha(embedGlb(f))) as never, inputs: all.map((f) => [f]) },
+    { name: 'model-snapshot-fallback.snapshotFromModel', ts: ((f: string, side: 'left' | 'right' | null, max: number) => compact(snapshotFromModel(fs.readFileSync(f), side, max))) as never, inputs: all.flatMap((f) => [[f, null, 192], [f, 'left', 50], [f, 'right', 7], [f, null, 0]]) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('style meshes, particle roots and the Crest preview in Rust answer as the TypeScript ones do', { skip }, async () => {
+  const crypto = await import('node:crypto');
+  const { writeGlb } = await import('../src/glb-embed.ts');
+  const sm = await import('../src/model-style-meshes.ts');
+  const hp = await import('../src/hero-particle-styles.ts');
+  const rc = await import('../src/razor-crest-preview.ts');
+  const sha = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-styles-'));
+  const put = (name: string, b: Buffer) => { const f = path.join(tmp, name); fs.writeFileSync(f, b); return f; };
+  const prim = (...m: (number | undefined)[]) => ({ primitives: m.map((material) => (material === undefined ? {} : { material })) });
+  const styled = (materials: string[], meshes: unknown[], nodes: unknown[]) => writeGlb({ asset: { version: '2.0' }, materials: materials.map((name) => ({ name })), meshes, nodes } as never, Buffer.from([1, 2, 3, 4]));
+  const glbs = [
+    put('pair.glb', styled(['Materials\\Items\\Cape.vmat', 'materials/items/cape_ALT.vmat', 'trim'], [prim(0), prim(1), { name: 'cape_copy2', ...prim(0) }, prim(0, 2), prim(0, 1), prim()], [{ mesh: 0 }, { mesh: 1, name: 'x' }, { mesh: 2 }, { mesh: 3 }, { mesh: 4 }, { mesh: 5 }, { mesh: 9 }, { mesh: null }, {}])),
+    put('nopair.glb', styled(['a', 'b_alt'], [prim(0), prim(1)], [{ mesh: 0 }, { mesh: 1 }])),
+    put('blades.glb', styled(['materials/models/spectre/landing_page_blade_dissolve.vmat', 'x/landing_page_foo_dissolve', 'Landing_Page_Blade', 'body', 'mylanding_page_blade'], [prim(0, 1), prim(2), prim(3), prim(0, 3), prim(4), prim()], [{ mesh: 0 }, { mesh: 1 }, { mesh: 2 }, { mesh: 3 }, { mesh: 4 }, { mesh: 5 }])),
+    put('bare.glb', styled([], [], [])),
+  ];
+  const real = path.join(process.env.APPDATA ?? '', 'Dota 2 Mod Manager', 'models3d');
+  const realGlbs = fs.existsSync(real) ? fs.readdirSync(real, { recursive: true, withFileTypes: true }).filter((d) => d.isFile() && d.name.endsWith('.glb')).map((d) => path.join(d.parentPath, d.name)).slice(0, 30) : [];
+  // the Crest: a normal look with its pictures in the binary chunk, and a gold rig beside it
+  const look = { asset: { version: '2.0' }, materials: [{ name: 'm0' }, { name: 'm1' }], meshes: [{ primitives: [{ material: 1 }, { material: 0 }, { material: 1 }] }], images: [{ bufferView: 0, mimeType: 'image/png' }, { uri: 'data:image/png;base64,AA' }], bufferViews: [{ buffer: 0, byteOffset: 2, byteLength: 3 }], samplers: [{}], textures: [{ source: 0 }], extras: { a: 1 }, extensionsUsed: ['KHR_a', 'KHR_b'] };
+  const gold = { asset: { version: '2.0' }, materials: [{ name: 'g0' }, { name: 'g1' }], meshes: [{ primitives: [{ material: 0 }, { material: 1 }] }], nodes: [{ mesh: 0 }], extensionsUsed: ['KHR_b', 'KHR_c'], samplers: [{ x: 1 }] };
+  const normal = put('normal.glb', writeGlb(look as never, Buffer.from([0, 0, 7, 8, 9, 0])));
+  const golden = put('golden.glb', writeGlb(gold as never, Buffer.from([5, 5, 5, 5])));
+  const noLook = put('nolook.glb', writeGlb({ ...look, images: undefined, extras: undefined } as never, Buffer.alloc(0)));
+  const badView = put('badview.glb', writeGlb({ ...look, images: [{ bufferView: 3, mimeType: 'image/png' }] } as never, Buffer.alloc(0)));
+  const otherSlots = put('slots.glb', writeGlb({ ...look, meshes: [{ primitives: [{ material: 0 }] }] } as never, Buffer.alloc(0)));
+  const fewer = put('fewer.glb', writeGlb({ ...look, materials: [{}] } as never, Buffer.alloc(0)));
+  const { file: items } = await realItems();
+  const text = fs.readFileSync(items).toString('latin1');
+  const crestModel = /"6646"[\s\S]*?"model_player"\s+"([^"]+)"/.exec(text)?.[1] ?? 'models/items/razor/x.vmdl';
+  const roots = [
+    { path: 'particles/econ/items/spectre/spectre_arcana/spectre_arcana_ambient_v2_style1.vpcf', config: 'a' },
+    { path: 'particles/econ/items/spectre/spectre_arcana/spectre_arcana_ambient.vpcf', config: 'b' },
+    { path: 'Particles\\Units\\Heroes\\Hero_Spectre\\spectre_ambient_v3.vpcf', config: '' },
+    { path: 'particles/x/blade_v2_v3_style2_glow.vpcf', config: 'c' },
+    { path: 'particles/x/blade_glow.vpcf', config: 'd' },
+    { path: 'particles/x/sword_v12x.vpcf', config: 'e' },
+  ];
+  const selected = [['particles/econ/items/spectre/spectre_arcana/spectre_arcana_ambient_style2.vpcf'], ['particles/units/heroes/hero_spectre/spectre_ambient.vpcf', 'particles/x/blade_glow.vpcf'], [], ['particles/x/BLADE_GLOW.vpcf']];
+  const def = { tree: { _class: 'C_X', m_hSnapshot: 'particles/stock.vsnap_c', other: 1 }, extra: true, children: [{ tree: { m_hSnapshot: 'PARTICLES/STOCK.VSNAP' }, children: [{ tree: { m_hSnapshot: 'particles/other.vsnap' }, children: [] }] }, { tree: {}, children: [] }] };
+  const blades = ['particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword.vpcf', 'PARTICLES/units/heroes/hero_terrorblade/terrorblade_ambient_sword_b.vpcf_c', 'particles/units/heroes/hero_terrorblade/terrorblade_ambient_sword.vpcfx', 'particles/error/null.vpcf', 'particles/econ/tb/new.vpcf'];
+  compare([
+    { name: 'model-style-meshes.selectStyleMeshes', ts: ((f: string, st: number) => sha(sm.selectStyleMeshes(fs.readFileSync(f), st))) as never, inputs: [...glbs, ...realGlbs].flatMap((f) => [[f, 0], [f, 1], [f, 2]]) },
+    { name: 'model-style-meshes.hidePreviewOnlyMeshes', ts: ((f: string) => sha(sm.hidePreviewOnlyMeshes(fs.readFileSync(f)))) as never, inputs: [...glbs, ...realGlbs].map((f) => [f]) },
+    { name: 'model-style-meshes.styleFamily', ts: sm.styleFamily as never, inputs: ['models/items/pudge/hook/hook.vmdl', 'Models\\Items\\Pudge\\Hook\\a\\b.vmdl', 'models/items/pudge/hook', 'models/items//x/y', 'models/heroes/pudge/pudge.vmdl', ''].map((m) => [m]) },
+    { name: 'model-style-meshes.syncArcanaStyles', ts: ((parts: { model: string; style?: number }[]) => { sm.syncArcanaStyles(parts); return parts; }) as never, inputs: [[[
+      { model: 'models/items/pa/arcana/blade.vmdl', style: 2 }, { model: 'models/items/pa/arcana/cape.vmdl' }, { model: 'models/items/pa/arcana/belt.vmdl', explicitBaseStyle: true },
+      { model: 'Models/items/pa/arcana/head.vmdl' }, { model: 'models/items/pa/other/x.vmdl', style: 0 }, { model: 'models/heroes/pa/pa.vmdl', style: 1 }, { model: 'models/items/pa/arcana/two.vmdl', style: 1 },
+    ]], [[]]] },
+    { name: 'hero-particle-styles.styleParticleRoots', ts: ((m: typeof roots, s: string[], st: number) => [...hp.styleParticleRoots(m, s, st)]) as never, inputs: selected.flatMap((s) => [[roots, s, 0], [roots, s, 2]]) },
+    { name: 'hero-particle-styles.isStockTerrorbladeBlade', ts: hp.isStockTerrorbladeBlade as never, inputs: blades.map((b) => [b]) },
+    { name: 'hero-particle-styles.replaceTerrorbladeBladeFx', ts: hp.replaceTerrorbladeBladeFx as never, inputs: [
+      ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'models/items/tb/x.vmdl', blades], ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'models/items/tb/x.vmdl', blades.slice(0, 4)],
+      ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'models/heroes/terrorblade/weapon.vmdl', blades], ['models/heroes/terrorblade/terrorblade.vmdl', 'x', blades], ['models/heroes/terrorblade/terrorblade_arcana.vmdl', 'x', []],
+    ] },
+    { name: 'hero-particle-styles.bladeSnapshots', ts: ((d: never, r: [string, string][]) => hp.bladeSnapshots(d, new Map(r))) as never, inputs: [
+      [def, [['particles/stock.vsnap', 'particles/new.vsnap']]], [def, [['particles/stock.vsnap', 'particles/new.vmdl']]], [def, []], [def, [['particles/other.vsnap', 'a.vsnap']]],
+      [{ tree: { m_hSnapshot: 1 }, children: [] }, [['1', 'x.vsnap']]], [{ tree: {} }, [['a', 'b']]],
+    ] },
+    { name: 'razor-crest-preview.goldenCrestModel', ts: rc.goldenCrestModel as never, inputs: [[{ $file: items }, 'models/x.vmdl', '6646'], [{ $file: items }, crestModel.toLowerCase(), '6646'], [{ $file: items }, 'models/x.vmdl', '6916'], ['"items" { }', 'm', '6646']] },
+    { name: 'razor-crest-preview.crestActivities', ts: rc.crestActivities as never, inputs: [[{ $file: items }, '6646', ''], [{ $file: items }, '1', '"asset_modifier0" { "type" "activity" "modifier" "a" } "asset_modifier1" { "type" "activity" "modifier" "b" "style" "1" }']] },
+    { name: 'razor-crest-preview.normalCrestOnGoldenRig', ts: ((n: string, g: string) => { const b = rc.normalCrestOnGoldenRig(fs.readFileSync(n), g); return b && sha(b); }) as never, inputs: [normal, noLook, badView, otherSlots, fewer, golden].map((n) => [n, golden]).concat([[normal, path.join(tmp, 'none.glb')]]) },
+    { name: 'razor-crest-preview.mergeCrestAttachments', ts: rc.mergeCrestAttachments as never, inputs: [[[{ name: 'A', x: 1 }, { name: 'b', x: 2 }, { name: 'c' }], [{ name: 'a', x: 9 }, { name: 'D' }, { name: 'B', y: 1 }]], [[], []]] },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('animations and sprite sheets in Rust answer as the TypeScript ones do, on the game files', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const ml = await import('../src/model-loadout.ts');
+  const { loadoutSheet } = await import('../src/loadout-sheet.ts');
+  const index = openVpkIndex(GAME_PAK01);
+  const all = [...index.paths()];
+  const spread = <T,>(a: T[], n: number) => a.filter((_, k) => k % Math.max(1, Math.floor(a.length / n)) === 0).slice(0, n);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-anim-'));
+  let n = 0;
+  const save = (p: string) => { const at = path.join(tmp, `${n++}${path.extname(p)}`); fs.writeFileSync(at, index.read(p) ?? Buffer.alloc(0)); return at; };
+  const bodies = all.filter((p) => /^models\/heroes\/([^/]+)\/\1\.vmdl_c$/.test(p)).slice(0, 40);
+  const models = [...bodies, ...spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 60)].map(save);
+  const textures = [...spread(all.filter((p) => p.startsWith('materials/particle/') && p.endsWith('.vtex_c')), 80), ...spread(all.filter((p) => p.endsWith('.vtex_c')), 20)].map(save);
+  const { file: items, blocks } = await realItems();
+  const text = fs.readFileSync(items).toString('latin1');
+  const ofItems = [...ml.itemModifiers(text)];
+  const seqs = models.map((f) => ml.modelSequences(fs.readFileSync(f)));
+  const worn = [[], ['whalehook'], ofItems.slice(0, 6), ['LOADOUT', 'arcana'], ofItems];
+  const read = (f: string | null) => (f ? fs.readFileSync(f) : null);
+  compare([
+    { name: 'model-loadout.modelSequences', ts: ((f: string | null) => ml.modelSequences(read(f))) as never, inputs: [...models.map((f) => [f]), [null], [textures[0]]] },
+    { name: 'model-loadout.itemModifiers', ts: ((s: string) => [...ml.itemModifiers(s)].sort()) as never, inputs: [[{ $file: items }], ['"activity" "modifier" "A" }'], ['{ "activity" no close'], ['x "activity" { "modifier"  "Zed" } { "activity" "modifier" "b" }']] },
+    { name: 'model-loadout.motionList', ts: ((s: never, m: string[], o: string[]) => ml.motionList(s, m, new Set(o))) as never, inputs: seqs.flatMap((s) => worn.slice(0, 3).map((w) => [s, w, ofItems])) },
+    { name: 'model-loadout.idleSequence', ts: ml.idleSequence as never, inputs: seqs.map((s) => [s]) },
+    { name: 'model-loadout.loadoutSequence', ts: ml.loadoutSequence as never, inputs: seqs.flatMap((s) => worn.map((w) => [s, w])) },
+    { name: 'model-loadout.wearableClip', ts: ml.wearableClip as never, inputs: seqs.map((s) => [s]) },
+    { name: 'model-loadout.itemActivities', ts: ml.itemActivities as never, inputs: blocks.map((b) => [b.block]) },
+    { name: 'loadout-sheet.loadoutSheet', ts: ((f: string | null) => loadoutSheet(read(f))) as never, inputs: [...textures.map((f) => [f]), [null], [models[0]]] },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
 });

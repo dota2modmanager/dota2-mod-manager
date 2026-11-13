@@ -184,6 +184,7 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | the mod doctor: models whose animations need an item's modifier, sequences out of the game's order or moved off what the server picks, particle children missing, unnamed or on the wrong point (`mod-doctor.ts`) | done | no | `mod_doctor.rs`; parity: the scenes of `test/mod-doctor.test.ts` and odder ones, the sandbox's mods against its game, and 80 of the real game's own models and particles where there is a game |
 | the support report: gathered from the services' answers, the problems it names, the summary and REPORT.md, the folder listings and the log tails (`diagnostics.ts`, `diagnostics-files.ts`, `diagnostics-render.ts`) | done | no | `diagnostics.rs`; the owner hands in what the services answer (`ReportInputs`); parity: a twin game with both language folders and the files the patch edits, no game, a game path that leads nowhere, over fakes for the services; the problems over odd reports; both layouts of each report |
 | Discord: the status's words and frames, its connection (`presence-status.ts`, `discord-presence.ts`), signing in (`discord-auth.ts`) | done | no | `presence_status.rs`, `discord_presence.rs` (one thread reads and writes the pipe, PeekNamedPipe on Windows), `discord_auth.rs` (the loopback on std's TcpListener); parity: both clients against a stand-in Discord on a pipe, every frame compared; sign-in against a stand-in browser and API, every way it ends. The one difference: a name cut in the middle of an emoji loses the emoji whole |
+| The 3D preview's file work: a GLB's chunks and its pictures put inside (`glb-embed.ts`), the snapshot sampled off a model (`model-snapshot-fallback.ts`), the style meshes (`model-style-meshes.ts`), the particle roots per style (`hero-particle-styles.ts`), the loadout animation (`model-loadout.ts`), sprite sheets (`loadout-sheet.ts`), the Crest on its golden rig (`razor-crest-preview.ts`) | done | no | `glb_embed.rs`, `model_snapshot_fallback.rs`, `model_style_meshes.rs`, `hero_particle_styles.rs`, `model_loadout.rs`, `loadout_sheet.rs`, `razor_crest_preview.rs`; parity: synthetic GLBs for every branch, the exported GLBs in userData when there, the game's models and textures. Found on the way: `js::number` broke a tie between two shortest strings the other way from V8 (`1.0396194458007812`); now nearest, then even, and checked on 3000 random numbers |
 | item builder, arcana, Workshop editors | - | - | |
 | 3D preview (`preview3d:*`) | - | - | binary answers already go back raw (`answer` in `src-tauri/src/main.rs`) |
 | tray, autostart, updater, deep links, uninstall | - | - | Tauri plugins: tray-icon, autostart, updater, deep-link |
@@ -245,9 +246,9 @@ pushed to it (a copy Rust sends whenever settings change: the host's reads are o
 How it is done, so it can be built in steps without a release in between that half-works:
 
 1. The pieces with no Rust twin yet that the channels over the two files call. On 2026-11-13
-   these are left: the 3D preview (`model-glb.ts`, `model-loadout.ts`, `hero-preview*.ts`,
-   `mod-preview*.ts`, `glb-embed.ts`, `loadout-*.ts`, `model-style-meshes.ts`,
-   `hero-particle-styles.ts`, `model-snapshot-fallback.ts`, `razor-crest-preview.ts`), the removal window (`uninstall-window.ts`), and
+   these are left: the rest of the 3D preview (`model-glb.ts`, `hero-preview*.ts`,
+   `mod-preview*.ts`, `loadout-resources.ts`, the loadout shader's descriptor in
+   `loadout-material.ts`), the removal window (`uninstall-window.ts`), and
    the updater (`updater.ts`, `portable-update.ts`), which becomes Tauri's own.
 2. The owner in the shell: one state holding settings, the library, the installer and the
    services, built at start in the order `src/services.ts` builds them, and the channels

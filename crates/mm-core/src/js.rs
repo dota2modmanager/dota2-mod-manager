@@ -2,6 +2,61 @@
 
 use serde_json::Value;
 
+/// Of the shortest digit strings that read back as `n`, the one nearest its exact value, and the
+/// even one on a tie: what ECMAScript's Number::toString asks for. Rust's `{:e}` gives a shortest
+/// one, not always that one (1.0396194458007812 is the float 1.03961944580078125, which Rust
+/// writes ...7813).
+fn closest_digits(n: f64, digits: String, exp: i32) -> String {
+    let k = digits.len();
+    // the exact decimal value: no f64 has more than 767 significant digits
+    let exact = format!("{:.800e}", n);
+    let (m, e) = exact.split_once('e').unwrap_or((&exact, "0"));
+    if e.parse::<i32>().ok() != Some(exp) {
+        return digits;
+    }
+    let all: Vec<u8> = m.bytes().filter(u8::is_ascii_digit).collect();
+    if all.len() <= k {
+        return digits;
+    }
+    let (head, rest) = all.split_at(k);
+    // the rest against one half of the last place
+    let half = match rest[0].cmp(&b'5') {
+        std::cmp::Ordering::Equal if rest[1..].iter().all(|&d| d == b'0') => std::cmp::Ordering::Equal,
+        std::cmp::Ordering::Equal => std::cmp::Ordering::Greater,
+        o => o,
+    };
+    let mut up = head.to_vec();
+    let mut i = k;
+    while i > 0 {
+        i -= 1;
+        if up[i] == b'9' {
+            up[i] = b'0';
+        } else {
+            up[i] += 1;
+            break;
+        }
+        if i == 0 {
+            // a carry out of the first digit changes the exponent: keep what Rust gave
+            return digits;
+        }
+    }
+    let floor = String::from_utf8_lossy(head).into_owned();
+    let ceil = String::from_utf8_lossy(&up).into_owned();
+    let reads = |d: &str| format!("{}.{}e{exp}", &d[..1], &d[1..]).parse::<f64>().ok() == Some(n);
+    let even = |d: &str| d.as_bytes()[k - 1].is_multiple_of(2);
+    let best = match half {
+        std::cmp::Ordering::Less => floor,
+        std::cmp::Ordering::Greater => ceil,
+        std::cmp::Ordering::Equal if even(&floor) => floor,
+        std::cmp::Ordering::Equal => ceil,
+    };
+    if reads(&best) {
+        best
+    } else {
+        digits
+    }
+}
+
 /// A number as JavaScript's String() writes it: no ".0" on whole numbers, an exponent from 1e21
 /// and below 1e-6, the shortest digits that read back as the same number.
 pub fn number(n: f64) -> String {
@@ -18,7 +73,7 @@ pub fn number(n: f64) -> String {
     let e = format!("{:e}", n.abs());
     let (mant, exp) = e.split_once('e').unwrap_or((&e, "0"));
     let exp: i32 = exp.parse().unwrap_or(0);
-    let digits: String = mant.chars().filter(char::is_ascii_digit).collect();
+    let digits = closest_digits(n.abs(), mant.chars().filter(char::is_ascii_digit).collect(), exp);
     let k = digits.len() as i32;
     // n = 0.digits * 10^point
     let point = exp + 1;
@@ -366,6 +421,13 @@ mod tests {
             (2e22, "2e+22"),
             (1e20, "100000000000000000000"),
             (0.30000000000000004, "0.30000000000000004"),
+            // a tie between two shortest strings goes to the even digit, as in V8
+            (f32::from_bits(0x3f85_1240) as f64, "1.0396194458007812"),
+            (0.3_f32 as f64, "0.30000001192092896"),
+            (-7.1_f32 as f64, "-7.099999904632568"),
+            (5e-324, "5e-324"),
+            (f64::MAX, "1.7976931348623157e+308"),
+            (2f64.powi(-20), "9.5367431640625e-7"),
         ] {
             assert_eq!(number(n), s, "{n}");
         }
