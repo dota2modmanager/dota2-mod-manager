@@ -9276,6 +9276,14 @@ toolchain: those hashes are pinned here and a mismatch there is the thing being 
 A request across the mirror chain (src/net.ts explains it): each mirror of a URL in turn, a
 failure noted against its host, and the first good answer returned.
 
+### `setNetTiming`
+
+```ts
+export function setNetTiming(next: { headMs: number; idleMs: number } | null): void
+```
+
+Shorter budgets for a test; null puts the real ones back.
+
 ### `FetchOptions`
 
 ```ts
@@ -9515,7 +9523,7 @@ Callers import from here.
 
 Hands on from [`src/net-mirrors.ts`](#srcnet-mirrorsts): `RAW_HOST`, `FAIL_THRESHOLD`, `COOLDOWN_MS`, `DEFAULT_MIRRORS`, `mirrorsFor`, `entriesFor`, `mirrorHealth`, `resetHealth`, `setMirrors`, `applyMirrors`, `wellFormedMirror`, `Mirror`, `Entry`.
 
-Hands on from [`src/net-fetch.ts`](#srcnet-fetchts): `fetchMirrored`, `fetchText`, `FetchOptions`.
+Hands on from [`src/net-fetch.ts`](#srcnet-fetchts): `fetchMirrored`, `fetchText`, `setNetTiming`, `FetchOptions`.
 
 Hands on from [`src/net-download.ts`](#srcnet-downloadts): `sha256`, `downloadFile`, `Download`.
 

@@ -6,8 +6,45 @@ import { downloadProxyFetchInit } from './download-proxy.ts';
 const ATTEMPTS_PER_MIRROR = 2;
 
 // A stalled connection has to give up eventually or the install sits there forever. The
-// body has its own, longer budget: a 300 MB mod on a slow line is not a stall.
-const HEAD_TIMEOUT_MS = 10000;
+// budget covers the wait for the answer's headers. The body has its own: it is cut only when
+// nothing arrives for a while, since a 300 MB mod on a slow line is not a stall. Until
+// 2026-11-13 one 10 second signal covered both, and any download that took longer than that
+// failed half way through.
+const timing = { headMs: 10000, idleMs: 30000 };
+
+/** Shorter budgets for a test; null puts the real ones back. */
+export function setNetTiming(next: { headMs: number; idleMs: number } | null): void {
+  Object.assign(timing, next ?? { headMs: 10000, idleMs: 30000 });
+}
+
+const timeoutError = (what: string): Error => Object.assign(new Error(`${what} timed out`), { name: 'TimeoutError' });
+
+/** A fetch whose wait for headers is bounded by `headMs` and whose body is cut after `idleMs` of silence. */
+async function fetchWatched(url: string, init: RequestInit): Promise<Response> {
+  const ctl = new AbortController();
+  let timer = setTimeout(() => ctl.abort(timeoutError('the answer')), timing.headMs);
+  timer.unref?.();
+  let res: Response;
+  try {
+    res = await fetch(url, { ...init, signal: ctl.signal });
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+  clearTimeout(timer);
+  if (!res.body) return res;
+  const arm = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => ctl.abort(timeoutError('the download')), timing.idleMs);
+    timer.unref?.();
+  };
+  arm();
+  const body = res.body.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, out) { arm(); out.enqueue(chunk); },
+    flush() { clearTimeout(timer); },
+  }));
+  return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+}
 
 /** How a fetch walks the mirrors (see fetchMirrored). */
 export interface FetchOptions {
@@ -44,9 +81,8 @@ export async function fetchMirrored(url: string, {
       const host = candidate.host;
       if (stoodDown(host) || lacking.has(host)) continue;
       try {
-        const res = await fetch(candidate.url, {
+        const res = await fetchWatched(candidate.url, {
           headers,
-          signal: AbortSignal.timeout(HEAD_TIMEOUT_MS),
           ...downloadProxyFetchInit(),
         } as RequestInit & { dispatcher?: unknown });
         if (!res.ok && res.status !== 206) {
