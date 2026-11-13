@@ -11,6 +11,7 @@ pub mod arcana_base_color;
 pub mod arcana_base_store;
 pub mod arcana_bases;
 pub mod arcana_notes;
+pub mod arcana_service;
 pub mod atomic_file;
 pub mod background_builds;
 pub mod build_undo;

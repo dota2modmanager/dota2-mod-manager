@@ -6057,3 +6057,123 @@ test('the rank medal and hero levels in Rust are clamped, written and put in My 
   assert.ok(log.some((m) => m.includes('rank look: on')), 'installed');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the arcana window in Rust builds, gives way and builds again as the TypeScript does', { skip }, async () => {
+  const svcTs = await import('../src/arcana-service.ts');
+  const { RECOLOR_SETS } = await import('../src/recolor.ts');
+  const { ARCANA_SETS } = await import('../src/arcana.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, sharedVpkIndex, listVpkPathsFile } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const colours: unknown[] = [[255, 40, 40], [0, 0, 0], [255, 255, 255], [1.5, 2, 3], [-1, 0, 0], [256, 0, 0], 'x', [1, 2], [1, '2', 3], [1, 2, 3, 4], null];
+  compare([{ name: 'arcana-service.hex', ts: ((c: unknown) => { const v = svcTs.validColor(c); return v ? svcTs.hex(v) : null; }) as never, inputs: colours.map((c) => [c]) }]);
+  if (!fs.existsSync(GAME_PAK01)) return;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-arcana-'));
+  // twin games of what the window's sets read out of the real pak01
+  const real = sharedVpkIndex(GAME_PAK01);
+  const pre: string[] = [];
+  const exact = new Set(['scripts/items/items_game.txt']);
+  for (const [set, w] of Object.entries(svcTs.WINDOWS)) {
+    exact.add(w.picture); exact.add(w.model);
+    const r = RECOLOR_SETS[set];
+    pre.push(...r.own, ...r.shared, ...r.materials);
+    const a = ARCANA_SETS[set];
+    if (!a) continue;
+    for (const m of Object.values(a.models)) exact.add(m.from);
+    exact.add(a.host.from); exact.add(a.host.at);
+    for (const f of Object.values(a.swaps || {})) exact.add(f);
+    for (const f of a.forms || []) { exact.add(f.at); exact.add(`${f.child}_c`); }
+  }
+  const images = Object.values(ARCANA_SETS).map((a) => a.images);
+  const want = [...real.paths()].filter((p) => exact.has(p) || p.startsWith('panorama/images/econ/sockets/') || pre.some((x) => p.startsWith(x))
+    || images.some((i) => p.includes(i.hero) && i.under.some((u) => p.startsWith(u))));
+  const pak = buildVpk(want.map((p) => entryAt(p, real.read(p)!)));
+  // Terrorblade's base, from the app's own store when it is on this machine (only read)
+  const store = path.join(process.env.APPDATA || '', 'Dota 2 Mod Manager', 'arcana-bases');
+  const baseId = svcTs.WINDOWS['terrorblade-arcana'].base!;
+  let base: [string, { $file: string }][] | null = null;
+  try {
+    const ready = JSON.parse(fs.readFileSync(path.join(store, 'ready.json'), 'utf8'))[baseId];
+    if (ready) base = Object.entries(ready as Record<string, string>).map(([rel, h]) => [rel, { $file: path.join(store, 'blobs', h) }]);
+  } catch { /* no store here */ }
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const form = ARCANA_SETS['terrorblade-arcana'].forms?.[0]?.item ?? '0';
+  const ops: unknown[][] = [
+    ['state'], ['install', 'no-such', [1, 2, 3], 'mod'], ['install', 'razor-crest', [1.5, 2, 3], 'mod'],
+    ['install', 'terrorblade-span', [255, 40, 40], 'mod'], ['install', 'terrorblade-arcana', [20, 200, 255], 'mod'],
+    ['install', 'razor-crest', [255, 255, 255], 'recolor'],
+    ['pick', form], ['giveWay', '$filled'], ['giveWay', '$filled'], ['rebuild', ['$set:terrorblade-span', 'nobody']],
+    ['install', 'terrorblade-span', [0, 120, 40], 'recolor'], ['state'],
+  ];
+  // what the item builder's table fills: a third of the paths the span's pak carries
+  let filled: string[] = [];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const ms = (m: string) => m.replace(/ in \d+ ms$/, ' in <n> ms');
+  const setOf = (r: object) => ((r as { generated?: unknown }).generated as { set?: string } | undefined)?.set;
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  const wanted: string[] = [];
+  const held: Record<string, unknown> = { [baseId]: base };
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    const svc = svcTs.createArcanaService({
+      gamePath: () => a.game, installer: inst as never, library, log: (m) => log.push(m), code: () => 'stamp-1',
+      bases: {
+        entries: (id: string) => {
+          const e = held[id] as [string, { $file: string }][] | null | undefined;
+          return e ? e.map(([p, f]) => entryAt(p, fs.readFileSync(f.$file))) : null;
+        },
+        want: async (id: string) => { wanted.push(id); return false; },
+      } as never,
+    });
+    for (const op of ops) {
+      try {
+        let v: unknown;
+        if (op[0] === 'state') v = svc.state();
+        else if (op[0] === 'install') v = svc.install(op[1], op[2], op[3]);
+        else if (op[0] === 'pick') v = library.update(library.add({ name: 'pick', categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] }).id, { itemId: op[1] } as never);
+        else if (op[0] === 'giveWay') {
+          if (!filled.length) {
+            const rec = library.list().find((r) => setOf(r) === 'terrorblade-span')!;
+            filled = listVpkPathsFile(inst.langFileOnDisk(rec.files[0].relPath)).map((p) => p.toLowerCase()).filter((_, k) => k % 3 === 0);
+          }
+          v = svc.giveWay(new Set(filled));
+        } else {
+          v = svc.rebuild((op[1] as string[]).map((i) => (i.startsWith('$set:') ? library.list().find((r) => setOf(r) === i.slice(5))?.id ?? '' : i)));
+        }
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'ops.json');
+  const rsOps = ops.map((o) => (o[1] === '$filled' ? ['giveWay', filled] : o));
+  fs.writeFileSync(list, JSON.stringify([['arcana-service.service', b.game, 'russian', b.journal, b.lib, b.ud, 'stamp-1', held, rsOps]]));
+  const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[]; wanted: string[] }; error?: string }[];
+  assert.ok(r.ok, r.error);
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(r.ok.answers[k]), norm(answers[k]), `${k} ${JSON.stringify(op).slice(0, 100)}`);
+  assert.deepEqual(r.ok.log.map(ms), log.map(ms), 'the log');
+  assert.deepEqual(r.ok.wanted, wanted, 'the bases asked for');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok(log.some((m) => m.includes('built again around')), 'it gave way');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

@@ -3453,6 +3453,77 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": log })
         }
+        "arcana-service.hex" => json!(crate::arcana_service::valid_color(args.first().unwrap_or(&Value::Null)).map(crate::arcana_service::hex)),
+        "arcana-service.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, code, bases {id: entries | null} or
+            // null, ops): each answer, the log, and the bases asked for. `$set:<set>` in a rebuild
+            // stands for the id of that set's record; a `pick` step adds an item builder's pick.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let code = args.get(5).and_then(Value::as_str).map(str::to_string);
+            let mut svc = crate::arcana_service::ArcanaService::new(inst.game.clone(), code);
+            let store = match args.get(6).and_then(Value::as_object) {
+                Some(m) => {
+                    let mut held = HashMap::new();
+                    for (id, e) in m {
+                        held.insert(id.clone(), if e.is_null() { None } else { Some(entries_arg(Some(e))?) });
+                    }
+                    Some(TestBases { held, wanted: Mutex::new(Vec::new()) })
+                }
+                None => None,
+            };
+            let bases = store.as_ref().map(|s| s as &dyn crate::arcana_bases::BaseSource);
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(7).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "state" => Ok(svc.state(&lib, &mut d)),
+                    "install" => svc.install(&inst, &mut lib, (&arg(1), &arg(2), &arg(3)), bases, &mut d),
+                    "giveWay" => {
+                        let filled = arg(1).as_array().into_iter().flatten().map(crate::js::string).collect();
+                        Ok(json!(svc.give_way(&inst, &mut lib, &filled, bases, &mut d)))
+                    }
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1)
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .map(|i| {
+                                let i = crate::js::string(i);
+                                match i.strip_prefix("$set:") {
+                                    Some(set) => lib
+                                        .list()
+                                        .iter()
+                                        .find(|r| r["generated"]["set"].as_str() == Some(set))
+                                        .map(|r| crate::js::string(&r["id"]))
+                                        .unwrap_or_default(),
+                                    None => i,
+                                }
+                            })
+                            .collect();
+                        Ok(json!(svc.rebuild(&inst, &mut lib, &ids, bases, &mut d)))
+                    }
+                    "pick" => (|| {
+                        let new = json!({ "name": "pick", "categoryId": "cosmetic", "styleLabel": null, "fileRef": null, "preview": null, "files": [] });
+                        let made = lib.add(&new, None)?;
+                        lib.update(&made["id"], &json!({ "itemId": arg(1) }), None)
+                    })()
+                    .map(|r| r.unwrap_or(Value::Null))
+                    .map_err(|e| e.to_string()),
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            let wanted = store.map(|s| s.wanted.into_inner().unwrap_or_default()).unwrap_or_default();
+            json!({ "answers": answers, "log": log, "wanted": wanted })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

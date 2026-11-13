@@ -171,6 +171,7 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | the arcana bases' store: the signed manifest, each file checked against git's hash, blobs on disk, ready.json, the list from last time when the network fails, retries (`arcana-base-store.ts`) | done | no | `arcana_base_store.rs`; `want` is synchronous and takes the network as `Fetch`, for the shell to run off the main thread over the mirror chain; parity: a good list, one signed by another key, the network gone and an empty list, through bases that come down, one with a wrong file, one with a file missing and pinned files from another commit: answers, log and the store on disk |
 | the rank medal and hero levels: the look kept to what the game has, the medal's pictures and CSS rules, the levels script, a layout with its include (`rank-look.ts`, `rank-look-script.ts`) | done | no | `rank_look.rs` with the script's body in `rank_look_script.js`; `SCRIPT_MARK` is the TypeScript's (a hash of its function's source), held to it by the parity test; parity: looks of every shape, every medal in four styles, and the real game's layouts |
 | the window's half of the rank look: its state, the medals' and badges' pictures, a look put in My mods, built again after an update or when the script changed (`rank-look-service.ts`) | done | no | `rank_look_service.rs`; ValveResourceFormat is run through `Run`; a rebuild is `due` and then `rebuild_now`; parity: twin games of the real styles and layouts with a mod carrying one style: answers, log, game folder and library |
+| the arcana window's half: what it shows (each arcana, its picture, the gems), the whole arcana or only its colour put in My mods, built from Terrorblade's base when it is here, giving way to the item builder's picks, built again after an update (`arcana-service.ts`) | done | no | `arcana_service.rs`; a build is seconds of work, so the shell calls it off the main thread; a base it lacks is asked of the `BaseSource`, which brings it down in the background; parity: twin games of what the sets read out of pak01 and the base from the app's own store: wrong sets and colours, every set built, a pick with a form, giving way twice, a rebuild and a second colour: answers, log, the bases asked for, game folder and library |
 | item builder, arcana, Workshop editors | - | - | |
 | 3D preview (`preview3d:*`) | - | - | binary answers already go back raw (`answer` in `src-tauri/src/main.rs`) |
 | tray, autostart, updater, deep links, uninstall | - | - | Tauri plugins: tray-icon, autostart, updater, deep-link |
@@ -226,7 +227,6 @@ process that writes either file has to be in Rust. On 2026-11-13 these are not y
 |---|---|---|---|
 | library | `ability-sounds-service.ts` | 129 | `resource-compiler.ts` (the WAVs and the events file are compiled by Valve's tool) |
 | library | `hero-paint-service.ts` | 279 | `toolchain.ts`, `resource-compiler.ts` |
-| library | `arcana-service.ts` | 300 | nothing left: the service itself |
 | settings | `tray.ts`, `main-window.ts` | 124, 195 | Tauri's tray and window |
 
 What stays in the host after the switch has to live without the two files, or get what it reads
