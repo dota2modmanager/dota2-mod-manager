@@ -3993,6 +3993,57 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             crate::i18n::set_lang(crate::i18n::Lang::parse("en"));
             json!(r)
         }
+        "hero-grid.gridName" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            json!(crate::hero_grid::grid_name(&s(args, 1)))
+        }
+        "hero-grid.buildGrid" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let stats = args.get(1).and_then(Value::as_array).cloned().ok_or("stats.filter is not a function")?;
+            crate::hero_grid::build_grid(&stats, &s(args, 2))
+        }
+        "hero-grid.mergeGrids" => {
+            let ours = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            json!(crate::hero_grid::merge_grids(args.first().and_then(Value::as_str), ours)?)
+        }
+        "hero-grid.gridsIn" => json!(crate::hero_grid::grids_in(args.first().and_then(Value::as_str))),
+        "hero-grid.keepNumbers" => json!(crate::hero_grid::keep_numbers(args.first().unwrap_or(&Value::Null))),
+        "hero-grid.gridFile" => json!(crate::hero_grid::grid_file(std::path::Path::new(&s(args, 0))).to_string_lossy()),
+        "hero-grid.script" => {
+            // (lang, api, dataDir, accountDir, ops): the grids on their own clock, each answer or error
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let clock = Arc::new(Mutex::new(0.0f64));
+            let c = clock.clone();
+            let account = opt_s(args, 3).map(std::path::PathBuf::from);
+            let grids = crate::hero_grid::HeroGrids {
+                data_dir: std::path::PathBuf::from(s(args, 2)),
+                account_dir: Box::new(move || account.clone()),
+                net: Arc::new(crate::net_fetch::Net::default()),
+                api: s(args, 1),
+                now: Box::new(move || *c.lock().unwrap()),
+            };
+            let mut out = Vec::new();
+            for op in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let r = match op[0].as_str().unwrap_or("") {
+                    "now" => {
+                        *clock.lock().unwrap() = op[1].as_f64().unwrap_or(0.0);
+                        Ok(Value::Null)
+                    }
+                    "state" => Ok(grids.state()),
+                    "apply" => {
+                        let kinds: Vec<String> = op[1].as_array().map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect()).unwrap_or_default();
+                        grids.apply(&kinds)
+                    }
+                    "remove" => grids.remove(),
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

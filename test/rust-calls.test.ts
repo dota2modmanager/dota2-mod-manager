@@ -6824,3 +6824,110 @@ test('the first start\'s language, a folder\'s size and a closed feature in Rust
   assert.ok(compare(cases) > 25);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('hero grids for the pick screen in Rust are built, merged and written as the TypeScript ones', { skip }, async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const grid = await import('../src/hero-grid.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-grid-'));
+  // heroStats as OpenDota sends it: old-style totals for some, per-bracket numbers for the rest
+  let seed = 7;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
+  const attrs = ['str', 'agi', 'int', 'all', 'universal', null, ['str']];
+  const raw: Record<string, unknown>[] = Array.from({ length: 130 }, (_, i) => {
+    const h: Record<string, unknown> = { id: i + 1, localized_name: `Hero ${i}`, primary_attr: attrs[i % attrs.length], img: '/x.png' };
+    if (i % 5 === 0) { const p = Math.floor(rnd() * 90000) + 10; h.pub_pick = p; h.pub_win = Math.floor(p * (0.42 + rnd() * 0.16)); }
+    for (let b = 1; b <= 8; b++) { const p = Math.floor(rnd() * 5000); h[`${b}_pick`] = i % 7 === 3 ? String(p) : p; h[`${b}_win`] = Math.floor(p * (0.4 + rnd() * 0.2)); }
+    return h;
+  });
+  raw.push({ id: 0, '1_pick': 9 }, { id: -3 }, { id: 'x' }, { id: 4.5, pub_pick: 3.7, pub_win: -1 }, null as never, 5 as never, { id: '200', '1_pick': '12', '1_win': 'ab' }, { id: 201 });
+  const kept = grid.keepNumbers(raw);
+  const odd = [...kept.slice(0, 20), { id: 300 }, { id: 2.5, pub_pick: 10, pub_win: 6 }, { id: '301', pub_pick: 10, pub_win: 6 }, { id: 302, pub_pick: 0, '1_pick': 4, '1_win': 4 }, { id: 303, pub_pick: 4, pub_win: 2, primary_attr: 'agi' }];
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  const files = [
+    null, '', '{"version":3,"configs":[]}', '{"version":3,"configs":[{"config_name":"Mine","categories":[]},{"config_name":"D2MM · Old","categories":[1]},{"config_name":5},{"x":1},"s",7]}',
+    '{"configs":{}}', '[1,2]', '{"z":1,"configs":[],"2":"two","1":"one","version":4}', 'nope', '"str"', 'null', '{"configs":"abc"}', '{"configs":[null]}', '{"configs":0}',
+  ];
+  const ours = [grid.buildGrid(kept, 'winrate'), { config_name: 'D2MM · x', categories: [] }];
+  const cases: Case[] = [
+    { name: 'hero-grid.keepNumbers', ts: grid.keepNumbers as never, inputs: [[raw], [null], [{}], [[]], ['abc']] },
+    { name: 'hero-grid.gridName', ts: ((l: string, k: string) => lang(l, () => grid.gridName(k as never))) as never, inputs: ['ru', 'en', 'zh-CN'].flatMap((l) => ['winrate', 'attribute', 'popular', 'other'].map((k) => [l, k])) },
+    { name: 'hero-grid.buildGrid', ts: ((l: string, s: never, k: string) => lang(l, () => grid.buildGrid(s, k as never))) as never, inputs: ['ru', 'en'].flatMap((l) => ['winrate', 'attribute', 'popular'].flatMap((k) => [[l, kept, k], [l, odd, k], [l, [], k], [l, kept.slice(0, 3), k]])) },
+    { name: 'hero-grid.mergeGrids', ts: grid.mergeGrids as never, inputs: files.flatMap((f) => [[f, ours], [f, []]]) },
+    { name: 'hero-grid.gridsIn', ts: grid.gridsIn as never, inputs: [...files.map((f) => [f]), [grid.mergeGrids(files[3], ours)]] },
+    { name: 'hero-grid.gridFile', ts: grid.gridFile as never, inputs: [[path.join(tmp, 'userdata', '123')]] },
+  ];
+  assert.ok(compare(cases) > 50);
+
+  // the service, against a server that answers each side's requests in the same order
+  const plan = [
+    { status: 200, body: JSON.stringify(raw) }, { status: 503, body: '' }, { status: 200, body: '[{"id":1}]' }, { status: 200, body: '{nope' },
+    { status: 200, body: JSON.stringify(raw.slice(10)) },
+  ];
+  const seen: Record<string, number> = { ts: 0, rs: 0 };
+  const server = http.createServer((req, res) => {
+    const side = (req.url || '').split('/')[1];
+    const a = plan[seen[side]++] ?? { status: 404, body: '' };
+    res.writeHead(a.status, { 'content-length': Buffer.byteLength(a.body) });
+    res.end(a.body);
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const ops: unknown[][] = [
+    ['state'], ['remove'], ['now', 1000], ['apply', ['popular', 'winrate', 'bogus']], ['state'], ['now', 2000], ['apply', ['attribute']], ['state'],
+    ['apply', []], ['apply', ['winrate']], ['now', 3000], ['apply', ['winrate', 'attribute', 'popular']], ['state'], ['remove'], ['state'], ['remove'],
+  ];
+  const sides = ['ts', 'rs'];
+  const dirs = Object.fromEntries(sides.map((side) => {
+    const d = { data: path.join(tmp, side, 'hero-grid'), account: path.join(tmp, side, 'userdata', '4242') };
+    const f = grid.gridFile(d.account);
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, '{"version":3,"configs":[{"config_name":"Mine","categories":[{"category_name":"a","x_position":1,"y_position":2,"width":3,"height":4,"hero_ids":[1]}]}]}');
+    return [side, d];
+  }));
+  const noAccount = path.join(tmp, 'none');
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([
+    ['hero-grid.script', 'en', `${base}/rs`, dirs.rs.data, dirs.rs.account, ops],
+    ['hero-grid.script', 'ru', `${base}/rs`, noAccount, null, [['state'], ['apply', ['winrate']], ['remove']]],
+  ]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async (l: string, api: string, dataDir: string, account: string | null, steps: unknown[][]) => {
+    setLang(l);
+    let clock = 0;
+    const g = grid.createHeroGrids({ dataDir, accountDir: () => account, now: () => clock, fetch: ((u: string, o: RequestInit) => fetch(api, o)) as never });
+    const out: unknown[] = [];
+    for (const op of steps) {
+      try {
+        let v: unknown = null;
+        if (op[0] === 'now') clock = op[1] as number;
+        else if (op[0] === 'state') v = g.state();
+        else if (op[0] === 'apply') v = await g.apply(op[1] as never);
+        else if (op[0] === 'remove') v = g.remove();
+        out.push({ ok: JSON.parse(JSON.stringify(v)) });
+      } catch (e) { out.push({ error: (e as Error).message }); }
+    }
+    setLang('en');
+    return out;
+  };
+  const want = [await run('en', `${base}/ts`, dirs.ts.data, dirs.ts.account, ops), await run('ru', `${base}/ts`, noAccount, null, [['state'], ['apply', ['winrate']], ['remove']])];
+  const got = (JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok!; });
+  server.closeAllConnections(); server.close();
+  // how a body that is not JSON is worded is each side's own
+  const norm = (v: unknown) => JSON.parse(JSON.stringify(v), (k, x) => (typeof x === 'string' && /OpenDota: /.test(x) && !/HTTP \d|OpenDota (sent|прислал)/.test(x) ? x.replace(/: .*/s, ': <why>') : x));
+  assert.deepEqual(norm(got), norm(want));
+  // the same files on disk: the cache, the backup and the grid file
+  const tree = (d: string) => fs.readdirSync(d, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).map((e) => {
+    const f = path.join(e.parentPath, e.name);
+    return [path.relative(d, f), fs.readFileSync(f, 'utf8')];
+  }).sort();
+  assert.deepEqual(tree(path.join(tmp, 'rs')), tree(path.join(tmp, 'ts')));
+  assert.ok(tree(path.join(tmp, 'ts')).some(([f]) => f.endsWith('backup.json')));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
