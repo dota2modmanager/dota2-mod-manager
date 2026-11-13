@@ -2250,6 +2250,88 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 None => Value::Null,
             }
         }
+        "net.script" => {
+            // (ops): one network, each answer in turn; a request's failure is an answer too
+            use crate::net_fetch::{DownloadOptions, FetchOptions, Net, NetError, Timing};
+            use crate::net_mirrors::{Map, Mirror};
+            let net = Net::default();
+            let fail = |e: NetError| json!({ "error": e.message, "offline": e.offline, "timeout": e.timeout, "checksum": e.checksum });
+            let mirror = |m: &Value| Mirror {
+                host: crate::js::string(&m["host"]),
+                map: Map::Prefix(crate::js::string(&m["prefix"])),
+                origin: m.get("origin").is_some_and(crate::js::truthy),
+                small_only: m.get("smallOnly").is_some_and(crate::js::truthy),
+                pictures: None,
+            };
+            let mut out = Vec::new();
+            for op in args.first().and_then(Value::as_array).cloned().unwrap_or_default() {
+                let st = |i: usize| crate::js::string(&op[i]);
+                let flag = |i: usize| op.get(i).is_some_and(crate::js::truthy);
+                let now = crate::net_fetch::now_ms();
+                out.push(match op[0].as_str().unwrap_or("") {
+                    "setMirrors" => {
+                        net.chain().set_mirrors(op[1].as_array().map(|l| l.iter().map(mirror).collect()));
+                        Value::Null
+                    }
+                    "apply" => json!(net.chain().apply_mirrors(&op[1])),
+                    "mirrorsFor" => json!(net.chain().mirrors_for(&st(1), flag(2), flag(3))),
+                    "entriesFor" => json!(net.chain().entries_for(&st(1), flag(2), flag(3))),
+                    "live" => {
+                        let c = net.chain();
+                        json!(c.live_order(c.entries_for(&st(1), flag(2), false), now))
+                    }
+                    "wellFormed" => json!(crate::net_mirrors::well_formed_mirror(&op[1])),
+                    "pictures" => json!(net.chain().picture_bases()),
+                    "fail" => {
+                        net.chain().note_failure(&st(1), &st(2), now);
+                        Value::Null
+                    }
+                    "stall" => {
+                        net.chain().note_stall(&st(1), &st(2), now);
+                        Value::Null
+                    }
+                    "success" => {
+                        net.chain().note_success(&st(1));
+                        Value::Null
+                    }
+                    "stoodDown" => json!(net.chain().stood_down(&st(1), now)),
+                    "health" => json!(net.chain().mirror_health(now)),
+                    "reset" => {
+                        net.chain().reset_health();
+                        Value::Null
+                    }
+                    "timing" => {
+                        net.set_timing(Some(Timing { head_ms: op[1].as_u64().unwrap_or(10000), idle_ms: op[2].as_u64().unwrap_or(30000) }));
+                        Value::Null
+                    }
+                    "text" => {
+                        let o = &op[2];
+                        let exclude = o.get("exclude").and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        let opts = FetchOptions { trusted_only: o.get("trustedOnly").is_some_and(crate::js::truthy), exclude, ..Default::default() };
+                        net.fetch_text(&st(1), opts).map_or_else(fail, |t| json!({ "text": t }))
+                    }
+                    "download" => {
+                        let o = &op[3];
+                        let mut steps = 0u64;
+                        let mut progress = |_: u64, _: u64| steps += 1;
+                        let opts = DownloadOptions {
+                            on_progress: Some(&mut progress),
+                            expect_sha256: o.get("expect").and_then(Value::as_str).map(String::from),
+                            from_published_list: o.get("published").is_some_and(crate::js::truthy),
+                            log: None,
+                        };
+                        net.download_file(&st(1), std::path::Path::new(&st(2)), opts)
+                            .map_or_else(fail, |d| json!({ "bytes": d.bytes, "sha256": d.sha256, "resumedFrom": d.resumed_from, "unverified": d.unverified }))
+                    }
+                    "sig" => {
+                        let payload = b(op.as_array().map_or(&[][..], Vec::as_slice), 1)?;
+                        json!(crate::catalog_signature::verify(&payload, &st(2), &op.get(3).map_or_else(|| crate::catalog_signature::CATALOG_PUBLIC_KEY.to_string(), crate::js::string)))
+                    }
+                    other => return Err(format!("no step {other}")),
+                });
+            }
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

@@ -31,4 +31,11 @@ fs4 = "0.13"
 # preset links: raw deflate and base64url, as node:zlib and Buffer make them
 flate2 = "1"
 base64 = "0.22"
+# the network: the catalog, mod archives and the signed config, through the mirror chain and the
+# user's proxy. native-tls is SChannel on Windows, so nothing is compiled from C there
+ureq = { version = "3", default-features = false, features = ["native-tls", "gzip"] }
+url = "2"
+sha2 = "0.10"
+# the catalog's signatures
+ed25519-dalek = "2"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
