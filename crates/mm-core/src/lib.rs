@@ -105,6 +105,7 @@ pub mod preset_plan;
 pub mod preset_share;
 pub mod presets_service;
 pub mod preview_cache;
+pub mod pumpkin;
 pub mod ready_presets;
 pub mod ready_presets_format;
 pub mod recolor;

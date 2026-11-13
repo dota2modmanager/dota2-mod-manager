@@ -2880,6 +2880,49 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": out, "log": logged })
         }
+        "pumpkin.readings" => json!(crate::pumpkin::readings(&s(args, 0))),
+        "pumpkin.beginNightAgain" => {
+            let mut st = crate::settings::Settings::new(std::path::Path::new(&s(args, 0)));
+            json!(crate::pumpkin::begin_night_again(&mut st).map_err(|e| e.to_string())?)
+        }
+        "pumpkin.script" => {
+            // (host, userData, libraryDir, voice, ops): each answer and the log; the import is a stand-in
+            // that takes a file starting "VPK" in as the prize, refuses "boom" outright and anything else
+            // as one error
+            let ud = std::path::PathBuf::from(s(args, 1));
+            let mut st = crate::settings::Settings::new(&ud);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 2)));
+            let net = crate::net_fetch::Net::default();
+            let p = crate::pumpkin::Pumpkin { net: &net, host: s(args, 0), voice: opt_s(args, 3) };
+            let mut n = 90;
+            let mut import = |paths: &[std::path::PathBuf], lib: &mut crate::library::Library| -> Value {
+                let data = std::fs::read(&paths[0]).unwrap_or_default();
+                if data.starts_with(b"boom") {
+                    return json!({ "error": "boom" });
+                }
+                if !data.starts_with(b"VPK") {
+                    return json!({ "imported": [], "errors": [{ "error": "not a vpk" }] });
+                }
+                n += 1;
+                let rel = format!("pak{n}_dir.vpk");
+                let name = paths[0].file_stem().map(|x| x.to_string_lossy().into_owned()).unwrap_or_default();
+                let _ = lib.add(&json!({ "name": name, "categoryId": "imported", "styleLabel": null, "fileRef": null, "files": [{ "root": "lang", "relPath": rel }] }), None);
+                json!({ "imported": [{ "name": name, "relPath": rel }], "errors": [] })
+            };
+            let mut logged = Vec::new();
+            let mut out = Vec::new();
+            for op in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let mut log = |m: String| logged.push(m);
+                out.push(match op[0].as_str().unwrap_or("") {
+                    "redeem" => p.redeem(op.get(1).unwrap_or(&Value::Null), &mut st, &mut lib, &mut import, &mut log),
+                    "again" => p.prize_again(&mut st, &mut lib, &mut import),
+                    "has" => json!(crate::pumpkin::Pumpkin::has_prize(&lib)),
+                    "install" => json!(crate::pumpkin::Pumpkin::install(&mut st).map_err(|e| e.to_string())?),
+                    other => json!({ "error": format!("no op {other}") }),
+                });
+            }
+            json!({ "answers": out, "log": logged })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

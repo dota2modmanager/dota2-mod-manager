@@ -4957,3 +4957,134 @@ test('the map without its decor in Rust finds and blanks the materials the TypeS
   assert.equal(mineOf(a).enabled, false, 'a rebuilt record stays off');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the pumpkin in Rust reads keys, spends them and fetches the prize as the TypeScript does', { skip }, async () => {
+  const pk = await import('../src/pumpkin.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { Library } = await import('../src/library.ts');
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pumpkin-'));
+  const typed = ['', '   ', 'short', 'aaaa-aaaa-aaaa-aaaa', 'AAAA AAAA AAAA AAAA', 'фффффффффффффффф', 'АААА ВВВВ СССС ЕЕЕЕ', 'ФЫВА-ФЫВА-ФЫВА-ФЫВА',
+    'used-used-used-used', 'a1b2c3d4e5f6g7h8i9', 'straße-straße-1234', 'ńñ00000000000000', '0123456789abcdef', 'ЙЦУКЕНГШЩЗХЪ1234'];
+  const nights = [{}, { nightRound: 1, blood: true }, { nightRound: 0, blood: true, theme: 'blood', secret: true }, { theme: 'secret' }, { nightRound: '1', theme: 'dark' }];
+  const nightDirs = nights.flatMap((n, i) => ['ts', 'rs'].map((side) => {
+    const d = path.join(tmp, `night-${i}-${side}`);
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'settings.json'), JSON.stringify(n));
+    return d;
+  }));
+  compare([{ name: 'pumpkin.readings', ts: pk.readings, inputs: typed.map((x) => [x]) }]);
+  const listNight = path.join(tmp, 'night.json');
+  fs.writeFileSync(listNight, JSON.stringify(nights.map((_, i) => ['pumpkin.beginNightAgain', nightDirs[2 * i + 1]])));
+  const rsNight = JSON.parse(execFileSync(cli, ['call', listNight], { encoding: 'utf8' })) as { ok: unknown }[];
+  for (const [i] of nights.entries()) {
+    const st = new Settings(nightDirs[2 * i]);
+    assert.deepEqual(rsNight[i].ok, pk.beginNightAgain(st as never), `night ${i}`);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(nightDirs[2 * i + 1], 'settings.json'), 'utf8')),
+      JSON.parse(fs.readFileSync(path.join(nightDirs[2 * i], 'settings.json'), 'utf8')), `night ${i}: the settings`);
+  }
+
+  // the worker: one key that opens, one spent, one the server chokes on, prizes that do not land
+  const seen: Record<string, string[]> = { ts: [], rs: [] };
+  const server = http.createServer((req, res) => {
+    const [, side, ...rest] = (req.url ?? '').split('/');
+    const at = `/${rest.join('/')}`;
+    let body = '';
+    req.on('data', (d) => { body += d; });
+    req.on('end', () => {
+      seen[side]?.push(`${req.method} ${at} ${body}`);
+      const u = new URL(at, 'http://x');
+      const key = u.searchParams.get('key') ?? (body ? JSON.parse(body).key : '');
+      if (u.pathname === '/redeem') {
+        const code = key === 'USEDUSEDUSEDUSED' ? 409 : key.startsWith('BROKEN') ? 500 : ['AAAAAAAAAAAAAAAA', 'BADPRIZE00000000', 'BOOM000000000000', 'NOPRIZE000000000'].includes(key) ? 200 : 404;
+        res.writeHead(code).end();
+      } else if (u.pathname === '/mod') {
+        if (key === 'NOPRIZE000000000') res.writeHead(503).end();
+        else res.writeHead(200).end(key === 'AAAAAAAAAAAAAAAA' ? `VPK prize ${u.searchParams.get('voice')}` : key === 'BOOM000000000000' ? 'boom' : 'junk');
+      } else if (u.pathname === '/mod/preview') {
+        if (key === 'AAAAAAAAAAAAAAAA') res.writeHead(200, { 'Content-Type': 'image/webp' }).end(Buffer.from([1, 2, 3, 250]));
+        else res.writeHead(404).end();
+      } else res.writeHead(404).end();
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const dead = await new Promise<string>((r) => { const s = http.createServer(); s.listen(0, '127.0.0.1', () => { const p = (s.address() as import('node:net').AddressInfo).port; s.close(() => r(`http://127.0.0.1:${p}`)); }); });
+  const INSTALL = '0123456789abcdef0123456789abcdef';
+  type Run = { name: string; host: (side: string) => string; voice: string | null; seed: Record<string, unknown>; ops: unknown[][] };
+  const runs: Run[] = [
+    { name: 'night', host: (s) => `${base}/${s}`, voice: 'russian', seed: { pumpkinInstall: INSTALL },
+      ops: [['has'], ['again'], ['redeem', null], ['redeem', '  '], ['redeem', 'nope'], ['redeem', 'used-used-used-used'], ['redeem', 'broken-key-12345'],
+        ['redeem', '0000-0000-0000-0001'], ['redeem', 'nopr-ize0-0000-0000'], ['redeem', 'BADPRIZE00000000'], ['redeem', 'boom000000000000'],
+        ['redeem', 'фффф-фффф-фффф-фффф'], ['has'], ['again'], ['has'], ['install']] },
+    { name: 'no voice', host: (s) => `${base}/${s}`, voice: null, seed: { pumpkinInstall: INSTALL, bloodKey: 'AAAAAAAAAAAAAAAA' }, ops: [['again'], ['has']] },
+    { name: 'offline', host: () => dead, voice: null, seed: { pumpkinInstall: INSTALL, bloodKey: 'NOPRIZE000000000' }, ops: [['redeem', 'aaaaaaaaaaaaaaaa'], ['again']] },
+  ];
+  const dirs = (side: string, r: Run) => {
+    const d = path.join(tmp, `${r.name}-${side}`);
+    fs.mkdirSync(path.join(d, 'ud'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'ud', 'settings.json'), JSON.stringify(r.seed));
+    return { ud: path.join(d, 'ud'), lib: path.join(d, 'lib') };
+  };
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify(runs.map((r) => { const d = dirs('rs', r); return ['pumpkin.script', r.host('rs'), d.ud, d.lib, r.voice, r.ops]; })));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const want: unknown[] = [];
+  for (const r of runs) {
+    const d = dirs('ts', r);
+    const settings = new Settings(d.ud);
+    const library = new Library(d.lib);
+    let n = 90;
+    const log: string[] = [];
+    const p = pk.createPumpkin({
+      settings: settings as never, library: library as never, voice: () => r.voice, host: r.host('ts'), log: (m) => log.push(m),
+      importVpkPaths: async (paths: string[]) => {
+        const data = fs.readFileSync(paths[0]);
+        if (data.subarray(0, 4).toString() === 'boom') return { error: 'boom' };
+        if (data.subarray(0, 3).toString() !== 'VPK') return { imported: [], errors: [{ error: 'not a vpk' }] };
+        const relPath = `pak${++n}_dir.vpk`;
+        const name = path.basename(paths[0], '.vpk');
+        library.add({ name, categoryId: 'imported', styleLabel: null, fileRef: null, files: [{ root: 'lang', relPath }] } as never);
+        return { imported: [{ name, relPath }], errors: [] };
+      },
+    });
+    const answers: unknown[] = [];
+    for (const op of r.ops) {
+      if (op[0] === 'redeem') answers.push(snap(await p.redeem(op[1])));
+      else if (op[0] === 'again') answers.push(snap(await p.prizeAgain()));
+      else if (op[0] === 'has') answers.push(p.hasPrize());
+      else answers.push(p.install());
+    }
+    want.push({ answers, log });
+  }
+  const got = (JSON.parse(await rsRun) as { ok?: unknown; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok; });
+  server.closeAllConnections(); server.close();
+  // how a refused connection is worded is the platform's
+  const calm = (v: unknown): unknown => JSON.parse(JSON.stringify(v, (k, x) => ((k === 'detail' || k === 'error') && typeof x === 'string' && /fetch failed|os error|refused|connect/i.test(x) ? '<why>' : typeof x === 'string' && x.startsWith('pumpkin: ') && !x.includes('prize') ? 'pumpkin: <why>' : x)));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : x)));
+  for (const [i, r] of runs.entries()) {
+    assert.deepEqual(calm(got[i]), calm(want[i]), r.name);
+    const [a, b] = ['ts', 'rs'].map((side) => path.join(tmp, `${r.name}-${side}`));
+    const file = (d: string, f: string) => (fs.existsSync(path.join(d, f)) ? JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')) : null);
+    assert.deepEqual(file(b, 'ud/settings.json'), file(a, 'ud/settings.json'), `${r.name}: the settings`);
+    assert.deepEqual(norm(file(b, 'lib/manifest.json')), norm(file(a, 'lib/manifest.json')), `${r.name}: the library`);
+  }
+  assert.deepEqual(seen.rs, seen.ts, 'the requests');
+  const night = (want[0] as { answers: { ok?: boolean; installed?: string }[] }).answers;
+  assert.ok(night.some((x) => x.ok && x.installed === pk.PRIZE_NAME), 'a key did open the night');
+  // a missing install name is made, 32 hex digits, and kept
+  const fresh = path.join(tmp, 'fresh');
+  fs.mkdirSync(fresh);
+  fs.writeFileSync(list, JSON.stringify([['pumpkin.script', base, fresh, path.join(tmp, 'fresh-lib'), null, [['install'], ['install']]]]));
+  const [made] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok: { answers: string[] } }[];
+  assert.match(made.ok.answers[0], /^[0-9a-f]{32}$/);
+  assert.equal(made.ok.answers[1], made.ok.answers[0]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
