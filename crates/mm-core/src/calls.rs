@@ -2923,6 +2923,87 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": out, "log": logged })
         }
+        "steam-appstate.parse" => json!(crate::steam_appstate::parse_app_manifest(&s(args, 0))),
+        "steam-appstate.pending" | "steam-appstate.work" => {
+            let st = args.first().filter(|v| !v.is_null()).map(|v| crate::steam_appstate::AppState {
+                flags: crate::js::to_number(&v["flags"]),
+                to_download: crate::js::to_number(&v["toDownload"]),
+                downloaded: crate::js::to_number(&v["downloaded"]),
+            });
+            if name == "steam-appstate.work" {
+                json!(crate::steam_appstate::steam_work(st.as_ref()))
+            } else {
+                json!(st.is_some_and(|st| crate::steam_appstate::update_pending(&st)))
+            }
+        }
+        "steam-appstate.read" => json!(crate::steam_appstate::read_app_state(opt_path(args, 0).as_deref())),
+        "steam-appstate.warning" => json!(crate::steam_appstate::launch_warning(opt_path(args, 0).as_deref())),
+        "game-repair.script" => {
+            // (game, suffix, journalDir, libraryDir, userData, build, ops): each answer, and the log.
+            // A mod whose name starts with "Generated" counts as built again by the app.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let mut svc = crate::schema_service::SchemaService::new(&ud, true);
+            let note = crate::update_impact::UpdateImpact { file: ud.join("update-impact.json"), game: inst.game.clone() };
+            let impact = crate::game_repair::Impact { note: &note, build: args.get(5).and_then(Value::as_str).map(String::from) };
+            let mut repair = crate::game_repair::GameRepair::default();
+            let ops = args.get(6).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut answers = Vec::new();
+            let mut diag: Vec<String> = Vec::new();
+            for op in &ops {
+                let mut log = |_: String| {};
+                let mut deployed = |_: std::collections::HashSet<String>| {};
+                let mut ctx = crate::schema_service::Ctx {
+                    inst: &inst,
+                    lib: &mut lib,
+                    settings: &mut st,
+                    bases: None,
+                    log: &mut log,
+                    on_deployed: &mut deployed,
+                };
+                let mut gen = |_: &crate::installer::Installer, lib: &mut crate::library::Library, ids: &[String]| -> Vec<String> {
+                    ids.iter()
+                        .filter(|id| {
+                            lib.list().iter().any(|r| {
+                                r.get("id").map(crate::js::string).as_deref() == Some(id.as_str())
+                                    && r.get("name").and_then(Value::as_str).is_some_and(|n| n.starts_with("Generated"))
+                            })
+                        })
+                        .cloned()
+                        .collect()
+                };
+                let mut d = |m: String| diag.push(m);
+                answers.push(match op[0].as_str().unwrap_or("") {
+                    "start" => {
+                        let wants = repair.repair_at_start(&mut svc, &mut ctx, Some(&impact), Some(&mut gen), 0.0, &mut d);
+                        json!({ "rebuild": wants, "patch": repair.patch_repair() })
+                    }
+                    "after" => {
+                        let steam = op.get(3).and_then(Value::as_str);
+                        let a = repair.repair_after_patch(
+                            &mut svc,
+                            &mut ctx,
+                            Some(&impact),
+                            Some(&mut gen),
+                            op.get(1).cloned().filter(|v| !v.is_null()),
+                            (crate::js::truthy(&op[2]), steam),
+                            0.0,
+                            &mut d,
+                        );
+                        json!({ "sent": a.sent, "retry": a.retry, "rebuild": a.rebuild })
+                    }
+                    "restore" => json!(repair.restore_after_verify(&inst, ctx.lib, &mut d)),
+                    "stuck" => json!(repair.verify_stuck()),
+                    "patch" => repair.patch_repair().clone(),
+                    "settings" => json!({ "gameStamp": ctx.settings.get("gameStamp") }),
+                    other => json!({ "error": format!("no step {other}") }),
+                });
+            }
+            json!({ "answers": answers, "log": diag })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

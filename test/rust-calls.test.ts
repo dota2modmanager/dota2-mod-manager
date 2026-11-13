@@ -5088,3 +5088,146 @@ test('the pumpkin in Rust reads keys, spends them and fetches the prize as the T
   assert.equal(made.ok.answers[1], made.ok.answers[0]);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('Steam\'s manifest and the repair after a patch in Rust read and put back the game as the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'gameinfo.gi'))) { t.skip('no sandbox'); return; }
+  const sa = await import('../src/steam-appstate.ts');
+  const { createGameRepair } = await import('../src/game-repair.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { createUpdateImpact, impactMods } = await import('../src/update-impact.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-repair-'));
+
+  // the manifest: texts, flags, and where it sits next to a game
+  const acf = (flags: unknown, extra = '') => `"AppState"\n{\n\t"appid"\t\t"570"\n\t"StateFlags"\t\t"${flags}"\n${extra}}\n`;
+  const texts = [acf(4), acf(6), acf(1026, '\t"BytesToDownload"\t\t"900"\n\t"BytesDownloaded"\t\t"30"\n'), acf(0), acf(131076), acf('x'), '', 'no flags',
+    '"stateflags"   "4"', '"StateFlags" "1048580"', acf(4294967300), acf(2147483652)];
+  const flags = [0, 2, 4, 6, 260, 516, 1028, 131076, 1048580, 2097156, 4194308, 4194304, 4294967300, -4, 2.5];
+  const states = flags.map((f) => [{ flags: f, toDownload: 0, downloaded: 0 }]);
+  const lib = (name: string, text: string | null) => {
+    const game = path.join(tmp, name, 'steamapps', 'common', 'dota 2 beta', 'game');
+    fs.mkdirSync(game, { recursive: true });
+    if (text !== null) fs.writeFileSync(path.join(tmp, name, 'steamapps', 'appmanifest_570.acf'), text);
+    return game;
+  };
+  const games = [[lib('done', acf(4))], [lib('pending', acf(6))], [lib('none', null)], [lib('broken', 'junk')], [lib('trail', acf(1028)) + path.sep], [null], ['']];
+  compare([
+    { name: 'steam-appstate.parse', ts: sa.parseAppManifest, inputs: texts.map((x) => [x]) },
+    { name: 'steam-appstate.pending', ts: sa.updatePending, inputs: states },
+    { name: 'steam-appstate.work', ts: sa.steamWork as never, inputs: [...states, [null]] },
+    { name: 'steam-appstate.read', ts: sa.readAppState as never, inputs: games },
+    { name: 'steam-appstate.warning', ts: sa.launchWarning as never, inputs: games },
+  ]);
+
+  // the repair: twin games with three mods, two phases of a patch landing, and no game at all
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const pak = (file: string, files: Record<string, string>) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buildVpk(Object.entries(files).map(([p, b]) => entryAt(p, Buffer.from(b)))));
+  };
+  const inf = (game: string, v: string) => fs.writeFileSync(path.join(game, 'dota', 'steam.inf'),
+    fs.readFileSync(path.join(sandboxGame, 'dota', 'steam.inf'), 'latin1').replace(/^ClientVersion=\d+/m, `ClientVersion=${v}`), 'latin1');
+  const mods = [
+    { id: 'm1', name: 'Mod one', at: 'pak90_dir.vpk', file: 'a/one.txt' },
+    { id: 'g1', name: 'Generated trees', at: 'pak91_dir.vpk', file: 'a/two.txt' },
+    { id: 'm3', name: 'Mod three', at: 'pak92_dir.vpk', file: 'a/three.txt' },
+  ];
+  type Twin = { root: string; game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    for (const f of ['bin/win64/dota.signatures', 'dota/gameinfo.gi', 'dota/gameinfo_branchspecific.gi', 'dota/cfg/boot.vcfg']) {
+      fs.mkdirSync(path.dirname(path.join(game, f)), { recursive: true });
+      fs.copyFileSync(path.join(sandboxGame, f), path.join(game, f));
+    }
+    inf(game, '100');
+    pak(path.join(game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one', 'a/two.txt': 'two', 'a/three.txt': 'three' });
+    for (const m of mods) pak(path.join(game, 'dota_russian', m.at), { [m.file]: `mine ${m.id}` });
+    for (const d of ['lib', 'ud']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: mods.map((m) => ({
+      id: m.id, name: m.name, categoryId: 'heroes', styleLabel: null, enabled: true, files: [{ root: 'lang', relPath: m.at }],
+    })), presets: [] }, null, 2));
+    fs.writeFileSync(path.join(root, 'ud', 'settings.json'), JSON.stringify({ dotaGamePath: game, schemaPatch: false }));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const phases: { build: string; ops: unknown[][]; before?: (x: Twin) => void }[] = [
+    { build: '100', ops: [['restore'], ['stuck'], ['patch'], ['start'], ['patch'], ['settings'], ['after', 'watch', true],
+      ['after', undefined, false, 'validating'], ['after', 'w', false, 'updating'], ['after', 'x', false, null], ['patch'], ['settings']] },
+    { build: '101', before: (x) => { inf(x.game, '101'); pak(path.join(x.game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one!', 'a/two.txt': 'two!', 'a/three.txt': 'three' }); },
+      ops: [['after', 'patch', false, null], ['patch'], ['settings'], ['after', 'again', false, null]] },
+    { build: '102', before: (x) => { inf(x.game, '102'); pak(path.join(x.game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one!!', 'a/two.txt': 'two!' }); },
+      ops: [['start'], ['patch'], ['settings'], ['start'], ['patch']] },
+    { build: '103', before: (x) => { inf(x.game, '103'); }, ops: [['start'], ['patch'], ['settings']] },
+    { build: '104', before: (x) => {
+      const f = path.join(x.ud, 'settings.json');
+      fs.writeFileSync(f, JSON.stringify({ ...JSON.parse(fs.readFileSync(f, 'utf8')), dotaGamePath: null }));
+    }, ops: [['after', 'r', false, null], ['start'], ['patch'], ['settings']] },
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const file = (x: Twin, f: string) => (fs.existsSync(path.join(x.root, f)) ? JSON.parse(fs.readFileSync(path.join(x.root, f), 'utf8')) : null);
+  // the update note keys files by size:mtime, each side its own
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (k === 'key' || k === 'sig' ? '<sig>'
+    : typeof x === 'string' ? x.split(a.root).join('<root>').split(b.root).join('<root>') : x)));
+  for (const [k, ph] of phases.entries()) {
+    for (const x of [a, b]) ph.before?.(x);
+    const gameOf = (x: Twin) => (k === 4 ? '' : x.game);
+    const answers: unknown[] = [];
+    const log: string[] = [];
+    FileTx.journalDir = a.journal;
+    let repair: ReturnType<typeof createGameRepair> | null = null;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => gameOf(a) || null, getLangSuffix: () => 'russian' });
+      const library = new Library(a.lib);
+      const settings = new Settings(a.ud);
+      const schemaService = createSchemaService({ settings: settings as never, library, installer: inst as never, userDataDir: a.ud, pak: inst as never,
+        modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+      const updateImpact = createUpdateImpact({ file: path.join(a.ud, 'update-impact.json'), gamePath: () => gameOf(a) || null,
+        mods: () => impactMods(library.list(), (rel) => inst.langFileOnDisk(rel)), build: () => ph.build, log: (m) => log.push(m) });
+      let running = false;
+      let steam: 'validating' | 'updating' | null = null;
+      let sent: unknown = null;
+      repair = createGameRepair({ settings: settings as never, installer: inst as never, library, schemaService, updateImpact,
+        rebuildGenerated: (ids) => ids.filter((id) => library.list().find((r) => r.id === id)?.name.startsWith('Generated')),
+        diag: (m) => log.push(m), send: (r) => { sent = r; }, isRunning: async () => running, steamBusy: () => steam, retryMs: 1e9, now: () => 0 });
+      for (const op of ph.ops) {
+        switch (op[0]) {
+          case 'start': repair.repairAtStart(); answers.push(snap({ rebuild: false, patch: repair.patchRepair() })); break;
+          case 'after': {
+            running = !!op[2]; steam = (op[3] ?? null) as never; sent = null;
+            await repair.repairAfterPatch(op[1]);
+            const s = sent as { at?: number; state?: string } | null;
+            answers.push(snap({ sent: s, retry: s?.state === 'waiting', rebuild: false }));
+            break;
+          }
+          case 'restore': answers.push(repair.restoreAfterVerify()); break;
+          case 'stuck': answers.push(snap(repair.verifyStuck())); break;
+          case 'patch': answers.push(snap(repair.patchRepair())); break;
+          case 'settings': answers.push({ gameStamp: settings.get('gameStamp') ?? null }); break;
+        }
+      }
+      await schemaService.settled?.();
+    } finally { repair?.stop(); FileTx.journalDir = null; }
+    const list = path.join(tmp, `phase-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['game-repair.script', gameOf(b), 'russian', b.journal, b.lib, b.ud, ph.build, ph.ops.map((o) => o.map((v) => v ?? null))]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }))[0] as { ok?: { answers: unknown[]; log: string[] }; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok.answers), norm(answers), `phase ${k}`);
+    assert.deepEqual(got.ok.log, log, `phase ${k}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `phase ${k}: the game folder`);
+    for (const f of ['ud/settings.json', 'ud/update-impact.json', 'lib/manifest.json']) {
+      assert.deepEqual(norm(file(b, f)), norm(file(a, f)), `phase ${k}: ${f}`);
+    }
+  }
+  const told = (file(a, 'ud/update-impact.json') as { mods: Record<string, unknown> }).mods;
+  assert.ok(told.m1 && !told.g1, 'a mod the app builds again carries no mark');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
