@@ -2567,6 +2567,23 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "steam.join" => {
+            let parts: Vec<String> = args.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::steam::join(args.first().and_then(Value::as_bool).unwrap_or(false), &parts.iter().map(String::as_str).collect::<Vec<_>>()))
+        }
+        "steam.regValue" => json!(crate::steam::reg_value(&s(args, 0))),
+        "steam.parseLibraryFolders" => json!(crate::steam::parse_library_folders(&s(args, 0))),
+        "steam.linuxSteamRoots" => json!(crate::steam::linux_steam_roots(&s(args, 0), opt_s(args, 1).as_deref())),
+        "steam.steamappsDir" => json!(crate::steam::steamapps_dir(cfg!(windows), &s(args, 0))),
+        "steam.pickSteamRoot" => {
+            let c: Vec<Option<String>> = args.first().and_then(Value::as_array).map(|a| a.iter().map(|v| v.as_str().map(String::from)).collect()).unwrap_or_default();
+            json!(crate::steam::pick_steam_root(&c, args.get(1).and_then(Value::as_bool).unwrap_or(false)))
+        }
+        "steam.fallbackLibraries" => json!(crate::steam::fallback_libraries(args.first().and_then(Value::as_bool).unwrap_or(false), &s(args, 1), opt_s(args, 2).as_deref())),
+        "steam.findDotaIn" => {
+            let f: Vec<String> = args.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+            json!(crate::steam::find_dota_in(cfg!(windows), opt_s(args, 0).as_deref(), &f))
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

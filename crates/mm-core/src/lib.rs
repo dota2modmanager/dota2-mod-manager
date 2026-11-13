@@ -111,6 +111,7 @@ pub mod schema_service;
 pub mod scream_guard;
 pub mod settings;
 pub mod slot_zones;
+pub mod steam;
 pub mod terrain_age;
 pub mod unusual_effects;
 pub mod update_impact;

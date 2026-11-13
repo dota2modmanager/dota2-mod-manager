@@ -4119,3 +4119,49 @@ test('release notes and the star count in Rust read and keep what the TypeScript
   for (const [c] of caches) assert.equal(fs.readFileSync(fileFor('rs', c), 'utf8'), fs.readFileSync(fileFor('ts', c), 'utf8'), c);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('finding Steam and Dota in Rust looks where the TypeScript looks', { skip }, async () => {
+  const steam = await import('../src/steam.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-steam-'));
+  const mk = (...p: string[]) => { const f = path.join(tmp, ...p); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, ''); };
+  // Steam's root lists two more libraries; the first is what a moved library leaves behind, the
+  // second spells SteamApps the old way and has the game; a fallback has it too
+  const lib = (n: string) => path.join(tmp, n);
+  fs.mkdirSync(path.join(lib('root'), 'steamapps', 'common', 'dota 2 beta', 'game', 'dota'), { recursive: true });
+  const vdf = `"libraryfolders"\n{\n\t"0"\n\t{\n\t\t"path"\t\t"${lib('root').replace(/\\/g, '\\\\')}"\n\t}\n\t"1"\n\t{\n\t\t"path"  "${lib('moved').replace(/\\/g, '\\\\')}"\n\t}\n\t"2" { "path" "${lib('real').replace(/\\/g, '\\\\')}" }\n}\n`;
+  fs.writeFileSync(path.join(lib('root'), 'steamapps', 'libraryfolders.vdf'), vdf);
+  fs.mkdirSync(path.join(lib('moved'), 'steamapps', 'common', 'dota 2 beta', 'game', 'dota'), { recursive: true });
+  mk('real', 'SteamApps', 'common', 'dota 2 beta', 'game', 'bin', 'win64', 'dota2.exe');
+  mk('fallback', 'steamapps', 'common', 'dota 2 beta', 'game', 'dota', 'pak01_dir.vpk');
+  mk('linux', 'steamapps', 'common', 'dota 2 beta', 'game', 'bin', 'linuxsteamrt64', 'dota2');
+  fs.mkdirSync(lib('broken-vdf/steamapps/libraryfolders.vdf'), { recursive: true });
+
+  const joins: [boolean, string[]][] = [
+    [true, ['C:\\Steam', 'steamapps']], [true, ['C:/Steam/', 'steamapps', 'common']], [true, ['C:', 'x']], [true, ['a', '..', '..', 'b']],
+    [true, ['\\\\server\\share', 'x', '..', 'y']], [true, ['C:\\a\\.\\b\\', '']], [true, ['', '']], [true, ['/a//b/', 'c/']], [true, ['C:\\..\\x']],
+    [false, ['/home/u', '.steam', 'steam']], [false, ['a/', '../..', 'b']], [false, ['/', '..', 'x']], [false, ['x//', './y/']], [false, []],
+  ];
+  const win = process.platform === 'win32';
+  const reg = [
+    '\r\nHKEY_CURRENT_USER\\SOFTWARE\\Valve\\Steam\r\n    SteamPath    REG_SZ    c:/program files (x86)/steam\r\n\r\n', 'REG_SZ\tD:\\Steam  \n', 'REG_DWORD 0x1', '', 'REG_SZ    \r\n',
+  ];
+  compare([
+    { name: 'steam.join', ts: ((w: boolean, parts: string[]) => (w ? path.win32 : path.posix).join(...parts)) as never, inputs: joins },
+    { name: 'steam.regValue', ts: steam.regValue as never, inputs: reg.map((r) => [r]) },
+    { name: 'steam.parseLibraryFolders', ts: steam.parseLibraryFolders as never, inputs: [[vdf], [''], ['"path" "C:\\\\a\\\\b" "PATH" "x" "path"\n"y" "path" ""']] },
+    { name: 'steam.linuxSteamRoots', ts: ((h: string, x: string | null) => steam.linuxSteamRoots(h, x == null ? {} : { XDG_DATA_HOME: x })) as never, inputs: [['/home/u', null], ['/home/u', '/data'], ['/home/u', '']] },
+    { name: 'steam.steamappsDir', ts: steam.steamappsDir as never, inputs: ['root', 'real', 'nothing'].map((n) => [lib(n)]) },
+    { name: 'steam.pickSteamRoot', ts: steam.pickSteamRoot as never, inputs: [
+      [[null, '', lib('nope'), lib('real').replace(/\\/g, '/'), lib('root')], win], [[null, null], win], [[lib('real').replace(/\\/g, '/')], false],
+    ] },
+    { name: 'steam.fallbackLibraries', ts: ((w: boolean, h: string, x: string | null) => (x == null ? steam.fallbackLibraries(w, h) : (() => {
+      const was = process.env.XDG_DATA_HOME; process.env.XDG_DATA_HOME = x;
+      try { return steam.fallbackLibraries(w, h); } finally { if (was === undefined) delete process.env.XDG_DATA_HOME; else process.env.XDG_DATA_HOME = was; }
+    })())) as never, inputs: [[true, '/home/u', null], [false, '/home/u', null], [false, '/home/u', '/data']] },
+    { name: 'steam.findDotaIn', ts: steam.findDotaIn as never, inputs: [
+      [lib('root'), [lib('fallback')]], [null, [lib('moved'), lib('MOVED'), lib('fallback')]], [lib('broken-vdf'), [lib('linux')]],
+      [lib('nope'), []], ['', ['', lib('real')]], [null, []],
+    ] },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
