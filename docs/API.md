@@ -7714,6 +7714,14 @@ export function workAreaFrom(spec: string | undefined): { width: number; height:
 
 A work area written "1366x728" (MM_WORKAREA, tools/sim profiles), standing in for a smaller screen.
 
+### `zoomFor`
+
+```ts
+export function zoomFor(key: string, current: number): number | null
+```
+
+The key a Ctrl chord turns into a new scale, or null for any other key.
+
 ### `createMainWindow`
 
 ```ts

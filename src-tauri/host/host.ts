@@ -12,6 +12,8 @@
  *                 {t:'send', channel, args}         ipcRenderer.send, no answer
  *                 {t:'reply', id, ok, value|error}  the answer to one of the host's requests
  *                 {t:'loaded'}                      the page finished loading
+ *                 {t:'second', argv}                the app was started again (a link clicked)
+ *                 {t:'hidden'}                      the shell hid the window in the tray
  *   host -> Rust  {t:'event', channel, args}        webContents.send
  *                 {t:'request', id, method, args}   something only the shell can do: a dialog, a link
  *                 {t:'ready', channels}             every channel registered, the window may load
@@ -257,6 +259,12 @@ readline.createInterface({ input: process.stdin }).on('line', (line) => {
   } else if (msg.t === 'key') {
     // Ctrl +/-/0 in the page: src/main-window.ts scales the content from here, as in Electron
     for (const w of WindowHandle.all) w.webContents.emit('before-input-event', { preventDefault() {} }, msg.input);
+  } else if (msg.t === 'hidden') {
+    // the shell hid the window in the tray: src/tray.ts's close handler marks its hint seen
+    for (const w of WindowHandle.all) w.emit('close', { preventDefault() {} });
+  } else if (msg.t === 'second') {
+    // the app started again while running: a link to take, or the uninstaller asking it to go
+    appEvents.emit('second-instance', { preventDefault() {} }, msg.argv ?? []);
   } else if (msg.t === 'quit') {
     appEvents.emit('before-quit', { preventDefault() {} });
     appEvents.emit('will-quit', { preventDefault() {} });

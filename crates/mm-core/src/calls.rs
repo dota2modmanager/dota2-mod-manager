@@ -731,6 +731,15 @@ fn kv_err(e: crate::kv::KvError) -> String {
     e.to_string()
 }
 
+/// A work area as {width, height}, or none.
+fn area_arg(args: &[Value], i: usize) -> Option<crate::main_window::Area> {
+    let a = args.get(i)?.as_object()?;
+    Some(crate::main_window::Area {
+        width: crate::js::to_number(a.get("width").unwrap_or(&Value::Null)),
+        height: crate::js::to_number(a.get("height").unwrap_or(&Value::Null)),
+    })
+}
+
 fn s(args: &[Value], i: usize) -> String {
     match args.get(i) {
         Some(Value::String(s)) => s.clone(),
@@ -3840,6 +3849,74 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 });
             }
             json!({ "answers": answers, "log": log, "jobs": jobs })
+        }
+        "main-window.clampZoom" => json!(crate::main_window::clamp_zoom(args.first().unwrap_or(&Value::Null))),
+        "main-window.windowFit" => {
+            json!(crate::main_window::window_fit(area_arg(args, 0), crate::js::to_number(args.get(1).unwrap_or(&Value::Null))))
+        }
+        "main-window.startScale" => json!(crate::main_window::start_scale(area_arg(args, 0))),
+        "main-window.workAreaFrom" => {
+            json!(crate::main_window::work_area_from(args.first().and_then(Value::as_str))
+                .map(|a| json!({ "width": a.width, "height": a.height })))
+        }
+        "main-window.zoomFor" => json!(crate::main_window::zoom_for_input(
+            &s(args, 0),
+            &s(args, 1),
+            args.get(2).is_some_and(crate::js::truthy),
+            args.get(3).is_some_and(crate::js::truthy),
+            n(args, 4)
+        )),
+        "tray.startedHidden" => {
+            let argv: Vec<String> = args.first().and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            json!(crate::tray::started_hidden(&argv))
+        }
+        "tray.loginItemAllowed" => json!(crate::tray::login_item_allowed(
+            args.first().is_some_and(crate::js::truthy),
+            args.get(1).is_some_and(crate::js::truthy),
+            args.get(2).is_some_and(crate::js::truthy),
+            args.get(3).is_some_and(crate::js::truthy)
+        )),
+        "tray.script" => {
+            // (lang, ops): each step's doings, as the test's fakes record them in the TypeScript.
+            // ['sync', settings] | ['close', settings] | ['quit'] | ['lang', l]
+            let mut keeper = crate::tray::TrayKeeper::default();
+            let mut out: Vec<Value> = Vec::new();
+            let fill = |out: &mut Vec<Value>, icon: bool| {
+                if icon {
+                    let items: Vec<Value> = crate::tray::menu().into_iter().map(|(_, l)| json!(l)).collect();
+                    out.push(json!(["menu", items]));
+                }
+            };
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let st = op.get(1).cloned().unwrap_or(Value::Null);
+                match op.get(0).and_then(Value::as_str).unwrap_or("") {
+                    "sync" => {
+                        match keeper.sync(&st) {
+                            crate::tray::Icon::Make => out.push(json!(["make", crate::tray::TITLE])),
+                            crate::tray::Icon::Destroy => out.push(json!(["destroy"])),
+                            crate::tray::Icon::Keep => {}
+                        }
+                        fill(&mut out, keeper.icon);
+                    }
+                    "close" => match keeper.close(&st) {
+                        crate::tray::Close::Close => out.push(json!(["close"])),
+                        crate::tray::Close::Hide { hint } => {
+                            out.push(json!(["hide"]));
+                            if hint {
+                                if keeper.icon {
+                                    out.push(json!(["balloon", crate::tray::TITLE, crate::tray::hint()]));
+                                }
+                                out.push(json!(["set", "trayHintSeen", true]));
+                            }
+                        }
+                    },
+                    "quit" => keeper.quitting = true,
+                    "lang" => crate::i18n::set_lang(crate::i18n::Lang::parse(&crate::js::string(&st))),
+                    other => out.push(json!(["no step", other])),
+                }
+            }
+            json!(out)
         }
         _ => return Err(format!("no function {name}")),
     })

@@ -6583,3 +6583,66 @@ test('a hero painted part by part in Rust is built, compiled and put in My mods 
   assert.ok(log.some((m) => m.includes('no ValveResourceFormat')), 'without the reader the pictures stay');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the window\'s size, scale and zoom keys and the tray\'s doings in Rust are the TypeScript ones', { skip }, async () => {
+  const mw = await import('../src/main-window.ts');
+  const tray = await import('../src/tray.ts');
+  const nums = [0, -1, 0.5, 0.69, 0.7, 1, 1.04, 1.3, 2.5, 2.51, 9, NaN, '1.5', '', ' 2 ', 'x', null, true, false, [], [2], {}, '1e1', '0x2'];
+  const areas = [null, { width: 0, height: 900 }, { width: 1366, height: 728 }, { width: 1280, height: 680 }, { width: 1920, height: 1040 }, { width: 2000, height: 1100 },
+    { width: 2001, height: 1100 }, { width: 2560, height: 1400 }, { width: 3840, height: 2100 }, { width: 5120, height: 1400 }, { width: 7680, height: 4300 }, { width: -5, height: 10 }];
+  const keys = ['=', '+', '-', '_', '0', '1', 'a', 'Enter', ''];
+  const cases: Case[] = [
+    { name: 'main-window.clampZoom', ts: mw.clampZoom as never, inputs: nums.map((v) => [v]) },
+    { name: 'main-window.windowFit', ts: ((a: never, s: number) => mw.windowFit(a, s)) as never, inputs: areas.flatMap((a) => [1, 1.3, 2.5, 0.8].map((s) => [a, s])) },
+    { name: 'main-window.startScale', ts: mw.startScale as never, inputs: areas.map((a) => [a]) },
+    { name: 'main-window.workAreaFrom', ts: mw.workAreaFrom as never, inputs: ['1366x728', '1366X728', 'x', '10x', 'x10', ' 1x1', '1x1 ', '0x0', '12345x6', '1.5x2', null, ''].map((v) => [v]) },
+    { name: 'main-window.zoomFor', ts: ((kind: string, key: string, control: boolean, alt: boolean, cur: number) => (kind !== 'keyDown' || !control || alt ? null : mw.zoomFor(key, cur))) as never,
+      inputs: [...keys.flatMap((k) => [0.7, 1, 1.95, 2.5].map((c) => ['keyDown', k, true, false, c])), ['keyUp', '=', true, false, 1], ['keyDown', '=', false, false, 1], ['keyDown', '=', true, true, 1]] },
+    { name: 'tray.startedHidden', ts: tray.startedHidden as never, inputs: [[[]], [['app.exe']], [['app.exe', '--background']], [['--background=1']], [['--BACKGROUND']]] },
+  ];
+  assert.ok(compare(cases) > 100);
+  // the keeper over fakes that write down what it does, the Rust's TrayKeeper over the same steps
+  const script = (lang: string, ops: unknown[][]) => {
+    setLang(lang);
+    const out: unknown[] = [];
+    let cur: Record<string, unknown> = {};
+    let close: ((e: { preventDefault(): void }) => void) | null = null;
+    let beforeQuit = () => {};
+    let keeper: { sync(): void } | null = null;
+    const settings = { get: (k: string) => cur[k], set: (k: string, v: unknown) => { out.push(['set', k, v]); } };
+    for (const [kind, arg] of ops) {
+      if (kind === 'lang') { setLang(arg as string); continue; }
+      if (kind === 'quit') { beforeQuit(); continue; }
+      cur = (arg as Record<string, unknown>) ?? {};
+      if (kind === 'close') { let kept = false; close!({ preventDefault: () => { kept = true; } }); if (!kept) out.push(['close']); continue; }
+      if (keeper) { keeper.sync(); continue; }
+      keeper = tray.keepInTray({
+        app: { on: (_e, fn) => { beforeQuit = fn; }, quit: () => out.push(['quit']) },
+        win: { on: (_e, fn) => { close = fn; }, hide: () => out.push(['hide']), show() {}, focus() {}, restore() {}, isMinimized: () => false, isDestroyed: () => false },
+        settings: settings as never, t, play: () => {},
+        makeTray: () => ({ setToolTip: (s) => out.push(['make', s]), setContextMenu: (m) => out.push(['menu', m]), on() {}, displayBalloon: (o) => out.push(['balloon', o.title, o.content]), destroy: () => out.push(['destroy']) }),
+        menu: (items) => items.map((i) => i.label ?? null),
+      });
+    }
+    setLang('en');
+    return out;
+  };
+  const on = {}; const off = { runInBackground: false }; const seen = { trayHintSeen: true }; const odd = { runInBackground: 0, trayHintSeen: 'yes' };
+  const scripts: unknown[][][] = [
+    [['sync', on], ['close', on], ['close', on], ['close', seen], ['quit'], ['close', on]],
+    [['sync', off], ['close', off], ['sync', on], ['lang', 'ru'], ['sync', on], ['close', on], ['sync', off], ['close', on], ['sync', odd], ['close', odd]],
+    [['sync', on], ['sync', off], ['close', on], ['sync', on], ['lang', 'zh-CN'], ['sync', seen], ['close', { runInBackground: null }], ['close', { runInBackground: 'false' }]],
+  ];
+  const langs = ['en', 'ru', 'zh-CN'];
+  const list = langs.flatMap((l) => scripts.map((s) => ['tray.script', l, s]));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-tray-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify(list));
+  const rs = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8' })) as { ok: unknown }[];
+  let k = 0;
+  for (const l of langs) for (const s of scripts) assert.deepEqual(rs[k++].ok, script(l, s), `${l} ${JSON.stringify(s)}`);
+  for (const args of [[true, true, false, false], [false, true, false, false], [true, false, false, false], [true, true, true, false], [true, true, false, true]]) {
+    const [r] = JSON.parse((fs.writeFileSync(path.join(tmp, 'c.json'), JSON.stringify([['tray.loginItemAllowed', ...args]])), execFileSync(cli, ['call', path.join(tmp, 'c.json')], { encoding: 'utf8' })));
+    assert.equal(r.ok, args[0] && args[1] && !args[2] && !args[3]);
+  }
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
