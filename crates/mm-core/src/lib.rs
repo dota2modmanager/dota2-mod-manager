@@ -4,6 +4,7 @@
 pub mod ability_icons;
 pub mod ability_icons_service;
 pub mod ability_sounds;
+pub mod ability_sounds_service;
 pub mod adopt;
 pub mod app_info;
 pub mod arcana;

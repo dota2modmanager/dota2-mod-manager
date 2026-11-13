@@ -3684,6 +3684,63 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": log, "ran": ran })
         }
+        "ability-sounds.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each answer, the log, and the
+            // jobs compiled. The compiler's stand-in hands back each source as `compiled <sha1>` at
+            // its compiled path; after a `drop` step, the next compile leaves the sounds out.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let svc = crate::ability_sounds_service::AbilitySoundsService::new(inst.game.clone(), &ud);
+            let mut drop_next = false;
+            let mut jobs: Vec<Value> = Vec::new();
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let st = |i: usize| crate::js::string(&arg(i));
+                let mut d = |m: String| log.push(m);
+                let dropping = drop_next;
+                let mut compile = |job: &crate::resource_compiler::CompileJob| {
+                    jobs.push(json!([job.id, job.compile]));
+                    Ok(job
+                        .files
+                        .iter()
+                        .filter(|f| !(dropping && f.path.ends_with(".wav")))
+                        .map(|f| {
+                            let sha1 = hex(&<sha1::Sha1 as sha1::Digest>::digest(&f.data));
+                            let at = crate::resource_compiler::compiled_of(&f.path);
+                            crate::vpk::entry_at(&at, format!("compiled {sha1}").into_bytes().into())
+                        })
+                        .collect())
+                };
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "heroes" => svc.heroes(),
+                    "hero" => svc.hero(&lib, &st(1)),
+                    "drop" => {
+                        drop_next = true;
+                        Ok(Value::Null)
+                    }
+                    "add" => {
+                        let wav = b(std::slice::from_ref(&arg(5)), 0)?;
+                        let volume = arg(4).as_f64().unwrap_or(0.0);
+                        svc.add(&inst, &mut lib, (&st(1), &st(2), &st(3), volume, &wav, &st(6)), &mut compile, &mut d)
+                    }
+                    "remove" => svc.remove(&inst, &mut lib, &st(1), &st(2), &mut compile, &mut d),
+                    "rebuild" => svc.rebuild(&inst, &mut lib, &st(1), &mut compile, &mut d),
+                    other => Err(format!("no step {other}")),
+                };
+                if arg(0).as_str() != Some("drop") {
+                    drop_next = false;
+                }
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log, "jobs": jobs })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

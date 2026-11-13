@@ -6359,3 +6359,105 @@ test('Valve\'s resource compiler in Rust is found, run on an addon of ours and c
     for (const d of [path.join(install, 'content', 'dota_addons'), path.join(game, 'dota_addons')]) assert.deepEqual(fs.existsSync(d) ? fs.readdirSync(d) : [], [], d);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
 });
+
+test('a hero\'s own sounds in Rust are kept, compiled and put in My mods as the TypeScript does', { skip }, async () => {
+  if (!fs.existsSync(GAME_PAK01)) return;
+  const svcTs = await import('../src/ability-sounds-service.ts');
+  const { compiledOf } = await import('../src/resource-compiler.ts');
+  const { eventsFile } = await import('../src/ability-sounds.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-snd-'));
+  const real = sharedVpkIndex(GAME_PAK01);
+  const heroes = ['axe', 'crystalmaiden'];
+  const pak = buildVpk(heroes.map((h) => entryAt(eventsFile(h), real.read(eventsFile(h))!)));
+  // a WAV of 16-bit PCM at a rate the compiler takes, and ones it does not
+  const wav = (rate: number, bits: number, format = 1, samples = 64) => {
+    const data = Buffer.alloc(samples * 2, 7);
+    const fmt = Buffer.alloc(24);
+    fmt.write('fmt ', 0, 'ascii'); fmt.writeUInt32LE(16, 4); fmt.writeUInt16LE(format, 8); fmt.writeUInt16LE(1, 10);
+    fmt.writeUInt32LE(rate, 12); fmt.writeUInt32LE(rate * 2, 16); fmt.writeUInt16LE(2, 20); fmt.writeUInt16LE(bits, 22);
+    const head = Buffer.alloc(12); head.write('RIFF', 0, 'ascii'); head.writeUInt32LE(4 + 24 + 8 + data.length, 4); head.write('WAVE', 8, 'ascii');
+    const dh = Buffer.alloc(8); dh.write('data', 0, 'ascii'); dh.writeUInt32LE(data.length, 4);
+    return Buffer.concat([head, fmt, dh, data]);
+  };
+  const files = [wav(44100, 16), wav(48000, 16, 1, 99), wav(44100, 8), wav(11025, 16), wav(44100, 16, 3), Buffer.from('not a wav')].map((b, k) => {
+    const f = path.join(tmp, `w${k}.wav`); fs.writeFileSync(f, b); return { $file: f };
+  });
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  // the events to put sounds on: the first two of each hero's, read as the window would
+  const probe = svcTs.createAbilitySounds({ gamePath: () => a.game, userDataDir: a.ud, installer: null as never, library: new Library(path.join(tmp, 'probe')), compile: async () => [] });
+  const [ev1, ev2] = probe.hero('axe').events.map((e) => e.name);
+  const [cm1] = probe.hero('crystalmaiden').events.map((e) => e.name);
+  const ops: unknown[][] = [
+    ['heroes'], ['hero', 'axe'], ['hero', 'nobody'],
+    ['add', 'axe', ev1, 'replace', 1, files[2], 'eight bit'], ['add', 'axe', ev1, 'replace', 1, files[3], 'slow'], ['add', 'axe', ev1, 'replace', 1, files[4], 'float'],
+    ['add', 'axe', ev1, 'replace', 1, files[5], 'text'], ['add', 'axe', 'no_such_event', 'replace', 1, files[0], 'x'],
+    ['add', 'axe', ev1, 'replace', 0.5, files[0], 'a sound of mine'], ['add', 'axe', ev2, 'add', 1, files[1], 'x'.repeat(130)],
+    ['hero', 'axe'], ['add', 'axe', ev1, 'add', 0.25, files[1], 'again'], ['drop'], ['add', 'crystalmaiden', cm1, 'replace', 1, files[0], 'cm'],
+    ['add', 'crystalmaiden', cm1, 'replace', 1, files[0], 'cm'], ['rebuild', 'axe'], ['remove', 'axe', ev1], ['remove', 'axe', 'nothing'],
+    ['remove', 'axe', ev2], ['hero', 'axe'], ['rebuild', 'axe'],
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|recId|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  const jobs: unknown[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    let dropNext = false;
+    let dropping = false;
+    const svc = svcTs.createAbilitySounds({
+      gamePath: () => a.game, userDataDir: a.ud, installer: inst as never, library, log: (m) => log.push(m),
+      compile: async (job) => {
+        jobs.push([job.id, job.compile]);
+        return job.files.filter((f) => !(dropping && f.path.endsWith('.wav'))).map((f) => entryAt(compiledOf(f.path), Buffer.from(`compiled ${sha(f.data)}`)));
+      },
+    });
+    for (const op of ops) {
+      dropping = dropNext;
+      if (op[0] !== 'drop') dropNext = false;
+      try {
+        let v: unknown;
+        if (op[0] === 'heroes') v = svc.heroes();
+        else if (op[0] === 'hero') v = svc.hero(op[1] as string);
+        else if (op[0] === 'drop') { dropNext = true; v = null; }
+        else if (op[0] === 'add') v = await svc.add(op[1] as string, op[2] as string, op[3] as never, op[4] as number, fs.readFileSync((op[5] as { $file: string }).$file), op[6] as string);
+        else if (op[0] === 'remove') v = await svc.remove(op[1] as string, op[2] as string);
+        else v = await svc.rebuild(op[1] as string);
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'ops.json');
+  fs.writeFileSync(list, JSON.stringify([['ability-sounds.service', b.game, 'russian', b.journal, b.lib, b.ud, ops]]));
+  const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[]; jobs: unknown[] }; error?: string }[];
+  assert.ok(r.ok, r.error);
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(r.ok.answers[k]), norm(answers[k]), `${k} ${JSON.stringify(op).slice(0, 100)}`);
+  assert.deepEqual(r.ok.log, log, 'the log');
+  assert.deepEqual(r.ok.jobs, jobs, 'the compiles');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(tree(path.join(b.ud, 'ability-sounds')), tree(path.join(a.ud, 'ability-sounds')), 'the sounds kept');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok(answers.some((x) => (x as { error?: string }).error?.includes('resourcecompiler')), 'a compile that leaves the sounds out is an error');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
