@@ -1748,6 +1748,82 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "presets-service.script" => {
+            // (lang, game, suffix, libraryDir, userData, catalog, ops): each answer, the library after it
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let inst = crate::installer::Installer::new(opt_path(args, 1), &s(args, 2)).with_user_data(&ud);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let catalog = args.get(5).filter(|c| !c.is_null());
+            let cat = crate::preset_plan::CatalogIndex::new(catalog);
+            let ops = args.get(6).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let r: Result<Value, String> = (|| {
+                    let preset = || lib.get_preset(&op[1]).cloned().ok_or_else(|| "no preset".to_string());
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "entries" => {
+                            let entries = crate::preset_plan::preset_share_entries(&lib, &inst, &preset()?, &cat)?;
+                            let mut sums = Vec::new();
+                            let mut sum = |e: &crate::preset_plan::ShareEntry| match e.data(&inst) {
+                                Ok(d) => sums.push(json!(d.map(|d| crate::safe_zip::sha1_hex(&d)))),
+                                Err(e) => sums.push(json!({ "error": e })),
+                            };
+                            for e in &entries {
+                                sum(e);
+                                e.members.iter().for_each(&mut sum);
+                            }
+                            json!({ "plan": crate::preset_plan::plan_shape(&entries), "lines": entries.iter().map(|e| e.to_value()).collect::<Vec<_>>(), "data": sums })
+                        }
+                        "link" => {
+                            let (mods, skipped) = crate::preset_plan::preset_link_mods(&lib, &preset()?, &cat)?;
+                            json!({ "mods": mods, "skipped": skipped })
+                        }
+                        "status" => crate::preset_plan::shared_preset_status(&lib, &inst, &preset()?, &cat),
+                        "fps" => {
+                            let mut v: Vec<(String, Value)> = crate::preset_plan::installed_fp_index(&lib, &inst).into_iter().collect();
+                            v.sort_by(|a, b| a.0.cmp(&b.0));
+                            json!(v.into_iter().map(|(k, id)| json!([k, id])).collect::<Vec<_>>())
+                        }
+                        "catalogSize" => json!(cat.len()),
+                        "isOn" => json!(crate::presets_service::preset_is_on(&lib, &preset()?)?),
+                        "state" => crate::presets_service::preset_state(&lib, Some(&st), &preset()?)?,
+                        "apply" => {
+                            let p = preset()?;
+                            let mut pick = |lib: &mut crate::library::Library, p: &Value| -> Result<(), String> {
+                                let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
+                                crate::schema_cosmetics::pick_cosmetic(lib, &crate::js::string(&p["slot"]), &crate::js::string(&p["itemId"]), p["name"].as_str(), Some(&effect))?;
+                                Ok(())
+                            };
+                            let a = crate::presets_service::apply_preset(&mut lib, &inst, Some(&mut st), &p, crate::js::truthy(&op[2]), &mut pick)?;
+                            json!({ "errors": a.errors, "schemaTouched": a.schema_touched })
+                        }
+                        "importFile" => crate::presets_service::import_preset_file(&mut lib, &ud, std::path::Path::new(&crate::js::string(&op[1]))),
+                        "importLink" => crate::presets_service::import_preset_link(&mut lib, &op[1]),
+                        "pack" => {
+                            let ids = op[2].as_array().cloned().unwrap_or_default();
+                            let mut deployed = Vec::new();
+                            let r = crate::presets_service::pack_from_records(&mut lib, &inst, &crate::js::string(&op[1]), &ids, &mut |p| deployed.push(p["id"].clone()))?;
+                            json!({ "pack": r, "deployed": deployed })
+                        }
+                        "drop" => {
+                            crate::presets_service::drop_shared_preset_file(lib.get_preset(&op[1]));
+                            Value::Null
+                        }
+                        "list" => json!(lib.list()),
+                        "presets" => json!(lib.list_presets()),
+                        "packable" => json!(lib.list().iter().map(|r| crate::presets_service::packable_record(Some(r))).collect::<Vec<_>>()),
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));
