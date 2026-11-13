@@ -4427,3 +4427,807 @@ test('removing everything in Rust takes out of the game what the TypeScript take
   assert.equal((want[0].out as { removed: number }).removed, 4);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+/** A copy of an answer as it is now: the TypeScript library hands out the record it keeps changing. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const snap = <T>(v: T): T => JSON.parse(JSON.stringify(v ?? null));
+test('the menu background in Rust builds the layouts, the pak and the record the TypeScript builds', { skip }, async () => {
+  const mb = await import('../src/menu-background.ts');
+  const { createMenuBackground } = await import('../src/menu-background-service.ts');
+  const { buildVpk, entryAt, openVpkIndex } = await import('../src/vpk.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { muxWebm } = await import('../renderer/catalog/background/webm.ts');
+  const { encodeKv3, resource } = await import('./helpers/kv3-build.ts');
+  const { createHash } = await import('node:crypto');
+  type V = Parameters<typeof encodeKv3>[0];
+  const s = (str: string): V => ({ str });
+  const at = (name: string, value: string): V => ({ obj: [['eType', s('PANEL_ATTRIBUTE')], ['name', s(name)], ['child', { obj: [['eType', s('PANEL_ATTRIBUTE_VALUE')], ['name', s(value)]] }]] });
+  const panel = (name: string, kids: V[] = [], line = false): V => ({ obj: [['eType', s('PANEL')], ['name', s(name)],
+    ...(kids.length === 1 ? [['child', kids[0]] as [string, V]] : kids.length ? [['vecChildren', { arr: kids }] as [string, V]] : []),
+    ...(line ? [['sourceLineColumn', { int: 4 }] as [string, V]] : [])] });
+  const layout = (...body: V[]): Buffer => resource([['RED2', Buffer.from('editor')], ['DATA', Buffer.alloc(6)],
+    ['LaCo', encodeKv3({ obj: [['m_AST', { obj: [['m_pRoot', { obj: [['eType', s('ROOT')], ['vecChildren', { arr: body }]] }]] }]] })]]);
+  const L = mb.LAYOUTS;
+  const games: Record<string, Map<string, Buffer>> = {
+    shaped: new Map([
+      [L.dashboard, layout(panel('DOTADashboard', [panel('Panel', [at('id', 'DashboardCore'), panel('DOTADashboardBackgroundManager', [at('id', 'M'), at('override-background', 'X')])])]))],
+      [L.manager, layout(panel('DOTADashboardBackgroundManager'))],
+      [L.lastMatch, layout(panel('DOTADashboardBackgroundLastMatch', [
+        panel('DOTAScenePanel', [at('id', 'BackgroundScene'), at('style', 'x')], true), at('class', 'c'), panel('Panel', [at('id', 'DetailsContainer')]),
+      ]))],
+    ]),
+    // a manager inside a manager, one child stored alone, and a background with no panels of its own
+    odd: new Map([
+      [L.dashboard, layout(panel('DOTADashboardBackgroundManager', [panel('DOTADashboardBackgroundManager', [at('id', 'inner')])]))],
+      [L.manager, layout(panel('DOTADashboardBackgroundManager', [at('id', 'one')]))],
+      [L.lastMatch, layout(panel('DOTADashboardBackgroundLastMatch', [at('class', 'only')]))],
+    ]),
+    'no panel': new Map([[L.dashboard, layout(panel('Panel'))], [L.manager, layout(panel('Panel'))], [L.lastMatch, layout(panel('Panel'))]]),
+    'no layouts': new Map([['scripts/x.txt', Buffer.from('x')]]),
+  };
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-menu-bg-'));
+  const paks: Record<string, string> = {};
+  for (const [name, files] of Object.entries(games)) {
+    const dir = path.join(tmp, 'paks', name.replace(' ', '-'));
+    fs.mkdirSync(dir, { recursive: true });
+    paks[name] = path.join(dir, 'pak01_dir.vpk');
+    fs.writeFileSync(paks[name], buildVpk([...files].map(([p, b]) => entryAt(p, b))));
+  }
+  // the game's own layouts, read and never written, when this machine has the game
+  if (fs.existsSync(GAME_PAK01)) {
+    const real = openVpkIndex(GAME_PAK01);
+    const own = Object.values(L).map((p) => [p, real.read(p)] as const).filter(([, b]) => b);
+    if (own.length === 3) {
+      paks.game = path.join(tmp, 'paks', 'game', 'pak01_dir.vpk');
+      fs.mkdirSync(path.dirname(paks.game), { recursive: true });
+      fs.writeFileSync(paks.game, buildVpk(own.map(([p, b]) => entryAt(p, b!))));
+    }
+  }
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const looks = [{ dim: 0.2, blur: 0 }, { dim: 0.5, blur: 6 }, { dim: 0, blur: 99 }, { dim: 5, blur: 3.5 }, { dim: -1, blur: 0.4 }];
+  const webm = Buffer.from(muxWebm({ width: 64, height: 36, duration: 2_000_000, frames: [
+    { data: Uint8Array.from([0x82, 0x49, 0x83, 0x42, 0x00]), time: 0, key: true }, { data: Uint8Array.from([0x86, 0x00]), time: 1_000_000, key: false },
+  ] }));
+  const files = { webm, gif: Buffer.from('GIF89a'.padEnd(80, '.')), bare: Buffer.concat([webm.subarray(0, 40), Buffer.alloc(200)]), short: webm.subarray(0, 30) };
+  const fileArgs: Record<string, { $file: string }> = {};
+  for (const [k, b] of Object.entries(files)) { const f = path.join(tmp, `${k}.bin`); fs.writeFileSync(f, b); fileArgs[k] = { $file: f }; }
+  const bytes = (x: string) => Buffer.from(x, 'latin1');
+  compare([
+    { name: 'menu-background.veil', ts: mb.veil, inputs: [[0], [0.2], [0.5], [0.9], [5], [-3], [0.3333]] },
+    { name: 'menu-background.webmProblem', ts: ((x: string, max?: number) => mb.webmProblem(bytes(x), max)) as never,
+      inputs: [[fileArgs.webm], [fileArgs.gif], [fileArgs.bare], [fileArgs.short], [fileArgs.webm, 10], [fileArgs.webm, 3 * 1024 * 1024]] },
+    { name: 'menu-background.layouts', ts: ((pak: string, look: { dim: number; blur: number }) => {
+      const ix = openVpkIndex(pak);
+      return mb.backgroundLayouts((f) => ix.read(f), look).map((l) => ({ path: l.path, sha1: sha(l.data) }));
+    }) as never, inputs: Object.values(paks).flatMap((p) => looks.map((l) => [p, l])) },
+  ]);
+
+  setLang('en');
+  // the record: twin games and user folders, the same steps on each
+  const twin = (side: string) => {
+    const r = path.join(tmp, side);
+    const game = path.join(r, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.copyFileSync(paks.shaped, path.join(game, 'dota', 'pak01_dir.vpk'));
+    return { game, lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  type Op = [string, ...unknown[]];
+  const steps: Op[][] = [
+    [['state'], ['install', null, 'none', 0.2, 0], ['install', fileArgs.gif, 'gif', 0.2, 0], ['install', fileArgs.webm, 'clip.mp4', 0.5, 6], ['state'],
+      ['install', null, 'other', 'abc', 99], ['state'], ['rebuild', []]],
+    // a second movie in the first one's slot, the record switched off and kept off through a rebuild
+    [['install', fileArgs.bare, '', 1, 1], ['install', bytesArg(webm, 'w2'), '', -1, null], ['state']],
+    [['rebuild', ['$id']], ['state'], ['rebuild', ['nope']]],
+  ];
+  function bytesArg(buf: Buffer, k: string) { const f = path.join(tmp, `${k}.bin`); fs.writeFileSync(f, Buffer.concat([buf, Buffer.from('webm extra')])); return { $file: f }; }
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? '<' + k + '>' : UUID.test(String(x)) ? '<uuid>' : x)));
+  const libOf = (x: { lib: string }) => norm(JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8')));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  for (const [k, ops] of steps.entries()) {
+    const idOf = (x: { lib: string }) => (JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8')).installed ?? []).find((r: { generated?: { background?: string } }) => r.generated?.background)?.id;
+    if (k === 2) {
+      // switched off in the app, as My mods would
+      for (const x of [a, b]) {
+        FileTx.journalDir = x.journal;
+        const inst = new Installer({ userDataDir: x.ud, getGamePath: () => x.game, getLangSuffix: () => 'russian' });
+        const lib = new Library(x.lib);
+        const rec = lib.list().find((r) => (r.generated as { background?: string } | undefined)?.background)!;
+        inst.setEnabled(rec.files, false, rec.id);
+        lib.setEnabled(rec.id, false);
+        FileTx.journalDir = null;
+      }
+    }
+    const fill = (x: { lib: string }) => ops.map((op) => op.map((v) => (Array.isArray(v) ? v.map((i) => (i === '$id' ? idOf(x) : i)) : v)));
+    FileTx.journalDir = a.journal;
+    const want: unknown[] = [];
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      const svc = createMenuBackground({ gamePath: () => a.game, userDataDir: a.ud, installer: inst as never, library: lib });
+      for (const [op, ...args] of fill(a)) {
+        try {
+          if (op === 'state') want.push(snap(svc.state()));
+          else if (op === 'install') want.push(snap(svc.install(args[0] ? new Uint8Array(fs.readFileSync((args[0] as { $file: string }).$file)) : null, args[1], args[2], args[3])));
+          else want.push(snap(svc.rebuild(args[0] as string[])));
+        } catch (e) { want.push(snap({ error: (e as Error).message })); }
+      }
+    } finally { FileTx.journalDir = null; }
+    const list = path.join(tmp, `service-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['menu-background.service', b.game, 'russian', b.journal, b.lib, b.ud, fill(b)]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }))[0] as { ok?: unknown; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok), norm(want), `steps ${k}`);
+    assert.deepEqual(tree(b.game), tree(a.game), `steps ${k}: the game folder`);
+    assert.deepEqual(libOf(b), libOf(a), `steps ${k}: the library`);
+    assert.deepEqual(tree(path.join(b.ud, 'menu-backgrounds')), tree(path.join(a.ud, 'menu-backgrounds')), `steps ${k}: the kept movies`);
+  }
+  // the steps did make a record, and the last rebuild kept it off
+  const last = (libOf(a) as { installed: { enabled?: boolean; generated?: unknown }[] }).installed.filter((r) => r.generated);
+  assert.equal(last.length, 1);
+  assert.equal(last[0].enabled, false);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('Panorama styles and the HUD layout in Rust read and write what the TypeScript does', { skip }, async () => {
+  const pf = await import('../src/panorama-files.ts');
+  const hud = await import('../src/hud-scale.ts');
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { style, script, texture } = await import('./helpers/panorama.ts');
+  const { resource } = await import('./helpers/kv3-build.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-panorama-'));
+  let n = 0;
+  const put = (b: Buffer) => { const f = path.join(tmp, `${n++}.bin`); fs.writeFileSync(f, b); return { $file: f }; };
+  const bytes = (x: string) => Buffer.from(x, 'latin1');
+  const RANK = 'panorama/images/rank_tier_icons/rank3_psd.vtex';
+  const CSS = `.A{background-image: url("s2r://${RANK}");}`;
+  const next = `${CSS}.B{background-image: url("s2r://panorama/images/a_png.vtex");}.C{background-image: url( 'file://{images}/b.PNG' );}.D{background-image: url("s2r://panorama/images/gone.vtex");}.E{background-image:url(//x/y.tga)}`;
+  const own = style(CSS, [[RANK, 256, 256]]);
+  const R = await import('../src/resource.ts');
+  const d = R.resourceBlock(own, 'DATA').data;
+  // the same list without the four bytes of CRC after the size
+  const v2file = R.resourceBlock(own, 'DATA').replace(Buffer.concat([d.subarray(0, 6 + RANK.length + 1 + 4), d.subarray(6 + RANK.length + 1 + 8)]));
+  v2file.writeUInt16LE(2, 6);
+  const noRerl = resource([['RED2', Buffer.from('editor')], ['DATA', d]]);
+  noRerl.writeUInt16LE(3, 6);
+  const other = style('', [['panorama/images/a_png.vtex', 40, 20]]);
+  const styles = [own, v2file, noRerl, other, resource([['RED2', Buffer.alloc(4)]]), style('é ü \u{1F600}', [])];
+  const games: Buffer[] = [];
+  if (fs.existsSync(GAME_PAK01)) {
+    const real = openVpkIndex(GAME_PAK01);
+    for (const p of [hud.STYLE, 'panorama/styles/dashboard.vcss_c']) { const b = real.read(p); if (b) games.push(b); }
+  }
+  const tex = { 'panorama/images/b_png.vtex_c': put(texture(64, 32)), 'x/y_tga.vtex_c': put(Buffer.from('not a texture')) };
+  const latin = (b: Buffer) => b.toString('latin1');
+  const texOf = (p: string) => { const t = (tex as Record<string, { $file: string }>)[p]; return t ? fs.readFileSync(t.$file) : null; };
+  const parts = [
+    null, 'x', [], [null, 3, { id: 'nope' }, { id: 'lower_hud' }], [{ id: 'lower_hud', scale: 87 }, { id: 'lower_hud', scale: '112.5' }],
+    [{ id: 'topbar', x: 10.6, y: -5000, opacity: 33, tint: '#ABCDEF', hidden: true }, { id: 'minimap_container', x: -2.5, y: 0.5, opacity: 'z', tint: 'red' }],
+    [{ id: 'HudChat', scale: Infinity, opacity: 3, hidden: 'yes' }, { id: 'inventory', scale: -1e9, x: '7', opacity: null }, { id: 'abilities', scale: 52.4, opacity: 102.5 }],
+    [{ id: 'lower_hud', x: 4, y: 2, scale: 130 }, { id: 'minimap_container', y: -3 }, { id: 'combat_events', opacity: 72.5 }],
+  ];
+  const cssIn = [
+    '', '.a{}', '\uFEFF/* made by Source 2 Viewer 9 */\n.a{}\n\n', '  /* nothing */ .a{}', '.a{}\n\n/* d2mm: HUD scale */\n#lower_hud\n{\n}\n',
+    ...games.map((g) => pf.readStyle(g).css),
+  ];
+  compare([
+    { name: 'panorama.readStyle', ts: ((x: string) => pf.readStyle(bytes(x))) as never, inputs: [...styles, ...games].map((b) => [put(b)]) },
+    { name: 'panorama.cssImages', ts: pf.cssImages, inputs: [[CSS], [next], [''], ["a{background-image:url('s2r://x/y.vtex')} b{background-image: url(\"file://{images}/z/w.psd\")}"], ...games.map((g) => [pf.readStyle(g).css])] },
+    { name: 'panorama.writeStyle', ts: ((f: string, css: string, known: string[], _t: unknown) => latin(pf.writeStyle(bytes(f), css, pf.imagesOf(known.map((k) => fs.readFileSync((k as unknown as { $file: string }).$file))), texOf))) as never,
+      inputs: [[put(own), CSS, [], {}], [put(own), next, [put(other), put(Buffer.from('junk'))], tex], [put(v2file), next, [], tex], [put(noRerl), next, [put(other)], tex],
+        [put(own), 'é', [], {}], [put(styles[4]), CSS, [], {}], ...games.map((g) => [put(g), hud.withLayout(pf.readStyle(g).css, parts[7]), [], tex])] },
+    { name: 'panorama.writeScript', ts: ((f: string, js: string) => latin(pf.writeScript(bytes(f), js))) as never,
+      inputs: [[put(script('old()')), 'new()'], [put((() => { const o = script(); o.writeUInt16LE(3, 6); return o; })()), 'x'], [put(script()), 'é\u{1F600}']] },
+    { name: 'hud.clampScale', ts: hud.clampScale, inputs: [[100], [87], [87.5], [62.5], [-1], [1e9], ['95'], [null], ['x'], [true]] },
+    { name: 'hud.cleanParts', ts: hud.cleanParts, inputs: parts.map((p) => [p]) },
+    { name: 'hud.withLayout', ts: hud.withLayout, inputs: cssIn.flatMap((c) => parts.slice(2).map((p) => [c, p])) },
+  ]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the HUD layout record in Rust is built from the style in force, as the TypeScript builds it', { skip }, async () => {
+  const { createHudScale } = await import('../src/hud-scale-service.ts');
+  const hud = await import('../src/hud-scale.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { style, texture } = await import('./helpers/panorama.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hud-'));
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const icon = 'panorama/images/hud/reborn/x_png.vtex';
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const r = path.join(tmp, side);
+    const game = path.join(r, 'game');
+    const lang = path.join(game, 'dota_russian');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(lang, { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), buildVpk([
+      entryAt(hud.STYLE, style('#lower_hud{}', [])), entryAt(`${icon}_c`, texture(12, 34)),
+    ]));
+    // a HUD mod the app cannot read, before one it can
+    fs.writeFileSync(path.join(lang, 'pak03_dir.vpk'), buildVpk([entryAt(hud.STYLE, Buffer.from('not a style'))]));
+    fs.writeFileSync(path.join(lang, 'pak05_dir.vpk'), buildVpk([entryAt(hud.STYLE, style(`.mod{background-image:url("s2r://${icon}")}`, []))]));
+    const lib = new Library(path.join(r, 'lib'));
+    lib.add({ name: 'Broken HUD', categoryId: 'huds', styleLabel: null, fileRef: 'a', files: [{ root: 'lang', relPath: 'pak03_dir.vpk' }] } as never);
+    lib.add({ name: 'Nice HUD', categoryId: 'huds', styleLabel: null, fileRef: 'b', files: [{ root: 'lang', relPath: 'pak05_dir.vpk' }] } as never);
+    return { game, lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  // the same ids on both sides, so the steps can name them
+  fs.copyFileSync(path.join(a.lib, 'manifest.json'), path.join(b.lib, 'manifest.json'));
+  type Op = [string, ...unknown[]];
+  const steps: Op[][] = [
+    [['state'], ['install', [{ id: 'lower_hud', scale: 87 }, { id: 'topbar', x: 10.6, y: -5000, opacity: 33, tint: '#ABCDEF', hidden: true }, { id: 'nope' }]], ['state'],
+      ['install', 'junk'], ['state'], ['rebuild', ['zzz']]],
+    // switched off, then rebuilt after an update: it stays off
+    [['rebuild', ['$id']], ['state']],
+    // a record from before the editor: one scale
+    [['state'], ['rebuild', ['$id']], ['state']],
+    // the game folder gone from the settings
+    [['state'], ['install', []]],
+  ];
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const mineOf = (x: Twin) => manifest(x).installed.find((r: { generated?: { hud?: unknown } }) => typeof r.generated?.hud === 'number');
+  for (const [k, ops] of steps.entries()) {
+    for (const x of [a, b]) {
+      FileTx.journalDir = x.journal;
+      const inst = new Installer({ userDataDir: x.ud, getGamePath: () => x.game, getLangSuffix: () => 'russian' });
+      const lib = new Library(x.lib);
+      const rec = lib.list().find((r) => typeof (r.generated as { hud?: unknown } | undefined)?.hud === 'number');
+      if (k === 1 && rec) { inst.setEnabled(rec.files, false, rec.id); lib.setEnabled(rec.id, false); }
+      if (k === 2 && rec) lib.update(rec.id, { generated: { hud: 110, base: 'game' } } as never);
+      FileTx.journalDir = null;
+    }
+    const gameOf = (x: Twin) => (k === 3 ? '' : x.game);
+    const fill = (x: Twin) => ops.map((op) => op.map((v) => (Array.isArray(v) ? v.map((i) => (i === '$id' ? mineOf(x)?.id : i)) : v)));
+    const answers: unknown[] = [];
+    const log: string[] = [];
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => gameOf(a) || null, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      let rebuilt: string | null = null;
+      const svc = createHudScale({ gamePath: () => gameOf(a) || null, installer: inst as never, library: lib, onRebuilt: (id) => { rebuilt = id; }, log: (m) => log.push(m) });
+      for (const [op, ...args] of fill(a)) {
+        try {
+          if (op === 'state') answers.push(snap(svc.state()));
+          else if (op === 'install') answers.push(snap(await svc.install(args[0])));
+          else {
+            rebuilt = null;
+            const returned = svc.rebuild(args[0] as string[]);
+            await new Promise((r) => setTimeout(r, 30));
+            answers.push(snap({ returned, rebuilt }));
+          }
+        } catch (e) { answers.push(snap({ error: (e as Error).message })); }
+      }
+    } finally { FileTx.journalDir = null; }
+    const list = path.join(tmp, `steps-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['hud.service', gameOf(b), 'russian', b.journal, b.lib, b.ud, fill(b)]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }))[0] as { ok?: { answers: unknown; log: string[] }; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok.answers), norm(answers), `steps ${k}`);
+    assert.deepEqual(got.ok.log, log, `steps ${k}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `steps ${k}: the game folder`);
+    assert.deepEqual(norm(manifest(b)), norm(manifest(a)), `steps ${k}: the library`);
+  }
+  const rec = mineOf(a);
+  assert.equal(rec.enabled, false, 'a rebuilt record stays off');
+  assert.equal(rec.generated.base, 'Nice HUD', 'built on the mod the app could read');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('towers, trees and the map looks record in Rust build what the TypeScript builds', { skip }, async () => {
+  const sandboxPak = path.join(sandboxGame, 'dota', 'pak01_dir.vpk');
+  if (!fs.existsSync(sandboxPak)) return;
+  const tl = await import('../src/tower-looks.ts');
+  const ts = await import('../src/tree-sets.ts');
+  const { itemVisuals } = await import('../src/item-visuals.ts');
+  const { createMapLooks } = await import('../src/map-looks-service.ts');
+  const { buildVpk, entryAt, openVpkIndex } = await import('../src/vpk.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-map-'));
+  const itemsGame = openVpkIndex(sandboxPak).read('scripts/items/items_game.txt')!;
+  const itemsFile = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(itemsFile, itemsGame);
+  const text = itemsGame.toString('latin1');
+  const looks = tl.towerLooks(text);
+  assert.ok(looks.length >= 5, 'the table has tower looks');
+  const both = looks.find((l) => l.sides.length === 2)!;
+  const radiantOnly = looks.find((l) => l.id !== both.id && l.sides.includes('radiant'))!;
+  // a pak01 of the table, the files the looks name (one left out) and a few trees
+  const planned = [...new Set(looks.flatMap((l) => (['radiant', 'dire'] as const).flatMap((s) => tl.towerPlan(itemVisuals(text, l.id)!.modifiers, s).files.map((f) => f.from))))];
+  const winter = ts.TREE_SETS.find((x) => x.id === 'winter')!.models.map((m) => `${m}_c`);
+  const files = new Map<string, Buffer>([['scripts/items/items_game.txt', itemsGame]]);
+  for (const [k, f] of [...planned.slice(1), ...winter.slice(1), ...Object.values(tl.DEFAULT_TOWER).map((m) => `${m}_c`)].entries()) files.set(f, Buffer.from(`model ${k} ${f}`));
+  const pakDir = path.join(tmp, 'pak');
+  fs.mkdirSync(pakDir);
+  const pak = path.join(pakDir, 'pak01_dir.vpk');
+  fs.writeFileSync(pak, buildVpk([...files].map(([p, b]) => entryAt(p, b))));
+  const real = fs.existsSync(GAME_PAK01) ? GAME_PAK01 : null;
+  const pick = (r: string | null, d: string | null) => [r, d];
+  const builds = [pick(both.id, both.id), pick(both.id, null), pick(null, both.id), pick(radiantOnly.id, null), pick(null, null), pick('999999999', null), pick(radiantOnly.id, radiantOnly.id)];
+  compare([
+    { name: 'tower-looks.ids', ts: ((x: string) => tl.towerLookIds(Buffer.from(x, 'latin1').toString('latin1'))) as never, inputs: [[{ $file: itemsFile }], ['\n\t\t"5"{ "asset" "npc_dota_goodguys_tower1" }'], ['']] },
+    { name: 'tower-looks.looks', ts: ((x: string) => tl.towerLooks(x)) as never, inputs: [[{ $file: itemsFile }]] },
+    { name: 'tower-looks.plan', ts: ((x: string, id: string, side: 'radiant' | 'dire') => tl.towerPlan(itemVisuals(x, id)?.modifiers ?? [], side)) as never,
+      inputs: looks.flatMap((l) => [[{ $file: itemsFile }, l.id, 'radiant'], [{ $file: itemsFile }, l.id, 'dire']]) },
+    { name: 'tower-looks.build', ts: ((p: string, x: string, r: string | null, d: string | null) => {
+      const b = tl.buildTowers({ pak01: p, text: x, radiant: r, dire: d });
+      return { vpk: sha(b.vpk), names: b.names, files: b.files, missing: b.missing, skipped: b.skipped };
+    }) as never, inputs: [...builds.map((b) => [pak, { $file: itemsFile }, ...b]), ...(real ? looks.map((l) => [real, { $file: itemsFile }, l.sides.includes('radiant') ? l.id : null, l.sides.includes('dire') ? l.id : null]) : [])] },
+    { name: 'tree-sets.plan', ts: ((side: 'radiant' | 'dire', id: string) => ts.treePlan(side, ts.TREE_SETS.find((x) => x.id === id)!)) as never,
+      inputs: ts.TREE_SETS.flatMap((x) => [['radiant', x.id], ['dire', x.id]]) },
+    { name: 'tree-sets.build', ts: ((p: string, r: string | null, d: string | null) => { const b = ts.buildTrees({ pak01: p, radiant: r, dire: d }); return { vpk: sha(b.vpk), files: b.files, missing: b.missing }; }) as never,
+      inputs: [[pak, 'winter', null], [pak, 'winter', 'winter'], [pak, 'radiant', 'dire'], [pak, null, null], [pak, 'nope', null], [pak, '', 'topiary'],
+        ...(real ? ts.TREE_SETS.map((x) => [real, x.id, x.id]) : [])] },
+  ]);
+
+  // the records: twin games and libraries, the same steps on each
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const r = path.join(tmp, side);
+    const game = path.join(r, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.copyFileSync(pak, path.join(game, 'dota', 'pak01_dir.vpk'));
+    return { game, lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  type Op = unknown[];
+  const steps: Op[][] = [
+    [['state'], ['install', 'bridges', 'x', null], ['install', 'towers', null, ''], ['install', 'towers', 'nope', null], ['install', 'towers', both.id, both.id],
+      ['install', 'trees', 'winter', null], ['state'], ['install', 'towers', radiantOnly.id, null], ['install', 'trees', 'desert-dire', null], ['install', 'trees', 'topiary', 'jungle'], ['state']],
+    // switched off, then an update: both built again, the towers still off
+    [['rebuild', ['$towers', '$trees', 'zzz']], ['state']],
+  ];
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const idOf = (x: Twin, kind: string) => manifest(x).installed.find((r: { generated?: { map?: string } }) => r.generated?.map === kind)?.id;
+  for (const [k, ops] of steps.entries()) {
+    if (k === 1) {
+      for (const x of [a, b]) {
+        FileTx.journalDir = x.journal;
+        const inst = new Installer({ userDataDir: x.ud, getGamePath: () => x.game, getLangSuffix: () => 'russian' });
+        const lib = new Library(x.lib);
+        const rec = lib.list().find((r) => (r.generated as { map?: string } | undefined)?.map === 'towers')!;
+        inst.setEnabled(rec.files, false, rec.id);
+        lib.setEnabled(rec.id, false);
+        FileTx.journalDir = null;
+      }
+    }
+    const fill = (x: Twin) => ops.map((op) => op.map((v) => (Array.isArray(v) ? v.map((i) => (i === '$towers' ? idOf(x, 'towers') : i === '$trees' ? idOf(x, 'trees') : i)) : v)));
+    const answers: unknown[] = [];
+    const log: string[] = [];
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      const svc = createMapLooks({ gamePath: () => a.game, installer: inst as never, library: lib, log: (m) => log.push(m) });
+      for (const [op, ...args] of fill(a)) {
+        try {
+          if (op === 'state') answers.push(snap(svc.state()));
+          else if (op === 'install') answers.push(snap(svc.install(args[0], args[1], args[2])));
+          else answers.push(snap(svc.rebuild(args[0] as string[])));
+        } catch (e) { answers.push(snap({ error: (e as Error).message })); }
+      }
+    } finally { FileTx.journalDir = null; }
+    const list = path.join(tmp, `steps-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['map-looks.service', b.game, 'russian', b.journal, b.lib, b.ud, fill(b)]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 }))[0] as { ok?: { answers: unknown; log: string[] }; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok.answers), norm(answers), `steps ${k}`);
+    assert.deepEqual(got.ok.log, log, `steps ${k}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `steps ${k}: the game folder`);
+    assert.deepEqual(norm(manifest(b)), norm(manifest(a)), `steps ${k}: the library`);
+  }
+  const towers = manifest(a).installed.find((r: { generated?: { map?: string } }) => r.generated?.map === 'towers');
+  assert.equal(towers.enabled, false, 'the towers stay off through the rebuild');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the map without its decor in Rust finds and blanks the materials the TypeScript does', { skip }, async () => {
+  const md = await import('../src/map-decor.ts');
+  const { buildVpk, entryAt, openVpkIndex } = await import('../src/vpk.ts');
+  const { drain } = await import('../src/steps.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-decor-'));
+  const vpkAt = (file: string, files: [string, string | Buffer][]) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buildVpk(files.map(([p, b]) => entryAt(p, Buffer.isBuffer(b) ? b : Buffer.from(b, 'latin1')))));
+    return file;
+  };
+  // a map naming materials and models straight and in mixed case, models naming more of them
+  const mapFiles = (extra = ''): [string, string][] => [
+    ['maps/dota/world.vwrld_c', `\0materials/models/props_nature/grass_01.vmat\0Materials/Nature/Card_Grass_A.VMAT_c models/props_debris/rocks_01.vmdl\0${extra}`],
+    ['maps/dota/entities/default_ents.vents_c', 'models/props_tree/tree_pine_01.vmdl models/props_wildlife/frog.vmdl models/heroes/axe/axe.vmdl'],
+    ['maps/dota/nodes.vwnod_c', 'materials/overlays/blood/splat.vmat materials/overlays/leaves/pile.vmat materials/terrain/ground.vmat materials/models/props_bones/skull.vmaté'],
+  ];
+  const pakFiles: [string, string][] = [
+    [md.BLANK, 'blank material'],
+    ['models/props_debris/rocks_01.vmdl_c', 'x materials/models/props_rock/rock_02.vmat y materials/models/props_magic/orb.vmat'],
+    ['models/props_wildlife/frog.vmdl_c', 'materials/models/props_wildlife/frog_skin.vmat'],
+    ['models/props_tree/tree_pine_01.vmdl_c', 'materials/models/props_tree/pine.vmat'],
+    ...['materials/models/props_nature/grass_01.vmat_c', 'materials/nature/card_grass_a.vmat_c', 'materials/models/props_rock/rock_02.vmat_c',
+      'materials/models/props_wildlife/frog_skin.vmat_c', 'materials/overlays/blood/splat.vmat_c', 'materials/models/props_bones/skull.vmat_c',
+      'materials/terrain/ground.vmat_c', 'materials/models/props_tree/pine.vmat_c'].map((p) => [p, `material ${p}`] as [string, string]),
+  ];
+  const map = vpkAt(path.join(tmp, 'm', 'dota.vpk'), mapFiles());
+  const pak = vpkAt(path.join(tmp, 'p', 'pak01_dir.vpk'), pakFiles);
+  const real = fs.existsSync(GAME_PAK01) && fs.existsSync(path.join(path.dirname(GAME_PAK01), 'maps', 'dota.vpk'))
+    ? [[path.join(path.dirname(GAME_PAK01), 'maps', 'dota.vpk'), GAME_PAK01]] : [];
+  compare([
+    { name: 'map-decor.clampGroups', ts: md.clampGroups, inputs: [[null], ['plants'], [[]], [['debris', 'plants', 'plants', 'x']], [['debris']]] },
+    { name: 'map-decor.materials', ts: ((m: string, p: string) => drain(md.decorMaterialsSteps(openVpkIndex(m), openVpkIndex(p)))) as never, inputs: [[map, pak], ...real] },
+  ]);
+
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const r = path.join(tmp, side);
+    const game = path.join(r, 'game');
+    vpkAt(path.join(game, 'dota', 'maps', 'dota.vpk'), mapFiles());
+    vpkAt(path.join(game, 'dota', 'pak01_dir.vpk'), pakFiles);
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    return { game, lib: path.join(r, 'lib'), ud: path.join(r, 'ud'), journal: path.join(r, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const steps: unknown[][][] = [
+    [['state'], ['install', []], ['install', 'plants'], ['install', ['plants']], ['state'], ['install', ['debris', 'plants']], ['state'], ['rebuild', ['zzz']]],
+    // a whole-map terrain in the language folder, the record switched off, and an update
+    [['state'], ['rebuild', ['$id']], ['state']],
+    // no game folder
+    [['state'], ['install', ['debris']]],
+  ];
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const mineOf = (x: Twin) => manifest(x).installed.find((r: { generated?: { decor?: unknown } }) => Array.isArray(r.generated?.decor));
+  for (const [k, ops] of steps.entries()) {
+    if (k === 1) {
+      for (const x of [a, b]) {
+        vpkAt(path.join(x.game, 'dota_russian', 'maps', 'dota.vpk'), mapFiles('materials/overlays/petals/rose.vmat materials/models/props_rock/rock_02.vmat'));
+        FileTx.journalDir = x.journal;
+        const inst = new Installer({ userDataDir: x.ud, getGamePath: () => x.game, getLangSuffix: () => 'russian' });
+        const lib = new Library(x.lib);
+        const rec = lib.list().find((r) => Array.isArray((r.generated as { decor?: unknown } | undefined)?.decor))!;
+        inst.setEnabled(rec.files, false, rec.id);
+        lib.setEnabled(rec.id, false);
+        FileTx.journalDir = null;
+      }
+    }
+    const gameOf = (x: Twin) => (k === 2 ? '' : x.game);
+    const fill = (x: Twin) => ops.map((op) => op.map((v) => (Array.isArray(v) ? v.map((i) => (i === '$id' ? mineOf(x)?.id : i)) : v)));
+    const answers: unknown[] = [];
+    const log: string[] = [];
+    FileTx.journalDir = a.journal;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => gameOf(a) || null, getLangSuffix: () => 'russian' });
+      const lib = new Library(a.lib);
+      let rebuilt: string | null = null;
+      const svc = md.createMapDecor({ gamePath: () => gameOf(a) || null, installer: inst as never, library: lib, onRebuilt: (id) => { rebuilt = id; }, log: (m) => log.push(m) });
+      for (const [op, ...args] of fill(a)) {
+        try {
+          if (op === 'state') answers.push(snap(await svc.state()));
+          else if (op === 'install') answers.push(snap(await svc.install(args[0])));
+          else {
+            rebuilt = null;
+            const returned = svc.rebuild(args[0] as string[]);
+            await new Promise((r) => setTimeout(r, 100));
+            answers.push(snap({ returned, rebuilt }));
+          }
+        } catch (e) { answers.push(snap({ error: (e as Error).message })); }
+      }
+    } finally { FileTx.journalDir = null; }
+    const list = path.join(tmp, `steps-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['map-decor.service', gameOf(b), 'russian', b.journal, b.lib, b.ud, fill(b)]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }))[0] as { ok?: { answers: unknown; log: string[] }; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok.answers), norm(answers), `steps ${k}`);
+    assert.deepEqual(got.ok.log, log, `steps ${k}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `steps ${k}: the game folder`);
+    assert.deepEqual(norm(manifest(b)), norm(manifest(a)), `steps ${k}: the library`);
+  }
+  assert.equal(mineOf(a).enabled, false, 'a rebuilt record stays off');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the pumpkin in Rust reads keys, spends them and fetches the prize as the TypeScript does', { skip }, async () => {
+  const pk = await import('../src/pumpkin.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { Library } = await import('../src/library.ts');
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pumpkin-'));
+  const typed = ['', '   ', 'short', 'aaaa-aaaa-aaaa-aaaa', 'AAAA AAAA AAAA AAAA', 'фффффффффффффффф', 'АААА ВВВВ СССС ЕЕЕЕ', 'ФЫВА-ФЫВА-ФЫВА-ФЫВА',
+    'used-used-used-used', 'a1b2c3d4e5f6g7h8i9', 'straße-straße-1234', 'ńñ00000000000000', '0123456789abcdef', 'ЙЦУКЕНГШЩЗХЪ1234'];
+  const nights = [{}, { nightRound: 1, blood: true }, { nightRound: 0, blood: true, theme: 'blood', secret: true }, { theme: 'secret' }, { nightRound: '1', theme: 'dark' }];
+  const nightDirs = nights.flatMap((n, i) => ['ts', 'rs'].map((side) => {
+    const d = path.join(tmp, `night-${i}-${side}`);
+    fs.mkdirSync(d, { recursive: true });
+    fs.writeFileSync(path.join(d, 'settings.json'), JSON.stringify(n));
+    return d;
+  }));
+  compare([{ name: 'pumpkin.readings', ts: pk.readings, inputs: typed.map((x) => [x]) }]);
+  const listNight = path.join(tmp, 'night.json');
+  fs.writeFileSync(listNight, JSON.stringify(nights.map((_, i) => ['pumpkin.beginNightAgain', nightDirs[2 * i + 1]])));
+  const rsNight = JSON.parse(execFileSync(cli, ['call', listNight], { encoding: 'utf8' })) as { ok: unknown }[];
+  for (const [i] of nights.entries()) {
+    const st = new Settings(nightDirs[2 * i]);
+    assert.deepEqual(rsNight[i].ok, pk.beginNightAgain(st as never), `night ${i}`);
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(nightDirs[2 * i + 1], 'settings.json'), 'utf8')),
+      JSON.parse(fs.readFileSync(path.join(nightDirs[2 * i], 'settings.json'), 'utf8')), `night ${i}: the settings`);
+  }
+
+  // the worker: one key that opens, one spent, one the server chokes on, prizes that do not land
+  const seen: Record<string, string[]> = { ts: [], rs: [] };
+  const server = http.createServer((req, res) => {
+    const [, side, ...rest] = (req.url ?? '').split('/');
+    const at = `/${rest.join('/')}`;
+    let body = '';
+    req.on('data', (d) => { body += d; });
+    req.on('end', () => {
+      seen[side]?.push(`${req.method} ${at} ${body}`);
+      const u = new URL(at, 'http://x');
+      const key = u.searchParams.get('key') ?? (body ? JSON.parse(body).key : '');
+      if (u.pathname === '/redeem') {
+        const code = key === 'USEDUSEDUSEDUSED' ? 409 : key.startsWith('BROKEN') ? 500 : ['AAAAAAAAAAAAAAAA', 'BADPRIZE00000000', 'BOOM000000000000', 'NOPRIZE000000000'].includes(key) ? 200 : 404;
+        res.writeHead(code).end();
+      } else if (u.pathname === '/mod') {
+        if (key === 'NOPRIZE000000000') res.writeHead(503).end();
+        else res.writeHead(200).end(key === 'AAAAAAAAAAAAAAAA' ? `VPK prize ${u.searchParams.get('voice')}` : key === 'BOOM000000000000' ? 'boom' : 'junk');
+      } else if (u.pathname === '/mod/preview') {
+        if (key === 'AAAAAAAAAAAAAAAA') res.writeHead(200, { 'Content-Type': 'image/webp' }).end(Buffer.from([1, 2, 3, 250]));
+        else res.writeHead(404).end();
+      } else res.writeHead(404).end();
+    });
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const dead = await new Promise<string>((r) => { const s = http.createServer(); s.listen(0, '127.0.0.1', () => { const p = (s.address() as import('node:net').AddressInfo).port; s.close(() => r(`http://127.0.0.1:${p}`)); }); });
+  const INSTALL = '0123456789abcdef0123456789abcdef';
+  type Run = { name: string; host: (side: string) => string; voice: string | null; seed: Record<string, unknown>; ops: unknown[][] };
+  const runs: Run[] = [
+    { name: 'night', host: (s) => `${base}/${s}`, voice: 'russian', seed: { pumpkinInstall: INSTALL },
+      ops: [['has'], ['again'], ['redeem', null], ['redeem', '  '], ['redeem', 'nope'], ['redeem', 'used-used-used-used'], ['redeem', 'broken-key-12345'],
+        ['redeem', '0000-0000-0000-0001'], ['redeem', 'nopr-ize0-0000-0000'], ['redeem', 'BADPRIZE00000000'], ['redeem', 'boom000000000000'],
+        ['redeem', 'фффф-фффф-фффф-фффф'], ['has'], ['again'], ['has'], ['install']] },
+    { name: 'no voice', host: (s) => `${base}/${s}`, voice: null, seed: { pumpkinInstall: INSTALL, bloodKey: 'AAAAAAAAAAAAAAAA' }, ops: [['again'], ['has']] },
+    { name: 'offline', host: () => dead, voice: null, seed: { pumpkinInstall: INSTALL, bloodKey: 'NOPRIZE000000000' }, ops: [['redeem', 'aaaaaaaaaaaaaaaa'], ['again']] },
+  ];
+  const dirs = (side: string, r: Run) => {
+    const d = path.join(tmp, `${r.name}-${side}`);
+    fs.mkdirSync(path.join(d, 'ud'), { recursive: true });
+    fs.writeFileSync(path.join(d, 'ud', 'settings.json'), JSON.stringify(r.seed));
+    return { ud: path.join(d, 'ud'), lib: path.join(d, 'lib') };
+  };
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify(runs.map((r) => { const d = dirs('rs', r); return ['pumpkin.script', r.host('rs'), d.ud, d.lib, r.voice, r.ops]; })));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const want: unknown[] = [];
+  for (const r of runs) {
+    const d = dirs('ts', r);
+    const settings = new Settings(d.ud);
+    const library = new Library(d.lib);
+    let n = 90;
+    const log: string[] = [];
+    const p = pk.createPumpkin({
+      settings: settings as never, library: library as never, voice: () => r.voice, host: r.host('ts'), log: (m) => log.push(m),
+      importVpkPaths: async (paths: string[]) => {
+        const data = fs.readFileSync(paths[0]);
+        if (data.subarray(0, 4).toString() === 'boom') return { error: 'boom' };
+        if (data.subarray(0, 3).toString() !== 'VPK') return { imported: [], errors: [{ error: 'not a vpk' }] };
+        const relPath = `pak${++n}_dir.vpk`;
+        const name = path.basename(paths[0], '.vpk');
+        library.add({ name, categoryId: 'imported', styleLabel: null, fileRef: null, files: [{ root: 'lang', relPath }] } as never);
+        return { imported: [{ name, relPath }], errors: [] };
+      },
+    });
+    const answers: unknown[] = [];
+    for (const op of r.ops) {
+      if (op[0] === 'redeem') answers.push(snap(await p.redeem(op[1])));
+      else if (op[0] === 'again') answers.push(snap(await p.prizeAgain()));
+      else if (op[0] === 'has') answers.push(p.hasPrize());
+      else answers.push(p.install());
+    }
+    want.push({ answers, log });
+  }
+  const got = (JSON.parse(await rsRun) as { ok?: unknown; error?: string }[]).map((a) => { assert.ok(a.ok, a.error); return a.ok; });
+  server.closeAllConnections(); server.close();
+  // how a refused connection is worded is the platform's
+  const calm = (v: unknown): unknown => JSON.parse(JSON.stringify(v, (k, x) => ((k === 'detail' || k === 'error') && typeof x === 'string' && /fetch failed|os error|refused|connect/i.test(x) ? '<why>' : typeof x === 'string' && x.startsWith('pumpkin: ') && !x.includes('prize') ? 'pumpkin: <why>' : x)));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) ? `<${k}>` : x)));
+  for (const [i, r] of runs.entries()) {
+    assert.deepEqual(calm(got[i]), calm(want[i]), r.name);
+    const [a, b] = ['ts', 'rs'].map((side) => path.join(tmp, `${r.name}-${side}`));
+    const file = (d: string, f: string) => (fs.existsSync(path.join(d, f)) ? JSON.parse(fs.readFileSync(path.join(d, f), 'utf8')) : null);
+    assert.deepEqual(file(b, 'ud/settings.json'), file(a, 'ud/settings.json'), `${r.name}: the settings`);
+    assert.deepEqual(norm(file(b, 'lib/manifest.json')), norm(file(a, 'lib/manifest.json')), `${r.name}: the library`);
+  }
+  assert.deepEqual(seen.rs, seen.ts, 'the requests');
+  const night = (want[0] as { answers: { ok?: boolean; installed?: string }[] }).answers;
+  assert.ok(night.some((x) => x.ok && x.installed === pk.PRIZE_NAME), 'a key did open the night');
+  // a missing install name is made, 32 hex digits, and kept
+  const fresh = path.join(tmp, 'fresh');
+  fs.mkdirSync(fresh);
+  fs.writeFileSync(list, JSON.stringify([['pumpkin.script', base, fresh, path.join(tmp, 'fresh-lib'), null, [['install'], ['install']]]]));
+  const [made] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok: { answers: string[] } }[];
+  assert.match(made.ok.answers[0], /^[0-9a-f]{32}$/);
+  assert.equal(made.ok.answers[1], made.ok.answers[0]);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('Steam\'s manifest and the repair after a patch in Rust read and put back the game as the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'gameinfo.gi'))) { t.skip('no sandbox'); return; }
+  const sa = await import('../src/steam-appstate.ts');
+  const { createGameRepair } = await import('../src/game-repair.ts');
+  const { createSchemaService } = await import('../src/schema-service.ts');
+  const { createUpdateImpact, impactMods } = await import('../src/update-impact.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-repair-'));
+
+  // the manifest: texts, flags, and where it sits next to a game
+  const acf = (flags: unknown, extra = '') => `"AppState"\n{\n\t"appid"\t\t"570"\n\t"StateFlags"\t\t"${flags}"\n${extra}}\n`;
+  const texts = [acf(4), acf(6), acf(1026, '\t"BytesToDownload"\t\t"900"\n\t"BytesDownloaded"\t\t"30"\n'), acf(0), acf(131076), acf('x'), '', 'no flags',
+    '"stateflags"   "4"', '"StateFlags" "1048580"', acf(4294967300), acf(2147483652)];
+  const flags = [0, 2, 4, 6, 260, 516, 1028, 131076, 1048580, 2097156, 4194308, 4194304, 4294967300, -4, 2.5];
+  const states = flags.map((f) => [{ flags: f, toDownload: 0, downloaded: 0 }]);
+  const lib = (name: string, text: string | null) => {
+    const game = path.join(tmp, name, 'steamapps', 'common', 'dota 2 beta', 'game');
+    fs.mkdirSync(game, { recursive: true });
+    if (text !== null) fs.writeFileSync(path.join(tmp, name, 'steamapps', 'appmanifest_570.acf'), text);
+    return game;
+  };
+  const games = [[lib('done', acf(4))], [lib('pending', acf(6))], [lib('none', null)], [lib('broken', 'junk')], [lib('trail', acf(1028)) + path.sep], [null], ['']];
+  compare([
+    { name: 'steam-appstate.parse', ts: sa.parseAppManifest, inputs: texts.map((x) => [x]) },
+    { name: 'steam-appstate.pending', ts: sa.updatePending, inputs: states },
+    { name: 'steam-appstate.work', ts: sa.steamWork as never, inputs: [...states, [null]] },
+    { name: 'steam-appstate.read', ts: sa.readAppState as never, inputs: games },
+    { name: 'steam-appstate.warning', ts: sa.launchWarning as never, inputs: games },
+  ]);
+
+  // the repair: twin games with three mods, two phases of a patch landing, and no game at all
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const pak = (file: string, files: Record<string, string>) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, buildVpk(Object.entries(files).map(([p, b]) => entryAt(p, Buffer.from(b)))));
+  };
+  const inf = (game: string, v: string) => fs.writeFileSync(path.join(game, 'dota', 'steam.inf'),
+    fs.readFileSync(path.join(sandboxGame, 'dota', 'steam.inf'), 'latin1').replace(/^ClientVersion=\d+/m, `ClientVersion=${v}`), 'latin1');
+  const mods = [
+    { id: 'm1', name: 'Mod one', at: 'pak90_dir.vpk', file: 'a/one.txt' },
+    { id: 'g1', name: 'Generated trees', at: 'pak91_dir.vpk', file: 'a/two.txt' },
+    { id: 'm3', name: 'Mod three', at: 'pak92_dir.vpk', file: 'a/three.txt' },
+  ];
+  type Twin = { root: string; game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    for (const f of ['bin/win64/dota.signatures', 'dota/gameinfo.gi', 'dota/gameinfo_branchspecific.gi', 'dota/cfg/boot.vcfg']) {
+      fs.mkdirSync(path.dirname(path.join(game, f)), { recursive: true });
+      fs.copyFileSync(path.join(sandboxGame, f), path.join(game, f));
+    }
+    inf(game, '100');
+    pak(path.join(game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one', 'a/two.txt': 'two', 'a/three.txt': 'three' });
+    for (const m of mods) pak(path.join(game, 'dota_russian', m.at), { [m.file]: `mine ${m.id}` });
+    for (const d of ['lib', 'ud']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: mods.map((m) => ({
+      id: m.id, name: m.name, categoryId: 'heroes', styleLabel: null, enabled: true, files: [{ root: 'lang', relPath: m.at }],
+    })), presets: [] }, null, 2));
+    fs.writeFileSync(path.join(root, 'ud', 'settings.json'), JSON.stringify({ dotaGamePath: game, schemaPatch: false }));
+    return { root, game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const phases: { build: string; ops: unknown[][]; before?: (x: Twin) => void }[] = [
+    { build: '100', ops: [['restore'], ['stuck'], ['patch'], ['start'], ['patch'], ['settings'], ['after', 'watch', true],
+      ['after', undefined, false, 'validating'], ['after', 'w', false, 'updating'], ['after', 'x', false, null], ['patch'], ['settings']] },
+    { build: '101', before: (x) => { inf(x.game, '101'); pak(path.join(x.game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one!', 'a/two.txt': 'two!', 'a/three.txt': 'three' }); },
+      ops: [['after', 'patch', false, null], ['patch'], ['settings'], ['after', 'again', false, null]] },
+    { build: '102', before: (x) => { inf(x.game, '102'); pak(path.join(x.game, 'dota', 'pak01_dir.vpk'), { 'a/one.txt': 'one!!', 'a/two.txt': 'two!' }); },
+      ops: [['start'], ['patch'], ['settings'], ['start'], ['patch']] },
+    { build: '103', before: (x) => { inf(x.game, '103'); }, ops: [['start'], ['patch'], ['settings']] },
+    { build: '104', before: (x) => {
+      const f = path.join(x.ud, 'settings.json');
+      fs.writeFileSync(f, JSON.stringify({ ...JSON.parse(fs.readFileSync(f, 'utf8')), dotaGamePath: null }));
+    }, ops: [['after', 'r', false, null], ['start'], ['patch'], ['settings']] },
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const file = (x: Twin, f: string) => (fs.existsSync(path.join(x.root, f)) ? JSON.parse(fs.readFileSync(path.join(x.root, f), 'utf8')) : null);
+  // the update note keys files by size:mtime, each side its own
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (k === 'key' || k === 'sig' ? '<sig>'
+    : typeof x === 'string' ? x.split(a.root).join('<root>').split(b.root).join('<root>') : x)));
+  for (const [k, ph] of phases.entries()) {
+    for (const x of [a, b]) ph.before?.(x);
+    const gameOf = (x: Twin) => (k === 4 ? '' : x.game);
+    const answers: unknown[] = [];
+    const log: string[] = [];
+    FileTx.journalDir = a.journal;
+    let repair: ReturnType<typeof createGameRepair> | null = null;
+    try {
+      const inst = new Installer({ userDataDir: a.ud, getGamePath: () => gameOf(a) || null, getLangSuffix: () => 'russian' });
+      const library = new Library(a.lib);
+      const settings = new Settings(a.ud);
+      const schemaService = createSchemaService({ settings: settings as never, library, installer: inst as never, userDataDir: a.ud, pak: inst as never,
+        modsOff: () => inst.masterIsOff(), onDeployed: () => {} });
+      const updateImpact = createUpdateImpact({ file: path.join(a.ud, 'update-impact.json'), gamePath: () => gameOf(a) || null,
+        mods: () => impactMods(library.list(), (rel) => inst.langFileOnDisk(rel)), build: () => ph.build, log: (m) => log.push(m) });
+      let running = false;
+      let steam: 'validating' | 'updating' | null = null;
+      let sent: unknown = null;
+      repair = createGameRepair({ settings: settings as never, installer: inst as never, library, schemaService, updateImpact,
+        rebuildGenerated: (ids) => ids.filter((id) => library.list().find((r) => r.id === id)?.name.startsWith('Generated')),
+        diag: (m) => log.push(m), send: (r) => { sent = r; }, isRunning: async () => running, steamBusy: () => steam, retryMs: 1e9, now: () => 0 });
+      for (const op of ph.ops) {
+        switch (op[0]) {
+          case 'start': repair.repairAtStart(); answers.push(snap({ rebuild: false, patch: repair.patchRepair() })); break;
+          case 'after': {
+            running = !!op[2]; steam = (op[3] ?? null) as never; sent = null;
+            await repair.repairAfterPatch(op[1]);
+            const s = sent as { at?: number; state?: string } | null;
+            answers.push(snap({ sent: s, retry: s?.state === 'waiting', rebuild: false }));
+            break;
+          }
+          case 'restore': answers.push(repair.restoreAfterVerify()); break;
+          case 'stuck': answers.push(snap(repair.verifyStuck())); break;
+          case 'patch': answers.push(snap(repair.patchRepair())); break;
+          case 'settings': answers.push({ gameStamp: settings.get('gameStamp') ?? null }); break;
+        }
+      }
+      await schemaService.settled?.();
+    } finally { repair?.stop(); FileTx.journalDir = null; }
+    const list = path.join(tmp, `phase-${k}.json`);
+    fs.writeFileSync(list, JSON.stringify([['game-repair.script', gameOf(b), 'russian', b.journal, b.lib, b.ud, ph.build, ph.ops.map((o) => o.map((v) => v ?? null))]]));
+    const got = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }))[0] as { ok?: { answers: unknown[]; log: string[] }; error?: string };
+    assert.ok(got.ok, got.error);
+    assert.deepEqual(norm(got.ok.answers), norm(answers), `phase ${k}`);
+    assert.deepEqual(got.ok.log, log, `phase ${k}: the log`);
+    assert.deepEqual(tree(b.game), tree(a.game), `phase ${k}: the game folder`);
+    for (const f of ['ud/settings.json', 'ud/update-impact.json', 'lib/manifest.json']) {
+      assert.deepEqual(norm(file(b, f)), norm(file(a, f)), `phase ${k}: ${f}`);
+    }
+  }
+  const told = (file(a, 'ud/update-impact.json') as { mods: Record<string, unknown> }).mods;
+  assert.ok(told.m1 && !told.g1, 'a mod the app builds again carries no mark');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

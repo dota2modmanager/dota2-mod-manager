@@ -212,6 +212,18 @@ impl Net {
         body: Option<&[u8]>,
         timeout_ms: u64,
     ) -> Result<(u16, Vec<u8>), NetError> {
+        self.direct_typed(method, url, headers, body, timeout_ms).map(|(status, _, body)| (status, body))
+    }
+
+    /// `direct`, with the answer's Content-Type.
+    pub fn direct_typed(
+        &self,
+        method: &str,
+        url: &str,
+        headers: &[(&str, &str)],
+        body: Option<&[u8]>,
+        timeout_ms: u64,
+    ) -> Result<(u16, Option<String>, Vec<u8>), NetError> {
         let agent = self.agent.read().unwrap_or_else(|e| e.into_inner()).1.clone();
         let timeout = Some(Duration::from_millis(timeout_ms));
         let err = |e: ureq::Error| {
@@ -232,9 +244,10 @@ impl Net {
             req.call().map_err(err)?
         };
         let status = res.status().as_u16();
+        let kind = res.headers().get("content-type").and_then(|v| v.to_str().ok()).map(str::to_string);
         let mut buf = Vec::new();
         res.into_body().into_reader().read_to_end(&mut buf).map_err(io_error)?;
-        Ok((status, buf))
+        Ok((status, kind, buf))
     }
 
     fn get(&self, url: &str, headers: &[(String, String)]) -> Result<Answer, NetError> {
