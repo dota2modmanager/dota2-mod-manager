@@ -97,6 +97,211 @@ fn tx_ops(tx: &mut crate::file_tx::FileTx, root: &std::path::Path, ops: &Value) 
     Ok(())
 }
 
+/// One step of the writing half of the installer, for its parity script.
+fn write_step(
+    root: &std::path::Path,
+    inst: &crate::installer::Installer,
+    lib: &mut crate::library::Library,
+    op: &Value,
+) -> Result<Value, String> {
+    use crate::overlays::{files_of, files_value};
+    use crate::safe_zip::{OpenedZip, Source};
+    use std::path::{Path, PathBuf};
+    let at = |v: &Value| -> PathBuf {
+        let p = crate::js::string(v);
+        match p.strip_prefix("@/") {
+            Some(rest) => rest.split('/').fold(root.to_path_buf(), |p, s| p.join(s)),
+            None => PathBuf::from(p),
+        }
+    };
+    let rel = |p: &Path| -> Value {
+        match p.strip_prefix(root) {
+            Ok(r) => json!(format!("@/{}", r.to_string_lossy().replace('\\', "/"))),
+            Err(_) => json!(p.to_string_lossy()),
+        }
+    };
+    let text = |v: &Value| crate::js::string(v);
+    Ok(match op[0].as_str().unwrap_or("") {
+        "unsafe" => json!(crate::safe_zip::is_unsafe_name(&text(&op[1]))),
+        "safeJoin" => rel(&crate::safe_zip::safe_join(&at(&op[1]), &text(&op[2]))?),
+        "zip" => {
+            let lim = op.get(2).filter(|v| v.is_object()).map(|l| {
+                let d = crate::safe_zip::LIMITS;
+                let n = |k: &str, dv: u64| l.get(k).and_then(Value::as_u64).unwrap_or(dv);
+                crate::safe_zip::Limits {
+                    archive_bytes: n("archiveBytes", d.archive_bytes),
+                    entries: n("entries", d.entries as u64) as usize,
+                    entry_bytes: n("entryBytes", d.entry_bytes),
+                    total_bytes: n("totalBytes", d.total_bytes),
+                    ratio: l.get("ratio").and_then(Value::as_f64).unwrap_or(d.ratio),
+                    ratio_floor: n("ratioFloor", d.ratio_floor),
+                }
+            });
+            OpenedZip::open(Source::File(&at(&op[1])), None, lim)?.describe()?
+        }
+        "space" => {
+            crate::disk_space::ensure_space(&at(&op[1]), op[2].as_u64().unwrap_or(0), Some(op[3].as_u64()))?;
+            Value::Null
+        }
+        "fileUrl" => json!(crate::installer_downloads::file_url(&text(&op[1]), &text(&op[2]))),
+        "cachedArchive" => inst.cached_archive(op[1].as_str(), op[2].as_str()).map_or(Value::Null, |p| rel(&p)),
+        "remember" => {
+            inst.remember_download(&text(&op[1]), op[2].clone());
+            Value::Null
+        }
+        "index" => Value::Object(inst.download_index()),
+        "listCache" => json!(inst
+            .list_download_cache()
+            .iter()
+            .map(|d| json!({ "key": d.key, "categoryId": d.category_id, "name": d.name, "bytes": d.bytes }))
+            .collect::<Vec<_>>()),
+        "removeCached" => json!(inst.remove_cached_download(&text(&op[1]))),
+        "cacheSize" => json!(inst.download_cache_size()),
+        "clearCache" => {
+            inst.clear_download_cache();
+            Value::Null
+        }
+        "installFonts" => files_value(&inst.install_fonts(Source::File(&at(&op[1])), &text(&op[2]), None)?),
+        "installCursor" => files_value(&inst.install_cursor(Source::File(&at(&op[1])), &text(&op[2]), None)?),
+        "written" => Value::Object(inst.written()),
+        "fontHashes" => json!(inst.font_folder_hashes()),
+        "lost" => json!(inst.lost_to_verify(op[1].as_array().map(Vec::as_slice).unwrap_or(&[]))),
+        "ensureStore" => json!(inst.ensure_cursor_store(op[1].as_str(), &files_of(&op[2]))?),
+        "deployCursor" => json!(inst.deploy_cursor(&text(&op[1]), &files_of(&op[2]))?),
+        "undeployCursor" => {
+            inst.undeploy_cursor(&text(&op[1]), &files_of(&op[2]))?;
+            Value::Null
+        }
+        "cursorZip" => {
+            let buf = inst.cursor_zip(&text(&op[1]), &text(&op[2]), &files_of(&op[3]))?;
+            OpenedZip::open(Source::Bytes(buf), Some("x"), None)?.describe()?["files"].clone()
+        }
+        "dropStore" => {
+            inst.drop_cursor_store(op[1].as_str());
+            Value::Null
+        }
+        "restore" => json!(inst.restore_deployed(&op[1])?),
+        "install" => {
+            let local = at(&op[3]);
+            let (category_id, mod_name) = (text(&op[1]), text(&op[2]));
+            let job =
+                crate::installer_write::InstallJob { category_id: &category_id, mod_name: &mod_name, local: &local };
+            let files = crate::file_tx::FileTx::run(inst.journal_dir.as_deref(), inst.tx_log(), |tx| {
+                inst.install_into(tx, &job)
+            })?;
+            files_value(&files)
+        }
+        "installTool" => files_value(&inst.install_tool(&at(&op[1]), &text(&op[2]), None)?),
+        "setEnabled" => {
+            inst.set_enabled(&files_of(&op[1]), op[2].as_bool().unwrap_or(false), op[3].as_str())?;
+            Value::Null
+        }
+        "remove" => {
+            inst.remove(&files_of(&op[1]), op[2].as_str(), op[3].as_bool().unwrap_or(true))?;
+            Value::Null
+        }
+        "merge" => {
+            let deltas: Option<Vec<Vec<u8>>> = op[2]
+                .as_array()
+                .map(|d| d.iter().map(|b| text(&b["block"]).chars().map(|c| c as u8).collect()).collect());
+            json!(crate::safe_zip::sha1_hex(&inst.merge_to_single_vpk(&files_of(&op[1]), deltas.as_deref())?))
+        }
+        "unpack" => {
+            let (n, bytes) = inst.unpack_to_folder(&files_of(&op[1]), &at(&op[2]))?;
+            json!({ "files": n, "bytes": bytes })
+        }
+        "displayName" => json!(inst.display_name_for_file(&text(&op[1]))),
+        "harvest" => {
+            let mut records = files_of(&op[1]);
+            let vanilla = match op[2].as_str() {
+                Some(_) => Some(std::fs::read(at(&op[2])).map_err(|e| e.to_string())?),
+                None => None,
+            };
+            let (deltas, stripped) = inst.harvest_schema(&mut records, vanilla.as_deref())?;
+            json!({ "deltas": deltas, "stripped": stripped, "records": files_value(&records) })
+        }
+        "installedSize" => json!(inst.installed_size(&files_of(&op[1]))?),
+        "dropIcons" => {
+            let mut records = files_of(&op[1]);
+            let n = inst.drop_item_icons(&mut records)?;
+            json!({ "n": n, "records": files_value(&records) })
+        }
+        "analyze" => inst.analyze_record(&files_of(&op[1])).unwrap_or(Value::Null),
+        "split" => json!(inst.split_vpk_file(&text(&op[1]))?),
+        "mergeMulti" => {
+            inst.merge_multi_part_records(lib)?;
+            json!(lib.list())
+        }
+        "addMember" => {
+            let rec = op[2].as_u64().and_then(|i| lib.list().get(i as usize)).cloned().unwrap_or(json!({}));
+            inst.add_pack_member_from_record(&text(&op[1]), &rec, &text(&op[3]))?
+        }
+        "deployPack" => inst.deploy_pack(&op[1])?,
+        "removePackFully" => {
+            inst.remove_pack_fully(&op[1])?;
+            Value::Null
+        }
+        "deployMember" => files_value(&inst.deploy_member_as_mod(&text(&op[1]), &text(&op[2]))?),
+        "importPaths" => {
+            let paths: Vec<PathBuf> = op[1].as_array().map(|a| a.iter().map(at).collect()).unwrap_or_default();
+            let mut steps = Vec::new();
+            let out = crate::import::import_vpks(inst, &paths, &mut |d, t| steps.push(json!([d, t])))?;
+            json!({ "results": out, "steps": steps })
+        }
+        "importBuffers" => {
+            let mut items = Vec::new();
+            for it in op[1].as_array().cloned().unwrap_or_default() {
+                items.push((text(&it[0]), std::fs::read(at(&it[1])).map_err(|e| e.to_string())?));
+            }
+            json!(crate::import::import_vpk_buffers(inst, &items, &mut |_, _| {})?)
+        }
+        "installBuffer" => {
+            json!(crate::import::install_vpk_buffer(inst, &std::fs::read(at(&op[1])).map_err(|e| e.to_string())?)?)
+        }
+        "libList" => json!(lib.list()),
+        "fpStore" => {
+            crate::fingerprints::Fingerprints::new(&inst.user_data).store(&text(&op[1]))?;
+            Value::Null
+        }
+        "fpMatch" => json!(crate::fingerprints::Fingerprints::new(&inst.user_data).matches(op[1].as_str())),
+        "fpHas" => json!(crate::fingerprints::Fingerprints::new(&inst.user_data).has_data()),
+        "fpPrints" => {
+            let style = op.get(3).cloned().filter(|v| !v.is_null());
+            let mut fp = crate::fingerprints::Fingerprints::new(&inst.user_data);
+            json!(fp.prints_of(&text(&op[1]), &text(&op[2]), &style).map(|p| {
+                let mut v: Vec<&String> = p.iter().collect();
+                v.sort();
+                v.into_iter().cloned().collect::<Vec<_>>()
+            }))
+        }
+        "fpFonts" => {
+            let mut fp = crate::fingerprints::Fingerprints::new(&inst.user_data);
+            let hashes = inst.font_folder_hashes().unwrap_or_default();
+            json!(fp.match_fonts(&hashes).iter().map(|m| m.name.clone()).collect::<Vec<_>>())
+        }
+        "updatable" => json!(crate::mod_update::updatable(&op[1])),
+        "behind" => {
+            let mut fp = crate::fingerprints::Fingerprints::new(&inst.user_data);
+            json!(crate::mod_update::behind_catalog(&op[1], op[2].as_str(), &mut |c, n, st| fp
+                .prints_of(c, n, st)
+                .cloned()))
+        }
+        "updateMod" => {
+            let rec = op[1].as_u64().and_then(|i| lib.list().get(i as usize)).cloned().unwrap_or(json!({}));
+            let out = crate::mod_update::update_mod(inst, lib, &rec, &at(&op[2]), &mut |_| {})?;
+            // the clock differs between the two runs
+            lib.drop_fields(&rec["id"], &["updatedAt"], None).map_err(|e| e.to_string())?;
+            json!(out.get("files"))
+        }
+        "ring" => json!(crate::emblem_ring::with_ring(&text(&op[1]), op[2].as_bool().unwrap_or(false))),
+        "keepRing" => json!(crate::emblem_ring::keep_ring(
+            inst.game.as_deref().unwrap_or(Path::new("")),
+            op[1].as_bool().unwrap_or(false)
+        )?),
+        other => return Err(format!("no step {other}")),
+    })
+}
+
 /// One step of a load order script; records are named by their place in the library.
 fn slots_step(
     inst: &crate::installer::Installer,
@@ -817,6 +1022,23 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
         "library.inPreset" => json!(crate::library::Library::in_preset(args.first())),
         "library.isPick" => json!(crate::library::Library::is_pick(args.first())),
         "library.pickOf" => crate::library::Library::pick_of(&args[0]),
+        "installer.script" => {
+            // (root, game, suffix, journalDir, userData, libraryDir, ops): "@/x" in an op is root/x
+            let root = std::path::PathBuf::from(s(args, 0));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 1), &s(args, 2))
+                .with_user_data(std::path::Path::new(&s(args, 4)));
+            inst.journal_dir = opt_path(args, 3);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 5)));
+            let ops = args.get(6).and_then(Value::as_array).cloned().unwrap_or_default();
+            Value::Array(
+                ops.iter()
+                    .map(|op| match write_step(&root, &inst, &mut lib, op) {
+                        Ok(v) => json!({ "ok": v }),
+                        Err(e) => json!({ "error": e }),
+                    })
+                    .collect(),
+            )
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));
@@ -911,6 +1133,29 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 count_mods: count.as_ref().map(|c| c as &dyn Fn(&str) -> usize),
                 launch_options: o["launchOptions"].as_str(),
             }))
+        }
+        "patcher.script" => {
+            // (game, backupDir, ops): ["state", folder] ["apply", folder] ["revert", folder]
+            let game = std::path::PathBuf::from(s(args, 0));
+            let backups = std::path::PathBuf::from(s(args, 1));
+            let ops = args.get(2).and_then(Value::as_array).cloned().unwrap_or_default();
+            Value::Array(
+                ops.iter()
+                    .map(|op| {
+                        let folder = op[1].as_str();
+                        let r = match op[0].as_str().unwrap_or("") {
+                            "state" => crate::patcher::state(&game, folder),
+                            "apply" => crate::patcher::apply(&game, folder.unwrap_or(""), &backups),
+                            "revert" => crate::patcher::revert(&game, folder, &backups),
+                            other => Err(format!("no step {other}")),
+                        };
+                        match r {
+                            Ok(v) => json!({ "ok": v }),
+                            Err(e) => json!({ "error": e }),
+                        }
+                    })
+                    .collect(),
+            )
         }
         "patcher-gameinfo.searchPathsBlock" => json!(crate::patcher_gameinfo::search_paths_block(&s(args, 0))?),
         "patcher-gameinfo.withModFolder" => json!(crate::patcher_gameinfo::with_mod_folder(&s(args, 0), &s(args, 1))?),

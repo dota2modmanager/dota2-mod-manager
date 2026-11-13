@@ -1722,3 +1722,304 @@ test('the master switch, the ownership note and foreign files in Rust match the 
   assert.deepEqual(tree(b.root), tree(a.root));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('installing, switching, removing, fonts, cursors, packs and the download cache in Rust match the TypeScript', { skip }, async () => {
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { openZip, safeJoin, isUnsafeName } = await import('../src/safe-zip.ts');
+  const { ensureSpace } = await import('../src/disk-space.ts');
+  const { fileUrl } = await import('../src/installer-downloads.ts');
+  const imp = await import('../src/import.ts');
+  const { Fingerprints } = await import('../src/fingerprints.ts');
+  const mu = await import('../src/mod-update.ts');
+  const ring = await import('../src/emblem-ring.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk-write.ts');
+  const AdmZip = (await import('adm-zip')).default;
+  const crypto = await import('node:crypto');
+  const sha1 = (b: Buffer) => crypto.createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-write-'));
+  const pak = (files: Record<string, string | Buffer>) => buildVpk(Object.entries(files).map(([p, d]) => entryAt(p, Buffer.from(d))));
+  const zip = (files: Record<string, string | Buffer>) => {
+    const z = new AdmZip();
+    for (const [n, d] of Object.entries(files)) z.addFile(n, Buffer.from(d));
+    return z.toBuffer();
+  };
+  const evil = (() => {
+    const z = new AdmZip();
+    z.addFile('ok.txt', Buffer.from('ok'));
+    z.addFile('CON', Buffer.from('c'));
+    z.addFile('a/dots./x.txt', Buffer.from('d'));
+    z.addFile('dir/', Buffer.alloc(0));
+    // a name adm-zip will not write for us, patched into both headers after the fact
+    return Buffer.from(z.toBuffer().toString('latin1').replaceAll('a/dots./x.txt', '../../evx.txt'), 'latin1');
+  })();
+  const heroes = {
+    'models/heroes/juggernaut/juggernaut.vmdl_c': 'j', 'materials/models/heroes/juggernaut/j.vmat_c': 'jm',
+    'models/heroes/axe/axe.vmdl_c': 'a', 'particles/units/heroes/hero_axe/x.vpcf_c': 'p',
+    'panorama/images/heroes/axe_png.vtex_c': 'i', 'materials/shared/s.vmat_c': 's',
+  };
+  const items = ['"items_game"', '{', '\t"items"', '\t{', '\t\t"4100"', '\t\t{', '\t\t\t"name"\t"Blade"', '\t\t\t"prefab"\t"wearable"',
+    '\t\t\t"model_player"\t"models/heroes/juggernaut/juggernaut.vmdl"', '\t\t}', '\t}', '}', ''].join('\n');
+  const modded = items.replace('"Blade"', '"Blade of the mod"');
+  const inputs: Record<string, string | Buffer> = {
+    'in/mod.zip': zip({
+      'Mod/pak01_dir.vpk': pak(heroes), 'Mod/pak01_000.vpk': 'vol', 'Mod/readme.txt': 'r', 'Mod/maps/dota.vpk': pak({ 'maps/dota.vmap_c': 'm' }),
+      'Mod/extra/x.txt': 'x', '!guide/a.txt': 'g', 'Mod/install.bat': 'b', 'top.txt': 't',
+    }),
+    'in/single.vpk': pak(heroes), 'in/note.txt': 'note',
+    'imp/set/pak01_dir.vpk': (() => { const v = pak({ 'models/heroes/axe/axe.vmdl_c': 'a' }); return v; })(), 'imp/set/pak01_000.vpk': 'notreal',
+    'imp/set/pak01_001.vpk': 'x', 'imp/set/loose.vpk': pak({ 'a.txt': 'a' }), 'imp/set/readme.txt': 'r', 'imp/orphan/foo_000.vpk': 'v',
+    'imp/tree/game/Dota2SkinChanger/pak01_dir.vpk': pak({ 'models/heroes/juggernaut/juggernaut.vmdl_c': 'j' }),
+    'imp/author/My  Mod!/materials/x.vmat_c': 'm', 'imp/author/My  Mod!/readme.md': 'r', 'imp/empty/notes.txt': 'n',
+    'imp/pack.zip': zip({ 'P/pak01_dir.vpk': pak({ 'models/heroes/axe/axe.vmdl_c': 'a' }), 'P/x.txt': 'x' }), 'imp/novpk.zip': zip({ 'x.txt': 'x' }),
+    'in/icons.zip': zip({ 'I/pak01_dir.vpk': pak({ 'panorama/images/items/blink_png.vtex_c': 'b', 'models/heroes/axe/axe.vmdl_c': 'a' }), 'I/pak01_000.vpk': 'vol' }),
+    'in/schema.vpk': pak({
+      'models/heroes/juggernaut/juggernaut.vmdl_c': 'j', 'scripts/items/items_game.txt': modded,
+      'resource/localization/dota_english.txt': 'x'.repeat(300 * 1024), 'resource/localization/mine.txt': 'small', 'panorama/images/ds_logo.vtex_c': 'l',
+    }),
+    'in/font.zip': zip({ 'F/assets/custom/radiance.otf': 'mine', 'F/assets/custom/new.otf': 'new', 'F/assets/default/radiance.otf': 'valve' }),
+    'in/nofont.zip': zip({ 'F/x.otf': 'x' }),
+    'in/cursor.zip': zip({ 'C/cursor/arrow.cur': 'mycur', 'C/cursor/hand.cur': 'hand' }),
+    'in/tool.zip': zip({ 't/a.exe': 'exe', 't/sub/b.dll': 'dll' }),
+    'in/evil.zip': evil, 'in/damaged.zip': 'PK\x03\x04 not really a zip at all',
+    'in/bomb.zip': zip({ 'zeros.bin': Buffer.alloc(3 * 1024 * 1024) }),
+    'in/vanilla.txt': items,
+    'game/dota/pak01_dir.vpk': pak({ 'x.txt': 'valve' }), 'game/dota_russian/gameinfo.gi': 'gi',
+    'game/dota_russian/pak01_dir.vpk': pak({ 'sounds/v.vsnd_c': 'v' }),
+    'game/dota_russian/pak20_dir.vpk': pak({ 'models/heroes/axe/axe.vmdl_c': 'a' }), 'game/dota_russian/pak20_000.vpk.off': 'v0',
+    'game/dota/panorama/fonts/radiance.otf': 'valve', 'game/dota/resource/cursor/arrow.cur': 'valvecur',
+    'ud/downloads/mods/Red Abaddon (v2).zip': 'cached',
+    'lib/manifest.json': JSON.stringify({ installed: [
+      { id: 'multi', name: 'Old import', categoryId: 'heroes', fileRef: 'old.zip', enabled: false, schema: [{ id: '1' }], files: [{ root: 'lang', relPath: 'pak20_dir.vpk' }, { root: 'lang', relPath: 'pak20_000.vpk' }] },
+    ], presets: [] }),
+  };
+  const twin = (side: string) => {
+    const r = path.join(tmp, side);
+    for (const [f, d] of Object.entries(inputs)) {
+      fs.mkdirSync(path.dirname(path.join(r, f)), { recursive: true });
+      fs.writeFileSync(path.join(r, f), d);
+    }
+    fs.mkdirSync(path.join(r, 'ud/downloads/fonts'), { recursive: true });
+    fs.copyFileSync(path.join(r, 'in/font.zip'), path.join(r, 'ud/downloads/fonts/font.zip'));
+    return r;
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const at = (p: unknown) => (String(p).startsWith('@/') ? path.join(a, ...String(p).slice(2).split('/')) : String(p));
+  const rel = (p: string) => (p.startsWith(a) ? `@/${path.relative(a, p).replace(/\\/g, '/')}` : p);
+  const describe = (z: ReturnType<typeof openZip>) => z.files.map((f) => ({ path: f.path, size: f.size, sha1: sha1(f.read()) }));
+  FileTx.journalDir = path.join(a, 'journal');
+  const inst = new Installer({ userDataDir: path.join(a, 'ud'), getGamePath: () => path.join(a, 'game'), getLangSuffix: () => 'russian' });
+  const lib = new Library(path.join(a, 'lib'));
+  const ov = inst.overlays;
+  const run = (op: unknown[]): unknown => {
+    switch (op[0]) {
+      case 'unsafe': return isUnsafeName(op[1] as string);
+      case 'safeJoin': return rel(safeJoin(at(op[1]), op[2] as string));
+      case 'zip': { const z = openZip(at(op[1]), op[2] ? { limits: op[2] as never } : {}); return { label: z.label, files: describe(z) }; }
+      case 'space':
+        ensureSpace(at(op[1]), op[2] as number, () => { if (op[3] === null) throw new Error('no'); return { bavail: op[3] as number, bsize: 1 }; });
+        return null;
+      case 'fileUrl': return fileUrl(op[1] as string, op[2] as string);
+      case 'cachedArchive': { const p = inst.cachedArchive(op[1] as string, op[2] as string); return p && rel(p); }
+      case 'remember': inst.rememberDownload(op[1] as string, op[2] as never); return null;
+      case 'index': return inst.downloadIndex();
+      case 'listCache': return inst.listDownloadCache().map(({ at: _at, ...d }) => d);
+      case 'removeCached': return inst.removeCachedDownload(op[1] as string);
+      case 'cacheSize': return inst.downloadCacheSize();
+      case 'clearCache': inst.clearDownloadCache(); return null;
+      case 'installFonts': return ov.installFonts(at(op[1]), op[2] as string);
+      case 'installCursor': return ov.installCursor(at(op[1]), op[2] as string);
+      case 'written': return ov.written();
+      case 'fontHashes': return ov.fontFolderHashes();
+      case 'lost': { const recs = op[1] as never[]; return ov.lostToVerify(recs).map((r) => recs.indexOf(r)); }
+      case 'ensureStore': return inst.ensureCursorStore(op[1] as string, op[2] as never);
+      case 'deployCursor': return inst.deployCursor(op[1] as string, op[2] as never);
+      case 'undeployCursor': inst.undeployCursor(op[1] as string, op[2] as never); return null;
+      case 'cursorZip': return describe(openZip(inst.cursorZip({ id: op[1], name: op[2], files: op[3] } as never)));
+      case 'dropStore': ov.dropCursorStore(op[1] as string); return null;
+      case 'restore': return inst.restoreDeployed(op[1] as never);
+      case 'install': return FileTx.run((tx) => inst.installInto(tx, { categoryId: op[1] as string, modName: op[2] as string, local: at(op[3]) }));
+      case 'installTool': return inst.installTool(at(op[1]), op[2] as string);
+      case 'setEnabled': inst.setEnabled(op[1] as never, op[2] as boolean, op[3] as string | null); return null;
+      case 'remove': inst.remove(op[1] as never, { recId: op[2] as string | null, deployed: op[3] as boolean }); return null;
+      case 'merge': return sha1(inst.mergeToSingleVpk({ files: op[1] } as never, op[2] as never));
+      case 'unpack': return inst.unpackToFolder({ files: op[1] } as never, at(op[2]));
+      case 'displayName': return inst.displayNameForFile(op[1] as string);
+      case 'harvest': {
+        const records = op[1] as never[];
+        const r = inst.harvestSchema(records, op[2] ? fs.readFileSync(at(op[2]), 'latin1') : null);
+        return { ...r, records };
+      }
+      case 'installedSize': return inst.installedSize({ files: op[1] } as never);
+      case 'dropIcons': { const records = op[1] as never[]; const n = inst.dropItemIcons(records); return { n, records }; }
+      case 'analyze': return inst.analyzeRecord({ files: op[1] } as never);
+      case 'split': return inst.splitVpkFile(op[1] as string);
+      case 'mergeMulti': inst.mergeMultiPartRecords(lib); return lib.list();
+      case 'addMember': return inst.addPackMemberFromRecord(op[1] as string, lib.list()[op[2] as number], op[3] as string);
+      case 'deployPack': return inst.deployPack(op[1] as never);
+      case 'removePackFully': inst.removePackFully(op[1] as never); return null;
+      case 'deployMember': return inst.deployMemberAsMod({ id: op[1] } as never, { id: op[2] } as never).files;
+      case 'libList': return lib.list();
+      case 'fpStore': { const f = new Fingerprints(path.join(a, 'ud')); f.apply(JSON.parse(op[1] as string)); fs.writeFileSync(f.file, op[1] as string); return null; }
+      case 'fpMatch': return new Fingerprints(path.join(a, 'ud')).match(op[1] as string);
+      case 'fpHas': return new Fingerprints(path.join(a, 'ud')).hasData();
+      case 'fpPrints': { const p = new Fingerprints(path.join(a, 'ud')).printsOf({ categoryId: op[1], name: op[2], styleLabel: op[3] } as never); return p && [...p].sort(); }
+      case 'fpFonts': return new Fingerprints(path.join(a, 'ud')).matchFonts(ov.fontFolderHashes() || {}).map((m) => m.name);
+      case 'updatable': return mu.updatable(op[1] as never);
+      case 'behind': { const f = new Fingerprints(path.join(a, 'ud')); return mu.behindCatalog(op[1] as never, op[2] as string, (id) => f.printsOf(id)); }
+      case 'updateMod': {
+        const rec = lib.list()[op[1] as number];
+        const local = at(op[2]);
+        const proxy = Object.assign(Object.create(inst), { download: async () => local });
+        return mu.updateMod({ installer: proxy, library: lib, rec }).then((r) => { delete (r as { updatedAt?: number }).updatedAt; lib.save(); return r.files; });
+      }
+      case 'ring': return ring.withRing(op[1] as string, op[2] as boolean);
+      case 'keepRing': return ring.keepRing(path.join(a, 'game'), op[1] as boolean);
+      case 'importPaths': { const steps: number[][] = []; return imp.importVpks(inst, (op[1] as string[]).map(at), (d, n) => steps.push([d, n])).then((results) => ({ results, steps })); }
+      case 'importBuffers': return imp.importVpkBuffers(inst, (op[1] as string[][]).map(([name, p]) => ({ name, data: fs.readFileSync(at(p)) })));
+      case 'installBuffer': return imp.installVpkBuffer(inst, fs.readFileSync(at(op[1])));
+    }
+    throw new Error(`no step ${op[0]}`);
+  };
+  // a step may be built from the answers before it, which is why the TypeScript runs first
+  type Step = unknown[] | ((ans: unknown[]) => unknown[]);
+  const lang = (r: string) => ({ root: 'lang', relPath: r });
+  const named: Record<string, number> = {};
+  const as = (name: string, s: Step): Step => (ans) => { named[name] = ans.length; return typeof s === 'function' ? s(ans) : s; };
+  const got = (ans: unknown[], name: string) => ans[named[name]];
+  const first = (ans: unknown[], name: string) => (got(ans, name) as { relPath: string }[])[0].relPath;
+  const steps: Step[] = [
+    ['unsafe', 'a/b.txt'], ['unsafe', '../x'], ['unsafe', '/abs'], ['unsafe', 'C:x'], ['unsafe', 'a/CON.txt'], ['unsafe', 'a/b./c'], ['unsafe', './a'], ['unsafe', 'lpt¹'], ['unsafe', ''],
+    ['safeJoin', '@/out', 'a/b'], ['safeJoin', '@/out', '../c'], ['safeJoin', '@/out', 'a/../../c'], ['safeJoin', '@/out', ''],
+    ['zip', '@/in/mod.zip'], ['zip', '@/in/evil.zip'], ['zip', '@/in/bomb.zip'], ['zip', '@/in/bomb.zip', { ratio: 100000 }], ['zip', '@/in/damaged.zip'],
+    ['zip', '@/in/mod.zip', { entries: 2 }], ['zip', '@/in/mod.zip', { totalBytes: 10 }], ['zip', '@/in/mod.zip', { archiveBytes: 10 }],
+    ['space', '@/game/nowhere/deeper', 100, 1e12], ['space', '@/game', 100, 10], ['space', '@/game', 100, null],
+    ['fileUrl', 'mods', 'Red Abaddon (v2).zip'], ['fileUrl', 'mods', 'https://x.example/a.zip'], ['fileUrl', 'mods', 'HTTP://x/y'], ['fileUrl', 'a b', 'ж/ё?#.zip'],
+    ['remember', 'mods/Red Abaddon (v2).zip', { size: 6, sha256: 'ab', at: 1 }], ['remember', 'mods/x.zip', { size: 1, sha256: 'cd', at: 2 }], ['index'], ['listCache'], ['cacheSize'],
+    ['cachedArchive', 'mods', 'Red Abaddon (v2).zip'], ['cachedArchive', 'mods', 'missing.zip'], ['cachedArchive', null, 'x'], ['cachedArchive', 'fonts', 'font.zip'],
+    as('mod', ['install', 'heroes', 'Juggernaut', '@/in/mod.zip']), as('single', ['install', 'trees', 'Priority', '@/in/single.vpk']), ['install', 'heroes', 'Note', '@/in/note.txt'],
+    ['install', 'heroes', 'Bad', '@/in/damaged.zip'], ['install', 'heroes', 'Evil', '@/in/evil.zip'],
+    as('font', ['install', 'fonts', 'Font', '@/in/font.zip']), ['written'], ['installFonts', '@/in/font.zip', 'Font'], ['installFonts', '@/in/nofont.zip', 'No font'], ['fontHashes'],
+    as('cursor', ['install', 'cursors', 'Cur', '@/in/cursor.zip']), ['installCursor', '@/in/nofont.zip', 'No cursor'],
+    (ans) => ['ensureStore', 'c1', got(ans, 'cursor')],
+    (ans) => ['undeployCursor', 'c1', got(ans, 'cursor')],
+    (ans) => ['lost', [{ files: got(ans, 'cursor') }, { files: got(ans, 'cursor'), enabled: false }, { files: [lang('pak01_dir.vpk')] }, { files: got(ans, 'font') }]],
+    (ans) => ['deployCursor', 'c1', got(ans, 'cursor')],
+    (ans) => ['cursorZip', 'c1', 'My/Cur', got(ans, 'cursor')],
+    ['written'],
+    as('tool', ['install', 'tools', 'My:Tool', '@/in/tool.zip']), ['installTool', '@/in/single.vpk', 'Loose'],
+    as('schema', ['install', 'heroes', 'Schema', '@/in/schema.vpk']),
+    (ans) => ['harvest', got(ans, 'schema'), '@/in/vanilla.txt'],
+    as('schema2', ['install', 'heroes', 'Schema again', '@/in/schema.vpk']),
+    (ans) => ['harvest', got(ans, 'schema2'), null],
+    (ans) => ['setEnabled', got(ans, 'mod'), false, null], (ans) => ['setEnabled', got(ans, 'mod'), true, null], (ans) => ['setEnabled', got(ans, 'mod'), false, null],
+    (ans) => ['analyze', got(ans, 'mod')], (ans) => ['installedSize', got(ans, 'mod')], (ans) => ['merge', got(ans, 'mod'), null],
+    (ans) => ['merge', got(ans, 'mod'), [{ block: '"4100"\n{\n\t"name"\t"xé"\n}' }]], (ans) => ['unpack', got(ans, 'mod'), '@/out/unpacked'],
+    (ans) => ['displayName', first(ans, 'mod')], ['displayName', 'nope_dir.vpk'],
+    (ans) => ['split', first(ans, 'single')], ['split', 'pak01_dir.vpk'],
+    ['analyze', [lang('pak20_dir.vpk')]], ['mergeMulti'], ['mergeMulti'],
+    ['addMember', 'p1', 0, 'm1'],
+    as('pack', ['deployPack', { id: 'p1', files: [], members: [{ id: 'm1', enabled: true }, { id: 'm9', enabled: false }] }]),
+    (ans) => ['deployPack', { id: 'p1', files: (got(ans, 'pack') as { files: unknown }).files, members: [{ id: 'm1', enabled: true }] }],
+    ['deployPack', { id: 'p1', files: [lang('pak90_dir.vpk')], members: [] }],
+    ['deployMember', 'p1', 'm1'], ['deployMember', 'p1', 'nope'],
+    (ans) => ['removePackFully', { id: 'p1', files: (got(ans, 'pack') as { files: unknown }).files }],
+    as('icons', ['install', 'heroes', 'Icons', '@/in/icons.zip']), (ans) => ['dropIcons', got(ans, 'icons')], (ans) => ['dropIcons', got(ans, 'icons')],
+    (ans) => ['remove', got(ans, 'font'), null, true],
+    (ans) => ['restore', { id: 'f', name: 'Font', categoryId: 'fonts', fileRef: 'font.zip', files: got(ans, 'font') }],
+    (ans) => ['remove', got(ans, 'cursor'), 'c1', false], (ans) => ['remove', got(ans, 'cursor'), 'c1', true],
+    (ans) => ['remove', got(ans, 'tool'), null, true], (ans) => ['remove', got(ans, 'mod'), null, true],
+    ['importPaths', ['@/imp/set/pak01_dir.vpk', '@/imp/set/pak01_000.vpk', '@/imp/set/loose.vpk', '@/imp/set/readme.txt', '@/imp/orphan/foo_000.vpk', '@/imp/tree', '@/imp/author/My  Mod!', '@/imp/empty', '@/imp/pack.zip', '@/imp/novpk.zip', '@/in/damaged.zip']],
+    ['importBuffers', [['a.vpk', '@/imp/set/loose.vpk'], ['b.txt', '@/imp/set/readme.txt'], ['c.zip', '@/imp/pack.zip']]],
+    ['installBuffer', '@/imp/set/loose.vpk'], ['installBuffer', '@/imp/set/readme.txt'],
+    ['fpHas'], ['fpMatch', 'aa'], ['fpStore', JSON.stringify({ mods: { aa: { name: 'Old import', categoryId: 'heroes' }, bb: [{ name: 'Jugg', categoryId: 'heroes', styleLabel: 'Red' }, { name: 'Jugg RU', categoryId: 'heroes' }], cc: { name: 'Jugg', categoryId: 'heroes', styleLabel: 'Red' } }, fonts: [{ name: 'My font', categoryId: 'fonts', files: { 'radiance.otf': '8034c43d15bb7ef42e2cc24255217acfc5f4b2f4' } }, { name: 'Other', categoryId: 'fonts', files: { 'x.otf': 'zz' } }] })], ['fpHas'], ['fpMatch', 'aa'], ['fpMatch', 'bb'], ['fpMatch', null], ['fpMatch', 'zz'],
+    ['fpPrints', 'heroes', 'Jugg', 'Red'], ['fpPrints', 'heroes', 'Jugg', null], ['fpPrints', 'heroes', 'Old import', ''], ['fpFonts'], ['fpStore', 'not json'],
+    ['updatable', { fileRef: 'a.zip', categoryId: 'heroes' }], ['updatable', { fileRef: 'a.zip', categoryId: 'fonts' }], ['updatable', { fileRef: '', categoryId: 'heroes' }], ['updatable', { fileRef: 'a', kind: 'pack', categoryId: 'x' }],
+    ['behind', { fileRef: 'a.zip', categoryId: 'heroes', name: 'Jugg', styleLabel: 'Red' }, 'bb'], ['behind', { fileRef: 'a.zip', categoryId: 'heroes', name: 'Jugg', styleLabel: 'Red' }, 'xx'],
+    ['behind', { fileRef: 'a.zip', categoryId: 'heroes', name: 'Jugg', styleLabel: 'Red', fpOriginal: 'cc' }, 'xx'], ['behind', { fileRef: 'a.zip', categoryId: 'heroes', name: 'Nobody' }, 'xx'], ['behind', { fileRef: 'a.zip', categoryId: 'heroes', name: 'Jugg' }, null],
+    ['updateMod', 0, '@/in/single.vpk'], ['libList'],
+    ['ring', '', true], ['ring', 'bind x y\r\n', true], ['ring', 'a\n// Dota 2 Mod Manager: emblems show on the selection ring\nr_draw_selected_ring 1\n\n', false], ['ring', 'r_draw_selected_ring "1" // mine\n', true], ['ring', '', false],
+    ['keepRing', false], ['keepRing', true], ['keepRing', true], ['keepRing', false],
+    ['removeCached', 'mods/Red Abaddon (v2).zip'], ['removeCached', '../lib/manifest.json'], ['index'], ['clearCache'], ['listCache'], ['libList'],
+  ];
+  const ops: unknown[][] = [];
+  const want: unknown[] = [];
+  try {
+    for (const s of steps) {
+      const op = typeof s === 'function' ? s(want.map((w) => (w as { ok?: unknown }).ok)) : s;
+      ops.push(op);
+      // a step edits what it is handed in place, as harvestSchema does: it gets its own copy
+      try { want.push({ ok: JSON.parse(JSON.stringify((await run(structuredClone(op))) ?? null)) }); } catch { want.push({ error: true }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'write.json');
+  fs.writeFileSync(list, JSON.stringify([['installer.script', b, path.join(b, 'game'), 'russian', path.join(b, 'journal'), path.join(b, 'ud'), path.join(b, 'lib'), ops]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 }));
+  (rs.ok as { ok?: unknown; error?: unknown }[]).forEach((g, k) => {
+    assert.deepEqual('error' in g ? { error: true } : g, want[k], `${k} ${JSON.stringify(ops[k]).slice(0, 200)}`);
+  });
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .map((d) => { const p = path.join(d.parentPath, d.name); return path.relative(g, p) + (d.isFile() ? ` ${sha1(fs.readFileSync(p))}` : '/'); }).sort();
+  assert.deepEqual(tree(b).filter((l) => !l.startsWith('write.json')), tree(a));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the patch in Rust goes in, signs, comes out and backs up as the TypeScript one does', { skip }, async (t) => {
+  const patcher = await import('../src/patcher.ts');
+  const sg = await import('../src/patcher-signatures.ts');
+  const src = [sandboxGame, path.dirname(path.dirname(GAME_PAK01))].find((g) => fs.existsSync(path.join(g, 'dota', 'gameinfo.gi')) && fs.existsSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi')));
+  if (!src) { t.skip('no gameinfo files (npm run sandbox:seed)'); return; }
+  const gameinfo = fs.readFileSync(path.join(src, 'dota', 'gameinfo.gi'));
+  const branch = fs.readFileSync(path.join(src, 'dota', 'gameinfo_branchspecific.gi'));
+  const bin = process.platform === 'linux' ? ['bin', 'linuxsteamrt64'] : ['bin', 'win64'];
+  // a list shaped like Valve's: their entry for the file before DIGEST, nothing after it
+  const sigs = `...\\..\\..\\bin\\win64\\dota2.exe~SHA1:${'A'.repeat(40)};CRC:01234567\r\n${sg.signatureLine(branch)}\r\nDIGEST:ABCDEF\r\n`;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-patch-'));
+  const twin = (side: string) => {
+    const g = path.join(tmp, side, 'game');
+    fs.mkdirSync(path.join(g, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(g, ...bin), { recursive: true });
+    fs.writeFileSync(path.join(g, 'dota', 'gameinfo.gi'), gameinfo);
+    fs.writeFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), branch);
+    fs.writeFileSync(path.join(g, ...bin, 'dota.signatures'), sigs);
+    return { game: g, backups: path.join(tmp, side, 'backups') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  // steps between the script's pieces: what Steam, an update or another patcher does to the files
+  const touch: Record<number, (g: string) => void> = {
+    3: (g) => fs.appendFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), '\n\t\t\tGame\tDota2SkinChanger\n'),
+    6: (g) => fs.writeFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), branch),
+    8: (g) => fs.writeFileSync(path.join(g, 'dota_mods', 'x.txt'), 'x'),
+    11: (g) => fs.rmSync(path.join(g, ...bin, 'dota.signatures')),
+    15: (g) => fs.rmSync(path.join(g, 'dota', 'gameinfo.gi')),
+  };
+  const ops: unknown[][] = [
+    ['state', null], ['apply', 'dota_mods'], ['state', 'dota_mods'], ['apply', 'dota_mods'], ['state', 'dota_mods'], ['revert', 'dota_mods'],
+    ['state', null], ['apply', 'dota_mods'], ['revert', 'dota_mods'], ['state', 'dota_mods'], ['apply', 'my mods'], ['state', 'my mods'],
+    ['apply', 'my mods'], ['revert', 'my mods'], ['state', null], ['apply', 'dota_mods'], ['revert', null],
+  ];
+  const tsRun = (op: unknown[]) => {
+    const folder = op[1] as string | null;
+    if (op[0] === 'state') return patcher.state(a.game, folder);
+    if (op[0] === 'apply') return patcher.apply({ gamePath: a.game, folder: folder as string, backupDir: a.backups });
+    return patcher.revert({ gamePath: a.game, folder, backupDir: a.backups });
+  };
+  const tree = (r: string): string[] => (fs.readdirSync(r, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .map((d) => { const p = path.join(d.parentPath, d.name); return path.relative(r, p) + (d.isFile() ? ` ${fs.readFileSync(p).toString('base64')}` : '/'); }).sort();
+  ops.forEach((op, k) => {
+    for (const side of [a, b]) touch[k]?.(side.game);
+    let want: unknown;
+    try { want = { ok: JSON.parse(JSON.stringify(tsRun(op))) }; } catch { want = { error: true }; }
+    const list = path.join(tmp, 'patch.json');
+    fs.writeFileSync(list, JSON.stringify([['patcher.script', b.game, b.backups, [op]]]));
+    const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }));
+    fs.rmSync(list);
+    const got = (rs.ok as { ok?: unknown; error?: unknown }[])[0];
+    assert.deepEqual('error' in got ? { error: true } : got, want, `${k} ${JSON.stringify(op)}`);
+    assert.deepEqual(tree(path.join(tmp, 'rs')), tree(path.join(tmp, 'ts')), `${k} ${JSON.stringify(op)}: the files`);
+  });
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

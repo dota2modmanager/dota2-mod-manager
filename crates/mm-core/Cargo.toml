@@ -23,3 +23,7 @@ libm = "0.2"
 # String.prototype.localeCompare: the root collation of ICU, which V8 sorts names by
 icu_collator = "2"
 uuid = { version = "1", features = ["v4"] }
+# foreign archives: mods, fonts, cursors and tools off the catalog, presets off Discord
+zip = { version = "2", default-features = false, features = ["deflate"] }
+# free space on the drive a mod is about to be written to
+fs4 = "0.13"

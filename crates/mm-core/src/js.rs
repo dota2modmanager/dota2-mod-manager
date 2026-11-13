@@ -293,6 +293,20 @@ pub fn stringify(v: &Value, indent: &str) -> String {
     out
 }
 
+/// String.prototype.slice(0, n): the first n UTF-16 units (a pair cut in half is dropped whole).
+pub fn slice_utf16(s: &str, n: usize) -> String {
+    let mut units = 0;
+    let mut out = String::new();
+    for c in s.chars() {
+        units += c.len_utf16();
+        if units > n {
+            break;
+        }
+        out.push(c);
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

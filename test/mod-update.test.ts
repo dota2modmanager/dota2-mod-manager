@@ -28,6 +28,14 @@ test('only a pak from the catalog can be behind it', () => {
   assert.equal(updatable({ ...HUD, fileRef: null }), false);
 });
 
+test('the index answers for a mod straight from the cached file, before anything else read it', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-fp-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(dir, 'fingerprints.json'), JSON.stringify({ mods: { p1: [{ name: 'Hud', categoryId: 'hud' }] } }));
+  // reading the cache used to drop the turned-round map while it was being built
+  assert.deepEqual([...(new Fingerprints(dir).printsOf({ name: 'Hud', categoryId: 'hud' }) || [])], ['p1']);
+});
+
 test('a mod is behind when the catalog knows it and its installed file is none of the catalog\'s own', () => {
   const prints = new Map([['huds\u0000Gotohouse Hud\u0000', new Set(['new-print'])]]);
   const printsOf = (id: { categoryId: string; name: string; styleLabel?: string | null }) => prints.get(`${id.categoryId}\u0000${id.name}\u0000${id.styleLabel || ''}`) || null;

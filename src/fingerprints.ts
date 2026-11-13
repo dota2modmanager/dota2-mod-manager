@@ -90,8 +90,10 @@ export class Fingerprints {
   printsOf(id: CatalogIdentity): Set<string> | null {
     const key = (x: CatalogIdentity) => `${x.categoryId}\u0000${x.name}\u0000${x.styleLabel || ''}`;
     if (!this.byMod) {
+      // read the cache first: reading it resets byMod
+      const map = this.ensure();
       this.byMod = new Map();
-      for (const [fp, v] of Object.entries(this.ensure())) {
+      for (const [fp, v] of Object.entries(map)) {
         for (const x of (Array.isArray(v) ? v : [v])) {
           const k = key(x);
           if (!this.byMod.has(k)) this.byMod.set(k, new Set());
