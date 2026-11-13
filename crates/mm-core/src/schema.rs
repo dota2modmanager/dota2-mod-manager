@@ -238,13 +238,9 @@ pub fn cosmetic_options(items: &[SchemaItem], slot: &str) -> Vec<(String, String
         .filter(|i| slot_of(i) == slot && !i.baseitem && (i.has_visuals || ownerless) && !i.name.is_empty())
         .map(|i| (i.id.clone(), to_utf8(&i.name)))
         .collect();
-    // localeCompare: case- and accent-insensitive first, which is what the pickers sort by
-    out.sort_by(|a, b| collate(&a.1).cmp(&collate(&b.1)).then_with(|| a.1.cmp(&b.1)));
+    // localeCompare, which is what the pickers sort by: an apostrophe comes before the letters
+    out.sort_by(|a, b| crate::js::locale_compare(&a.1, &b.1));
     out
-}
-
-fn collate(s: &str) -> Vec<char> {
-    s.chars().flat_map(char::to_lowercase).filter(|c| c.is_alphanumeric() || c.is_whitespace()).collect()
 }
 
 /// The game's own table out of its pak01, and the stamp that changes when an update replaces it.
