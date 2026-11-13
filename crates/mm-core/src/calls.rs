@@ -4089,6 +4089,157 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "mod-doctor.examine" => {
+            json!(crate::mod_doctor::examine(std::path::Path::new(&s(args, 0)), std::path::Path::new(&s(args, 1)))?)
+        }
+        "diagnostics.redactHome" => {
+            let dir = s(args, 0);
+            // a null home is no home (only a missing one falls back to the user's)
+            if dir.is_empty() || args.get(1) == Some(&Value::Null) {
+                args.first().cloned().unwrap_or(Value::Null)
+            } else {
+                json!(crate::diagnostics::redact_home(&dir, opt_s(args, 1).as_deref()))
+            }
+        }
+        "diagnostics.folderListingText" => {
+            let pak = |f: &crate::diagnostics::Listed| crate::diagnostics::pak_listed(f);
+            let filter: Option<&dyn Fn(&crate::diagnostics::Listed) -> bool> =
+                if s(args, 1) == "pak" { Some(&pak) } else { None };
+            json!(crate::diagnostics::folder_listing_text(std::path::Path::new(&s(args, 0)), filter, opt_s(args, 2).as_deref()))
+        }
+        "diagnostics.tailLog" => json!(crate::diagnostics::tail_log(std::path::Path::new(&s(args, 0)), n(args, 1) as u64)),
+        "diagnostics.findProblems" => {
+            json!(crate::diagnostics::find_problems(args.first().unwrap_or(&Value::Null), args.get(1).unwrap_or(&Value::Null)))
+        }
+        "diagnostics.renderSummary" => json!(crate::diagnostics::render_summary(args.first().unwrap_or(&Value::Null))),
+        "diagnostics.renderDetailed" => {
+            let files: indexmap::IndexMap<String, String> =
+                serde_json::from_value(args.get(1).cloned().unwrap_or(json!({}))).map_err(|e| e.to_string())?;
+            json!(crate::diagnostics::render_detailed(args.first().unwrap_or(&Value::Null), &files))
+        }
+        "diagnostics.buildReport" => {
+            let i = args.first().cloned().unwrap_or(Value::Null);
+            let get = |k: &str| i.get(k).cloned().unwrap_or(Value::Null);
+            let text = |k: &str| i.get(k).and_then(Value::as_str).map(String::from);
+            let schema = get("schemaState");
+            let (report, files) = crate::diagnostics::build_report(crate::diagnostics::ReportInputs {
+                settings: get("settings").as_object().cloned().unwrap_or_default(),
+                records: get("records").as_array().cloned().unwrap_or_default(),
+                presets: get("presets").as_u64().unwrap_or(0) as usize,
+                coverage: get("coverage").as_f64(),
+                slots: get("slots").as_array().cloned().unwrap_or_default().iter().map(Value::as_f64).collect(),
+                download_cache: get("downloadCache"),
+                icon_size: i.get("iconSize").cloned(),
+                schema_state: match schema.get("error") {
+                    Some(e) => Err(crate::js::string(e)),
+                    None => Ok(schema.get("ok").cloned().unwrap_or(Value::Null)),
+                },
+                catalog_cache: get("catalogCache"),
+                mirrors: get("mirrors"),
+                version: text("version").unwrap_or_default(),
+                platform: text("platform").unwrap_or_default(),
+                node: text("node").unwrap_or_default(),
+                log_file: text("logFile"),
+                user_data_dir: text("userDataDir"),
+                update_error: get("updateError"),
+                extra: get("extra").as_object().cloned().unwrap_or_default(),
+                home: text("home"),
+                generated_at: text("generatedAt").unwrap_or_default(),
+            });
+            json!({ "report": report, "files": files })
+        }
+        "presence-status.presenceActivity" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            crate::presence_status::presence_activity(&s(args, 1), n(args, 2), args.get(3).is_some_and(crate::js::truthy))
+        }
+        "presence-status.discordActivity" => {
+            crate::presence_status::discord_activity(args.first().unwrap_or(&Value::Null), n(args, 1), args.get(2).is_some_and(crate::js::truthy))
+        }
+        "presence-status.frames" => {
+            // (op, data)... encoded, joined, cut into chunks of n bytes, and read back frame by frame
+            let mut all = Vec::new();
+            for f in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                all.extend(crate::presence_status::encode_frame(f[0].as_i64().unwrap_or(0) as i32, &f[1]));
+            }
+            let mut buf = Vec::new();
+            let mut out = Vec::new();
+            for chunk in all.chunks((n(args, 0) as usize).max(1)) {
+                buf.extend_from_slice(chunk);
+                for (op, v) in crate::presence_status::take_frames(&mut buf) {
+                    out.push(json!([op, v.unwrap_or(Value::Null)]));
+                }
+            }
+            json!({ "bytes": all.len(), "frames": out })
+        }
+        "discord-presence.script" => {
+            // (clientId, ops): the status driven by start/stop/set/wait, and what it logged
+            let logs = Arc::new(Mutex::new(Vec::<String>::new()));
+            let l = logs.clone();
+            let p = crate::discord_presence::Presence::new(&s(args, 0), Box::new(move |m: &str| l.lock().unwrap().push(m.to_string())));
+            for op in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                match op[0].as_str().unwrap_or("") {
+                    "start" => p.start(),
+                    "stop" => p.stop(),
+                    "set" => p.set(op[1].clone()),
+                    "wait" => std::thread::sleep(std::time::Duration::from_millis(op[1].as_u64().unwrap_or(0))),
+                    other => return Err(format!("no step {other}")),
+                }
+            }
+            drop(p);
+            let out = logs.lock().unwrap().clone();
+            json!(out)
+        }
+        "discord-auth.authorizeUrl" => json!(crate::discord_auth::authorize_url(&s(args, 0), &s(args, 1), n(args, 2) as u16)),
+        "discord-auth.script" => {
+            // (lang, port, api, cdn, timeoutMs, browser): sign-in with a stand-in browser that
+            // opens the callback page and posts back what `browser` says: ok, state, denied, none
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let port = n(args, 1) as u16;
+            let at = crate::discord_auth::Endpoints {
+                port,
+                authorize: "https://discord.com/oauth2/authorize".into(),
+                api: s(args, 2),
+                cdn: s(args, 3),
+                timeout: std::time::Duration::from_millis(n(args, 4) as u64),
+            };
+            let browser = s(args, 5);
+            let opened = Arc::new(Mutex::new(String::new()));
+            let seen = opened.clone();
+            let open = move |url: &str| -> Result<(), String> {
+                *seen.lock().unwrap() = url.to_string();
+                let state = url::Url::parse(url).ok().and_then(|u| u.query_pairs().find(|(k, _)| k == "state").map(|(_, v)| v.into_owned())).unwrap_or_default();
+                let browser = browser.clone();
+                std::thread::spawn(move || {
+                    use std::io::{Read, Write};
+                    let call = |req: String| {
+                        let mut c = std::net::TcpStream::connect(("127.0.0.1", port)).ok()?;
+                        c.write_all(req.as_bytes()).ok()?;
+                        let mut out = String::new();
+                        c.read_to_string(&mut out).ok()?;
+                        Some(out)
+                    };
+                    let _ = call("GET /nothing HTTP/1.1\r\nhost: x\r\n\r\n".into());
+                    let page = call("GET /callback HTTP/1.1\r\nhost: x\r\n\r\n".into()).unwrap_or_default();
+                    let body = match browser.as_str() {
+                        "ok" => format!("access_token=TOKEN&token_type=Bearer&state={state}"),
+                        "state" => "access_token=TOKEN&state=other".into(),
+                        "denied" => format!("error=access_denied&error_description=The+user+said+no&state={state}"),
+                        "notoken" => format!("state={state}"),
+                        _ => return,
+                    };
+                    if page.contains("location.hash") {
+                        let _ = call(format!("POST /token HTTP/1.1\r\nhost: x\r\ncontent-length: {}\r\n\r\n{body}", body.len()));
+                    }
+                });
+                Ok(())
+            };
+            let r = crate::discord_auth::sign_in(&crate::net_fetch::Net::default(), &at, &open);
+            let url = opened.lock().unwrap().clone();
+            match r {
+                Ok(v) => json!({ "ok": v, "url": url }),
+                Err(e) => json!({ "error": e, "url": url }),
+            }
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

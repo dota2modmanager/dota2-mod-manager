@@ -49,6 +49,9 @@ const TOLERANCE = 0.5;
 const SEP = String.fromCharCode(92);
 // A local npm dependency resolves outside node_modules; measure app code, not upstream code.
 const VENDOR_COVERAGE_EXCLUDE = '--test-coverage-exclude=vendor/**';
+// The Rust parity checks run only where mm-cli is built and skip elsewhere, so their own lines
+// would read as uncovered on CI and pull the aggregate down with every check added.
+const RUST_CALLS_COVERAGE_EXCLUDE = '--test-coverage-exclude=test/rust-calls.test.ts';
 
 /** hit/found as a percentage, where nothing to cover counts as covered. */
 export function pct(hit, found) {
@@ -200,6 +203,7 @@ function runSuite() {
   const args = [
     '--test', '--experimental-test-coverage',
     VENDOR_COVERAGE_EXCLUDE,
+    RUST_CALLS_COVERAGE_EXCLUDE,
     '--test-reporter=spec', '--test-reporter-destination=stdout',
     '--test-reporter=lcov', `--test-reporter-destination=${out}`,
     'test/**/*.test.js', 'test/**/*.test.ts',
