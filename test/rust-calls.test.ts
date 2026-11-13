@@ -3259,7 +3259,7 @@ test('putting a preset on in Rust does what the TypeScript does: downloads, own 
   const downloads: Record<string, string> = {};
   const dl = path.join(tmp, 'downloads');
   fs.mkdirSync(dl);
-  for (const [ref, files] of Object.entries({ 'hud-gray.zip': { 'panorama/hud.xml': 'hud' }, 'lina.zip': { 'models/heroes/lina/lina.vmdl_c': 'lina' }, 'cursor-b.zip': { 'cursor.txt': 'b' } })) {
+  for (const [ref, files] of Object.entries<Record<string, string>>({ 'hud-gray.zip': { 'panorama/hud.xml': 'hud' }, 'lina.zip': { 'models/heroes/lina/lina.vmdl_c': 'lina' }, 'cursor-b.zip': { 'cursor.txt': 'b' } })) {
     downloads[ref] = path.join(dl, ref.replace('.zip', '.vpk'));
     fs.writeFileSync(downloads[ref], pak(files));
   }
@@ -3355,7 +3355,7 @@ test('putting a preset on in Rust does what the TypeScript does: downloads, own 
   const presetsSvc = presetsService({ catalog: { load: async () => catalog as never }, installer: inst as never, library: lib, settings: st as never, schemaService, deployAndApply: (p) => { deployed.push(p.id); } });
   const install = createPresetInstall({ installer: inst as never, library: lib, schemaService: schemaService as never, presets: presetsSvc as never,
     adoptImportedFiles: adopt.adoptImportedFiles, afterDeployMaster: () => { master = true; }, disableOtherCursors: cursors.disableOtherCursors,
-    sendProgress: (p) => { progress.push(p); }, blocked: () => null } as never);
+    sendProgress: (p: unknown) => { progress.push(p); }, blocked: () => null } as never);
   const sha = (buf: Buffer) => createHash('sha1').update(buf).digest('hex');
   const tsIds = new Map<string, string>();
   const rsIds = new Map<string, string>();
