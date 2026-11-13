@@ -6177,3 +6177,409 @@ test('the arcana window in Rust builds, gives way and builds again as the TypeSc
   assert.ok(log.some((m) => m.includes('built again around')), 'it gave way');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the toolchain in Rust keeps its pins, downloads, unpacks and forgets tools as the TypeScript does', { skip }, async () => {
+  const tcTs = await import('../src/toolchain.ts');
+  const net = await import('../src/net.ts');
+  const http = await import('node:http');
+  const crypto = await import('node:crypto');
+  const AdmZip = (await import('adm-zip')).default;
+  setLang('en');
+  const pins = tcTs.BUILT_IN_PINS;
+  const win = { ...pins.vrf['win32-x64'] };
+  const odd = [
+    win, { ...win, url: win.url.replace('ValveResourceFormat/ValveResourceFormat', 'SteamDatabase/ValveResourceFormat') },
+    { ...win, url: win.url.replace('https://github.com/ValveResourceFormat', 'https://GitHub.com/valveresourceformat') },
+    { ...win, url: 'https://github.com/someone/ValveResourceFormat/releases/download/1/x.zip' }, { ...win, url: 'https://github.com.evil/ValveResourceFormat/ValveResourceFormat/releases/download/x' },
+    { ...win, sha256: 'F'.repeat(64) }, { ...win, sha256: 'f'.repeat(63) }, { ...win, sha256: 'g'.repeat(64) }, { ...win, exe: 'a/b.exe' }, { ...win, exe: 'a\\b' }, { ...win, exe: '' },
+    { ...win, version: '' }, { ...win, version: 20 }, { ...win, url: 7 }, null, [], 'x',
+  ];
+  compare([
+    { name: 'toolchain.validPin', ts: tcTs.validPin as never, inputs: [...odd.map((p) => [p, 'vrf']), [win, 'vpk'], [win, null]] },
+    { name: 'toolchain.fallbackName', ts: tcTs.fallbackName as never, inputs: [['vrf', '20.1', 'win32-x64'], ['vrf', '20.1', 'linux-x64'], ['x', '', 'darwin-arm64']] },
+    { name: 'toolchain.downloadOrder', ts: tcTs.downloadOrder as never, inputs: [['a', 'b', false], ['a', 'b', true]] },
+    { name: 'toolchain.pins', ts: (() => pins) as never, inputs: [[]] },
+  ]);
+  const zip = (exe: string) => { const z = new AdmZip(); z.addFile(exe, Buffer.from('MZ pretend this is a program')); z.addFile('libSkiaSharp.dll', Buffer.from('a library it needs')); return z.toBuffer(); };
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-tools-'));
+  const shaOf = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const seedOld = (ud: string, version: string, exe: string, build?: string) => {
+    const dir = path.join(ud, 'toolchain', 'vrf', version);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, exe), 'old');
+    fs.writeFileSync(path.join(ud, 'toolchain', 'installed.json'), JSON.stringify({ vrf: { version, exe, sha256: 'a', at: 1, ...(build ? { build } : {}) } }));
+  };
+  const winExe = pins.vrf['win32-x64'].exe;
+  const linExe = pins.vrf['linux-x64'].exe;
+  const scenarios: { build: string; archive: Buffer | null; seed?: (ud: string) => void; ops: unknown[][] }[] = [
+    { build: 'win32-x64', archive: zip(winExe), ops: [['state'], ['pathOf', 'vrf'], ['ensure', 'vpk'], ['ensure', 'vrf'], ['pathOf', 'vrf'], ['state'], ['ensure', 'vrf'], ['remove', 'vrf'], ['state'], ['pathOf', 'vrf'], ['remove', 'vrf']] },
+    { build: 'win32-x64', archive: zip(winExe), seed: (ud) => seedOld(ud, '19.2', winExe), ops: [['pathOf', 'vrf'], ['state'], ['catchUp'], ['pathOf', 'vrf'], ['state'], ['catchUp']] },
+    { build: 'win32-x64', archive: zip(winExe), ops: [['catchUp'], ['pathOf', 'vrf']] },
+    { build: 'darwin-arm64', archive: zip(winExe), ops: [['ensure', 'vrf'], ['state']] },
+    { build: 'win32-x64', archive: zip('SomethingElse.exe'), ops: [['ensure', 'vrf'], ['pathOf', 'vrf'], ['state']] },
+    { build: 'linux-x64', archive: zip(linExe), seed: (ud) => seedOld(ud, pins.vrf['win32-x64'].version, winExe), ops: [['pathOf', 'vrf'], ['state'], ['ensure', 'vrf'], ['pathOf', 'vrf']] },
+  ];
+  const tree = (d: string) => Object.fromEntries((fs.existsSync(d) ? fs.readdirSync(d, { recursive: true, withFileTypes: true }) as fs.Dirent[] : []).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); const rel = path.relative(d, f).split(path.sep).join('/');
+      return [rel, rel.endsWith('installed.json') ? JSON.parse(fs.readFileSync(f, 'utf8'), (k, x) => (k === 'at' && x !== 1 ? '<at>' : x)) : shaOf(fs.readFileSync(f))]; }).sort());
+  const saved = Object.fromEntries(Object.entries(pins.vrf).map(([b, p]) => [b, p.sha256]));
+  try {
+    for (const [k, sc] of scenarios.entries()) {
+      const shas = sc.archive ? Object.fromEntries(Object.keys(pins.vrf).map((b) => [b, shaOf(sc.archive!)])) : {};
+      const server = http.createServer((_req, res) => { res.writeHead(200, { 'content-length': sc.archive!.length }); res.end(sc.archive); });
+      server.listen(0, '127.0.0.1');
+      await new Promise((r) => server.on('listening', r));
+      const { port } = server.address() as import('node:net').AddressInfo;
+      net.setMirrors([{ host: `127.0.0.1:${port}`, map: () => `http://127.0.0.1:${port}/tool.zip` }] as never);
+      const a = path.join(tmp, `ts${k}`);
+      const b = path.join(tmp, `rs${k}`);
+      fs.mkdirSync(a, { recursive: true });
+      fs.mkdirSync(b, { recursive: true });
+      sc.seed?.(a);
+      sc.seed?.(b);
+      const log: string[] = [];
+      const events: unknown[] = [];
+      const answers: unknown[] = [];
+      for (const [bd, sha] of Object.entries(shas)) pins.vrf[bd].sha256 = sha;
+      try {
+        const tc = tcTs.createToolchain({ userDataDir: a, build: sc.build, log: (m) => log.push(m), onProgress: (e) => events.push(e) });
+        const rel = (p: string | null) => (p == null ? null : path.relative(a, p).split(path.sep).join('/'));
+        for (const op of sc.ops) {
+          try {
+            let v: unknown;
+            if (op[0] === 'state') v = tc.state();
+            else if (op[0] === 'pathOf') v = rel(tc.pathOf(op[1] as string));
+            else if (op[0] === 'ensure') v = rel(await tc.ensure(op[1] as string));
+            else if (op[0] === 'catchUp') v = (await tc.catchUp()) ?? null;
+            else v = tc.remove(op[1] as string) ?? null;
+            answers.push({ ok: snap(v) });
+          } catch (e) { answers.push({ error: (e as Error).message }); }
+        }
+      } finally {
+        server.close();
+        net.setMirrors(null);
+        for (const [bd, sha] of Object.entries(saved)) pins.vrf[bd].sha256 = sha;
+      }
+      const list = path.join(tmp, `ops${k}.json`);
+      const file = path.join(tmp, `archive${k}.zip`);
+      if (sc.archive) fs.writeFileSync(file, sc.archive);
+      fs.writeFileSync(list, JSON.stringify([['toolchain.service', b, sc.build, shas, sc.archive ? { $file: file } : null, sc.ops]]));
+      const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok?: { answers: unknown[]; log: string[]; events: { type: string }[] }; error?: string }[];
+      assert.ok(r.ok, r.error);
+      for (const [n, op] of sc.ops.entries()) assert.deepEqual(r.ok.answers[n], answers[n], `${k}/${n} ${JSON.stringify(op)}`);
+      const own = (l: string[]) => l.filter((m) => m.startsWith('toolchain:'));
+      assert.deepEqual(own(r.ok.log), own(log), `${k} the log`);
+      const shown = (e: unknown[]) => e.filter((x) => (x as { type: string }).type !== 'download');
+      assert.deepEqual(shown(r.ok.events), shown(events), `${k} the progress`);
+      assert.deepEqual(tree(b), tree(a), `${k} the files`);
+    }
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test('Valve\'s resource compiler in Rust is found, run on an addon of ours and checked as the TypeScript does', { skip }, async () => {
+  const rc = await import('../src/resource-compiler.ts');
+  const wt = await import('../src/workshop-tools.ts');
+  setLang('en');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-rc-'));
+  try {
+    // an install of the Workshop Tools: game/bin/win64 with the compiler, and the game beside it
+    const install = path.join(tmp, 'install');
+    const game = path.join(install, 'game');
+    const exe = rc.compilerIn(game);
+    fs.mkdirSync(path.dirname(exe), { recursive: true });
+    fs.writeFileSync(exe, 'MZ');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'gameinfo.gi'), '"GameInfo" {}');
+    fs.writeFileSync(path.join(game, 'dota', 'steam.inf'), 'ClientVersion=6543\n');
+    const lone = path.join(tmp, 'elsewhere', 'resourcecompiler.exe');
+    fs.mkdirSync(path.dirname(lone), { recursive: true });
+    fs.writeFileSync(lone, 'MZ');
+    compare([
+      { name: 'resource-compiler.installOf', ts: rc.installOf as never, inputs: [[exe], [exe.toUpperCase()], [lone], [path.join(game, 'bin', 'win64', 'other.exe')], [path.join(tmp, 'x', 'bin', 'win64', 'resourcecompiler.exe')], [null], ['']] },
+      { name: 'resource-compiler.safeRel', ts: rc.safeRel as never, inputs: ['models/a.vmdl', '', '/abs', 'a//b', 'a/./b', 'a/../b', 'a\\b', 'c:x', 'a\0b', '..', 'sounds/x.wav', 'C:/x'].map((r) => [r]) },
+      { name: 'resource-compiler.compiledOf', ts: rc.compiledOf as never, inputs: ['sounds/x.wav', 'sounds/X.MP3', 'panorama/styles/a.css', 'panorama/layout/a.XML', 'panorama/scripts/a.js', 'Panorama/a.css', 'styles/a.css', 'models/a.vmdl', 'panorama/.js', 'a'].map((r) => [r]) },
+      { name: 'workshop-tools.windowsOnly', ts: wt.windowsOnly as never, inputs: ['bin/win64/client.dll', 'bin/linuxsteamrt64/x', 'shaders_pc_40.vpk', 'SHADERS_PC_x', 'shaders_pc_a/b', 'tools/x.FGD', 'readonly_tools_asset_info.bin', 'pak01_dir.vpk', 'bin\\win64\\a'].map((r) => [r]) },
+    ]);
+    // the compiler's stand-in: what it writes, or says, is named by the source
+    const behave = (source: string) => {
+      const m = /[\\/]content[\\/]dota_addons[\\/][^\\/]+[\\/](.+)$/.exec(source);
+      const rel = m ? m[1].split(path.sep).join('/') : '';
+      if (rel.includes('fail')) return { code: 3, out: 'starting\r\n\r\nline two\nERROR: it broke\n' };
+      if (rel.includes('schema')) return { code: 1, out: 'x\nSchema mismatches reported for 450 classes\n' };
+      if (rel.includes('silent')) return { code: 0, out: '' };
+      const out = source.replace(`${path.sep}content${path.sep}dota_addons${path.sep}`, `${path.sep}game${path.sep}dota_addons${path.sep}`);
+      const to = path.join(out.slice(0, out.length - rel.length), rc.compiledOf(rel));
+      fs.mkdirSync(path.dirname(to), { recursive: true });
+      fs.writeFileSync(to, `compiled ${rel}`);
+      fs.writeFileSync(path.join(out.slice(0, out.length - rel.length), 'tools_thumbnail_c'), 'a note');
+      return { code: 0, out: 'ok' };
+    };
+    const job = (id: string, files: string[], compile = files) => ({ id, files: files.map((p) => ({ path: p, data: Buffer.from(`source ${p}`) })), compile });
+    const jobs = [
+      job('Bad', ['models/a.vmdl']), job('ok', ['../a.vmdl']), job('ok', ['models/a.vmdl'], ['models/b.vmdl']),
+      job('base_1', ['models/a.vmdl', 'materials/a.vmat', 'sounds/hit.wav'], ['models/a.vmdl', 'sounds/hit.wav']),
+      job('f', ['models/fail.vmdl']), job('s', ['models/schema.vmdl']), job('q', ['models/silent.vmdl']),
+    ];
+    type Ans = { ok?: unknown; error?: string };
+    const runTs = async (chosen: string | null, gamePath: string | null, steps: unknown[][]) => {
+      const ud = path.join(tmp, `ts-${steps.length}-${chosen ? 'c' : 'n'}${gamePath ? 'g' : 'n'}`);
+      const log: string[] = [];
+      const ran: unknown[] = [];
+      const c = rc.createResourceCompiler({
+        userDataDir: ud, gamePath: () => gamePath, chosen: () => chosen, log: (m) => log.push(m), platform: 'win32',
+        run: async (x, args, o) => { ran.push([path.basename(x), args.slice(0, 3), o.cwd || '']); return behave(args[3]); },
+      });
+      const answers: Ans[] = [];
+      for (const s of steps) {
+        try {
+          let v: unknown;
+          if (s[0] === 'state') v = c.state();
+          else if (s[0] === 'check') v = await c.check();
+          else v = (await c.compile(jobs[s[1] as number])).map((e) => [entryPath(e), e.data.toString('latin1')]);
+          answers.push({ ok: snap(v) });
+        } catch (e) { answers.push({ error: (e as Error).message }); }
+      }
+      return { answers, log, ran };
+    };
+    const { entryPath } = await import('../src/vpk.ts');
+    const steps: unknown[][] = [['state'], ...jobs.map((_, k) => ['compile', k]), ['state'], ['check'], ['state']];
+    const norm = (v: unknown) => JSON.parse(JSON.stringify(v, (k, x) => (k === 'seconds' || k === 'at' ? '<n>' : typeof x === 'string' ? x.replace(/after \d+\.\d s/, 'after <n> s').replace(/in \d+\.\d s/, 'in <n> s').split(tmp).join('<tmp>').replace(/\\/g, '/') : x)));
+    for (const [chosen, gp] of [[null, game], [exe, null], [lone, game], [null, null]] as const) {
+      const ts = await runTs(chosen, gp, steps);
+      const list = path.join(tmp, 'ops.json');
+      const ud = path.join(tmp, `rs-${chosen ? 'c' : 'n'}${gp ? 'g' : 'n'}`);
+      fs.writeFileSync(list, JSON.stringify([['resource-compiler.service', ud, gp, chosen, jobs.map((j) => ({ ...j, files: j.files.map((f) => ({ path: f.path, data: f.data.toString('latin1') })) })), steps]]));
+      const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' })) as { ok?: { answers: Ans[]; log: string[]; ran: unknown[] }; error?: string }[];
+      assert.ok(r.ok, r.error);
+      for (const [k, s] of steps.entries()) assert.deepEqual(norm(r.ok.answers[k]), norm(ts.answers[k]), `${chosen} ${gp} ${k} ${JSON.stringify(s)}`);
+      assert.deepEqual(norm(r.ok.log), norm(ts.log), `${chosen} ${gp} the log`);
+      assert.deepEqual(norm(r.ok.ran), norm(ts.ran), `${chosen} ${gp} the runs`);
+    }
+    // nothing of an addon is left in the install either way
+    for (const d of [path.join(install, 'content', 'dota_addons'), path.join(game, 'dota_addons')]) assert.deepEqual(fs.existsSync(d) ? fs.readdirSync(d) : [], [], d);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});
+
+test('a hero\'s own sounds in Rust are kept, compiled and put in My mods as the TypeScript does', { skip }, async () => {
+  if (!fs.existsSync(GAME_PAK01)) return;
+  const svcTs = await import('../src/ability-sounds-service.ts');
+  const { compiledOf } = await import('../src/resource-compiler.ts');
+  const { eventsFile } = await import('../src/ability-sounds.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-snd-'));
+  const real = sharedVpkIndex(GAME_PAK01);
+  const heroes = ['axe', 'crystalmaiden'];
+  const pak = buildVpk(heroes.map((h) => entryAt(eventsFile(h), real.read(eventsFile(h))!)));
+  // a WAV of 16-bit PCM at a rate the compiler takes, and ones it does not
+  const wav = (rate: number, bits: number, format = 1, samples = 64) => {
+    const data = Buffer.alloc(samples * 2, 7);
+    const fmt = Buffer.alloc(24);
+    fmt.write('fmt ', 0, 'ascii'); fmt.writeUInt32LE(16, 4); fmt.writeUInt16LE(format, 8); fmt.writeUInt16LE(1, 10);
+    fmt.writeUInt32LE(rate, 12); fmt.writeUInt32LE(rate * 2, 16); fmt.writeUInt16LE(2, 20); fmt.writeUInt16LE(bits, 22);
+    const head = Buffer.alloc(12); head.write('RIFF', 0, 'ascii'); head.writeUInt32LE(4 + 24 + 8 + data.length, 4); head.write('WAVE', 8, 'ascii');
+    const dh = Buffer.alloc(8); dh.write('data', 0, 'ascii'); dh.writeUInt32LE(data.length, 4);
+    return Buffer.concat([head, fmt, dh, data]);
+  };
+  const files = [wav(44100, 16), wav(48000, 16, 1, 99), wav(44100, 8), wav(11025, 16), wav(44100, 16, 3), Buffer.from('not a wav')].map((b, k) => {
+    const f = path.join(tmp, `w${k}.wav`); fs.writeFileSync(f, b); return { $file: f };
+  });
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  // the events to put sounds on: the first two of each hero's, read as the window would
+  const probe = svcTs.createAbilitySounds({ gamePath: () => a.game, userDataDir: a.ud, installer: null as never, library: new Library(path.join(tmp, 'probe')), compile: async () => [] });
+  const [ev1, ev2] = probe.hero('axe').events.map((e) => e.name);
+  const [cm1] = probe.hero('crystalmaiden').events.map((e) => e.name);
+  const ops: unknown[][] = [
+    ['heroes'], ['hero', 'axe'], ['hero', 'nobody'],
+    ['add', 'axe', ev1, 'replace', 1, files[2], 'eight bit'], ['add', 'axe', ev1, 'replace', 1, files[3], 'slow'], ['add', 'axe', ev1, 'replace', 1, files[4], 'float'],
+    ['add', 'axe', ev1, 'replace', 1, files[5], 'text'], ['add', 'axe', 'no_such_event', 'replace', 1, files[0], 'x'],
+    ['add', 'axe', ev1, 'replace', 0.5, files[0], 'a sound of mine'], ['add', 'axe', ev2, 'add', 1, files[1], 'x'.repeat(130)],
+    ['hero', 'axe'], ['add', 'axe', ev1, 'add', 0.25, files[1], 'again'], ['drop'], ['add', 'crystalmaiden', cm1, 'replace', 1, files[0], 'cm'],
+    ['add', 'crystalmaiden', cm1, 'replace', 1, files[0], 'cm'], ['rebuild', 'axe'], ['remove', 'axe', ev1], ['remove', 'axe', 'nothing'],
+    ['remove', 'axe', ev2], ['hero', 'axe'], ['rebuild', 'axe'],
+  ];
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|recId|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  const jobs: unknown[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    let dropNext = false;
+    let dropping = false;
+    const svc = svcTs.createAbilitySounds({
+      gamePath: () => a.game, userDataDir: a.ud, installer: inst as never, library, log: (m) => log.push(m),
+      compile: async (job) => {
+        jobs.push([job.id, job.compile]);
+        return job.files.filter((f) => !(dropping && f.path.endsWith('.wav'))).map((f) => entryAt(compiledOf(f.path), Buffer.from(`compiled ${sha(f.data)}`)));
+      },
+    });
+    for (const op of ops) {
+      dropping = dropNext;
+      if (op[0] !== 'drop') dropNext = false;
+      try {
+        let v: unknown;
+        if (op[0] === 'heroes') v = svc.heroes();
+        else if (op[0] === 'hero') v = svc.hero(op[1] as string);
+        else if (op[0] === 'drop') { dropNext = true; v = null; }
+        else if (op[0] === 'add') v = await svc.add(op[1] as string, op[2] as string, op[3] as never, op[4] as number, fs.readFileSync((op[5] as { $file: string }).$file), op[6] as string);
+        else if (op[0] === 'remove') v = await svc.remove(op[1] as string, op[2] as string);
+        else v = await svc.rebuild(op[1] as string);
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'ops.json');
+  fs.writeFileSync(list, JSON.stringify([['ability-sounds.service', b.game, 'russian', b.journal, b.lib, b.ud, ops]]));
+  const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[]; jobs: unknown[] }; error?: string }[];
+  assert.ok(r.ok, r.error);
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(r.ok.answers[k]), norm(answers[k]), `${k} ${JSON.stringify(op).slice(0, 100)}`);
+  assert.deepEqual(r.ok.log, log, 'the log');
+  assert.deepEqual(r.ok.jobs, jobs, 'the compiles');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(tree(path.join(b.ud, 'ability-sounds')), tree(path.join(a.ud, 'ability-sounds')), 'the sounds kept');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok(answers.some((x) => (x as { error?: string }).error?.includes('resourcecompiler')), 'a compile that leaves the sounds out is an error');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('a hero painted part by part in Rust is built, compiled and put in My mods as the TypeScript does', { skip }, async () => {
+  const hp = await import('../src/hero-paint-service.ts');
+  const { compiledOf } = await import('../src/resource-compiler.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  if (!fs.existsSync(GAME_PAK01)) return;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-paint-'));
+  const real = sharedVpkIndex(GAME_PAK01);
+  const hero = 'razor';
+  const vanilla = real.read('scripts/items/items_game.txt')!.toString('latin1');
+  // two of the hero's items that name particles: what he wears in the window
+  const worn = listItems(vanilla).filter((i) => { const b = vanilla.slice(i.start, i.end); return b.includes(`"npc_dota_hero_${hero}"`) && /"particles\/[^"]+\.vpcf"/.test(b); }).slice(0, 2).map((i) => i.id);
+  // twin games of the hero's files, his items' and the ability names
+  const want = [...real.paths()].filter((p) => p.includes(hero) || p === 'resource/localization/abilities_english.txt' || p === `scripts/npc/heroes/npc_dota_hero_${hero}.txt`);
+  const pak = buildVpk(want.map((p) => entryAt(p, real.read(p)!)));
+  const vfile = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(vfile, vanilla, 'latin1');
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    // an item builder's pick for the hero, which counts as worn too
+    const lib = new Library(path.join(root, 'lib'));
+    const pick = lib.add({ name: 'pick', categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+    lib.update(pick.id, { slot: `item:${hero}:weapon`, itemId: worn[1] } as never);
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const repaint = (png: Buffer, c: number[], mode: string) => { if (png.subarray(0, 3).toString() === 'BAD') throw new Error('a picture the codec cannot read'); return Buffer.concat([png, Buffer.from(`|${c}|${mode}`)]); };
+  const decode = async (_exe: string, v: Buffer) => Buffer.from(`PNG:${sha(v)}`);
+  // the layers the window would list, to colour
+  const probe = hp.createHeroPaint({ gamePath: () => a.game, installer: null as never, library: new Library(path.join(tmp, 'probe')), vanilla: () => vanilla, repaint });
+  const ids = probe.state(hero, worn).layers.map((l) => l.id);
+  const pickOf = (kinds: RegExp, value: string) => Object.fromEntries(ids.filter((i) => kinds.test(i)).slice(0, 3).map((i) => [i, value]));
+  const colours1 = { ...pickOf(/^ability:/, '#ff2828'), ...pickOf(/^item:/, '#20c8ff:full'), bogus: '#123456', [ids[0]]: 'red', effects: '#00ff00:keep' };
+  const colours2 = { ...pickOf(/^(abilityIcon|portrait)/, '#ffcc00:rgb'), ...pickOf(/^(body|itemModel)/, '#8040ff') };
+  const ops: unknown[][] = [
+    ['state', hero, worn, {}], ['state', 'Nope!', [], {}], ['state', 'nobody', [], {}],
+    ['install', 'X', colours1, 'Razor', worn, {}], ['install', hero, { a: 'red' }, 'Razor', worn, {}],
+    ['install', hero, { ...colours2, ...colours1 }, '   ', worn, { compile: 'none' }],
+    ['install', hero, { ...colours1, ...colours2 }, `  ${'R'.repeat(90)}  `, worn, { vrf: 'vrf.exe', compile: 'failOnce' }],
+    ['state', hero, [], { vrf: 'vrf.exe' }],
+    ['install', hero, colours2, 'Razor', [...worn, 'x', '1'.repeat(10)], { vrf: 'vrf.exe', compile: 'fail' }],
+    ['install', hero, colours2, 'Razor', worn, { vrf: 'vrf.exe', compile: 'ok' }],
+    ['rebuild', ['$paint:razor', 'nobody'], { vrf: 'vrf.exe', compile: 'ok' }], ['state', hero, worn, {}],
+  ].map((o) => (o[0] === 'rebuild' ? [o[0], o[1], null, null, null, o[2]] : o));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  const jobs: unknown[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    let how: { vrf?: string; compile?: string } = {};
+    let tries = 0;
+    const built: string[] = [];
+    const svc = hp.createHeroPaint({
+      gamePath: () => a.game, installer: inst as never, library, vanilla: () => vanilla, repaint: repaint as never, decode,
+      vrf: () => how.vrf ?? null, lang: () => 'en', log: (m) => log.push(m), onRebuilt: (id) => built.push(id),
+      compile: async (job) => {
+        if (!how.compile || how.compile === 'none') throw new Error('no compile here');
+        tries += 1;
+        jobs.push([job.id, job.compile, job.files.map((f) => f.path)]);
+        if (how.compile === 'fail' || (how.compile === 'failOnce' && tries === 1)) throw new Error(`access violation ${'x'.repeat(300)}`);
+        return job.files.map((f) => {
+          const n = /^materials\/d2mm_paint\/(.+)\.png$/.exec(f.path);
+          const at = n ? `materials/d2mm_paint/${n[1]}_png_0123abcd.vtex_c` : f.path.startsWith('panorama/images/') && f.path.endsWith('.png') ? `${f.path.slice(0, -4)}_png.vtex_c` : compiledOf(f.path);
+          return entryAt(at, Buffer.from(`compiled ${sha(f.data)}`));
+        });
+      },
+    });
+    for (const op of ops) {
+      how = (op[5] as typeof how) || {};
+      tries = 0;
+      try {
+        let v: unknown;
+        if (op[0] === 'state') v = svc.state(op[1] as string, op[2]);
+        else if (op[0] === 'install') {
+          // with no compiler the service is handed none, as the Rust's is
+          if (how.compile === 'none' || !how.compile) {
+            const bare = hp.createHeroPaint({ gamePath: () => a.game, installer: inst as never, library, vanilla: () => vanilla, repaint: repaint as never, decode, vrf: () => how.vrf ?? null, lang: () => 'en', log: (m) => log.push(m) });
+            v = await bare.install(op[1], op[2], op[3], op[4]);
+          } else v = await svc.install(op[1], op[2], op[3], op[4]);
+        } else {
+          built.length = 0;
+          const list = (op[1] as string[]).map((i) => (i.startsWith('$paint:') ? library.list().find((r) => (r.generated as { paint?: string } | undefined)?.paint === i.slice(7))?.id ?? '' : i));
+          svc.rebuild(list);
+          for (let k = 0; k < 100 && !built.length; k++) await new Promise((r) => setTimeout(r, 50));
+          v = [...built];
+        }
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'ops.json');
+  fs.writeFileSync(list, JSON.stringify([['hero-paint.service', b.game, 'russian', b.journal, b.lib, b.ud, { $file: vfile }, 'en', ops]]));
+  const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[]; jobs: unknown[] }; error?: string }[];
+  assert.ok(r.ok, r.error);
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(r.ok.answers[k]), norm(answers[k]), `${k} ${JSON.stringify(op).slice(0, 100)}`);
+  assert.deepEqual(r.ok.log, log, 'the log');
+  assert.deepEqual(r.ok.jobs, jobs, 'the compiles');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok(log.some((m) => m.includes('compiling again after')), 'a compile that died was tried again');
+  assert.ok(log.some((m) => m.includes('no ValveResourceFormat')), 'without the reader the pictures stay');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

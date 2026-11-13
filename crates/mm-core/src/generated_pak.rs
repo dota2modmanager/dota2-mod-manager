@@ -11,7 +11,8 @@ fn io(e: std::io::Error) -> String {
     e.to_string()
 }
 
-fn files_of(rec: &Value) -> Vec<LibFile> {
+/// A record's files, as the installer takes them.
+pub fn files_of(rec: &Value) -> Vec<LibFile> {
     rec.get("files")
         .and_then(Value::as_array)
         .map(|a| {

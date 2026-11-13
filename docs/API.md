@@ -11095,12 +11095,10 @@ What a rank record was built from, and the script it carries (SCRIPT_MARK when i
 ### `SCRIPT_MARK`
 
 ```ts
-export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString() + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12)
+export const SCRIPT_MARK = createHash('sha1').update(levelsScript.toString().replace(/\r\n/g, '\n') + JSON.stringify(LAYOUTS)).digest('hex').slice(0, 12)
 ```
 
-The script and the layouts it goes into, as a short mark. A record built by an older app keeps
-that app's script in its pak, so a new part of it (the level in a match) stays out of the game
-until the record is built again; the app does that at start when the marks differ.
+the function's source has the line endings of the checkout it was built from: CRLF on Windows
 
 ### `RankState`
 

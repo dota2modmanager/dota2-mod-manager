@@ -3524,6 +3524,323 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let wanted = store.map(|s| s.wanted.into_inner().unwrap_or_default()).unwrap_or_default();
             json!({ "answers": answers, "log": log, "wanted": wanted })
         }
+        "toolchain.validPin" => json!(crate::toolchain::valid_pin(args.first().unwrap_or(&Value::Null), args.get(1).and_then(Value::as_str))),
+        "toolchain.fallbackName" => json!(crate::toolchain::fallback_name(&s(args, 0), &s(args, 1), &s(args, 2))),
+        "toolchain.downloadOrder" => {
+            let (a, b2) = crate::toolchain::download_order(&s(args, 0), &s(args, 1), args.get(2).is_some_and(crate::js::truthy));
+            json!([a, b2])
+        }
+        "toolchain.pins" => {
+            let pins = crate::toolchain::built_in_pins();
+            json!(pins
+                .iter()
+                .map(|(n, builds)| (n.clone(), builds.iter().map(|(b2, p)| (b2.clone(), json!({
+                    "version": p.version, "license": p.license, "project": p.project, "url": p.url,
+                    "sha256": p.sha256, "bytes": p.bytes, "exe": p.exe,
+                }))).collect::<serde_json::Map<_, _>>().into()))
+                .collect::<serde_json::Map<_, _>>())
+        }
+        "toolchain.service" => {
+            // (userData, build, {build: sha256} over the pins, the archive every download hands
+            // over or null, ops): each answer with paths under userData, the log, the progress.
+            // A download hands the archive over if it hashes to the pin, else fails as a wrong
+            // checksum does; with no archive it is a 404.
+            let ud = std::path::PathBuf::from(s(args, 0));
+            let mut tc = crate::toolchain::Toolchain::new(&ud, args.get(1).and_then(Value::as_str));
+            for (b2, sha) in args.get(2).and_then(Value::as_object).into_iter().flatten() {
+                if let Some(p) = tc.pins.get_mut("vrf").and_then(|m| m.get_mut(b2)) {
+                    p.sha256 = crate::js::string(sha);
+                }
+            }
+            let archive = match args.get(3) {
+                Some(v) if !v.is_null() => Some(b(std::slice::from_ref(v), 0)?.to_vec()),
+                _ => None,
+            };
+            let mut asked: Vec<String> = Vec::new();
+            let mut get = |url: &str, dest: &std::path::Path, want: &str, on: &mut dyn FnMut(u64, u64)| {
+                asked.push(url.to_string());
+                let data = archive.clone().ok_or_else(|| "HTTP 404".to_string())?;
+                let sha = hex(&<sha2::Sha256 as sha2::Digest>::digest(&data));
+                if sha != want.to_lowercase() {
+                    return Err(format!(
+                        "checksum mismatch for {}",
+                        dest.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()
+                    ));
+                }
+                std::fs::create_dir_all(dest.parent().unwrap_or(&ud)).map_err(|e| e.to_string())?;
+                std::fs::write(dest, &data).map_err(|e| e.to_string())?;
+                on(data.len() as u64, data.len() as u64);
+                Ok((data.len() as u64, sha))
+            };
+            let rel = |p: std::path::PathBuf| {
+                p.strip_prefix(&ud).map(|r| r.to_string_lossy().replace('\\', "/")).unwrap_or_else(|_| p.display().to_string())
+            };
+            let (mut log, mut events) = (Vec::<String>::new(), Vec::<Value>::new());
+            let mut answers = Vec::new();
+            for op in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let name = op.get(1).map(crate::js::string).unwrap_or_default();
+                let mut d = |m: String| log.push(m);
+                let mut e = |v: Value| events.push(v);
+                let r: Result<Value, String> = match op[0].as_str().unwrap_or("") {
+                    "state" => Ok(tc.state()),
+                    "pathOf" => Ok(json!(tc.path_of(&name).map(rel))),
+                    "ensure" => tc.ensure(&name, &mut get, false, &mut e, &mut d).map(|p| json!(rel(p))),
+                    "catchUp" => tc.catch_up(&mut get, false, &mut e, &mut d).map(|_| Value::Null),
+                    "remove" => tc.remove(&name).map(|_| Value::Null),
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log, "events": events, "asked": asked })
+        }
+        "resource-compiler.installOf" => json!(crate::resource_compiler::install_of(
+            args.first().and_then(Value::as_str).map(std::path::Path::new)
+        )
+        .map(|p| p.to_string_lossy().into_owned())),
+        "resource-compiler.safeRel" => json!(crate::resource_compiler::safe_rel(&s(args, 0))),
+        "resource-compiler.compiledOf" => json!(crate::resource_compiler::compiled_of(&s(args, 0))),
+        "workshop-tools.windowsOnly" => json!(crate::workshop_tools::windows_only(&s(args, 0))),
+        "resource-compiler.service" => {
+            // (userData, game, chosen, jobs [{id, files: [{path, data latin1}], compile}], steps
+            // [state] | [compile, k] | [check]): each answer, the log, and the runs. The stand-in for
+            // the compiler is named by the source, as the test's TypeScript one is.
+            let ud = std::path::PathBuf::from(s(args, 0));
+            let c = crate::resource_compiler::ResourceCompiler {
+                needs_wine: false,
+                ..crate::resource_compiler::ResourceCompiler::new(&ud, opt_path(args, 1), opt_path(args, 2))
+            };
+            let latin1 = |v: &Value| crate::js::string(v).chars().map(|ch| ch as u32 as u8).collect::<Vec<u8>>();
+            let jobs: Vec<crate::resource_compiler::CompileJob> = args
+                .get(3)
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .map(|j| crate::resource_compiler::CompileJob {
+                    id: crate::js::string(&j["id"]),
+                    files: j["files"]
+                        .as_array()
+                        .into_iter()
+                        .flatten()
+                        .map(|f| crate::resource_compiler::SourceFile { path: crate::js::string(&f["path"]), data: latin1(&f["data"]) })
+                        .collect(),
+                    compile: j["compile"].as_array().into_iter().flatten().map(crate::js::string).collect(),
+                })
+                .collect();
+            let tmp_root = |p: &str| p.to_string();
+            let mut ran: Vec<Value> = Vec::new();
+            let mut run = |x: &str, a: &[String], cwd: Option<&std::path::Path>, _: &[(String, String)], _: u64| {
+                let base = std::path::Path::new(x).file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                ran.push(json!([base, a[..3.min(a.len())], cwd.map(|c| c.display().to_string()).unwrap_or_default()]));
+                let source = a.get(3).cloned().unwrap_or_default();
+                let sep = std::path::MAIN_SEPARATOR;
+                let marker = format!("{sep}content{sep}dota_addons{sep}");
+                let rel = source
+                    .find(&marker)
+                    .map(|i| &source[i + marker.len()..])
+                    .and_then(|r| r.split_once(sep).map(|(_, rest)| rest.replace(sep, "/")))
+                    .unwrap_or_default();
+                if rel.contains("fail") {
+                    return Ok((3, "starting\r\n\r\nline two\nERROR: it broke\n".to_string()));
+                }
+                if rel.contains("schema") {
+                    return Ok((1, "x\nSchema mismatches reported for 450 classes\n".to_string()));
+                }
+                if rel.contains("silent") {
+                    return Ok((0, String::new()));
+                }
+                let out = source.replacen(&marker, &format!("{sep}game{sep}dota_addons{sep}"), 1);
+                let root = std::path::PathBuf::from(tmp_root(&out[..out.len() - rel.len()]));
+                let to = root.join(crate::resource_compiler::compiled_of(&rel));
+                std::fs::create_dir_all(to.parent().unwrap_or(&root)).map_err(|e| e.to_string())?;
+                std::fs::write(&to, format!("compiled {rel}")).map_err(|e| e.to_string())?;
+                std::fs::write(root.join("tools_thumbnail_c"), "a note").map_err(|e| e.to_string())?;
+                Ok((0, "ok".to_string()))
+            };
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for step in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match step[0].as_str().unwrap_or("") {
+                    "state" => Ok(c.state(None, &mut d)),
+                    "check" => Ok(c.check(None, &mut run, &mut |_| {}, &mut d)),
+                    "compile" => {
+                        let k = step[1].as_u64().unwrap_or(0) as usize;
+                        c.compile(&jobs[k], None, &mut run, &mut d).map(|es| {
+                            json!(es
+                                .iter()
+                                .map(|e| json!([e.path(), e.data.iter().map(|&b| b as char).collect::<String>()]))
+                                .collect::<Vec<_>>())
+                        })
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log, "ran": ran })
+        }
+        "ability-sounds.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each answer, the log, and the
+            // jobs compiled. The compiler's stand-in hands back each source as `compiled <sha1>` at
+            // its compiled path; after a `drop` step, the next compile leaves the sounds out.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let svc = crate::ability_sounds_service::AbilitySoundsService::new(inst.game.clone(), &ud);
+            let mut drop_next = false;
+            let mut jobs: Vec<Value> = Vec::new();
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let st = |i: usize| crate::js::string(&arg(i));
+                let mut d = |m: String| log.push(m);
+                let dropping = drop_next;
+                let mut compile = |job: &crate::resource_compiler::CompileJob| {
+                    jobs.push(json!([job.id, job.compile]));
+                    Ok(job
+                        .files
+                        .iter()
+                        .filter(|f| !(dropping && f.path.ends_with(".wav")))
+                        .map(|f| {
+                            let sha1 = hex(&<sha1::Sha1 as sha1::Digest>::digest(&f.data));
+                            let at = crate::resource_compiler::compiled_of(&f.path);
+                            crate::vpk::entry_at(&at, format!("compiled {sha1}").into_bytes().into())
+                        })
+                        .collect())
+                };
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "heroes" => svc.heroes(),
+                    "hero" => svc.hero(&lib, &st(1)),
+                    "drop" => {
+                        drop_next = true;
+                        Ok(Value::Null)
+                    }
+                    "add" => {
+                        let wav = b(std::slice::from_ref(&arg(5)), 0)?;
+                        let volume = arg(4).as_f64().unwrap_or(0.0);
+                        svc.add(&inst, &mut lib, (&st(1), &st(2), &st(3), volume, &wav, &st(6)), &mut compile, &mut d)
+                    }
+                    "remove" => svc.remove(&inst, &mut lib, &st(1), &st(2), &mut compile, &mut d),
+                    "rebuild" => svc.rebuild(&inst, &mut lib, &st(1), &mut compile, &mut d),
+                    other => Err(format!("no step {other}")),
+                };
+                if arg(0).as_str() != Some("drop") {
+                    drop_next = false;
+                }
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log, "jobs": jobs })
+        }
+        "hero-paint.wornOf" => json!(crate::hero_paint_service::worn_of(args.first().unwrap_or(&Value::Null))),
+        "hero-paint.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, vanilla {$file}, lang, ops): each
+            // answer, the log, and the jobs compiled. The tools are stand-ins, as in the test's
+            // TypeScript: a repaint that appends the colour and mode, a decode that names the
+            // texture's sha1, and a compiler named per step (ok, none, failOnce, fail).
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let vanilla = b(args, 5)?;
+            let svc = crate::hero_paint_service::HeroPaintService::new(inst.game.clone(), &s(args, 6));
+            let sha1hex = |d: &[u8]| hex(&<sha1::Sha1 as sha1::Digest>::digest(d));
+            let repaint = |png: &[u8], c: crate::recolor::Rgb, mode: &str| -> Result<Vec<u8>, String> {
+                if png.starts_with(b"BAD") {
+                    return Err("a picture the codec cannot read".into());
+                }
+                let mut out = png.to_vec();
+                out.extend(format!("|{},{},{}|{mode}", c[0], c[1], c[2]).into_bytes());
+                Ok(out)
+            };
+            let mut decode = |_: &str, v: &[u8]| -> Result<Vec<u8>, String> { Ok(format!("PNG:{}", sha1hex(v)).into_bytes()) };
+            let mut jobs: Vec<Value> = Vec::new();
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(7).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let how = arg(5);
+                let kind = how["compile"].as_str().unwrap_or("none").to_string();
+                let mut tries = 0;
+                let mut compile = |job: &crate::resource_compiler::CompileJob| -> Result<Vec<crate::vpk::Entry>, String> {
+                    tries += 1;
+                    jobs.push(json!([job.id, job.compile, job.files.iter().map(|f| f.path.clone()).collect::<Vec<_>>()]));
+                    if kind == "fail" || (kind == "failOnce" && tries == 1) {
+                        return Err(format!("access violation {}", "x".repeat(300)));
+                    }
+                    Ok(job
+                        .files
+                        .iter()
+                        .map(|f| {
+                            let p = &f.path;
+                            let at = if let Some(n) = p.strip_prefix("materials/d2mm_paint/").and_then(|r| r.strip_suffix(".png")) {
+                                format!("materials/d2mm_paint/{n}_png_0123abcd.vtex_c")
+                            } else if p.starts_with("panorama/images/") && p.ends_with(".png") {
+                                format!("{}_png.vtex_c", &p[..p.len() - 4])
+                            } else {
+                                crate::resource_compiler::compiled_of(p)
+                            };
+                            crate::vpk::entry_at(&at, format!("compiled {}", sha1hex(&f.data)).into_bytes().into())
+                        })
+                        .collect())
+                };
+                let mut d = |m: String| log.push(m);
+                let vrf = how["vrf"].as_str().map(str::to_string);
+                let mut tools = crate::hero_paint_service::Tools {
+                    vrf: vrf.clone(),
+                    repaint: &repaint,
+                    decode: &mut decode,
+                    compile: if kind == "none" { None } else { Some(&mut compile) },
+                };
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "state" => svc.state(&lib, &vanilla, &crate::js::string(&arg(1)), &arg(2), vrf.is_some()),
+                    "install" => {
+                        svc.install(&inst, &mut lib, &vanilla, (&arg(1), &arg(2), &arg(3), &arg(4)), &mut tools, &mut d)
+                    }
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1)
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .map(|i| {
+                                let i = crate::js::string(i);
+                                match i.strip_prefix("$paint:") {
+                                    Some(h) => lib
+                                        .list()
+                                        .iter()
+                                        .find(|r| r["generated"]["paint"].as_str() == Some(h))
+                                        .map(|r| crate::js::string(&r["id"]))
+                                        .unwrap_or_default(),
+                                    None => i,
+                                }
+                            })
+                            .collect();
+                        let mut built = Vec::new();
+                        for id in svc.due(&lib, &ids) {
+                            if svc.rebuild_now(&inst, &mut lib, &vanilla, &id, &mut tools, &mut d) {
+                                built.push(id);
+                            }
+                        }
+                        Ok(json!(built))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log, "jobs": jobs })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

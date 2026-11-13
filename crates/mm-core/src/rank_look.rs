@@ -225,7 +225,7 @@ const SCRIPT_BODY: &str = include_str!("rank_look_script.js");
 /// The script and the layouts it goes into, as a short mark: a record whose mark differs is built
 /// again at start. The TypeScript's (a hash of its function's source); the parity test holds the
 /// two together, and a change to the script changes it.
-pub const SCRIPT_MARK: &str = "af7fca4038aa";
+pub const SCRIPT_MARK: &str = "6ce930a463bd";
 
 /// The script the layouts include, with the player's levels and medal in it. `ids` names the
 /// chosen heroes by the number the game gives them.
