@@ -522,13 +522,14 @@ const trickle = (chunks: number, everyMs: number): Handler => (req, res) => {
 test('a download that takes longer than the wait for an answer still arrives', async (t) => {
   /* One signal used to cover the headers and the body, so any mod that needed more than ten
      seconds to come down failed half way, on every mirror in turn. */
-  net.setNetTiming({ headMs: 200, idleMs: 300 });
+  // wide margins: a loaded CI runner can stall a few hundred milliseconds (2026-11-13, windows)
+  net.setNetTiming({ headMs: 600, idleMs: 1000 });
   t.after(() => net.setNetTiming(null));
-  const slow = await serve(t, trickle(12, 50)); // 600 ms in all, never silent for long
+  const slow = await serve(t, trickle(30, 50)); // 1.5 s in all, never silent for long
   net.setMirrors([slow.mirror()]);
   const dest = path.join(tempDir(t), 'Mod.zip');
   const got = await net.downloadFile(RAW_URL, dest);
-  assert.equal(got.bytes, 120);
+  assert.equal(got.bytes, 300);
 });
 
 test('a body that goes silent is cut, so a stalled mirror cannot hold an install forever', async (t) => {
