@@ -7288,7 +7288,7 @@ test('the Discord status in Rust talks to Discord as the TypeScript one does', {
     ['set', { details: 'two', state: '' }], ['wait', 100], ['set', { details: 'three', state: 's' }], ['wait', 4600],
     ['stop'], ['set', { details: 'gone' }], ['wait', 200], ['start'], ['wait', 600],
   ];
-  const list = path.join(os.tmpdir(), `mm-discord-${process.pid}.json`);
+  const list = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'mm-discord-')), 'calls.json');
   fs.writeFileSync(list, JSON.stringify([['discord-presence.script', '1529830456697163867', ops]]));
   const rsRun = new Promise<string>((resolve, reject) => {
     const p = spawn(cli, ['call', list], { env: { ...process.env, MM_DISCORD_PIPE: name('rs') } });
@@ -7312,7 +7312,7 @@ test('the Discord status in Rust talks to Discord as the TypeScript one does', {
   } finally { if (before === undefined) delete process.env.MM_DISCORD_PIPE; else process.env.MM_DISCORD_PIPE = before; }
   const [rs] = JSON.parse(await rsRun) as { ok?: string[]; error?: string }[];
   for (const s of servers) s.close();
-  fs.rmSync(list, { force: true });
+  fs.rmSync(path.dirname(list), { recursive: true, force: true });
   assert.deepEqual(rs.ok, logs);
   assert.deepEqual(seen.rs, seen.ts);
   assert.ok(seen.ts.length >= 6, `Discord heard the handshakes, the pong and the activities: ${JSON.stringify(seen.ts)}`);
@@ -7346,7 +7346,7 @@ test('signing in with Discord in Rust asks, waits and reads the profile as the T
   const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
   const port = 53000 + (process.pid % 900);
   const run = async (lang: string, browser: string, timeout = 5000) => {
-    const list = path.join(os.tmpdir(), `mm-auth-${process.pid}.json`);
+    const list = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'mm-auth-')), 'calls.json');
     fs.writeFileSync(list, JSON.stringify([['discord-auth.script', lang, port, `${base}/api`, `${base}/cdn`, timeout, browser]]));
     const out = await new Promise<string>((resolve, reject) => {
       const p = spawn(cli, ['call', list]);
@@ -7355,7 +7355,7 @@ test('signing in with Discord in Rust asks, waits and reads the profile as the T
       p.on('error', reject);
       p.on('close', (code) => (code === 0 ? resolve(o) : reject(new Error(`mm-cli exited ${code}`))));
     });
-    fs.rmSync(list, { force: true });
+    fs.rmSync(path.dirname(list), { recursive: true, force: true });
     return (JSON.parse(out) as { ok: { ok?: Record<string, unknown>; error?: string; url: string } }[])[0].ok;
   };
   const lt = (l: string, ru: string, ...v: unknown[]) => { setLang(l); const s = t(ru, ...v); setLang('en'); return s; };
