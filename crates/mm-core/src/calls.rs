@@ -3741,6 +3741,106 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": log, "jobs": jobs })
         }
+        "hero-paint.wornOf" => json!(crate::hero_paint_service::worn_of(args.first().unwrap_or(&Value::Null))),
+        "hero-paint.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, vanilla {$file}, lang, ops): each
+            // answer, the log, and the jobs compiled. The tools are stand-ins, as in the test's
+            // TypeScript: a repaint that appends the colour and mode, a decode that names the
+            // texture's sha1, and a compiler named per step (ok, none, failOnce, fail).
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let vanilla = b(args, 5)?;
+            let svc = crate::hero_paint_service::HeroPaintService::new(inst.game.clone(), &s(args, 6));
+            let sha1hex = |d: &[u8]| hex(&<sha1::Sha1 as sha1::Digest>::digest(d));
+            let repaint = |png: &[u8], c: crate::recolor::Rgb, mode: &str| -> Result<Vec<u8>, String> {
+                if png.starts_with(b"BAD") {
+                    return Err("a picture the codec cannot read".into());
+                }
+                let mut out = png.to_vec();
+                out.extend(format!("|{},{},{}|{mode}", c[0], c[1], c[2]).into_bytes());
+                Ok(out)
+            };
+            let mut decode = |_: &str, v: &[u8]| -> Result<Vec<u8>, String> { Ok(format!("PNG:{}", sha1hex(v)).into_bytes()) };
+            let mut jobs: Vec<Value> = Vec::new();
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(7).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let how = arg(5);
+                let kind = how["compile"].as_str().unwrap_or("none").to_string();
+                let mut tries = 0;
+                let mut compile = |job: &crate::resource_compiler::CompileJob| -> Result<Vec<crate::vpk::Entry>, String> {
+                    tries += 1;
+                    jobs.push(json!([job.id, job.compile, job.files.iter().map(|f| f.path.clone()).collect::<Vec<_>>()]));
+                    if kind == "fail" || (kind == "failOnce" && tries == 1) {
+                        return Err(format!("access violation {}", "x".repeat(300)));
+                    }
+                    Ok(job
+                        .files
+                        .iter()
+                        .map(|f| {
+                            let p = &f.path;
+                            let at = if let Some(n) = p.strip_prefix("materials/d2mm_paint/").and_then(|r| r.strip_suffix(".png")) {
+                                format!("materials/d2mm_paint/{n}_png_0123abcd.vtex_c")
+                            } else if p.starts_with("panorama/images/") && p.ends_with(".png") {
+                                format!("{}_png.vtex_c", &p[..p.len() - 4])
+                            } else {
+                                crate::resource_compiler::compiled_of(p)
+                            };
+                            crate::vpk::entry_at(&at, format!("compiled {}", sha1hex(&f.data)).into_bytes().into())
+                        })
+                        .collect())
+                };
+                let mut d = |m: String| log.push(m);
+                let vrf = how["vrf"].as_str().map(str::to_string);
+                let mut tools = crate::hero_paint_service::Tools {
+                    vrf: vrf.clone(),
+                    repaint: &repaint,
+                    decode: &mut decode,
+                    compile: if kind == "none" { None } else { Some(&mut compile) },
+                };
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "state" => svc.state(&lib, &vanilla, &crate::js::string(&arg(1)), &arg(2), vrf.is_some()),
+                    "install" => {
+                        svc.install(&inst, &mut lib, &vanilla, (&arg(1), &arg(2), &arg(3), &arg(4)), &mut tools, &mut d)
+                    }
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1)
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .map(|i| {
+                                let i = crate::js::string(i);
+                                match i.strip_prefix("$paint:") {
+                                    Some(h) => lib
+                                        .list()
+                                        .iter()
+                                        .find(|r| r["generated"]["paint"].as_str() == Some(h))
+                                        .map(|r| crate::js::string(&r["id"]))
+                                        .unwrap_or_default(),
+                                    None => i,
+                                }
+                            })
+                            .collect();
+                        let mut built = Vec::new();
+                        for id in svc.due(&lib, &ids) {
+                            if svc.rebuild_now(&inst, &mut lib, &vanilla, &id, &mut tools, &mut d) {
+                                built.push(id);
+                            }
+                        }
+                        Ok(json!(built))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log, "jobs": jobs })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

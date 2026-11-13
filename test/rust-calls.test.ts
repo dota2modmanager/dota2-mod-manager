@@ -6461,3 +6461,125 @@ test('a hero\'s own sounds in Rust are kept, compiled and put in My mods as the 
   assert.ok(answers.some((x) => (x as { error?: string }).error?.includes('resourcecompiler')), 'a compile that leaves the sounds out is an error');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('a hero painted part by part in Rust is built, compiled and put in My mods as the TypeScript does', { skip }, async () => {
+  const hp = await import('../src/hero-paint-service.ts');
+  const { compiledOf } = await import('../src/resource-compiler.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
+  const { createHash } = await import('node:crypto');
+  setLang('en');
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  if (!fs.existsSync(GAME_PAK01)) return;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-paint-'));
+  const real = sharedVpkIndex(GAME_PAK01);
+  const hero = 'razor';
+  const vanilla = real.read('scripts/items/items_game.txt')!.toString('latin1');
+  // two of the hero's items that name particles: what he wears in the window
+  const worn = listItems(vanilla).filter((i) => { const b = vanilla.slice(i.start, i.end); return b.includes(`"npc_dota_hero_${hero}"`) && /"particles\/[^"]+\.vpcf"/.test(b); }).slice(0, 2).map((i) => i.id);
+  // twin games of the hero's files, his items' and the ability names
+  const want = [...real.paths()].filter((p) => p.includes(hero) || p === 'resource/localization/abilities_english.txt' || p === `scripts/npc/heroes/npc_dota_hero_${hero}.txt`);
+  const pak = buildVpk(want.map((p) => entryAt(p, real.read(p)!)));
+  const vfile = path.join(tmp, 'items_game.txt');
+  fs.writeFileSync(vfile, vanilla, 'latin1');
+  type Twin = { game: string; lib: string; ud: string; journal: string };
+  const twin = (side: string): Twin => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    fs.mkdirSync(path.join(game, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(game, 'dota_russian'), { recursive: true });
+    fs.writeFileSync(path.join(game, 'dota', 'pak01_dir.vpk'), pak);
+    // an item builder's pick for the hero, which counts as worn too
+    const lib = new Library(path.join(root, 'lib'));
+    const pick = lib.add({ name: 'pick', categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] });
+    lib.update(pick.id, { slot: `item:${hero}:weapon`, itemId: worn[1] } as never);
+    return { game, lib: path.join(root, 'lib'), ud: path.join(root, 'ud'), journal: path.join(root, 'journal') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const repaint = (png: Buffer, c: number[], mode: string) => { if (png.subarray(0, 3).toString() === 'BAD') throw new Error('a picture the codec cannot read'); return Buffer.concat([png, Buffer.from(`|${c}|${mode}`)]); };
+  const decode = async (_exe: string, v: Buffer) => Buffer.from(`PNG:${sha(v)}`);
+  // the layers the window would list, to colour
+  const probe = hp.createHeroPaint({ gamePath: () => a.game, installer: null as never, library: new Library(path.join(tmp, 'probe')), vanilla: () => vanilla, repaint });
+  const ids = probe.state(hero, worn).layers.map((l) => l.id);
+  const pickOf = (kinds: RegExp, value: string) => Object.fromEntries(ids.filter((i) => kinds.test(i)).slice(0, 3).map((i) => [i, value]));
+  const colours1 = { ...pickOf(/^ability:/, '#ff2828'), ...pickOf(/^item:/, '#20c8ff:full'), bogus: '#123456', [ids[0]]: 'red', effects: '#00ff00:keep' };
+  const colours2 = { ...pickOf(/^(abilityIcon|portrait)/, '#ffcc00:rgb'), ...pickOf(/^(body|itemModel)/, '#8040ff') };
+  const ops: unknown[][] = [
+    ['state', hero, worn, {}], ['state', 'Nope!', [], {}], ['state', 'nobody', [], {}],
+    ['install', 'X', colours1, 'Razor', worn, {}], ['install', hero, { a: 'red' }, 'Razor', worn, {}],
+    ['install', hero, { ...colours2, ...colours1 }, '   ', worn, { compile: 'none' }],
+    ['install', hero, { ...colours1, ...colours2 }, `  ${'R'.repeat(90)}  `, worn, { vrf: 'vrf.exe', compile: 'failOnce' }],
+    ['state', hero, [], { vrf: 'vrf.exe' }],
+    ['install', hero, colours2, 'Razor', [...worn, 'x', '1'.repeat(10)], { vrf: 'vrf.exe', compile: 'fail' }],
+    ['install', hero, colours2, 'Razor', worn, { vrf: 'vrf.exe', compile: 'ok' }],
+    ['rebuild', ['$paint:razor', 'nobody'], { vrf: 'vrf.exe', compile: 'ok' }], ['state', hero, worn, {}],
+  ].map((o) => (o[0] === 'rebuild' ? [o[0], o[1], null, null, null, o[2]] : o));
+  const tree = (g: string) => Object.fromEntries((fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
+    .map((e) => { const f = path.join(e.parentPath, e.name); return [path.relative(g, f), sha(fs.readFileSync(f))]; }).sort());
+  const manifest = (x: Twin) => JSON.parse(fs.readFileSync(path.join(x.lib, 'manifest.json'), 'utf8'));
+  const norm = (v: unknown): unknown => JSON.parse(JSON.stringify(v ?? null, (k, x) => (/^(id|installedAt|updatedAt)$/.test(k) && x != null ? `<${k}>` : UUID.test(String(x)) ? '<uuid>' : x)));
+  const answers: unknown[] = [];
+  const log: string[] = [];
+  const jobs: unknown[] = [];
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const library = new Library(a.lib);
+    let how: { vrf?: string; compile?: string } = {};
+    let tries = 0;
+    const built: string[] = [];
+    const svc = hp.createHeroPaint({
+      gamePath: () => a.game, installer: inst as never, library, vanilla: () => vanilla, repaint: repaint as never, decode,
+      vrf: () => how.vrf ?? null, lang: () => 'en', log: (m) => log.push(m), onRebuilt: (id) => built.push(id),
+      compile: async (job) => {
+        if (!how.compile || how.compile === 'none') throw new Error('no compile here');
+        tries += 1;
+        jobs.push([job.id, job.compile, job.files.map((f) => f.path)]);
+        if (how.compile === 'fail' || (how.compile === 'failOnce' && tries === 1)) throw new Error(`access violation ${'x'.repeat(300)}`);
+        return job.files.map((f) => {
+          const n = /^materials\/d2mm_paint\/(.+)\.png$/.exec(f.path);
+          const at = n ? `materials/d2mm_paint/${n[1]}_png_0123abcd.vtex_c` : f.path.startsWith('panorama/images/') && f.path.endsWith('.png') ? `${f.path.slice(0, -4)}_png.vtex_c` : compiledOf(f.path);
+          return entryAt(at, Buffer.from(`compiled ${sha(f.data)}`));
+        });
+      },
+    });
+    for (const op of ops) {
+      how = (op[5] as typeof how) || {};
+      tries = 0;
+      try {
+        let v: unknown;
+        if (op[0] === 'state') v = svc.state(op[1] as string, op[2]);
+        else if (op[0] === 'install') {
+          // with no compiler the service is handed none, as the Rust's is
+          if (how.compile === 'none' || !how.compile) {
+            const bare = hp.createHeroPaint({ gamePath: () => a.game, installer: inst as never, library, vanilla: () => vanilla, repaint: repaint as never, decode, vrf: () => how.vrf ?? null, lang: () => 'en', log: (m) => log.push(m) });
+            v = await bare.install(op[1], op[2], op[3], op[4]);
+          } else v = await svc.install(op[1], op[2], op[3], op[4]);
+        } else {
+          built.length = 0;
+          const list = (op[1] as string[]).map((i) => (i.startsWith('$paint:') ? library.list().find((r) => (r.generated as { paint?: string } | undefined)?.paint === i.slice(7))?.id ?? '' : i));
+          svc.rebuild(list);
+          for (let k = 0; k < 100 && !built.length; k++) await new Promise((r) => setTimeout(r, 50));
+          v = [...built];
+        }
+        answers.push({ ok: snap(v) });
+      } catch (e) { answers.push({ error: (e as Error).message }); }
+    }
+  } finally { FileTx.journalDir = null; }
+  const list = path.join(tmp, 'ops.json');
+  fs.writeFileSync(list, JSON.stringify([['hero-paint.service', b.game, 'russian', b.journal, b.lib, b.ud, { $file: vfile }, 'en', ops]]));
+  const [r] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { answers: unknown[]; log: string[]; jobs: unknown[] }; error?: string }[];
+  assert.ok(r.ok, r.error);
+  for (const [k, op] of ops.entries()) assert.deepEqual(norm(r.ok.answers[k]), norm(answers[k]), `${k} ${JSON.stringify(op).slice(0, 100)}`);
+  assert.deepEqual(r.ok.log, log, 'the log');
+  assert.deepEqual(r.ok.jobs, jobs, 'the compiles');
+  assert.deepEqual(tree(b.game), tree(a.game), 'the game folder');
+  assert.deepEqual(norm(manifest(b)), norm(manifest(a)), 'the library');
+  assert.ok(log.some((m) => m.includes('compiling again after')), 'a compile that died was tried again');
+  assert.ok(log.some((m) => m.includes('no ValveResourceFormat')), 'without the reader the pictures stay');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

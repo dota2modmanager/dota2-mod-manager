@@ -39,6 +39,7 @@ pub mod gamelang;
 pub mod gem_colors;
 pub mod generated_pak;
 pub mod hero_names;
+pub mod hero_paint_service;
 pub mod hero_showcase;
 pub mod hud_scale;
 pub mod hud_scale_service;
