@@ -8106,3 +8106,87 @@ test('the builder\'s effect pictures and single models in Rust are the TypeScrip
   files.forEach((f, k) => assert.deepEqual(got.models[k], models[k], f));
   assert.ok(effects.filter((e) => 'ok' in e && e.ok).length >= 4, 'effects drawn');
 });
+
+test('a mod\'s own picture in Rust is made and kept as the TypeScript does it', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01)) { t.skip('no game on this machine'); return; }
+  const crypto = await import('node:crypto');
+  const { openVpkIndex, buildVpk } = await import('../src/vpk.ts');
+  const { entry } = await import('./helpers/vpk-entry.ts');
+  const { createModPreviews } = await import('../src/mod-preview.ts');
+  const ix = openVpkIndex(GAME_PAK01);
+  const paths = [...ix.paths()];
+  const art = paths.filter((p) => /^panorama\/images\/heroes\/selection\/[^/]+\.vtex_c$/.test(p)).slice(0, 4);
+  const tex = paths.filter((p) => /^materials\/models\/heroes\/.+_color.*\.vtex_c$/.test(p)).slice(0, 4);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-mp-'));
+  const mods = path.join(tmp, 'mods');
+  fs.mkdirSync(path.join(mods, 'sub'), { recursive: true });
+  const put = (name: string, files: [string, Buffer][]) => fs.writeFileSync(path.join(mods, name), buildVpk(files.map(([p, b]) => entry(p, b))));
+  art.forEach((p, k) => put(`art${k}_dir.vpk`, [[p, ix.read(p)!], [tex[k] ?? 'materials/x_color.vtex_c', ix.read(tex[k] ?? '') ?? Buffer.from('xxxxxxxxxx')]]));
+  tex.forEach((p, k) => put(`tex${k}_dir.vpk`, [[p, ix.read(p)!], [p.replace('_color', '_normal'), Buffer.from('normal map bytes')]]));
+  put('fx_dir.vpk', [['particles/x.vpcf_c', Buffer.from('fx')]]);
+  put('sub/deep_dir.vpk', [[art[0] ?? 'panorama/images/heroes/selection/a.vtex_c', Buffer.from([7, 9, 9, 1, 2, 3, 4, 5, 6])]]);
+  // the tool makes nothing of one, the decoder sees through another
+  put('none_dir.vpk', [['panorama/images/heroes/selection/n.vtex_c', Buffer.from([10, 1, 2, 3, 4, 5, 6, 7, 8])]]);
+  put('clear_dir.vpk', [['panorama/images/heroes/selection/c.vtex_c', Buffer.from([11, 1, 2, 4, 4, 5, 6, 7, 8])]]);
+  // more than one call's worth
+  for (let k = 0; k < 44; k++) put(`many${k}_dir.vpk`, [[`panorama/images/econ/items/m${k}.vtex_c`, Buffer.from([k * 3 + 1, k, k * 7, k + 1, 1, 2, 3, 4, 5, 6])]]);
+  put('vid_dir.vpk', [['panorama/videos/heroes/npc_dota_hero_x.webm', Buffer.from('webm bytes, not a real clip')], [art[1] ?? 'panorama/images/a.vtex_c', Buffer.from([3, 3, 3, 3, 3, 3, 3, 3])]]);
+  put('vid2_dir.vpk', [['panorama/videos/heroes/npc_dota_hero_y.webm', Buffer.from('another clip')]]);
+  put('big_dir.vpk', [['panorama/videos/heroes/npc_dota_hero_z.webm', Buffer.alloc(25 * 1024 * 1024, 1)]]);
+  const names = fs.readdirSync(mods).filter((n) => n.endsWith('.vpk')).concat(['sub/deep_dir.vpk', 'missing_dir.vpk', '../mods/fx_dir.vpk', 'C:/x_dir.vpk', 'a\\b_dir.vpk']);
+  const keys = [...names.flatMap((n) => ['modart:' + n, 'modtex:' + n]), 'hero:Brewmaster', 'modvid:vid_dir.vpk', 42 as never];
+  const pic = (b: Buffer) => b.toString('base64');
+  const frame = (b3: number) => pic(Buffer.from([1, 20, 30, b3, 9, 8, 7, 6, 5, 4]));
+  const ops: unknown[][] = [
+    ['ready'], ['tool', false], ['getMany', keys], ['ready'], ['tool', true], ['getMany', keys], ['getMany', keys],
+    ['hasVideo', 'modvid:vid_dir.vpk'], ['hasVideo', 'modart:vid_dir.vpk'], ['videoBytes', 'modvid:vid_dir.vpk'], ['videoBytes', 'modvid:big_dir.vpk'],
+    ['hasVideo', 'modvid:big_dir.vpk'], ['videoBytes', 'modvid:fx_dir.vpk'], ['saveFrame', 'modvid:vid_dir.vpk', null], ['saveFrame', 'modvid:vid_dir.vpk', frame(4)],
+    ['hasVideo', 'modvid:vid_dir.vpk'], ['videoBytes', 'modvid:vid_dir.vpk'], ['saveFrame', 'modvid:vid2_dir.vpk', frame(5)], ['saveFrame', 'modart:vid2_dir.vpk', frame(5)],
+    ['getMany', ['modvid:vid2_dir.vpk', 'modvid:vid_dir.vpk']], ['size'], ['clear'], ['size'], ['tool', false], ['getMany', keys],
+  ];
+  const sha256 = (b: Buffer) => crypto.createHash('sha256').update(b).digest('hex');
+  const images = {
+    read(file: string) {
+      const b = fs.readFileSync(file);
+      if (b.length < 8) return null;
+      const [w, h] = [32 + (b[1] % 64), 32 + (b[2] % 64)];
+      const a = b[3] % 4 === 0 ? 0 : 255;
+      const data = Buffer.alloc(w * h * 4);
+      for (let i = 0; i < w * h; i++) data.set([b[(i * 3) % b.length], b[(i * 5 + 1) % b.length], b[(i * 7 + 2) % b.length], a], i * 4);
+      return { width: w, height: h, data };
+    },
+    toSmallPng: (bmp: { width: number; height: number; data: Uint8Array }) => Buffer.from(`small ${bmp.width}x${bmp.height} ${crypto.createHash('sha1').update(bmp.data).digest('hex')}`),
+  };
+  let tool = true;
+  const previews = createModPreviews({
+    userDataDir: path.join(tmp, 'ts'), toolchain: { pathOf: () => (tool ? 'C:/fake/vrf.exe' : null) }, langFileOf: (rel) => path.join(mods, rel), images,
+    run: async (_exe, args) => {
+      for (const n of fs.readdirSync(args[1])) {
+        if (!n.endsWith('.vtex_c')) continue;
+        const data = fs.readFileSync(path.join(args[1], n));
+        if (data.length && data[0] % 5 !== 0) fs.writeFileSync(path.join(args[1], n.replace(/\.vtex_c$/, '.png')), data);
+      }
+    },
+  });
+  const want: unknown[] = [];
+  for (const o of ops) {
+    const a = o.slice(1) as never[];
+    switch (o[0]) {
+      case 'tool': tool = !!a[0]; want.push(null); break;
+      case 'getMany': want.push(await previews.getMany(a[0])); break;
+      case 'hasVideo': want.push(previews.hasVideo(a[0])); break;
+      case 'videoBytes': { const v = previews.videoBytes(a[0]); want.push(v && sha256(v.bytes)); break; }
+      case 'saveFrame': want.push(previews.saveFrame(a[0], a[1] ? Buffer.from(a[1], 'base64') : null)); break;
+      case 'size': want.push(previews.size()); break;
+      case 'clear': previews.clear(); want.push(null); break;
+      case 'ready': want.push(previews.ready()); break;
+    }
+  }
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['mod-preview.script', path.join(tmp, 'rs'), mods, ops]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+  fs.rmSync(tmp, { recursive: true, force: true });
+  ops.forEach((o, k) => assert.deepEqual(got[k], want[k], `${k} ${JSON.stringify(o).slice(0, 120)}`));
+  // 44 of one kind and the real mods' make more than one call's worth; the real textures' header
+  // reads as see-through to the stand-in decoder, so the pictures are the synthetic ones
+  assert.ok(Object.keys(want[5] as object).length >= 20, 'pictures made');
+});

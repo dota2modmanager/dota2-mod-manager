@@ -106,6 +106,7 @@ pub mod meshopt;
 pub mod minify;
 pub mod mod_doctor;
 pub mod mod_id;
+pub mod mod_preview;
 pub mod mod_preview_pick;
 pub mod mod_update;
 pub mod model_attachments;

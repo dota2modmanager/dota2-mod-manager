@@ -4837,6 +4837,88 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 .collect();
             json!({ "effects": effects, "models": models })
         }
+        // (userData, mods folder, ops): a mod's own picture with a stand-in tool and decoder. The
+        // tool turns each staged texture into a "png" of its own bytes unless the first byte is a
+        // multiple of 5; the decoder reads a file of 8 bytes or more as a picture of
+        // (32 + b[1] % 64) x (32 + b[2] % 64) pixels sampled off its bytes, see-through where
+        // b[3] % 4 is 0, and a small png is "small WxH <sha1 of the pixels>". Ops: ["tool", on],
+        // ["getMany", keys], ["hasVideo", key], ["videoBytes", key] (as sha256), ["saveFrame", key,
+        // base64 | null], ["size"], ["clear"], ["ready"]
+        "mod-preview.script" => {
+            use sha2::Digest;
+            use std::sync::atomic::{AtomicBool, Ordering};
+            use std::sync::Arc;
+            struct Fake;
+            impl crate::mod_preview::Images for Fake {
+                fn read(&self, file: &std::path::Path) -> Option<crate::mod_preview::Bitmap> {
+                    let b = std::fs::read(file).ok()?;
+                    if b.len() < 8 {
+                        return None;
+                    }
+                    let (w, h) = (32 + b[1] as usize % 64, 32 + b[2] as usize % 64);
+                    let a = if b[3] % 4 == 0 { 0 } else { 255 };
+                    let n = b.len();
+                    let data = (0..w * h).flat_map(|i| [b[(i * 3) % n], b[(i * 5 + 1) % n], b[(i * 7 + 2) % n], a]).collect();
+                    Some(crate::mod_preview::Bitmap { width: w, height: h, data })
+                }
+                fn to_small_png(&self, bmp: &crate::mod_preview::Bitmap) -> Vec<u8> {
+                    use sha1::Digest as _;
+                    format!("small {}x{} {:x}", bmp.width, bmp.height, sha1::Sha1::digest(&bmp.data)).into_bytes()
+                }
+            }
+            let tool = Arc::new(AtomicBool::new(true));
+            let mods = std::path::PathBuf::from(s(args, 1));
+            let on = tool.clone();
+            let previews = crate::mod_preview::ModPreviews::new(
+                std::path::Path::new(&s(args, 0)),
+                Box::new(move || on.load(Ordering::SeqCst).then(|| std::path::PathBuf::from("C:/fake/vrf.exe"))),
+                Box::new(move |rel| Some(mods.join(rel))),
+                Box::new(Fake),
+                Box::new(|_, args| {
+                    let dir = std::path::PathBuf::from(&args[1]);
+                    for e in std::fs::read_dir(&dir).map_err(|e| e.to_string())?.flatten() {
+                        let name = e.file_name().to_string_lossy().to_string();
+                        let Some(stem) = name.strip_suffix(".vtex_c") else { continue };
+                        let data = std::fs::read(e.path()).map_err(|e| e.to_string())?;
+                        if data.first().is_some_and(|b| b % 5 != 0) {
+                            std::fs::write(dir.join(format!("{stem}.png")), data).map_err(|e| e.to_string())?;
+                        }
+                    }
+                    Ok(())
+                }),
+                Box::new(|_| {}),
+            );
+            let sha = |b: &[u8]| format!("{:x}", sha2::Sha256::digest(b));
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let o = op.as_array().cloned().unwrap_or_default();
+                let st = |i: usize| o.get(i).map(crate::js::string).unwrap_or_default();
+                out.push(match o.first().and_then(Value::as_str).unwrap_or("") {
+                    "tool" => {
+                        tool.store(o.get(1).is_some_and(crate::js::truthy), Ordering::SeqCst);
+                        Value::Null
+                    }
+                    "getMany" => {
+                        let keys: Vec<String> = o.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
+                        json!(previews.get_many(&keys))
+                    }
+                    "hasVideo" => json!(previews.has_video(&st(1))),
+                    "videoBytes" => json!(previews.video_bytes(&st(1)).map(|b| sha(&b))),
+                    "saveFrame" => {
+                        let png = o.get(2).and_then(Value::as_str).map(crate::js::base64_decode);
+                        json!(previews.save_frame(&st(1), png.as_deref()))
+                    }
+                    "size" => json!(previews.size()),
+                    "clear" => {
+                        previews.clear();
+                        Value::Null
+                    }
+                    "ready" => json!(previews.ready()),
+                    other => json!({ "no op": other }),
+                });
+            }
+            json!(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
