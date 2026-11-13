@@ -47,7 +47,8 @@ fn put(o: &mut Map<String, Value>, k: &str, v: Option<&Value>) {
     }
 }
 
-fn now() -> f64 {
+/// The time now, in JavaScript's milliseconds.
+pub fn now() -> f64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0.0, |d| d.as_millis() as f64)
 }
 
@@ -225,6 +226,12 @@ impl Library {
         tx: Option<&mut FileTx>,
     ) -> std::io::Result<Option<Value>> {
         self.update(id, &json!({ "enabled": enabled }), tx)
+    }
+
+    /// Put a whole record back at the end, as it was (Cancel on the item table's bar).
+    pub fn push_record(&mut self, rec: Value, tx: Option<&mut FileTx>) -> std::io::Result<()> {
+        self.installed_mut().push(rec);
+        self.save(tx)
     }
 
     pub fn remove_record(&mut self, id: &Value, tx: Option<&mut FileTx>) -> std::io::Result<()> {
