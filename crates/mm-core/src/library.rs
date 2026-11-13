@@ -423,6 +423,23 @@ impl Library {
         Ok(Some(self.presets()[i].clone()))
     }
 
+    /// A preset with some of its fields gone: a received one resolved into an ordinary one.
+    pub fn drop_preset_fields(
+        &mut self,
+        id: &Value,
+        keys: &[&str],
+        tx: Option<&mut FileTx>,
+    ) -> std::io::Result<Option<Value>> {
+        let Some(i) = self.preset_index(id) else { return Ok(None) };
+        if let Some(p) = self.presets_mut()[i].as_object_mut() {
+            for k in keys {
+                p.shift_remove(*k);
+            }
+        }
+        self.save(tx)?;
+        Ok(Some(self.presets()[i].clone()))
+    }
+
     pub fn delete_preset(&mut self, preset_id: &Value, tx: Option<&mut FileTx>) -> std::io::Result<()> {
         self.presets_mut().retain(|p| !same(get(p, "id"), Some(preset_id)));
         self.save(tx)

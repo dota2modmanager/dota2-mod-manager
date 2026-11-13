@@ -3225,3 +3225,179 @@ test('the presets service in Rust plans, applies and receives presets as the Typ
   assert.deepEqual(sideTree(path.join(b.ud, 'shared-presets')).length, 1, 'the file with bytes in it is kept until Install');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('putting a preset on in Rust does what the TypeScript does: downloads, own mods, received files, cursors, imports', { skip }, async () => {
+  const { Installer } = await import('../src/installer.ts');
+  const { Library } = await import('../src/library.ts');
+  const { Settings } = await import('../src/settings.ts');
+  const { createHarvest } = await import('../src/schema-harvest.ts');
+  const { createAdopt } = await import('../src/adopt.ts');
+  const { createCursors } = await import('../src/cursors.ts');
+  const { createCosmetics } = await import('../src/schema-cosmetics.ts');
+  const { presetsService } = await import('../src/presets-service.ts');
+  const { createPresetInstall } = await import('../src/preset-install.ts');
+  const { installVpkBuffer } = await import('../src/import.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk-write.ts');
+  const share = await import('../src/preset-share.ts');
+  const { createHash } = await import('node:crypto');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-preset-install-'));
+  const pak = (files: Record<string, string>) => buildVpk(Object.entries(files).map(([p, d]) => entryAt(p, Buffer.from(d, 'latin1'))));
+  const item = (id: string, name: string, model: string) => [`\t\t"${id}"`, '\t\t{', `\t\t\t"name"\t"${name}"`, '\t\t\t"prefab"\t"wearable"', `\t\t\t"model_player"\t"${model}"`, '\t\t}'];
+  const table = (rows: string[][]) => ['"items_game"', '{', '\t"items"', '\t{', ...rows.flat(), '\t}', '}', ''].join('\n');
+  const jugg = 'models/heroes/juggernaut/juggernaut.vmdl';
+  const axe = 'models/items/axe/axe_helm.vmdl';
+  const vanilla = table([item('4100', 'Blade', jugg), item('4200', 'Helm', axe)]);
+  const both = table([item('4100', 'Blade of the pack', jugg), item('4200', 'Helm of the pack', axe)]);
+  const twoHeroes = pak({ 'models/heroes/juggernaut/juggernaut.vmdl_c': 'j', 'materials/models/heroes/juggernaut/j.vmat_c': 'jm',
+    'models/items/axe/axe_helm.vmdl_c': 'a', 'particles/units/heroes/hero_axe/x.vpcf_c': 'p', 'scripts/items/items_game.txt': both });
+  const lang = (f: string) => [{ root: 'lang', relPath: f }];
+  const catalog = { mods: { modsData: {
+    huds: [{ name: 'Hud One', styles: [{ label: 'gray', file: 'hud-gray.zip', preview: 'h.png' }] }],
+    heroes: [{ name: 'Lina Look', file: 'lina.zip' }, { name: 'No file' }],
+    cursors: [{ name: 'Cursor B', file: 'cursor-b.zip' }],
+  } } };
+  const downloads: Record<string, string> = {};
+  const dl = path.join(tmp, 'downloads');
+  fs.mkdirSync(dl);
+  for (const [ref, files] of Object.entries({ 'hud-gray.zip': { 'panorama/hud.xml': 'hud' }, 'lina.zip': { 'models/heroes/lina/lina.vmdl_c': 'lina' }, 'cursor-b.zip': { 'cursor.txt': 'b' } })) {
+    downloads[ref] = path.join(dl, ref.replace('.zip', '.vpk'));
+    fs.writeFileSync(downloads[ref], pak(files));
+  }
+  const recs = [
+    { id: 'own', name: 'My own', categoryId: 'imported', styleLabel: null, enabled: true, files: lang('pak30_dir.vpk'), installedAt: 3 },
+    { id: 'curA', name: 'Cursor A', categoryId: 'cursors', styleLabel: null, enabled: true, files: [{ root: 'cursor', relPath: 'cursor_a.cur' }], installedAt: 5 },
+    { id: 'curC', name: 'Cursor C', categoryId: 'cursors', styleLabel: null, enabled: true, files: [{ root: 'cursor', relPath: 'cursor_c.cur' }], installedAt: 2 },
+    { id: 'w1', name: 'Rain', categoryId: 'cosmetic', styleLabel: null, enabled: true, files: [], slot: 'weather', itemId: '5' },
+    { id: 'w2', name: 'Snow', categoryId: 'cosmetic', styleLabel: null, enabled: true, files: [], slot: 'weather', itemId: '6' },
+  ];
+  const presets = [
+    { id: 'Own', name: 'Own', updatedAt: 1, mods: [
+      { categoryId: 'huds', name: 'Hud One', styleLabel: 'gray', fp: null }, { categoryId: 'imported', name: 'Gone own', styleLabel: null, fp: null },
+      { categoryId: 'heroes', name: 'No file', styleLabel: null, fp: null }, { categoryId: 'heroes', name: 'Nowhere', styleLabel: null, fp: null },
+      { categoryId: 'imported', name: 'My own', styleLabel: null, fp: null }], picks: [{ slot: 'courier', itemId: '3', name: 'Pet', effectId: '' }] },
+    { id: 'Link', name: 'From a link', updatedAt: 1, modIds: [], wanted: [
+      { kind: 'catalog', categoryId: 'heroes', name: 'Lina Look', styleLabel: null, fp: null }, { kind: 'catalog', categoryId: 'cursors', name: 'Cursor B', styleLabel: null, fp: null },
+      { kind: 'catalog', categoryId: 'x', name: 'Unknown', styleLabel: null, fp: null }, { kind: 'cosmetic', name: 'Helm', slot: 'item:axe:head', itemId: '4200', effectId: 'fx' },
+      { kind: 'embedded', name: 'Not here', file: 'mods/000.vpk', fp: null }, { kind: 'missing', name: 'Left out', reason: 'too big' }, { kind: 'what', name: 'Odd' },
+    ], source: { note: '', author: '', file: null, importedAt: 1 } },
+  ];
+  const twin = (side: string) => {
+    const root = path.join(tmp, side);
+    const dir = path.join(root, 'game', 'dota_russian');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.mkdirSync(path.join(root, 'game', 'dota', 'resource', 'cursor'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'game', 'dota', 'pak01_dir.vpk'), pak({ 'scripts/items/items_game.txt': vanilla }));
+    fs.writeFileSync(path.join(dir, 'gameinfo.gi'), 'gi');
+    fs.writeFileSync(path.join(dir, 'pak30_dir.vpk'), pak({ 'models/heroes/axe/axe.vmdl_c': 'own' }));
+    fs.writeFileSync(path.join(root, 'game', 'dota', 'resource', 'cursor', 'cursor_a.cur'), 'A');
+    fs.writeFileSync(path.join(root, 'game', 'dota', 'resource', 'cursor', 'cursor_c.cur'), 'C');
+    for (const d of ['lib', 'userdata', 'in']) fs.mkdirSync(path.join(root, d), { recursive: true });
+    fs.writeFileSync(path.join(root, 'userdata', 'settings.json'), JSON.stringify({ dotaGamePath: path.join(root, 'game') }));
+    fs.writeFileSync(path.join(root, 'vanilla.txt'), vanilla, 'latin1');
+    // a received file with bytes in it, parked the way importPresetFile parks it
+    const parked = path.join(root, 'userdata', 'shared-presets', 'Recv.d2mm');
+    fs.mkdirSync(path.dirname(parked), { recursive: true });
+    share.writePresetFile(parked, { name: 'Received' }, [
+      { kind: 'embedded', name: 'pak77', categoryId: 'imported', data: twoHeroes }, { kind: 'embedded', name: 'Sender name', categoryId: 'imported', data: pak({ 'models/heroes/axe/axe.vmdl_c': 'own' }) },
+      { kind: 'pack', name: 'Their pack', members: [{ kind: 'catalog', categoryId: 'huds', name: 'Hud One', styleLabel: 'gray' }, { kind: 'embedded', name: 'Lone', categoryId: 'imported', data: pak({ 'models/heroes/sven/sven.vmdl_c': 's' }) }] },
+    ] as never);
+    const recv = { ...share.readPresetFile(parked).manifest };
+    const own = new Installer({ userDataDir: path.join(root, 'userdata'), getGamePath: () => path.join(root, 'game'), getLangSuffix: () => 'russian' }).analyzeRecord(recs[0] as never)!.fp;
+    // the second embedded mod is one already on disk, by its fingerprint
+    (recv.mods[1] as { fp: string | null }).fp = own;
+    const all = [...presets, { id: 'Recv', name: 'Received', updatedAt: 1, modIds: [], wanted: recv.mods, source: { note: '', author: '', file: parked, importedAt: 1 } },
+      { id: 'Gone', name: 'Gone file', updatedAt: 1, modIds: [], wanted: recv.mods, source: { note: '', author: '', file: path.join(root, 'nope.d2mm'), importedAt: 1 } }];
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: recs, presets: all }, null, 2));
+    return { root, game: path.join(root, 'game'), lib: path.join(root, 'lib'), ud: path.join(root, 'userdata'), vanilla: path.join(root, 'vanilla.txt') };
+  };
+  const a = twin('ts');
+  const b = twin('rs');
+  const results = (side: string) => [
+    { source: 'two.zip', files: lang('pak40_dir.vpk'), name: 'pak40', merged: 2 }, { source: 'bad.zip', error: 'broken' },
+    { source: 'one.zip', files: lang('pak41_dir.vpk'), name: 'Named one' }, { source: 'quiet.zip', error: '' }, side,
+  ].filter((r) => typeof r !== 'string');
+  for (const s of [a, b]) {
+    fs.writeFileSync(path.join(s.game, 'dota_russian', 'pak40_dir.vpk'), twoHeroes);
+    fs.writeFileSync(path.join(s.game, 'dota_russian', 'pak41_dir.vpk'), pak({ 'models/heroes/axe/axe.vmdl_c': 'imported' }));
+  }
+  const ops: unknown[][] = [
+    ['reconcile'], ['list'], ['cursorsOff', 'curA'], ['list'], ['cosmeticsOff', 'w1'], ['masterCursors', false], ['masterCursors', true],
+    ['fromCatalog', { categoryId: 'huds', name: 'Hud One', styleLabel: 'gray' }], ['fromCatalog', { categoryId: 'heroes', name: 'No file', styleLabel: null }],
+    ['own', 'Own'], ['list'], ['presets'], ['own', 'Own'],
+    ['resolve', 'Link'], ['list'], ['resolve', 'Gone'], ['resolve', 'Recv'], ['list'], ['presets'],
+    ['register', results('x')], ['list'],
+    ['adopt', lang('pak30_dir.vpk'), 'pak30', null], ['list'],
+  ];
+  const list = path.join(tmp, 'install.json');
+  fs.writeFileSync(list, JSON.stringify([['preset-install.script', 'en', b.game, 'russian', b.lib, b.ud, catalog, downloads, b.vanilla, '', ops]]));
+  const [res] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 26 }));
+  const answers = res.ok as { ok?: unknown; error?: string; progress?: unknown[]; deployed?: unknown[] }[];
+  const plainOf = (v: unknown, ids: Map<string, string>) => JSON.parse(JSON.stringify(v ?? null), (k, x) => {
+    if (typeof x === 'string' && /^[0-9a-f]{8}-[0-9a-f-]{27}$/.test(x)) { if (!ids.has(x)) ids.set(x, `#${ids.size}`); return ids.get(x); }
+    if ((k === 'updatedAt' || k === 'importedAt' || k === 'installedAt') && typeof x === 'number' && x > 1e12) return 'now';
+    if (typeof x === 'string') return x.split(a.root).join('<root>').split(b.root).join('<root>');
+    return x;
+  });
+  setLang('en');
+  const inst = new Installer({ userDataDir: a.ud, getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+  (inst as unknown as { install: (o: { fileRef: string }) => Promise<unknown> }).install = async ({ fileRef }) => installVpkBuffer(inst, fs.readFileSync(downloads[fileRef]));
+  const lib = new Library(a.lib);
+  const st = new Settings(a.ud);
+  const harvest = createHarvest({ library: lib, installer: inst as never, gamePath: () => a.game, vanilla: () => fs.readFileSync(a.vanilla, 'latin1') });
+  const adopt = createAdopt({ installer: inst as never, library: lib, schemaService: { harvest: harvest.harvest, split: harvest.split, refresh: () => null } as never });
+  const cursors = createCursors({ installer: inst as never, library: lib, settings: st as never });
+  const cos = createCosmetics({ library: lib, settings: st as never, gamePath: () => a.game, vanilla: () => vanilla, refresh: () => {} });
+  let deployed: string[] = [];
+  let progress: unknown[] = [];
+  let built = false;
+  let master = false;
+  const schemaService = { refreshInBackground: async () => { built = true; }, pickCosmetic: (s: string, i: string, n: string, e: string, o: { write: boolean }) => cos.pickCosmetic(s, i, n, e, o) };
+  const presetsSvc = presetsService({ catalog: { load: async () => catalog as never }, installer: inst as never, library: lib, settings: st as never, schemaService, deployAndApply: (p) => { deployed.push(p.id); } });
+  const install = createPresetInstall({ installer: inst as never, library: lib, schemaService: schemaService as never, presets: presetsSvc as never,
+    adoptImportedFiles: adopt.adoptImportedFiles, afterDeployMaster: () => { master = true; }, disableOtherCursors: cursors.disableOtherCursors,
+    sendProgress: (p) => { progress.push(p); }, blocked: () => null } as never);
+  const sha = (buf: Buffer) => createHash('sha1').update(buf).digest('hex');
+  const tsIds = new Map<string, string>();
+  const rsIds = new Map<string, string>();
+  for (const [k, op] of ops.entries()) {
+    let want: unknown;
+    deployed = []; progress = []; built = false; master = false;
+    try {
+      const preset = () => { const p = lib.getPreset(op[1] as string); if (!p) throw new Error('no preset'); return p; };
+      const cat = await presetsSvc.catalogIndex();
+      const v = await (async (): Promise<unknown> => {
+        switch (op[0]) {
+          case 'own': { const answer = await install.applyOwn(preset()); return { answer, schema: built, afterMaster: master }; }
+          case 'resolve': { const answer = await install.resolve(preset() as never); return { answer, schema: built, afterMaster: master }; }
+          case 'fromCatalog': { const errors: string[] = []; const rec = await install.installFromCatalog(op[1] as never, cat, errors); return { rec, errors }; }
+          case 'adopt': return adopt.adoptImportedFiles({ files: op[1] as never, name: op[2] as string, fileRef: op[3] as string });
+          case 'register': { const steps: unknown[] = []; const r = await adopt.registerImportResults(op[1] as never, (x, y) => steps.push([x, y])); return { ...r, steps }; }
+          case 'cursorsOff': return cursors.disableOtherCursors(op[1] as string);
+          case 'cosmeticsOff': return cursors.disableOtherCosmetics(lib.find(op[1] as string)!);
+          case 'masterCursors': cursors.applyMasterToCursors(!!op[1]); return null;
+          case 'reconcile': cursors.reconcileCursors(); return null;
+          case 'list': return lib.list();
+          case 'presets': return lib.listPresets();
+        }
+        throw new Error(`no step ${op[0]}`);
+      })();
+      want = { ok: plainOf(v, tsIds), progress: plainOf(progress, tsIds), deployed: plainOf(deployed, tsIds) };
+    } catch (err) { want = { error: (err as Error).message }; }
+    const got = answers[k];
+    const norm = 'error' in got ? got : { ok: plainOf(got.ok, rsIds), progress: plainOf(got.progress, rsIds), deployed: plainOf(got.deployed, rsIds) };
+    // the TypeScript builds the table and runs what follows the master switch itself; the Rust says it has to
+    if ((op[0] === 'own' || op[0] === 'resolve') && norm.ok && want && (want as { ok?: unknown }).ok) {
+      const [g, w] = [norm.ok as Record<string, unknown>, (want as { ok: Record<string, unknown> }).ok];
+      assert.ok(g.schema || !w.schema, `${k} a build the TypeScript started is asked for`);
+      delete g.schema; delete w.schema;
+    }
+    assert.deepEqual(norm, want, `${k} ${JSON.stringify(op).slice(0, 200)}`);
+  }
+  const tree = (g: string) => (fs.readdirSync(g, { recursive: true }) as string[]).filter((f) => fs.statSync(path.join(g, f)).isFile()).sort()
+    .map((f) => `${f.replace(/[0-9a-f]{8}-[0-9a-f-]{27}/g, '<id>')} ${sha(fs.readFileSync(path.join(g, f)))}`).sort();
+  assert.deepEqual(tree(b.game), tree(a.game));
+  assert.deepEqual(tree(b.ud).filter((f) => !f.startsWith('settings.json')), tree(a.ud).filter((f) => !f.startsWith('settings.json')));
+  const resolved = answers[ops.findIndex((op) => op[0] === 'resolve' && op[1] === 'Recv')].ok as { answer: { ok?: boolean; installed?: number } };
+  assert.ok(resolved.answer.ok && (resolved.answer.installed ?? 0) >= 3, JSON.stringify(resolved));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

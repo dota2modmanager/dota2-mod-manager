@@ -1824,6 +1824,95 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "preset-install.script" => {
+            // (lang, game, suffix, libraryDir, userData, catalog, downloads {fileRef: vpk}, vanillaFile, blocked, ops)
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let inst = crate::installer::Installer::new(opt_path(args, 1), &s(args, 2)).with_user_data(&ud);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut st = crate::settings::Settings::new(&ud);
+            let cat = crate::preset_plan::CatalogIndex::new(args.get(5).filter(|c| !c.is_null()));
+            let downloads = args.get(6).cloned().unwrap_or(Value::Null);
+            let vanilla = opt_path(args, 7).and_then(|p| std::fs::read(p).ok());
+            let blocked = opt_s(args, 8).filter(|b| !b.is_empty());
+            let ops = args.get(9).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for op in &ops {
+                let mut progress: Vec<Value> = Vec::new();
+                let mut deployed: Vec<Value> = Vec::new();
+                let r: Result<Value, String> = (|| {
+                    let mut fetch = |hit: &Value| -> Result<Vec<Value>, String> {
+                        let file = downloads.get(crate::js::string(&hit["fileRef"])).map(crate::js::string).ok_or("no such download")?;
+                        crate::import::install_vpk_buffer(&inst, &std::fs::read(file).map_err(|e| e.to_string())?)
+                    };
+                    let mut pick = |lib: &mut crate::library::Library, p: &Value| {
+                        let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
+                        crate::schema_cosmetics::pick_cosmetic(lib, &crate::js::string(&p["slot"]), &crate::js::string(&p["itemId"]), p["name"].as_str(), Some(&effect))
+                    };
+                    let mut deploy = |p: &Value| deployed.push(p["id"].clone());
+                    let mut prog = |v: Value| progress.push(v);
+                    let mut d = crate::preset_install::Deps {
+                        inst: &inst,
+                        lib: &mut lib,
+                        settings: Some(&mut st),
+                        vanilla: vanilla.as_deref(),
+                        cosmetics_blocked: blocked.clone(),
+                        fetch: &mut fetch,
+                        pick: &mut pick,
+                        deploy_pack: &mut deploy,
+                        progress: &mut prog,
+                    };
+                    let outcome = |o: crate::preset_install::Outcome| json!({ "answer": o.answer, "schema": o.schema, "afterMaster": o.after_master });
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "own" => {
+                            let p = d.lib.get_preset(&op[1]).cloned().ok_or("no preset")?;
+                            outcome(crate::preset_install::apply_own(&mut d, &p, &cat)?)
+                        }
+                        "resolve" => {
+                            let p = d.lib.get_preset(&op[1]).cloned().ok_or("no preset")?;
+                            outcome(crate::preset_install::resolve(&mut d, &p, &cat)?)
+                        }
+                        "fromCatalog" => {
+                            let mut errors = Vec::new();
+                            let r = crate::preset_install::install_from_catalog(&mut d, &op[1], &cat, &mut errors)?;
+                            json!({ "rec": r, "errors": errors })
+                        }
+                        "adopt" => {
+                            let files = op[1].as_array().cloned().unwrap_or_default();
+                            json!(crate::adopt::adopt_imported_files(&inst, d.lib, d.vanilla, &files, op[2].as_str(), op.get(3), None)?)
+                        }
+                        "register" => {
+                            let results = op[1].as_array().cloned().unwrap_or_default();
+                            let mut steps = Vec::new();
+                            let mut r = crate::adopt::register_import_results(&inst, d.lib, d.vanilla, &results, &mut |a, b| steps.push(json!([a, b])))?;
+                            r["steps"] = json!(steps);
+                            r
+                        }
+                        "cursorsOff" => json!(crate::cursors::disable_other_cursors(&inst, d.lib, op.get(1).filter(|v| !v.is_null()))),
+                        "cosmeticsOff" => {
+                            let rec = d.lib.find(&op[1]).cloned().unwrap_or(Value::Null);
+                            json!(crate::cursors::disable_other_cosmetics(d.lib, &rec))
+                        }
+                        "masterCursors" => {
+                            crate::cursors::apply_master_to_cursors(&inst, d.lib, crate::js::truthy(&op[1]));
+                            Value::Null
+                        }
+                        "reconcile" => {
+                            crate::cursors::reconcile_cursors(&inst, d.lib, true);
+                            Value::Null
+                        }
+                        "list" => json!(d.lib.list()),
+                        "presets" => json!(d.lib.list_presets()),
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v, "progress": progress, "deployed": deployed }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));
