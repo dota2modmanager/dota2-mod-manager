@@ -1,6 +1,6 @@
 //! The download cache: where a catalog mod's archive lives, what it is called on disk, and what
 //! each file hashed to when it arrived, replacing the disk half of src/installer-downloads.ts.
-//! Fetching over the network moves with the catalog.
+//! `download` brings a catalog archive over the mirror chain (`net_fetch.rs`).
 
 use std::fs;
 use std::path::PathBuf;
@@ -134,6 +134,64 @@ impl Installer {
         let safe_name = safe_file_name(&decoded, "mod");
         let dest = self.downloads_dir().join(safe_file_name(category_id, "other")).join(&safe_name);
         (dest, format!("{category_id}/{safe_name}"), decoded)
+    }
+
+    /// The archive of a catalog mod on disk: from the cache when it is still what arrived,
+    /// downloaded otherwise. `published` is the hash the catalog published for a file
+    /// (`Catalog::published_hash`); it outranks every proxy, and so does what the file was the
+    /// first time it arrived here, but neither outranks the catalog's own host.
+    pub fn download(
+        &self,
+        net: &crate::net_fetch::Net,
+        category_id: &str,
+        file_ref: &str,
+        label: Option<&str>,
+        published: &dyn Fn(&str, &str) -> Option<String>,
+        progress: &mut dyn FnMut(Value),
+    ) -> Result<PathBuf, String> {
+        let url = file_url(category_id, file_ref);
+        let (dest, key, decoded) = self.download_target(category_id, file_ref);
+        if let Some(dir) = dest.parent() {
+            fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+        }
+        let safe_name = dest.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let label = label.filter(|l| !l.is_empty()).unwrap_or(&safe_name).to_string();
+        let known = self.download_index().get(&key).filter(|k| crate::js::truthy(k)).cloned();
+        let known_sha =
+            known.as_ref().and_then(|k| k.get("sha256")).filter(|s| crate::js::truthy(s)).map(crate::js::string);
+        let published = published(category_id, &decoded);
+        if let Some(size) = fs::metadata(&dest).ok().map(|m| m.len()).filter(|n| *n > 0) {
+            // a copy cut short, or one the catalog now disagrees with, is not a cached copy
+            let disowned = published.as_ref().is_some_and(|p| known_sha.as_ref().is_some_and(|k| k != p));
+            let same_size = known.as_ref().is_none_or(|k| k.get("size").and_then(Value::as_f64) == Some(size as f64));
+            if !disowned && same_size {
+                return Ok(dest);
+            }
+            progress(
+                json!({ "type": "stage", "label": label, "stage": crate::i18n::t("перекачиваю повреждённый файл", &[]) }),
+            );
+            let _ = fs::remove_file(&dest);
+        }
+        let mut on_progress = |loaded: u64, total: u64| {
+            progress(json!({ "type": "download", "label": label, "loaded": loaded, "total": total }))
+        };
+        let opts = crate::net_fetch::DownloadOptions {
+            on_progress: Some(&mut on_progress),
+            expect_sha256: published.or(known_sha),
+            from_published_list: true,
+            log: None,
+        };
+        match net.download_file(&url, &dest, opts) {
+            Ok(d) => {
+                self.remember_download(&key, json!({ "size": d.bytes, "sha256": d.sha256, "at": crate::js::json_number(crate::net_fetch::now_ms()) }));
+                Ok(dest)
+            }
+            Err(e) if e.checksum => Err(crate::i18n::t(
+                "{0}: скачанный файл не совпадает с тем, что опубликовал автор мода. Попробуй позже",
+                &[json!(safe_name)],
+            )),
+            Err(e) => Err(crate::i18n::t("Не удалось скачать {0}: {1}", &[json!(safe_name), json!(e.message)])),
+        }
     }
 
     /// The archive this mod was installed from, if it is still in the download cache.

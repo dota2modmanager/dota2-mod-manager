@@ -2323,6 +2323,31 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                         net.download_file(&st(1), std::path::Path::new(&st(2)), opts)
                             .map_or_else(fail, |d| json!({ "bytes": d.bytes, "sha256": d.sha256, "resumedFrom": d.resumed_from, "unverified": d.unverified }))
                     }
+                    "proxy" => crate::net_fetch::validate_download_proxy(&op[1]).map_or_else(|e| json!({ "ok": false, "error": e }), |v| json!({ "ok": true, "value": v })),
+                    "cut" => {
+                        let f = std::fs::OpenOptions::new().write(true).open(st(1)).map_err(|e| e.to_string())?;
+                        f.set_len(5000).map_err(|e| e.to_string())?;
+                        Value::Null
+                    }
+                    "lang" => {
+                        crate::i18n::set_lang(crate::i18n::Lang::parse(&st(1)));
+                        Value::Null
+                    }
+                    "fetchMod" => {
+                        // (userData, categoryId, fileRef, label, published hashes by "cat/file"): the path, or why not, and the stages
+                        let inst = crate::installer::Installer::new(None, "").with_user_data(std::path::Path::new(&st(1)));
+                        let hashes = op[5].clone();
+                        let published = |c: &str, f: &str| hashes.get(format!("{c}/{f}")).and_then(Value::as_str).map(String::from);
+                        let mut events: Vec<Value> = Vec::new();
+                        let r = inst.download(&net, &st(2), &st(3), op[4].as_str(), &published, &mut |e: Value| events.push(e));
+                        let last = events.iter().rev().find(|e| e["type"] == json!("download")).cloned();
+                        let stages: Vec<Value> = events.into_iter().filter(|e| e["type"] != json!("download")).collect();
+                        let mut a = r.map_or_else(|e| json!({ "error": e }), |p| json!({ "path": p }));
+                        a["stages"] = json!(stages);
+                        a["last"] = last.unwrap_or(Value::Null);
+                        a["index"] = Value::Object(inst.download_index());
+                        a
+                    }
                     "sig" => {
                         let payload = b(op.as_array().map_or(&[][..], Vec::as_slice), 1)?;
                         json!(crate::catalog_signature::verify(&payload, &st(2), &op.get(3).map_or_else(|| crate::catalog_signature::CATALOG_PUBLIC_KEY.to_string(), crate::js::string)))

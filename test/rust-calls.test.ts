@@ -3498,6 +3498,16 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
     ['setMirrors', [at('good')]], ['download', RAW, 'resumed.zip', { expect: digest }],
     ['setMirrors', [at('whole')]], ['download', RAW, 'restarted.zip', {}],
     ['setMirrors', [at('down')]], ['download', RAW, 'e.zip', {}],
+    // a catalog mod's archive into the download cache: fetched, reused, fetched again when cut short or disowned
+    ['lang', 'en'],
+    ...[5, null, '', '  ', 'http://127.0.0.1:8080', ' HTTPS://Proxy.Example:3128/ ', 'http:///x', 'http://h:0', 'http://h:65535', 'http://h:65536', 'socks5://h:1', 'ftp://h',
+      'http://u:p@h:1', 'http://h:1/path', 'http://h:1/?', 'http://h:1/?q=1', 'http://h:1#x', 'http://h', 'https://h:443', 'http://[::1]:8080', 'http://h:12ab', 'http://', 'h:8080', 'http://h :1'].map((v) => ['proxy', v]),
+    ['setMirrors', [at('good', { origin: true })]], ['fetchMod', 'heroes', 'Mod.zip', 'Mod', {}], ['fetchMod', 'heroes', 'Mod.zip', null, {}],
+    ['cut', 'heroes/Mod.zip'], ['fetchMod', 'heroes', 'Mod.zip', 'Mod', {}],
+    ['fetchMod', 'heroes', 'Mod.zip', 'Mod', { 'heroes/Mod.zip': 'f'.repeat(64) }],
+    ['setMirrors', [at('wrong'), at('wrong', { host: 'other' })]], ['fetchMod', 'heroes', 'Other.zip', 'Other', { 'heroes/Other.zip': digest }],
+    ['setMirrors', [at('down')]], ['fetchMod', 'sounds', 'a%2F..%2Fb<c>.zip', '', {}],
+    ['fetchMod', 'skins', `http://127.0.0.1:${port.good}/direct/Thing%20(v2).zip?x=1`, 'Thing', {}],
     // the catalog signature
     ['sig', pf, sig, spki], ['sig', pf, sig.replace(/^./, (c) => (c === 'A' ? 'B' : 'A')), spki],
     ['sig', pf, ` ${sig.slice(0, 40)}\n${sig.slice(40)} `, spki], ['sig', pf, '', spki],
@@ -3510,7 +3520,12 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
     fs.writeFileSync(twin(side, 'resumed.zip.part'), data.subarray(0, 100000));
     fs.writeFileSync(twin(side, 'restarted.zip.part'), data.subarray(0, 100000));
   }
-  const local = (side: string, op: unknown[]) => (op[0] === 'download' ? [op[0], op[1], twin(side, op[2] as string), op[3]] : op);
+  const local = (side: string, op: unknown[]) => {
+    if (op[0] === 'download') return [op[0], op[1], twin(side, op[2] as string), op[3]];
+    if (op[0] === 'fetchMod') return [op[0], twin(side, 'ud'), ...op.slice(1)];
+    if (op[0] === 'cut') return [op[0], path.join(twin(side, 'ud'), 'downloads', op[1] as string)];
+    return op;
+  };
 
   const list = path.join(tmp, 'calls.json');
   fs.writeFileSync(list, JSON.stringify([['net.script', ops.map((op) => local('rs', op))],
@@ -3553,6 +3568,21 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
           const d = await net.downloadFile(op[1] as string, op[2] as string, { expectSha256: o.expect ?? null, fromPublishedList: !!o.published });
           return { bytes: d.bytes, sha256: d.sha256, resumedFrom: d.resumedFrom, unverified: !!d.unverified };
         } catch (e) { return plain(e); }
+        case 'lang': setLang(op[1] as string); return null;
+        case 'proxy': return (await import('../src/download-proxy.ts')).validateDownloadProxy(op[1]);
+        case 'cut': fs.truncateSync(op[1] as string, 5000); return null;
+        case 'fetchMod': {
+          const { Installer } = await import('../src/installer.ts');
+          const events: Record<string, unknown>[] = [];
+          const hashes = op[5] as Record<string, string>;
+          const inst = new Installer({ userDataDir: op[1] as string, getGamePath: () => null, getLangSuffix: () => '', onProgress: (e: Record<string, unknown>) => events.push(e), publishedHash: (c, f) => hashes[`${c}/${f}`] ?? null });
+          const a: Record<string, unknown> = {};
+          try { a.path = await inst.download(op[2] as string, op[3] as string, op[4] as string | null); } catch (e) { a.error = (e as Error).message; }
+          a.stages = events.filter((e) => e.type !== 'download');
+          a.last = events.filter((e) => e.type === 'download').pop() ?? null;
+          a.index = inst.downloadIndex();
+          return a;
+        }
         case 'sig': return signature.verify(fs.readFileSync(payloadFile), op[2], op.length > 3 ? op[3] as string : signature.CATALOG_PUBLIC_KEY);
       }
       throw new Error(`no step ${op[0]}`);
@@ -3569,11 +3599,14 @@ test('the mirror chain, requests, downloads and the catalog signature in Rust an
   const worded = (s: unknown) => (typeof s === 'string' && /HTTP \d|checksum|no mirror|^timed out$/.test(s) ? s : '<socket>');
   const norm = (v: unknown, op: unknown[]): unknown => {
     if (op[0] === 'health') return (v as { why?: string; standingDownFor: number }[]).map((h) => ({ ...h, why: worded(h.why), standingDownFor: h.standingDownFor > 0 }));
+    if (op[0] === 'fetchMod') return JSON.parse(JSON.stringify(v).split(JSON.stringify(path.join(tmp, 'rs')).slice(1, -1)).join('<side>').split(JSON.stringify(path.join(tmp, 'ts')).slice(1, -1)).join('<side>'), (k, x) => (k === 'at' ? 'now' : x));
     if (v && typeof v === 'object' && 'error' in v) return { ...v, error: worded((v as { error: string }).error) };
     return v;
   };
   ops.forEach((op, i) => assert.deepEqual(norm(rs[i], op), norm(want[i], op), `${i} ${JSON.stringify(op).slice(0, 160)}`));
-  const tree = (side: string) => fs.readdirSync(path.join(tmp, side)).sort().map((f) => `${f} ${sha(fs.readFileSync(path.join(tmp, side, f)))}`);
+  // the download index carries the time each archive arrived; its entries are in the answers above
+  const tree = (side: string) => (fs.readdirSync(path.join(tmp, side), { recursive: true }) as string[]).filter((f) => fs.statSync(path.join(tmp, side, f)).isFile() && !f.endsWith('index.json'))
+    .sort().map((f) => `${f} ${sha(fs.readFileSync(path.join(tmp, side, f)))}`);
   assert.deepEqual(tree('rs'), tree('ts'));
   // a body that trickles in for longer than the wait for headers arrives; one that goes silent is cut
   assert.deepEqual(timed[2], { text: 'x'.repeat(120) });
