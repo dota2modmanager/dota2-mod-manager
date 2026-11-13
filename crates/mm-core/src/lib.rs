@@ -1,6 +1,8 @@
 //! The parts of Dota 2 Mod Manager that read and write the game's files, rewritten from src/*.ts.
 //! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
 
+pub mod ability_icons;
+pub mod ability_icons_service;
 pub mod ability_sounds;
 pub mod adopt;
 pub mod app_info;

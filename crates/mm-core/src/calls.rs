@@ -3205,6 +3205,83 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": log })
         }
+        "ability-icons.modifiers" => json!(crate::ability_icons::icon_modifiers(&b(args, 0)?)),
+        "ability-icons.setLabel" => json!(crate::ability_icons::set_label(&s(args, 0))),
+        "ability-icons.sets" => json!(crate::ability_icons::modifier_sets(&b(args, 0)?).map_err(|e| e.to_string())?),
+        "ability-icons.forced" => {
+            let text = b(args, 2)?;
+            json!(crate::ability_icons::forced_files(&s(args, 0), &s(args, 1), &crate::ability_icons::icon_modifiers(&text)))
+        }
+        "ability-icons.choices" => {
+            // (table, hero, order, files the game has)
+            let text = b(args, 0)?;
+            let mut sources: Vec<crate::ability_icons::IconSource> = crate::schema::list_items(&text)
+                .map_err(|e| e.to_string())?
+                .into_iter()
+                .map(|i| crate::ability_icons::IconSource { id: i.id, name: i.name, start: i.start, end: i.end, shared: false, loc_key: None })
+                .collect();
+            sources.extend(crate::ability_icons::modifier_sets(&text).map_err(|e| e.to_string())?);
+            let order: Vec<String> = args.get(2).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            let files: std::collections::HashSet<String> =
+                args.get(3).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+            let has = |f: &str| files.contains(f);
+            let mods = crate::ability_icons::icon_modifiers(&text);
+            json!(crate::ability_icons::hero_icon_choices(&text, &sources, &s(args, 1), &order, &has, &mods).map_err(|e| e.to_string())?)
+        }
+        "ability-icons.entries" => {
+            // (pak01 path, picks, table): each file with its data's sha1, and the picks gone
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let picks: indexmap::IndexMap<String, String> = args
+                .get(1)
+                .and_then(Value::as_object)
+                .map(|o| o.iter().map(|(k, v)| (k.clone(), crate::js::string(v))).collect())
+                .unwrap_or_default();
+            let mods = crate::ability_icons::icon_modifiers(&b(args, 2)?);
+            let mut read = |f: &str| ix.read(f).ok().flatten();
+            let has = |f: &str| ix.has(f);
+            let (entries, gone) = crate::ability_icons::icon_entries(&mut read, &picks, &mods, &has);
+            let files: Vec<Value> = entries
+                .iter()
+                .map(|(p, e)| json!([p, hex(&<sha1::Sha1 as sha1::Digest>::digest(&e.data[..]))]))
+                .collect();
+            json!({ "entries": files, "gone": gone })
+        }
+        "ability-icons.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, table, lang, vrf, ops): each answer, and the log
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let table = opt_b(args, 5)?.map(|t| t.to_vec()).unwrap_or_default();
+            let vrf = args.get(7).is_some_and(crate::js::truthy);
+            let mut svc = crate::ability_icons_service::AbilityIconsService::new(inst.game.clone(), table, &s(args, 6), vrf)?;
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(8).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let a = op.as_array().cloned().unwrap_or_default();
+                let arg = |i: usize| a.get(i).map(crate::js::string).unwrap_or_default();
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str() {
+                    "heroes" => svc.heroes().map(|v| json!(v)),
+                    "hero" => svc.hero(&lib, &arg(1)),
+                    "set" => {
+                        let icon = a.get(3).and_then(Value::as_str).map(str::to_string);
+                        svc.set(&inst, &mut lib, (&arg(1), &arg(2), icon.as_deref()), &mut d)
+                    }
+                    "clear" => svc.clear(&inst, &mut lib, &arg(1), &mut d),
+                    "rebuild" => {
+                        let ids: Vec<String> = a.get(1).and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+                        Ok(json!(svc.rebuild(&inst, &mut lib, &ids, &mut d)))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
