@@ -4189,6 +4189,57 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let out = logs.lock().unwrap().clone();
             json!(out)
         }
+        "discord-auth.authorizeUrl" => json!(crate::discord_auth::authorize_url(&s(args, 0), &s(args, 1), n(args, 2) as u16)),
+        "discord-auth.script" => {
+            // (lang, port, api, cdn, timeoutMs, browser): sign-in with a stand-in browser that
+            // opens the callback page and posts back what `browser` says: ok, state, denied, none
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let port = n(args, 1) as u16;
+            let at = crate::discord_auth::Endpoints {
+                port,
+                authorize: "https://discord.com/oauth2/authorize".into(),
+                api: s(args, 2),
+                cdn: s(args, 3),
+                timeout: std::time::Duration::from_millis(n(args, 4) as u64),
+            };
+            let browser = s(args, 5);
+            let opened = Arc::new(Mutex::new(String::new()));
+            let seen = opened.clone();
+            let open = move |url: &str| -> Result<(), String> {
+                *seen.lock().unwrap() = url.to_string();
+                let state = url::Url::parse(url).ok().and_then(|u| u.query_pairs().find(|(k, _)| k == "state").map(|(_, v)| v.into_owned())).unwrap_or_default();
+                let browser = browser.clone();
+                std::thread::spawn(move || {
+                    use std::io::{Read, Write};
+                    let call = |req: String| {
+                        let mut c = std::net::TcpStream::connect(("127.0.0.1", port)).ok()?;
+                        c.write_all(req.as_bytes()).ok()?;
+                        let mut out = String::new();
+                        c.read_to_string(&mut out).ok()?;
+                        Some(out)
+                    };
+                    let _ = call("GET /nothing HTTP/1.1\r\nhost: x\r\n\r\n".into());
+                    let page = call("GET /callback HTTP/1.1\r\nhost: x\r\n\r\n".into()).unwrap_or_default();
+                    let body = match browser.as_str() {
+                        "ok" => format!("access_token=TOKEN&token_type=Bearer&state={state}"),
+                        "state" => "access_token=TOKEN&state=other".into(),
+                        "denied" => format!("error=access_denied&error_description=The+user+said+no&state={state}"),
+                        "notoken" => format!("state={state}"),
+                        _ => return,
+                    };
+                    if page.contains("location.hash") {
+                        let _ = call(format!("POST /token HTTP/1.1\r\nhost: x\r\ncontent-length: {}\r\n\r\n{body}", body.len()));
+                    }
+                });
+                Ok(())
+            };
+            let r = crate::discord_auth::sign_in(&crate::net_fetch::Net::default(), &at, &open);
+            let url = opened.lock().unwrap().clone();
+            match r {
+                Ok(v) => json!({ "ok": v, "url": url }),
+                Err(e) => json!({ "error": e, "url": url }),
+            }
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

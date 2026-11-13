@@ -7317,3 +7317,64 @@ test('the Discord status in Rust talks to Discord as the TypeScript one does', {
   assert.deepEqual(seen.rs, seen.ts);
   assert.ok(seen.ts.length >= 6, `Discord heard the handshakes, the pong and the activities: ${JSON.stringify(seen.ts)}`);
 });
+
+test('signing in with Discord in Rust asks, waits and reads the profile as the TypeScript does', { skip }, async () => {
+  const http = await import('node:http');
+  const { spawn } = await import('node:child_process');
+  const auth = await import('../src/discord-auth.ts');
+  // the address the browser is sent to, built as signIn builds it
+  const tsUrl = (state: string) => 'https://discord.com/oauth2/authorize?' + new URLSearchParams({
+    response_type: 'token', client_id: auth.CLIENT_ID, redirect_uri: auth.REDIRECT_URI, scope: 'identify', state, prompt: 'consent',
+  });
+  compare([{ name: 'discord-auth.authorizeUrl', ts: ((b: string, s: string) => tsUrl(s)) as never, inputs: [['https://discord.com/oauth2/authorize', 'ab12', auth.PORT], ['https://discord.com/oauth2/authorize', 'a b&c=ж', auth.PORT]].map(([b, s]) => [b, s, auth.PORT]) }]);
+
+  // a stand-in for Discord's API and its avatar CDN
+  const picture = Buffer.from('\x89PNG picture', 'latin1');
+  const profiles: Record<string, unknown> = {
+    TOKEN: { id: 42, username: 'plain', global_name: `${'Г'.repeat(79)}😀x`, avatar: 'abc' },
+  };
+  let profileStatus = 200;
+  const server = http.createServer((req, res) => {
+    if (req.url === '/api/users/@me') {
+      const token = String(req.headers.authorization || '').replace('Bearer ', '');
+      res.writeHead(profileStatus, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(profiles[token] ?? { message: 'no' }));
+    } else if (req.url === '/cdn/avatars/42/abc.png?size=64') { res.writeHead(200); res.end(picture); }
+    else { res.writeHead(404); res.end(); }
+  });
+  await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+  const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+  const port = 53000 + (process.pid % 900);
+  const run = async (lang: string, browser: string, timeout = 5000) => {
+    const list = path.join(os.tmpdir(), `mm-auth-${process.pid}.json`);
+    fs.writeFileSync(list, JSON.stringify([['discord-auth.script', lang, port, `${base}/api`, `${base}/cdn`, timeout, browser]]));
+    const out = await new Promise<string>((resolve, reject) => {
+      const p = spawn(cli, ['call', list]);
+      let o = '';
+      p.stdout.on('data', (d) => { o += d; });
+      p.on('error', reject);
+      p.on('close', (code) => (code === 0 ? resolve(o) : reject(new Error(`mm-cli exited ${code}`))));
+    });
+    fs.rmSync(list, { force: true });
+    return (JSON.parse(out) as { ok: { ok?: Record<string, unknown>; error?: string; url: string } }[])[0].ok;
+  };
+  const lt = (l: string, ru: string, ...v: unknown[]) => { setLang(l); const s = t(ru, ...v); setLang('en'); return s; };
+
+  const ok = await run('en', 'ok');
+  assert.match(ok.url, /^https:\/\/discord\.com\/oauth2\/authorize\?response_type=token&client_id=1529830456697163867&redirect_uri=http%3A%2F%2F127\.0\.0\.1%3A\d+%2Fcallback&scope=identify&state=[0-9a-f]{32}&prompt=consent$/);
+  // the name cut to 80 UTF-16 units as signIn cuts it, except that an emoji cut in half is
+  // dropped whole where the TypeScript kept half of it, a character no screen can draw
+  assert.deepEqual(ok.ok, { id: '42', username: `${'Г'.repeat(79)}`, avatar: `data:image/png;base64,${picture.toString('base64')}` });
+  assert.deepEqual((await run('ru', 'state')).error, lt('ru', 'Ответ Discord не совпал с запросом'));
+  assert.deepEqual((await run('en', 'denied')).error, 'The user said no');
+  assert.deepEqual((await run('en', 'notoken')).error, lt('en', 'Discord не выдал токен'));
+  assert.deepEqual((await run('en', 'none', 800)).error, lt('en', 'Вход занял слишком много времени'));
+  profileStatus = 401;
+  assert.deepEqual((await run('en', 'ok')).error, lt('en', 'Discord не отдал профиль (HTTP {0})', 401));
+  // the port taken: the message names it
+  const busy = http.createServer();
+  await new Promise<void>((r) => busy.listen(port, '127.0.0.1', () => r()));
+  assert.deepEqual((await run('ru', 'ok')).error, lt('ru', 'Порт {0} занят — закрой другой вход и попробуй снова', port));
+  busy.close();
+  server.close();
+});
