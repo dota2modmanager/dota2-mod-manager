@@ -13,7 +13,8 @@ import { CLI, SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, s
 
 const skip = (!fs.existsSync(CLI) && 'mm-cli is not built (cargo build -p mm-cli)') || (!fs.existsSync(SANDBOX_GAME) && 'no sandbox (npm run sandbox:seed)');
 
-type Step = { call: [string, ...unknown[]]; reply?: Reply; note?: string };
+/** `unsized`: the answer's size is its compressor's, not the state's (a zip deflated by another library). */
+type Step = { call: [string, ...unknown[]]; reply?: Reply; note?: string; unsized?: boolean };
 
 /** The settings a process wrote that are its own clock or its own build, not the state compared. */
 const VOLATILE = ['lastSeenVersion', 'gameStamp', 'windowBounds'];
@@ -62,13 +63,14 @@ async function compare(name: string, base: Twin, steps: Step[]): Promise<void> {
           return JSON.parse(text);
         };
         p.reply = (m, x) => here((s.reply ?? (() => null))(m, x));
-        const r = await p.invoke(s.call[0], here(s.call.slice(1)) as unknown[]);
+        const r = await p.invoke(s.call[0], here(s.call.slice(1)) as unknown[]) as { value?: { size?: unknown } };
+        if (s.unsized && r?.value && typeof r.value.size === 'number') r.value.size = '<SIZE>';
         noteIds(side, t);
         got.push(named(blind({ answer: r, asked: p.asked }, t), side));
       }
       assert.deepEqual(got[1], got[0], label);
     }
-    assert.deepEqual(settingsOf(b), settingsOf(a), `${name}: settings.json`);
+    assert.deepEqual(named(settingsOf(b), 1), named(settingsOf(a), 0), `${name}: settings.json`);
     const manifest = (t: Twin, side: number) => named(blind(readJson(path.join(t.ud, 'manifest.json')), t), side);
     assert.deepEqual(manifest(b, 1), manifest(a, 0), `${name}: the library`);
     assert.deepEqual(tree(b.game), tree(a.game), `${name}: the game folder`);
@@ -250,6 +252,46 @@ test('combined packs answer as the TypeScript does', { skip }, async () => {
     { call: ['mods:list'] },
     { call: ['packs:disband', '<ID 0>'] },
     { call: ['packs:disband', 'nope'] },
+    { call: ['mods:list'] },
+  ]);
+});
+
+test('presets answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('presets-base'), 'b'), OFFLINE);
+  const id = idsOf(base);
+  const save = (filePath: string | null) => (m: string) => (m === 'dialog.save' ? (filePath ? { canceled: false, filePath } : { canceled: true }) : null);
+  await compare('presets', base, [
+    { call: ['presets:list'] },
+    { call: ['presets:save', 'Everything'] },
+    { call: ['mods:setEnabled', id['Trees'], false] },
+    { call: ['presets:save', 'No trees'] },
+    { call: ['presets:list'] },
+    { call: ['presets:update', '<ID 0>'] },
+    { call: ['presets:update', 'nope'] },
+    { call: ['presets:rename', '<ID 1>', '  Renamed  '] },
+    { call: ['presets:rename', '<ID 1>', '   '] },
+    { call: ['presets:rename', 'nope', 'x'] },
+    { call: ['presets:apply', '<ID 1>'] },
+    { call: ['presets:list'] },
+    { call: ['presets:exportPlan', '<ID 1>'] },
+    { call: ['presets:exportPlan', 'nope'] },
+    { call: ['presets:export', '<ID 1>', {}], reply: save(null), note: 'cancelled' },
+    { call: ['presets:export', '<ID 1>', { note: 'for you', author: 'me', skip: ['1'] }], reply: save('<ROOT>/build.d2mm'), unsized: true },
+    { call: ['presets:shareLink', '<ID 1>'] },
+    { call: ['presets:shareLink', 'nope'] },
+    { call: ['presets:importFile', '<ROOT>/build.d2mm'] },
+    { call: ['presets:importFile', '<ROOT>/nothing.d2mm'] },
+    { call: ['presets:importDialog'], reply: open(null), note: 'cancelled' },
+    { call: ['presets:list'] },
+    { call: ['mods:remove', id['IO Purple']] },
+    { call: ['presets:apply', '<ID 0>'], note: 'a member gone, and no catalog to fetch it from' },
+    { call: ['presets:resolve', '<ID 2>'] },
+    { call: ['presets:resolve', '<ID 0>'], note: 'not a received one' },
+    { call: ['presets:list'] },
+    { call: ['presets:ready'] },
+    { call: ['presets:takeReady', 'nope'] },
+    { call: ['presets:delete', '<ID 1>'] },
+    { call: ['presets:apply', 'nope'] },
     { call: ['mods:list'] },
   ]);
 });

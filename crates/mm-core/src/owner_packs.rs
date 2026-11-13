@@ -4,6 +4,8 @@
 use serde_json::{json, Value};
 
 use crate::i18n::t;
+use crate::installer::Installer;
+use crate::library::Library;
 use crate::overlays::files_of;
 use crate::owner::{arg, Core, Owner, R};
 use crate::presets_service::packable_record;
@@ -43,28 +45,37 @@ fn members(pack: &Value) -> Vec<Value> {
 
 /// After any deploy with the master switch off, the files just written go off too.
 pub fn after_deploy_master(c: &Core) {
-    if c.installer.master_is_off().unwrap_or(false) {
-        let _ = c.installer.set_master_enabled(false);
+    master_after_deploy(&c.installer);
+}
+
+fn master_after_deploy(inst: &Installer) {
+    if inst.master_is_off().unwrap_or(false) {
+        let _ = inst.set_master_enabled(false);
     }
 }
 
 /// Rebuild a pack's deployed VPK, keep its files and members, and put the pack's and the master
 /// switch's off state back (src/services.ts deployAndApply): the conflicts the merge found.
 pub fn deploy_and_apply(c: &mut Core, pack: &Value) -> Result<Value, String> {
-    let out = c.installer.deploy_pack(pack)?;
+    let Core { installer, library, .. } = c;
+    deploy_into(installer, library, pack)
+}
+
+/// [`deploy_and_apply`] over the installer and the library alone.
+pub fn deploy_into(inst: &Installer, lib: &mut Library, pack: &Value) -> Result<Value, String> {
+    let out = inst.deploy_pack(pack)?;
     let files = out.get("files").cloned().unwrap_or(json!([]));
-    c.library
-        .update(
-            &pack["id"],
-            &json!({ "files": files, "members": pack.get("members").cloned().unwrap_or(Value::Null) }),
-            None,
-        )
-        .map_err(io)?;
+    lib.update(
+        &pack["id"],
+        &json!({ "files": files, "members": pack.get("members").cloned().unwrap_or(Value::Null) }),
+        None,
+    )
+    .map_err(io)?;
     let list = files_of(&files);
     if pack.get("enabled") == Some(&Value::Bool(false)) && !list.is_empty() {
-        let _ = c.installer.set_enabled(&list, false, None);
+        let _ = inst.set_enabled(&list, false, None);
     }
-    after_deploy_master(c);
+    master_after_deploy(inst);
     Ok(out.get("conflicts").cloned().unwrap_or(json!([])))
 }
 

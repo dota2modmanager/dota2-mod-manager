@@ -1829,7 +1829,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                         "pack" => {
                             let ids = op[2].as_array().cloned().unwrap_or_default();
                             let mut deployed = Vec::new();
-                            let r = crate::presets_service::pack_from_records(&mut lib, &inst, &crate::js::string(&op[1]), &ids, &mut |p| deployed.push(p["id"].clone()))?;
+                            let r = crate::presets_service::pack_from_records(&mut lib, &inst, &crate::js::string(&op[1]), &ids, &mut |_, p| deployed.push(p["id"].clone()))?;
                             json!({ "pack": r, "deployed": deployed })
                         }
                         "drop" => {
@@ -1874,7 +1874,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                         let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
                         crate::schema_cosmetics::pick_cosmetic(lib, &crate::js::string(&p["slot"]), &crate::js::string(&p["itemId"]), p["name"].as_str(), Some(&effect))
                     };
-                    let mut deploy = |p: &Value| deployed.push(p["id"].clone());
+                    let mut deploy = |_: &mut crate::library::Library, p: &Value| deployed.push(p["id"].clone());
                     let mut prog = |v: Value| progress.push(v);
                     let mut d = crate::preset_install::Deps {
                         inst: &inst,

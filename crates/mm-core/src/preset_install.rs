@@ -35,7 +35,7 @@ pub struct Deps<'a> {
     /// one look on, without writing the table (`schema_cosmetics::pick_cosmetic`)
     pub pick: &'a mut PickLook,
     /// a pack's VPK rebuilt
-    pub deploy_pack: &'a mut dyn FnMut(&Value),
+    pub deploy_pack: &'a mut dyn FnMut(&mut Library, &Value),
     pub progress: &'a mut dyn FnMut(Value),
 }
 

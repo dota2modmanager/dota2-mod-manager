@@ -64,6 +64,8 @@ pub struct Core {
     /// the network, through the user's proxy
     pub net: Arc<crate::net_fetch::Net>,
     pub catalog: crate::catalog::Catalog,
+    /// the ready-made presets, from the last good copy until the start's fetch lands
+    pub ready: crate::ready_presets::ReadyPresets,
     /// which catalog mod a file is, by what it hashes to
     pub fingerprints: crate::fingerprints::Fingerprints,
     /// the anti-cheat notice in plain words
@@ -113,6 +115,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_mods::CHANNELS, crate::owner_mods::handle),
     (crate::owner_foreign::CHANNELS, crate::owner_foreign::handle),
     (crate::owner_packs::CHANNELS, crate::owner_packs::handle),
+    (crate::owner_presets::CHANNELS, crate::owner_presets::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -213,6 +216,7 @@ impl Owner {
             presence_view: "catalog".into(),
             net,
             catalog,
+            ready: crate::ready_presets::ReadyPresets::new(&ud, None),
             fingerprints: crate::fingerprints::Fingerprints::new(&ud),
             notice: crate::notice_text::NoticeText::default(),
             download_stats,
