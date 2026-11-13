@@ -3296,6 +3296,234 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!({ "answers": answers, "log": log })
         }
+        "vtex.png" => json!(crate::vtex::png_from_vtex(&b(args, 0)?).map(crate::vtex::data_url)),
+        "gem-colors.name" => json!(crate::gem_colors::gem_name(&s(args, 0))),
+        "gem-colors.rgb" => json!(crate::gem_colors::rgb_of(&s(args, 0))),
+        "gem-colors.colors" => json!(crate::gem_colors::gem_colors(&b(args, 0)?).map_err(|e| e.to_string())?),
+        "gem-colors.find" => {
+            let gems = crate::gem_colors::gem_colors(&b(args, 0)?).map_err(|e| e.to_string())?;
+            json!(crate::gem_colors::find_gem(&gems, &s(args, 1)))
+        }
+        "gem-colors.art" => {
+            // (pak01 path, table): the shared art and each gem's own picture
+            let ix = crate::vpk_shared::shared_index(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let gems = crate::gem_colors::gem_colors(&b(args, 1)?).map_err(|e| e.to_string())?;
+            json!({
+                "art": crate::gem_colors::prismatic_gem_art(&ix),
+                "gems": crate::gem_colors::prismatic_gem_pictures(&gems, &ix),
+            })
+        }
+        "recolor-modes.parse" => {
+            json!(crate::recolor_modes::parse_paint(args.first().unwrap_or(&Value::Null)).map(|(hex, mode)| json!({ "hex": hex, "mode": mode })))
+        }
+        "recolor-modes.value" => {
+            let mode = args.get(1).and_then(Value::as_str).unwrap_or("tint");
+            json!(crate::recolor_modes::paint_value(&s(args, 0), mode))
+        }
+        "recolor-modes.rgbOfHex" => json!(crate::recolor_modes::rgb_of_hex(&s(args, 0))),
+        "recolor-modes.hsv" => json!(crate::recolor_modes::hsv(rgb(args, 0))),
+        "recolor-modes.fromHsv" => json!(crate::recolor_modes::from_hsv(rgb(args, 0))),
+        "recolor-modes.pixel" => {
+            let (u, v) = (args.get(3).and_then(Value::as_f64).unwrap_or(0.0), args.get(4).and_then(Value::as_f64).unwrap_or(0.0));
+            json!(crate::recolor_modes::paint_pixel(rgb(args, 0), rgb(args, 1), &s(args, 2), u, v))
+        }
+        "recolor-modes.pixels" => {
+            // (pixels as a file, width, colour, mode, bgra): the pixels after, and how many changed
+            let mut px = b(args, 0)?.to_vec();
+            let width = args.get(1).and_then(Value::as_u64).unwrap_or(0) as usize;
+            let bgra = args.get(4).is_some_and(crate::js::truthy);
+            let n = crate::recolor_modes::paint_pixels(&mut px, width, rgb(args, 2), &s(args, 3), bgra);
+            json!({ "changed": n, "sha1": hex(&<sha1::Sha1 as sha1::Digest>::digest(&px)) })
+        }
+        "arcana-bases.safe" => json!(crate::arcana_base_store::safe_listing(args.first().unwrap_or(&Value::Null))),
+        "arcana-bases.signed" => json!(crate::arcana_base_store::signed_listing(&s(args, 0), &s(args, 1), &s(args, 2))),
+        "arcana-bases.blobSha" => json!(crate::arcana_base_store::blob_sha(&b(args, 0)?)),
+        "arcana-bases.store" => {
+            // (dir, key, pins, served {url: {status, body (base64)} | {error}}, ops): each answer, and the log
+            let mut store = crate::arcana_base_store::BaseStore::new(std::path::Path::new(&s(args, 0)));
+            store.key = s(args, 1);
+            store.pins = from_arg(args, 2)?;
+            let served = args.get(3).cloned().unwrap_or(Value::Null);
+            let fetch = move |url: &str, _small: bool| -> Result<crate::arcana_base_store::Got, String> {
+                let Some(a) = served.get(url) else { return Err(format!("not served: {url}")) };
+                if let Some(e) = a.get("error").and_then(Value::as_str) {
+                    return Err(e.to_string());
+                }
+                let status = a.get("status").and_then(Value::as_u64).unwrap_or(200) as u16;
+                let body = crate::js::base64_decode(a.get("body").and_then(Value::as_str).unwrap_or(""));
+                Ok(crate::arcana_base_store::Got { status, body })
+            };
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(4).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let id = op.get(1).map(crate::js::string).unwrap_or_default();
+                let mut d = |m: String| log.push(m);
+                answers.push(match op.get(0).and_then(Value::as_str).unwrap_or("") {
+                    "want" => json!(store.want(&id, &fetch, 0.0, &mut d)),
+                    "entries" => json!(store.entries(&id).map(|list| list
+                        .iter()
+                        .map(|e| json!([crate::vpk::join_path(&e.folder, &e.name, &e.ext), hex(&<sha1::Sha1 as sha1::Digest>::digest(&e.data[..]))]))
+                        .collect::<Vec<_>>())),
+                    "ready" => json!(store.ready()),
+                    _ => Value::Null,
+                });
+            }
+            json!({ "answers": answers, "log": log })
+        }
+        "rank-look.clamp" => json!(crate::rank_look::clamp_look(args.first().unwrap_or(&Value::Null))),
+        "rank-look.tierOf" => json!(crate::rank_look::tier_of(n(args, 0))),
+        "rank-look.medalImage" => {
+            let m = crate::rank_look::clamp_look(&json!({ "medal": args.first().cloned().unwrap_or(Value::Null) })).medal;
+            json!(m.map(|m| crate::rank_look::medal_image(&m, args.get(1).is_some_and(crate::js::truthy))))
+        }
+        "rank-look.withMedal" => {
+            let m = crate::rank_look::clamp_look(&json!({ "medal": args.get(1).cloned().unwrap_or(Value::Null) })).medal;
+            json!(m.map(|m| crate::rank_look::with_medal(&s(args, 0), &m)))
+        }
+        "rank-look.takesScript" => json!(crate::rank_look::takes_script(&b(args, 0)?)),
+        "rank-look.withScript" => json!(hex(&<sha1::Sha1 as sha1::Digest>::digest(crate::rank_look::with_script(&b(args, 0)?)?))),
+        "rank-look.levelsScript" => {
+            // (raw look, {id: hero})
+            let look = crate::rank_look::clamp_look(args.first().unwrap_or(&Value::Null));
+            let ids: std::collections::BTreeMap<u32, String> = args
+                .get(1)
+                .and_then(Value::as_object)
+                .map(|o| o.iter().filter_map(|(k, v)| Some((k.parse().ok()?, crate::js::string(v)))).collect())
+                .unwrap_or_default();
+            json!(crate::rank_look::levels_script(&look, &ids))
+        }
+        "rank-look.mark" => json!(crate::rank_look::SCRIPT_MARK),
+        "rank-look.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, ops): each answer, and the log. A
+            // `pictures` step names the program and what the stand-in for it writes: {name: png
+            // base64} into the folder it is handed, or {error} for a run that fails.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let mut svc = crate::rank_look_service::RankLookService::new(inst.game.clone());
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(5).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "state" => Ok(svc.state(&lib, crate::js::truthy(&arg(1)))),
+                    "pictures" => {
+                        let exe = arg(1).as_str().map(str::to_string);
+                        let made = arg(2);
+                        let mut run = |_: &str, a: &[String]| -> Result<(), String> {
+                            if let Some(e) = made.get("error").and_then(Value::as_str) {
+                                return Err(e.to_string());
+                            }
+                            let dir = std::path::Path::new(&a[3]).join("panorama").join("images").join("rank_tier_icons");
+                            std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+                            for (n, png) in made.as_object().into_iter().flatten() {
+                                let data = crate::js::base64_decode(png.as_str().unwrap_or(""));
+                                std::fs::write(dir.join(format!("{n}_psd.png")), data).map_err(|e| e.to_string())?;
+                            }
+                            Ok(())
+                        };
+                        svc.pictures(exe.as_deref(), &mut run, &ud, &mut d)
+                    }
+                    "install" => svc.install(&inst, &mut lib, &arg(1), &mut d),
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1).as_array().into_iter().flatten().map(crate::js::string).collect();
+                        let mut built = Vec::new();
+                        for id in svc.due(&lib, &ids) {
+                            if svc.rebuild_now(&inst, &mut lib, &mut d) {
+                                built.push(id);
+                            }
+                        }
+                        Ok(json!(built))
+                    }
+                    "refresh" => {
+                        let id = svc.refresh_script(&lib, &mut d);
+                        if id.is_some() {
+                            svc.rebuild_now(&inst, &mut lib, &mut d);
+                        }
+                        Ok(json!(id))
+                    }
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            json!({ "answers": answers, "log": log })
+        }
+        "arcana-service.hex" => json!(crate::arcana_service::valid_color(args.first().unwrap_or(&Value::Null)).map(crate::arcana_service::hex)),
+        "arcana-service.service" => {
+            // (game, suffix, journalDir, libraryDir, userData, code, bases {id: entries | null} or
+            // null, ops): each answer, the log, and the bases asked for. `$set:<set>` in a rebuild
+            // stands for the id of that set's record; a `pick` step adds an item builder's pick.
+            let ud = std::path::PathBuf::from(s(args, 4));
+            let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1)).with_user_data(&ud);
+            inst.journal_dir = opt_path(args, 2);
+            let mut lib = crate::library::Library::new(std::path::Path::new(&s(args, 3)));
+            let code = args.get(5).and_then(Value::as_str).map(str::to_string);
+            let mut svc = crate::arcana_service::ArcanaService::new(inst.game.clone(), code);
+            let store = match args.get(6).and_then(Value::as_object) {
+                Some(m) => {
+                    let mut held = HashMap::new();
+                    for (id, e) in m {
+                        held.insert(id.clone(), if e.is_null() { None } else { Some(entries_arg(Some(e))?) });
+                    }
+                    Some(TestBases { held, wanted: Mutex::new(Vec::new()) })
+                }
+                None => None,
+            };
+            let bases = store.as_ref().map(|s| s as &dyn crate::arcana_bases::BaseSource);
+            let mut log: Vec<String> = Vec::new();
+            let mut answers = Vec::new();
+            for op in args.get(7).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let arg = |i: usize| op.get(i).cloned().unwrap_or(Value::Null);
+                let mut d = |m: String| log.push(m);
+                let r: Result<Value, String> = match arg(0).as_str().unwrap_or("") {
+                    "state" => Ok(svc.state(&lib, &mut d)),
+                    "install" => svc.install(&inst, &mut lib, (&arg(1), &arg(2), &arg(3)), bases, &mut d),
+                    "giveWay" => {
+                        let filled = arg(1).as_array().into_iter().flatten().map(crate::js::string).collect();
+                        Ok(json!(svc.give_way(&inst, &mut lib, &filled, bases, &mut d)))
+                    }
+                    "rebuild" => {
+                        let ids: Vec<String> = arg(1)
+                            .as_array()
+                            .into_iter()
+                            .flatten()
+                            .map(|i| {
+                                let i = crate::js::string(i);
+                                match i.strip_prefix("$set:") {
+                                    Some(set) => lib
+                                        .list()
+                                        .iter()
+                                        .find(|r| r["generated"]["set"].as_str() == Some(set))
+                                        .map(|r| crate::js::string(&r["id"]))
+                                        .unwrap_or_default(),
+                                    None => i,
+                                }
+                            })
+                            .collect();
+                        Ok(json!(svc.rebuild(&inst, &mut lib, &ids, bases, &mut d)))
+                    }
+                    "pick" => (|| {
+                        let new = json!({ "name": "pick", "categoryId": "cosmetic", "styleLabel": null, "fileRef": null, "preview": null, "files": [] });
+                        let made = lib.add(&new, None)?;
+                        lib.update(&made["id"], &json!({ "itemId": arg(1) }), None)
+                    })()
+                    .map(|r| r.unwrap_or(Value::Null))
+                    .map_err(|e| e.to_string()),
+                    other => Err(format!("no step {other}")),
+                };
+                answers.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            let wanted = store.map(|s| s.wanted.into_inner().unwrap_or_default()).unwrap_or_default();
+            json!({ "answers": answers, "log": log, "wanted": wanted })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
