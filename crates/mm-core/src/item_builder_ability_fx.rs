@@ -208,33 +208,59 @@ fn modifiers_of(block: &[u8]) -> Result<Vec<Vec<u8>>, KvError> {
     Ok(out)
 }
 
+/// A patch the ability effects slots' picks are joined in (merge_fx_patches).
+pub trait FxJoin {
+    fn id(&self) -> &str;
+    fn block_mut(&mut self) -> &mut Vec<u8>;
+    fn take_assets(&mut self) -> Vec<crate::vpk::Entry>;
+    fn add_assets(&mut self, more: Vec<crate::vpk::Entry>);
+    fn source_mut(&mut self) -> &mut String;
+}
+
+impl FxJoin for crate::item_builder_everyone::SchemaPatch {
+    fn id(&self) -> &str {
+        &self.id
+    }
+    fn block_mut(&mut self) -> &mut Vec<u8> {
+        &mut self.block
+    }
+    fn take_assets(&mut self) -> Vec<crate::vpk::Entry> {
+        std::mem::take(&mut self.assets)
+    }
+    fn add_assets(&mut self, more: Vec<crate::vpk::Entry>) {
+        self.assets.extend(more);
+    }
+    fn source_mut(&mut self) -> &mut String {
+        &mut self.source
+    }
+}
+
 /// The patches with each ability effects slot's picks joined into one: the first pick's block with
 /// every other one's modifiers added, and all their files, the first pick's ahead.
-pub fn merge_fx_patches(
-    list: Vec<crate::item_builder_everyone::SchemaPatch>,
-    is_fx: impl Fn(&crate::item_builder_everyone::SchemaPatch) -> bool,
-) -> Result<Vec<crate::item_builder_everyone::SchemaPatch>, KvError> {
-    let mut out: Vec<crate::item_builder_everyone::SchemaPatch> = Vec::new();
+pub fn merge_fx_patches<T: FxJoin>(list: Vec<T>, is_fx: impl Fn(&T) -> bool) -> Result<Vec<T>, KvError> {
+    let mut out: Vec<T> = Vec::new();
     let mut joined: std::collections::HashMap<String, usize> = std::collections::HashMap::new();
-    for p in list {
+    for mut p in list {
         if !is_fx(&p) {
             out.push(p);
             continue;
         }
-        let Some(&at) = joined.get(&p.id) else {
-            joined.insert(p.id.clone(), out.len());
+        let Some(&at) = joined.get(p.id()) else {
+            joined.insert(p.id().to_string(), out.len());
             out.push(p);
             continue;
         };
         let had = &mut out[at];
-        if let Some((s, e)) = visuals_of(&had.block)? {
-            let visuals = had.block[s..e].to_vec();
-            let start = memchr::memmem::find(&had.block, &visuals).unwrap_or(s);
-            let merged = with_modifiers(&visuals, &modifiers_of(&p.block)?);
-            had.block = [&had.block[..start], &merged[..], &had.block[start + visuals.len()..]].concat();
+        let block = had.block_mut();
+        if let Some((s, e)) = visuals_of(block)? {
+            let visuals = block[s..e].to_vec();
+            let start = memchr::memmem::find(block, &visuals).unwrap_or(s);
+            let merged = with_modifiers(&visuals, &modifiers_of(p.block_mut())?);
+            *block = [&block[..start], &merged[..], &block[start + visuals.len()..]].concat();
         }
-        had.assets.extend(p.assets);
-        had.source = format!("{}, {}", had.source, p.source);
+        had.add_assets(p.take_assets());
+        let src = format!("{}, {}", had.source_mut(), p.source_mut());
+        *had.source_mut() = src;
     }
     Ok(out)
 }
