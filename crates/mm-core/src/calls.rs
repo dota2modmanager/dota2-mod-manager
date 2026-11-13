@@ -2584,6 +2584,55 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let f: Vec<String> = args.get(1).and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
             json!(crate::steam::find_dota_in(cfg!(windows), opt_s(args, 0).as_deref(), &f))
         }
+        "patch-watch.clientVersion" => json!(crate::patch_watch::client_version(std::path::Path::new(&s(args, 0)))),
+        "patch-watch.gameStamp" => json!(crate::patch_watch::game_stamp(opt_s(args, 0).as_deref().map(std::path::Path::new))),
+        "patch-watch.script" => {
+            // (game, debounceMs, ops): the watcher over a game folder the script itself changes
+            let game = Arc::new(Mutex::new(opt_s(args, 0)));
+            let expects = Arc::new(Mutex::new(false));
+            let fail = Arc::new(Mutex::new(false));
+            let logs = Arc::new(Mutex::new(Vec::<Value>::new()));
+            let (g, e, f, l, l2) = (game.clone(), expects.clone(), fail.clone(), logs.clone(), logs.clone());
+            let w = crate::patch_watch::PatchWatcher::new(
+                Box::new(move || g.lock().unwrap().clone().map(std::path::PathBuf::from)),
+                Box::new(move |ev| {
+                    l.lock().unwrap().push(json!({ "patch": ev }));
+                    if *f.lock().unwrap() { Err("no".into()) } else { Ok(()) }
+                }),
+                Box::new(move || *e.lock().unwrap()),
+                Box::new(move |m: &str| l2.lock().unwrap().push(json!(m))),
+                args.get(1).and_then(Value::as_u64),
+            );
+            let base = || std::path::PathBuf::from(game.lock().unwrap().clone().unwrap_or_default());
+            let mut out = Vec::new();
+            for op in args.get(2).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let v = match op[0].as_str().unwrap_or("") {
+                    "start" => { w.start(op.get(1).and_then(Value::as_str).map(String::from)); Value::Null }
+                    "check" => { w.check(); Value::Null }
+                    "current" => json!(w.current()),
+                    "rearm" => { w.rearm(); Value::Null }
+                    "stop" => { w.stop(); Value::Null }
+                    "expects" => { *expects.lock().unwrap() = op[1].as_bool().unwrap_or(false); Value::Null }
+                    "fail" => { *fail.lock().unwrap() = op[1].as_bool().unwrap_or(false); Value::Null }
+                    "game" => { *game.lock().unwrap() = op[1].as_str().map(String::from); Value::Null }
+                    "write" => {
+                        let f = base().join(crate::js::string(&op[1]));
+                        std::fs::create_dir_all(f.parent().unwrap()).map_err(|e| e.to_string())?;
+                        std::fs::write(&f, crate::js::string(&op[2])).map_err(|e| e.to_string())?;
+                        Value::Null
+                    }
+                    "copy" => {
+                        std::fs::copy(base().join(crate::js::string(&op[1])), base().join(crate::js::string(&op[2]))).map_err(|e| e.to_string())?;
+                        Value::Null
+                    }
+                    "wait" => { std::thread::sleep(std::time::Duration::from_millis(op[1].as_u64().unwrap_or(0))); Value::Null }
+                    other => return Err(format!("no step {other}")),
+                };
+                out.push(json!({ "v": v, "logs": std::mem::take(&mut *logs.lock().unwrap()) }));
+            }
+            w.stop();
+            Value::Array(out)
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

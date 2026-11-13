@@ -4165,3 +4165,98 @@ test('finding Steam and Dota in Rust looks where the TypeScript looks', { skip }
   ]);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the patch watcher in Rust notices what the TypeScript one notices', { skip }, async (t) => {
+  const patcher = await import('../src/patcher.ts');
+  const sg = await import('../src/patcher-signatures.ts');
+  const pw = await import('../src/patch-watch.ts');
+  const { spawn } = await import('node:child_process');
+  const src = path.join(sandboxGame, 'dota');
+  if (!fs.existsSync(path.join(src, 'gameinfo_branchspecific.gi'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
+  const branch = fs.readFileSync(path.join(src, 'gameinfo_branchspecific.gi'));
+  const bin = process.platform === 'linux' ? ['bin', 'linuxsteamrt64'] : ['bin', 'win64'];
+  const sigs = `...\\..\\..\\bin\\win64\\dota2.exe~SHA1:${'A'.repeat(40)};CRC:01234567\r\n${sg.signatureLine(branch)}\r\nDIGEST:ABCDEF\r\n`;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-pwatch-'));
+  const twin = (side: string) => {
+    const g = path.join(tmp, side, 'game');
+    fs.mkdirSync(path.join(g, 'dota'), { recursive: true });
+    fs.mkdirSync(path.join(g, ...bin), { recursive: true });
+    for (const f of ['gameinfo.gi', 'gameinfo_branchspecific.gi']) fs.copyFileSync(path.join(src, f), path.join(g, 'dota', f));
+    fs.writeFileSync(path.join(g, 'dota', 'steam.inf'), 'ClientVersion=6900\r\nServerVersion=6900\r\n');
+    fs.writeFileSync(path.join(g, ...bin, 'dota.signatures'), sigs);
+    fs.copyFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), path.join(g, 'dota', 'branch.orig'));
+    patcher.apply({ gamePath: g, folder: patcher.FOLDER, backupDir: path.join(tmp, side, 'backups') });
+    fs.copyFileSync(path.join(g, 'dota', 'gameinfo_branchspecific.gi'), path.join(g, 'dota', 'branch.patched'));
+    return g;
+  };
+  const games = { ts: twin('ts'), rs: twin('rs') };
+  const empty = path.join(tmp, 'empty');
+  const onlyInf = path.join(tmp, 'inf');
+  fs.mkdirSync(path.join(onlyInf, 'dota'), { recursive: true });
+  fs.writeFileSync(path.join(onlyInf, 'dota', 'steam.inf'), 'x\nClientVersion=12abc\n');
+  compare([
+    { name: 'patch-watch.clientVersion', ts: pw.clientVersion as never, inputs: [[games.ts], [empty], [onlyInf]] },
+    { name: 'patch-watch.gameStamp', ts: pw.gameStamp as never, inputs: [[games.ts], [empty], [onlyInf], [null], ['']] },
+  ]);
+
+  const inf = (n: number) => `ClientVersion=${n}\r\n`;
+  const ops: unknown[][] = [
+    ['current'], ['start'], ['check'], ['start'], ['expects', true], ['check'],
+    ['copy', 'dota/branch.orig', 'dota/gameinfo_branchspecific.gi'], ['check'], ['check'],
+    ['write', 'dota/steam.inf', inf(6901)], ['check'], ['fail', true], ['write', 'dota/steam.inf', inf(6902)], ['check'], ['fail', false],
+    ['copy', 'dota/branch.patched', 'dota/gameinfo_branchspecific.gi'], ['check'],
+    ['write', 'dota/gameinfo.gi', `${fs.readFileSync(path.join(src, 'gameinfo.gi'), 'latin1').replace(/Game_LowViolence/, 'Game_LowViolence2')}\n`], ['check'], ['check'],
+    ['game', null], ['rearm'], ['current'], ['game', 'self'], ['rearm'], ['current'],
+    ['write', 'dota/steam.inf', inf(6903)], ['wait', 3000], ['current'],
+    ['stop'], ['write', 'dota/steam.inf', inf(6904)], ['wait', 1200], ['check'], ['current'],
+  ];
+  const sideOps = (side: 'ts' | 'rs') => ops.map((op) => (op[0] === 'game' && op[1] === 'self' ? ['game', games[side]] : op));
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify([['patch-watch.script', games.rs, 300, sideOps('rs')]]));
+  const rsRun = new Promise<string>((resolve, reject) => {
+    const p = spawn(cli, ['call', list]);
+    let out = '';
+    p.stdout.on('data', (d) => { out += d; });
+    p.on('error', reject);
+    p.on('close', (code) => (code === 0 ? resolve(out) : reject(new Error(`mm-cli exited ${code}`))));
+  });
+  const run = async () => {
+    let game: string | null = games.ts;
+    let expects = false;
+    let fail = false;
+    let logs: unknown[] = [];
+    const w = pw.createPatchWatcher({
+      getGamePath: () => game, expectsPatch: () => expects, log: (m) => logs.push(m), debounceMs: 300,
+      onPatch: (e) => { logs.push({ patch: e }); if (fail) throw new Error('no'); },
+    });
+    const out: unknown[] = [];
+    for (const op of sideOps('ts')) {
+      let v: unknown = null;
+      const at = (rel: unknown) => path.join(games.ts, rel as string);
+      if (op[0] === 'start') w.start(op[1] as string | undefined);
+      else if (op[0] === 'check') w.check();
+      else if (op[0] === 'current') v = w.current();
+      else if (op[0] === 'rearm') w.rearm();
+      else if (op[0] === 'stop') w.stop();
+      else if (op[0] === 'expects') expects = op[1] as boolean;
+      else if (op[0] === 'fail') fail = op[1] as boolean;
+      else if (op[0] === 'game') game = op[1] as string | null;
+      else if (op[0] === 'write') fs.writeFileSync(at(op[1]), op[2] as string);
+      else if (op[0] === 'copy') fs.copyFileSync(at(op[1]), at(op[2]));
+      else if (op[0] === 'wait') await new Promise((ok) => setTimeout(ok, op[1] as number));
+      out.push({ v, logs });
+      logs = [];
+    }
+    w.stop();
+    return out;
+  };
+  const want = await run();
+  const got = JSON.parse(await rsRun) as { ok?: unknown[]; error?: string }[];
+  assert.ok(got[0].ok, got[0].error);
+  const norm = (v: unknown, side: 'ts' | 'rs') => JSON.parse(JSON.stringify(v).split(JSON.stringify(games[side]).slice(1, -1)).join('<game>'));
+  ops.forEach((op, j) => assert.deepEqual(norm(got[0].ok![j], 'rs'), norm(want[j], 'ts'), `${j} ${JSON.stringify(op)}`));
+  // the run went where it was meant to: Steam's check, a patch, a handler that threw, the polled change
+  const all = JSON.stringify(want);
+  for (const s of ['files-restored', '6901', 'patch handler failed: no', '6903']) assert.ok(all.includes(s), s);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

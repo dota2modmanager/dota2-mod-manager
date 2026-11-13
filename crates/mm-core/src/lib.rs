@@ -85,6 +85,7 @@ pub mod pak_stamp;
 pub mod particle_snapshot;
 pub mod particle_spec;
 pub mod particle_surface;
+pub mod patch_watch;
 pub mod patcher;
 pub mod patcher_gameinfo;
 pub mod patcher_signatures;
