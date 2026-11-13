@@ -68,9 +68,7 @@ fn utf16_cmp(a: &str, b: &str) -> std::cmp::Ordering {
 
 /// The names in a folder, in the order the system lists them.
 fn names_in(dir: &std::path::Path) -> Vec<String> {
-    std::fs::read_dir(dir)
-        .map(|r| r.filter_map(|e| e.ok().map(|e| e.file_name().to_string_lossy().into_owned())).collect())
-        .unwrap_or_default()
+    crate::js::dir_names(dir)
 }
 
 impl Installer {

@@ -176,6 +176,25 @@ fn slots_step(
         }
         "vacate" => json!(crate::slot_zones::vacate_app_pak(inst, lib)?),
         "list" => json!(lib.list()),
+        "togglable" => json!(inst.is_togglable_mod_file(&crate::js::string(&op[1]))),
+        "masterIsOff" => json!(inst.master_is_off()?),
+        "setMaster" => json!({ "changed": inst.set_master_enabled(op[1].as_bool().unwrap_or(false))? }),
+        "writeOwnership" => {
+            inst.write_ownership(&list(&op[1]), &crate::js::string(&op[2]));
+            Value::Null
+        }
+        "ownsFile" => json!(inst.owns_file(&crate::js::string(&op[1]))),
+        "sweep" => {
+            let (restored, dropped) =
+                inst.sweep_staged(std::path::Path::new(&crate::js::string(&op[1])), op[2].as_f64().unwrap_or(0.0));
+            json!({ "restored": restored, "dropped": dropped })
+        }
+        "primaryPresent" => json!(inst.lang_primary_present(&op[1])),
+        "siblingParts" => json!(inst.sibling_parts(&crate::js::string(&op[1]))),
+        "external" => {
+            let known = op[1].as_array().cloned().unwrap_or_default();
+            json!(inst.external_files(&known, op[2].as_bool().unwrap_or(true))?)
+        }
         other => return Err(format!("no step {other}")),
     })
 }

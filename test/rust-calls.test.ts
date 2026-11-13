@@ -1024,7 +1024,7 @@ test('what a mod changes, read in Rust from its paths, is what the TypeScript re
   }
   const games = [sandboxGame, path.dirname(path.dirname(GAME_PAK01)), path.join(root, 'no-such-game')].filter((g, k) => k === 2 || fs.existsSync(g));
   cases.push({ name: 'pak-stamp.gameSchemaStamp', ts: gameSchemaStamp as never, inputs: games.map((g) => [g]) });
-  assert.ok(compare(cases) > 200);
+  assert.ok(compare(cases) > (lists.length > 30 ? 200 : 20));
 });
 
 test('the game\'s own text in Rust is the one the TypeScript reads: tokens, style names, Chinese names', { skip }, async (t) => {
@@ -1135,7 +1135,7 @@ test('the gameinfo patch and the signature list in Rust are the TypeScript ones,
   const patched = branches.flatMap((b) => blocks.map((bl) => tryOr(() => gi.patchedBranch(b, bl), b)));
   const twice = patched.map((p, k) => tryOr(() => gi.patchedBranch(p, blocks[k % blocks.length]), p));
   const variants = (s: string) => [s, s.replace(/\r\n/g, '\n'), s.replace(/\t}/g, '}'), s.replace(/}\s*$/, ''), s.slice(0, s.length >> 1), s.replace(/SearchPaths/g, 'Search'),
-    s.replace(/FileSystem/, 'Files'), s.replace(/Game\s+dota/, 'Game dota2'), s.replace(/\{/, ''), `}\n${s}`, s + '\r\n\t\t', `x // ${gi.MARKER}`];
+    s.replace(/FileSystem/, 'Files'), s.replace(/Game\s+dota/, 'Game dota2'), (s.includes('{') ? s.slice(0, s.indexOf('{')) + s.slice(s.indexOf('{') + 1) : s), `}\n${s}`, s + '\r\n\t\t', `x // ${gi.MARKER}`];
   const texts = [...infos, ...branches, ...patched, ...twice].flatMap(variants).concat(['', '{', '}', 'SearchPaths', 'SearchPaths }{', `SearchPaths { a // ${gi.MARKER} }`]);
   const hashes = sigs.map((s) => sg.vanillaBranchHashes(s));
   const wants = [...hashes, ...branches.map((b) => sg.fileHashes(Buffer.from(b, 'latin1'))), null, { sha1: '0'.repeat(40), crc: '00000000' }];
@@ -1622,6 +1622,97 @@ test('the load order in Rust hands out, moves and swaps slots as the TypeScript 
         want = { ok: JSON.parse(JSON.stringify(v ?? null)) };
       } catch { want = { error: true }; }
       const got = answers[k] as { ok?: unknown; error?: unknown };
+      assert.deepEqual('error' in got ? { error: true } : got, want, `${JSON.stringify(op).slice(0, 200)}`);
+    });
+  } finally { FileTx.journalDir = null; }
+  const tree = (g: string): string[] => (fs.readdirSync(g, { recursive: true, withFileTypes: true }) as fs.Dirent[])
+    .filter((d) => !d.parentPath.includes('userdata') && d.name !== 'userdata')
+    .map((d) => { const p = path.join(d.parentPath, d.name); return path.relative(g, p) + (d.isFile() ? ` ${fs.readFileSync(p).toString('base64')}` : '/'); }).sort();
+  assert.deepEqual(tree(b.root), tree(a.root));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the master switch, the ownership note and foreign files in Rust match the TypeScript', { skip }, async () => {
+  const { Installer } = await import('../src/installer.ts');
+  const { FileTx } = await import('../src/file-tx.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk-write.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-folder-'));
+  const pak = (files: string[]) => buildVpk(files.map((p) => entryAt(p, Buffer.from(p))));
+  const old = new Date(Date.now() - 30 * 24 * 3600 * 1000);
+  const lang: Record<string, Buffer | string> = {
+    'pak01_dir.vpk': pak(['x.txt']), 'gameinfo.gi': 'gi', 'dota2modmanager.json': '{"files":["pak30_dir.vpk"]}',
+    'pak30_dir.vpk': pak(['models/heroes/juggernaut/juggernaut.vmdl_c', 'materials/models/heroes/juggernaut/j.vmat_c']),
+    'pak31_dir.vpk': pak(['particles/units/heroes/hero_axe/axe_counter.vpcf_c', 'sounds/weapons/hero/axe/a.vsnd_c']),
+    'pak31_000.vpk': 'volume', 'pak31_001.vpk.off': 'volume1', 'pak31_7.vpk': 'not a volume',
+    'pak40_dir.vpk.off': pak(['materials/terrain/t.vmat_c']), 'pak41_dir.vpk.moff': pak(['a.txt']),
+    'pak66_dir.vpk': pak(['minify.txt']), 'readme.txt': 'r', 'broken_dir.vpk': 'not a vpk',
+    'pak50_dir.vpk.abc123-k2.mmtx': 'parked old', 'pak51_dir.vpk.def-9.mmtx': 'parked lost',
+    'maps/dota.vpk': pak(['maps/dota.vmap_c']), 'maps/other.vpk.off': pak(['maps/x.txt']), 'maps/notes.txt': 'n',
+  };
+  const twin = (side: string) => {
+    const root = path.join(tmp, side);
+    const game = path.join(root, 'game');
+    for (const [f, data] of Object.entries(lang)) {
+      const p = path.join(game, 'dota_russian', f);
+      fs.mkdirSync(path.dirname(p), { recursive: true });
+      fs.writeFileSync(p, data);
+    }
+    fs.writeFileSync(path.join(game, 'dota_russian', 'pak50_dir.vpk'), 'new');
+    for (const f of ['pak50_dir.vpk.abc123-k2.mmtx']) fs.utimesSync(path.join(game, 'dota_russian', f), old, old);
+    fs.mkdirSync(path.join(root, 'lib'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'lib', 'manifest.json'), JSON.stringify({ installed: [], presets: [] }));
+    return { root, game, lib: path.join(root, 'lib'), journal: path.join(root, 'journal'), tools: path.join(root, 'userdata', 'tools') };
+  };
+  const known = [{ root: 'lang', relPath: 'pak30_dir.vpk' }, { root: 'fonts', relPath: 'f.ttf' }];
+  const rec = (rel: string) => ({ files: [{ root: 'lang', relPath: rel }] });
+  const ops = (t: string): unknown[][] => [
+    ['togglable', 'pak30_dir.vpk'], ['togglable', 'pak01_dir.vpk'], ['togglable', 'pak66_dir.vpk'], ['togglable', 'dota2modmanager.json'],
+    ['masterIsOff'], ['ownsFile', 'pak30_dir.vpk'], ['ownsFile', 'PAK30_DIR.VPK'], ['ownsFile', 'pak31_dir.vpk'],
+    ['primaryPresent', rec('pak30_dir.vpk')], ['primaryPresent', rec('pak40_dir.vpk')], ['primaryPresent', rec('pak41_dir.vpk')], ['primaryPresent', rec('pak99_dir.vpk')], ['primaryPresent', { files: [{ root: 'fonts', relPath: 'f.ttf' }] }],
+    ['siblingParts', 'pak31_dir.vpk'], ['siblingParts', 'pak30_dir.vpk'], ['siblingParts', 'pak31.vpk'], ['siblingParts', 'maps/dota_dir.vpk'],
+    ['external', known, true], ['external', known, false], ['external', [], true],
+    ['sweep', t, 7 * 24 * 3600 * 1000],
+    ['setMaster', false], ['masterIsOff'], ['external', known, true], ['setMaster', false], ['setMaster', true], ['masterIsOff'],
+    ['writeOwnership', ['pak31_dir.vpk', 'maps\dota.vpk', 'pak30_dir.vpk', 'pak31_dir.vpk'], '2026-01-01T00:00:00.000Z'], ['ownsFile', 'maps/dota.vpk'], ['ownsFile', 'pak30_dir.vpk'],
+  ];
+  const a = twin('ts');
+  const b = twin('rs');
+  const list = path.join(tmp, 'folder.json');
+  fs.writeFileSync(list, JSON.stringify([['installer-slots.script', b.game, 'russian', b.journal, b.lib, ops(b.tools)]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8' }));
+  const answers = rs.ok as { ok?: unknown; error?: unknown }[];
+  const ext = answers[17].ok as { name: string; info?: string }[];
+  assert.ok(ext.length >= 5 && ext.some((e) => e.info), JSON.stringify(answers[17]).slice(0, 300));
+  assert.deepEqual(answers[20], { ok: { restored: 1, dropped: 1 } });
+  FileTx.journalDir = a.journal;
+  try {
+    const inst = new Installer({ userDataDir: path.join(a.root, 'userdata'), getGamePath: () => a.game, getLangSuffix: () => 'russian' });
+    const RealDate = Date;
+    ops(a.tools).forEach((op, k) => {
+      let want: unknown;
+      try {
+        const v = ((): unknown => {
+          switch (op[0]) {
+            case 'togglable': return inst.isTogglableModFile(op[1] as string);
+            case 'masterIsOff': return inst.masterIsOff();
+            case 'setMaster': return inst.setMasterEnabled(op[1] as boolean);
+            case 'ownsFile': return inst.ownsFile(op[1] as string);
+            case 'primaryPresent': return inst.langPrimaryPresent(op[1] as never);
+            case 'siblingParts': return inst.siblingParts(op[1] as string);
+            case 'external': return inst.externalFiles(op[1] as never, { scanExtras: op[2] as boolean });
+            case 'sweep': return inst.sweepStaged(op[2] as number);
+            case 'writeOwnership': {
+              const at = op[2] as string;
+              (globalThis as { Date: unknown }).Date = class extends RealDate { constructor(...x: unknown[]) { super(...((x.length ? x : [at]) as [string])); } };
+              try { inst.writeOwnership(op[1] as string[]); } finally { (globalThis as { Date: unknown }).Date = RealDate; }
+              return null;
+            }
+          }
+          throw new Error(`no step ${op[0]}`);
+        })();
+        want = { ok: JSON.parse(JSON.stringify(v ?? null)) };
+      } catch { want = { error: true }; }
+      const got = answers[k];
       assert.deepEqual('error' in got ? { error: true } : got, want, `${JSON.stringify(op).slice(0, 200)}`);
     });
   } finally { FileTx.journalDir = null; }

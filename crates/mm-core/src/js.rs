@@ -221,6 +221,21 @@ pub fn lines(s: &str) -> Vec<&str> {
     s.split('\n').map(|l| l.strip_suffix('\r').unwrap_or(l)).collect()
 }
 
+/// A folder's entries in the order fs.readdirSync gives them: the system's own on Windows, and by
+/// bytes elsewhere, because libuv sorts what it lists there and the std listing does not.
+pub fn read_dir(dir: &std::path::Path) -> std::io::Result<Vec<std::fs::DirEntry>> {
+    let mut all: Vec<std::fs::DirEntry> = std::fs::read_dir(dir)?.collect::<std::io::Result<_>>()?;
+    if !cfg!(windows) {
+        all.sort_by(|a, b| a.file_name().as_encoded_bytes().cmp(b.file_name().as_encoded_bytes()));
+    }
+    Ok(all)
+}
+
+/// The names in a folder, in readdirSync's order; an unreadable folder has none.
+pub fn dir_names(dir: &std::path::Path) -> Vec<String> {
+    read_dir(dir).map(|d| d.iter().map(|e| e.file_name().to_string_lossy().into_owned()).collect()).unwrap_or_default()
+}
+
 /// Is this key an array index, which a JavaScript object lists first, in ascending order?
 fn index_key(k: &str) -> Option<u32> {
     let n: u32 = k.parse().ok()?;

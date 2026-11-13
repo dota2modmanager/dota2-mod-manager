@@ -134,13 +134,13 @@ pub fn boot_languages(game: Option<&Path>) -> Option<(Option<String>, Option<Str
 /// Every dota_* folder on disk, with what is inside each.
 pub fn lang_folders(game: Option<&Path>) -> Vec<LangFolder> {
     let Some(game) = game else { return vec![] };
-    let Ok(dir) = std::fs::read_dir(game) else { return vec![] };
+    let Ok(dir) = crate::js::read_dir(game) else { return vec![] };
     static PAK: OnceLock<Regex> = OnceLock::new();
     let pak = PAK.get_or_init(|| {
         RegexBuilder::new(r"^pak[0-9]+_dir\.vpk(\.off|\.moff)?$").case_insensitive(true).build().unwrap()
     });
     let mut out = Vec::new();
-    for e in dir.flatten() {
+    for e in dir {
         if !e.file_type().is_ok_and(|t| t.is_dir()) {
             continue;
         }
@@ -155,9 +155,7 @@ pub fn lang_folders(game: Option<&Path>) -> Vec<LangFolder> {
         if ["addons", "lv", "core", "mods"].contains(&suffix.as_str()) {
             continue; // not language layers; dota_mods is ours
         }
-        let files: Vec<String> = std::fs::read_dir(game.join(&name))
-            .map(|d| d.flatten().map(|f| f.file_name().to_string_lossy().into_owned()).collect())
-            .unwrap_or_default();
+        let files: Vec<String> = crate::js::dir_names(&game.join(&name));
         let valve = |f: &String| f.get(..6).is_some_and(|h| h.eq_ignore_ascii_case("pak01_"));
         out.push(LangFolder {
             official: MOD_FOLDERS.contains(&suffix.as_str()),
@@ -342,9 +340,9 @@ fn steam_roots(game: Option<&Path>) -> Vec<PathBuf> {
 }
 
 fn account_ids(userdata: &Path, skip_zero: bool) -> Option<Vec<String>> {
-    let ids: Vec<String> = std::fs::read_dir(userdata)
+    let ids: Vec<String> = crate::js::read_dir(userdata)
         .ok()?
-        .flatten()
+        .into_iter()
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .filter(|d| !d.is_empty() && d.bytes().all(|c| c.is_ascii_digit()) && !(skip_zero && d == "0"))
         .collect();
@@ -477,8 +475,8 @@ pub fn move_lang_folder(game: Option<&Path>, from: Option<&str>, to: Option<&str
             return Ok(());
         }
         let new = ensure_lang_folder(game, to)?;
-        for e in std::fs::read_dir(&old)? {
-            let f = e?.file_name().to_string_lossy().into_owned();
+        for e in crate::js::read_dir(&old)? {
+            let f = e.file_name().to_string_lossy().into_owned();
             if is_valve_pak(&f) || f.to_lowercase() == "gameinfo.gi" {
                 continue;
             }

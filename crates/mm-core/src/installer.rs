@@ -19,11 +19,22 @@ pub struct Installer {
     /// where a change's journal goes (src/file-tx.ts FileTx.journalDir)
     pub journal_dir: Option<PathBuf>,
     pub log: Log,
+    /// asks the game which of its own items a path list replaces (src/mod-id.ts); none without a game
+    pub identify: Option<Identify>,
 }
+
+/// What the game's own item table says a path list is.
+pub type Identify = Box<dyn Fn(&[String]) -> Option<crate::installer_folder::Guess> + Send + Sync>;
 
 impl Installer {
     pub fn new(game: Option<PathBuf>, lang_suffix: &str) -> Installer {
-        Installer { game, lang_suffix: lang_suffix.to_string(), journal_dir: None, log: Arc::new(|_| {}) }
+        Installer {
+            game,
+            lang_suffix: lang_suffix.to_string(),
+            journal_dir: None,
+            log: Arc::new(|_| {}),
+            identify: None,
+        }
     }
 
     /// The log, as a change takes it.

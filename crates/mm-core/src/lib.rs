@@ -16,6 +16,7 @@ pub mod hero_showcase;
 pub mod i18n;
 pub mod installer;
 pub mod installer_files;
+pub mod installer_folder;
 pub mod installer_slots;
 pub mod item_builder;
 pub mod item_builder_ability_fx;
