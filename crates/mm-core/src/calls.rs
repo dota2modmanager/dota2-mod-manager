@@ -4089,6 +4089,88 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "mod-doctor.examine" => {
+            json!(crate::mod_doctor::examine(std::path::Path::new(&s(args, 0)), std::path::Path::new(&s(args, 1)))?)
+        }
+        "diagnostics.redactHome" => {
+            let dir = s(args, 0);
+            // a null home is no home (only a missing one falls back to the user's)
+            if dir.is_empty() || args.get(1) == Some(&Value::Null) {
+                args.first().cloned().unwrap_or(Value::Null)
+            } else {
+                json!(crate::diagnostics::redact_home(&dir, opt_s(args, 1).as_deref()))
+            }
+        }
+        "diagnostics.folderListingText" => {
+            let pak = |f: &crate::diagnostics::Listed| crate::diagnostics::pak_listed(f);
+            let filter: Option<&dyn Fn(&crate::diagnostics::Listed) -> bool> =
+                if s(args, 1) == "pak" { Some(&pak) } else { None };
+            json!(crate::diagnostics::folder_listing_text(std::path::Path::new(&s(args, 0)), filter, opt_s(args, 2).as_deref()))
+        }
+        "diagnostics.tailLog" => json!(crate::diagnostics::tail_log(std::path::Path::new(&s(args, 0)), n(args, 1) as u64)),
+        "diagnostics.findProblems" => {
+            json!(crate::diagnostics::find_problems(args.first().unwrap_or(&Value::Null), args.get(1).unwrap_or(&Value::Null)))
+        }
+        "diagnostics.renderSummary" => json!(crate::diagnostics::render_summary(args.first().unwrap_or(&Value::Null))),
+        "diagnostics.renderDetailed" => {
+            let files: indexmap::IndexMap<String, String> =
+                serde_json::from_value(args.get(1).cloned().unwrap_or(json!({}))).map_err(|e| e.to_string())?;
+            json!(crate::diagnostics::render_detailed(args.first().unwrap_or(&Value::Null), &files))
+        }
+        "diagnostics.buildReport" => {
+            let i = args.first().cloned().unwrap_or(Value::Null);
+            let get = |k: &str| i.get(k).cloned().unwrap_or(Value::Null);
+            let text = |k: &str| i.get(k).and_then(Value::as_str).map(String::from);
+            let schema = get("schemaState");
+            let (report, files) = crate::diagnostics::build_report(crate::diagnostics::ReportInputs {
+                settings: get("settings").as_object().cloned().unwrap_or_default(),
+                records: get("records").as_array().cloned().unwrap_or_default(),
+                presets: get("presets").as_u64().unwrap_or(0) as usize,
+                coverage: get("coverage").as_f64(),
+                slots: get("slots").as_array().cloned().unwrap_or_default().iter().map(Value::as_f64).collect(),
+                download_cache: get("downloadCache"),
+                icon_size: i.get("iconSize").cloned(),
+                schema_state: match schema.get("error") {
+                    Some(e) => Err(crate::js::string(e)),
+                    None => Ok(schema.get("ok").cloned().unwrap_or(Value::Null)),
+                },
+                catalog_cache: get("catalogCache"),
+                mirrors: get("mirrors"),
+                version: text("version").unwrap_or_default(),
+                platform: text("platform").unwrap_or_default(),
+                node: text("node").unwrap_or_default(),
+                log_file: text("logFile"),
+                user_data_dir: text("userDataDir"),
+                update_error: get("updateError"),
+                extra: get("extra").as_object().cloned().unwrap_or_default(),
+                home: text("home"),
+                generated_at: text("generatedAt").unwrap_or_default(),
+            });
+            json!({ "report": report, "files": files })
+        }
+        "presence-status.presenceActivity" => {
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            crate::presence_status::presence_activity(&s(args, 1), n(args, 2), args.get(3).is_some_and(crate::js::truthy))
+        }
+        "presence-status.discordActivity" => {
+            crate::presence_status::discord_activity(args.first().unwrap_or(&Value::Null), n(args, 1), args.get(2).is_some_and(crate::js::truthy))
+        }
+        "presence-status.frames" => {
+            // (op, data)... encoded, joined, cut into chunks of n bytes, and read back frame by frame
+            let mut all = Vec::new();
+            for f in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                all.extend(crate::presence_status::encode_frame(f[0].as_i64().unwrap_or(0) as i32, &f[1]));
+            }
+            let mut buf = Vec::new();
+            let mut out = Vec::new();
+            for chunk in all.chunks((n(args, 0) as usize).max(1)) {
+                buf.extend_from_slice(chunk);
+                for (op, v) in crate::presence_status::take_frames(&mut buf) {
+                    out.push(json!([op, v.unwrap_or(Value::Null)]));
+                }
+            }
+            json!({ "bytes": all.len(), "frames": out })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

@@ -7034,3 +7034,212 @@ test('an author\'s drafts and the archive for the catalog in Rust are the TypeSc
   ]);
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the mod doctor in Rust finds what the TypeScript one does', { skip }, async () => {
+  const { examine } = await import('../src/mod-doctor.ts');
+  const { buildVpk: build, entryAt: at, openVpkIndex: openIx } = await import('../src/vpk.ts');
+  const kb = await import('./helpers/kv3-build.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-doctor-'));
+  const M = 'models/heroes/terrorblade/terrorblade.vmdl_c';
+  const src = 'models/heroes/terrorblade/terrorblade.vmdl';
+  const drawnOn = (a: string) => kb.resource([['RERL', kb.rerl([])], ['DATA', kb.encodeKv3({ obj: [
+    ['m_controlPointConfigurations', { arr: [{ obj: [['m_drivers', { arr: [{ obj: [['m_iControlPoint', { int: 1 }], ['m_attachmentName', { str: 'attach_other' }]] }, { obj: [['m_attachmentName', { str: a }]] }] }]] }] }],
+  ] })]]);
+  const eyes = (second: string, points: number, named = true) => {
+    const children = ['particles/eye.vpcf', second, second, 'particles/gone.vpcf'];
+    return kb.resource([['RERL', kb.rerl(named ? children.slice(0, 2) : [])], ['DATA', kb.encodeKv3({ obj: [
+      ['m_Children', { arr: [...children.map((c): import('./helpers/kv3-build.ts').V => ({ obj: [['m_ChildRef', { ref: c }]] })), { obj: [['m_ChildRef', { str: '' }]] }] }],
+      ['m_controlPointConfigurations', { arr: [{ obj: [['m_drivers', { arr: [{ obj: [['m_attachmentName', { str: 'attach_eye_r' }]] }] }]] }] }],
+      ['m_PreEmissionOperators', { arr: [{ obj: [['_class', { str: 'C_OP_Other' }]] }, { obj: [['_class', { str: 'C_OP_SetParentControlPointsToChildCP' }], ['m_nNumControlPoints', { int: points }]] }] }],
+    ] })]]);
+  };
+  const seqs = (list: [string, string[]][]) => list;
+  const game3 = seqs([['idle_anim', ['ACT_DOTA_IDLE']], ['immosh_idle_injured', ['ACT_DOTA_IDLE', 'immosh', 'injured']], ['immosh_idle_anim', ['ACT_DOTA_IDLE', 'immosh']], ['run', ['ACT_DOTA_RUN', 'haste', 'fast']]]);
+  const mod3 = seqs([['idle_anim', []], ['immosh_idle_injured', ['ACT_DOTA_IDLE', 'injured']], ['immosh_idle_anim', ['ACT_DOTA_IDLE']], ['run', ['ACT_DOTA_RUN', 'fast', 'haste']]]);
+  const scenes: [string, [string, Buffer][], [string, Buffer][]][] = [
+    ['modifiers', [[M, kb.model(src, [['attack', ['ACT_DOTA_ATTACK', 'abysm']], ['attack2', ['ACT_DOTA_ATTACK', 'zz', 'abysm']], ['attack_injured', ['ACT_DOTA_ATTACK', 'injured']], ['run', ['ACT_DOTA_RUN']], ['spawn', ['ACT_DOTA_SPAWN', 'loadout']]])]], []],
+    ['clips', [[M, kb.model(src, [['attack', ['ACT_DOTA_ATTACK']]], [['attack', ['ACT_DOTA_ATTACK', 'abysm']], ['x', ['ACT_DOTA_ATTACK', 'ACT_DOTA_ATTACK']]])]], []],
+    ['order', [[M, kb.model('models/heroes/terrorblade/terrorblade_arcana.vmdl', [['attack', ['ACT_DOTA_ATTACK']], ['run', ['ACT_DOTA_RUN']]])]],
+      [[M, kb.model(src, [['attack', ['ACT_DOTA_ATTACK']], ['idle', ['ACT_DOTA_IDLE']], ['run', ['ACT_DOTA_RUN']]])]]],
+    ['shorter', [[M, kb.model(src, [['attack', ['ACT_DOTA_ATTACK']]])]], [[M, kb.model(src, [['attack', ['ACT_DOTA_ATTACK']], ['idle', ['ACT_DOTA_IDLE']]])]]],
+    ['numbers', [[M, kb.model(src, game3.slice(0, 1), game3.slice(0, 1), ['idle_anim', 'cast', 'run'])]], [[M, kb.model(src, game3.slice(0, 1), game3.slice(0, 1), ['idle_anim', 'cast', '@@cast', 'run'])]]],
+    ['moved', [[M, kb.model(src, mod3)], ['models/a.vmdl_c', kb.model('models/a.vmdl', [['idle', ['ACT_DOTA_IDLE']]])]], [[M, kb.model(src, game3)], ['models/a.vmdl_c', kb.model('models/a.vmdl', [['idle', ['ACT_DOTA_RUN']]])]]],
+    ['children', [
+      ['particles/eyes.vpcf_c', eyes('particles/body.vpcf', 1)], ['particles/body.vpcf_c', drawnOn('attach_hitloc')],
+      ['particles/eyes2.vpcf_c', eyes('particles/eye_glint.vpcf', 0, false)], ['particles/eye_glint.vpcf_c', drawnOn('attach_eye_r')],
+      ['particles/eyes3.vpcf_c', eyes('particles/body.vpcf', -1)], ['particles/eyes4.vpcf_c', eyes('particles/body.vpcf', 9)],
+      ['particles/host.vpcf_c', kb.host(['particles/gone.vpcf', 'particles/eye.vpcf'])],
+    ], [['particles/eye.vpcf_c', drawnOn('attach_eye_r')]]],
+    ['broken', [[M, Buffer.from('not a resource')], ['particles/b.vpcf_c', Buffer.alloc(40)], ['readme.txt', Buffer.from('x')], ['Models/Z.vmdl_c', kb.model('models/z.vmdl', [])]], []],
+  ];
+  const pairs: [string, string][] = scenes.map(([name, mod, game]) => {
+    const dir = path.join(tmp, name);
+    fs.mkdirSync(dir);
+    const put = (file: string, files: [string, Buffer][]) => { const f = path.join(dir, file); fs.writeFileSync(f, build(files.map(([p, b]) => at(p, b)))); return f; };
+    return [put('mod_dir.vpk', mod), put('pak01_dir.vpk', game.length ? game : [['readme.txt', Buffer.from('x')]])];
+  });
+  // the sandbox's mods against its game, and a mod of the real game's own files when there is one
+  const mods = path.join(root, 'sandbox', 'mods');
+  const sandboxPak = path.join(sandboxGame, 'dota', 'pak01_dir.vpk');
+  if (fs.existsSync(sandboxPak)) for (const f of fs.existsSync(mods) ? fs.readdirSync(mods) : []) if (f.endsWith('_dir.vpk')) pairs.push([path.join(mods, f), sandboxPak]);
+  if (fs.existsSync(GAME_PAK01)) {
+    const ix = openIx(GAME_PAK01);
+    const real = [...ix.paths()].filter((p) => /^models\/heroes\/(terrorblade|necrolyte|pudge)\/[^/]+\.vmdl_c$/.test(p) || /^particles\/units\/heroes\/hero_terrorblade\/[^/]+\.vpcf_c$/.test(p)).slice(0, 80);
+    const f = path.join(tmp, 'real_dir.vpk');
+    fs.writeFileSync(f, build(real.map((p) => at(p, ix.read(p) as Buffer))));
+    pairs.push([f, GAME_PAK01]);
+  }
+  const list = path.join(tmp, 'calls.json');
+  fs.writeFileSync(list, JSON.stringify(pairs.map(([m, p]) => ['mod-doctor.examine', m, p])));
+  const rs = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: unknown; error?: string }[];
+  // why a file could not be read is each side's own wording
+  const norm = (v: unknown) => JSON.parse(JSON.stringify(v), (k, x) => (k === 'what' && typeof x === 'string' && x.startsWith('not read: ') ? 'not read' : x));
+  let found = 0;
+  for (const [i, [m, p]] of pairs.entries()) {
+    const want = examine({ mod: m, pak01: p });
+    found += want.length;
+    assert.ok(rs[i].ok, rs[i].error);
+    assert.deepEqual(norm(rs[i].ok), norm(want), `${path.basename(path.dirname(m))}/${path.basename(m)}`);
+  }
+  assert.ok(found > 15, 'the doctor had things to say');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the support report in Rust gathers, judges and lays out what the TypeScript one does', { skip }, async () => {
+  const diag = await import('../src/diagnostics.ts');
+  const files = await import('../src/diagnostics-files.ts');
+  const { mirrorHealth } = await import('../src/net.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-diag-'));
+  const put = (rel: string, data: string | Buffer) => { const f = path.join(tmp, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, data); return f; };
+  // a game: the pak, the two files the patch edits, boot.vcfg, a console log, two language folders
+  const game = path.join(tmp, 'steamapps', 'common', 'dota 2 beta', 'game');
+  put('steamapps/common/dota 2 beta/game/dota/pak01_dir.vpk', 'x');
+  put('steamapps/common/dota 2 beta/game/dota/pak01_000.vpk', 'xx');
+  put('steamapps/common/dota 2 beta/game/dota/Pak7_dir.vpk', 'y');
+  put('steamapps/common/dota 2 beta/game/dota/paks_dir.vpk', 'n');
+  put('steamapps/common/dota 2 beta/game/dota/gameinfo.gi', '"GameInfo" { SearchPaths { Game dota_russian } }');
+  put('steamapps/common/dota 2 beta/game/dota/gameinfo_branchspecific.gi', 'branch');
+  put('steamapps/common/dota 2 beta/game/dota/cfg/boot.vcfg', '"config" { "setting.language" "russian" }');
+  put('steamapps/common/dota 2 beta/game/dota/console.log', `${'ж'.repeat(140000)}end`);
+  put('steamapps/common/dota 2 beta/game/dota_russian/pak01_dir.vpk', 'r');
+  put('steamapps/common/dota 2 beta/game/dota_russian/sub/x.txt', 'r');
+  put('steamapps/common/dota 2 beta/game/dota_english/pak02_dir.vpk', 'e');
+  put('steamapps/common/dota 2 beta/game/dota_minify/x', 'm');
+  const ud = path.join(tmp, 'ud');
+  put('ud/settings.json', '{}');
+  put('ud/downloads/a.zip', 'a'.repeat(3000));
+  fs.mkdirSync(path.join(ud, 'backups'));
+  const log = put('ud/logs/main.log', `${'line one\n'.repeat(60000)}é`);
+  put('ud/logs/main.log.1', 'before');
+  const home = tmp;
+
+  // the pure half
+  const report0 = {
+    dota: { path: null, pathValid: false, langFolders: [], activeVoiceInstalled: false }, settings: { langSuffix: 'russian' },
+    patchAndSchema: null, library: { fileOverlaps: 0 }, mirrors: [], dotaRunning: false, disk: null,
+  };
+  const reports: Record<string, unknown>[] = [
+    report0,
+    { ...report0, dota: { path: 'D:/x', pathValid: false } },
+    { ...report0, dota: { path: 'D:/x', pathValid: true, detectedLang: { suffix: 'english' }, langFolders: [{ suffix: 'english', modFiles: 3 }, { suffix: 'russian', modFiles: 2 }, { suffix: 'koreana', modFiles: 0 }], activeVoiceInstalled: false },
+      patchAndSchema: { patched: false, enabled: true, mods: 2, deployed: true, stale: true }, library: { fileOverlaps: 4 },
+      mirrors: [{ host: 'a', fails: 2 }, { host: 'b', fails: 0 }], dotaRunning: true, disk: { freeBytes: 1.5 * 1024 ** 3 } },
+    { ...report0, settings: {}, dota: { path: 'D:/x', pathValid: true, detectedLang: null, langFolders: [{ suffix: 'english', modFiles: '2' }], activeVoiceInstalled: true },
+      patchAndSchema: { error: 'gone' }, mirrors: [{ host: 'a', fails: 1 }, { host: 'b', fails: '3' }], disk: { freeBytes: 5 * 1024 ** 3 } },
+    { ...report0, settings: { langSuffix: null }, patchAndSchema: { patched: true, enabled: 1, mods: 0 }, disk: { freeBytes: 0 }, mirrors: [{ host: 'z', fails: 0 }] },
+  ];
+  const cases: Case[] = [
+    { name: 'diagnostics.findProblems', ts: ((r: never, e: unknown) => diag.findProblems(r, { app: { updateError: e as string } })) as never, inputs: reports.flatMap((r) => [[r, null], [r, 'boom'], [r, 0]]) },
+    { name: 'diagnostics.redactHome', ts: files.redactHome as never, inputs: [[path.join(home, 'a', 'b'), home], [home, home], [home.toUpperCase(), home], [`${home}x`, home], ['C:\\other', home], ['', home], [path.join(home, 'z'), null]] },
+    { name: 'diagnostics.tailLog', ts: files.tailLog as never, inputs: [[log, 100], [log, 1], [log, 1 << 30], [path.join(game, 'dota', 'console.log'), 256 * 1024], [path.join(tmp, 'missing'), 10]] },
+  ];
+  compare(cases);
+
+  // the whole report, over fakes for the services, on the game above and on none
+  const records = [
+    { id: 'a', name: 'Axe | red', categoryId: 'heroes', enabled: true, files: [{}, {}], schema: [{}] },
+    { id: 'b', name: 'Pack', categoryId: 'packs', enabled: false, kind: 'pack', files: [] },
+    { id: 'c', name: 'Third', categoryId: 'heroes' },
+    { id: 'd', name: 'No cat', files: [{}] },
+  ];
+  const inputs = [
+    { settings: { dotaGamePath: game, langSuffix: 'russian', uiLang: 'en', account: { username: 'u', id: '1' }, theme: 'axe' }, records, presets: 2, coverage: 3, slots: [5, null, 1, null],
+      downloadCache: 3000, iconSize: 1234567, schemaState: { ok: { patched: true, enabled: true, mods: 1, deployed: false } }, catalogCache: { fetchedAt: 5 },
+      extra: { dotaRunning: 1, windows: [{ title: 'w' }], gpu: { name: 'g' }, displays: null, updater: '' }, logFile: log, userDataDir: ud, updateError: 'old', home },
+    { settings: { dotaGamePath: null, langSuffix: null, uiLang: 'ru', account: null }, records: [], presets: 0, coverage: null, slots: [], downloadCache: 0,
+      schemaState: { error: 'no game' }, catalogCache: { fetchedAt: null }, extra: {}, updateError: null },
+    { settings: { dotaGamePath: path.join(tmp, 'nowhere'), uiLang: 'en' }, records: records.slice(0, 1), presets: 0, coverage: 0, slots: [null], downloadCache: 5 * 1024 ** 3,
+      iconSize: 0, schemaState: { ok: null }, catalogCache: {}, extra: { toolchain: { ok: true } }, userDataDir: path.join(tmp, 'gone-ud'), home: 'Q:\\nobody' },
+  ];
+  const platform = `${os.platform()} ${os.release()} ${os.arch()}`;
+  const tsReport = (i: typeof inputs[number]) => diag.buildReport({
+    settings: { all: () => i.settings } as never,
+    library: { list: () => i.records, listPresets: () => Array(i.presets).fill({}) } as never,
+    installer: {
+      coverage: () => { if (i.coverage === null) throw new Error('x'); return { size: i.coverage }; },
+      downloadCacheSize: () => i.downloadCache,
+      slotNumber: (r: { id: string }) => i.slots[i.records.findIndex((x) => x.id === r.id)] ?? null,
+    } as never,
+    schemaService: { state: () => { if ('error' in i.schemaState) throw new Error(i.schemaState.error); return i.schemaState.ok as never; } },
+    catalog: { cacheInfo: () => i.catalogCache } as never,
+    icons: 'iconSize' in i ? { size: () => i.iconSize as number } : null,
+    app: { version: '9.9.9', logFile: 'logFile' in i ? i.logFile : undefined, userDataDir: 'userDataDir' in i ? i.userDataDir : undefined, updateError: i.updateError ?? null },
+    extra: i.extra as never, home: 'home' in i ? i.home : undefined,
+  });
+  const list = path.join(tmp, 'calls.json');
+  const mirrors = mirrorHealth();
+  fs.writeFileSync(list, JSON.stringify(inputs.map((i) => ['diagnostics.buildReport', { ...i, mirrors, version: '9.9.9', platform, node: process.versions.node, generatedAt: 'now' }])));
+  const rs = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 28 })) as { ok?: { report: Record<string, unknown>; files: Record<string, string> }; error?: string }[];
+  const norm = (r: Record<string, unknown>) => ({ ...r, generatedAt: 'now', disk: r.disk ? 'some' : null });
+  let made = 0;
+  for (const [k, i] of inputs.entries()) {
+    const want = tsReport(i);
+    const got = rs[k].ok!;
+    assert.ok(got, rs[k].error);
+    assert.deepEqual(norm(got.report), norm(JSON.parse(JSON.stringify(want.report))), `report ${k}`);
+    assert.deepEqual(Object.keys(got.files), Object.keys(want.files), `file names ${k}`);
+    for (const n of Object.keys(want.files)) assert.equal(got.files[n], want.files[n], `${k} ${n}`);
+    made += Object.keys(want.files).length;
+    // the two layouts, of the TypeScript's report, so only the layout is compared
+    const r = JSON.parse(JSON.stringify(want.report));
+    const back = JSON.parse(execFileSync(cli, ['call', (fs.writeFileSync(list, JSON.stringify([['diagnostics.renderSummary', r], ['diagnostics.renderDetailed', r, want.files], ['diagnostics.renderDetailed', { ...r, problems: [], installedMods: [] }]])), list)], { encoding: 'utf8', maxBuffer: 1 << 28 }));
+    assert.equal(back[0].ok, diag.renderSummary(r), `summary ${k}`);
+    assert.equal(back[1].ok, diag.renderDetailed(r, want.files), `detailed ${k}`);
+    assert.equal(back[2].ok, diag.renderDetailed({ ...r, problems: [], installedMods: [] }), `detailed bare ${k}`);
+  }
+  assert.ok(made >= 10, 'the files beside the report were written');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('the Discord status in Rust says and frames what the TypeScript one does', { skip }, async () => {
+  const { presenceActivity } = await import('../src/presence-status.ts');
+  const lang = (l: string, f: () => unknown) => { setLang(l); return f(); };
+  const views = ['catalog', 'library', 'presets', 'cosmetics', 'tools', 'guides', 'settings', 'nowhere', ''];
+  // the frame layout of src/discord-presence.ts: [op i32][length i32][json], read back across chunk edges
+  const frames = [[0, { v: 1, client_id: '123' }], [1, { cmd: 'SET_ACTIVITY', args: { activity: { details: 'Смотрит', state: 'ж😀' } } }], [3, null], [2, { code: 1000 }]];
+  const framed = (chunk: number, _f: unknown) => {
+    const all = Buffer.concat(frames.map(([op, data]) => {
+      const json = Buffer.from(JSON.stringify(data), 'utf-8');
+      const head = Buffer.alloc(8);
+      head.writeInt32LE(op as number, 0);
+      head.writeInt32LE(json.length, 4);
+      return Buffer.concat([head, json]);
+    }));
+    return { bytes: all.length, frames: frames.map(([op, data]) => [op, data]) };
+  };
+  const activity = (a: Record<string, unknown>, started: number, drop: boolean) => {
+    const out: Record<string, unknown> = { type: 0, details: a.details || undefined, state: a.state || undefined, timestamps: { start: started } };
+    const b = a.buttons as unknown[] | undefined;
+    if (b && b.length && !drop) out.buttons = b.slice(0, 2);
+    return out;
+  };
+  const buttons = [{ label: 'a', url: 'u' }, { label: 'b', url: 'v' }, { label: 'c', url: 'w' }];
+  compare([
+    { name: 'presence-status.presenceActivity', ts: ((l: string, v: string, m: number, off: boolean) => lang(l, () => presenceActivity({ view: v, mods: m, masterOff: off }))) as never,
+      inputs: ['ru', 'en', 'zh-CN'].flatMap((l) => views.flatMap((v) => [[l, v, 0, false], [l, v, 7, false], [l, v, 7, true], [l, v, 1, false]])) },
+    { name: 'presence-status.discordActivity', ts: activity as never, inputs: [
+      [{ details: 'd', state: 's', buttons }, 1700000000000, false], [{ details: '', state: null, buttons: [] }, 5, false], [{ buttons }, 5, true], [{}, 0, false],
+    ] },
+    { name: 'presence-status.frames', ts: framed as never, inputs: [1, 3, 8, 1000].map((c) => [c, frames]) },
+  ]);
+});
