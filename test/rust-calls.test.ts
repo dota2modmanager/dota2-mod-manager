@@ -2923,3 +2923,135 @@ test('the free cosmetics and the item builder\'s picks in Rust answer as the Typ
   assert.ok(all.slots.length > 100 && all.sets.length > 50, 'the slots and sets of the real table');
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('preset links, ready presets and .d2mm files in Rust read and write as the TypeScript ones do', { skip }, async () => {
+  const link = await import('../src/preset-link.ts');
+  const ready = await import('../src/ready-presets-format.ts');
+  const share = await import('../src/preset-share.ts');
+  const zlib = await import('node:zlib');
+  const { createHash } = await import('node:crypto');
+  const AdmZip = (await import('adm-zip')).default;
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-presets-'));
+  const raw = (o: unknown) => zlib.deflateRawSync(Buffer.from(JSON.stringify(o))).toString('base64url');
+  const mods = [
+    { categoryId: 'huds', name: 'Hud One', styleLabel: 'gray' },
+    { categoryId: 'terrains', name: 'Тёмный ландшафт 🌑', styleLabel: null },
+    { kind: 'cosmetic', slot: 'item:axe:head', itemId: 123, name: 'Helm', effectId: 'fx-fire' },
+    { kind: 'cosmetic', slot: 'courier', itemId: '77', name: 'Pet' },
+  ];
+  const encodes: unknown[][] = [
+    ['Build', 'me', mods], ['', null, []], [42, 'x'.repeat(100), mods.slice(0, 1)], ['Ё'.repeat(200), '', mods],
+  ];
+  const tsCodes = encodes.map(([n, a, m]) => link.encodePresetLink({ name: n as string, author: a as string, mods: m as never }));
+  const decodes: unknown[] = [
+    ...tsCodes.flatMap((c) => [c.code, c.web, ` <${c.direct}/> `, `\`D2MM://preset/${c.code}\``, `"${c.web}"`]),
+    '', null, 'not a link!', 'd2mm://preset/', tsCodes[0].code.slice(0, 20), 'A'.repeat(70000), 'QUJD',
+    raw({ v: 2, m: [] }), raw({ v: 1 }), raw([1]), raw({ v: 1, m: Array(501).fill(['a', 'b']) }),
+    raw({ v: 1, n: 5, a: ['x'], m: [['$cos', 'slot', null, 4], ['$cos', '', '1'], ['$cos', 's', 99, 'N', 7], [1, 'b'], ['a'], 'x', ['c', 'n', 5], ['c'.repeat(80), 'n'.repeat(400), 's'.repeat(400)]] }),
+    raw({ v: 1.0, n: '', m: [] }), tsCodes[0].code + 'A', tsCodes[0].code + 'AB',
+  ];
+  const readies: unknown[] = [
+    null, [], { version: 2, presets: [] }, { version: 1, presets: {} },
+    { version: 1, presets: [null, [], { id: 'Bad' }, { id: 'a', ru: '', en: '' }, { id: 'a', ru: 'A', mods: [] },
+      { id: 'b', en: ' B ', about: { ru: ' про ', en: 5 }, mods: [{ category: 'huds', name: ' Hud ', style: ' ' }, { category: '', name: 'x' }, null, []] },
+      { id: 'b', ru: 'again', mods: [{ category: 'c', name: 'n' }] },
+      { id: 'c', ru: 'C', about: [], mods: Array(70).fill({ category: 'c', name: 'n', style: 's' }) },
+      ...Array(40).fill(0).map((_, k) => ({ id: `p${k}`, ru: `P${k}`, mods: [{ category: 'c', name: 'n' }] }))] },
+  ];
+  const manifests: unknown[] = [
+    null, 5, [], { format: 'x' }, { format: share.FORMAT }, { format: share.FORMAT, version: 2, mods: [] },
+    { format: share.FORMAT, version: '1', mods: {} }, { format: share.FORMAT, version: null, mods: Array(501).fill({}) },
+    { format: share.FORMAT, version: 1, name: 'N'.repeat(200), note: 7, author: { name: 'Me' }, createdAt: 1.5, app: '2.9.0', catalogFetchedAt: 'x',
+      mods: [
+        { kind: 'catalog', name: 'A', categoryId: 'huds', styleLabel: '', fp: 'f'.repeat(80) }, { kind: 'catalog', name: 'B' },
+        { kind: 'embedded', name: 'E', file: 'mods/000.vpk', size: 12, fp: null, info: 'i' }, { kind: 'embedded', name: 'E2', file: '../x.vpk' },
+        { kind: 'embedded', name: 'E3', file: 'mods/001.vpk', categoryId: '', size: '9' },
+        { kind: 'cosmetic', name: 'C', slot: 'courier', itemId: '5', effectId: 3 }, { kind: 'cosmetic', name: 'C2', slot: 'courier', itemId: 5 },
+        { kind: 'pack', name: 'P', members: [{ kind: 'catalog', name: 'M', categoryId: 'c' }, { kind: 'pack', name: 'inner', members: [] }, null] },
+        { kind: 'pack', name: 'P2' }, { kind: 'missing', name: 'Gone', reason: 'gone' }, { kind: 'what', name: 'W' }, { name: '' }, 'line',
+      ] },
+    { format: share.FORMAT, version: [1], author: [], mods: [] },
+  ];
+  const vpk = (k: number) => { const f = path.join(tmp, `mod${k}.vpk`); fs.writeFileSync(f, Buffer.from(`vpk bytes ${k}`.repeat(50 * (k + 1)))); return f; };
+  const files = [vpk(0), vpk(1), vpk(2)];
+  const entries = (bytes: (f: string) => unknown) => [
+    { kind: 'catalog', categoryId: 'huds', name: 'Hud', styleLabel: null, fp: 'abc' },
+    { kind: 'embedded', name: 'Mine', categoryId: 'imported', fp: null, info: '', data: bytes(files[0]) },
+    { kind: 'pack', name: 'Pack', members: [{ kind: 'embedded', name: 'In', categoryId: 'heroes', data: bytes(files[1]) }, { kind: 'catalog', categoryId: 'c', name: 'n' }] },
+    { kind: 'embedded', name: 'Last', categoryId: 'imported', data: bytes(files[2]) },
+    { kind: 'cosmetic', name: 'C', slot: 'courier', itemId: '5', effectId: '' },
+  ];
+  const head = { name: 'Shared', note: 'a note', author: { name: 'Me' }, app: '2.9.0', catalogFetchedAt: 1700000000000 };
+  // a zip that lies: an embedded line with nothing behind it, a manifest too big, not a preset at all
+  const lying = path.join(tmp, 'lying.d2mm');
+  { const z = new AdmZip(); z.addFile('preset.json', Buffer.from(JSON.stringify({ format: share.FORMAT, version: 1, mods: [{ kind: 'embedded', name: 'X', file: 'mods/009.vpk' }, { kind: 'pack', name: 'P', members: [{ kind: 'embedded', name: 'Y', file: 'mods/008.vpk' }] }] }))); z.addFile('mods/008.vpk', Buffer.from('y')); z.writeZip(lying); }
+  const big = path.join(tmp, 'big.d2mm');
+  { const z = new AdmZip(); z.addFile('preset.json', Buffer.alloc((1 << 20) + 10, 32)); z.writeZip(big); }
+  const plainZip = path.join(tmp, 'plain.d2mm');
+  { const z = new AdmZip(); z.addFile('readme.txt', Buffer.from('hi')); z.writeZip(plainZip); }
+  const badJson = path.join(tmp, 'bad.d2mm');
+  { const z = new AdmZip(); z.addFile('preset.json', Buffer.from('{ nope')); z.writeZip(badJson); }
+  const notZip = path.join(tmp, 'not.d2mm');
+  fs.writeFileSync(notZip, 'not a zip at all');
+  const wanted = ['mods/000.vpk', 'mods/001.vpk', 'mods/002.vpk', 'mods/003.vpk', '../x', 'preset.json'];
+  const tsOut = path.join(tmp, 'ts.d2mm');
+  const rsOut = path.join(tmp, 'rs.d2mm');
+  const ops: unknown[][] = [
+    ...encodes.map((e) => ['encode', ...e]),
+    ...decodes.map((d) => ['decode', d]),
+    ...readies.map((r) => ['ready', r]),
+    ...manifests.map((m) => ['validate', m]),
+    ['write', rsOut, head, entries((f) => ({ $file: f })), 1700000000000],
+    ...[rsOut, tsOut, lying, big, plainZip, badJson, notZip, path.join(tmp, 'none.d2mm')].map((f) => ['read', f, wanted]),
+  ];
+  setLang('en');
+  // the TypeScript writes its own file first, so the Rust can read it
+  const tsWrite = share.writePresetFile(tsOut, head, entries((f) => fs.readFileSync(f)) as never);
+  const list = path.join(tmp, 'presets.json');
+  fs.writeFileSync(list, JSON.stringify([['presets.script', 'en', ops]]));
+  const [res] = JSON.parse(execFileSync(cli, ['call', list], { encoding: 'utf8', maxBuffer: 1 << 26 }));
+  const answers = res.ok as { ok?: unknown; error?: string }[];
+  const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const created = (v: unknown) => JSON.parse(JSON.stringify(v), (k, x) => (k === 'createdAt' && typeof x === 'number' && x > 1e12 ? 'now' : x));
+  ops.forEach((op, k) => {
+    let want: unknown;
+    try {
+      const v = ((): unknown => {
+        switch (op[0]) {
+          case 'encode': return link.encodePresetLink({ name: op[1] as string, author: op[2] as string, mods: op[3] as never });
+          case 'decode': return link.decodePresetLink(op[1]);
+          case 'ready': return ready.normalizeReady(op[1]);
+          case 'validate': return share.validateManifest(op[1]);
+          case 'write': return tsWrite;
+          case 'read': {
+            const f = share.readPresetFile(op[1] as string);
+            return { manifest: f.manifest, files: (op[2] as string[]).map((n) => { try { return { sha1: sha(f.readMod(n)) }; } catch (err) { return { error: (err as Error).message }; } }) };
+          }
+        }
+        throw new Error(`no step ${op[0]}`);
+      })();
+      want = { ok: created(v) };
+    } catch (err) { want = { error: (err as Error).message }; }
+    const got = answers[k];
+    if (op[0] === 'encode') {
+      // miniz and zlib pack the same text differently: each side reads the other's link
+      const mine = (want as { ok: { code: string } }).ok;
+      const theirs = (got.ok as { code: string; web: string; direct: string });
+      assert.equal(theirs.web, `https://dota2modmanager.com/p/#${theirs.code}`);
+      assert.equal(theirs.direct, `d2mm://preset/${theirs.code}`);
+      assert.deepEqual(link.decodePresetLink(theirs.code), link.decodePresetLink(mine.code), `${k} ${JSON.stringify(op)}`);
+      return;
+    }
+    if (op[0] === 'write') {
+      const w = got.ok as { size: number; mods: unknown };
+      assert.deepEqual(w.mods, (want as { ok: { mods: unknown } }).ok.mods, 'the lines as written');
+      assert.ok(w.size > 0 && w.size === fs.statSync(rsOut).size);
+      return;
+    }
+    assert.deepEqual(created(got), want, `${k} ${JSON.stringify(op).slice(0, 300)}`);
+  });
+  // the Rust's links read back the same in the TypeScript, and the TypeScript's in the Rust
+  const rsDecoded = ops.flatMap((op, k) => (op[0] === 'decode' ? [answers[k]] : []));
+  assert.ok(rsDecoded.filter((a) => a.ok).length >= 20, 'most pasted forms read');
+  fs.rmSync(tmp, { recursive: true, force: true });
+});

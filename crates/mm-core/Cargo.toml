@@ -28,4 +28,7 @@ zip = { version = "2", default-features = false, features = ["deflate"] }
 # free space on the drive a mod is about to be written to
 fs4 = "0.13"
 # local time for a zip's dates, and the ISO time in the ownership note
+# preset links: raw deflate and base64url, as node:zlib and Buffer make them
+flate2 = "1"
+base64 = "0.22"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }

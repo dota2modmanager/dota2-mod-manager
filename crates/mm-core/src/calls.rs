@@ -1686,6 +1686,68 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             Value::Array(out)
         }
+        "presets.script" => {
+            // (lang, ops): the link, the ready list, the .d2mm file; each answer or its error
+            crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));
+            let ops = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            let entry = |v: &Value| -> Result<crate::preset_share::EntryToWrite, String> {
+                fn one(v: &Value) -> Result<crate::preset_share::EntryToWrite, String> {
+                    let line = v.as_object().cloned().unwrap_or_default();
+                    let data = match line.get("data") {
+                        Some(d) => Some(b(std::slice::from_ref(d), 0)?.to_vec()),
+                        None => None,
+                    };
+                    let members = line
+                        .get("members")
+                        .and_then(Value::as_array)
+                        .map(|m| m.iter().map(one).collect::<Result<Vec<_>, _>>())
+                        .transpose()?
+                        .unwrap_or_default();
+                    Ok(crate::preset_share::EntryToWrite { line, data, members })
+                }
+                one(v)
+            };
+            let mut out = Vec::new();
+            for op in &ops {
+                let r: Result<Value, String> = (|| {
+                    Ok(match op[0].as_str().unwrap_or("") {
+                        "encode" => {
+                            let mods = op[3].as_array().cloned().unwrap_or_default();
+                            json!(crate::preset_link::encode_preset_link(&op[1], &op[2], &mods))
+                        }
+                        "decode" => json!(crate::preset_link::decode_preset_link(&op[1])?),
+                        "ready" => json!(crate::ready_presets_format::normalize_ready(&op[1])),
+                        "validate" => crate::preset_share::validate_manifest(&op[1])?,
+                        "write" => {
+                            let entries = op[3].as_array().map(|a| a.iter().map(entry).collect::<Result<Vec<_>, _>>()).transpose()?.unwrap_or_default();
+                            let manifest = op[2].as_object().cloned().unwrap_or_default();
+                            let (size, mods) = crate::preset_share::write_preset_file(std::path::Path::new(&crate::js::string(&op[1])), &manifest, entries, n(op.as_array().map(Vec::as_slice).unwrap_or(&[]), 4))?;
+                            json!({ "path": op[1], "size": size, "mods": mods })
+                        }
+                        "read" => {
+                            let mut f = crate::preset_share::PresetFile::open(std::path::Path::new(&crate::js::string(&op[1])))?;
+                            let files: Vec<Value> = op[2]
+                                .as_array()
+                                .cloned()
+                                .unwrap_or_default()
+                                .iter()
+                                .map(|name| match f.read_mod(&crate::js::string(name)) {
+                                    Ok(d) => json!({ "sha1": crate::safe_zip::sha1_hex(&d) }),
+                                    Err(e) => json!({ "error": e }),
+                                })
+                                .collect();
+                            json!({ "manifest": f.manifest, "files": files })
+                        }
+                        other => return Err(format!("no step {other}")),
+                    })
+                })();
+                out.push(match r {
+                    Ok(v) => json!({ "ok": v }),
+                    Err(e) => json!({ "error": e }),
+                });
+            }
+            Value::Array(out)
+        }
         "installer-slots.script" => {
             // (game, suffix, journalDir, libraryDir, ops): each step's answer, a thrown step as {error}
             let mut inst = crate::installer::Installer::new(opt_path(args, 0), &s(args, 1));

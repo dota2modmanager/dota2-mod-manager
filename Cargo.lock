@@ -2214,8 +2214,10 @@ dependencies = [
 name = "mm-core"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
  "crc32fast",
+ "flate2",
  "fs4",
  "icu_collator",
  "indexmap 2.14.2",
