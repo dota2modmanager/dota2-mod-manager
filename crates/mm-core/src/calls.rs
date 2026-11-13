@@ -3918,6 +3918,39 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!(out)
         }
+        "support-prompt.readPrompt" => json!(crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null)).to_json()),
+        "support-prompt.counted" => {
+            json!(crate::support_prompt::counted(&crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null))).to_json())
+        }
+        "support-prompt.due" => {
+            json!(crate::support_prompt::due(&crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null)), n(args, 1)))
+        }
+        "support-prompt.choose" => json!(crate::support_prompt::choose(
+            &crate::support_prompt::read_prompt(args.first().unwrap_or(&Value::Null)),
+            &s(args, 1),
+            n(args, 2)
+        )
+        .to_json()),
+        "beta.idHash" => json!(crate::beta::id_hash(&s(args, 0), &s(args, 1))),
+        "beta.betaState" => json!(crate::beta::beta_state(
+            args.first().and_then(Value::as_str),
+            args.get(1).unwrap_or(&Value::Null),
+            args.get(2) == Some(&Value::Bool(true))
+        )),
+        "settings-view.view" => {
+            // (settings, records, discordConfigured, langFolder, migration, slotMigration)
+            let records = args.get(1).and_then(Value::as_array).cloned().unwrap_or_default();
+            let lang_folder = s(args, 3);
+            crate::settings_view::settings_view(crate::settings_view::ViewInput {
+                settings: args.first().and_then(Value::as_object).cloned().unwrap_or_default(),
+                records: &records,
+                discord_configured: args.get(2).is_some_and(crate::js::truthy),
+                lang_folder: &lang_folder,
+                migration: args.get(4).cloned().unwrap_or(Value::Null),
+                slot_migration: args.get(5).cloned().unwrap_or(Value::Null),
+                minify_config: crate::minify::read_config(&crate::minify::config_path()),
+            })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }

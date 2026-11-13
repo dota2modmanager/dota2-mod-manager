@@ -6646,3 +6646,47 @@ test('the window\'s size, scale and zoom keys and the tray\'s doings in Rust are
   }
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the settings view, the support window\'s timing and the beta gate in Rust are the TypeScript ones', { skip }, async () => {
+  const { settingsViewFor } = await import('../src/settings-view.ts');
+  const sp = await import('../src/support-prompt.ts');
+  const beta = await import('../src/beta.ts');
+  const { validateGamePath } = await import('../src/steam.ts');
+  const { buildVpk, entryAt } = await import('../src/vpk.ts');
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-view-'));
+  // a game with our folder, Minify's in its own folder and in a borrowed one, and mods stranded
+  const game = path.join(tmp, 'steamapps', 'common', 'dota 2 beta', 'game');
+  const put = (rel: string, data: Buffer = Buffer.from('x')) => { const f = path.join(game, rel); fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, data); };
+  const marked = buildVpk([entryAt('minify_version.txt', Buffer.from('1'))]);
+  put('dota/pak01_dir.vpk', buildVpk([entryAt('a.txt', Buffer.from('a'))]));
+  put('dota_russian/pak01_dir.vpk'); put('dota_russian/pak02_dir.vpk'); put('dota_russian/pak03_dir.vpk.off');
+  put('dota_minify/pak66_dir.vpk'); put('dota_minify/pak10_dir.vpk', marked); put('dota_minify/other.txt');
+  put('dota_koreana/pak05_dir.vpk'); put('dota_dutch/pak66_dir.vpk.moff');
+  const bare = path.join(tmp, 'bare', 'game');
+  fs.mkdirSync(bare, { recursive: true });
+  const recs = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, files: i % 2 ? [{ root: 'lang', name: 'x' }] : [{ root: 'game', name: 'y' }] }));
+  const games = [game, sandboxGame, bare, '', null, path.join(tmp, 'nope')];
+  const views: unknown[][] = [];
+  for (const g of games) for (const folder of ['russian', 'minify', 'koreana']) for (const n of [0, 3]) {
+    views.push([{ dotaGamePath: g, uiLang: 'en', minify: 'kept?', zeta: 1 }, recs(n), n > 0, folder, n ? { moved: 2 } : null, n ? null : { laidOut: true }]);
+  }
+  const prompts = [null, 5, 'x', [], {}, { launches: 2 }, { launches: 3 }, { launches: 3, until: 1e15 }, { launches: '9', state: 'done' }, { launches: 7, state: 'later', until: 100, later: 2 },
+    { launches: 4, state: 'later', later: 3 }, { launches: -1, until: NaN, later: Infinity }, { state: 'bogus', launches: 1e300 }];
+  const salt = 'pepper';
+  const list = { salt, ids: [beta.idHash('42', salt).toUpperCase(), 7, null, beta.idHash(' 99 ', salt)] };
+  const cases: Case[] = [
+    { name: 'settings-view.view', ts: ((st: Record<string, unknown>, records: unknown[], dc: boolean, folder: string, mig: unknown, slot: unknown) => {
+      const settings = { get: (k: string) => st[k], all: () => ({ ...st }) };
+      return settingsViewFor({ settings: settings as never, library: { list: () => records as never }, discordAuth: { isConfigured: () => dc }, validateGamePath, langFolder: () => folder, takeMigration: () => mig, takeSlotMigration: () => slot })({ consumeMigration: true });
+    }) as never, inputs: views },
+    { name: 'support-prompt.readPrompt', ts: sp.readPrompt as never, inputs: prompts.map((p) => [p]) },
+    { name: 'support-prompt.counted', ts: ((p: unknown) => sp.counted(sp.readPrompt(p))) as never, inputs: prompts.map((p) => [p]) },
+    { name: 'support-prompt.due', ts: ((p: unknown, now: number) => sp.due(sp.readPrompt(p), now)) as never, inputs: prompts.flatMap((p) => [0, 100, 1e15, 2e15].map((t) => [p, t])) },
+    { name: 'support-prompt.choose', ts: ((p: unknown, c: string, now: number) => sp.choose(sp.readPrompt(p), c as never, now)) as never, inputs: prompts.flatMap((p) => ['later', 'done'].map((c) => [p, c, 1000])) },
+    { name: 'beta.idHash', ts: beta.idHash as never, inputs: [['42', salt], [' 42 ', ''], ['', 'x'], ['айди', 'соль']] },
+    { name: 'beta.betaState', ts: ((id: string | null, b: unknown, wanted: unknown) => beta.betaState({ discordId: id, beta: b as never, wanted: wanted as boolean })) as never,
+      inputs: ['42', '99', '7', '', null].flatMap((id) => [list, { ids: [] }, null, { salt, ids: 'x' }, []].flatMap((b) => [true, false].map((w) => [id, b, w]))) },
+  ];
+  assert.ok(compare(cases) > 150);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
