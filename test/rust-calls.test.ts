@@ -7861,3 +7861,56 @@ test('the hero preview\'s picks in Rust dress the hero as the TypeScript does, o
   assert.ok(want.some((w) => w.ok && typeof w.ok === 'string' && w.ok.startsWith('models/')), 'a stock head found');
   assert.ok(want.some((w) => Array.isArray(w.ok) && w.ok.some((s: { slot?: string }) => s?.slot === 'h:head')), 'a persona dressed');
 });
+
+test('the hero preview\'s particles in Rust are the TypeScript ones, on the game', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or sandbox here'); return; }
+  const { openVpkIndex } = await import('../src/vpk.ts');
+  const { listItems } = await import('../src/schema-items.ts');
+  const { itemHeroes } = await import('../src/item-builder-slots.ts');
+  const { itemParticles } = await import('../src/particle-spec.ts');
+  const { unusualEffects } = await import('../src/unusual-effects.ts');
+  const hp = await import('../src/hero-preview-picks.ts');
+  const fx = await import('../src/hero-preview-fx.ts');
+  const ix = openVpkIndex(GAME_PAK01);
+  const { file, effects } = await realItems();
+  const text = fs.readFileSync(file, 'latin1');
+  const all = listItems(text);
+  const unusual = unusualEffects(text);
+  const names = ['terrorblade', 'razor', 'wisp', 'monkey_king', 'juggernaut', 'pudge', 'crystal_maiden', 'invoker'];
+  const plans = names.map((name, k) => {
+    const hero = 'npc_dota_hero_' + name;
+    const mine = all.filter((i) => i.model && itemHeroes(text, i).includes(hero));
+    const stock = mine.filter((i) => i.prefab === 'default_item');
+    // a few of the hero's effect items in place of their slot's stock one
+    const worn = effects.map((e) => all.find((i) => i.id === e.id)!).filter((i) => i && itemHeroes(text, i).includes(hero)).slice(0, 3);
+    const parts = [
+      ...stock.filter((s) => !worn.some((w) => w.slot === s.slot)).map((s) => ({ slot: `${hero}:${s.slot}`, model: s.model, fx: [] as string[] })),
+      ...worn.map((w, j) => {
+        const e = effects.find((x) => x.id === w.id)!;
+        const replacements = hp.previewParticleReplacements(e.visuals!, true);
+        return { slot: `${hero}:${w.slot}`, model: w.model, style: j % 2, fx: itemParticles(e.block), replacements: replacements.size ? replacements : undefined };
+      }),
+    ];
+    const script = ix.read(`scripts/npc/heroes/${hero}.txt`)?.toString('utf8') ?? null;
+    const heroFx = hp.previewHeroParticles(script, hero, true, ix);
+    const bindings = new Map(k % 2 ? unusual.slice(0, 40).map((u) => [u.system, u] as const) : []);
+    const replacements = new Map(k === 0 ? [[heroFx[0] ?? 'x', 'particles/none.vpcf']] as [string, string][] : []);
+    return { body: `models/heroes/${name}/${name}.vmdl`, bodyFx: k === 3 ? ['particles/econ/items/x/x.vpcf'] : [], heroFx, replacements, bindings, parts };
+  });
+  plans.push({ body: 'models/heroes/wisp/wisp.vmdl', bodyFx: [], heroFx: [], replacements: new Map(), bindings: new Map(), parts: [] });
+  const read = (p: string) => ix.read(p);
+  const want = plans.map((p) => fx.previewParticles({ ...p, read }));
+  const placed = plans[0].parts.map((_, i) => (i % 3 === 1 ? -1 : i % 3 === 2 ? Math.max(0, i - 1) : i));
+  const moved = fx.forParts(want[0], placed);
+  const wire = plans.map((p) => ({ ...p, replacements: [...p.replacements], bindings: Object.fromEntries(p.bindings),
+    parts: p.parts.map((x) => ({ ...x, replacements: 'replacements' in x && x.replacements ? [...(x.replacements as Map<string, string>)] : undefined })) }));
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-hpf-'));
+  fs.writeFileSync(path.join(tmp, 'calls.json'), JSON.stringify([['hero-preview-fx.script', GAME_PAK01, wire, placed]]));
+  const got = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'calls.json')], { encoding: 'utf8', maxBuffer: 1 << 30 }))[0].ok;
+  fs.rmSync(tmp, { recursive: true, force: true });
+  const plain = (v: unknown) => JSON.parse(JSON.stringify(v));
+  for (let k = 0; k < plans.length; k++) assert.deepEqual(got.plans[k], plain(want[k]), plans[k].body);
+  assert.deepEqual(got.moved, plain(moved));
+  assert.ok(want.some((w) => w.some((x) => x.part >= 0)) && want.some((w) => w.some((x) => x.part === -2)), 'parts and the hero carry effects');
+  assert.equal(fx.forParts(want[1], want[1].map((_, i) => i)), want[1]);
+});

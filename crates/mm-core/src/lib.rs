@@ -51,6 +51,7 @@ pub mod hero_grid;
 pub mod hero_names;
 pub mod hero_paint_service;
 pub mod hero_particle_styles;
+pub mod hero_preview_fx;
 pub mod hero_preview_picks;
 pub mod hero_showcase;
 pub mod hud_scale;

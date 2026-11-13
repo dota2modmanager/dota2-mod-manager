@@ -4681,6 +4681,49 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             }
             json!(results)
         }
+        // (pak, plans, placed): each plan's preview particles from that pak's files, and forParts of
+        // the first with `placed`; maps come as [key, value] entries, bindings as {path: effect}
+        "hero-preview-fx.script" => {
+            use crate::hero_preview_fx as f;
+            let ix = crate::vpk::Index::open(std::path::Path::new(&s(args, 0))).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let map = |v: Option<&Value>| -> Option<indexmap::IndexMap<String, String>> {
+                v.and_then(Value::as_array).map(|a| {
+                    a.iter().filter_map(Value::as_array).map(|e| (crate::js::string(&e[0]), crate::js::string(&e[1]))).collect()
+                })
+            };
+            let strs = |v: Option<&Value>| -> Vec<String> { v.and_then(Value::as_array).map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default() };
+            let mut out = Vec::new();
+            for plan in args.get(1).and_then(Value::as_array).cloned().unwrap_or_default() {
+                let p = f::FxPlan {
+                    body: crate::js::string(&plan["body"]),
+                    body_fx: strs(plan.get("bodyFx")),
+                    hero_fx: strs(plan.get("heroFx")),
+                    replacements: map(plan.get("replacements")).unwrap_or_default(),
+                    bindings: plan.get("bindings").and_then(Value::as_object).map(|o| o.iter().map(|(k, v)| (k.clone(), v.clone())).collect()).unwrap_or_default(),
+                    read: &read,
+                    parts: plan
+                        .get("parts")
+                        .and_then(Value::as_array)
+                        .map(|a| {
+                            a.iter()
+                                .map(|x| f::FxPart {
+                                    slot: crate::js::string(&x["slot"]),
+                                    model: crate::js::string(&x["model"]),
+                                    style: x.get("style").filter(|v| !v.is_null()).map_or(0.0, crate::js::to_number),
+                                    fx: strs(x.get("fx")),
+                                    replacements: map(x.get("replacements")),
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                };
+                out.push(f::preview_particles(&p, None)?);
+            }
+            let placed: Vec<i64> = args.get(2).and_then(Value::as_array).map(|a| a.iter().map(|v| crate::js::to_number(v) as i64).collect()).unwrap_or_default();
+            let moved = out.first().cloned().map(|x| f::for_parts(x, &placed)).unwrap_or_default();
+            json!({ "plans": out, "moved": moved })
+        }
         _ => return Err(format!("no function {name}")),
     })
 }
