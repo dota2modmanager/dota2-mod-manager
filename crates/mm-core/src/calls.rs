@@ -3100,6 +3100,11 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             });
             json!({ "answers": answers, "log": diag })
         }
+        // (material as readLoadoutMaterial gives it)
+        "loadout-material.loadoutDescriptor" => {
+            let m: crate::loadout_material::NativeMaterial = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
+            crate::loadout_material::loadout_descriptor(&m)
+        }
         "loadout.material" => json!(crate::loadout_material::read_loadout_material(Some(&b(args, 0)?))),
         "recolor-layers.abilities" => json!(crate::recolor_layers::hero_abilities(&s(args, 0))),
         "recolor-layers.modelFolder" => json!(crate::recolor_layers::hero_model_folder(&s(args, 0))),

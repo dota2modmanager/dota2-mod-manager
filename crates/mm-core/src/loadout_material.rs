@@ -1,23 +1,27 @@
 //! A material's own inputs, as the game compiled them (`readLoadoutMaterial` in
 //! src/loadout-material.ts): its shader, its numbers, vectors and textures, from a KV3 material or
-//! an older NTRO one. The textures are what the recolour of an item's model reads (`g_tColor`).
-//! Not here yet: the expressions that tint by the gem's colour (`gemParams`, src/material.ts) and
-//! the loadout shader's descriptor, which the 3D preview uses.
+//! an older NTRO one. The textures are what the recolour of an item's model reads (`g_tColor`);
+//! with the expressions that tint by the gem's colour (`gemParams`) and the loadout shader's
+//! descriptor (`loadoutDescriptor`), they are what the 3D preview draws with.
 
 use indexmap::IndexMap;
-use serde::Serialize;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 
 use crate::resource;
 
 /// A material's inputs, kept apart by kind so a zero flag and a packed mask survive.
-#[derive(Debug, Clone, Default, PartialEq, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NativeMaterial {
     pub shader: String,
     pub floats: IndexMap<String, f64>,
     pub ints: IndexMap<String, f64>,
     pub vectors: IndexMap<String, Vec<f64>>,
     pub textures: IndexMap<String, String>,
+    /// the vectors an expression tints by the gem's colour
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub gem_params: Option<Vec<String>>,
 }
 
 type R<T> = Result<T, String>;
@@ -224,5 +228,85 @@ pub fn read_loadout_material(file: Option<&[u8]>) -> Option<NativeMaterial> {
     if out.ints.get("F_SPECULAR_CUBE_MAP").is_none_or(|v| *v == 0.0 || v.is_nan()) {
         out.textures.shift_remove("g_tCubeMap");
     }
+    // a broken or unknown expression must not lose the textures that read fine
+    if let Some(gem) = gem_params(file?) {
+        if !gem.is_empty() {
+            out.gem_params = Some(gem);
+        }
+    }
     Some(out)
 }
+
+/// The names of the expressions that read the gem's colour: those `withConstant` can pin.
+fn gem_params(file: &[u8]) -> Option<Vec<String>> {
+    let token = crate::material::attribute_token("$GemColor");
+    let mut out = Vec::new();
+    for e in crate::material::material_expressions(file).ok()? {
+        if crate::material::with_constant(&e.code, token, &[1.0, 1.0, 1.0]).ok()?.is_some() {
+            out.push(e.name);
+        }
+    }
+    Some(out)
+}
+
+fn on(n: Option<&f64>) -> bool {
+    n.is_some_and(|v| *v != 0.0 && !v.is_nan())
+}
+
+/// What the loadout shader is told about a material, in the native hero.vfx channel layout.
+pub fn loadout_descriptor(m: &NativeMaterial) -> Value {
+    let num = crate::js::json_number;
+    let f = |k: &str, d: f64| num(*m.floats.get(k).unwrap_or(&d));
+    let v = |k: &str, d: &[f64]| -> Value {
+        let row = m.vectors.get(k).map_or(d.to_vec(), |x| x.iter().take(d.len()).copied().collect());
+        Value::Array(row.into_iter().map(num).collect())
+    };
+    let gem = |name: &str| m.gem_params.as_ref().is_some_and(|g| g.iter().any(|x| x == name));
+    let mut out = serde_json::Map::new();
+    // workshopMasks: the textures are the game's own, laid out as the Workshop documents them,
+    // which the renderer reads in another order unless told (a rim mask read as metalness drew
+    // Spirit Breaker black)
+    out.insert("workshopMasks".into(), json!(true));
+    out.insert("selfIllum".into(), json!(on(m.ints.get("F_SELF_ILLUM"))));
+    if gem("g_vDetail1ColorTint") {
+        out.insert("detailGem".into(), json!(true));
+    }
+    if gem("g_vSpecularColor") {
+        out.insert("specGem".into(), v("g_vSpecularColor", &[1.0, 1.0, 1.0]));
+    }
+    let cube = on(m.ints.get("F_SPECULAR_CUBE_MAP")) && m.textures.get("g_tCubeMap").is_some_and(|t| !t.is_empty());
+    out.insert("expectsReflectionCube".into(), json!(cube));
+    out.insert("detailMode".into(), num(*m.ints.get("F_DETAIL").unwrap_or(&0.0)));
+    out.insert("detailBlend".into(), f("g_flDetailBlendFactor", 1.0));
+    out.insert("detailScale".into(), v("g_vDetailTexCoordScale", &[1.0, 1.0]));
+    out.insert("detailTint".into(), v("g_vDetail1ColorTint", &[1.0, 1.0, 1.0]));
+    out.insert("rimColor".into(), v("g_vRimLightColor", &[1.0, 1.0, 1.0]));
+    out.insert("rimScale".into(), f("g_flRimLightScale", 0.0));
+    out.insert("specColor".into(), v("g_vSpecularColor", &[1.0, 1.0, 1.0]));
+    out.insert("specScale".into(), f("g_flSpecularScale", 1.0));
+    out.insert("specExponent".into(), f("g_flSpecularExponent", 16.0));
+    out.insert(
+        "alphaTest".into(),
+        if on(m.ints.get("F_ALPHA_TEST")) { f("g_flAlphaTestReference", 0.5) } else { json!(0) },
+    );
+    out.insert("translucent".into(), json!(on(m.ints.get("F_TRANSLUCENT"))));
+    out.insert("additive".into(), json!(on(m.ints.get("F_ADDITIVE_BLEND"))));
+    out.insert(
+        "cloak".into(),
+        if on(m.ints.get("F_ENABLE_CLOAK")) { f("g_flMaterialCloakFactor", 0.0) } else { json!(0) },
+    );
+    Value::Object(out)
+}
+
+/// Texture roles the loadout shader reads from the GLB's extras instead of glTF's PBR channels.
+/// cube: the six faces as one strip (src/png-strip.ts); a metal without it came out black.
+pub const LOADOUT_MASKS: [(&str, &str); 8] = [
+    ("opacity", "g_tOpacity"),
+    ("masks", "g_tMasks1"),
+    ("specular", "g_tMasks2"),
+    ("normal", "g_tNormal"),
+    ("detail", "g_tDetail"),
+    ("fresnel", "g_tFresnelWarp"),
+    ("diffuseWarp", "g_tDiffuseWarp"),
+    ("cube", "g_tCubeMap"),
+];

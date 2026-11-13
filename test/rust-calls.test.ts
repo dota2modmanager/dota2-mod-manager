@@ -5519,7 +5519,12 @@ test('a hero\'s layers, a material\'s inputs and the effect finder in Rust read 
     const models = spread(all.filter((p) => p.startsWith('models/items/') && p.endsWith('.vmdl_c')), 25).map((p) => p.replace(/_c$/, ''));
     const blocksReal = spread(fs.readFileSync(real, 'latin1').split(/\n\t\t"\d+"\n/), 60);
     compare([
-      { name: 'loadout.material', ts: ((f: string) => lm.readLoadoutMaterial(buf(f)) && (({ gemParams, ...rest }) => rest)(lm.readLoadoutMaterial(buf(f))!)) as never, inputs: mats.map((m) => [m]) },
+      { name: 'loadout.material', ts: ((f: string) => lm.readLoadoutMaterial(buf(f))) as never, inputs: mats.map((m) => [m]) },
+      { name: 'loadout-material.loadoutDescriptor', ts: lm.loadoutDescriptor as never, inputs: [
+        ...mats.map((m) => lm.readLoadoutMaterial(fs.readFileSync(m.$file))).filter(Boolean).map((m) => [m]),
+        [{ shader: 'x', floats: { g_flAlphaTestReference: 0.25, g_flMaterialCloakFactor: -0 }, ints: { F_ALPHA_TEST: 1, F_ENABLE_CLOAK: 2, F_SELF_ILLUM: 0, F_DETAIL: 3, F_SPECULAR_CUBE_MAP: 1, F_TRANSLUCENT: 1 }, vectors: { g_vSpecularColor: [0.5, 0.25], g_vDetailTexCoordScale: [2, 3, 4, 5] }, textures: { g_tCubeMap: 'c' }, gemParams: ['g_vSpecularColor', 'g_vDetail1ColorTint'] }],
+        [{ shader: '', floats: {}, ints: { F_SPECULAR_CUBE_MAP: 1 }, vectors: {}, textures: { g_tCubeMap: '' }, gemParams: [] }],
+      ] },
       { name: 'recolor-layers.modelColorTextures', ts: ((m: string[]) => rl.modelColorTextures(m, (p) => ix.read(p))) as never, inputs: [[models], ...models.slice(0, 8).map((m) => [[m]])] },
       { name: 'recolor-layers.itemModelPaths', ts: rl.itemModelPaths, inputs: blocksReal.map((x) => [x]) },
     ].map((c) => (c.name === 'recolor-layers.modelColorTextures' ? { ...c, inputs: c.inputs.map((i) => [...i, GAME_PAK01]) } : c)));
