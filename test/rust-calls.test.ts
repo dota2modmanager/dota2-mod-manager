@@ -2215,3 +2215,122 @@ test('the listing in Rust, and the terrain ages, update impact, notice text and 
   assert.deepEqual(tree(b).filter((l) => !l.startsWith('svc.json')), tree(a));
   fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('the item table built in Rust is the one the TypeScript builds: picks, bases, personas, shared files', { skip }, async (t) => {
+  if (!fs.existsSync(GAME_PAK01) || !fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no game or no sandbox'); return; }
+  const { createTableBuild } = await import('../src/schema-build.ts');
+  const { openVpkIndex, entryAt, entryPath } = await import('../src/vpk.ts');
+  const sl = await import('../src/item-builder-slots.ts');
+  const ps = await import('../src/item-builder-personas.ts');
+  const kin = await import('../src/item-builder-kinetic.ts');
+  const { ITEM_EFFECTS } = await import('../src/item-builder-effects.ts');
+  const { ARCANA_BASES, TERRORBLADE_BASE } = await import('../src/arcana-bases.ts');
+  const { cosmeticOptions } = await import('../src/schema-items.ts');
+  const { createHash } = await import('node:crypto');
+  const sha = (f: Buffer) => createHash('sha1').update(f).digest('hex');
+  const { file } = await realItems();
+  const text = fs.readFileSync(file).toString('latin1');
+  const game = path.dirname(path.dirname(GAME_PAK01));
+  const index = openVpkIndex(GAME_PAK01);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-table-'));
+  const spread = <T,>(a: T[], k: number) => a.filter((_, j) => j % Math.max(1, Math.floor(a.length / k)) === 0).slice(0, k);
+  const slots = sl.itemSlots(text);
+  const own = ITEM_EFFECTS.map((e) => e.id);
+  const gems = [...kin.kineticGems(text).keys()];
+  let n = 0;
+  const rec = (slot: string, itemId: string, extra: object = {}) => ({ id: `r${n}`, name: `pick ${n++}`, categoryId: 'cosmetic', files: [], slot, itemId, ...extra });
+  const plain = slots.filter((s) => !s.persona && !s.abilityFx && s.options.length);
+  const effectsOf = (k: number) => [[], [own[k % own.length]], ['style-1'], [`kinetic-${gems[k % gems.length]}`], `${own[(k + 1) % own.length]},style-2`][k % 5];
+  const picks = spread(plain, 24).map((s, k) => rec(s.slot, s.options[k % s.options.length].id, { effectId: effectsOf(k) }));
+  const fx = slots.filter((s) => s.abilityFx && s.options.length);
+  const fxName = fx[0]?.slot.split(':').pop();
+  const fxPicks = fx.filter((s) => s.slot.endsWith(`:${fxName}`)).slice(0, 3).map((s, k) => rec(s.slot, s.options[k % s.options.length].id));
+  const persona = ps.PERSONA_BASES[0];
+  const mine = ps.personaSlots(text).filter((s) => s.slot.startsWith(`item:${persona.hero}:`) || s.heroIds.includes(`npc_dota_hero_${persona.hero}`));
+  const selector = mine.find((s) => ps.isSelectorSlot(s.slot));
+  const personaPicks = selector ? [rec(selector.slot, persona.item), ...mine.filter((s) => !ps.isSelectorSlot(s.slot)).slice(0, 2).map((s) => rec(s.slot, s.options[0]?.id ?? '1'))] : [];
+  const theirs = plain.filter((s) => s.heroIds.includes(`npc_dota_hero_${persona.hero}`)).slice(0, 1).map((s) => rec(s.slot, s.options[0].id));
+  const looks = ['courier', 'ward', 'multikill_banner', 'weather'].flatMap((slot) => cosmeticOptions(text, slot).slice(1, 2).map((o) => rec(slot, o.id)));
+  // the arcana bases' picks: some held, some not here yet
+  const bases = ARCANA_BASES.filter((b, k) => k % 2 === 0 || b.id === TERRORBLADE_BASE);
+  const basePicks = bases.map((b) => rec(`item:${b.hero}:base`, b.item, b.styles ? { effectId: [`style-${b.styles[0]}`] } : {}));
+  const put = (p: string) => {
+    const data = index.read(p);
+    if (!data) return null;
+    const f = path.join(tmp, `${n++}.bin`);
+    fs.writeFileSync(f, data);
+    return [p, { $file: f }] as [string, { $file: string }];
+  };
+  const store: Record<string, [string, { $file: string }][] | null> = {};
+  for (const [k, b] of bases.entries()) {
+    if (k % 3 === 2) { store[b.id] = null; continue; }
+    const theirFiles = [...index.paths()].filter((p) => p.startsWith(`particles/econ/items/${b.hero}/`) || p.startsWith(`materials/models/heroes/${b.hero}/`)).filter((_, j) => j % 41 === 0).slice(0, 4);
+    store[b.id] = [`models/heroes/${b.hero}/${b.hero}.vmdl_c`, ...theirFiles].map(put).filter((e) => e !== null);
+  }
+  const mod = { id: 'mod', name: 'a mod', categoryId: 'model', files: [], schema: [{ id: picks[0].itemId, block: '"x"\r\n{\r\n}' }, { id: '999999', block: '"y" {}' }] };
+  const off = { ...rec(plain[1].slot, plain[1].options[0].id), enabled: false };
+  const arcanaWindow = { id: 'tb', name: 'arcana window', categoryId: 'model', files: [], generated: { set: 'terrorblade-arcana', color: [255, 40, 40] } };
+  const everything = [...picks, ...fxPicks, ...personaPicks, ...theirs, ...looks, ...basePicks, mod, off, arcanaWindow];
+  const steps = [
+    { records: everything, bases: store },
+    { records: everything, bases: store },
+    { records: [...picks.slice(3), ...looks, ...basePicks, { ...arcanaWindow, generated: { set: 'terrorblade-arcana', color: [20, 200, 255] } }], bases: store },
+    { records: everything, bases: {}, forget: true },
+    { records: [...personaPicks, ...theirs], bases: store },
+  ];
+  // one build for every step, as the app keeps one: the store and the library read the step's
+  let cur: object[] = [];
+  let held: Record<string, ReturnType<typeof entryAt>[] | null> = {};
+  let log: string[] = [];
+  let wanted: string[] = [];
+  const tb = createTableBuild({
+    library: { list: () => cur as never },
+    bases: { entries: (id: string) => held[id] ?? null, want: async (id: string) => { wanted.push(id); return true; } },
+    log: (m) => log.push(m),
+  });
+  const files = (es: ReturnType<typeof entryAt>[]) => es.map((e) => [entryPath(e), sha(e.data)]);
+  const ts = steps.map((st) => {
+    cur = st.records; log = []; wanted = [];
+    held = Object.fromEntries(Object.entries(st.bases).map(([id, es]) => [id, es && es.map(([p, f]) => entryAt(p, fs.readFileSync(f.$file)))]));
+    if (st.forget) tb.forget();
+    const progress: number[][] = [];
+    try {
+      const g = tb.buildSteps(text, game);
+      let r = g.next();
+      while (!r.done) {
+        const v = r.value as { done?: number; total?: number };
+        if (v && typeof v === 'object' && 'done' in v) progress.push([v.done!, v.total!]);
+        r = g.next();
+      }
+      const b = r.value;
+      return JSON.parse(JSON.stringify({
+        list: b.list.map((p) => ({ id: p.id, block: p.block, source: p.source, own: p.own ?? null, added: p.added ?? null, unplaced: p.unplaced ?? null, item: p.item ?? null, assets: p.assets ? files(p.assets) : null })),
+        beneath: files(b.beneath), shared: { paths: b.filesShared.paths, entries: files(b.filesShared.entries) }, progress, log, wanted,
+      }));
+    } catch (e) { return { error: (e as Error).message, progress, log, wanted }; }
+  });
+  fs.writeFileSync(path.join(tmp, 'list.json'), JSON.stringify([['schema-build.script', game, { $file: file }, steps]]));
+  const [rs] = JSON.parse(execFileSync(cli, ['call', path.join(tmp, 'list.json')], { encoding: 'utf8', maxBuffer: 1 << 28 }));
+  try {
+    assert.ok(rs.ok, rs.error);
+    for (const [k, want] of ts.entries()) {
+      const got = rs.ok[k];
+      if ('error' in want) { assert.ok(got.error, `step ${k}: TypeScript throws ${want.error}`); continue; }
+      assert.deepEqual(got.log, want.log, `step ${k} log`);
+      assert.deepEqual(got.progress, want.progress, `step ${k} progress`);
+      assert.deepEqual(got.wanted, want.wanted, `step ${k} wanted`);
+      const ids = (l: { id: string; source: string }[]) => l.map((p) => `${p.id} ${p.source}`);
+      assert.deepEqual(ids(got.list), ids(want.list), `step ${k} patches`);
+      for (const [j, p] of want.list.entries()) assert.deepEqual(got.list[j], p, `step ${k} patch ${j} (${p.source})`);
+      assert.deepEqual(got.beneath, want.beneath, `step ${k} beneath`);
+      assert.deepEqual(got.shared, want.shared, `step ${k} shared files`);
+    }
+    // the build did something worth comparing: picks with files, a second build from what was kept
+    // (only the picks the builder refused are tried again), bases
+    assert.ok(ts[0].list.filter((p: { assets: unknown[] | null }) => p.assets?.length).length > 10);
+    assert.ok(ts[1].progress.length < ts[0].progress.length / 3, `${ts[1].progress.length} of ${ts[0].progress.length} built again`);
+    assert.ok(ts[0].log.some((m: string) => m.includes('not here yet')) && ts[0].wanted.length);
+    assert.ok(fxPicks.length > 1 && ts[0].list.some((p: { source: string }) => p.source.includes(', ')), 'ability effects picks joined');
+    assert.ok(ts[0].beneath.length > 0 && ts[0].shared.entries.length > 0);
+  } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
+});

@@ -72,6 +72,21 @@ fn ready_bases(v: Option<&Value>) -> Result<Vec<crate::item_builder_personas::Re
     Ok(ready)
 }
 
+/// A store of arcana bases for a test: the files of each, or none yet, and the ones asked for.
+struct TestBases {
+    held: HashMap<String, Option<Vec<crate::vpk::Entry>>>,
+    wanted: Mutex<Vec<String>>,
+}
+
+impl crate::arcana_bases::BaseSource for TestBases {
+    fn entries(&self, id: &str) -> Option<Vec<crate::vpk::Entry>> {
+        self.held.get(id).cloned().flatten()
+    }
+    fn want(&self, id: &str) {
+        self.wanted.lock().unwrap().push(id.to_string());
+    }
+}
+
 /// A test script of FileTx steps under `root`: write, copy, move, remove, fail, and a savepoint
 /// that either lets its failure through or catches it.
 fn tx_ops(tx: &mut crate::file_tx::FileTx, root: &std::path::Path, ops: &Value) -> Result<(), String> {
@@ -1215,6 +1230,56 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                     })
                     .collect(),
             )
+        }
+        "schema-build.script" => {
+            // (game, items_game, steps): builds of one table, each {records, bases, forget}
+            let game = std::path::PathBuf::from(s(args, 0));
+            let vanilla = b(args, 1)?;
+            let mut tb = crate::schema_build::TableBuild::new();
+            let steps = args.get(2).and_then(Value::as_array).cloned().unwrap_or_default();
+            let mut out = Vec::new();
+            for step in steps {
+                if step.get("forget").is_some_and(crate::js::truthy) {
+                    tb.forget();
+                }
+                let records = step.get("records").and_then(Value::as_array).cloned().unwrap_or_default();
+                let store = match step.get("bases").and_then(Value::as_object) {
+                    Some(m) => {
+                        let mut held = HashMap::new();
+                        for (id, e) in m {
+                            held.insert(id.clone(), if e.is_null() { None } else { Some(entries_arg(Some(e))?) });
+                        }
+                        Some(TestBases { held, wanted: Mutex::new(Vec::new()) })
+                    }
+                    None => None,
+                };
+                let (mut progress, mut log) = (Vec::new(), Vec::new());
+                let r = tb.build(
+                    &vanilla,
+                    &game,
+                    &records,
+                    store.as_ref().map(|s| s as &dyn crate::arcana_bases::BaseSource),
+                    &mut |d, t| progress.push(json!([d, t])),
+                    &mut |m| log.push(m),
+                );
+                let files = |e: &[crate::vpk::Entry]| {
+                    json!(e.iter().map(|e| json!([e.path(), sha(Some(e.data.to_vec()))])).collect::<Vec<_>>())
+                };
+                let wanted = store.map(|s| s.wanted.into_inner().unwrap()).unwrap_or_default();
+                out.push(match r {
+                    Ok(built) => json!({
+                        "list": built.list.iter().map(|p| json!({
+                            "id": p.id, "block": latin1(&p.block), "source": p.source, "own": p.own, "added": p.added,
+                            "unplaced": p.unplaced, "item": p.item, "assets": p.assets.as_deref().map(files),
+                        })).collect::<Vec<_>>(),
+                        "beneath": files(&built.beneath),
+                        "shared": { "paths": built.files_shared.paths, "entries": files(&built.files_shared.entries) },
+                        "progress": progress, "log": log, "wanted": wanted,
+                    }),
+                    Err(e) => json!({ "error": e, "progress": progress, "log": log, "wanted": wanted }),
+                });
+            }
+            Value::Array(out)
         }
         "services.script" => {
             // (root, game, suffix, journalDir, userData, libraryDir, ops), as installer.script
