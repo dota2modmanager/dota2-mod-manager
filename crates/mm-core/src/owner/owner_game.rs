@@ -3,6 +3,7 @@
 //! Source 2 toolchain, and the arcanas and map looks built out of the game's own files.
 
 use std::path::Path;
+use std::sync::Arc;
 
 use serde_json::{json, Map, Value};
 
@@ -379,17 +380,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 Err(e) => json!({ "ok": false, "reason": "failed", "error": e }),
             }
         }
-        "cosmetics:slots" => {
-            let mut core = o.core();
-            let c = &mut *core;
-            let game = c.game();
-            let text = match game.as_deref().map(|g| c.schema.vanilla(g)) {
-                None => return json!({ "slots": [], "sets": [] }),
-                Some(Err(e)) => return json!({ "slots": [], "sets": [], "error": e }),
-                Some(Ok(b)) => b,
-            };
-            crate::schema_cosmetics::cosmetic_slots(&c.library, game.as_deref(), &text.0, crate::i18n::lang().code())
-        }
+        "cosmetics:slots" => slots(o),
         "cosmetics:pick" => {
             if let Some(stop) = o.blocked("cosmetics") {
                 return stop;
@@ -537,5 +528,81 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             }
         }
         _ => json!({ "error": format!("no handler for {channel}") }),
+    }
+}
+
+/// The item builder's slots, the last answer kept for its inputs. The answer is read off the
+/// whole item table and took two seconds; under the state's lock that held every other call of
+/// the window, the catalog's at start among them. Only what it reads is taken under the lock.
+fn slots(o: &Owner) -> Value {
+    let (game, text, lib) = {
+        let mut core = o.core();
+        let c = &mut *core;
+        let game = c.game();
+        let text = match game.as_deref().map(|g| c.schema.vanilla(g)) {
+            None => return json!({ "slots": [], "sets": [] }),
+            Some(Err(e)) => return json!({ "slots": [], "sets": [], "error": e }),
+            Some(Ok(b)) => b,
+        };
+        (game, text, crate::library::Library { file: c.library.file.clone(), data: c.library.data.clone() })
+    };
+    let lang = crate::i18n::lang().code();
+    let key = game.as_deref().and_then(|g| slots_key(g, &lib, lang));
+    let mut kept = SLOTS.lock().unwrap_or_else(|e| e.into_inner());
+    if let (Some(k), Some((have, held, answer))) = (&key, kept.as_ref()) {
+        // the same table by the same buffer: the cache holds it, so its address is never another's
+        if k == have && Arc::ptr_eq(held, &text) {
+            return answer.clone();
+        }
+    }
+    drop(kept);
+    let answer = crate::schema_cosmetics::cosmetic_slots(&lib, game.as_deref(), &text.0, lang);
+    kept = SLOTS.lock().unwrap_or_else(|e| e.into_inner());
+    // a failure may be the disk's for a moment: asked again, it reads again
+    *kept = key.filter(|_| answer.get("error").is_none()).map(|k| (k, text, answer.clone()));
+    answer
+}
+
+type Kept = Option<(String, Arc<(Vec<u8>, String)>, Value)>;
+static SLOTS: std::sync::Mutex<Kept> = std::sync::Mutex::new(None);
+
+/// What the slots' answer is made of besides the item table: the game folder and its build (the
+/// game's own words and pak01 are read by it), the language, and the picks that are on.
+fn slots_key(game: &Path, lib: &crate::library::Library, lang: &str) -> Option<String> {
+    let stamp = crate::pak_stamp::game_schema_stamp(game).ok()?;
+    let picks: Vec<&Value> =
+        lib.list().iter().filter(|r| r.get("categoryId").and_then(Value::as_str) == Some("cosmetic")).collect();
+    Some(format!("{}|{stamp}|{lang}|{}", game.display(), serde_json::to_string(&picks).ok()?))
+}
+
+#[cfg(test)]
+mod slots_kept {
+    use super::slots_key;
+    use crate::library::Library;
+    use serde_json::{json, Value};
+
+    fn lib(installed: Value) -> Library {
+        let Value::Object(data) = json!({ "installed": installed, "presets": [] }) else { unreachable!() };
+        Library { file: std::path::PathBuf::from("manifest.json"), data }
+    }
+
+    #[test]
+    fn a_kept_answer_is_for_the_same_picks_language_and_game_build() {
+        let game = std::env::temp_dir().join(format!("mm-slots-key-{}", std::process::id()));
+        std::fs::create_dir_all(game.join("dota")).unwrap();
+        std::fs::write(game.join("dota").join("pak01_dir.vpk"), b"pak").unwrap();
+        let pick = |on: bool| json!({ "id": "a", "categoryId": "cosmetic", "slot": "item:axe:head", "itemId": "1", "enabled": on });
+        let other = |on: bool| json!({ "id": "b", "categoryId": "imported", "name": "x", "enabled": on });
+        let key = |installed: Value, lang: &str| slots_key(&game, &lib(installed), lang).unwrap();
+        let base = key(json!([pick(true), other(true)]), "ru");
+        assert_eq!(base, key(json!([pick(true), other(true)]), "ru"));
+        // a mod that is not a pick does not show in the slots
+        assert_eq!(base, key(json!([pick(true), other(false)]), "ru"));
+        assert_ne!(base, key(json!([pick(false), other(true)]), "ru"));
+        assert_ne!(base, key(json!([pick(true), other(true)]), "en"));
+        // the game updated: pak01 is another size
+        std::fs::write(game.join("dota").join("pak01_dir.vpk"), b"pak, patched").unwrap();
+        assert_ne!(base, key(json!([pick(true), other(true)]), "ru"));
+        std::fs::remove_dir_all(&game).unwrap();
     }
 }

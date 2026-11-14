@@ -85,7 +85,7 @@ pub fn kinetic_name(token: &str) -> Option<&str> {
     (!name.is_empty() && name.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'-')).then_some(name)
 }
 
-type Gems = IndexMap<String, KineticGem>;
+pub type Gems = IndexMap<String, KineticGem>;
 
 /// Every gem in the table, by its name in lower case.
 pub fn kinetic_gems(text: &[u8]) -> Result<Arc<Gems>, KvError> {
@@ -132,9 +132,14 @@ pub fn kinetic_gems(text: &[u8]) -> Result<Arc<Gems>, KvError> {
 
 /// The gems a hero's model can play, as the picker offers them. `heroes`: npc_dota_hero_*.
 pub fn offered_kinetic(text: &[u8], heroes: &[String]) -> Result<Vec<OfferedGem>, KvError> {
+    Ok(offered_of(&*kinetic_gems(text)?, heroes))
+}
+
+/// offered_kinetic over the gems already read: the picker asks for every one of its thousand
+/// slots, and reading them again each time hashed the whole items_game a thousand times.
+pub fn offered_of(gems: &Gems, heroes: &[String]) -> Vec<OfferedGem> {
     let short: Vec<&str> = heroes.iter().map(|h| h.strip_prefix("npc_dota_hero_").unwrap_or(h)).collect();
-    Ok(kinetic_gems(text)?
-        .iter()
+    gems.iter()
         .filter(|(name, _)| {
             GEM_HEROES.iter().find(|(g, _)| g == name).is_some_and(|(_, hs)| hs.iter().any(|h| short.contains(h)))
         })
@@ -147,7 +152,7 @@ pub fn offered_kinetic(text: &[u8], heroes: &[String]) -> Result<Vec<OfferedGem>
             };
             OfferedGem { id: format!("kinetic-{name}"), name_token: gem.token.clone(), fallback }
         })
-        .collect())
+        .collect()
 }
 
 /// The gems among a pick's effects; an error when the table has no such gem.
