@@ -45,3 +45,16 @@ test('the takeover runs the Electron uninstaller from the folder it moved into',
   const run = pre.lines.find((l) => l.startsWith('ExecWait'));
   assert.ok(run && run.includes('$INSTDIR\\${D2MM_ELECTRON_UNINSTALLER}') && run.includes('_?=$INSTDIR'), run);
 });
+
+test('the takeover removes the Electron layout itself, whatever its uninstaller managed', () => {
+  const pre = macros(HOOKS).find((m) => m.name === 'NSIS_HOOK_PREINSTALL');
+  assert.ok(pre);
+  const after = pre.lines.slice(pre.lines.findIndex((l) => l.startsWith('ExecWait')));
+  for (const want of ['RMDir /r "$INSTDIR\\resources"', 'RMDir /r "$INSTDIR\\locales"',
+    'Delete "$INSTDIR\\ffmpeg.dll"', 'Delete "$INSTDIR\\LICENSE.electron.txt"']) {
+    assert.ok(after.includes(want), `no ${want} after the uninstaller runs`);
+  }
+  // this build's own files are never on that list
+  const own = after.filter((l) => /^(Delete|RMDir)/.test(l) && /\$INSTDIR\\(app\b|uninstall\.exe|\$\{MAINBINARYNAME\})/.test(l));
+  assert.deepEqual(own, []);
+});
