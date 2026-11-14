@@ -107,8 +107,10 @@ export function twins(base: Twin, at: string): [Twin, Twin] {
     const t = twinAt(path.join(at, side));
     fs.cpSync(base.root, t.root, { recursive: true });
     const sf = path.join(t.ud, 'settings.json');
-    if (fs.existsSync(sf)) {
-      const s = JSON.parse(fs.readFileSync(sf, 'utf8'));
+    let text: string | null = null;
+    try { text = fs.readFileSync(sf, 'utf8'); } catch { /* no settings in this copy */ }
+    if (text !== null) {
+      const s = JSON.parse(text);
       if (s.dotaGamePath === base.game) s.dotaGamePath = t.game;
       fs.writeFileSync(sf, JSON.stringify(s, null, 2));
     }
@@ -156,7 +158,11 @@ export function tree(dir: string): Record<string, string> {
     .sort(([a], [b]) => (a < b ? -1 : 1)));
 }
 
-export const readJson = (f: string): unknown => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null);
+export function readJson(f: string): unknown {
+  let text: string;
+  try { text = fs.readFileSync(f, 'utf8'); } catch { return null; }
+  return JSON.parse(text);
+}
 
 /* Each run copies the sandbox's game a few times over (some 200 MB a copy), so the copies go when
  * the process ends: left behind, a few dozen runs filled a 60 GB hole in the temp folder.
