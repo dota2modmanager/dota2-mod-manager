@@ -20,6 +20,11 @@ before trying a fix.
 | Particles stay round the hero after a cast | A continuous emitter in a child of a long-lived effect | An instantaneous burst with short lives |
 | An ability no longer reads as itself | Swapped-in models at the old size and number cover the hero and the effect | Fewer and smaller, and keep the plain effect's signature part (its dark cloud) as a child |
 | A model swapped into an effect wears the old one's skin | `m_hOverrideMaterial` on the renderer | Remove it |
+| A trail or a ring you wrote draws nothing, and the log is clean | `C_OP_RenderTrails` and the flat ring renderer, written by hand | The same particles as sprites ([recolor.md](recolor.md)) |
+| A borrowed arcana effect is faint, or gone while the hero stands | It emits by a control point the game sets for its own hero (the hero's speed into CP6) | Remap from 0 with an output minimum, set the point in the root's pre-emission operators |
+| You asked for twice the particles and got the same | `m_nMaxParticles` capped the new rate | Raise the budget with the rate |
+| An effect on an item hangs in the air beside it | Placed by an offset from an attachment | Surface hitboxes on the item, `C_INIT_CreateOnModel` on `mm_surface`, `C_OP_LockToBone` ([recolor.md](recolor.md)) |
+| A model in an effect is tiny or huge | The particle's radius is the model's scale | Set the radius, not the model's size |
 
 ## Models and materials
 
@@ -39,6 +44,15 @@ before trying a fix.
 | Glass or water on a blade draws flat white in the game | `hero_fluid.vfx` is mostly refraction of bright cube maps; tint and colour barely reach it | Your own `hero.vfx` material: deep colour in the texture, glowing cracks through the self-illum mask, a tight highlight and a cold rim |
 | A part that reads in a front render is a blob of colour in the game | The game's camera looks down from high behind: a bag on the back is a ball of one colour, fur trims are stripes | Render at the game's angle (about 60 degrees down) before you call a look done; give the top and the back something that reads (a bright accent, a dark band across a large area of one colour) |
 | Hard dark strokes across a cloth | Faces in the folds given a darker material: the material edges follow the mesh, not the light | Fold with the shape alone; a darker material only where a whole region is in shadow (underneath) |
+| Your new weapon never shows; the old one and its chain stay | The default item's model is another file than the slot's name suggests | Replace the file the default item's `model_player` names ([custom-models.md](custom-models.md)) |
+| A white halo round fur and bright cloth, past the silhouette | Bright whites overexposed in that hero's lighting and bloomed; turning bloom off did not help | `F_MASKS_1`/`F_MASKS_2` with black rim, glow and detail masks and a dark grey specular mask |
+| A part moves two or three times as far as its bone | Weights added up past 1 when pieces were joined | Normalise after joining; print the largest weight sum before export |
+| Sleeves slide off the arms in poses | Tubes built along the bone line | Shells of the arm's skin, which bend with it |
+| Fur trims vanish after smoothing the edge they sit on | Laplacian smoothing shrinks a loop | Taubin smoothing |
+| A cloth shaded in patches, one per UV island | Occlusion or noise blurred in UV space | Shade per vertex, bake the vertex colour ([custom-models.md](custom-models.md)) |
+| A lip or a rim added along a mouth looks stuck on | A separate tube over the face | Clean the face's own edge and set it to a curve |
+| A wide cloth surface crumples in poses | Cloth chains have no links between them and drift apart | Hold them firmly, or keep the surface on the skeleton |
+| A fitted beard from another hero shows facets and spikes | Its low mesh was shaped for another face | An item made for your hero, in your material |
 | Item effects hang in the air | They are bound to attachment points of the item's own model, which your model lacks | Leave them out, or hang them on a particle the hero always has ([items-from-game.md](items-from-game.md)) |
 
 ## Animations
@@ -74,4 +88,8 @@ before trying a fix.
 | The user still saw an old version | They had an earlier build installed | After a rebuild, tell them to import the new VPK in the app |
 | A fix for one thing broke another | Several fixes tried in a row on a guess | One cause at a time, each in a test build |
 | A "broken" effect was normal | Never compared with the unmodded hero | Run the bench without `--vpk` first |
+| A Python script came out with broken strings | A shell heredoc turned `'\\n'` into a real line break | Write scripts with a file tool, not through the shell |
+| A Blender script kept wrong vertices or lost weights | bmesh element references die after create operations, and `vertex_groups.clear()` wipes the weights | Build new geometry in its own bmesh and copy it in; set weights after the groups exist |
+| The doctor and the bench checked an old VPK | `Select-Object -First 1` after the pack in PowerShell stopped the pipeline and killed the packer | Never cut the output of a step that writes |
+| A part from an earlier test build came back | A partial rebuild left the stage as the test left it | Rebuild with the whole build script every time |
 | A confident report turned out wrong | The bench's attack verdict on a dark model | Look at the frames; the verdict is a hint |
