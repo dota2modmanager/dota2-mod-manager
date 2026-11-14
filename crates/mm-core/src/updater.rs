@@ -44,6 +44,25 @@ pub trait UpdaterLike {
     fn check(&mut self);
 }
 
+/// The shell's updater as the owner keeps it, behind a box.
+impl<T: UpdaterLike + ?Sized> UpdaterLike for Box<T> {
+    fn set_channel(&mut self, name: &str) {
+        (**self).set_channel(name)
+    }
+    fn set_allow_prerelease(&mut self, on: bool) {
+        (**self).set_allow_prerelease(on)
+    }
+    fn set_auto_download(&mut self, on: bool) {
+        (**self).set_auto_download(on)
+    }
+    fn set_feed(&mut self, feed: Feed) -> Result<(), String> {
+        (**self).set_feed(feed)
+    }
+    fn check(&mut self) {
+        (**self).check()
+    }
+}
+
 /// What the window is told: a version exists, is fetched, or is to be fetched beside a portable copy.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct UpdateNews {

@@ -125,6 +125,8 @@ pub struct Owner {
     pub patch_watcher: OnceLock<Arc<crate::patch_watch::PatchWatcher>>,
     /// the Discord status, once the shell connects it (owner_presence.rs)
     pub presence: OnceLock<crate::discord_presence::Presence>,
+    /// auto-update, once the shell starts it over its own updater (owner_update.rs)
+    pub updater: OnceLock<crate::owner_update::Driver>,
 }
 
 #[derive(Default)]
@@ -296,6 +298,7 @@ impl Owner {
             build_turn: Mutex::new(()),
             patch_watcher: OnceLock::new(),
             presence: OnceLock::new(),
+            updater: OnceLock::new(),
         });
         let bases = owner.core().bases.clone();
         bases.attach(Arc::downgrade(&owner));

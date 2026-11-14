@@ -322,23 +322,34 @@ report failed under Tauri with a TypeError; it answers 1280x800 now, as its othe
 
 ## Updates and removal under Tauri
 
-The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`); what is left is the
-wiring, and three parts of it are the maintainer's to decide, because they reach every copy out
-there:
+The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How it is wired:
 
-- Tauri's updater plugin installs only what is signed with its own key (minisign, not the code
-  signing certificate): a key pair made once with `tauri signer generate`, the private half a CI
-  secret, the public half in `tauri.conf.json`. Losing it means no copy can update again.
-- It reads a JSON manifest (`latest.json`, and one per channel for the testers) where
-  electron-updater reads `latest.yml`. CI writes both while the two builds overlap, and the bucket
-  mirror carries both (`tools/mirror-plan.js`). `Updater` takes the feed through `UpdaterLike`, so
-  the plugin's endpoints become the two feeds and the channel picks the file.
-- The way over: the last Electron release has to install the Tauri build, through
-  electron-updater's NSIS step, into the same folder and under the same app id, keeping userData
-  where it is (`%APPDATA%\Dota 2 Mod Manager`). The removal questions move from
-  `build/installer.nsh` to Tauri's NSIS hooks (`NSIS_HOOK_PREUNINSTALL`), with the same pair of
-  locks: the hook never starts the app on an update's command line, and `is_uninstall_run` says
-  no to one.
+- The owner runs the driver (`owner_update.rs`) over the shell's updater (`src-tauri/src/update.rs`,
+  `tauri-plugin-updater`), as src/main.ts runs src/updater.ts over electron-updater. It looks at
+  start and every four hours, reads the channel on every look, and looks again at once when the
+  beta switch changes or the account signs out. Only a packaged build that is not held to a
+  sandbox starts it. A version is fetched as soon as it is found; the window's "restart"
+  (`update:install`) installs it.
+- The plugin installs only what is signed with the project's own minisign key (not the code
+  signing certificate). The public half is in `tauri.conf.json` (`plugins.updater.pubkey`); the
+  private half is the CI secret `TAURI_SIGNING_PRIVATE_KEY`. Losing it means no copy can update
+  again.
+- The feed is a JSON manifest per channel, `latest.json` and `beta.json`, where electron-updater
+  reads `latest.yml`. The stable channel reads GitHub's latest release first and the mirror after
+  a failure. GitHub's "latest" release is never a prerelease, so the beta channel reads the
+  mirror (`https://cdn.dota2modmanager.com/updates/beta.json`).
+- The removal questions are in Tauri's NSIS hooks (`src-tauri/windows/hooks.nsh`, from
+  `build/installer.nsh`). The hook asks nothing on an update: the plugin starts the new installer
+  with `/UPDATE` (and `/P`, passive), and the installer hands both to the old uninstaller. It also
+  asks nothing in a silent run, and `is_uninstall_run` refuses an update's command line as well.
+  Tauri's own "is the app running" check comes after the hook, so the hook runs that check itself
+  first: a copy in the tray would take the `--uninstall` start as a second instance and end it
+  unasked.
+
+Still to do: CI building the signed NSIS installer and the manifests beside each release and on
+the mirror, and the way over. The last Electron release has to install the Tauri build, through
+electron-updater's NSIS step, into the same folder and under the same app id, keeping userData
+where it is (`%APPDATA%\Dota 2 Mod Manager`).
 
 ## Moving a piece
 

@@ -151,6 +151,7 @@ pub mod owner_studios;
 pub mod owner_support;
 pub mod owner_tools;
 pub mod owner_uninstall;
+pub mod owner_update;
 pub mod owner_watch;
 pub mod pak_stamp;
 pub mod panorama_files;

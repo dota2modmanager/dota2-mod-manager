@@ -58,6 +58,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
         "beta:set" => {
             let mut c = o.core();
             set(&mut c, "betaChannel", json!(arg(args, 0) == Value::Bool(true)))?;
+            // look now rather than in four hours: switching this on is a question the user just asked
+            crate::owner_update::recheck(o);
             Ok(beta(&c))
         }
         "support:state" => {
@@ -116,6 +118,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
         }
         "account:signOut" => {
             set(&mut o.core(), "account", Value::Null)?;
+            // no account, nobody to check against the list: back to the channel everybody else reads
+            crate::owner_update::recheck(o);
             Ok(json!({ "ok": true }))
         }
         other => Err(format!("no handler for {other}")),

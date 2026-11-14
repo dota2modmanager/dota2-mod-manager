@@ -12,6 +12,7 @@ mod backend;
 mod native;
 mod ported;
 mod shell;
+mod update;
 mod window;
 
 use std::path::PathBuf;
@@ -172,6 +173,8 @@ fn main() {
         ))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(update::Pending::default())
         .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key])
         // the catalog's pictures, which bridge.js points the page's images at
         .register_asynchronous_uri_scheme_protocol(mm_core::preview_cache::SCHEME, |ctx, req, responder| {
@@ -204,6 +207,9 @@ fn main() {
                     downloads: app.path().download_dir().unwrap_or_default(),
                     argv: argv.clone(),
                     first_run,
+                    // a packaged build updates itself; a checkout's build and a sandbox run do not
+                    // (src/main.ts: the updater keeps its cache outside any sandbox)
+                    updates: !cfg!(debug_assertions) && flag(&argv, "write-jail").is_none(),
                 },
             )));
             app.manage(Owner(owner.clone()));

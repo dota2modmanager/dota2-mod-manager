@@ -100,6 +100,8 @@ fn inputs(o: &Owner) -> crate::diagnostics::ReportInputs {
     let shell = o.shell.request("win.report", vec![]).unwrap_or(Value::Null);
     let shell_field = |k: &str| shell.get(k).cloned().unwrap_or(Value::Null);
     let compiler = crate::owner_compiler::state_for_report(o);
+    // the owner's own driver, when the shell started one; read before the state's lock
+    let own_updater = crate::owner_update::report(o);
     let c = o.core();
     let settings = c.settings.all();
     let lang = settings.get("uiLang").and_then(Value::as_str).filter(|l| !l.is_empty()).unwrap_or("en").to_string();
@@ -120,7 +122,7 @@ fn inputs(o: &Owner) -> crate::diagnostics::ReportInputs {
             (k.to_string(), json!({ "off": off, "note": note }))
         })
         .collect();
-    let updater = match shell.get("updater") {
+    let updater = match own_updater.as_ref().or(shell.get("updater")) {
         Some(u) if !u.is_null() => u.clone(),
         // a shell that does not say has its updater: a Tauri build always carries one
         _ => json!({ "available": true, "lastError": null }),
