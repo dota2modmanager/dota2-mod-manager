@@ -2,7 +2,7 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
-## 3.9.0
+## 4.0.0
 
 We rewrote the app. The window looks as before, but the code behind it (installing mods, building
 the item table, downloads, watching the game) now runs in Rust on Tauri instead of Node.js on
@@ -21,7 +21,7 @@ The app reads the item list each time it builds the item table, each time you pi
 the builder and after every Dota patch, so you wait less at all three. That work now uses every
 core of your processor instead of one.
 
-You don't need to do anything. 3.8.0 updates itself to 3.9.0 in the same folder and keeps your
+You don't need to do anything. 3.8.0 updates itself to 4.0.0 in the same folder and keeps your
 mods, presets and settings. Shortcuts, the taskbar pin and the tray keep working, and the update
 removes the old Electron files.
 
