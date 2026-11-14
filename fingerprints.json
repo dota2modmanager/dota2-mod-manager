@@ -1,5 +1,5 @@
 {
-  "count": 1944,
+  "count": 1945,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -339,6 +339,7 @@
     "2cd72a6b8a05d2d5768a5ef8660954ecb29f38e7": [{"name":"Aghanim Peach","categoryId":"shaders","styleLabel":null,"type":"vpk"}],
     "2d039fd7bac952ae0d90e908ce4bbe2850842405": [{"name":"Warcraft 3 Clockwerk","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2d204f7581ad46acc148868034fb3a8dd40ba8fa": [{"name":"TI10 Bottle","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "2d4fb4b903a600fa3e1d3623bef277b3ae45a90d": [{"name":"Warcraft 3 Arc Warden","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "2d54da0cff9ad9e81086bce04dd6bd1349a08a3d": [{"name":"Nemestice Teleport","categoryId":"item-effects","styleLabel":"lvl Il","type":"vpk"}],
     "2d6def7a319c2daa87a164cb9a16cebaa5b61fda": [{"name":"Reptilian Dire Creeps","categoryId":"creeps","styleLabel":"Style II","type":"vpk"}],
     "2d73983ba39ab81acc103f4a63a3cc89c88256f5": [{"name":"Kez Tensura","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1177,6 +1178,7 @@
     "9cacac840adb38a5b1e8ed907f412e9f6c800e90": [{"name":"Vs Creen Lycoris Colors V1","categoryId":"parts","styleLabel":"Style I","type":"vpk"}],
     "9cc0f453c428ed764ad56b997a62308aa384b244": [{"name":"The International 2019","categoryId":"music","styleLabel":null,"type":"vpk"}],
     "9cf8b9271fca809690135fff7d6769e3521bf0bd": [{"name":"Kunkka Leviathan","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "9d107755ca6be2606e702a99acc0c4b0dd8b044c": [{"name":"Warcraft III Neutrals","categoryId":"neutral-creeps","styleLabel":null,"type":"vpk"}],
     "9d18248fadaf87fe8e9f2eeb4a495ed4df3fe0aa": [{"name":"Pumpkin Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
     "9d19b4ec82b49ff44c332f9c9f8d8503ee780d92": [{"name":"Keeper of the Light Prominence","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "9d1b63acdfe643ffedbcd884be5225eea243f7fb": [{"name":"Ancient Apparition Sanity","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -1621,7 +1623,6 @@
     "d9f897dd7b60aa1d1f36d1257c092720251d5b21": [{"name":"Invoker Dark Apex","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "da2c4088c045d8145badb99d8181a5f4850d2c7e": [{"name":"Greasepaint Gutbuster Pudge","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "da4c3488294af13d587524370c3a8d862b646b18": [{"name":"Shadow Fiend Taunt","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
-    "da5e00436666ad25bdb9893c3cbe8d53c2e7b1b5": [{"name":"Warcraft III Neutrals","categoryId":"neutral-creeps","styleLabel":null,"type":"vpk"}],
     "da60c0a71f43cfe5147fd0dfdf99ee770df94ad9": [{"name":"Dark Carnaval Pedestal","categoryId":"pedestal","styleLabel":null,"type":"vpk"}],
     "da8f65e34285bffc0efb4ce9eaba0e89c8930478": [{"name":"Naga Siren Snickers","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "db01233efabe5f04d78da1b4f18536db175830bc": [{"name":"Monkey King","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],

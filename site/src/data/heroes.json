@@ -4434,6 +4434,17 @@
           "date": 1791253117
         },
         {
+          "name": "Warcraft 3 Arc Warden",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["back","arms","shoulder","head"],
+          "image": {"src":"/mods/warcraft-3-arc-warden.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1794649159
+        },
+        {
           "name": "Arc Warden Ancient Gaoler",
           "categoryId": "heroes",
           "styleLabel": null,
