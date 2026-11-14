@@ -15,7 +15,7 @@ use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
 
-use crate::sidecar::Sidecar;
+use crate::backend::Backend;
 
 /// settings.json as the host last wrote it, or `{}`.
 pub fn settings(ud: &Path) -> Value {
@@ -46,7 +46,7 @@ pub fn work_area(app: &tauri::App) -> Option<Area> {
 /// What the window and the tray share.
 pub struct Shell {
     user_data: PathBuf,
-    host: Arc<Sidecar>,
+    host: Arc<Backend>,
     keeper: Mutex<TrayKeeper>,
     icon: Mutex<Option<TrayIcon>>,
     zoom: Mutex<f64>,
@@ -64,7 +64,11 @@ impl Shell {
     fn tell_host(&self, channel: &'static str, args: Value) {
         let host = self.host.clone();
         std::thread::spawn(move || {
-            let _ = host.invoke(channel, args);
+            let list = match args {
+                Value::Array(a) => a,
+                other => vec![other],
+            };
+            let _ = host.invoke(channel, list);
         });
     }
 
@@ -128,7 +132,7 @@ impl Shell {
         }
         // the host's own keeper (src/tray.ts) hears the close too and marks the hint seen in
         // settings.json, which it owns until the switch
-        self.host.notify(json!({ "t": "hidden" }));
+        self.host.hidden();
         eprintln!("[mm-shell] window hidden in the tray");
     }
 
@@ -204,7 +208,7 @@ pub struct Open {
 }
 
 /// Open the window on the app's page, locked to it, with the tray beside it.
-pub fn open(app: &tauri::App, host: Arc<Sidecar>, o: Open) -> tauri::Result<WebviewWindow> {
+pub fn open(app: &tauri::App, host: Arc<Backend>, o: Open) -> tauri::Result<WebviewWindow> {
     let s = settings(&o.user_data);
     let scale = if o.first_run && start_scale(o.area) != 1.0 { start_scale(o.area) } else { clamp_zoom(&s["uiScale"]) };
     let fit = window_fit(o.area, scale);

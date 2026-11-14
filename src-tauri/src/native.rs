@@ -7,6 +7,11 @@ use tauri::{AppHandle, Manager};
 
 /// `Some(answer)` when the channel is Rust's, `None` when it is still the host's.
 pub fn handle(app: &AppHandle, channel: &str, args: &[Value]) -> Option<Result<Value, String>> {
+    window(app, channel).or_else(|| crate::ported::handle(app, channel, args))
+}
+
+/// The title bar's buttons: the shell's own, whoever owns the state.
+pub fn window(app: &AppHandle, channel: &str) -> Option<Result<Value, String>> {
     let window = || app.get_webview_window("main").ok_or_else(|| "no main window".to_string());
     let res = match channel {
         "win:minimize" => window().and_then(|w| w.minimize().map_err(|e| e.to_string())).map(|_| Value::Null),
@@ -17,7 +22,7 @@ pub fn handle(app: &AppHandle, channel: &str, args: &[Value]) -> Option<Result<V
         }),
         "win:close" => window().and_then(|w| w.close().map_err(|e| e.to_string())).map(|_| Value::Null),
         "win:isMaximized" => window().map(|w| json!(w.is_maximized().unwrap_or(false))),
-        _ => return crate::ported::handle(app, channel, args),
+        _ => return None,
     };
     Some(res)
 }

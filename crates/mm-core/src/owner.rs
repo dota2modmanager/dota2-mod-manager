@@ -98,6 +98,8 @@ pub struct Core {
     pub repair_gen: u64,
     /// the window's own errors, for the support report (diag:rendererError)
     pub renderer_errors: Vec<Value>,
+    /// whether Dota is open as the window was last told, and the crash watch after Play
+    pub watches: crate::owner_watch::Watches,
     /// the app's log, which the installer writes to as well
     log: Arc<crate::app_log::AppLog>,
     /// the game folder and language folder the installer was made for
@@ -266,6 +268,7 @@ impl Owner {
             undo: crate::build_undo::BuildUndo::default(),
             repair_gen: 0,
             renderer_errors: Vec::new(),
+            watches: Default::default(),
             log: log.clone(),
             made_for,
         };

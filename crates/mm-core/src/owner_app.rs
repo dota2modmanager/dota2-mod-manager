@@ -188,6 +188,8 @@ fn is_maximized(o: &Owner) -> bool {
 fn launch(o: &Owner) -> Value {
     o.settled();
     o.heal();
+    // a close seconds from now is a crash worth naming
+    crate::owner_watch::launched(o);
     let _ = o.shell.request("shell.openExternal", vec![json!("steam://rungameid/570")]);
     let game = o.core().game();
     json!({ "ok": true, "warning": crate::steam_appstate::launch_warning(game.as_deref()) })
