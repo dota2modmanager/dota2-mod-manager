@@ -154,6 +154,7 @@ fn slots_in(lib: &Library, game: &Path, text: &[u8], lang: &str) -> Result<Value
         offered.extend(unusual.iter().map(|e| json!({ "id": e.id, "name": english(&e.name_token) })));
         let mut named: HashMap<String, Value> = HashMap::new();
         let mut entries = Vec::new();
+        let mut gems_read: Option<std::sync::Arc<crate::item_builder_kinetic::Gems>> = None;
         for it in &item_slots {
             let rec = cosmetic_record_for(lib, &it.slot);
             let mut o = match json!(it) {
@@ -188,7 +189,11 @@ fn slots_in(lib: &Library, game: &Path, text: &[u8], lang: &str) -> Result<Value
                 vec![]
             } else {
                 let mut all = offered.clone();
-                let gems = crate::item_builder_kinetic::offered_kinetic(text, &it.hero_ids).map_err(kv)?;
+                let gems = match &gems_read {
+                    Some(g) => g.clone(),
+                    None => gems_read.insert(crate::item_builder_kinetic::kinetic_gems(text).map_err(kv)?).clone(),
+                };
+                let gems = crate::item_builder_kinetic::offered_of(&gems, &it.hero_ids);
                 all.extend(gems.iter().map(|g| {
                     let n = english(&g.name_token);
                     json!({ "id": g.id, "name": if n.is_empty() { g.fallback.clone() } else { n } })
