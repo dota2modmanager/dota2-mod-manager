@@ -72,6 +72,12 @@ pub struct Core {
     pub game_icons: Arc<crate::game_icons::GameIcons>,
     /// pictures off the Dota wikis, for what the game and the mods have none of
     pub wiki: Arc<crate::wiki_icons::WikiIcons>,
+    /// the 3D preview: its models made ready, the exporter, and the answers too big for one message
+    pub hero_preview: Arc<crate::hero_preview::HeroPreview>,
+    pub glb: Arc<crate::model_glb::ModelGlb>,
+    pub large: crate::large_answer::LargeAnswers,
+    /// the game folder as the settings have it, for the exporter's runs off the lock
+    game_now: Arc<std::sync::RwLock<Option<PathBuf>>>,
     /// which catalog mod a file is, by what it hashes to
     pub fingerprints: crate::fingerprints::Fingerprints,
     /// the anti-cheat notice in plain words
@@ -132,6 +138,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_app::CHANNELS, crate::owner_app::handle),
     (crate::owner_game::CHANNELS, crate::owner_game::handle),
     (crate::owner_pictures::CHANNELS, crate::owner_pictures::handle),
+    (crate::owner_preview3d::CHANNELS, crate::owner_preview3d::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -149,6 +156,7 @@ impl Core {
         }
         if now.0 != self.made_for.0 {
             self.mod_id = Arc::new(crate::mod_id::ModIdentity::new(now.0.clone()));
+            *self.game_now.write().unwrap_or_else(|e| e.into_inner()) = now.0.clone();
         }
         self.installer = make_installer(&now, user_data, &self.mod_id, &self.log);
         self.made_for = now;
@@ -220,6 +228,7 @@ impl Owner {
             Box::new(now),
             Box::new(move |m: &str| stats_log.lock().unwrap_or_else(|e| e.into_inner()).push(m.to_string())),
         );
+        let game_now = Arc::new(std::sync::RwLock::new(made_for.0.clone()));
         let core = Core {
             user_data: ud.clone(),
             settings,
@@ -236,6 +245,10 @@ impl Owner {
             kept: crate::owner_tools::Kept::default(),
             game_icons: Arc::new(crate::game_icons::GameIcons::new(&ud)),
             wiki: Arc::new(crate::wiki_icons::WikiIcons::new(&ud, net.clone(), now, &opts.app_version)),
+            hero_preview: Arc::new(crate::hero_preview::HeroPreview::new()),
+            glb: Arc::new(model_glb(&ud, &game_now, &log)),
+            large: crate::large_answer::LargeAnswers::default(),
+            game_now,
             fingerprints: crate::fingerprints::Fingerprints::new(&ud),
             notice: crate::notice_text::NoticeText::default(),
             download_stats,
@@ -486,6 +499,22 @@ fn after_deploys(c: &mut Core, filled: Option<std::collections::HashSet<String>>
     let arcana = c.kept.arcana(&game);
     arcana.give_way(&c.installer, &mut c.library, &filled, None, &mut |m| lines.push(m));
     c.undo.mark(&c.installer, &c.library, &c.settings);
+}
+
+/// The 3D preview's exporter: the toolchain's decoder over the game in the settings.
+fn model_glb(
+    ud: &Path,
+    game: &Arc<std::sync::RwLock<Option<PathBuf>>>,
+    log: &Arc<Mutex<Vec<String>>>,
+) -> crate::model_glb::ModelGlb {
+    let (tools, game, log) = (ud.to_path_buf(), game.clone(), log.clone());
+    crate::model_glb::ModelGlb::new(
+        ud,
+        Box::new(move || crate::toolchain::Toolchain::new(&tools, None).path_of("vrf")),
+        Box::new(move || game.read().unwrap_or_else(|e| e.into_inner()).clone()),
+        Box::new(|exe, args| crate::owner_tools::run_tool(&exe.to_string_lossy(), args)),
+        Box::new(move |m| log.lock().unwrap_or_else(|e| e.into_inner()).push(m.to_string())),
+    )
 }
 
 /// The start's steps that need more than the upkeep holds (src/game-upkeep.ts atStart).

@@ -117,6 +117,13 @@ async function compare(name: string, base: Twin, steps: Step[], picturePaks: str
   }
 }
 
+/** The texture decoder, when this machine has one installed, copied into a base state: what it
+ * makes is compared too. Without one both sides answer as having none. */
+function withVrf(base: Twin): void {
+  const vrf = path.join(process.env.APPDATA || '', 'Dota 2 Mod Manager', 'toolchain');
+  if (process.env.APPDATA && fs.existsSync(path.join(vrf, 'installed.json'))) fs.cpSync(vrf, path.join(base.ud, 'toolchain'), { recursive: true });
+}
+
 const open = (filePaths: string[] | null) => (m: string) => (m === 'dialog.open' ? (filePaths ? { canceled: false, filePaths } : { canceled: true, filePaths: [] }) : null);
 
 test('settings, the beta switch, the support prompt and the account answer as the TypeScript does', { skip }, async () => {
@@ -475,9 +482,7 @@ test('heroes\' portraits, the tiles\' pictures and the mods\' clips answer as th
   const base = await withMods(path.join(tmpRoot('pictures-base'), 'b'), OFFLINE);
   const mods = (readJson(path.join(base.ud, 'manifest.json')) as { installed: { files?: { relPath: string }[] }[] }).installed;
   const paks = mods.flatMap((r) => (r.files || []).map((f) => f.relPath)).filter((p) => p.endsWith('_dir.vpk'));
-  // the texture decoder, when this machine has one installed: the pictures it makes are compared too
-  const vrf = path.join(process.env.APPDATA || '', 'Dota 2 Mod Manager', 'toolchain');
-  if (process.env.APPDATA && fs.existsSync(path.join(vrf, 'installed.json'))) fs.cpSync(vrf, path.join(base.ud, 'toolchain'), { recursive: true });
+  withVrf(base);
   await compare('pictures', base, [
     { call: ['cosmetics:heroPortraits', ['axe', 'crystal_maiden', '../up', 7], false] },
     { call: ['cosmetics:heroPortraits', ['axe', 'nobody_at_all'], true] },
@@ -487,5 +492,23 @@ test('heroes\' portraits, the tiles\' pictures and the mods\' clips answer as th
     ...paks.map((p) => ({ call: ['preview:video', `modvid:${p}`] as [string, ...unknown[]] })),
     { call: ['preview:video', 'nonsense'] },
     { call: ['preview:frame', 'nonsense', { $b64: Buffer.from('not a png').toString('base64') }] },
+  ]);
+});
+
+test('the 3D preview answers as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('p3d-base'), 'b'), OFFLINE);
+  withVrf(base);
+  const slots = [{ slot: 'npc_dota_hero_axe:weapon', stock: '0' }];
+  await compare('p3d', base, [
+    { call: ['preview3d:slice', 1, 0] },
+    { call: ['preview3d:models', 'npc_dota_hero_axe', []] },
+    { call: ['preview3d:models', 'npc_dota_hero_axe', slots] },
+    { call: ['preview3d:warm', 'npc_dota_hero_axe', slots] },
+    { call: ['preview3d:prefetch', 'npc_dota_hero_axe', slots, 'npc_dota_hero_axe:weapon', ['1', '2']] },
+    { call: ['preview3d:motions', 'models/heroes/axe/axe.vmdl'] },
+    { call: ['preview3d:effect', 'nope'] },
+    { call: ['preview3d:effect', 'unusual-1'] },
+    { call: ['preview3d:model', 'models/heroes/axe/axe.vmdl'], note: 'not a prop' },
+    { call: ['preview3d:model', 'models/props_tree/tree_oak_00.vmdl'] },
   ]);
 });
