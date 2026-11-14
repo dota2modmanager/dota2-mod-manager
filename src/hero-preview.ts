@@ -284,7 +284,8 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
     const byClip = new Map<string, Set<string>>(), all = new Set<string>();
     let read: ((path: string) => Buffer | null) | null = null;
     for (const itemId of items.slice(0, 40)) {
-      let p: ReturnType<typeof plan> | null = await new Promise<null>((r) => setImmediate(() => r(null)));
+      await new Promise<void>((r) => setImmediate(r));
+      let p: ReturnType<typeof plan> | null;
       try { p = plan(hero, slots.map((s) => (s.slot === slot ? { ...s, tryOn: { itemId, effectId: '' } } : s))); } catch { continue; }
       if (!p) return 0;
       read = p.read;

@@ -3401,7 +3401,7 @@ test('putting a preset on in Rust does what the TypeScript does: downloads, own 
     const got = answers[k];
     const norm = 'error' in got ? got : { ok: plainOf(got.ok, rsIds), progress: plainOf(got.progress, rsIds), deployed: plainOf(got.deployed, rsIds) };
     // the TypeScript builds the table and runs what follows the master switch itself; the Rust says it has to
-    if ((op[0] === 'own' || op[0] === 'resolve') && norm.ok && want && (want as { ok?: unknown }).ok) {
+    if ((op[0] === 'own' || op[0] === 'resolve') && norm.ok && (want as { ok?: unknown }).ok) {
       const [g, w] = [norm.ok as Record<string, unknown>, (want as { ok: Record<string, unknown> }).ok];
       assert.ok(g.schema || !w.schema, `${k} a build the TypeScript started is asked for`);
       delete g.schema; delete w.schema;

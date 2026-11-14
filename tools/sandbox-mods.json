@@ -20,98 +20,98 @@
     {
       "categoryId": "shaders",
       "name": "Aghanim Labyrinth",
-      "file": "pak07_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/shaders/pak07_dir.vpk",
-      "sha256": "91203f7ebee05f6e8b8b6905cfcc512574e46f9eb9f6c10b8e52b7d9621a2651",
-      "bytes": 2488
+      "file": "Aghanim Labyrinth.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/shaders/Aghanim%20Labyrinth.zip",
+      "sha256": "72fed8c8a6933f7cd19ca904b773a9cd3cb0dae4b975427a3eb6849bc9fd7c6c",
+      "bytes": 1819
     },
     {
       "categoryId": "shaders",
       "name": "Aghanim Purple",
-      "file": "pak13_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/shaders/pak13_dir.vpk",
-      "sha256": "7dc2b549883f1a23fef49b122d3525083007a5080430a27056225990344375c0",
-      "bytes": 1055598
+      "file": "Aghanim Purple.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/shaders/Aghanim%20Purple.zip",
+      "sha256": "4ccc4d1dc33317e855881bd992e1cce63625e540b56f5fcdb603d495962e22fd",
+      "bytes": 134889
     },
     {
       "categoryId": "ti-bp-effects",
       "name": "Remove Seasonal Effects",
-      "file": "pak22_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/ti-bp-effects/pak22_dir.vpk",
-      "sha256": "60be030460b98fa3fca1fb16b1f6351b124e69dd69e1a4a651eca888d1794a52",
-      "bytes": 140955
+      "file": "Remove Seasonal Effects.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/ti-bp-effects/Remove%20Seasonal%20Effects.zip",
+      "sha256": "7b5ca67a55f7e66d62d182a946f8d4236e2627bebb7cf894c01c237c8a11bbd9",
+      "bytes": 46615
     },
     {
       "categoryId": "ti-bp-effects",
       "name": "TI 2019 Battle Pass",
-      "file": "pak10_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/ti-bp-effects/pak10_dir.vpk",
-      "sha256": "347607cfd5161141fff41b742db11092628f67e1346489e964a20f9256b341f6",
-      "bytes": 207087
+      "file": "TI 2019 Battle Pass.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/ti-bp-effects/TI%202019%20Battle%20Pass.zip",
+      "sha256": "9fb58dc3b3d357b1b8c81728f39ed412cabaf50fc37b3c5f555e1107a4d0412f",
+      "bytes": 47184
     },
     {
       "categoryId": "emblems",
       "name": "Emblem of the Diretide Green",
-      "file": "pak28_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/emblems/pak28_dir.vpk",
-      "sha256": "a71678d6d3f5c254de0fa2e558389e024e2d3bee832c70c6ed76e00699f835e9",
-      "bytes": 2783
+      "file": "Emblem of the Diretide Green.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/emblems/Emblem%20of%20the%20Diretide%20Green.zip",
+      "sha256": "6dc85bdb084dd7da729c6ae393c2f3ca1fc4871f42941155212bebea9f3d93d5",
+      "bytes": 2177
     },
     {
       "categoryId": "emblems",
       "name": "Emblem of the Diretide Blue",
-      "file": "pak29_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/emblems/pak29_dir.vpk",
-      "sha256": "ab9f5627710a1fe0ecb660fdc625f301f663cb4c183b1d3f2d304e8d4595a077",
-      "bytes": 2783
+      "file": "Emblem of the Diretide Blue.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/emblems/Emblem%20of%20the%20Diretide%20Blue.zip",
+      "sha256": "dcfa927dc7f62d3a729927aa456e36633160b27d86c8b0c76ce6976195ed0464",
+      "bytes": 2178
     },
     {
       "categoryId": "versus-screens",
       "name": "Winter Versus Screen",
-      "file": "pak10_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/versus-screens/pak10_dir.vpk",
-      "sha256": "a9abefdce0104a64b25be0d1732bb3233fc7f2b85893b55fda045d66d616e2ae",
-      "bytes": 4688
+      "file": "Winter Versus Screen.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/versus-screens/Winter%20Versus%20Screen.zip",
+      "sha256": "bd05f1b7c262d016c3cec848a8a55ba3fa6eabd66788b1140296396b8d5a28be",
+      "bytes": 1926
     },
     {
       "categoryId": "versus-screens",
       "name": "TI9 Versus Screen I",
-      "file": "pak11_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/versus-screens/pak11_dir.vpk",
-      "sha256": "9be77e598f0fc3dd95b6b92c75c31440ed4faa49a6d20fd47f1a8919a47c36fc",
-      "bytes": 4774
+      "file": "TI9 Versus Screen I.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/versus-screens/TI9%20Versus%20Screen%20I.zip",
+      "sha256": "7c4320082495ad6fd656a44b56019d832bd75f21b627f32e10a9b72e6c872f8f",
+      "bytes": 1944
     },
     {
       "categoryId": "terrains",
       "name": "DarkPoly & Trees",
-      "file": "pak10_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/terrains/pak10_dir.vpk",
-      "sha256": "42ea832a28654574dd3afd6cf822d9baf2b3ab7c73b21d91c2db87534daeec31",
-      "bytes": 48628312
+      "file": "DarkPoly & Trees.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/terrains/DarkPoly%20%26%20Trees.zip",
+      "sha256": "1afff7a335dd0cf3123214c17faef8ee6f1f02ab2da9201c818ef55146ffb67a",
+      "bytes": 30109221
     },
     {
       "categoryId": "terrains",
       "name": "DarkPoly",
-      "file": "pak11_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/terrains/pak11_dir.vpk",
-      "sha256": "7dd4b12f2f094a501bec02410493caabf4a8c8eaca7b761ee4f1e852af019061",
-      "bytes": 48448439
+      "file": "DarkPoly.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/terrains/DarkPoly.zip",
+      "sha256": "12a0d340d2b09bd38bff19ead8c13ad23268ba993d31b267d8ef31138bc5c193",
+      "bytes": 30074773
     },
     {
       "categoryId": "trees",
       "name": "Pumpkin Trees",
-      "file": "pak10_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/trees/pak10_dir.vpk",
-      "sha256": "62abd6dad56ed9e2f52fbf06a44cae885f908d8ab5fdd457c317b096fef28dd1",
-      "bytes": 6271637
+      "file": "Pumpkin Trees.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/trees/Pumpkin%20Trees.zip",
+      "sha256": "c0d3c8ff26390ea6593fa9ee543ab83cf2b7f91a6b14917298ececd0de50caab",
+      "bytes": 1926335
     },
     {
       "categoryId": "trees",
       "name": "Small Trees Minify",
-      "file": "pak11_dir.vpk",
-      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/trees/pak11_dir.vpk",
-      "sha256": "5274de3e3c0e991b440c33d25c47c0ed9333bbb1a435dcc9feddd80b423cee53",
-      "bytes": 615400
+      "file": "Small Trees Minify.zip",
+      "url": "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/assets/files/trees/Small%20Trees%20Minify.zip",
+      "sha256": "446ac21d206c5472faa2ef46163002d682dbecd268eb2f9ea644b219956429fe",
+      "bytes": 213438
     }
   ]
 }
