@@ -133,7 +133,10 @@ fn slots_in(lib: &Library, game: &Path, text: &[u8], lang: &str) -> Result<Value
     let effects = crate::item_builder_effects::item_effects();
     if !item_slots.is_empty() && !effects.is_empty() {
         if ix.is_some() {
-            let ids: Vec<String> = item_slots.iter().flat_map(|it| it.hero_ids.iter().cloned()).collect();
+            let mut ids: Vec<String> = item_slots.iter().flat_map(|it| it.hero_ids.iter().cloned()).collect();
+            if let Some(ix) = &ix {
+                ids.extend(crate::item_builder_details::game_hero_ids(ix.paths()));
+            }
             let mut r = |p: &str| read(p);
             hero_attrs = json!(crate::item_builder_details::hero_attributes(&mut r, &ids));
         }

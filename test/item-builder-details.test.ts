@@ -9,7 +9,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { eventName, eventNames, heroAttributesSteps, itemFacts, setDetails } from '../src/item-builder-details.ts';
+import { eventName, eventNames, gameHeroIdsSteps, heroAttributesSteps, itemFacts, setDetails } from '../src/item-builder-details.ts';
 import { drain } from '../src/steps.ts';
 import { activeFilters, filterSets, readSetFilters, setFacets, SET_FILTERS, writeSetFilters } from '../renderer/catalog/builder/set-filters.ts';
 import type { ItemSet } from '../src/item-builder-sets.ts';
@@ -27,6 +27,13 @@ test("a hero's group is the attribute its own script names, and a hero without o
   const index = { read: (rel: string) => files[rel] || null };
   assert.deepEqual(drain(heroAttributesSteps(index, ['axe', 'luna', 'lina', 'pangolier', 'axe', 'newhero', '../escape'])),
     { axe: 'str', luna: 'agi', lina: 'int', pangolier: 'all' });
+});
+
+test('every hero the game has a script for gets an attribute, not only the ones with items', () => {
+  const paths = ['scripts/npc/heroes/npc_dota_hero_largo.txt', 'scripts/npc/heroes/npc_dota_hero_kez.txt', 'scripts/npc/npc_heroes.txt',
+    'scripts/npc/heroes/npc_dota_hero_Bad.txt', 'scripts/npc/heroes/npc_dota_hero_axe.vdata', 'scripts/npc/heroes/npc_dota_hero_.txt',
+    ...Array.from({ length: 25_000 }, (_, i) => `x/${i}.txt`)];
+  assert.deepEqual(drain(gameHeroIdsSteps({ paths: () => paths })), ['kez', 'largo']);
 });
 
 test('the hub lists heroes as the game does: strength, agility, intelligence, universal, each alphabetical', async () => {

@@ -1065,6 +1065,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let ids: Vec<String> = serde_json::from_value(args.get(1).cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
             json!(crate::item_builder_details::hero_attributes(&mut read, &ids))
         }
+        "item-builder-details.gameHeroIds" => json!(crate::item_builder_details::game_hero_ids(pak(&s(args, 0))?.paths())),
         "item-builder-details.eventNames" => {
             let tokens: Vec<(String, String)> = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null)).map_err(|e| e.to_string())?;
             let names = crate::item_builder_details::event_names(tokens.iter().map(|(k, v)| (k.as_str(), v.as_str())));
@@ -3313,6 +3314,9 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             json!({ "answers": answers, "log": log })
         }
         "vtex.png" => json!(crate::vtex::png_from_vtex(&b(args, 0)?).map(crate::vtex::data_url)),
+        "vtex.rgba" => json!(crate::vtex::rgba_from_vtex(&b(args, 0)?).map(|(w, h, rgba)| {
+            json!({ "width": w, "height": h, "sha1": hex(&<sha1::Sha1 as sha1::Digest>::digest(&rgba)) })
+        })),
         "gem-colors.name" => json!(crate::gem_colors::gem_name(&s(args, 0))),
         "gem-colors.rgb" => json!(crate::gem_colors::rgb_of(&s(args, 0))),
         "gem-colors.colors" => json!(crate::gem_colors::gem_colors(&b(args, 0)?).map_err(|e| e.to_string())?),

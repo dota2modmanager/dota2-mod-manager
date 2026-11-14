@@ -9,7 +9,7 @@ import { t } from './i18n.ts';
 import { getLang } from './i18n.ts';
 import { chineseCosmeticNamesSteps, gameTokens, styleNamer } from './cosmetic-names.ts';
 import { sharedVpkIndexSteps } from './vpk.ts';
-import { eventNames, heroAttributesSteps, setDetails, type HeroAttribute, type SetDetails } from './item-builder-details.ts';
+import { eventNames, gameHeroIdsSteps, heroAttributesSteps, setDetails, type HeroAttribute, type SetDetails } from './item-builder-details.ts';
 import { drain, PAUSE } from './steps.ts';
 import type { Settings } from './settings.ts';
 import type { Library } from './library.ts';
@@ -101,7 +101,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
       yield PAUSE;
       const effects = itemBuilder.itemEffects();
       if (itemSlots.length && effects.length) {
-        if (ix) heroAttrs = yield* heroAttributesSteps(ix, itemSlots.flatMap((it) => it.heroIds));
+        if (ix) heroAttrs = yield* heroAttributesSteps(ix, [...itemSlots.flatMap((it) => it.heroIds), ...yield* gameHeroIdsSteps(ix)]);
         const styleName = styleNamer(game, getLang(), (i) => t('Стиль {0}', i + 1));
         yield PAUSE;
         // the game's own unusual effects after the builder's, by the names the game gives them (issue #393)

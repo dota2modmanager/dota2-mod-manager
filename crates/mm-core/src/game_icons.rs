@@ -113,7 +113,7 @@ impl GameIcons {
         let mut left = Vec::new();
         for p in paths {
             match ix.read(&texture_path(p)) {
-                Ok(Some(buf)) => match crate::vtex::png_from_vtex(&buf) {
+                Ok(Some(buf)) => match crate::vtex::picture_from_vtex(&buf) {
                     Some(png) => {
                         let _ = std::fs::write(self.cache_file(p), png);
                     }

@@ -26,7 +26,7 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import * as schema from './schema.ts';
 import { openVpkIndex, type VpkIndex } from './vpk.ts';
-import { pngFromVtex } from './vtex.ts';
+import { pictureFromVtex } from './vtex.ts';
 import { runTool } from './toolchain.ts';
 import { folderSize } from './folder-size.ts';
 
@@ -160,7 +160,7 @@ export function createGameIcons({ userDataDir, toolchain, getGamePath, log = () 
     fs.mkdirSync(root, { recursive: true });
     for (const imagePath of imagePaths) {
       try {
-        const png = pngFromVtex(ix.read(texturePath(imagePath)));
+        const png = pictureFromVtex(ix.read(texturePath(imagePath)));
         if (png) fs.writeFileSync(cacheFile(imagePath), png);
         else left.push(imagePath);
       } catch (err) {

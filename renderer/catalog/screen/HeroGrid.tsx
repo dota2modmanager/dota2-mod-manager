@@ -27,7 +27,9 @@ export function HeroGrid({ tiles, actions }: { tiles: HeroTileModel[]; actions: 
   if (!tiles.length) return <div className="empty-note">{L`Ничего не найдено — сбрось фильтры`}</div>;
   const flat = tiles.every((t) => t.attr === 'other');
   const q = fold(search);
-  const shown = q ? tiles.filter((t) => fold(t.hero).includes(q) || fold(heroName(t.hero)).includes(q)) : tiles;
+  // the mods that name no hero are not a hero: they stay in the list, not as a tile among portraits
+  const heroes = flat ? tiles : tiles.filter((t) => t.hero);
+  const shown = q ? heroes.filter((t) => fold(t.hero).includes(q) || fold(heroName(t.hero)).includes(q)) : heroes;
   return (
     <>
       <div className="toolbar">
@@ -38,13 +40,13 @@ export function HeroGrid({ tiles, actions }: { tiles: HeroTileModel[]; actions: 
               onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div className="layout-toggle" role="group" aria-label={L`Вид`}>
-            <button className="seg-btn active" data-layout="grid" title={L`Сеткой героев`} aria-label={L`Сеткой героев`}
+            <button className="seg-btn active" data-layout="grid"
               onClick={() => actions.layout('grid')}>
-              <span className="ms">grid_view</span>
+              <span className="ms">grid_view</span>{L`Сеткой героев`}
             </button>
-            <button className="seg-btn" data-layout="list" title={L`Все моды списком`} aria-label={L`Все моды списком`}
+            <button className="seg-btn" data-layout="list"
               onClick={() => actions.layout('list')}>
-              <span className="ms">view_agenda</span>
+              <span className="ms">view_agenda</span>{L`Все моды списком`}
             </button>
           </div>
         </div>

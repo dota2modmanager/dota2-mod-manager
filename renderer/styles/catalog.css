@@ -841,24 +841,31 @@
 .hero-tile.installed { border-color: color-mix(in srgb, var(--installed) 55%, var(--border)); }
 .hero-back .ms { font-size: 16px; }
 
-/* grid / list switch in the heroes toolbar */
+/* grid / list switch in the heroes toolbar: worded, since the list is where the filters are and an
+   icon pair alone went unnoticed */
 .layout-toggle {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 .layout-toggle .seg-btn {
   border: 0;
   background: none;
   color: var(--text-muted);
-  padding: 5px 10px;
+  padding: var(--space-1) var(--space-4);
   display: inline-flex;
   align-items: center;
+  gap: var(--space-2);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
 }
-.layout-toggle .seg-btn .ms { font-size: 16px; }
+.layout-toggle .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
+.layout-toggle .seg-btn .ms { font-size: var(--icon-sm); }
 .layout-toggle .seg-btn:hover { color: var(--text); background: var(--surface); }
 .layout-toggle .seg-btn.active { background: var(--primary-dim); color: var(--primary-soft); }
 .layout-toggle .seg-btn:focus-visible { outline: none; box-shadow: var(--focus-ring-inset); }
