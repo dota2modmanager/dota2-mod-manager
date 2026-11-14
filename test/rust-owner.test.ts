@@ -494,6 +494,9 @@ test('the remote config, the game patch and its repair, the item table, cosmetic
     { call: ['map:install', 'towers', '12936', null] },
     { call: ['arcana:install', 'terrorblade-arcana', [255, 0, 0], 'recolor'] },
     { call: ['arcana:state'] },
+    // the looks above start builds in the background: both sides wait them out before the end,
+    // or settings.json is compared while one side's build is still owed
+    { call: ['schema:refresh'], note: 'the builds are over' },
     { call: ['patch:setEnabled', false] },
     { call: ['patch:state'] },
     { call: ['mods:list'] },
