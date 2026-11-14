@@ -305,9 +305,14 @@ What the owner still does differently, or not yet:
   started by once the page has loaded, and one a second start hands over.
   The first start's language comes from the system's languages (`sys-locale`), as Electron's
   `getPreferredSystemLanguages`; `MM_LOCALE` stands in for them in a test run.
+  The uninstaller's run (`--uninstall`) opens only the removal's window
+  (`src-tauri/src/uninstall.rs`): the same `renderer/uninstall.html`, which
+  `tools/ui-build.mjs --tauri` copies beside the app's page, with `preload-uninstall.js` run
+  against the bridge. That window gets answers to the removal's four channels and no others, and
+  the owner skips the watches and the start's fetches. A close counts as cancelling (exit code 3).
+  `node tools/tauri-shot.mjs --uninstall` shows it and prints the code the run ends with.
   Not there yet: installing an update (the updater plugin is not wired), the
-  graphics card in the support report, and the uninstall window, which the Tauri shell does not
-  open yet under either side (it belongs with the installer's uninstall hooks).
+  graphics card in the support report, and the installer's hook that runs the removal.
 - The game watch and the crash watch after Play run in the owner (`owner_watch.rs`): asked every
   five seconds, every second while Dota is open, told to the page on a change and afresh after a
   reload.

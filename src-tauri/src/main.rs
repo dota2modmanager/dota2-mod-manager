@@ -12,6 +12,7 @@ mod backend;
 mod native;
 mod ported;
 mod shell;
+mod uninstall;
 mod update;
 mod window;
 
@@ -59,10 +60,15 @@ fn answer(a: Answer) -> Result<tauri::ipc::Response, String> {
 #[tauri::command]
 async fn mm_invoke(
     app: tauri::AppHandle,
+    window: tauri::WebviewWindow,
     owner: tauri::State<'_, Owner>,
     channel: String,
     args: Value,
 ) -> Result<tauri::ipc::Response, String> {
+    if !uninstall::allowed(window.label(), &channel) {
+        eprintln!("[mm-shell] ipc: refused {channel} from the removal window");
+        return Err("refused: not the removal's".into());
+    }
     let owner = owner.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let list = args_of(args);
@@ -97,7 +103,10 @@ fn after(app: &tauri::AppHandle, channel: &str, args: &[Value], ok: bool) {
 
 /// ipcRenderer.send: no answer.
 #[tauri::command]
-fn mm_send(owner: tauri::State<'_, Owner>, channel: String, args: Value) {
+fn mm_send(window: tauri::WebviewWindow, owner: tauri::State<'_, Owner>, channel: String, args: Value) {
+    if !uninstall::allowed(window.label(), &channel) {
+        return;
+    }
     let list = args_of(args);
     if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
         eprintln!("[mm-shell] ipc: refused {channel}: {why}");
@@ -114,8 +123,11 @@ fn mm_loaded(owner: tauri::State<'_, Owner>) {
 
 /// A Ctrl key the page passed on: Electron's before-input-event, which scales the content.
 #[tauri::command]
-fn mm_key(app: tauri::AppHandle, shell: tauri::State<'_, Arc<window::Shell>>, key: String, control: bool, alt: bool) {
-    shell.key(&app, &key, control, alt);
+fn mm_key(app: tauri::AppHandle, key: String, control: bool, alt: bool) {
+    // the removal's window has no scale to keep, and no shell state behind it
+    if let Some(shell) = app.try_state::<Arc<window::Shell>>() {
+        shell.key(&app, &key, control, alt);
+    }
 }
 
 /// `--name=value` from the command line.
@@ -213,6 +225,11 @@ fn main() {
                 },
             )));
             app.manage(Owner(owner.clone()));
+            // the uninstaller's run: its one window and nothing else, no tray (src/main.ts)
+            if mm_core::uninstall::is_uninstall_run(&argv) {
+                uninstall::open(app, std::env::var_os("MM_QUIET").is_some())?;
+                return Ok(());
+            }
             let jailed = flag(&argv, "write-jail").is_some();
             window::open(
                 app,

@@ -43,6 +43,27 @@ export function isStale(projectRoot = root) {
   return newestSource(projectRoot) > fs.statSync(page).mtimeMs;
 }
 
+/* The uninstaller's window (renderer/uninstall.html) is not a Vite page: Electron loads it
+ * straight from renderer/, classic scripts and all. The Tauri shell can only load what is in its
+ * own folder, so the page and what it links are copied there as they are. Its IPC is a fetch to
+ * ipc.localhost, which the page's connect-src has to name, as vite.config.mjs does for the main page. */
+export const UNINSTALL_PAGE = [
+  'uninstall.html', 'uninstall.js', 'i18n.js',
+  'locales/zh-CN-catalog.js', 'locales/zh-CN-library.js', 'locales/zh-CN-app.js',
+  'styles/fonts.css', 'styles/themes.css', 'styles/tokens.css', 'styles/base.css', 'styles/controls.css', 'styles/modal.css',
+  'fonts',
+];
+export function copyUninstallPage(outDir, projectRoot = root) {
+  const from = path.join(projectRoot, 'renderer');
+  for (const rel of UNINSTALL_PAGE) {
+    fs.cpSync(path.join(from, rel), path.join(outDir, rel), { recursive: true });
+  }
+  const page = path.join(outDir, 'uninstall.html');
+  const html = fs.readFileSync(page, 'utf8');
+  if (!html.includes("connect-src 'none'")) throw new Error('uninstall.html: the policy changed, see copyUninstallPage');
+  fs.writeFileSync(page, html.replace("connect-src 'none'", 'connect-src ipc: http://ipc.localhost'));
+}
+
 /** Builds the page. Quiet unless it fails: the tools that call this print their own progress. */
 export async function buildUi({ quiet = true } = {}) {
   const { build } = await import('vite');
@@ -61,6 +82,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   if (process.argv.includes('--tauri')) {
     process.env.MM_TARGET = 'tauri';
     await buildUi({ quiet: false });
+    copyUninstallPage(path.join(root, 'out', 'renderer-tauri'));
     process.exit(0);
   }
   const force = process.argv.includes('--force');

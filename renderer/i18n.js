@@ -891,14 +891,14 @@ const EN = {
   'Безопасный режим сейчас выключен. gameinfo и подписи вернутся байт в байт, без следов.':
     'Safe mode is off right now. gameinfo and the signatures go back byte for byte, with nothing left behind.',
   'Удалить установленные моды': 'Remove the installed mods',
-  '{0} шт., {1} МБ в папке игры. Иначе останутся лежать там, и управлять ими будет нечем.':
-    '{0} of them, {1} MB inside the game folder. Left alone they stay there with nothing to manage them.',
+  '{0} шт. в папке игры. Иначе останутся лежать там, и управлять ими будет нечем.':
+    '{0} of them inside the game folder. Left alone they stay there with nothing to manage them.',
   'Модов не установлено.': 'No mods are installed.',
   'Удалить данные приложения': 'Remove the app\'s own data',
-  'Настройки, библиотека, кэш картинок и скачанные инструменты — {0} МБ.':
-    'Settings, library, picture cache and downloaded tools: {0} MB.',
-  'Ничего не отмечено — будет удалена только сама программа.':
-    'Nothing ticked: only the program itself will go.',
+  'Настройки, библиотека, кэш картинок и скачанные инструменты.': 'Settings, library, picture cache and downloaded tools.',
+  'Освободится {0} МБ': 'Frees {0} MB',
+  'Игра вернётся к своим файлам': 'The game gets its own files back',
+  'Удалится только сама программа': 'Only the program itself goes',
   'Удаляю…': 'Removing…',
   'Не удалось убрать {0}: {1}': 'Could not remove {0}: {1}',
   'Продолжить': 'Carry on',

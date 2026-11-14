@@ -311,7 +311,7 @@ export const EVAL_UNINSTALL_WINDOW = `
   if (box('optRevert')) step('putting the game back is ticked, because nothing else can do it later', box('optRevert').checked, 'it was not ticked');
   // the numbers come from the main process reading the real library and the real folder,
   // so a window that draws but is told nothing shows up here rather than looking fine
-  const notes = [...document.querySelectorAll('.uninstall-opt small')].map((n) => n.textContent).join(' | ');
+  const notes = [...document.querySelectorAll('.uninstall-opt small, .uninstall-opt-size, #total')].map((n) => n.textContent).join(' | ');
   step('it says how much it is talking about', /[0-9]/.test(notes), notes || '(no notes drawn)');
   return out;
 `;
