@@ -195,6 +195,11 @@ pub fn volume_path(dir_path: &Path, idx: u16) -> PathBuf {
 
 fn read_at(path: &Path, offset: u64, len: usize) -> Result<Vec<u8>> {
     let mut f = File::open(path)?;
+    // a record that runs past the end of its file is a damaged tree, refused before a buffer of
+    // the size it claims (up to 4 GiB) is made for it
+    if offset.saturating_add(len as u64) > f.metadata()?.len() {
+        return Err(VpkError::Tree);
+    }
     f.seek(SeekFrom::Start(offset))?;
     let mut body = vec![0u8; len];
     let mut got = 0;

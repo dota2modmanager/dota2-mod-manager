@@ -153,7 +153,15 @@ pub fn write_atomic(file: &Path, buf: &[u8]) -> Result<(), String> {
     }
     let _ = fs::remove_file(file);
     if fs::rename(&tmp, file).is_err() {
-        fs::write(file, buf).map_err(io)?;
+        if let Err(e) = fs::write(file, buf) {
+            // the old file is still there: the copy beside it is only litter. If it went, the
+            // copy is the one left, and stays for whoever reads the error.
+            if file.exists() {
+                let _ = fs::remove_file(&tmp);
+                return Err(io(e));
+            }
+            return Err(format!("{} ({})", io(e), tmp.to_string_lossy()));
+        }
         let _ = fs::remove_file(&tmp);
     }
     Ok(())
