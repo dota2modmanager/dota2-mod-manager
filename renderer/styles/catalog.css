@@ -1069,3 +1069,8 @@
 
 .fx-canvas > canvas { display: block; width: 100%; height: 100%; border-radius: inherit; }
 .fx-preview-status { padding: 8px 12px; color: var(--text-muted); font-size: 12px; }
+
+/* The heroes category in the game's four columns (catalog/screen/HeroGrid.tsx), on the item
+   builder's tiles (builder.css): a size up from the builder's, since each carries its count. */
+.hero-columns .hub-grid { grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); }
+.hero-columns .hero-count { top: var(--space-px); right: var(--space-px); min-width: 0; padding: 0 5px; font-size: var(--text-xs); }

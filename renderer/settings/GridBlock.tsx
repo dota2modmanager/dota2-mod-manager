@@ -1,9 +1,10 @@
 /* Hero grids in Settings (src/hero-grid.ts, issue #428): a switch per grid, on when the grid is in
  * the account's file. A switch writes at once, so the state is always the file's. The numbers are
  * OpenDota's, and the line under the switches says from when. */
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from '../ui/toast.ts';
 import { Toggle } from './Toggle.tsx';
+import { Row } from './parts.tsx';
 import type { GridKind, GridState } from '../api/app.ts';
 
 const KINDS: Array<{ kind: GridKind; label: () => string }> = [
@@ -12,7 +13,7 @@ const KINDS: Array<{ kind: GridKind; label: () => string }> = [
   { kind: 'popular', label: () => L`Чаще всего берут` },
 ];
 
-export function GridBlock({ i }: { i: number }) {
+export function GridRows() {
   const [st, setSt] = useState<GridState | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { void window.api.grids.state().then(setSt).catch(() => setSt(null)); }, []);
@@ -33,23 +34,19 @@ export function GridBlock({ i }: { i: number }) {
 
   const date = st.statsAt ? new Date(st.statsAt).toLocaleDateString(window.i18nLocale()) : null;
   return (
-    <div className="settings-block" id="gridBlock" style={{ '--i': i } as CSSProperties}>
-      <h3>{L`Сетки героев`}</h3>
-      {/* one column of switches after the longest name, so they line up whatever the language */}
-      <div className="settings-switches">
-        {KINDS.map(({ kind, label }) => (
-          <label className="settings-switch-row" key={kind}>
-            <span className="settings-label">{label()}</span>
-            <Toggle id={`grid-${kind}`} on={st.kinds.includes(kind)} label={label()} disabled={busy || !st.account} onClick={() => { void flip(kind); }} />
-          </label>
-        ))}
-      </div>
-      <div className="settings-hint">
-        {st.account
-          ? L`Сетки появятся в выборе героя рядом с твоими, твои остаются как были. Цифры берутся с OpenDota по всем рангам за последние дни.`
-          : L`Не нашёл аккаунт Steam, в который заходила Dota 2.`}
-        {date && ` ${L`Цифры от ${date}.`}`}
-      </div>
-    </div>
+    <>
+      <Row id="gridBlock" label={L`Сетки героев`}
+        hint={<>
+          {st.account
+            ? L`Сетки появятся в выборе героя рядом с твоими, твои остаются как были. Цифры берутся с OpenDota по всем рангам за последние дни.`
+            : L`Не нашёл аккаунт Steam, в который заходила Dota 2.`}
+          {date && ` ${L`Цифры от ${date}.`}`}
+        </>} />
+      {KINDS.map(({ kind, label }) => (
+        <Row sub key={kind} label={label()}>
+          <Toggle id={`grid-${kind}`} on={st.kinds.includes(kind)} label={label()} disabled={busy || !st.account} onClick={() => { void flip(kind); }} />
+        </Row>
+      ))}
+    </>
   );
 }

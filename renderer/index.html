@@ -132,11 +132,13 @@
       <span class="dot" id="dotaStatusDot"></span>
       <span id="dotaStatusText">Looking for Dota 2…</span>
       <div class="sb-right">
-        <button class="btn btn-sm" id="openModsFolderBtn" title="Open the folder the mods are installed into" data-i18n-title="Открыть папку, куда ставятся моды"><span class="ms">folder_open</span><span data-i18n="Папка модов">Mods folder</span></button>
-        <button class="mods-switch on" id="modsMasterBtn" role="switch" aria-checked="true" title="Turn all mods on/off at once (to launch the vanilla game)" data-i18n-title="Включить/выключить все моды сразу (для запуска ванильной игры)">
-          <span class="mods-switch-txt"><span data-i18n="Моды:">Mods:</span> <b id="modsMasterState">on</b></span>
-          <span class="mods-switch-track"><span class="mods-switch-thumb"></span></span>
-        </button>
+        <div class="sb-group">
+          <button class="sb-btn" id="openModsFolderBtn" title="Open the folder the mods are installed into" data-i18n-title="Открыть папку, куда ставятся моды"><span class="ms">folder_open</span><span data-i18n="Папка модов">Mods folder</span></button>
+          <button class="mods-switch on" id="modsMasterBtn" role="switch" aria-checked="true" title="Turn all mods on/off at once (to launch the vanilla game)" data-i18n-title="Включить/выключить все моды сразу (для запуска ванильной игры)">
+            <span class="mods-switch-txt"><span data-i18n="Моды:">Mods:</span> <b id="modsMasterState">on</b></span>
+            <span class="mods-switch-track"><span class="mods-switch-thumb"></span></span>
+          </button>
+        </div>
         <button class="btn btn-primary btn-play" id="launchBtn" title="Launch Dota 2 through Steam with your launch options" data-i18n-title="Запустить Dota 2 через Steam с твоими параметрами запуска">
           <span class="ms">play_arrow</span><span data-i18n="Играть">Play</span>
         </button>

@@ -59,6 +59,10 @@
 .modal-content.grows { animation: none; transform-origin: 0 0; }
 .modal-overlay.grows { animation: none; }
 .grows .modal-media img, .grows .modal-media video { animation: none; }
+/* Closing back into the card plays the same path backwards (modal-motion.ts shrinkAway), so the
+   fade of the whole overlay and the window's own fall step aside for it too. */
+.modal-overlay.returns.closing { animation: none; }
+.returns .modal-content { animation: none; transform-origin: 0 0; }
 
 .modal-media {
   aspect-ratio: 16 / 9;

@@ -46,6 +46,8 @@ interface GridModel {
 
 export interface HeroTileModel {
   hero: string;
+  /** the hero's attribute, the column of the game's hero grid it stands in */
+  attr: 'str' | 'agi' | 'int' | 'all' | 'other';
   count: number;
   installed: boolean;
   /** the hero's own portrait, a mod's picture standing in for it, or neither */
