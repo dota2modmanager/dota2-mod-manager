@@ -22,9 +22,10 @@ pub enum Backend {
 }
 
 /// The owner, once its start is over: it runs off the main thread, so the window opens at once
-/// and a call made while the owner is starting waits for it.
+/// and a call made while the owner is starting waits for it. The link the app was started by
+/// waits for the page's first load.
 #[derive(Default)]
-pub struct Owned(OnceLock<Arc<Owner>>);
+pub struct Owned(OnceLock<Arc<Owner>>, std::sync::Mutex<Option<String>>);
 
 impl Owned {
     pub fn get(&self) -> &Arc<Owner> {
@@ -110,6 +111,7 @@ pub struct Start {
 /// The owner started on a thread of its own; the watches and the start's fetches follow once it is up.
 pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
     let owned = Arc::new(Owned::default());
+    *owned.1.lock().unwrap_or_else(|e| e.into_inner()) = mm_core::owner_links::first(&s.argv);
     let (cell, app) = (owned.clone(), app.clone());
     std::thread::spawn(move || {
         let opts = mm_core::owner::Options {
@@ -169,7 +171,13 @@ impl Backend {
     pub fn loaded(&self) {
         match self {
             Backend::Host(h) => h.notify(json!({ "t": "loaded" })),
-            Backend::Owner(o) => mm_core::owner_watch::page_loaded(o.get()),
+            Backend::Owner(o) => {
+                mm_core::owner_watch::page_loaded(o.get());
+                // launched BY a link: the page has to exist before it can be told
+                if let Some(cold) = o.1.lock().unwrap_or_else(|e| e.into_inner()).take() {
+                    mm_core::owner_links::take(o.get(), Some(&cold));
+                }
+            }
         }
     }
 
@@ -193,8 +201,7 @@ impl Backend {
     pub fn second(&self, argv: Vec<String>) {
         match self {
             Backend::Host(h) => h.notify(json!({ "t": "second", "argv": argv })),
-            // the links are not the owner's yet (docs/rust-migration.md, step 2)
-            Backend::Owner(o) => o.get().diag("a second start's link is not taken yet under the Rust owner"),
+            Backend::Owner(o) => mm_core::owner_links::take(o.get(), mm_core::owner_links::first(&argv).as_deref()),
         }
     }
 
