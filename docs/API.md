@@ -5851,6 +5851,16 @@ out, and the window puts it after the four groups.
 @param ids  hero ids without the npc_dota_hero_ prefix
 ```
 
+### `gameHeroIdsSteps`
+
+```ts
+export function* gameHeroIdsSteps(index: Pick<VpkIndex, 'paths'>): Generator<typeof PAUSE, string[]>
+```
+
+Every hero the game has a script for (scripts/npc/heroes/npc_dota_hero_<id>.txt), A-Z: the
+catalog's hero grid puts heroes in their columns too, and a hero with no item in the table yet
+(Kez and Largo on the game of 2026-11-14) still has its attribute. A pause every 20 000 paths.
+
 ### `itemFacts`
 
 ```ts
@@ -14873,6 +14883,22 @@ export function pngFromVtex(buf: unknown): Buffer | null
 @param buf contents of a .vtex_c
 @returns the PNG file it carries, or null when it carries pixels instead
 ```
+
+### `rgbaFromVtex`
+
+```ts
+export function rgbaFromVtex(buf: unknown): { width: number; height: number; rgba: Buffer } | null
+```
+
+A DXT1 or DXT5 texture of one mip, as RGBA; null for anything else.
+
+### `pictureFromVtex`
+
+```ts
+export function pictureFromVtex(buf: unknown): Buffer | null
+```
+
+The picture a .vtex_c carries: its PNG, or a one-mip DXT texture turned into one; null otherwise.
 
 ## src/window-guard.ts
 

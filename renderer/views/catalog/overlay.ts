@@ -7,7 +7,7 @@
  * the stylesheet stays the one place the tempo is set, and so the system's reduced-motion setting,
  * which flattens it to 1ms, is honoured for free. */
 import { tokenMs } from '../../core/css-time.ts';
-import { growFrom, shrinkAway } from '../../catalog/modal-motion.ts';
+import { growFrom, reset, shrinkAway } from '../../catalog/modal-motion.ts';
 import { clearModal } from '../../catalog/modal/root.tsx';
 
 const overlay = document.getElementById('modalOverlay') as HTMLElement;
@@ -27,6 +27,8 @@ export function takeOverlay(): void {
 }
 
 let closingTimer = 0;
+/** the card the window came out of, so it can go back into it */
+let openedFrom: Element | null = null;
 
 /** Draw a window and grow it out of the card it was opened from, or out of the middle with none. */
 export function openOverlay(draw: () => void, from: Element | null): void {
@@ -34,19 +36,22 @@ export function openOverlay(draw: () => void, from: Element | null): void {
   overlay.classList.remove('closing');
   draw();
   overlay.classList.remove('hidden');
+  openedFrom = from;
   growFrom(panel, from);
 }
 
 export function closeOverlay(): void {
   if (overlay.classList.contains('hidden')) return;
   overlay.classList.add('closing');
-  shrinkAway(panel);
+  shrinkAway(panel, openedFrom);
+  openedFrom = null;
   clearTimeout(closingTimer);
   closingTimer = window.setTimeout(() => {
     // reopened while it was falling: that pass owns the overlay now
     if (!overlay.classList.contains('closing')) return;
     overlay.classList.add('hidden');
     overlay.classList.remove('closing');
+    reset(panel);
     clearModal();
     takeOverlay();
   }, tokenMs('--dur-base'));

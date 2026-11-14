@@ -145,6 +145,21 @@ fn mm_key(app: tauri::AppHandle, key: String, control: bool, alt: bool) {
     }
 }
 
+/// A press on the title bar (src-tauri/src/bridge.js): the window follows the mouse, or a second
+/// press in a row maximizes or restores it. Synchronous, so it runs on the window's own thread
+/// while the button is still down.
+#[tauri::command]
+fn mm_drag(window: tauri::WebviewWindow, toggle: bool) -> Result<(), String> {
+    let res = if !toggle {
+        window.start_dragging()
+    } else if window.is_maximized().unwrap_or(false) {
+        window.unmaximize()
+    } else {
+        window.maximize()
+    };
+    res.map_err(|e| e.to_string())
+}
+
 /// `--name=value` from the command line.
 fn flag(args: &[String], name: &str) -> Option<String> {
     let prefix = format!("--{name}=");
@@ -210,7 +225,7 @@ fn main() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(update::Pending::default())
         .manage(Harnessed(harness::wanted(flag(&argv, "write-jail").is_some(), |k| std::env::var(k).ok())))
-        .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key, mm_shot_done])
+        .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key, mm_drag, mm_shot_done])
         // the catalog's pictures, which bridge.js points the page's images at
         .register_asynchronous_uri_scheme_protocol(mm_core::preview_cache::SCHEME, |ctx, req, responder| {
             let app = ctx.app_handle().clone();

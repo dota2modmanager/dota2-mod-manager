@@ -36,6 +36,22 @@ export function* heroAttributesSteps(index: Pick<VpkIndex, 'read'>, ids: string[
 }
 
 /**
+ * Every hero the game has a script for (scripts/npc/heroes/npc_dota_hero_<id>.txt), A-Z: the
+ * catalog's hero grid puts heroes in their columns too, and a hero with no item in the table yet
+ * (Kez and Largo on the game of 2026-11-14) still has its attribute. A pause every 20 000 paths.
+ */
+export function* gameHeroIdsSteps(index: Pick<VpkIndex, 'paths'>): Generator<typeof PAUSE, string[]> {
+  const out: string[] = [];
+  let n = 0;
+  for (const p of index.paths()) {
+    if (++n % 20_000 === 0) yield PAUSE;
+    const m = /^scripts\/npc\/heroes\/npc_dota_hero_([a-z0-9_]+)\.txt$/.exec(p);
+    if (m) out.push(m[1]);
+  }
+  return out.sort();
+}
+
+/**
  * An item's rarity key ("mythical") and the day it came out ("2021-09-01"), out of its block, for
  * the item builder's cards: each left out when the block does not say.
  */

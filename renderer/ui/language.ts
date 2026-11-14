@@ -11,7 +11,8 @@ import { state } from '../core/store.ts';
 import { render } from '../core/router.ts';
 import { refreshCosmeticSlots } from '../core/installed.ts';
 import { paintMasterSwitch, refreshSidebarStatus } from './statusbar.ts';
-import { paintPanels, syncNavOverflow } from './chrome.ts';
+import { paintPanels } from './chrome.ts';
+import { syncNavOverflow } from './tab-strip.ts';
 
 // translate the static app chrome (index.html markup) in place, preserving child nodes
 export function applyStaticI18n(): void {

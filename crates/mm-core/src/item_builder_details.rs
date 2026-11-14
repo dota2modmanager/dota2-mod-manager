@@ -49,6 +49,18 @@ pub fn hero_attributes(
     out
 }
 
+/// Every hero the game has a script for (scripts/npc/heroes/npc_dota_hero_<id>.txt), A-Z, so a
+/// hero with no item in the table yet still has its attribute (src/item-builder-details.ts).
+pub fn game_hero_ids<'a>(paths: impl Iterator<Item = &'a str>) -> Vec<String> {
+    let mut out: Vec<String> = paths
+        .filter_map(|p| p.strip_prefix("scripts/npc/heroes/npc_dota_hero_")?.strip_suffix(".txt"))
+        .filter(|id| !id.is_empty() && id.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'_'))
+        .map(str::to_string)
+        .collect();
+    out.sort();
+    out
+}
+
 /// An item's rarity key ("mythical") and the day it came out ("2021-09-01"), each left out when
 /// the block does not say.
 #[derive(Debug, Clone, Default, PartialEq, Serialize)]

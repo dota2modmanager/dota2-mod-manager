@@ -250,7 +250,11 @@ function builderAssets(real, schemaText) {
     const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
     const want = new Set();
     const slots = builder.itemSlots(schemaText);
-    for (const id of new Set(slots.flatMap((sl) => sl.heroIds))) {
+    // every hero the game has, not only those with items in this schema: the catalog's hero grid
+    // puts each in its attribute's column, and a hero without its script lands under "Other"
+    const { gameHeroIdsSteps } = require('../src/item-builder-details.ts');
+    const { drain } = require('../src/steps.ts');
+    for (const id of new Set([...slots.flatMap((sl) => sl.heroIds), ...drain(gameHeroIdsSteps(ix))])) {
       want.add(`panorama/images/heroes/npc_dota_hero_${id}_png.vtex_c`);
       want.add(`panorama/images/heroes/selection/npc_dota_hero_${id}_png.vtex_c`);
       // the hero's script: its main attribute puts it in its group of the hub (src/item-builder-details.ts)

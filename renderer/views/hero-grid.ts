@@ -8,6 +8,9 @@
  */
 import { previewUrl, isMedia, resolveUrl } from '../ui/media.ts';
 import { catalogConstants } from '../catalog/data.ts';
+import { state } from '../core/store.ts';
+import { ATTRIBUTES } from '../catalog/builder/logic.ts';
+import { heroIdOf, heroIdsByName } from '../catalog/hero-ids.ts';
 import type { Filters, Mod } from '../catalog/types.ts';
 import type { HeroTileModel } from '../catalog/screen/model.ts';
 
@@ -48,21 +51,32 @@ export function setHeroLayout(v: 'grid' | 'list'): void {
   try { localStorage.setItem(LAYOUT_KEY, v); } catch { /* the default then */ }
 }
 
-/** The grid, unless a hero is picked, a sort asks for mods in an order, or the list was chosen. */
+/** The grid, unless a hero is picked or the list was chosen. The grid has no sort of its own, so a sort picked in the list stays there. */
 export function heroGridWanted(filters: Filters): boolean {
-  return !filters.hero && filters.sort === 'default' && heroLayout() === 'grid';
+  return !filters.hero && heroLayout() === 'grid';
 }
 
-// Portraits come out of the player's own game (src/game-icons.ts heroPortraits), keyed by the
-// name the catalog prints. null means asked and not found, so the tile keeps its stand-in.
+// Portraits come out of the player's own game (src/game-icons.ts heroPortraits): upright, as the
+// game's hero grid and the item builder draw them, by the hero's id; landscape by the name the
+// catalog prints for a hero the item table does not know. null means asked and not found, so the
+// tile keeps its stand-in.
 const heroArt = new Map<string, string | null>();
 
-async function loadHeroArt(names: string[]): Promise<void> {
+async function loadHeroArt(names: string[], ids: Map<string, string>): Promise<void> {
   const want = names.filter((n) => !heroArt.has(n));
   if (!want.length) return;
+  const byId = new Map<string, string[]>();
+  for (const n of want) {
+    const id = heroIdOf(n, ids, state.heroAttrs);
+    if (id) byId.set(id, [...(byId.get(id) || []), n]);
+  }
+  let upright: Record<string, string> = {};
+  try { upright = byId.size ? await window.api.cosmetics.heroPortraits([...byId.keys()], true) : {}; } catch { /* no game */ }
+  for (const [id, list] of byId) for (const n of list) if (upright[id]) heroArt.set(n, upright[id]);
+  const rest = want.filter((n) => !heroArt.has(n));
   let got: Record<string, string> = {};
-  try { got = await window.api.cosmetics.heroPortraitsByName(want); } catch { /* no game: stand-ins */ }
-  for (const n of want) heroArt.set(n, got[n] || null);
+  try { got = rest.length ? await window.api.cosmetics.heroPortraitsByName(rest) : {}; } catch { /* no game: stand-ins */ }
+  for (const n of rest) heroArt.set(n, got[n] || null);
 }
 
 /**
@@ -78,7 +92,8 @@ export async function heroTiles(mods: Mod[], isInstalled: (cat: string, mod: Mod
     byHero.set(h, [...(byHero.get(h) || []), m]);
   }
   const order = [...byHero.keys()].sort((a, b) => (a ? 0 : 1) - (b ? 0 : 1) || a.localeCompare(b));
-  await loadHeroArt(order.filter(Boolean));
+  const ids = heroIdsByName(state.cosmeticSlots || []);
+  await loadHeroArt(order.filter(Boolean), ids);
   return order.map((hero) => {
     const list = byHero.get(hero) || [];
     const art = heroArt.get(hero);
@@ -87,8 +102,10 @@ export async function heroTiles(mods: Mod[], isInstalled: (cat: string, mod: Mod
     const first = list[0];
     const stand: string | null = art ? null : previewUrl(first._cat || '', first.preview || first.styles?.[0]?.preview);
     const standIn = Boolean(stand && !isMedia(stand));
+    const attr = hero ? state.heroAttrs?.[heroIdOf(hero, ids, state.heroAttrs)] : undefined;
     return {
       hero,
+      attr: attr && ATTRIBUTES.includes(attr) ? attr : 'other',
       count: list.length,
       installed: list.some((m) => isInstalled(m._cat || '', m)),
       art: art || (standIn ? resolveUrl(stand) : null),

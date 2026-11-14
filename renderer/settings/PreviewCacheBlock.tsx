@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PreviewSlot } from '../api/preview3d.ts';
+import { Row } from './parts.tsx';
 
 type Progress = { done: number; total: number; failed: number; partial: number };
 
-export function PreviewCacheBlock({ ready, game }: { ready: boolean; game: boolean }) {
+export function PreviewCacheRow({ ready, game }: { ready: boolean; game: boolean }) {
   const [running, setRunning] = useState(false);
   const [stopping, setStopping] = useState(false);
   const [progress, setProgress] = useState<Progress | null>(null);
@@ -51,23 +52,24 @@ export function PreviewCacheBlock({ ready, game }: { ready: boolean; game: boole
     }
   }
 
-  return <section className="settings-block">
-    <h3>{L`Кэш 3D-превью`}</h3>
-    <div className="settings-row">
-      <button className="btn btn-sm btn-primary" disabled={running || !ready || !game} onClick={() => void prepare()}>
-        {L`Выгрузить модели и эффекты`}
-      </button>
-      {running && <button className="btn btn-sm" disabled={stopping} onClick={() => { stop.current = true; setStopping(true); }}>
-        {stopping ? L`Завершаем текущего героя…` : L`Остановить`}
-      </button>}
-    </div>
-    <p className="settings-hint">{L`По желанию: заранее выгружает GLB и ресурсы частиц для текущего набора каждого героя. При следующем открытии 3D-превью готовые файлы берутся из локального кэша. Выгрузка может занять время и место на диске. Картинки каталога не выгружаются.`}</p>
-    {(!ready || !game) && <p className="settings-hint">{L`Для выгрузки нужны установленная Dota 2 и инструмент Source 2.`}</p>}
-    {progress && <p className="settings-hint" role="status">
+  const notes = [
+    (!ready || !game) && <span key="need">{L`Для выгрузки нужны установленная Dota 2 и инструмент Source 2.`}</span>,
+    progress && <span key="progress" role="status">
       {L`Обработано героев: ${progress.done} из ${progress.total}`}
       {progress.failed > 0 && <span> · {L`Ошибки: ${progress.failed}`}</span>}
       {progress.partial > 0 && <span> · {L`Частично: ${progress.partial}`}</span>}
-    </p>}
-    {error && <p role="alert">{error}</p>}
-  </section>;
+    </span>,
+    error && <span key="error" role="alert">{error}</span>,
+  ].filter(Boolean);
+  return (
+    <Row label={L`Кэш 3D-превью`} hint={notes.length ? <>{notes}</> : undefined}
+      more={L`По желанию: заранее выгружает GLB и ресурсы частиц для текущего набора каждого героя. При следующем открытии 3D-превью готовые файлы берутся из локального кэша. Выгрузка может занять время и место на диске. Картинки каталога не выгружаются.`}>
+      {running && <button className="btn btn-sm" disabled={stopping} onClick={() => { stop.current = true; setStopping(true); }}>
+        {stopping ? L`Завершаем текущего героя…` : L`Остановить`}
+      </button>}
+      <button className="btn btn-sm" disabled={running || !ready || !game} onClick={() => void prepare()}>
+        {L`Выгрузить модели и эффекты`}
+      </button>
+    </Row>
+  );
 }

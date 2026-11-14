@@ -626,6 +626,7 @@ test('arcana notes and the item builder details in Rust answer as the TypeScript
     { name: 'arcana-bases.hasBase', ts: bases.hasBase as never, inputs: [...arcanas.map((i) => [i.id]), ['1'], ['']] },
     { name: 'item-builder-details.itemFacts', ts: det.itemFacts as never, inputs: some.map((i) => [text.slice(i.start, i.end)]).concat([['\n"item_rarity" "Mythical"\n"creation_date" "2021-09-01 10:00"'], ['"item_rarity" "x"']]) },
     { name: 'item-builder-details.heroAttributes', ts: ((p: string, ids: string[]) => drain(det.heroAttributesSteps(openVpkIndex(p), ids))) as never, inputs: [[GAME_PAK01, [...heroIds, 'Bad Id', 'nobody', heroIds[0]]]] },
+    { name: 'item-builder-details.gameHeroIds', ts: ((p: string) => drain(det.gameHeroIdsSteps(openVpkIndex(p)))) as never, inputs: [[GAME_PAK01]] },
     { name: 'item-builder-details.eventNames', ts: ((pairs: [string, string][]) => Object.fromEntries(det.eventNames(new Map(pairs)))) as never, inputs: [[tokenPairs], [[['dota_eventname_x_y', 'A'], ['dota_eventnameshort_xy', 'B'], ['dota_eventname_xy', 'C'], ['dota_eventname_z', '#tok'], ['dota_eventname_', 'n']]]] },
     { name: 'item-builder-details.eventName', ts: ((id: string, pairs: [string, string][]) => det.eventName(id, det.eventNames(new Map(pairs)))) as never,
       inputs: [...events, 'EVENT_ID_NONE', 'EVENT_ID_', '5', '', 'EVENT_ID_10TH_ANNIVERSARY', 'EVENT_ID_FALL_2025', 'EVENT_ID_THE_INTERNATIONAL_PLUS_TEAM__X'].flatMap((e) => [[e, tokenPairs], [e, []]]) },
@@ -5801,7 +5802,7 @@ test('a hero\'s ability icons in Rust are offered, picked and put in My mods as 
 test('the paint modes, the gem colours and the PNG inside a texture in Rust are the TypeScript\'s', { skip }, async () => {
   const rm = await import('../src/recolor-modes.ts');
   const gc = await import('../src/gem-colors.ts');
-  const { pngFromVtex } = await import('../src/vtex.ts');
+  const { pngFromVtex, rgbaFromVtex } = await import('../src/vtex.ts');
   const { buildVpk, entryAt, sharedVpkIndex } = await import('../src/vpk.ts');
   const { createHash } = await import('node:crypto');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-gems-'));
@@ -5836,8 +5837,12 @@ test('the paint modes, the gem colours and the PNG inside a texture in Rust are 
   for (let i = 3; i < pixels.length; i += 20) pixels[i] = 0;
   const pf = file('pixels.bin', pixels);
   const sha = (b: Buffer) => createHash('sha1').update(b).digest('hex');
+  const rgba = (s: string) => { const im = rgbaFromVtex(latin(s)); return im && { width: im.width, height: im.height, sha1: sha(im.rgba) }; };
+  const { dxtTexture } = await import('./helpers/dxt.ts');
+  const dxt = [dxtTexture(1, 7, 5), dxtTexture(2, 9, 6), dxtTexture(2, 8, 8, true), dxtTexture(2, 8, 8, false, 2), Buffer.concat([dxtTexture(2, 4, 4), Buffer.from('x')]), dxtTexture(7, 4, 4)];
   compare([
     { name: 'vtex.png', ts: ((s: string) => dataUrl(pngFromVtex(latin(s)))) as never, inputs: textures.map((t, i) => [file(`t${i}.vtex_c`, t)]) },
+    { name: 'vtex.rgba', ts: rgba as never, inputs: [...textures, ...dxt].map((t, i) => [file(`d${i}.vtex_c`, t)]) },
     { name: 'gem-colors.name', ts: gc.gemName as never, inputs: [['UnusualCreatorsLight'], ['UnusualInternational2012'], ['Unusual'], ['aB1cD'], ['  UnusualXRayVision '], ['International2012Fall']] },
     { name: 'gem-colors.rgb', ts: gc.rgbOf as never, inputs: [['#FFAF00'], ['ffaf00'], [' #7f3fbf '], ['#12345'], ['#gggggg'], [''], ['#FFAF001']] },
     { name: 'gem-colors.colors', ts: ((s: string) => gc.gemColors(s)) as never, inputs: [[tf], [file('none.txt', latin('"items_game" { "items" { } }'))]] },
@@ -5864,6 +5869,7 @@ test('the paint modes, the gem colours and the PNG inside a texture in Rust are 
       { name: 'gem-colors.colors', ts: ((s: string) => gc.gemColors(s)) as never, inputs: [[real]] },
       { name: 'gem-colors.art', ts: ((p: string, s: string) => snap({ art: gc.prismaticGemArt(sharedVpkIndex(p)), gems: gc.prismaticGemPictures(gc.gemColors(s), sharedVpkIndex(p)) })) as never, inputs: [[GAME_PAK01, real]] },
       { name: 'vtex.png', ts: ((s: string) => dataUrl(pngFromVtex(latin(s)))) as never, inputs: pick.map((p, i) => [file(`r${i}.vtex_c`, ix.read(p)!)]) },
+      { name: 'vtex.rgba', ts: rgba as never, inputs: all.filter((p) => p.includes('/heroes/selection/')).slice(0, 80).map((p, i) => [file(`s${i}.vtex_c`, ix.read(p)!)]) },
     ]);
     assert.ok(gc.gemColors(ix.read('scripts/items/items_game.txt')!.toString('latin1')).length > 10, 'the game has gems');
   }
