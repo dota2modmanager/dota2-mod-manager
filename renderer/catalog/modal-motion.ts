@@ -10,6 +10,11 @@
  * first two frames after a click took 66 and 50 ms (the window's first raster), and with the clock
  * already running the window skipped a third of its 320 ms path and arrived in a jump.
  *
+ * The window drawn as the card is still not the card: its picture is cropped another way and the
+ * card's name, heart and hover sit elsewhere. So the two cross-fade where they meet, the window
+ * appearing over the card in the first part of the opening and dissolving into it in the last part
+ * of the closing, rather than one being swapped for the other in a single frame.
+ *
  * Without a card (a mod reached from a link), with the system asking for less motion, or with the
  * card gone from the screen by the time the window closes, the CSS motion in modal.css plays. */
 import { animate } from 'motion';
@@ -64,7 +69,7 @@ export function growFrom(panel: HTMLElement, card: Element | null): void {
   const overlay = panel.parentElement;
   panel.classList.remove('grows', 'returns');
   overlay?.classList.remove('grows', 'returns');
-  clear(panel, ['transform', 'clip-path']);
+  clear(panel, ['transform', 'clip-path', 'opacity']);
   if (overlay) clear(overlay, ['background-color', 'backdrop-filter']);
   if (!card || stillness()) return;
   const start = asCard(panel, card);
@@ -74,6 +79,7 @@ export function growFrom(panel: HTMLElement, card: Element | null): void {
   // drawn as the card from the first frame, so it is never see-through and never somewhere else
   panel.style.transform = start.transform;
   panel.style.clipPath = start.clipPath;
+  panel.style.opacity = '0';
   if (overlay) {
     overlay.style.backgroundColor = CLEAR;
     overlay.style.backdropFilter = 'blur(0px)';
@@ -86,8 +92,9 @@ export function growFrom(panel: HTMLElement, card: Element | null): void {
       animate(overlay, { backgroundColor: [CLEAR, DIM], backdropFilter: ['blur(0px)', 'blur(8px)'] }, clock)
         .finished.then(() => { if (mine === run) settle(overlay, ['background-color', 'backdrop-filter']); }).catch(() => {});
     }
+    animate(panel, { opacity: [0, 1] }, { duration: clock.duration * 0.3, ease: 'linear' }).finished.catch(() => {});
     animate(panel, { transform: [start.transform, 'translate(0px, 0px) scale(1)'], clipPath: [start.clipPath, start.open] }, clock)
-      .finished.then(() => { if (mine === run) settle(panel, ['transform', 'clip-path']); }).catch(() => {});
+      .finished.then(() => { if (mine === run) settle(panel, ['transform', 'clip-path', 'opacity']); }).catch(() => {});
   });
 }
 
@@ -121,11 +128,11 @@ export function shrinkAway(panel: HTMLElement, card: Element | null = null): boo
   overlay?.classList.remove('grows');
   // a window scrolled down would fold its own middle into the card's picture
   const back = onScreen(card) && panel.scrollTop < 4 && !stillness();
-  const end = back ? (clear(panel, ['transform', 'clip-path']), asCard(panel, card)) : null;
+  const end = back ? (clear(panel, ['transform', 'clip-path', 'opacity']), asCard(panel, card)) : null;
   if (!end) {
     panel.classList.remove('returns');
     overlay?.classList.remove('returns');
-    clear(panel, ['transform', 'clip-path']);
+    clear(panel, ['transform', 'clip-path', 'opacity']);
     if (overlay) clear(overlay, ['background-color', 'backdrop-filter']);
     return false;
   }
@@ -135,6 +142,8 @@ export function shrinkAway(panel: HTMLElement, card: Element | null = null): boo
   if (overlay) animate(overlay, { backgroundColor: [DIM, CLEAR], backdropFilter: ['blur(8px)', 'blur(0px)'] }, clock).finished.catch(() => {});
   void mine;
   animate(panel, { transform: ['translate(0px, 0px) scale(1)', end.transform], clipPath: [end.open, end.clipPath] }, clock).finished.catch(() => {});
+  // gone by the time it lands, so the card under it is what is left, not a swap
+  animate(panel, { opacity: [1, 0] }, { duration: clock.duration * 0.4, delay: clock.duration * 0.6, ease: 'linear' }).finished.catch(() => {});
   return true;
 }
 
@@ -144,6 +153,6 @@ export function reset(panel: HTMLElement): void {
   const overlay = panel.parentElement;
   panel.classList.remove('grows', 'returns');
   overlay?.classList.remove('grows', 'returns');
-  clear(panel, ['transform', 'clip-path']);
+  clear(panel, ['transform', 'clip-path', 'opacity']);
   if (overlay) clear(overlay, ['background-color', 'backdrop-filter']);
 }

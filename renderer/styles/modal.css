@@ -63,6 +63,10 @@
    fade of the whole overlay and the window's own fall step aside for it too. */
 .modal-overlay.returns.closing { animation: none; }
 .returns .modal-content { animation: none; transform-origin: 0 0; }
+/* The picture's own entrance (pictureIn) is held off by .grows; once that class goes on close the
+   animation would start over, and the picture blinked out and grew from a dot in the closing window. */
+.returns .modal-media img, .returns .modal-media video,
+.closing .modal-media img, .closing .modal-media video { animation: none; }
 
 .modal-media {
   aspect-ratio: 16 / 9;
