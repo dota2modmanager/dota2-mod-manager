@@ -42,3 +42,6 @@ crates/mm-core/data/*.json text eol=lf
 *.zip binary
 *.exe binary
 *.AppImage binary
+
+# What each rust-calls case answered (test/helpers/golden.ts): one line ending everywhere
+test/golden/*.json text eol=lf

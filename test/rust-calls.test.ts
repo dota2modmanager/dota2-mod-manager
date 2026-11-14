@@ -1,8 +1,8 @@
 // Pure functions moved to Rust (crates/mm-core/src/owner/calls.rs) answer what the TypeScript function
 // of the same name answers, input for input. Each case names the function as calls.rs does
 // (module.export), the TypeScript one, and the inputs; one mm-cli run answers them all. Skipped
-// where mm-cli is not built, like test/rust-parity.test.ts. The tables both sides read are checked
-// in test/rust-data.test.ts.
+// where mm-cli is not built, like test/rust-parity.test.ts. The tables Rust reads are
+// crates/mm-core/data/*.json.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
