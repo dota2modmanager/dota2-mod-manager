@@ -564,9 +564,21 @@ icon: `tray-icon` -> `libappindicator` -> `gtk` 0.18. Nothing here calls `Varian
 macro helper runs only at build time. glib is fixed in 0.20, which no Tauri 2 release takes; it
 comes with Tauri's GTK 4 port. Windows builds do not contain either.
 
-Both are accepted in `osv-scanner.toml` until 2027-01-08, with the other two.
+Both are accepted in `osv-scanner.toml` until 2027-01-08, with the npm ones.
 
 *Check:* `osv-scanner.toml`, `cargo tree -i glib --target all`.
+
+### zbus 5 on Linux, through three Tauri plugins
+
+`zvariant`, `zvariant_derive` and `zbus_names` (RUSTSEC-2026-0370, -0371, -0372) were folded into
+zbus 6 and are marked unmaintained. None of them has a known flaw. They arrive with zbus 5, which
+Tauri's notification, opener and single-instance plugins use for D-Bus on Linux; their newest
+releases still ask for zbus ^5, so the lockfile cannot move to 6 until they do. Windows builds do
+not contain zbus.
+
+All three are accepted in `osv-scanner.toml` until 2027-01-08.
+
+*Check:* `osv-scanner.toml`, `cargo tree -i zbus@5 --target all`.
 
 ### The installer is not signed
 
