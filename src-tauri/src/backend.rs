@@ -99,7 +99,7 @@ fn report(app: &AppHandle) -> Value {
 
 /// The system's languages, most wanted first, as Electron's app.getPreferredSystemLanguages gives
 /// them; `MM_LOCALE` stands in for them in a test run.
-fn system_languages() -> Vec<String> {
+pub fn system_languages() -> Vec<String> {
     if let Ok(l) = std::env::var("MM_LOCALE") {
         return vec![l];
     }

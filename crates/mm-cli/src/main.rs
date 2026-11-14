@@ -161,8 +161,43 @@ fn result(r: Result<String, String>) -> Value {
     }
 }
 
+/// `mm-cli app --user-data-dir=<dir> --write-jail=<dir> --list`: the app's command line
+/// (mm_core::cli) over a userData, without the shell's single-instance lock, so the sandbox can be
+/// driven while a real copy of the app is open. Never point it at a real game: pass --write-jail.
+fn app(args: &[String]) -> ExitCode {
+    let mut argv = vec!["mm-cli".to_string()];
+    argv.extend(args.iter().cloned());
+    let Some(parsed) = mm_core::cli::command(&argv) else {
+        eprintln!("mm-cli app: no command (--apply, --list, --disable-all)");
+        return ExitCode::from(mm_core::cli::USAGE as u8);
+    };
+    let flag = |name: &str| argv.iter().find_map(|a| a.strip_prefix(&format!("--{name}=")).map(String::from));
+    let Some(ud) = flag("user-data-dir") else {
+        eprintln!("mm-cli app: --user-data-dir=<dir> is required");
+        return ExitCode::from(mm_core::cli::USAGE as u8);
+    };
+    mm_core::write_jail::install(&mm_core::write_jail::from_argv(&argv));
+    let ud = std::path::absolute(&ud).unwrap_or_else(|_| ud.into());
+    let opts = mm_core::owner::Options {
+        downloads: ud.clone(),
+        app_root: std::env::current_dir().unwrap_or_default(),
+        user_data: ud,
+        app_version: env!("CARGO_PKG_VERSION").into(),
+        uninstall: false,
+        system_languages: None,
+        // the game in the settings or none: never one looked up on this machine
+        find_game: Box::new(|| None),
+        dota_running: Box::new(mm_core::game_watch::dota_is_running),
+        now: mm_core::net_fetch::now_ms,
+    };
+    ExitCode::from(mm_core::cli::main(parsed, opts, std::sync::Arc::new(mm_core::cli::Stdio)) as u8)
+}
+
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().map(String::as_str) == Some("app") {
+        return app(&args[1..]);
+    }
     if args.first().map(String::as_str) == Some("owner") {
         return match owner_wire::run(&args[1..]) {
             Ok(()) => ExitCode::SUCCESS,

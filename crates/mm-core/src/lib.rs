@@ -18,7 +18,7 @@ pub mod util;
 
 // Every module keeps the path it had before the folders: crate::kv, mm_core::vpk.
 pub use app::{
-    app_info, app_log, diagnostics, discord_auth, discord_presence, disk_space, folder_size, i18n, main_window,
+    app_info, app_log, cli, diagnostics, discord_auth, discord_presence, disk_space, folder_size, i18n, main_window,
     mod_doctor, notice_text, portable_update, presence_status, settings, settings_view, support_prompt, tray, ui_lang,
     updater, write_jail,
 };

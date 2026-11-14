@@ -2,6 +2,7 @@
 
 pub mod app_info;
 pub mod app_log;
+pub mod cli;
 pub mod diagnostics;
 pub mod discord_auth;
 pub mod discord_presence;

@@ -9,6 +9,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod backend;
+mod command_line;
 mod harness;
 mod native;
 mod ported;
@@ -195,6 +196,13 @@ fn main() {
         .and_then(|exe| mm_core::portable_update::portable_dir_of(&exe));
     mm_core::portable_update::set_portable_dir(portable.clone());
 
+    let context = tauri::generate_context!();
+    // --apply, --list, --disable-all: run to an exit code before any window or tray exists, and
+    // before the single-instance plugin would hand the line to an open copy (src/command_line.rs)
+    if let Some(code) = command_line::run(&argv, portable.as_deref(), &context) {
+        std::process::exit(code);
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             // the uninstaller's run: a copy in the tray gives way to it (src/tray.ts lockOnceFreed)
@@ -237,13 +245,8 @@ fn main() {
         })
         .setup(move |app| {
             let handle = app.handle().clone();
-            let user_data = flag(&argv, "user-data-dir")
-                .map(PathBuf::from)
-                // a read-only folder (the exe dropped into Program Files) keeps the ordinary place
-                .or_else(|| portable.as_deref().and_then(mm_core::portable_update::data_beside))
-                .or_else(|| std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("Dota 2 Mod Manager")))
-                .unwrap_or_else(|| app.path().app_data_dir().unwrap_or_default());
-            let user_data = std::path::absolute(&user_data).unwrap_or(user_data);
+            // the same folder the command line finds (src/command_line.rs)
+            let user_data = command_line::user_data_dir(&argv, portable.as_deref(), &app.config().identifier);
             app.manage(ported::UserData(user_data.clone()));
             app.manage(ported::Shared::new());
             let first_run = !user_data.join("settings.json").exists();
@@ -314,7 +317,7 @@ fn main() {
             )?;
             Ok(())
         })
-        .build(tauri::generate_context!())
+        .build(context)
         .expect("the Tauri shell failed to build")
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
