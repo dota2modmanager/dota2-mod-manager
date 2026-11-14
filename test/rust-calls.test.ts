@@ -1,14 +1,15 @@
 // Pure functions moved to Rust (crates/mm-core/src/owner/calls.rs) answer what the TypeScript function
 // of the same name answers, input for input. Each case names the function as calls.rs does
 // (module.export), the TypeScript one, and the inputs; one mm-cli run answers them all. Skipped
-// where mm-cli is not built, like test/rust-parity.test.ts. The tables both sides read are checked
-// in test/rust-data.test.ts.
-import { test } from 'node:test';
+// where mm-cli is not built, like test/rust-parity.test.ts. The tables Rust reads are
+// crates/mm-core/data/*.json.
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { Golden } from './helpers/golden.ts';
 
 import EN from '../src/i18n-en.ts';
 import { t, setLang } from '../src/i18n.ts';
@@ -21,9 +22,14 @@ const root = path.resolve(import.meta.dirname, '..');
 const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
 const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
 
+// what each case answered, recorded so Rust can be held to it once the TypeScript is gone
+const golden = new Golden(path.join(root, 'test', 'golden', `rust-calls.${process.platform}.json`));
+after(() => golden.save());
+
 /** `ulps`: numbers may differ by that many units in the last place (sines and cosines, which V8
- * takes from glibc and Rust from fdlibm); every other answer must be the same. */
-type Case = { name: string; ts: (...a: never[]) => unknown; inputs: unknown[][]; ulps?: number };
+ * takes from glibc and Rust from fdlibm); every other answer must be the same. `fresh`: the test
+ * makes the inputs anew on each run (keys it generates), so no answer is recorded for them. */
+type Case = { name: string; ts: (...a: never[]) => unknown; inputs: unknown[][]; ulps?: number; fresh?: boolean };
 
 /** `a` with each number that is within `ulps` of the same place in `b` replaced by b's. */
 function near(a: unknown, b: unknown, ulps: number): unknown {
@@ -75,6 +81,16 @@ function compare(cases: Case[]) {
         try { want = { ok: JSON.parse(JSON.stringify(c.ts(...(args.map(text) as never[])) ?? null)) }; } catch (e) { want = { error: (e as Error).message }; }
         if ('error' in (want as object)) assert.ok(got.error, `${c.name}(${shown}): TypeScript throws, Rust answers ${JSON.stringify(got.ok)?.slice(0, 200)}`);
         else assert.deepEqual(c.ulps ? near(got, want, c.ulps) : got, want, `${c.name}(${shown})`);
+        // an error is kept as the fact of one: the two sides word their messages differently
+        if (c.fresh) continue;
+        const kept = 'error' in (want as object) ? { error: true } : want;
+        if (golden.record) { golden.note(c.name, args, kept, Boolean(c.ulps)); continue; }
+        if (!golden.on) continue;
+        const was = golden.want(c.name, args);
+        assert.ok(was !== undefined, `${c.name}(${shown}): no recorded answer (GOLDEN_RECORD=1 npm test records them)`);
+        const now = 'error' in (want as object) ? { error: Boolean(got.error) } : got;
+        if (typeof was === 'string') assert.equal(Golden.form(now, false), was, `${c.name}(${shown}): the recorded answer`);
+        else assert.deepEqual(near(now, was.whole, c.ulps ?? 0), was.whole, `${c.name}(${shown}): the recorded answer`);
       }
     }
   } finally { setLang('en'); }
@@ -5923,7 +5939,7 @@ test('the arcana bases\' store in Rust takes, checks and keeps what the TypeScri
   ];
   compare([
     { name: 'arcana-bases.safe', ts: st.safeListing as never, inputs: [[bases], [null], [[1, 2]], [{ a: 5 }]] },
-    { name: 'arcana-bases.signed', ts: st.signedListing as never, inputs: [[manifest, sign(keys, manifest), key], [manifest, sign(other, manifest), key], ['{bad', sign(keys, '{bad'), key], [manifest, 'nope', key]] },
+    { name: 'arcana-bases.signed', ts: st.signedListing as never, fresh: true, inputs: [[manifest, sign(keys, manifest), key], [manifest, sign(other, manifest), key], ['{bad', sign(keys, '{bad'), key], [manifest, 'nope', key]] },
     { name: 'arcana-bases.blobSha', ts: ((s: string) => st.blobSha(Buffer.from(s, 'latin1'))) as never, inputs: [[{ $file: (fs.writeFileSync(path.join(tmp, 'b'), file('q')), path.join(tmp, 'b')) }]] },
   ]);
   const tree = (d: string) => (fs.existsSync(d) ? Object.fromEntries((fs.readdirSync(d, { recursive: true, withFileTypes: true }) as fs.Dirent[]).filter((e) => e.isFile())
