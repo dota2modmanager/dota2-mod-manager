@@ -249,10 +249,15 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
         .build()?;
     let events = app.handle().clone();
     let w = win.clone();
+    // Resized fires at every step of dragging an edge; the page hears only a change of state,
+    // as Electron's maximize and unmaximize events told it (src/main-window.ts).
+    let was_max = std::sync::atomic::AtomicBool::new(win.is_maximized().unwrap_or(false));
     win.on_window_event(move |e| match e {
         WindowEvent::Resized(_) => {
             let max = w.is_maximized().unwrap_or(false);
-            let _ = events.emit("mm", json!({ "channel": "win:maximized", "args": [max] }));
+            if was_max.swap(max, std::sync::atomic::Ordering::Relaxed) != max {
+                let _ = events.emit("mm", json!({ "channel": "win:maximized", "args": [max] }));
+            }
         }
         WindowEvent::CloseRequested { api, .. } => {
             events.state::<Arc<Shell>>().close(&events, &w, api);

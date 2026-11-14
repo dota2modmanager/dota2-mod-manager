@@ -60,24 +60,25 @@ function paintZoom(): void {
 
 export function applyContentZoom(factor: number): void {
   if (state.settings) state.settings.uiScale = factor;
-  const was = fit;
-  fit = fitFor(window.innerWidth, window.innerHeight, factor);
   paintZoom();
-  if (fit !== was) paintPanels();
   paintScale(Math.round(factor * 100));
 }
 
+// The window's share is applied once the edge stops moving: changing the zoom mid-drag reflows
+// every screen at each step, and the drag stutters under it.
 let refit = 0;
+function refitToWindow(): void {
+  const next = fitFor(window.innerWidth, window.innerHeight);
+  if (next === fit) return;
+  fit = next;
+  paintZoom();
+  paintPanels();
+}
 window.addEventListener('resize', () => {
-  cancelAnimationFrame(refit);
-  refit = requestAnimationFrame(() => {
-    const next = fitFor(window.innerWidth, window.innerHeight, Number(state.settings?.uiScale) || 1);
-    if (next === fit) return;
-    fit = next;
-    paintZoom();
-    paintPanels();
-  });
+  clearTimeout(refit);
+  refit = window.setTimeout(refitToWindow, 180);
 });
+fit = fitFor(window.innerWidth, window.innerHeight); // painted by the start-up applyContentZoom and bindPanels
 
 // paints first, saves after: the wheel can outrun the IPC and must not wait for it
 export function applyScalePct(pct: number): void {

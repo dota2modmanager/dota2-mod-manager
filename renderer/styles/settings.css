@@ -177,6 +177,9 @@
    The sections down the left, sticky, the one being read lit; the page to their right. One row
    per setting: its name and a line about it on the left, its control in one right-hand column, so
    every switch on the page lines up. A wide row puts its control under the text. */
+/* Settings is a column to read, not a page to fill: on a window wider than it, the whole screen
+   (title, sections, rows) sits in the middle instead of hugging the left edge. */
+.view-pane:has(> .set-layout) { max-width: calc(188px + var(--space-5) + 820px); margin-inline: auto; }
 .set-layout {
   display: grid;
   grid-template-columns: 188px minmax(0, 820px);
