@@ -178,10 +178,7 @@ impl Catalog {
             write(&self.cache_path(name), text)?;
         }
         // the hashes, which the app is allowed to do without
-        match self
-            .fetch_signed(net, HASH_FILE)
-            .and_then(|t| write(&self.cache_path(HASH_FILE), t))
-        {
+        match self.fetch_signed(net, HASH_FILE).and_then(|t| write(&self.cache_path(HASH_FILE), t)) {
             Ok(()) => {}
             Err(_) => *self.hashes.lock().unwrap_or_else(|e| e.into_inner()) = None,
         }
@@ -231,5 +228,48 @@ impl Catalog {
         }
         let v = hashes.get(format!("{category_id}/{file}"))?.as_str()?;
         (v.len() == 64 && v.bytes().all(|b| b.is_ascii_hexdigit())).then(|| v.to_lowercase())
+    }
+}
+
+#[cfg(test)]
+mod off_the_lock {
+    use super::{write, Catalog};
+    use std::sync::Arc;
+
+    #[test]
+    fn loads_at_once_read_whole_files_while_the_cache_is_rewritten() {
+        let ud = std::env::temp_dir().join(format!("mm-catalog-turn-{}", std::process::id()));
+        let cat = Arc::new(Catalog::new(&ud, Some(""), Some(""), Box::new(|| 0.0)));
+        let mods = |n: usize| {
+            serde_json::to_string(&vec![serde_json::json!({ "id": "m", "name": "x".repeat(n) }); 400]).unwrap()
+        };
+        write(&cat.cache_path("mods.json"), mods(10)).unwrap();
+        write(&cat.cache_path("constants.json"), "{}").unwrap();
+        write(&cat.cache_path("guides.json"), "[]").unwrap();
+        let net = Arc::new(crate::net_fetch::Net::new(|| 0.0));
+        let writer = {
+            let cat = cat.clone();
+            std::thread::spawn(move || {
+                for i in 0..60 {
+                    write(&cat.cache_path("mods.json"), mods(10 + i * 50)).unwrap();
+                }
+            })
+        };
+        let readers: Vec<_> = (0..4)
+            .map(|_| {
+                let (cat, net) = (cat.clone(), net.clone());
+                std::thread::spawn(move || {
+                    for _ in 0..30 {
+                        let got = cat.load(&net, false).expect("a whole mods.json every time");
+                        assert_eq!(got["mods"].as_array().map(Vec::len), Some(400));
+                    }
+                })
+            })
+            .collect();
+        writer.join().unwrap();
+        for r in readers {
+            r.join().unwrap();
+        }
+        std::fs::remove_dir_all(&ud).unwrap();
     }
 }
