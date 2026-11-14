@@ -40,7 +40,8 @@ test('a folder becomes a VPK holding every file at its path, the game\'s lower c
     const out = path.join(dir, 'out', 'pak01_dir.vpk');
     const made = mm('vpk-build', out, path.join(dir, 'in'));
     assert.equal(made.entries, Object.keys(FILES).length);
-    assert.equal(made.size, fs.statSync(out).size);
+    const bytes = fs.readFileSync(out);
+    assert.equal(made.size, bytes.length);
     const entries = new Map<string, number>(mm('vpk-entries', out));
     assert.deepEqual([...entries.keys()].sort(), Object.keys(FILES).map((p) => p.toLowerCase()).sort());
     for (const [rel, data] of Object.entries(FILES)) {
@@ -50,7 +51,7 @@ test('a folder becomes a VPK holding every file at its path, the game\'s lower c
     // the same folder, the same bytes: a sandbox seeded twice is the same sandbox
     const again = path.join(dir, 'again.vpk');
     mm('vpk-build', again, path.join(dir, 'in'));
-    assert.ok(fs.readFileSync(out).equals(fs.readFileSync(again)));
+    assert.ok(bytes.equals(fs.readFileSync(again)));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -68,6 +69,6 @@ test('a list names each file\'s path inside the VPK, relative to the list', { sk
     // a file the list names and the disk lacks is an error, not an empty entry
     fs.writeFileSync(path.join(dir, 'bad.json'), JSON.stringify([['a.txt', 'in/none']]));
     assert.throws(() => execFileSync(cli, ['vpk-build', path.join(dir, 'bad.vpk'), path.join(dir, 'bad.json')], { stdio: 'pipe' }));
-    assert.ok(!fs.existsSync(path.join(dir, 'bad.vpk')));
+    assert.deepEqual(fs.readdirSync(dir).filter((f) => f.startsWith('bad.vpk')), []);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
