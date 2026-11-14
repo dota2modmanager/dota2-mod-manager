@@ -26,7 +26,7 @@ uuid = { version = "1", features = ["v4"] }
 # a picture moved to a colour (png_paint.rs), as Electron's image codec did it
 png = "0.17"
 # foreign archives: mods, fonts, cursors and tools off the catalog, presets off Discord
-zip = { version = "2", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 # free space on the drive a mod is about to be written to
 fs4 = "0.13"
 # local time for a zip's dates, and the ISO time in the ownership note
