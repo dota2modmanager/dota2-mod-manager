@@ -112,3 +112,14 @@ test('anything but one whole DXT mip is left to the toolchain', () => {
   const png = decodePng(pictureFromVtex(dxtTexture(1, 5, 3))!)!;
   assert.deepEqual([png.width, png.height], [5, 3]);
 });
+
+test("DXT5's other alpha table: a0 not above a1 gives four steps, then fully clear and fully solid", () => {
+  const tex = dxtTexture(2, 4, 4);
+  const at = tex.length - 16;
+  tex.fill(0, at);
+  tex[at] = 50; tex[at + 1] = 150;
+  // pixels 0..3 take indices 0, 2, 6, 7: a0, the first step, clear, solid
+  tex.writeUIntLE(0 | (2 << 3) | (6 << 6) | (7 << 9), at + 2, 3);
+  const im = rgbaFromVtex(tex)!;
+  assert.deepEqual([0, 1, 2, 3].map((x) => px(im, x, 0)[3]), [50, 70, 0, 255]);
+});
