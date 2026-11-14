@@ -138,7 +138,7 @@ jobs:
       # electron-updater runs it and whose install it takes over (src-tauri/windows/hooks.nsh).
       # The portable build is the same exe without the installer around it, and portable.yml is
       # what it checks a new one against: it cannot install over itself, so it fetches the new one
-      # beside itself (crates/mm-core/src/portable_update.rs).
+      # beside itself (crates/mm-core/src/app/portable_update.rs).
       - name: Build the installer and the portable exe, and upload them to the draft
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash

@@ -12,6 +12,32 @@
 //! The additional terms in NOTICE apply: whoever carries this code keeps both names here and in
 //! the credits of the program it goes into.
 
+// The item builder: what a pick writes, its effects, styles, sets, sounds and the look on everybody.
+pub mod ability_icons;
+pub mod ability_icons_service;
+pub mod ability_sounds;
+pub mod ability_sounds_service;
+pub mod cosmetic_names;
+pub mod item_builder_ability_fx;
+pub mod item_builder_assets;
+pub mod item_builder_details;
+pub mod item_builder_donor;
+pub mod item_builder_effects;
+pub mod item_builder_everyone;
+pub mod item_builder_everyone_budget;
+pub mod item_builder_fx_patch;
+pub mod item_builder_kinetic;
+pub mod item_builder_personas;
+pub mod item_builder_refits;
+pub mod item_builder_sets;
+pub mod item_builder_slots;
+pub mod item_builder_styles;
+pub mod item_portraits;
+pub mod item_skin;
+pub mod item_sounds;
+pub mod item_visuals;
+pub mod unusual_effects;
+
 use regex::bytes::Regex;
 use serde::Serialize;
 use serde_json::json;

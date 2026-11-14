@@ -1,4 +1,4 @@
-/* The Rust owner (crates/mm-core/src/owner.rs) against the TypeScript main process, channel by
+/* The Rust owner (crates/mm-core/src/owner/mod.rs) against the TypeScript main process, channel by
  * channel: both run over twin copies of one state (test/helpers/owner-twins.ts), are handed the
  * same calls and the same answers from the shell, and must answer, ask and write the same.
  *

@@ -4,7 +4,7 @@
  * same question the first look picked asks (ui/game-files.ts), so there is one place it is
  * explained and one place it is undone.
  *
- * Under it, the look on everybody (crates/mm-core/src/item_builder_everyone.rs): every hero the user
+ * Under it, the look on everybody (crates/mm-core/src/item_builder/item_builder_everyone.rs): every hero the user
  * built, the one built most lately first, but those excluded here. The game takes only so many of
  * its files before it hands out wrong models (#414, item_builder_everyone_budget.rs), so a hero
  * that did not fit is named here rather than dropped in silence. */

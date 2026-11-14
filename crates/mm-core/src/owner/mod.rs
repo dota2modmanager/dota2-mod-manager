@@ -11,6 +11,33 @@
 //! The state sits behind one lock. The TypeScript main process is one thread, so a channel there
 //! never runs beside another; here each runs on a thread of its own and takes its turn at the lock.
 
+// The state the window talks to: one owner of settings, the library and the services, and its channels.
+pub mod calls;
+pub mod channel_args;
+pub mod large_answer;
+pub mod owner_app;
+pub mod owner_bases;
+pub mod owner_compiler;
+pub mod owner_creator;
+pub mod owner_foreign;
+pub mod owner_game;
+pub mod owner_library;
+pub mod owner_links;
+pub mod owner_mods;
+pub mod owner_packs;
+pub mod owner_pictures;
+pub mod owner_presence;
+pub mod owner_presets;
+pub mod owner_preview3d;
+pub mod owner_settings;
+pub mod owner_start;
+pub mod owner_studios;
+pub mod owner_support;
+pub mod owner_tools;
+pub mod owner_uninstall;
+pub mod owner_update;
+pub mod owner_watch;
+
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock, Weak};

@@ -1,5 +1,5 @@
 //! A picture moved to a colour (src/services.ts electronRepaint): the PNG decoded, its pixels
-//! painted by crates/mm-core/src/recolor_modes.rs, and written back as a PNG.
+//! painted by crates/mm-core/src/looks/recolor_modes.rs, and written back as a PNG.
 
 use crate::recolor::Rgb;
 

@@ -36,7 +36,7 @@ pub fn notice_texts() -> &'static IndexMap<String, IndexMap<String, String>> {
     static T: OnceLock<IndexMap<String, IndexMap<String, String>>> = OnceLock::new();
     T.get_or_init(|| {
         let rows: Vec<(String, IndexMap<String, String>)> =
-            serde_json::from_str(include_str!("../data/notice-texts.json")).expect("notice-texts.json");
+            serde_json::from_str(include_str!("../../data/notice-texts.json")).expect("notice-texts.json");
         rows.into_iter().collect()
     })
 }
@@ -46,7 +46,7 @@ pub fn notice_keys() -> &'static crate::data::Table {
     static T: OnceLock<crate::data::Table> = OnceLock::new();
     T.get_or_init(|| {
         let rows: Vec<(String, String)> =
-            serde_json::from_str(include_str!("../data/notice-keys.json")).expect("notice-keys.json");
+            serde_json::from_str(include_str!("../../data/notice-keys.json")).expect("notice-keys.json");
         rows.into_iter().collect()
     })
 }

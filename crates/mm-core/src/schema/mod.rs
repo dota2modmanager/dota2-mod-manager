@@ -2,6 +2,18 @@
 //! free item of a slot, the game's own table out of its pak01. Rewritten from src/schema-items.ts.
 //! The table is bytes (latin1 in the TypeScript), so a block found here splices back unchanged.
 
+// The item table (items_game): reading, merging, building and deploying it, and undoing a build.
+pub mod background_builds;
+pub mod build_undo;
+pub mod item_files;
+pub mod item_files_service;
+pub mod schema_build;
+pub mod schema_cosmetics;
+pub mod schema_deploy;
+pub mod schema_harvest;
+pub mod schema_merge;
+pub mod schema_service;
+
 use std::path::Path;
 
 use rayon::prelude::*;

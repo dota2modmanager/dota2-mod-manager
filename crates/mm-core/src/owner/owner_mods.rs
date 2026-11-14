@@ -1,6 +1,6 @@
 //! Installing, updating, importing, exporting and listing mods (src/ipc-mods.ts): the channels the
 //! Library screen and the catalog's install buttons reach for. What My mods is drawn from is built
-//! in crates/mm-core/src/mods_listing.rs.
+//! in crates/mm-core/src/install/mods_listing.rs.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

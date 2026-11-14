@@ -1,4 +1,4 @@
-// Pure functions moved to Rust (crates/mm-core/src/calls.rs) answer what the TypeScript function
+// Pure functions moved to Rust (crates/mm-core/src/owner/calls.rs) answer what the TypeScript function
 // of the same name answers, input for input. Each case names the function as calls.rs does
 // (module.export), the TypeScript one, and the inputs; one mm-cli run answers them all. Skipped
 // where mm-cli is not built, like test/rust-parity.test.ts. The tables both sides read are checked

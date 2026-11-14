@@ -1,5 +1,5 @@
 //! `mm-cli owner --user-data-dir=<dir> [--write-jail=<dir>] [--find-game=<path>] [--running]`:
-//! mm-core's owner (crates/mm-core/src/owner.rs) on the wire src-tauri/host/host.ts speaks, so
+//! mm-core's owner (crates/mm-core/src/owner/mod.rs) on the wire src-tauri/host/host.ts speaks, so
 //! test/rust-owner.test.ts can drive the TypeScript main process and the Rust owner with the same
 //! lines and compare what each answers, asks and writes.
 //!

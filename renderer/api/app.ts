@@ -30,7 +30,7 @@ export interface StoredSettings {
   countDownloads: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
   everyoneWearsMine: boolean;
-  /** the heroes it leaves alone, by id: every other hero built is dressed, as the game's limit allows (crates/mm-core/src/item_builder_everyone_budget.rs) */
+  /** the heroes it leaves alone, by id: every other hero built is dressed, as the game's limit allows (crates/mm-core/src/item_builder/item_builder_everyone_budget.rs) */
   everyoneExcluded: string[];
   /** the heroes the last build left out to stay under that limit */
   everyoneLeftOut: string[];

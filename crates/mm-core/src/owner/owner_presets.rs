@@ -1,7 +1,7 @@
 //! The preset channels (src/ipc-presets.ts): saving the on/off state under a name, putting a preset
 //! back on (its gone catalog mods fetched again first), sending it as a .d2mm or a link, taking one
-//! in, and the ready-made presets. What a preset is lives in crates/mm-core/src/presets_service.rs
-//! and the flows that put one on in crates/mm-core/src/preset_install.rs.
+//! in, and the ready-made presets. What a preset is lives in crates/mm-core/src/presets/presets_service.rs
+//! and the flows that put one on in crates/mm-core/src/presets/preset_install.rs.
 
 use serde_json::{json, Map, Value};
 
