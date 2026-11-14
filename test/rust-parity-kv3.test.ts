@@ -1,4 +1,4 @@
-// The Rust KV3 and resource code (crates/mm-core/src/kv3.rs, resource.rs) answers what
+// The Rust KV3 and resource code (crates/mm-core/src/formats/kv3.rs, resource.rs) answers what
 // src/kv3*.ts and src/resource.ts answer, on blocks built here in every shape the helpers know
 // (versions 1, 2 and 5 with zstd) and, when the game is on this machine, a spread of its own
 // particles, materials, models and sounds read out of pak01 (read only, as the sandbox does).

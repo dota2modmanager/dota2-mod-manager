@@ -46,7 +46,7 @@ Tauri command mm_invoke(channel, args)
 
 - `preload.js` is injected into the page as Tauri's initialization script with a stand-in
   `require('electron')` (`bridge.js`). The page gets the exact `window.api` it gets in Electron.
-- The owner (`crates/mm-core/src/owner.rs`) holds settings.json, the library, the installer and
+- The owner (`crates/mm-core/src/owner/mod.rs`) holds settings.json, the library, the installer and
   the services, and answers every channel the TypeScript main process registered, group by group
   in `owner_*.rs`, one per `src/ipc-*.ts`. No Node process runs.
 - Bytes cross the boundary as `{ "$b64": "..." }`. An answer that is only bytes (a 3D preview
@@ -61,7 +61,7 @@ has been through the sandbox and the e2e run. Both build from the same `renderer
 
 ## Comparing a pure function
 
-`crates/mm-core/src/calls.rs` names every ported function as `module.export` and takes its
+`crates/mm-core/src/owner/calls.rs` names every ported function as `module.export` and takes its
 arguments as JSON (a string of items_game text is its latin1 bytes; `{"$file": path}` reads a
 file once). `mm-cli call list.json` answers a list of `[name, ...args]`, and
 `test/rust-calls.test.ts` runs each case on both sides and compares. A new port adds its name
@@ -80,11 +80,11 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | Bridge (preload.js in the webview) | done | yes | `bridge.js` |
 | TypeScript host behind the shell | done | yes | `src-tauri/host/` |
 | `win:*` channels | done | yes | `native.rs` |
-| VPK read/write/fingerprint (`src/vpk-read.ts`, `vpk-write.ts`, `vpk-fingerprint.ts`) | done | no | `crates/mm-core/src/vpk.rs`, parity test `test/rust-parity.test.js` |
-| items_game reader (`src/schema-kv.ts`, `schema-items.ts`) | done | no | `crates/mm-core/src/kv.rs`, `schema.rs`; parity: all ~26 000 items equal, byte ranges included |
-| items_game merge and check (`schema-merge.ts`) | done | no | `crates/mm-core/src/schema_merge.rs`; parity: real patches merge to the same bytes, conflicts and `validate` agree |
-| KV3 read, numbers in place, blobs, write anew (`src/kv3*.ts`, `lz4.ts`) | done | no | `crates/mm-core/src/kv3.rs`, `lz4.rs`; parity `test/rust-parity-kv3.test.ts`: built blocks of versions 1, 2, 5 and ~200 of the game's particles, materials, models, sounds and animations give the same tree, the same bytes encoded back and written anew (zstd blocks: the same tree read back, since `ruzstd` compresses differently from Node) |
-| compiled resources: blocks, RERL (`src/resource.ts`) | done | no | `crates/mm-core/src/resource.rs`; same parity test |
+| VPK read/write/fingerprint (`src/vpk-read.ts`, `vpk-write.ts`, `vpk-fingerprint.ts`) | done | no | `crates/mm-core/src/formats/vpk.rs`, parity test `test/rust-parity.test.js` |
+| items_game reader (`src/schema-kv.ts`, `schema-items.ts`) | done | no | `crates/mm-core/src/formats/kv.rs`, `schema.rs`; parity: all ~26 000 items equal, byte ranges included |
+| items_game merge and check (`schema-merge.ts`) | done | no | `crates/mm-core/src/schema/schema_merge.rs`; parity: real patches merge to the same bytes, conflicts and `validate` agree |
+| KV3 read, numbers in place, blobs, write anew (`src/kv3*.ts`, `lz4.ts`) | done | no | `crates/mm-core/src/formats/kv3.rs`, `lz4.rs`; parity `test/rust-parity-kv3.test.ts`: built blocks of versions 1, 2, 5 and ~200 of the game's particles, materials, models, sounds and animations give the same tree, the same bytes encoded back and written anew (zstd blocks: the same tree read back, since `ruzstd` compresses differently from Node) |
+| compiled resources: blocks, RERL (`src/resource.ts`) | done | no | `crates/mm-core/src/formats/resource.rs`; same parity test |
 | strings and data tables (`i18n.ts`, `hero-names.ts`, the item builder's effects) | done | no | `i18n.rs`, `hero_names.rs`, `data.rs`; the tables are JSON in `crates/mm-core/data/`, written from the TypeScript by `node tools/rust-data.mjs` and checked by `test/rust-data.test.ts` |
 | item builder: styles, donor effects, own and unusual effects, item visuals, localization tokens (`item-builder-styles.ts`, `-donor.ts`, `-effects.ts`, `-unusual.ts`, `unusual-effects.ts`, `item-visuals.ts`, `cosmetic-names.ts` pure part) | done | no | parity through `calls.rs`: `test/rust-calls.test.ts` runs every function on both sides over the sandbox's real items_game (and the game's localization when installed) |
 | models: material set, cloth, attachments, sequence numbering (`model-skin.ts`, `model-cloth.ts`, `model-attachments.ts`, `model-sequences.ts`) | done | no | `model_*.rs`; parity: the same bytes (sha1) on ~200 of the game's item, courier and hero models, the courier numbering against all four donkeys |
@@ -261,7 +261,7 @@ sees it.
 
 ### Step 2 and 3 so far
 
-The owner is `crates/mm-core/src/owner.rs`: one `Core` behind a lock (settings, the library, the
+The owner is `crates/mm-core/src/owner/mod.rs`: one `Core` behind a lock (settings, the library, the
 installer, the item table's service, the upkeep, the network, the catalog and the services with
 indexes of their own), and the channels in groups, one `owner_*.rs` per `src/ipc-*.ts` module.
 `mm-cli owner` puts it on the host's own wire (`crates/mm-cli/src/owner_wire.rs`), so

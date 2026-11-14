@@ -25,9 +25,9 @@ for (const f of fs.readdirSync(shellDir, { recursive: true })) {
   for (const m of text.matchAll(/"([a-zA-Z0-9]+:[a-zA-Z0-9:_-]+)"\s*(?:\|[^=]*)?=>/g)) rust.add(m[1]);
   for (const m of text.matchAll(/\|\s*"([a-zA-Z0-9]+:[a-zA-Z0-9:_-]+)"/g)) rust.add(m[1]);
 }
-const coreDir = path.join(root, 'crates', 'mm-core', 'src');
+const coreDir = path.join(root, 'crates', 'mm-core', 'src', 'owner');
 for (const f of fs.readdirSync(coreDir)) {
-  if (!/^owner(_\w+)?\.rs$/.test(f)) continue;
+  if (!/^(mod|owner(_\w+)?)\.rs$/.test(f)) continue;
   const text = fs.readFileSync(path.join(coreDir, f), 'utf8');
   const list = text.match(/pub const CHANNELS: &\[&str\] =\s*&\[([\s\S]*?)\];/);
   if (list) for (const m of list[1].matchAll(CHANNEL)) rust.add(m[1]);

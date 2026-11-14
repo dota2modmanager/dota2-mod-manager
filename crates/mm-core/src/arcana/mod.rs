@@ -4,6 +4,18 @@
 //! particles hung on it as children; its portraits and ability icons and its versions of other
 //! items' particles under the plain ones' names; and its colour written in, since there is no gem.
 
+// Arcanas, personas and their bases, gems and the rank look.
+pub mod arcana_base_color;
+pub mod arcana_base_store;
+pub mod arcana_bases;
+pub mod arcana_notes;
+pub mod arcana_service;
+pub mod emblem_ring;
+pub mod gem_colors;
+pub mod persona_base_effects;
+pub mod rank_look;
+pub mod rank_look_service;
+
 use indexmap::IndexMap;
 use serde::Deserialize;
 use std::collections::HashSet;

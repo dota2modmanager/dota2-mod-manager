@@ -1,224 +1,79 @@
 //! The parts of Dota 2 Mod Manager that read and write the game's files, rewritten from src/*.ts.
 //! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
 
-pub mod ability_icons;
-pub mod ability_icons_service;
-pub mod ability_sounds;
-pub mod ability_sounds_service;
-pub mod adopt;
-pub mod app_info;
-pub mod app_log;
+pub mod app;
 pub mod arcana;
-pub mod arcana_base_color;
-pub mod arcana_base_store;
-pub mod arcana_bases;
-pub mod arcana_notes;
-pub mod arcana_service;
-pub mod atomic_file;
-pub mod background_builds;
-pub mod beta;
-pub mod build_undo;
-pub mod calls;
 pub mod catalog;
-pub mod catalog_signature;
-pub mod channel_args;
-pub mod cosmetic_names;
-pub mod courier_models;
-pub mod creator;
-pub mod cursors;
-pub mod data;
-pub mod deep_links;
-pub mod diagnostics;
-pub mod discord_auth;
-pub mod discord_presence;
-pub mod disk_space;
-pub mod download_stats;
-pub mod effect_edit;
-pub mod effect_edit_service;
-pub mod effect_finder;
-pub mod emblem_ring;
-pub mod feature_gate;
-pub mod file_tx;
-pub mod fingerprints;
-pub mod folder_size;
-pub mod game_icons;
-pub mod game_repair;
-pub mod game_upkeep;
-pub mod game_watch;
-pub mod gamelang;
-pub mod gem_colors;
-pub mod generated_pak;
-pub mod glb_embed;
-pub mod hero_grid;
-pub mod hero_names;
-pub mod hero_paint_service;
-pub mod hero_particle_styles;
-pub mod hero_preview;
-pub mod hero_preview_fx;
-pub mod hero_preview_picks;
-pub mod hero_showcase;
-pub mod hud_scale;
-pub mod hud_scale_service;
-pub mod i18n;
-pub mod icon_match;
-pub mod import;
-pub mod installer;
-pub mod installer_downloads;
-pub mod installer_files;
-pub mod installer_folder;
-pub mod installer_repack;
-pub mod installer_slots;
-pub mod installer_write;
+pub mod formats;
+pub mod game;
+pub mod install;
 pub mod item_builder;
-pub mod item_builder_ability_fx;
-pub mod item_builder_assets;
-pub mod item_builder_details;
-pub mod item_builder_donor;
-pub mod item_builder_effects;
-pub mod item_builder_everyone;
-pub mod item_builder_everyone_budget;
-pub mod item_builder_fx_patch;
-pub mod item_builder_kinetic;
-pub mod item_builder_personas;
-pub mod item_builder_refits;
-pub mod item_builder_sets;
-pub mod item_builder_slots;
-pub mod item_builder_styles;
-pub mod item_files;
-pub mod item_files_service;
-pub mod item_portraits;
-pub mod item_skin;
-pub mod item_sounds;
-pub mod item_visuals;
-pub mod js;
-pub mod kv;
-pub mod kv3;
-pub mod large_answer;
-pub mod library;
-pub mod loadout_material;
-pub mod loadout_resources;
-pub mod loadout_sheet;
-pub mod lz4;
-pub mod main_window;
-pub mod map_decor;
-pub mod map_looks_service;
-pub mod material;
-pub mod memo;
-pub mod menu_background;
-pub mod menu_background_service;
-pub mod meshopt;
-pub mod minify;
-pub mod mod_doctor;
-pub mod mod_id;
-pub mod mod_preview;
-pub mod mod_preview_pick;
-pub mod mod_update;
-pub mod model_attachments;
-pub mod model_bodygroups;
-pub mod model_cloth;
-pub mod model_glb;
-pub mod model_hitboxes;
-pub mod model_loadout;
-pub mod model_merge;
-pub mod model_particles;
-pub mod model_scale;
-pub mod model_sequences;
-pub mod model_skin;
-pub mod model_snapshot_fallback;
-pub mod model_style_meshes;
-pub mod mods_listing;
-pub mod net_fetch;
-pub mod net_mirrors;
-pub mod notice_text;
-pub mod overlays;
+pub mod looks;
+pub mod models;
 pub mod owner;
-pub mod owner_app;
-pub mod owner_bases;
-pub mod owner_compiler;
-pub mod owner_creator;
-pub mod owner_foreign;
-pub mod owner_game;
-pub mod owner_library;
-pub mod owner_links;
-pub mod owner_mods;
-pub mod owner_packs;
-pub mod owner_pictures;
-pub mod owner_presence;
-pub mod owner_presets;
-pub mod owner_preview3d;
-pub mod owner_settings;
-pub mod owner_start;
-pub mod owner_studios;
-pub mod owner_support;
-pub mod owner_tools;
-pub mod owner_uninstall;
-pub mod owner_update;
-pub mod owner_watch;
-pub mod pak_stamp;
-pub mod panorama_files;
-pub mod particle_snapshot;
-pub mod particle_spec;
-pub mod particle_surface;
-pub mod patch_watch;
-pub mod patcher;
-pub mod patcher_gameinfo;
-pub mod patcher_signatures;
-pub mod persona_base_effects;
-pub mod png_paint;
-pub mod png_strip;
-pub mod portable_update;
-pub mod presence_status;
-pub mod preset_install;
-pub mod preset_link;
-pub mod preset_plan;
-pub mod preset_share;
-pub mod presets_service;
-pub mod preview_cache;
-pub mod pumpkin;
-pub mod rank_look;
-pub mod rank_look_service;
-pub mod razor_crest_preview;
-pub mod ready_presets;
-pub mod ready_presets_format;
-pub mod recolor;
-pub mod recolor_layers;
-pub mod recolor_modes;
-pub mod remote_config;
-pub mod remove_everything;
-pub mod resource;
-pub mod resource_compiler;
-pub mod run_process;
-pub mod safe_zip;
+pub mod presets;
 pub mod schema;
-pub mod schema_build;
-pub mod schema_cosmetics;
-pub mod schema_deploy;
-pub mod schema_harvest;
-pub mod schema_merge;
-pub mod schema_service;
-pub mod scream_guard;
-pub mod settings;
-pub mod settings_view;
-pub mod slot_zones;
-pub mod steam;
-pub mod steam_appstate;
-pub mod support_prompt;
-pub mod terrain_age;
-pub mod toolchain;
-pub mod tower_looks;
-pub mod tray;
-pub mod tree_sets;
-pub mod ui_lang;
-pub mod uninstall;
-pub mod unusual_effects;
-pub mod update_impact;
-pub mod updater;
-pub mod vpk;
-pub mod vpk_analyze;
-pub mod vpk_pack;
-pub mod vpk_shared;
-pub mod vtex;
-pub mod wiki_icons;
-pub mod wine;
-pub mod workshop_tools;
-pub mod write_jail;
+pub mod tools;
+pub mod util;
+
+// Every module keeps the path it had before the folders: crate::kv, mm_core::vpk.
+pub use app::{
+    app_info, app_log, diagnostics, discord_auth, discord_presence, disk_space, folder_size, i18n, main_window,
+    mod_doctor, notice_text, portable_update, presence_status, settings, settings_view, support_prompt, tray, ui_lang,
+    updater, write_jail,
+};
+pub use arcana::{
+    arcana_base_color, arcana_base_store, arcana_bases, arcana_notes, arcana_service, emblem_ring, gem_colors,
+    persona_base_effects, rank_look, rank_look_service,
+};
+pub use catalog::{
+    beta, catalog_signature, deep_links, download_stats, feature_gate, fingerprints, icon_match, mod_preview,
+    mod_preview_pick, net_fetch, net_mirrors, preview_cache, remote_config, wiki_icons,
+};
+pub use formats::{
+    glb_embed, kv, kv3, lz4, material, meshopt, pak_stamp, panorama_files, png_paint, png_strip, resource, safe_zip,
+    vpk, vpk_analyze, vpk_pack, vpk_shared, vtex,
+};
+pub use game::{
+    game_icons, game_repair, game_upkeep, game_watch, gamelang, hero_grid, hero_names, minify, patch_watch, patcher,
+    patcher_gameinfo, patcher_signatures, scream_guard, steam, steam_appstate, terrain_age, update_impact,
+};
+pub use install::{
+    adopt, atomic_file, file_tx, generated_pak, import, installer, installer_downloads, installer_files,
+    installer_folder, installer_repack, installer_slots, installer_write, library, mod_id, mod_update, mods_listing,
+    overlays, remove_everything, slot_zones, uninstall,
+};
+pub use item_builder::{
+    ability_icons, ability_icons_service, ability_sounds, ability_sounds_service, cosmetic_names,
+    item_builder_ability_fx, item_builder_assets, item_builder_details, item_builder_donor, item_builder_effects,
+    item_builder_everyone, item_builder_everyone_budget, item_builder_fx_patch, item_builder_kinetic,
+    item_builder_personas, item_builder_refits, item_builder_sets, item_builder_slots, item_builder_styles,
+    item_portraits, item_skin, item_sounds, item_visuals, unusual_effects,
+};
+pub use looks::{
+    cursors, effect_edit, effect_edit_service, effect_finder, hero_paint_service, hud_scale, hud_scale_service,
+    map_decor, map_looks_service, menu_background, menu_background_service, pumpkin, recolor, recolor_layers,
+    recolor_modes, tower_looks, tree_sets,
+};
+pub use models::{
+    courier_models, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks, hero_showcase,
+    loadout_material, loadout_resources, loadout_sheet, model_attachments, model_bodygroups, model_cloth, model_glb,
+    model_hitboxes, model_loadout, model_merge, model_particles, model_scale, model_sequences, model_skin,
+    model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec, particle_surface,
+    razor_crest_preview,
+};
+pub use owner::{
+    calls, channel_args, large_answer, owner_app, owner_bases, owner_compiler, owner_creator, owner_foreign,
+    owner_game, owner_library, owner_links, owner_mods, owner_packs, owner_pictures, owner_presence, owner_presets,
+    owner_preview3d, owner_settings, owner_start, owner_studios, owner_support, owner_tools, owner_uninstall,
+    owner_update, owner_watch,
+};
+pub use presets::{
+    preset_install, preset_link, preset_plan, preset_share, presets_service, ready_presets, ready_presets_format,
+};
+pub use schema::{
+    background_builds, build_undo, item_files, item_files_service, schema_build, schema_cosmetics, schema_deploy,
+    schema_harvest, schema_merge, schema_service,
+};
+pub use tools::{creator, resource_compiler, run_process, toolchain, wine, workshop_tools};
+pub use util::{data, js, memo};

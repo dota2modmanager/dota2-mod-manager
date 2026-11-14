@@ -2,6 +2,22 @@
 //! repository, each checked against its author's signature, the last good copy kept on disk, and
 //! the archive hashes the catalog publishes beside them.
 
+// The mod catalog and everything fetched over the network: mirrors, the remote config, pictures, counters, links.
+pub mod beta;
+pub mod catalog_signature;
+pub mod deep_links;
+pub mod download_stats;
+pub mod feature_gate;
+pub mod fingerprints;
+pub mod icon_match;
+pub mod mod_preview;
+pub mod mod_preview_pick;
+pub mod net_fetch;
+pub mod net_mirrors;
+pub mod preview_cache;
+pub mod remote_config;
+pub mod wiki_icons;
+
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
