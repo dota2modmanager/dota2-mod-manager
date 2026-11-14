@@ -108,6 +108,9 @@ function under(path: string, en: VpkEntry): VpkEntry {
   return { ...entryAt(path, Buffer.alloc(0)), data: en.data, crc: en.crc, preload: en.preload };
 }
 
+/** A patch of everybody's look, with the hero it dresses (npc_dota_hero_*), for the budget to take whole heroes. */
+export type EveryonePatch = SchemaPatch & { hero: string };
+
 /**
  * The patches that dress every other wearable of each hero the build dresses as the user's hero is
  * dressed. Merged after the build's own, whose files and blocks win where both name one.
@@ -116,7 +119,7 @@ function under(path: string, en: VpkEntry): VpkEntry {
  * @param read     a file of the game's pak01, for its stock items and the invisible box
  * @param heroes   only these, as items_game names them without npc_dota_hero_; none: all of them
  */
-export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEntry[], read: (path: string) => Buffer | null, heroes?: string[]): SchemaPatch[] {
+export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEntry[], read: (path: string) => Buffer | null, heroes?: string[]): EveryonePatch[] {
   const files = new Map<string, VpkEntry>();
   for (const en of [...list.flatMap((p) => p.assets || []), ...beneath]) {
     const key = entryPath(en).toLowerCase();
@@ -174,7 +177,7 @@ export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEnt
     return bodies.get(hero)!;
   };
 
-  const out: SchemaPatch[] = [];
+  const out: EveryonePatch[] = [];
   for (const item of items) {
     // a block somebody else's mod lifted is that mod's (src/schema-build.ts rec.schema)
     if (item.prefab === 'default_item' || blocks.has(item.id)) continue;
@@ -203,6 +206,7 @@ export function everyoneWears(text: string, list: SchemaPatch[], beneath: VpkEnt
       block: blockInEveryStyle(asItem(blocks.get(stock.id) ?? text.slice(stock.start, stock.end), text, item, item.model), raw),
       assets,
       source: `${stock.name}: everybody's`,
+      hero: hero!,
     });
   }
   return out;

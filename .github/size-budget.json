@@ -5,6 +5,7 @@
   "files": {
     "renderer/i18n.js": 990,
     "renderer/locales/zh-CN-app.js": 345,
-    "src/i18n-zh-CN.ts": 304
+    "src/i18n-zh-CN.ts": 304,
+    "src/schema-service.ts": 317
   }
 }

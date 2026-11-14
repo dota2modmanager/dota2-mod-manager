@@ -19,7 +19,8 @@ use serde_json::{json, Map, Value};
 
 use crate::arcana_bases::BaseSource;
 use crate::installer::Installer;
-use crate::item_builder_everyone::{everyone_wears, SchemaPatch};
+use crate::item_builder_everyone::{everyone_wears_by_hero, SchemaPatch};
+use crate::item_builder_everyone_budget::{heroes_by_recency, within_budget, EVERYONE_ENTRY_BUDGET};
 use crate::item_files_service::ItemFilesPak;
 use crate::library::Library;
 use crate::patcher;
@@ -244,10 +245,7 @@ impl SchemaService {
             .collect();
         // every other player of the hero in the user's look, when asked for
         if ctx.on("everyoneWearsMine") {
-            let ix =
-                crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
-            let read = |p: &str| ix.read(p).ok().flatten();
-            let more = everyone_wears(&base.0, &list, &built.beneath, &read, None).map_err(|e| e.to_string())?;
+            let more = Self::everyone(ctx, &base.0, &list, &built.beneath, &records, game)?;
             list.extend(more);
         }
         if list.is_empty() {
@@ -276,6 +274,44 @@ impl SchemaService {
             bytes: Some(res.bytes),
             ..Default::default()
         })
+    }
+
+    /// Everybody's look for every hero the user built but those they left out, the one built most
+    /// lately first, as much of it as the game can take (crate::item_builder_everyone_budget). Who
+    /// did not fit is kept in `everyoneLeftOut` for Settings.
+    fn everyone(
+        ctx: &mut Ctx,
+        text: &[u8],
+        own: &[SchemaPatch],
+        beneath: &[crate::vpk::Entry],
+        records: &[Value],
+        game: &std::path::Path,
+    ) -> Result<Vec<SchemaPatch>, String> {
+        let excluded: HashSet<String> = ctx
+            .settings
+            .get("everyoneExcluded")
+            .and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect())
+            .unwrap_or_default();
+        let heroes: Vec<String> = heroes_by_recency(records).into_iter().filter(|h| !excluded.contains(h)).collect();
+        if heroes.is_empty() {
+            ctx.set("everyoneLeftOut", json!([]))?;
+            return Ok(Vec::new());
+        }
+        let ix =
+            crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
+        let read = |p: &str| ix.read(p).ok().flatten();
+        let all = everyone_wears_by_hero(text, own, beneath, &read, Some(&heroes)).map_err(|e| e.to_string())?;
+        let kept = within_budget(all, own, beneath, &heroes, EVERYONE_ENTRY_BUDGET);
+        if !kept.left.is_empty() {
+            (ctx.log)(format!(
+                "schema: my look on everyone left out {} hero(es) to stay under the game's limit: {}",
+                kept.left.len(),
+                kept.left.join(", ")
+            ));
+        }
+        ctx.set("everyoneLeftOut", json!(kept.left))?;
+        Ok(kept.patches)
     }
 
     /// A Dota update overwrites the patched gameinfo and moves the item table underneath our

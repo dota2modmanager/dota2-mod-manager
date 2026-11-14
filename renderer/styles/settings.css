@@ -267,6 +267,10 @@
 .set-more[open] > summary::after { transform: rotate(180deg); }
 .set-more .settings-hint p + p { margin-top: var(--space-2); }
 .set-warn { margin: 0 0 var(--space-3); }
+/* the heroes the look on everybody leaves alone (settings/GameFilesBlock.tsx) */
+.hero-picker { position: relative; width: 240px; }
+.hero-picker .input { width: 100%; }
+.settings-heroes { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 var(--space-3) var(--space-4); }
 .set-section .about-support { margin: var(--space-3) 0 0; }
 .set-section .about-legal { margin-bottom: var(--space-3); }
 .set-section .settings-adv.cache-files { margin-top: 0; margin-bottom: var(--space-2); }

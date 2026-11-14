@@ -21,7 +21,7 @@ import { Diagnostics } from './Diagnostics.tsx';
 import { CompilerRows, type CompilerActions } from './CompilerBlock.tsx';
 import { PreviewCacheRow } from './PreviewCacheBlock.tsx';
 import { GridRows } from './GridBlock.tsx';
-import { GameFilesRows } from './GameFilesBlock.tsx';
+import { GameFilesRows, type EveryoneModel } from './GameFilesBlock.tsx';
 import { BackgroundRow } from './BackgroundBlock.tsx';
 import { Toggle } from './Toggle.tsx';
 import { Row, Section, SectionNav, type SectionDef } from './parts.tsx';
@@ -35,7 +35,7 @@ export interface SettingsModel {
   /** installs of catalog mods are counted by the catalog's download counter */
   countDownloads: boolean;
   /** the item builder's look on everybody playing the hero */
-  everyone: boolean;
+  everyone: EveryoneModel;
   beta: { eligible: boolean; on: boolean };
   dotaPath: string;
   dotaValid: boolean;
@@ -62,6 +62,8 @@ export interface SettingsActions extends CompilerActions {
   presence: () => void;
   countDownloads: () => void;
   everyone: () => void;
+  /** a hero excluded from the look on everybody, or let back in */
+  everyoneHero: (id: string) => void;
   beta: () => void;
   detect: () => void;
   browse: () => void;
@@ -175,7 +177,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
                 <button className="btn btn-sm" id="browseBtn" onClick={actions.browse}>{L`Указать вручную`}</button>
               </div>
             </Row>
-            <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} />
+            <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} onHero={actions.everyoneHero} />
             <GridRows />
           </Section>
 

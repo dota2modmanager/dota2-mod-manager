@@ -77,6 +77,12 @@ pub fn settings_view(v: ViewInput) -> Value {
         .collect();
     let mut out = v.settings;
     out.insert("dotaPathValid".into(), json!(game.is_some_and(crate::installer::validate_game_path)));
+    // the heroes the look on everybody can be for: those the user built, picked last first
+    let built: Vec<Value> = crate::item_builder_everyone_budget::heroes_by_recency(v.records)
+        .into_iter()
+        .map(|id| json!({ "name": crate::hero_names::display_name(&id), "id": id }))
+        .collect();
+    out.insert("everyoneBuilt".into(), json!(built));
     out.insert("minify".into(), json!(m));
     out.insert("discordConfigured".into(), json!(v.discord_configured));
     out.insert(

@@ -310,6 +310,7 @@ pub fn window_settings() -> &'static HashMap<&'static str, Check> {
             ("discordPresence", bool_()),
             ("countDownloads", bool_()),
             ("everyoneWearsMine", bool_()),
+            ("everyoneExcluded", list(str_(64, 0), 300)),
             ("favorites", list(str_(500, 0), 20000)),
             ("itemLooks", list(item_look, 2000)),
             ("langPromptSeen", bool_()),

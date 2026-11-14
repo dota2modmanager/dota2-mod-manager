@@ -33,6 +33,10 @@ export interface StoredSettings {
   lastPreset: string | null;
   /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
   everyoneWearsMine: boolean;
+  /** the heroes it leaves alone, by id (skywrath_mage): every other hero the user built is dressed, as the budget allows */
+  everyoneExcluded: string[];
+  /** the heroes the last build left out to keep the pak under the game's limit (src/item-builder-everyone-budget.ts) */
+  everyoneLeftOut: string[];
   toolsPromptSeen: boolean;
   showAdult: boolean | null;
   lastSeenVersion: string | null;
@@ -133,6 +137,8 @@ const DEFAULTS: StoredSettings = {
   lastPreset: null,
   // tried on one hero first, so off until the user asks for it
   everyoneWearsMine: false,
+  everyoneExcluded: [],
+  everyoneLeftOut: [],
   schemaPending: false,
   // One-time offer of the Source 2 toolchain, asked once on first run. False for fresh
   // installs and for anybody updating from before it was offered, so everyone gets the

@@ -56,7 +56,12 @@ async function renderSettings(fresh = false): Promise<void> {
     scalePct: Math.round((Number(s.uiScale) || 1) * 100),
     presence: s.discordPresence !== false,
     countDownloads: s.countDownloads !== false,
-    everyone: s.everyoneWearsMine === true,
+    everyone: {
+      on: s.everyoneWearsMine === true,
+      built: s.everyoneBuilt ?? [],
+      excluded: s.everyoneExcluded ?? [],
+      leftOut: s.everyoneLeftOut ?? [],
+    },
     beta,
     dotaPath: s.dotaGamePath || '',
     dotaValid: Boolean(s.dotaPathValid),
@@ -80,7 +85,7 @@ function draw(): void {
 }
 
 /** A switch that shows its new position at once and tells main after. */
-function flip(field: 'presence' | 'adult' | 'countDownloads' | 'everyone'): boolean {
+function flip(field: 'presence' | 'adult' | 'countDownloads'): boolean {
   if (!model) return false;
   model = { ...model, [field]: !model[field] };
   draw();
@@ -113,7 +118,19 @@ const actions: SettingsActions = {
     state.settings = await window.api.settings.set('countDownloads', flip('countDownloads'));
   },
   everyone: async () => {
-    state.settings = await window.api.settings.set('everyoneWearsMine', flip('everyone'));
+    if (!model) return;
+    model = { ...model, everyone: { ...model.everyone, on: !model.everyone.on } };
+    draw();
+    state.settings = await window.api.settings.set('everyoneWearsMine', model.everyone.on);
+  },
+  // the build runs in the background; what it left out shows the next time Settings is drawn
+  everyoneHero: async (id) => {
+    if (!model) return;
+    const was = model.everyone.excluded;
+    const excluded = was.includes(id) ? was.filter((h) => h !== id) : [...was, id];
+    model = { ...model, everyone: { ...model.everyone, excluded } };
+    draw();
+    state.settings = await window.api.settings.set('everyoneExcluded', excluded);
   },
   beta: async () => {
     if (!model) return;

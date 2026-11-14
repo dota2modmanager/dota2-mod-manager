@@ -84,7 +84,7 @@ export function registerSettingsIpc({
     // the tray's menu speaks the language too, and the switch is the tray itself
     if (key === 'runInBackground' || key === 'uiLang') applyBackground();
     // the table is what the switch changes; the bar at the bottom counts the build
-    if (key === 'everyoneWearsMine') void schemaService.refreshInBackground();
+    if (key === 'everyoneWearsMine' || key === 'everyoneExcluded') void schemaService.refreshInBackground();
     return settingsView();
   });
 

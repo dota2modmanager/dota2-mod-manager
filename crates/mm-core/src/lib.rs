@@ -76,6 +76,7 @@ pub mod item_builder_details;
 pub mod item_builder_donor;
 pub mod item_builder_effects;
 pub mod item_builder_everyone;
+pub mod item_builder_everyone_budget;
 pub mod item_builder_fx_patch;
 pub mod item_builder_kinetic;
 pub mod item_builder_personas;
