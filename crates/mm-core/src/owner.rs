@@ -116,6 +116,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_foreign::CHANNELS, crate::owner_foreign::handle),
     (crate::owner_packs::CHANNELS, crate::owner_packs::handle),
     (crate::owner_presets::CHANNELS, crate::owner_presets::handle),
+    (crate::owner_studios::CHANNELS, crate::owner_studios::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -451,4 +452,29 @@ fn make_installer(
 /// `args[i]`, or null.
 pub fn arg(args: &[Value], i: usize) -> Value {
     args.get(i).cloned().unwrap_or(Value::Null)
+}
+
+/// Bytes a channel was handed: `{$b64}` off the wire, a plain list of numbers, or a typed array as
+/// JSON (`{"0": 1, ...}`); None for nothing at all.
+pub fn bytes_of(v: &Value) -> Result<Option<Vec<u8>>, String> {
+    use base64::Engine;
+    if !crate::js::truthy(v) {
+        return Ok(None);
+    }
+    match v {
+        Value::Object(o) if o.len() == 1 && o.get("$b64").is_some_and(Value::is_string) => {
+            base64::engine::general_purpose::STANDARD
+                .decode(o["$b64"].as_str().unwrap_or(""))
+                .map(Some)
+                .map_err(|e| e.to_string())
+        }
+        Value::Array(a) => Ok(Some(a.iter().map(|x| x.as_u64().unwrap_or(0) as u8).collect())),
+        Value::Object(o) => {
+            let mut v: Vec<(usize, u8)> =
+                o.iter().filter_map(|(k, x)| Some((k.parse().ok()?, x.as_u64().unwrap_or(0) as u8))).collect();
+            v.sort();
+            Ok(Some(v.into_iter().map(|(_, b)| b).collect()))
+        }
+        _ => Ok(Some(Vec::new())),
+    }
 }

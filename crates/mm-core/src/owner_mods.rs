@@ -444,19 +444,10 @@ fn import_buffers(o: &Owner, items: &Value) -> Value {
         .map(|a| {
             a.iter()
                 .map(|it| {
-                    let data = match it.get("data") {
-                        Some(Value::Array(b)) => b.iter().map(|x| x.as_u64().unwrap_or(0) as u8).collect(),
-                        Some(Value::Object(o)) => {
-                            // a Uint8Array as JSON: {"0": 1, "1": 2, ...}
-                            let mut v: Vec<(usize, u8)> = o
-                                .iter()
-                                .filter_map(|(k, x)| Some((k.parse().ok()?, x.as_u64().unwrap_or(0) as u8)))
-                                .collect();
-                            v.sort();
-                            v.into_iter().map(|(_, b)| b).collect()
-                        }
-                        _ => Vec::new(),
-                    };
+                    let data = crate::owner::bytes_of(it.get("data").unwrap_or(&Value::Null))
+                        .ok()
+                        .flatten()
+                        .unwrap_or_default();
                     (text(it.get("name")), data)
                 })
                 .collect()

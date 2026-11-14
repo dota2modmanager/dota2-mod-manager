@@ -68,6 +68,7 @@ async function compare(name: string, base: Twin, steps: Step[]): Promise<void> {
         noteIds(side, t);
         got.push(named(blind({ answer: r, asked: p.asked }, t), side));
       }
+      if (process.env.OWNER_SHOW) console.log(label, JSON.stringify(got[0]).slice(0, 240));
       assert.deepEqual(got[1], got[0], label);
     }
     assert.deepEqual(named(settingsOf(b), 1), named(settingsOf(a), 0), `${name}: settings.json`);
@@ -292,6 +293,29 @@ test('presets answer as the TypeScript does', { skip }, async () => {
     { call: ['presets:takeReady', 'nope'] },
     { call: ['presets:delete', '<ID 1>'] },
     { call: ['presets:apply', 'nope'] },
+    { call: ['mods:list'] },
+  ]);
+});
+
+test('the HUD, map decor, menu background, pumpkin, hero grids and saved looks answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('studios-base'), 'b'), OFFLINE);
+  await compare('studios', base, [
+    { call: ['hud:state'] },
+    { call: ['hud:install', [{ id: 'lower_hud', scale: 87 }, { id: 'topbar', x: 10.6, y: -50, opacity: 33, tint: '#ABCDEF', hidden: true }, { id: 'nope' }]] },
+    { call: ['hud:state'] },
+    { call: ['decor:state'] },
+    { call: ['decor:install', []], note: 'nothing chosen' },
+    { call: ['decor:install', ['plants']] },
+    { call: ['background:state'] },
+    { call: ['background:install', null, 'video', 0.5, 4], note: 'no movie yet' },
+    { call: ['background:install', { $b64: Buffer.from('not a movie').toString('base64') }, 'video', 0.5, 4], note: 'not a webm' },
+    { call: ['pumpkin:hasPrize'] },
+    { call: ['pumpkin:redeem', '   '] },
+    { call: ['pumpkin:redeem', 42] },
+    { call: ['pumpkin:prizeAgain'] },
+    { call: ['grid:state'] },
+    { call: ['cosmetics:wearLook', 'not a hero', []] },
+    { call: ['cosmetics:wearLook', 'item:npc_dota_hero_axe:', []] },
     { call: ['mods:list'] },
   ]);
 });

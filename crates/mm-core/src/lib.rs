@@ -134,6 +134,7 @@ pub mod owner_mods;
 pub mod owner_packs;
 pub mod owner_presets;
 pub mod owner_settings;
+pub mod owner_studios;
 pub mod pak_stamp;
 pub mod panorama_files;
 pub mod particle_snapshot;
