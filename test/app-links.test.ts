@@ -55,7 +55,7 @@ test('a preset link the helper writes holds what the app writes, and each reads 
 
 test('a pasted link reads the same in the helper and in the app, and a bad one fails in both', { skip }, () => {
   const { code, web, direct } = encodePresetLink(presets[0]);
-  const huge = encodePresetLink({ name: 'big', mods: Array.from({ length: 501 }, (_, i) => ({ categoryId: 'c', name: `m${i}` })) }).code;
+  const huge = encodePresetLink({ name: 'big', author: '', mods: Array.from({ length: 501 }, (_, i) => ({ categoryId: 'c', name: `m${i}` })) }).code;
   const inputs = [code, web, direct, ` <${direct}/> `, '`' + web + '`', `D2MM://preset/${code}`, encodePresetLink(presets[1]).code,
     'not a link', '', 'd2mm://preset/!!', 'AAAA', 'a'.repeat(70000), huge,
     Buffer.from('{"v":2,"m":[]}').toString('base64url')];
