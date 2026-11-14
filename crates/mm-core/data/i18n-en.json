@@ -312,5 +312,6 @@
 ["Открыть","Open"],
 ["Играть","Play"],
 ["Выйти","Quit"],
-["Приложение работает в трее и вернёт моды после обновления Доты. Выйти можно правым кликом по значку, отключить в Настройках.","The app keeps running in the tray and puts your mods back after a Dota update. Right-click the icon to quit, or turn this off in Settings."]
+["Приложение работает в трее и вернёт моды после обновления Доты. Выйти можно правым кликом по значку, отключить в Настройках.","The app keeps running in the tray and puts your mods back after a Dota update. Right-click the icon to quit, or turn this off in Settings."],
+["Архив больше 100 МБ: каталог такой не примет","The archive is over 100 MB: the catalog will not take it"]
 ]

@@ -2,8 +2,8 @@
    Russian is the source language and a missing key silently falls back to Russian,
    so an English user sees Russian text and nothing crashes. This finds those.
 
-   Scans call sites (L`...`, L('...'), tr('...') in renderer/, t('...') in src/)
-   and checks each canonical key against the EN dictionary of the matching i18n.js.
+   Scans call sites (L`...`, L('...'), tr('...') in renderer/, t("...") in the Rust of
+   crates/mm-core and src-tauri) and checks each key against the matching EN dictionary.
 
    `npm test` runs this through test/i18n.test.js, so a missing twin fails a pull request
    rather than waiting for somebody to notice Cyrillic in an English window.
@@ -201,11 +201,36 @@ function jsFiles(dir, skip) {
   return out;
 }
 
+/** Every .rs file under these folders. */
+function rsFiles(...dirs) {
+  return dirs.flatMap((d) => fs.readdirSync(path.join(ROOT, d), { recursive: true })
+    .map(String).filter((f) => f.endsWith('.rs')).map((f) => `${d}/${f.replace(/\\/g, '/')}`)).sort();
+}
+
+/** The Rust dictionary: crates/mm-core/data/i18n-en.json, a list of [Russian, English] pairs. */
+function readPairs(file) {
+  return JSON.parse(fs.readFileSync(path.join(ROOT, file), 'utf8'));
+}
+
+/* `t("...", &[...])` and `i18n::t("...")` in Rust: the key is the string literal right after the
+   call's parenthesis. A key held in a variable is not a literal and is not seen, as in JS. */
+function scanRust(src, names) {
+  const hits = [];
+  const call = new RegExp(String.raw`(?<![\w:"])(?:\w+::)*(${names.join('|')})\(\s*"((?:[^"\\]|\\.)*)"`, 'g');
+  for (const m of src.matchAll(call)) {
+    let key;
+    try { key = JSON.parse(`"${m[2].replace(/\\u\{([0-9a-fA-F]+)\}/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))}"`); } catch { continue; }
+    hits.push({ key, call: m[1], line: src.slice(0, m.index).split('\n').length });
+  }
+  return hits;
+}
+
 const SIDES = [
   // the window's dictionary is i18n.js plus the screens 3.0 added (renderer/locales/en-more.js),
   // which i18n.js reads as a fallback: one table, kept in two files so neither outgrows its budget
   { name: 'renderer', dict: 'renderer/i18n.js', more: ['renderer/locales/en-more.js'], calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js', 'renderer/locales/en-more.js']) },
-  { name: 'main', dict: 'src/i18n-en.ts', calls: ['t'], files: jsFiles('src', ['src/i18n.ts', 'src/i18n-en.ts']) },
+  // the native dialogs, tray and notices: Rust, keyed by the Russian text like the window
+  { name: 'main', dict: 'crates/mm-core/data/i18n-en.json', rust: true, calls: ['t'], files: rsFiles('crates/mm-core/src', 'src-tauri/src') },
 ];
 
 /* A key written twice in one dictionary.
@@ -228,6 +253,13 @@ function duplicateKeys(file) {
       at.get(m[1]).push(i + 1);
     }
   });
+  return [...at].filter(([, seen]) => seen.length > 1);
+}
+
+/** The same for the Rust table: a Russian key in two pairs (line numbers of the JSON file). */
+function duplicatePairs(file) {
+  const at = new Map();
+  readPairs(file).forEach(([ru], i) => at.set(ru, [...(at.get(ru) || []), i + 2]));
   return [...at].filter(([, seen]) => seen.length > 1);
 }
 
@@ -266,17 +298,18 @@ function translationReport(dict, file) {
 function main() {
   let missing = 0;
   for (const side of SIDES) {
-    const dupes = [side.dict, ...(side.more || [])].flatMap((f) => duplicateKeys(f));
+    const dupes = side.rust ? duplicatePairs(side.dict) : [side.dict, ...(side.more || [])].flatMap((f) => duplicateKeys(f));
     if (dupes.length) {
       missing += dupes.length;
       console.log(`\n${dupes.length} key(s) written more than once in ${side.dict}:`);
       for (const [key, seen] of dupes) console.log(`  ${JSON.stringify(key)}  lines ${seen.join(', ')}`);
     }
-    const dict = Object.assign({}, ...(side.more || []).map(readDict), readDict(side.dict));
+    const dict = side.rust ? Object.fromEntries(readPairs(side.dict)) : Object.assign({}, ...(side.more || []).map(readDict), readDict(side.dict));
     const used = new Set();
     const gaps = [];
     for (const file of side.files) {
-      for (const h of scan(fs.readFileSync(path.join(ROOT, file), 'utf8'), side.calls)) {
+      const src = fs.readFileSync(path.join(ROOT, file), 'utf8');
+      for (const h of side.rust ? scanRust(src, side.calls) : scan(src, side.calls)) {
         used.add(h.key);
         // A key with no Russian letters is already language-neutral (a name, a number, a path).
         if (dict[h.key] == null && /[А-Яа-яЁё]/.test(h.key)) gaps.push({ ...h, file });
@@ -305,4 +338,4 @@ function main() {
 // Run as a command; required by a test, it only hands over the functions above.
 if (require.main === module) main();
 
-module.exports = { checkTranslations, translationReport, SIDES, scan };
+module.exports = { checkTranslations, translationReport, SIDES, scan, scanRust };
