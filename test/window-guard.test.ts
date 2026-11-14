@@ -276,6 +276,9 @@ test('no check throws, whatever it is handed', () => {
   const loop: Record<string, unknown> = {};
   loop.self = loop;
   assert.match(String(checkArgs('settings:set', ['panels', loop])), /JSON/);
+  // fast-check found it: String() throws on an object whose toString is not a function
+  assert.equal(checkArgs('settings:set', [{ toString: '' }]), 'settings:set argument 1: the window may not set [object Object]');
+  assert.equal(checkArgs('settings:set', [Object.create(null)]), 'settings:set argument 1: the window may not set [object Object]');
   assert.match(String(checkArgs('fx:install', [' ', { a: 0n }])), /JSON/, 'a value JSON cannot write is refused, not thrown');
   assert.match(String(checkArgs('fx:install', [' ', loop])), /JSON/);
 });
