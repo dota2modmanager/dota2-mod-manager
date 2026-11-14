@@ -39,6 +39,8 @@ pub struct Options {
     pub app_version: String,
     /// where the build's own files are (the changelogs)
     pub app_root: PathBuf,
+    /// the user's Downloads folder, where a save dialog starts
+    pub downloads: PathBuf,
     /// on a first start, the system's languages: the window takes its language from them
     pub system_languages: Option<Vec<String>>,
     /// looking for Dota where Steam keeps it; the harness hands in its own answer
@@ -139,6 +141,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_game::CHANNELS, crate::owner_game::handle),
     (crate::owner_pictures::CHANNELS, crate::owner_pictures::handle),
     (crate::owner_preview3d::CHANNELS, crate::owner_preview3d::handle),
+    (crate::owner_creator::CHANNELS, crate::owner_creator::handle),
 ];
 
 /// The app's game folder, when one is set.

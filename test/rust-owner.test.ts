@@ -43,7 +43,10 @@ const recordIds = (t: Twin): string[] => {
   type Rec = { id: string; members?: { id: string }[] };
   const m = (readJson(path.join(t.ud, 'manifest.json')) ?? {}) as { installed?: Rec[]; presets?: Rec[] };
   // a pack's members have ids of their own, made as randomly
-  return [...(m.installed ?? []), ...(m.presets ?? [])].flatMap((r) => [r.id, ...(r.members ?? []).map((x) => x.id)]);
+  // and the author's drafts, a folder each
+  const drafts = path.join(t.ud, 'creator');
+  const draftIds = fs.existsSync(drafts) ? fs.readdirSync(drafts).filter((n) => /^[0-9a-f-]{36}$/.test(n)).sort() : [];
+  return [...(m.installed ?? []), ...(m.presets ?? [])].flatMap((r) => [r.id, ...(r.members ?? []).map((x) => x.id)]).concat(draftIds);
 };
 
 /** A pak of pictures by what it shows: each file's bytes, but a PNG inside one by its pixels, since
@@ -80,6 +83,8 @@ async function compare(name: string, base: Twin, steps: Step[], picturePaks: str
     const named = (v: unknown, side: number) => {
       let text = JSON.stringify(v ?? null);
       for (const [id, tag] of made[side]) text = text.split(id).join(tag);
+      // a file a draft took in is named with a random tail
+      text = text.replace(/(vpk|picture)-(\d+)-[0-9a-f]{6}/g, '$1-$2-<HEX>');
       return JSON.parse(text);
     };
     for (const [k, s] of steps.entries()) {
@@ -510,5 +515,34 @@ test('the 3D preview answers as the TypeScript does', { skip }, async () => {
     { call: ['preview3d:effect', 'unusual-1'] },
     { call: ['preview3d:model', 'models/heroes/axe/axe.vmdl'], note: 'not a prop' },
     { call: ['preview3d:model', 'models/props_tree/tree_oak_00.vmdl'] },
+  ]);
+});
+
+test('the author\'s drafts answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('creator-base'), 'b'), OFFLINE);
+  const save = (filePath: string | null) => (m: string) => (m === 'dialog.save' ? (filePath ? { canceled: false, filePath } : { canceled: true }) : null);
+  const vpk = path.join(SANDBOX_GAME, 'dota_russian', 'pak01_dir.vpk');
+  const pic = path.join(tmpRoot('creator-pic'), 'shot.png');
+  fs.mkdirSync(path.dirname(pic), { recursive: true });
+  fs.writeFileSync(pic, Buffer.from('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000d4944415478da63f8cfc0f01f0005000201a3b5d8a90000000049454e44ae426082', 'hex'));
+  const webp = { $b64: Buffer.concat([Buffer.from('RIFF'), Buffer.from([20, 0, 0, 0]), Buffer.from('WEBPVP8 '), Buffer.alloc(12)]).toString('base64') };
+  await compare('creator', base, [
+    { call: ['creator:list'] },
+    { call: ['creator:save', null, { name: 'Purple Io', category: 'heroes', hero: 'axe', description: 'mine', author: 'me', styles: [{ label: 'Purple' }] }] },
+    { call: ['creator:list'] },
+    { call: ['creator:attach', '<ID 0>', 0, 'vpk'], reply: open(null), note: 'cancelled' },
+    { call: ['creator:attach', '<ID 0>', 0, 'vpk'], reply: open([vpk]) },
+    { call: ['creator:attach', '<ID 0>', 0, 'picture'], reply: open([pic]) },
+    { call: ['creator:attach', '<ID 0>', 5, 'picture'], reply: open([pic]), note: 'no such style' },
+    { call: ['creator:attach', 'nobody', 0, 'vpk'], reply: open([vpk]) },
+    { call: ['creator:save', '<ID 0>', { name: 'Purple Io!', styles: [{ label: 'Purple' }, { label: 'Pink' }] }] },
+    { call: ['creator:export', '<ID 0>', []], note: 'not ready' },
+    { call: ['creator:save', '<ID 0>', { name: 'Axe Purple', styles: [{ label: 'Purple' }] }] },
+    { call: ['creator:export', '<ID 0>', [webp]], reply: save(null), note: 'cancelled' },
+    { call: ['creator:export', '<ID 0>', [webp]], reply: save('<ROOT>/io.zip'), unsized: true },
+    { call: ['creator:export', 'nobody', []], reply: save('<ROOT>/x.zip') },
+    { call: ['creator:remove', '<ID 0>'] },
+    { call: ['creator:remove', 'nobody'] },
+    { call: ['creator:list'] },
   ]);
 });

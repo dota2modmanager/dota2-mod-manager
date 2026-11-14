@@ -54,6 +54,12 @@ fn flag(args: &[String], name: &str) -> Option<String> {
     args.iter().find_map(|a| a.strip_prefix(&prefix).map(String::from))
 }
 
+/// The user's home folder, as Node's os.homedir() finds it.
+fn home() -> PathBuf {
+    let var = if cfg!(windows) { "USERPROFILE" } else { "HOME" };
+    std::env::var_os(var).map(PathBuf::from).unwrap_or_default()
+}
+
 pub fn run(args: &[String]) -> Result<(), String> {
     let user_data = PathBuf::from(flag(args, "user-data-dir").ok_or("owner: --user-data-dir is required")?);
     mm_core::write_jail::install(&mm_core::write_jail::from_argv(args));
@@ -66,6 +72,7 @@ pub fn run(args: &[String]) -> Result<(), String> {
         user_data,
         app_version: std::env::var("MM_APP_VERSION").unwrap_or_else(|_| "0.0.0".into()),
         app_root: std::env::current_dir().map_err(|e| e.to_string())?,
+        downloads: home().join("Downloads"),
         system_languages: first_run.then(|| vec![std::env::var("MM_LOCALE").unwrap_or_else(|_| "en-US".into())]),
         find_game: Box::new(move || match &find {
             Some(f) if f == "none" => None,
