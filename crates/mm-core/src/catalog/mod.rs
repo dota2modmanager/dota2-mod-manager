@@ -91,6 +91,12 @@ pub fn normalize_catalog(mods: &mut Value) {
     });
 }
 
+/// A cache file replaced whole: the download counts and the presets read mods.json while a refresh,
+/// off the owner's lock, may be writing it.
+fn write(file: &Path, text: impl AsRef<[u8]>) -> Result<(), String> {
+    crate::atomic_file::write_file_atomic(file, text.as_ref()).map_err(|e| e.to_string())
+}
+
 /// The catalog on disk and on the wire.
 pub struct Catalog {
     pub cache_dir: PathBuf,
@@ -100,6 +106,9 @@ pub struct Catalog {
     /// the published archive hashes: None until read, Some(None) when there are none
     hashes: Mutex<Option<Option<Value>>>,
     now: Clock,
+    /// one load at a time: a load runs without the owner's lock (its fetch can take seconds), and
+    /// two refreshes writing the same files at once would leave either's half
+    turn: Mutex<()>,
 }
 
 impl Catalog {
@@ -112,6 +121,7 @@ impl Catalog {
             public_key: public_key.unwrap_or(signature::CATALOG_PUBLIC_KEY).into(),
             hashes: Mutex::new(None),
             now,
+            turn: Mutex::new(()),
         }
     }
 
@@ -165,26 +175,23 @@ impl Catalog {
     pub fn refresh(&self, net: &Net) -> Result<(), String> {
         for name in DATA_FILES {
             let text = self.fetch_signed(net, name)?;
-            std::fs::write(self.cache_path(name), text).map_err(|e| e.to_string())?;
+            write(&self.cache_path(name), text)?;
         }
         // the hashes, which the app is allowed to do without
-        match self
-            .fetch_signed(net, HASH_FILE)
-            .and_then(|t| std::fs::write(self.cache_path(HASH_FILE), t).map_err(|e| e.to_string()))
-        {
+        match self.fetch_signed(net, HASH_FILE).and_then(|t| write(&self.cache_path(HASH_FILE), t)) {
             Ok(()) => {}
             Err(_) => *self.hashes.lock().unwrap_or_else(|e| e.into_inner()) = None,
         }
-        std::fs::write(
-            self.cache_path("meta.json"),
+        write(
+            &self.cache_path("meta.json"),
             crate::js::stringify(&json!({ "fetchedAt": crate::js::json_number((self.now)()) }), ""),
         )
-        .map_err(|e| e.to_string())
     }
 
     /// The three files as the window is handed them; a catalog that could not be fetched is not
     /// no catalog, so a failed refresh over a cache says why it is old instead of failing.
     pub fn load(&self, net: &Net, force_refresh: bool) -> Result<Value, String> {
+        let _turn = self.turn.lock().unwrap_or_else(|e| e.into_inner());
         let mut stale = None;
         if force_refresh || !self.has_cache() {
             if let Err(e) = self.refresh(net) {
@@ -221,5 +228,48 @@ impl Catalog {
         }
         let v = hashes.get(format!("{category_id}/{file}"))?.as_str()?;
         (v.len() == 64 && v.bytes().all(|b| b.is_ascii_hexdigit())).then(|| v.to_lowercase())
+    }
+}
+
+#[cfg(test)]
+mod off_the_lock {
+    use super::{write, Catalog};
+    use std::sync::Arc;
+
+    #[test]
+    fn loads_at_once_read_whole_files_while_the_cache_is_rewritten() {
+        let ud = std::env::temp_dir().join(format!("mm-catalog-turn-{}", std::process::id()));
+        let cat = Arc::new(Catalog::new(&ud, Some(""), Some(""), Box::new(|| 0.0)));
+        let mods = |n: usize| {
+            serde_json::to_string(&vec![serde_json::json!({ "id": "m", "name": "x".repeat(n) }); 400]).unwrap()
+        };
+        write(&cat.cache_path("mods.json"), mods(10)).unwrap();
+        write(&cat.cache_path("constants.json"), "{}").unwrap();
+        write(&cat.cache_path("guides.json"), "[]").unwrap();
+        let net = Arc::new(crate::net_fetch::Net::new(|| 0.0));
+        let writer = {
+            let cat = cat.clone();
+            std::thread::spawn(move || {
+                for i in 0..60 {
+                    write(&cat.cache_path("mods.json"), mods(10 + i * 50)).unwrap();
+                }
+            })
+        };
+        let readers: Vec<_> = (0..4)
+            .map(|_| {
+                let (cat, net) = (cat.clone(), net.clone());
+                std::thread::spawn(move || {
+                    for _ in 0..30 {
+                        let got = cat.load(&net, false).expect("a whole mods.json every time");
+                        assert_eq!(got["mods"].as_array().map(Vec::len), Some(400));
+                    }
+                })
+            })
+            .collect();
+        writer.join().unwrap();
+        for r in readers {
+            r.join().unwrap();
+        }
+        std::fs::remove_dir_all(&ud).unwrap();
     }
 }

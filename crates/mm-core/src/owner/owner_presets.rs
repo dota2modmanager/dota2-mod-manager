@@ -49,9 +49,15 @@ fn clip(v: Option<&Value>, n: usize) -> String {
     v.filter(|v| truthy(v)).map(string).unwrap_or_default().chars().take(n).collect()
 }
 
-/// The catalog by the names presets remember mods under; empty when it cannot be loaded.
-fn catalog_index(c: &Core) -> CatalogIndex {
-    let data = c.catalog.load(&c.net, false).ok();
+/// The catalog by the names presets remember mods under; empty when it cannot be loaded. Read
+/// before the state's lock is taken: the catalog is parsed whole each time, and fetched when
+/// there is no copy on disk.
+fn catalog_index(o: &Owner) -> CatalogIndex {
+    let (catalog, net) = {
+        let c = o.core();
+        (c.catalog.clone(), c.net.clone())
+    };
+    let data = catalog.load(&net, false).ok();
     CatalogIndex::new(data.as_ref())
 }
 
@@ -102,9 +108,9 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             flow(o, &p, true)
         }
         "presets:exportPlan" => {
+            let cat = catalog_index(o);
             let c = o.core();
             let Some(p) = c.library.get_preset(&id).cloned() else { return no_preset() };
-            let cat = catalog_index(&c);
             match crate::preset_plan::preset_share_entries(&c.library, &c.installer, &p, &cat) {
                 Ok(entries) => json!({ "name": p.get("name"), "entries": crate::preset_plan::plan_shape(&entries) }),
                 Err(e) => json!({ "error": e }),
@@ -152,8 +158,8 @@ fn import_file(o: &Owner, file: &str) -> Value {
 }
 
 fn list(o: &Owner) -> Value {
+    let cat = catalog_index(o);
     let c = o.core();
-    let cat = catalog_index(&c);
     let out: Vec<Value> = c
         .library
         .list_presets()
@@ -235,8 +241,8 @@ fn export(o: &Owner, id: &Value, opts: &Value) -> Value {
         let skip: Vec<String> =
             opts.get("skip").and_then(Value::as_array).map(|a| a.iter().map(string).collect()).unwrap_or_default();
         o.progress(json!({ "type": "stage", "label": name, "stage": t("сборка пресета", &[]) }));
+        let cat = catalog_index(o);
         let c = o.core();
-        let cat = catalog_index(&c);
         let entries = crate::preset_plan::preset_share_entries(&c.library, &c.installer, &preset, &cat)?
             .iter()
             .enumerate()
@@ -266,9 +272,9 @@ fn export(o: &Owner, id: &Value, opts: &Value) -> Value {
 }
 
 fn share_link(o: &Owner, id: &Value) -> Value {
+    let cat = catalog_index(o);
     let c = o.core();
     let Some(preset) = c.library.get_preset(id).cloned() else { return no_preset() };
-    let cat = catalog_index(&c);
     let (mods, skipped) = match crate::preset_plan::preset_link_mods(&c.library, &preset, &cat) {
         Ok(r) => r,
         Err(e) => return json!({ "error": e }),
@@ -378,10 +384,10 @@ fn take_ready(o: &Owner, id: &str) -> Value {
 /// through here too.
 pub fn flow(o: &Owner, preset: &Value, own: bool) -> Value {
     let cosmetics_blocked = o.blocked("cosmetics").map(|b| text(b.get("error")));
+    let cat = catalog_index(o);
     let (outcome, rebuild) = {
         let mut c = o.core();
         let base = if own { None } else { c.game().and_then(|g| c.schema.vanilla(&g).ok()) };
-        let cat = catalog_index(&c);
         let net = c.net.clone();
         let Core { installer, library, settings, catalog, .. } = &mut *c;
         let inst: &Installer = installer;
