@@ -382,3 +382,36 @@ test('the sounds, icons, effects, rank, paint and compiler studios answer as the
     { call: ['mods:list'] },
   ], [path.join('dota_russian', 'pak05_dir.vpk')]);
 });
+
+test('folders, the download cache, launching Dota, the version, its notes and the scale answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('app-base'), 'b'), OFFLINE);
+  cacheDownloads(base, [['terrains', 'pak11_dir.vpk'], ['heroes', 'IO Purple.zip']]);
+  await compare('app', base, [
+    { call: ['misc:openLangFolder'] },
+    { call: ['misc:openToolsFolder'] },
+    { call: ['misc:openToolsFolder', '../..'], note: 'not a tool of ours' },
+    { call: ['misc:openExternal', 'https://dota2modmanager.com/'] },
+    { call: ['misc:openExternal', 'file:///C:/Windows/notepad.exe'], note: 'not the web' },
+    { call: ['misc:openExternal', 'nonsense'] },
+    { call: ['misc:cacheSize'] },
+    { call: ['misc:cacheList'] },
+    { call: ['misc:cacheRemove', 'terrains/pak11_dir.vpk'] },
+    { call: ['misc:cacheRemove', '../settings.json'] },
+    { call: ['misc:cacheList'] },
+    { call: ['misc:openCacheFolder'] },
+    { call: ['misc:clearCache'] },
+    { call: ['misc:cacheSize'] },
+    { call: ['misc:runTool', 'nope'] },
+    { call: ['game:launch'] },
+    { call: ['update:fetchPortable'] },
+    { call: ['update:revealPortable', '<ROOT>/x.exe'] },
+    { call: ['app:version'] },
+    { call: ['app:notes', 'en'] },
+    { call: ['app:notes', 'ru'] },
+    { call: ['app:notesSeen'] },
+    { call: ['app:notes', 'en'] },
+    { call: ['app:stars'] },
+    { call: ['ui:setZoom', 1.25] },
+    { call: ['ui:setZoom', 'nonsense'] },
+  ]);
+});

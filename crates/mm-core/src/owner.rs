@@ -123,6 +123,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_studios::CHANNELS, crate::owner_studios::handle),
     (crate::owner_compiler::CHANNELS, crate::owner_compiler::handle),
     (crate::owner_tools::CHANNELS, crate::owner_tools::handle),
+    (crate::owner_app::CHANNELS, crate::owner_app::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -362,6 +363,35 @@ impl Owner {
         while b.pending > 0 {
             b = self.builds_done.wait(b).unwrap_or_else(|e| e.into_inner());
         }
+    }
+
+    /// What a Dota update broke put right (src/schema-service.ts heal): the search-path patch, or
+    /// the game's own file in safe mode; a table that needs building again is built in the
+    /// background.
+    pub fn heal(&self) -> Value {
+        let mut lines: Vec<String> = Vec::new();
+        let healed = {
+            let mut core = self.core();
+            let c = &mut *core;
+            let mut log = |m: String| lines.push(m);
+            let mut deployed = |_: std::collections::HashSet<String>| {};
+            let mut ctx = crate::schema_service::Ctx {
+                inst: &c.installer,
+                lib: &mut c.library,
+                settings: &mut c.settings,
+                bases: None,
+                log: &mut log,
+                on_deployed: &mut deployed,
+            };
+            c.schema.heal(&mut ctx, true)
+        };
+        for l in lines {
+            self.diag(&l);
+        }
+        if healed.rebuild {
+            drop(self.refresh_schema_in_background());
+        }
+        serde_json::to_value(&healed).unwrap_or(Value::Null)
     }
 
     /// One build of the item table, the bar at the bottom counting the picks built anew
