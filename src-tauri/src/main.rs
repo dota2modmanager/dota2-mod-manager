@@ -9,6 +9,7 @@
 // no console window behind the app in a release build
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod backend;
 mod native;
 mod ported;
 mod shell;
@@ -18,12 +19,13 @@ mod window;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use serde_json::{json, Value};
+use serde_json::Value;
 use tauri::Manager;
 
+use backend::Backend;
 use sidecar::{Answer, HostPaths, Sidecar};
 
-struct Host(Arc<Sidecar>);
+struct Host(Arc<Backend>);
 
 fn args_of(v: Value) -> Vec<Value> {
     match v {
@@ -70,9 +72,14 @@ async fn mm_invoke(
             eprintln!("[mm-shell] ipc: refused {channel}: {why}");
             return Err(format!("refused: {why}"));
         }
-        let res = match native::handle(&app, &channel, &list) {
+        // the window's own buttons are the shell's; with the Rust owner, every other channel is its
+        let own = match &*host {
+            Backend::Owner(_) => native::window(&app, &channel),
+            Backend::Host(_) => native::handle(&app, &channel, &list),
+        };
+        let res = match own {
             Some(res) => res.map(|v| Answer::Json(v.to_string())),
-            None => host.invoke(&channel, Value::Array(list.clone())),
+            None => host.invoke(&channel, list.clone()),
         };
         after(&app, &channel, &list, res.is_ok());
         answer(res?)
@@ -102,13 +109,13 @@ fn mm_send(host: tauri::State<'_, Host>, channel: String, args: Value) {
         eprintln!("[mm-shell] ipc: refused {channel}: {why}");
         return;
     }
-    host.0.send(&channel, Value::Array(list));
+    host.0.send(&channel, list);
 }
 
 /// The page has loaded: the host's 'did-finish-load' listeners run (the game watch, a cold link).
 #[tauri::command]
 fn mm_loaded(host: tauri::State<'_, Host>) {
-    host.0.notify(json!({ "t": "loaded" }));
+    host.0.loaded();
 }
 
 /// A Ctrl key the page passed on: Electron's before-input-event, which scales the content.
@@ -168,7 +175,7 @@ fn main() {
             }
             // a preset or mod link clicked while the app runs (src/deep-links.ts, the host's)
             if let Some(host) = app.try_state::<Host>() {
-                host.0.notify(json!({ "t": "second", "argv": argv }));
+                host.0.second(argv);
             }
         }))
         .plugin(tauri_plugin_notification::init())
@@ -214,7 +221,24 @@ fn main() {
             let pass: Vec<String> = argv.iter().skip(1).filter(|a| a.starts_with("--")).cloned().collect();
             let paths = host_paths(app);
             app.manage(ported::AppRoot(paths.root.clone()));
-            let host = Sidecar::start(handle.clone(), paths, env, pass)?;
+            let host = Arc::new(if backend::rust_owns() {
+                // the shell's own process is held to the folder too: it writes the game itself now
+                mm_core::write_jail::install(&mm_core::write_jail::from_argv(&argv));
+                eprintln!("[mm-shell] the Rust owner answers the window (MM_RUST_OWNS=1)");
+                Backend::Owner(backend::start_owner(
+                    &handle,
+                    backend::Start {
+                        user_data: user_data.clone(),
+                        app_version: app.package_info().version.to_string(),
+                        app_root: paths.root.clone(),
+                        downloads: app.path().download_dir().unwrap_or_default(),
+                        argv: argv.clone(),
+                        first_run,
+                    },
+                ))
+            } else {
+                Backend::Host(Sidecar::start(handle.clone(), paths, env, pass)?)
+            });
             app.manage(Host(host.clone()));
             let jailed = flag(&argv, "write-jail").is_some();
             window::open(

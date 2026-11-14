@@ -285,9 +285,12 @@ What the owner still does differently, or not yet:
 - One lock for the state, held through an item table build, a preset's downloads and a compile.
   The 3D preview and the pictures read what they need under it and work without it; the rest
   waits on its turn. A long build therefore holds other channels back until it is done.
-- The start's steps not ported: the arcana bases (`bases: None`), the patch watcher, the game
-  watch and the crash watch, the Discord status (`refreshPresence` is a no-op), and the refreshes
-  of the remote config, the fingerprints and the ready presets.
+- The start's steps in the owner: the arcana bases (`owner_bases.rs`: read from disk without a
+  lock, brought down on a thread of their own, the table built again when one lands), the patch
+  watcher (`owner_watch.rs start_patch`, rearmed when the game folder changes), the Discord status
+  (`owner_presence.rs`, connected by the shell only), and the fetches of the remote config, its
+  mirrors, the fingerprints and the ready presets (`owner_start.rs`). The cached mirrors count
+  from the first moment, as in `src/services.ts`.
 - The repair after a patch runs without `updateImpact` and `rebuildGenerated` (both `None`), and
   the arcana gives way to the builder's picks after a refresh, not in the middle of it.
 - `catalog:load` does not warm the previews' store afterwards.
@@ -299,9 +302,18 @@ What the owner still does differently, or not yet:
   release, and leaves Electron's and Chrome's versions out. What only the window's process knows
   (its windows, the screens, the graphics card, the updater) is asked of the shell as
   `win.report`; a shell that does not answer gives null for the first three and an updater.
-- The shell's part, still to write in `src-tauri`: `win.report`, `win.isMaximized`,
-  `app.updateInstall`, `app.exit` with the uninstaller's code, the uninstall window closed
-  without an answer as code 3, and the `patch-repair` event.
+- In the shell (`src-tauri/src/backend.rs`), `MM_RUST_OWNS=1` starts the owner on a thread of its
+  own instead of the Node host, installs the write jail in the shell's own process, and routes
+  every channel but the title bar's buttons to it; events reach the page as the host's did.
+  Checked on the sandbox's Tauri build: Home with the catalog, the version, its notes, the stars
+  and the game's state, `mods.list` and `settings.get`, no console errors, no Node process.
+  Not there yet under the flag: a second start's d2mm:// link (logged and dropped), the
+  clipboard, installing an update (the updater plugin is not wired), the graphics card in the
+  support report, the first start's language (taken from `MM_LOCALE`, else English, as the host
+  does), and the uninstall window closed without an answer as code 3.
+- The game watch and the crash watch after Play run in the owner (`owner_watch.rs`): asked every
+  five seconds, every second while Dota is open, told to the page on a change and afresh after a
+  reload.
 - Checked in the parity only by unit tests: the wiki's pictures (the parity runs offline); the 3D
   preview's real exports reach only `no-body` in the sandbox, whose pak01 has no models.
 - `account:signIn` is left out of the parity: after the browser fails to open, the TypeScript
