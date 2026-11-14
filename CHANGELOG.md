@@ -2,6 +2,65 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 3.9.0
+
+We rewrote the app. The window looks as before, but the code behind it (installing mods, building
+the item table, downloads, watching the game) now runs in Rust on Tauri instead of Node.js on
+Electron. We measured both versions on the same PC, with the same Dota and the same mods:
+
+- The installer is 9.8 MB instead of 127.6 MB, 13 times smaller.
+- The app takes 26 MB on disk instead of 159 MB, 6 times less.
+- The window shows up 0.8 s after you start the app instead of 1.1 s, 1.4 times sooner.
+- Once started, the app holds 438 MB of memory instead of 612 MB, 174 MB less.
+- Reading Dota's item list (items_game, about 26,000 items) takes 41 ms instead of 264 ms,
+  6.4 times faster. Counting the items in it takes 27 ms instead of 191 ms, 7.1 times faster.
+- Opening the game's main archive (pak01, 388,000 files) takes 92 ms instead of 231 ms, 2.5 times
+  faster. Checking it after a Dota patch takes 159 ms instead of 258 ms, 1.6 times faster.
+
+The app reads the item list each time it builds the item table, each time you pick an item in
+the builder and after every Dota patch, so you wait less at all three. That work now uses every
+core of your processor instead of one.
+
+You don't need to do anything. 3.8.0 updates itself to 3.9.0 in the same folder and keeps your
+mods, presets and settings. Shortcuts, the taskbar pin and the tray keep working, and the update
+removes the old Electron files.
+
+### My look on everyone
+
+- With many heroes built, the look on everyone wrote so many files that the game started showing
+  wrong models. The app now stops before that point, taking the heroes you built last first, and
+  Settings names the ones that did not fit.
+- In Settings, Game, type a hero's name under the switch to leave that hero out. Click the chip to
+  bring them back.
+
+### Window
+
+- On a big screen the app grows a little to use the room, up to 1.3 times at 4K, and the scale you
+  set in Settings works on top of that.
+- A mod's window opens from its card without dropping the first frames.
+
+### Catalog and Settings
+
+- Heroes in the catalog stand in four columns by attribute (Strength, Agility, Intelligence,
+  Universal), as in the hero builder.
+- Settings have a list of sections on the left. Each setting takes one row, and long explanations
+  fold under "Read more".
+- In Weather and the other cosmetics sections, search, sort and filters fit on one line.
+- The mods folder button and the mods switch in the bottom bar form one button, the size of Play.
+
+### Fixes
+
+- A mod that takes longer than ten seconds to download no longer fails halfway. A slow but steady
+  mirror finishes; one that sends nothing for 30 seconds still gets dropped.
+- The uninstaller asks what to remove in a window drawn like the app, shows how much space each
+  choice frees and greys out what you don't have.
+- The rest of the screens now have Simplified Chinese.
+
+### Other platforms
+
+- The portable build and the Linux AppImage come from the same code as the installer. The AppImage
+  opens `.d2mm` files and `d2mm://` links.
+
 ## 3.8.0
 
 ### My mods
