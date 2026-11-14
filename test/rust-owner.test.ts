@@ -8,7 +8,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import crypto from 'node:crypto';
+
+import AdmZip from 'adm-zip';
 
 import { openVpkIndex } from '../src/vpk.ts';
 import { decodePng } from '../src/png-strip.ts';
@@ -18,8 +21,12 @@ import { CLI, SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, s
 const skip = (!fs.existsSync(CLI) && 'mm-cli is not built (cargo build -p mm-cli)') || (!fs.existsSync(SANDBOX_GAME) && 'no sandbox (npm run sandbox:seed)');
 
 /** `unsized`: the answer's size is its compressor's, not the state's (a zip deflated by another library).
- * `pixels`: a PNG data URI in the answer is compared by its pixels (two encoders write one picture differently). */
-type Step = { call: [string, ...unknown[]]; reply?: Reply; note?: string; unsized?: boolean; pixels?: boolean };
+ * `pixels`: a PNG data URI in the answer is compared by its pixels (two encoders write one picture differently).
+ * `send`: the window sends it and waits for no answer (ipcRenderer.send).
+ * `netError`: the answer's error is a failed connection, worded by each stack's own network code
+ * ("fetch failed" against the system's words); what the window acts on (offline) is still compared.
+ * `blank`: fields of the answer that are each process's own (the bytes its own log holds). */
+type Step = { call: [string, ...unknown[]]; reply?: Reply; note?: string; unsized?: boolean; pixels?: boolean; send?: boolean; netError?: boolean; blank?: string[] };
 
 /** Every PNG data URI inside `v` as its size and a hash of its decoded pixels. */
 function byPixels(v: unknown): unknown {
@@ -67,9 +74,9 @@ const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 
 /** Run one script on both sides; compare each answer, what each asked, and the files after.
  * `picturePaks` (game-relative) are compared by [`pictures`]. */
-async function compare(name: string, base: Twin, steps: Step[], picturePaks: string[] = []): Promise<void> {
+async function compare(name: string, base: Twin, steps: Step[], picturePaks: string[] = [], args: string[] = []): Promise<[Twin, Twin]> {
   const [a, b] = twins(base, tmpRoot(name));
-  const procs: [Proc, Proc] = [startTs(a), startRs(b)];
+  const procs: [Proc, Proc] = [startTs(a, args), startRs(b, args)];
   try {
     const [tsChannels, rsChannels] = await Promise.all(procs.map((p) => p.ready));
     for (const s of steps) assert.ok(rsChannels.includes(s.call[0]), `${s.call[0]} is not the owner's`);
@@ -85,6 +92,10 @@ async function compare(name: string, base: Twin, steps: Step[], picturePaks: str
       for (const [id, tag] of made[side]) text = text.split(id).join(tag);
       // a file a draft took in is named with a random tail
       text = text.replace(/(vpk|picture)-(\d+)-[0-9a-f]{6}/g, '$1-$2-<HEX>');
+      // a sign-in carries a random state for the browser to hand back
+      text = text.replace(/state=[0-9a-f]{32}/g, 'state=<STATE>');
+      // a support report is named by the second it was asked for
+      text = text.replace(/diag-\d{4}-\d\d-\d\dT\d\d-\d\d-\d\d/g, 'diag-<STAMP>');
       return JSON.parse(text);
     };
     for (const [k, s] of steps.entries()) {
@@ -99,8 +110,13 @@ async function compare(name: string, base: Twin, steps: Step[], picturePaks: str
           return JSON.parse(text);
         };
         p.reply = (m, x) => here((s.reply ?? (() => null))(m, x));
-        const r = await p.invoke(s.call[0], here(s.call.slice(1)) as unknown[]) as { value?: { size?: unknown } };
+        const r = s.send
+          ? (p.send(s.call[0], here(s.call.slice(1)) as unknown[]), null)
+          : await p.invoke(s.call[0], here(s.call.slice(1)) as unknown[]) as { value?: { size?: unknown } };
         if (s.unsized && r?.value && typeof r.value.size === 'number') r.value.size = '<SIZE>';
+        const v = r?.value as { error?: unknown } | undefined;
+        if (s.netError && v && typeof v.error === 'string') v.error = '<NET>';
+        for (const k of s.blank ?? []) if (v && k in v) (v as Record<string, unknown>)[k] = '<OWN>';
         noteIds(side, t);
         const seen = named(blind({ answer: r, asked: p.asked }, t), side);
         got.push(s.pixels ? byPixels(seen) : seen);
@@ -117,6 +133,7 @@ async function compare(name: string, base: Twin, steps: Step[], picturePaks: str
       assert.deepEqual(pictures(path.join(b.game, p)), pictures(path.join(a.game, p)), `${name}: ${p}`);
     }
     assert.deepEqual(tb, ta, `${name}: the game folder`);
+    return [a, b];
   } finally {
     await Promise.all(procs.map((p) => p.stop()));
   }
@@ -545,4 +562,52 @@ test('the author\'s drafts answer as the TypeScript does', { skip }, async () =>
     { call: ['creator:remove', 'nobody'] },
     { call: ['creator:list'] },
   ]);
+});
+
+test('the support report, the window\'s errors, the catalog and the proxy test answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('support-base'), 'b'), OFFLINE);
+  const save = (filePath: string | null) => (m: string) => (m === 'dialog.save' ? (filePath ? { canceled: false, filePath } : { canceled: true }) : null);
+  const [a, b] = await compare('support', base, [
+    { call: ['settings:testProxy', null] },
+    { call: ['settings:testProxy', 'nope'] },
+    { call: ['settings:testProxy', 'ftp://x:1'] },
+    { call: ['settings:testProxy', 'http://127.0.0.1:9'] },
+    { call: ['catalog:load', false], netError: true },
+    // account:signIn is not run here: the TypeScript keeps its port until the sign-in times out
+    // after the browser failed to open, so the second side could not have it (the sign-in itself
+    // is compared through discord-auth's own script)
+    { call: ['diag:rendererError', 'TypeError: boom at x'], send: true },
+    { call: ['diag:rendererError', null], send: true },
+    { call: ['diag:export'], reply: save(null), note: 'cancelled' },
+    { call: ['diag:export'], reply: save('<ROOT>/diag.zip') },
+  ]);
+  // the archive: the same files, and the same report but for what is the process's own
+  // (its clock, its runtime, the window as each shell fakes it, the drive's free bytes)
+  const own = ['generatedAt', 'app', 'disk', 'windows', 'displays', 'gpu'];
+  const read = (t: Twin) => {
+    const z = new AdmZip(path.join(t.root, 'diag.zip'));
+    const report = JSON.parse(z.readAsText('report.json')) as Record<string, unknown>;
+    for (const k of own) delete report[k];
+    const errors = report.rendererErrors as { at?: string }[] | null;
+    for (const e of errors ?? []) e.at = '<AT>';
+    // why a mirror stands down is each stack's own wording of the failed connection
+    for (const m of (report.mirrors as { why?: string }[] | null) ?? []) if (m.why) m.why = '<NET>';
+    // the report takes the home folder out of its paths, so the copy's folder is written that way too
+    const home = os.homedir();
+    const root = t.root.toLowerCase().startsWith(home.toLowerCase()) ? `%USERPROFILE%${t.root.slice(home.length)}` : t.root;
+    const text = JSON.stringify({ names: z.getEntries().map((e) => e.entryName).sort(), report }).split(JSON.stringify(root).slice(1, -1)).join('<ROOT>');
+    return blind(JSON.parse(text), t);
+  };
+  assert.deepEqual(read(b), read(a), 'support: the archive');
+});
+
+test('the uninstaller\'s window answers as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('uninstall-base'), 'b'), OFFLINE);
+  const own = ['dataBytes'];
+  await compare('uninstall', base, [
+    { call: ['uninstall:plan'], blank: own },
+    { call: ['uninstall:run', { revert: true, mods: true }] },
+    { call: ['uninstall:plan'], blank: own },
+    { call: ['uninstall:done', true] },
+  ], [], ['--uninstall']);
 });

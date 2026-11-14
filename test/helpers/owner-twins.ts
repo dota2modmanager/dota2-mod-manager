@@ -72,7 +72,14 @@ export class Proc {
     });
   }
 
+  /** ipcRenderer.send: no answer comes back. */
+  send(channel: string, args: unknown[] = []): void {
+    this.child.stdin!.write(`${JSON.stringify({ t: 'send', channel, args })}\n`);
+  }
+
   async stop(): Promise<void> {
+    // a run that answered the uninstaller has gone already
+    if (this.child.exitCode !== null || this.child.signalCode !== null) return;
     const done = new Promise((r) => this.child.once('exit', r));
     this.child.stdin!.end();
     setTimeout(() => this.child.kill(), 3000).unref();
@@ -110,13 +117,13 @@ export function twins(base: Twin, at: string): [Twin, Twin] {
   return out as [Twin, Twin];
 }
 
-export function startTs(t: Twin): Proc {
-  return new Proc(process.execPath, [path.join(ROOT, 'src-tauri', 'host', 'host.ts'), `--write-jail=${t.root}`],
+export function startTs(t: Twin, args: string[] = []): Proc {
+  return new Proc(process.execPath, [path.join(ROOT, 'src-tauri', 'host', 'host.ts'), `--write-jail=${t.root}`, ...args],
     { MM_USER_DATA: t.ud, MM_QUIET: '1', MM_SHELL: 'tauri', MM_APP_VERSION: '9.9.9' });
 }
 
-export function startRs(t: Twin): Proc {
-  return new Proc(CLI, ['owner', `--user-data-dir=${t.ud}`, `--write-jail=${t.root}`], { MM_APP_VERSION: '9.9.9' });
+export function startRs(t: Twin, args: string[] = []): Proc {
+  return new Proc(CLI, ['owner', `--user-data-dir=${t.ud}`, `--write-jail=${t.root}`, ...args], { MM_APP_VERSION: '9.9.9' });
 }
 
 /** Every path of a twin written as <ROOT>, so the two copies' answers can be compared. */

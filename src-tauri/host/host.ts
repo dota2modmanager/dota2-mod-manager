@@ -181,6 +181,7 @@ class WindowHandle extends EventEmitter {
   getBounds() { return { x: 0, y: 0, width: 1280, height: 800 }; }
   setBounds() {}
   getContentSize() { return [1280, 800]; }
+  getSize() { return [1280, 800]; }
 }
 
 /** Pictures without Chromium (images.ts). */

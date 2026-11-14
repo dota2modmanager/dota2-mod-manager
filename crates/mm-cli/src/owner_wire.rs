@@ -3,7 +3,8 @@
 //! test/rust-owner.test.ts can drive the TypeScript main process and the Rust owner with the same
 //! lines and compare what each answers, asks and writes.
 //!
-//! In, one JSON object per line: {t:'invoke', id, channel, args}, {t:'reply', id, ok, value|error}.
+//! In, one JSON object per line: {t:'invoke', id, channel, args}, {t:'send', channel, args},
+//! {t:'reply', id, ok, value|error}.
 //! Out, each line starting with MARK: {t:'ready', channels}, {t:'event', channel, args},
 //! {t:'request', id, method, args}, and `R <id> j <json>` / `R <id> e <message>` for an answer.
 
@@ -73,6 +74,7 @@ pub fn run(args: &[String]) -> Result<(), String> {
         app_version: std::env::var("MM_APP_VERSION").unwrap_or_else(|_| "0.0.0".into()),
         app_root: std::env::current_dir().map_err(|e| e.to_string())?,
         downloads: home().join("Downloads"),
+        uninstall: mm_core::uninstall::is_uninstall_run(args),
         system_languages: first_run.then(|| vec![std::env::var("MM_LOCALE").unwrap_or_else(|_| "en-US".into())]),
         find_game: Box::new(move || match &find {
             Some(f) if f == "none" => None,
@@ -117,6 +119,14 @@ pub fn run(args: &[String]) -> Result<(), String> {
                     } else {
                         Err(mm_core::js::string(msg.get("error").unwrap_or(&Value::Null)))
                     });
+                }
+            }
+            // ipcRenderer.send: no answer, and handled before the next line, as the host does
+            Some("send") => {
+                let channel = msg.get("channel").and_then(Value::as_str).unwrap_or("");
+                let list = msg.get("args").and_then(Value::as_array).cloned().unwrap_or_default();
+                if mm_core::channel_args::check_args(channel, &list).is_none() {
+                    let _ = owner.invoke(channel, &list);
                 }
             }
             Some("log") => wire.line(&json!({ "t": "log", "lines": owner.take_log() }).to_string()),

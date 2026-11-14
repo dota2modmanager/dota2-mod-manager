@@ -41,6 +41,8 @@ pub struct Options {
     pub app_root: PathBuf,
     /// the user's Downloads folder, where a save dialog starts
     pub downloads: PathBuf,
+    /// the uninstaller's run (uninstall::is_uninstall_run): its window's channels answer
+    pub uninstall: bool,
     /// on a first start, the system's languages: the window takes its language from them
     pub system_languages: Option<Vec<String>>,
     /// looking for Dota where Steam keeps it; the harness hands in its own answer
@@ -94,8 +96,10 @@ pub struct Core {
     pub undo: crate::build_undo::BuildUndo,
     /// the repair after a patch asked for last; a retry of an older one stands down
     pub repair_gen: u64,
+    /// the window's own errors, for the support report (diag:rendererError)
+    pub renderer_errors: Vec<Value>,
     /// the app's log, which the installer writes to as well
-    log: Arc<Mutex<Vec<String>>>,
+    log: Arc<crate::app_log::AppLog>,
     /// the game folder and language folder the installer was made for
     made_for: (Option<PathBuf>, String),
 }
@@ -105,7 +109,7 @@ pub struct Owner {
     pub opts: Options,
     pub shell: Arc<dyn Shell>,
     core: Mutex<Core>,
-    log: Arc<Mutex<Vec<String>>>,
+    log: Arc<crate::app_log::AppLog>,
     started: AtomicBool,
     me: Weak<Owner>,
     /// the item table's builds in the background: the newest asked for, and how many have not answered
@@ -142,6 +146,8 @@ const GROUPS: &[Group] = &[
     (crate::owner_pictures::CHANNELS, crate::owner_pictures::handle),
     (crate::owner_preview3d::CHANNELS, crate::owner_preview3d::handle),
     (crate::owner_creator::CHANNELS, crate::owner_creator::handle),
+    (crate::owner_support::CHANNELS, crate::owner_support::handle),
+    (crate::owner_uninstall::CHANNELS, crate::owner_uninstall::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -202,7 +208,7 @@ impl Owner {
         );
         upkeep.lang_folder_step(&mut settings, &mut || (opts.dota_running)(), &mut |m| lines.push(m));
         let made_for = (game_of(&settings), upkeep.lang_folder().to_string());
-        let log = Arc::new(Mutex::new(Vec::<String>::new()));
+        let log = Arc::new(crate::app_log::AppLog::new(&ud));
         let mod_id = Arc::new(crate::mod_id::ModIdentity::new(made_for.0.clone()));
         let installer = make_installer(&made_for, &ud, &mod_id, &log);
         let schema = SchemaService::new(&ud, true);
@@ -229,7 +235,7 @@ impl Owner {
             None,
             net.clone(),
             Box::new(now),
-            Box::new(move |m: &str| stats_log.lock().unwrap_or_else(|e| e.into_inner()).push(m.to_string())),
+            Box::new(move |m: &str| stats_log.push(m)),
         );
         let game_now = Arc::new(std::sync::RwLock::new(made_for.0.clone()));
         let core = Core {
@@ -259,6 +265,7 @@ impl Owner {
             mod_id,
             undo: crate::build_undo::BuildUndo::default(),
             repair_gen: 0,
+            renderer_errors: Vec::new(),
             log: log.clone(),
             made_for,
         };
@@ -267,7 +274,7 @@ impl Owner {
             shell,
             core: Mutex::new(core),
             log: {
-                log.lock().unwrap_or_else(|e| e.into_inner()).splice(0..0, lines);
+                log.prepend(lines);
                 log
             },
             started: AtomicBool::new(false),
@@ -329,12 +336,12 @@ impl Owner {
 
     /// A line in the app's log.
     pub fn diag(&self, msg: &str) {
-        self.log.lock().unwrap_or_else(|e| e.into_inner()).push(msg.to_string());
+        self.log.push(msg);
     }
 
     /// The log so far, emptied (the harness compares it).
     pub fn take_log(&self) -> Vec<String> {
-        std::mem::take(&mut *self.log.lock().unwrap_or_else(|e| e.into_inner()))
+        self.log.take()
     }
 
     /// The window's bar at the bottom.
@@ -508,7 +515,7 @@ fn after_deploys(c: &mut Core, filled: Option<std::collections::HashSet<String>>
 fn model_glb(
     ud: &Path,
     game: &Arc<std::sync::RwLock<Option<PathBuf>>>,
-    log: &Arc<Mutex<Vec<String>>>,
+    log: &Arc<crate::app_log::AppLog>,
 ) -> crate::model_glb::ModelGlb {
     let (tools, game, log) = (ud.to_path_buf(), game.clone(), log.clone());
     crate::model_glb::ModelGlb::new(
@@ -516,7 +523,7 @@ fn model_glb(
         Box::new(move || crate::toolchain::Toolchain::new(&tools, None).path_of("vrf")),
         Box::new(move || game.read().unwrap_or_else(|e| e.into_inner()).clone()),
         Box::new(|exe, args| crate::owner_tools::run_tool(&exe.to_string_lossy(), args)),
-        Box::new(move |m| log.lock().unwrap_or_else(|e| e.into_inner()).push(m.to_string())),
+        Box::new(move |m| log.push(m)),
     )
 }
 
@@ -558,7 +565,7 @@ fn make_installer(
     at: &(Option<PathBuf>, String),
     user_data: &Path,
     mod_id: &Arc<crate::mod_id::ModIdentity>,
-    log: &Arc<Mutex<Vec<String>>>,
+    log: &Arc<crate::app_log::AppLog>,
 ) -> Installer {
     let mut inst = Installer::new(at.0.clone(), &at.1).with_user_data(user_data);
     inst.journal_dir = Some(user_data.join("tx"));
@@ -566,7 +573,7 @@ fn make_installer(
     inst.identify = Some(Box::new(move |paths: &[String]| {
         let mut lines = Vec::new();
         let g = mid.identify(paths.iter().map(String::as_str), &mut |l| lines.push(l));
-        log.lock().unwrap_or_else(|e| e.into_inner()).extend(lines);
+        log.extend(lines);
         g.map(|g| crate::installer_folder::Guess { items: g.items, slots: g.slots, hero_names: g.hero_names })
     }));
     inst

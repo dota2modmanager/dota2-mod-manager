@@ -470,6 +470,11 @@ impl Net {
     }
 }
 
+/// Whether an error is a server's answer ("HTTP 404 ..."), not a failure to reach it.
+pub fn is_http_error(message: &str) -> bool {
+    regex_http(message)
+}
+
 fn regex_http(message: &str) -> bool {
     let b = message.as_bytes();
     b.windows(6).any(|w| &w[..5] == b"HTTP " && w[5].is_ascii_digit())

@@ -65,6 +65,11 @@ fn state(o: &Owner) -> Value {
     s
 }
 
+/// The compiler's state for the support report, its paths without the home folder.
+pub fn state_for_report(o: &Owner) -> Value {
+    crate::owner_support::redact_compiler(state(o))
+}
+
 /// The tools copied, with the bar counting it; whether it copied.
 fn keep_tools(o: &Owner, force: bool) -> Result<bool, String> {
     let Some(k) = keeper(&o.core()) else { return Ok(false) };
