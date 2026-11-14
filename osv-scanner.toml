@@ -40,3 +40,22 @@ reason = "Linux only, through Tauri's tray icon (gtk 0.18 -> glib 0.18); the uns
 id = "RUSTSEC-2024-0370"
 ignoreUntil = 2027-01-08
 reason = "Unmaintained, not vulnerable: a build-time macro helper of glib-macros 0.18, Linux only, through Tauri's tray icon."
+
+# zvariant, zvariant_derive and zbus_names were folded into zbus 6 and are marked unmaintained:
+# no flaw, only no more releases. They come with zbus 5, which three Tauri plugins ask for on
+# Linux alone (notification, opener, single-instance: D-Bus). Their newest releases still ask for
+# zbus ^5, so nothing newer can be taken yet; Windows builds contain none of it.
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0370"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable (zvariant, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins, whose newest releases still ask for zbus ^5."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0371"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable (zbus_names, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0372"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable (zvariant_derive, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins."
