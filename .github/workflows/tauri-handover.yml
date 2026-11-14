@@ -99,6 +99,7 @@ jobs:
           if (-not (Test-Path $exe)) { throw "no Dota 2 Mod Manager.exe in $env:DIR after the handover" }
           if (Test-Path "$env:DIR\Uninstall Dota 2 Mod Manager.exe") { throw 'the Electron uninstaller is still there' }
           if (Test-Path "$env:DIR\resources\app.asar") { throw 'the Electron build is still beside the new exe' }
+          foreach ($f in 'locales', 'ffmpeg.dll', 'LICENSE.electron.txt') { if (Test-Path "$env:DIR\$f") { throw "Electron's $f is still beside the new exe" } }
           if (-not (Test-Path "$env:DIR\uninstall.exe")) { throw "the Tauri uninstaller is not in $env:DIR" }
           if (Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\c6184bef-ce59-56eb-9f33-76c285700bc8') { throw 'the Electron uninstall entry is still listed' }
           $cmd = (Get-ItemProperty 'HKCU:\Software\Classes\d2mm\shell\open\command').'(default)'

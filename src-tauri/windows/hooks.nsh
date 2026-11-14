@@ -92,6 +92,38 @@ Var d2mmWipeData
       ExecWait '"$INSTDIR\${D2MM_ELECTRON_UNINSTALLER}" /S --updated /KEEP_APP_DATA _?=$INSTDIR'
       Delete "$INSTDIR\${D2MM_ELECTRON_UNINSTALLER}"
     ${EndIf}
+    ; What that uninstaller left behind. It gives up and removes nothing while a file is still
+    ; held, and the copy CheckIfAppIsRunning just ended can hold app.asar for a moment, so the
+    ; Electron layout goes here by name, again after a pause while resources\ is still there.
+    ; None of these is a file of this build: its own sit in app\ and beside the exe.
+    StrCpy $1 0
+    d2mmElectronLeftovers:
+    RMDir /r "$INSTDIR\resources"
+    RMDir /r "$INSTDIR\locales"
+    Delete "$INSTDIR\chrome_100_percent.pak"
+    Delete "$INSTDIR\chrome_200_percent.pak"
+    Delete "$INSTDIR\d3dcompiler_47.dll"
+    Delete "$INSTDIR\dxcompiler.dll"
+    Delete "$INSTDIR\dxil.dll"
+    Delete "$INSTDIR\electron_wer.dll"
+    Delete "$INSTDIR\ffmpeg.dll"
+    Delete "$INSTDIR\icudtl.dat"
+    Delete "$INSTDIR\libEGL.dll"
+    Delete "$INSTDIR\libGLESv2.dll"
+    Delete "$INSTDIR\LICENSE.electron.txt"
+    Delete "$INSTDIR\LICENSES.chromium.html"
+    Delete "$INSTDIR\resources.pak"
+    Delete "$INSTDIR\snapshot_blob.bin"
+    Delete "$INSTDIR\v8_context_snapshot.bin"
+    Delete "$INSTDIR\vk_swiftshader.dll"
+    Delete "$INSTDIR\vk_swiftshader_icd.json"
+    Delete "$INSTDIR\vulkan-1.dll"
+    ${If} ${FileExists} "$INSTDIR\resources\*.*"
+    ${AndIf} $1 < 20
+      IntOp $1 $1 + 1
+      Sleep 500
+      Goto d2mmElectronLeftovers
+    ${EndIf}
     DeleteRegKey HKCU "${D2MM_ELECTRON_UNINSTALL}"
     DeleteRegKey HKCU "${D2MM_ELECTRON_KEY}"
     SetOutPath $INSTDIR
