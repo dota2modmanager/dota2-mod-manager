@@ -94,7 +94,7 @@ fn vrf(c: &Core) -> Option<PathBuf> {
 }
 
 /// A ValveResourceFormat run: the exit code 0 or the error.
-fn run_tool(exe: &str, args: &[String]) -> Result<(), String> {
+pub fn run_tool(exe: &str, args: &[String]) -> Result<(), String> {
     match crate::run_process::run(exe, args, None, &[], 60_000)? {
         (0, _) => Ok(()),
         (code, out) => Err(format!("{exe} exited {code}: {}", out.trim())),

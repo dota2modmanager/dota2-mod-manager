@@ -197,6 +197,7 @@ fn repair_app(o: &Owner) -> Value {
         let _ = std::fs::remove_dir_all(&dir);
         let _ = std::fs::create_dir_all(&dir);
         c.game_icons.clear();
+        c.wiki.clear();
     }
     steps.push(with_id(
         "caches",

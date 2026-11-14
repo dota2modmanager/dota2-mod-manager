@@ -70,6 +70,8 @@ pub struct Core {
     pub kept: crate::owner_tools::Kept,
     /// pictures out of the game, shared with the work done without the lock
     pub game_icons: Arc<crate::game_icons::GameIcons>,
+    /// pictures off the Dota wikis, for what the game and the mods have none of
+    pub wiki: Arc<crate::wiki_icons::WikiIcons>,
     /// which catalog mod a file is, by what it hashes to
     pub fingerprints: crate::fingerprints::Fingerprints,
     /// the anti-cheat notice in plain words
@@ -129,6 +131,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_tools::CHANNELS, crate::owner_tools::handle),
     (crate::owner_app::CHANNELS, crate::owner_app::handle),
     (crate::owner_game::CHANNELS, crate::owner_game::handle),
+    (crate::owner_pictures::CHANNELS, crate::owner_pictures::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -227,11 +230,12 @@ impl Owner {
             remote,
             launch_counted: false,
             presence_view: "catalog".into(),
-            net,
+            net: net.clone(),
             catalog,
             ready: crate::ready_presets::ReadyPresets::new(&ud, None),
             kept: crate::owner_tools::Kept::default(),
             game_icons: Arc::new(crate::game_icons::GameIcons::new(&ud)),
+            wiki: Arc::new(crate::wiki_icons::WikiIcons::new(&ud, net.clone(), now, &opts.app_version)),
             fingerprints: crate::fingerprints::Fingerprints::new(&ud),
             notice: crate::notice_text::NoticeText::default(),
             download_stats,

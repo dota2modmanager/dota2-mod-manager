@@ -17,8 +17,18 @@ import { CLI, SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, s
 
 const skip = (!fs.existsSync(CLI) && 'mm-cli is not built (cargo build -p mm-cli)') || (!fs.existsSync(SANDBOX_GAME) && 'no sandbox (npm run sandbox:seed)');
 
-/** `unsized`: the answer's size is its compressor's, not the state's (a zip deflated by another library). */
-type Step = { call: [string, ...unknown[]]; reply?: Reply; note?: string; unsized?: boolean };
+/** `unsized`: the answer's size is its compressor's, not the state's (a zip deflated by another library).
+ * `pixels`: a PNG data URI in the answer is compared by its pixels (two encoders write one picture differently). */
+type Step = { call: [string, ...unknown[]]; reply?: Reply; note?: string; unsized?: boolean; pixels?: boolean };
+
+/** Every PNG data URI inside `v` as its size and a hash of its decoded pixels. */
+function byPixels(v: unknown): unknown {
+  return JSON.parse(JSON.stringify(v ?? null), (_k, x) => {
+    if (typeof x !== 'string' || !x.startsWith('data:image/png;base64,')) return x;
+    const png = decodePng(Buffer.from(x.slice(22), 'base64'));
+    return png ? `<PNG ${png.width}x${png.height} ${crypto.createHash('sha1').update(png.rgba).digest('hex')}>` : x;
+  });
+}
 
 /** The settings a process wrote that are its own clock or its own build, not the state compared. */
 const VOLATILE = ['lastSeenVersion', 'gameStamp', 'windowBounds'];
@@ -87,7 +97,8 @@ async function compare(name: string, base: Twin, steps: Step[], picturePaks: str
         const r = await p.invoke(s.call[0], here(s.call.slice(1)) as unknown[]) as { value?: { size?: unknown } };
         if (s.unsized && r?.value && typeof r.value.size === 'number') r.value.size = '<SIZE>';
         noteIds(side, t);
-        got.push(named(blind({ answer: r, asked: p.asked }, t), side));
+        const seen = named(blind({ answer: r, asked: p.asked }, t), side);
+        got.push(s.pixels ? byPixels(seen) : seen);
       }
       if (process.env.OWNER_SHOW) console.log(label, JSON.stringify(got[0]).slice(0, 240));
       assert.deepEqual(got[1], got[0], label);
@@ -457,5 +468,24 @@ test('the remote config, the game patch and its repair, the item table, cosmetic
     { call: ['patch:setEnabled', false] },
     { call: ['patch:state'] },
     { call: ['mods:list'] },
+  ]);
+});
+
+test('heroes\' portraits, the tiles\' pictures and the mods\' clips answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('pictures-base'), 'b'), OFFLINE);
+  const mods = (readJson(path.join(base.ud, 'manifest.json')) as { installed: { files?: { relPath: string }[] }[] }).installed;
+  const paks = mods.flatMap((r) => (r.files || []).map((f) => f.relPath)).filter((p) => p.endsWith('_dir.vpk'));
+  // the texture decoder, when this machine has one installed: the pictures it makes are compared too
+  const vrf = path.join(process.env.APPDATA || '', 'Dota 2 Mod Manager', 'toolchain');
+  if (process.env.APPDATA && fs.existsSync(path.join(vrf, 'installed.json'))) fs.cpSync(vrf, path.join(base.ud, 'toolchain'), { recursive: true });
+  await compare('pictures', base, [
+    { call: ['cosmetics:heroPortraits', ['axe', 'crystal_maiden', '../up', 7], false] },
+    { call: ['cosmetics:heroPortraits', ['axe', 'nobody_at_all'], true] },
+    { call: ['cosmetics:heroPortraitsByName', ['Axe', 'Crystal Maiden', 'Nobody At All']] },
+    { call: ['cosmetics:icons', ['Weather Ash', 'Nonexistent Thing', 'hero:Io|generic:pack', ...paks.flatMap((p) => [`modart:${p}|hero:Io`, `modvid:${p}`, `modtex:${p}`])]], pixels: true },
+    { call: ['cosmetics:icons', paks.map((p) => `modart:${p}`)], note: 'again, from the cache', pixels: true },
+    ...paks.map((p) => ({ call: ['preview:video', `modvid:${p}`] as [string, ...unknown[]] })),
+    { call: ['preview:video', 'nonsense'] },
+    { call: ['preview:frame', 'nonsense', { $b64: Buffer.from('not a png').toString('base64') }] },
   ]);
 });
