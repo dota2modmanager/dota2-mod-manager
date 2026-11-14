@@ -15,6 +15,12 @@ use serde_json::{json, Value};
 /// by image name; elsewhere the name is matched exactly (`pgrep -f` would also match the Steam
 /// command line that mentions the game). A missing tool answers "not running".
 pub fn dota_is_running() -> bool {
+    // every toggle and pick asks this first: the process table read in place takes a millisecond,
+    // starting tasklist.exe took 220-280 ms, which was most of a toggle
+    #[cfg(windows)]
+    if let Some(open) = windows_process_named("dota2.exe") {
+        return open;
+    }
     #[cfg(windows)]
     let (out, hit) = {
         use std::os::windows::process::CommandExt;
@@ -31,6 +37,38 @@ pub fn dota_is_running() -> bool {
     match out {
         Ok(o) if o.status.success() => hit(&String::from_utf8_lossy(&o.stdout)),
         _ => false,
+    }
+}
+
+/// Whether a process with this image name runs, from a snapshot of the process table; None when
+/// no snapshot could be taken, and tasklist answers instead.
+#[cfg(windows)]
+fn windows_process_named(name: &str) -> Option<bool> {
+    use windows_sys::Win32::Foundation::{CloseHandle, INVALID_HANDLE_VALUE};
+    use windows_sys::Win32::System::Diagnostics::ToolHelp::{
+        CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W, TH32CS_SNAPPROCESS,
+    };
+    // SAFETY: the snapshot handle is checked and closed; the entry is a plain struct whose size
+    // field is set before the first call, as the API asks
+    unsafe {
+        let snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if snap == INVALID_HANDLE_VALUE || snap.is_null() {
+            return None;
+        }
+        let mut e: PROCESSENTRY32W = std::mem::zeroed();
+        e.dwSize = std::mem::size_of::<PROCESSENTRY32W>() as u32;
+        let mut found = false;
+        let mut ok = Process32FirstW(snap, &mut e) != 0;
+        while ok {
+            let len = e.szExeFile.iter().position(|&c| c == 0).unwrap_or(e.szExeFile.len());
+            if String::from_utf16_lossy(&e.szExeFile[..len]).eq_ignore_ascii_case(name) {
+                found = true;
+                break;
+            }
+            ok = Process32NextW(snap, &mut e) != 0;
+        }
+        CloseHandle(snap);
+        Some(found)
     }
 }
 
@@ -163,4 +201,26 @@ pub fn tell(
         out.push(("game:quickExit", exit));
     }
     out
+}
+
+#[cfg(all(test, windows))]
+mod process_table {
+    use super::windows_process_named;
+
+    #[test]
+    fn finds_this_test_and_not_a_made_up_name() {
+        let me = std::env::current_exe().unwrap();
+        let name = me.file_name().unwrap().to_string_lossy().to_uppercase();
+        assert_eq!(windows_process_named(&name), Some(true));
+        assert_eq!(windows_process_named("no-such-process-mm.exe"), Some(false));
+    }
+
+    #[test]
+    fn says_what_tasklist_says() {
+        // the answer the snapshot replaced, for a process every Windows session runs
+        let out =
+            std::process::Command::new("tasklist").args(["/FI", "IMAGENAME eq explorer.exe", "/NH"]).output().unwrap();
+        let listed = String::from_utf8_lossy(&out.stdout).to_lowercase().contains("explorer.exe");
+        assert_eq!(windows_process_named("explorer.exe"), Some(listed));
+    }
 }
