@@ -1,6 +1,6 @@
-//! What only the shell can do, asked for by the TypeScript host in place of Electron's dialog,
-//! shell and BrowserWindow (src-tauri/host/host.ts): a file dialog, a link in the browser, the
-//! window minimised. Each answer has the shape the Electron call it stands for returns.
+//! What only the shell can do, asked for by the owner in place of Electron's dialog, shell and
+//! BrowserWindow (mm_core::owner::Shell): a file dialog, a link in the browser, the window
+//! minimised. Each answer has the shape the Electron call it stands for returns.
 
 use std::path::PathBuf;
 

@@ -1,9 +1,9 @@
 //! The one window and the tray icon beside it (src/main-window.ts, src/tray.ts, src/background.ts).
 //! The logic is mm-core's (`main_window`, `tray`); this is Tauri doing what it answers.
 //!
-//! Until the switch (docs/rust-migration.md) the host owns settings.json, so the two settings the
-//! window writes go through it: `uiScale` by its `ui:setZoom` channel, and `trayHintSeen` by its
-//! own tray keeper, which hears the close as `{t:'hidden'}`. Everything else here only reads the file.
+//! The owner holds settings.json, so the two settings the window writes go through it: `uiScale`
+//! by its `ui:setZoom` channel, and `trayHintSeen` when the shell tells it of a close it turned into
+//! a hide. Everything else here only reads the file.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -17,7 +17,7 @@ use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindo
 
 use crate::backend::Backend;
 
-/// settings.json as the host last wrote it, or `{}`.
+/// settings.json as the owner last wrote it, or `{}`.
 pub fn settings(ud: &Path) -> Value {
     std::fs::read_to_string(ud.join("settings.json"))
         .ok()
@@ -46,7 +46,7 @@ pub fn work_area(app: &tauri::App) -> Option<Area> {
 /// What the window and the tray share.
 pub struct Shell {
     user_data: PathBuf,
-    host: Arc<Backend>,
+    owner: Arc<Backend>,
     keeper: Mutex<TrayKeeper>,
     icon: Mutex<Option<TrayIcon>>,
     zoom: Mutex<f64>,
@@ -60,15 +60,15 @@ pub fn is_own_page(url: &tauri::Url) -> bool {
 }
 
 impl Shell {
-    /// Ask the host something and forget the answer, off the calling thread.
-    fn tell_host(&self, channel: &'static str, args: Value) {
-        let host = self.host.clone();
+    /// Ask the owner something and forget the answer, off the calling thread.
+    fn tell_owner(&self, channel: &'static str, args: Value) {
+        let owner = self.owner.clone();
         std::thread::spawn(move || {
             let list = match args {
                 Value::Array(a) => a,
                 other => vec![other],
             };
-            let _ = host.invoke(channel, list);
+            let _ = owner.invoke(channel, list);
         });
     }
 
@@ -130,9 +130,8 @@ impl Shell {
                 let _ = app.notification().builder().title(mm_core::tray::TITLE).body(mm_core::tray::hint()).show();
             }
         }
-        // the host's own keeper (src/tray.ts) hears the close too and marks the hint seen in
-        // settings.json, which it owns until the switch
-        self.host.hidden();
+        // the owner marks the hint seen in settings.json, which it holds
+        self.owner.hidden();
         eprintln!("[mm-shell] window hidden in the tray");
     }
 
@@ -146,14 +145,14 @@ impl Shell {
         *self.zoom.lock().unwrap_or_else(|e| e.into_inner()) = z;
     }
 
-    /// Ctrl +/-/0 in the page: a new scale for the page to apply and the host to remember.
+    /// Ctrl +/-/0 in the page: a new scale for the page to apply and the owner to remember.
     pub fn key(&self, app: &AppHandle, key: &str, control: bool, alt: bool) {
         let mut cur = self.zoom.lock().unwrap_or_else(|e| e.into_inner());
         let Some(z) = zoom_for_input("keyDown", key, control, alt, *cur) else { return };
         *cur = z;
         drop(cur);
         let _ = app.emit("mm", json!({ "channel": "ui:zoom", "args": [z] }));
-        self.tell_host("ui:setZoom", json!([z]));
+        self.tell_owner("ui:setZoom", json!([z]));
     }
 }
 
@@ -175,7 +174,7 @@ fn make_icon(app: &AppHandle) -> tauri::Result<TrayIcon> {
         .show_menu_on_left_click(false)
         .on_menu_event(|app, e| match e.id().as_ref() {
             "open" => Shell::show(app),
-            "play" => app.state::<Arc<Shell>>().tell_host("game:launch", json!([])),
+            "play" => app.state::<Arc<Shell>>().tell_owner("game:launch", json!([])),
             "quit" => {
                 app.state::<Arc<Shell>>().quitting();
                 app.exit(0);
@@ -208,13 +207,13 @@ pub struct Open {
 }
 
 /// Open the window on the app's page, locked to it, with the tray beside it.
-pub fn open(app: &tauri::App, host: Arc<Backend>, o: Open) -> tauri::Result<WebviewWindow> {
+pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<WebviewWindow> {
     let s = settings(&o.user_data);
     let scale = if o.first_run && start_scale(o.area) != 1.0 { start_scale(o.area) } else { clamp_zoom(&s["uiScale"]) };
     let fit = window_fit(o.area, scale);
     let shell = Arc::new(Shell {
         user_data: o.user_data,
-        host,
+        owner,
         keeper: Mutex::new(TrayKeeper::default()),
         icon: Mutex::new(None),
         zoom: Mutex::new(scale),

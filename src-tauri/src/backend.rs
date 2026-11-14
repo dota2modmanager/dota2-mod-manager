@@ -1,6 +1,6 @@
-//! Who answers the window: the TypeScript main process under Node (src/sidecar.rs), or, with
-//! `MM_RUST_OWNS=1`, the Rust owner of the state (mm_core::owner), which answers every channel the
-//! TypeScript registers, so no Node process is started at all (docs/rust-migration.md, step 2).
+//! Who answers the window: the Rust owner of the state (mm_core::owner), which answers every
+//! channel the TypeScript main process registered, so no Node process is started at all
+//! (docs/rust-migration.md, step 3).
 
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
@@ -8,17 +8,17 @@ use std::sync::{Arc, OnceLock};
 use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::sidecar::{Answer, Sidecar};
 use mm_core::owner::Owner;
 
-/// Whether this run puts the state in Rust's hands.
-pub fn rust_owns() -> bool {
-    std::env::var("MM_RUST_OWNS").is_ok_and(|v| v == "1")
-}
+/// The owner the window talks to.
+pub struct Backend(pub Arc<Owned>);
 
-pub enum Backend {
-    Host(Arc<Sidecar>),
-    Owner(Arc<Owned>),
+/// An answer for the page.
+pub enum Answer {
+    /// no bytes inside
+    Json(String),
+    /// bytes inside, as {$b64}: the window decodes it
+    Bytes(String),
 }
 
 /// The owner, once its start is over: it runs off the main thread, so the window opens at once
@@ -161,71 +161,45 @@ fn answer_of(v: Value) -> Answer {
 impl Backend {
     /// ipcRenderer.invoke, its arguments already checked.
     pub fn invoke(&self, channel: &str, args: Vec<Value>) -> Result<Answer, String> {
-        match self {
-            Backend::Host(h) => h.invoke(channel, Value::Array(args)),
-            Backend::Owner(o) => match o.get().invoke(channel, &args) {
-                Some(r) => r.map(answer_of),
-                None => Err(format!("No handler registered for '{channel}'")),
-            },
+        match self.0.get().invoke(channel, &args) {
+            Some(r) => r.map(answer_of),
+            None => Err(format!("No handler registered for '{channel}'")),
         }
     }
 
     /// ipcRenderer.send: no answer.
     pub fn send(&self, channel: &str, args: Vec<Value>) {
-        match self {
-            Backend::Host(h) => h.send(channel, Value::Array(args)),
-            Backend::Owner(o) => {
-                let _ = o.get().invoke(channel, &args);
-            }
-        }
+        let _ = self.0.get().invoke(channel, &args);
     }
 
-    /// The page finished loading: the game watch tells it afresh.
+    /// The page finished loading: the game watch tells it afresh, and a link the app was started
+    /// by reaches it now that it exists.
     pub fn loaded(&self) {
-        match self {
-            Backend::Host(h) => h.notify(json!({ "t": "loaded" })),
-            Backend::Owner(o) => {
-                mm_core::owner_watch::page_loaded(o.get());
-                // launched BY a link: the page has to exist before it can be told
-                if let Some(cold) = o.1.lock().unwrap_or_else(|e| e.into_inner()).take() {
-                    mm_core::owner_links::take(o.get(), Some(&cold));
-                }
-            }
+        mm_core::owner_watch::page_loaded(self.0.get());
+        if let Some(cold) = self.0 .1.lock().unwrap_or_else(|e| e.into_inner()).take() {
+            mm_core::owner_links::take(self.0.get(), Some(&cold));
         }
     }
 
     /// The shell hid the window in the tray: the hint is not shown again.
     pub fn hidden(&self) {
-        match self {
-            Backend::Host(h) => h.notify(json!({ "t": "hidden" })),
-            Backend::Owner(o) => {
-                let o = o.get();
-                let mut c = o.core();
-                if !c.settings.get("trayHintSeen").is_some_and(mm_core::js::truthy) {
-                    let _ = c.settings.set("trayHintSeen", json!(true));
-                }
-                drop(c);
-                o.diag("window hidden in the tray");
-            }
+        let o = self.0.get();
+        let mut c = o.core();
+        if !c.settings.get("trayHintSeen").is_some_and(mm_core::js::truthy) {
+            let _ = c.settings.set("trayHintSeen", json!(true));
         }
+        drop(c);
+        o.diag("window hidden in the tray");
     }
 
     /// A second start handed its command line over (a d2mm:// link).
     pub fn second(&self, argv: Vec<String>) {
-        match self {
-            Backend::Host(h) => h.notify(json!({ "t": "second", "argv": argv })),
-            Backend::Owner(o) => mm_core::owner_links::take(o.get(), mm_core::owner_links::first(&argv).as_deref()),
-        }
+        mm_core::owner_links::take(self.0.get(), mm_core::owner_links::first(&argv).as_deref());
     }
 
     pub fn stop(&self) {
-        match self {
-            Backend::Host(h) => h.stop(),
-            Backend::Owner(o) => {
-                if let Some(w) = o.0.get().and_then(|o| o.patch_watcher.get()) {
-                    w.stop();
-                }
-            }
+        if let Some(w) = self.0 .0.get().and_then(|o| o.patch_watcher.get()) {
+            w.stop();
         }
     }
 }

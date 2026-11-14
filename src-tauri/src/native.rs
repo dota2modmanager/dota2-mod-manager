@@ -1,16 +1,10 @@
-//! The channels Rust answers itself. Everything not matched here goes to the TypeScript host
-//! (src/sidecar.rs). Moving a channel to Rust is: answer it here, with the same arguments and the
-//! same answer shape the TypeScript handler had, and tick it off in docs/rust-migration.md.
+//! The title bar's buttons, which the shell answers itself: everything else is the owner's
+//! (src/backend.rs).
 
 use serde_json::{json, Value};
 use tauri::{AppHandle, Manager};
 
-/// `Some(answer)` when the channel is Rust's, `None` when it is still the host's.
-pub fn handle(app: &AppHandle, channel: &str, args: &[Value]) -> Option<Result<Value, String>> {
-    window(app, channel).or_else(|| crate::ported::handle(app, channel, args))
-}
-
-/// The title bar's buttons: the shell's own, whoever owns the state.
+/// The title bar's buttons, or None for a channel that is the owner's.
 pub fn window(app: &AppHandle, channel: &str) -> Option<Result<Value, String>> {
     let window = || app.get_webview_window("main").ok_or_else(|| "no main window".to_string());
     let res = match channel {
