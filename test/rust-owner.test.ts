@@ -8,6 +8,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
+
+import { openVpkIndex } from '../src/vpk.ts';
+import { decodePng } from '../src/png-strip.ts';
 
 import { CLI, SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, startTs, tmpRoot, tree, twins, type Proc, type Reply, type Twin } from './helpers/owner-twins.ts';
 
@@ -32,8 +36,25 @@ const recordIds = (t: Twin): string[] => {
   return [...(m.installed ?? []), ...(m.presets ?? [])].flatMap((r) => [r.id, ...(r.members ?? []).map((x) => x.id)]);
 };
 
-/** Run one script on both sides; compare each answer, what each asked, and the files after. */
-async function compare(name: string, base: Twin, steps: Step[]): Promise<void> {
+/** A pak of pictures by what it shows: each file's bytes, but a PNG inside one by its pixels, since
+ * two PNG encoders write the same picture differently. */
+function pictures(pak: string): Record<string, string> {
+  const ix = openVpkIndex(pak);
+  const out: Record<string, string> = {};
+  for (const p of ix.paths()) {
+    const b = ix.read(p) ?? Buffer.alloc(0);
+    const at = b.indexOf(PNG);
+    const png = at >= 0 ? decodePng(b.subarray(at)) : null;
+    const hash = (x: Buffer) => crypto.createHash('sha1').update(x).digest('hex');
+    out[p] = png ? `${hash(b.subarray(0, at))} ${png.width}x${png.height} ${hash(png.rgba)}` : hash(b);
+  }
+  return out;
+}
+const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+
+/** Run one script on both sides; compare each answer, what each asked, and the files after.
+ * `picturePaks` (game-relative) are compared by [`pictures`]. */
+async function compare(name: string, base: Twin, steps: Step[], picturePaks: string[] = []): Promise<void> {
   const [a, b] = twins(base, tmpRoot(name));
   const procs: [Proc, Proc] = [startTs(a), startRs(b)];
   try {
@@ -74,7 +95,12 @@ async function compare(name: string, base: Twin, steps: Step[]): Promise<void> {
     assert.deepEqual(named(settingsOf(b), 1), named(settingsOf(a), 0), `${name}: settings.json`);
     const manifest = (t: Twin, side: number) => named(blind(readJson(path.join(t.ud, 'manifest.json')), t), side);
     assert.deepEqual(manifest(b, 1), manifest(a, 0), `${name}: the library`);
-    assert.deepEqual(tree(b.game), tree(a.game), `${name}: the game folder`);
+    const [ta, tb] = [tree(a.game), tree(b.game)];
+    for (const p of picturePaks) {
+      delete ta[p]; delete tb[p];
+      assert.deepEqual(pictures(path.join(b.game, p)), pictures(path.join(a.game, p)), `${name}: ${p}`);
+    }
+    assert.deepEqual(tb, ta, `${name}: the game folder`);
   } finally {
     await Promise.all(procs.map((p) => p.stop()));
   }
@@ -318,4 +344,41 @@ test('the HUD, map decor, menu background, pumpkin, hero grids and saved looks a
     { call: ['cosmetics:wearLook', 'item:npc_dota_hero_axe:', []] },
     { call: ['mods:list'] },
   ]);
+});
+
+test('the sounds, icons, effects, rank, paint and compiler studios answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('tools-base'), 'b'), OFFLINE);
+  const wav = { $b64: Buffer.from('RIFF....WAVEnope').toString('base64') };
+  await compare('tools', base, [
+    { call: ['compiler:state'] },
+    { call: ['compiler:browse'], reply: open(null), note: 'cancelled' },
+    { call: ['compiler:browse'], reply: open(['<ROOT>/not-a-compiler.exe']) },
+    { call: ['compiler:forget'] },
+    { call: ['compiler:removeKept'] },
+    { call: ['compiler:prepare'] },
+    { call: ['sounds:heroes'] },
+    { call: ['sounds:hero', 'npc_dota_hero_axe'] },
+    { call: ['sounds:add', 'npc_dota_hero_axe', 'Hero_Axe.Berserkers_Call', 'replace', 0.8, wav, 'mine'] },
+    { call: ['sounds:remove', 'npc_dota_hero_axe', 'Hero_Axe.Berserkers_Call'] },
+    { call: ['icons:heroes'] },
+    { call: ['icons:hero', 'npc_dota_hero_axe'] },
+    { call: ['icons:hero', 'terrorblade'] },
+    { call: ['icons:pictures', ['axe_berserkers_call', '../up']] },
+    { call: ['icons:set', 'npc_dota_hero_axe', 'axe_berserkers_call', null] },
+    { call: ['icons:clear', 'npc_dota_hero_axe'] },
+    { call: ['fx:search', 'call'] },
+    { call: ['fx:heroes'] },
+    { call: ['fx:hero', 'npc_dota_hero_axe'] },
+    { call: ['fx:load', 'particles/nope.vpcf'] },
+    { call: ['fx:preview', 'particles/nope.vpcf', {}] },
+    { call: ['fx:install', 'particles/nope.vpcf', {}, false] },
+    { call: ['rank:state'] },
+    { call: ['rank:pictures'] },
+    { call: ['rank:install', {}] },
+    { call: ['paint:state', 'axe', []] },
+    { call: ['paint:icons', ['axe_culling_blade']] },
+    { call: ['paint:install', 'axe', {}, 'red', []] },
+    { call: ['paint:install', 'axe', { portrait: '#ff0000' }, 'red', []], note: 'no compiler here' },
+    { call: ['mods:list'] },
+  ], [path.join('dota_russian', 'pak05_dir.vpk')]);
 });

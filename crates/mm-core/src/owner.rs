@@ -66,6 +66,10 @@ pub struct Core {
     pub catalog: crate::catalog::Catalog,
     /// the ready-made presets, from the last good copy until the start's fetch lands
     pub ready: crate::ready_presets::ReadyPresets,
+    /// the studios' services with indexes of their own (owner_tools.rs)
+    pub kept: crate::owner_tools::Kept,
+    /// pictures out of the game, shared with the work done without the lock
+    pub game_icons: Arc<crate::game_icons::GameIcons>,
     /// which catalog mod a file is, by what it hashes to
     pub fingerprints: crate::fingerprints::Fingerprints,
     /// the anti-cheat notice in plain words
@@ -117,6 +121,8 @@ const GROUPS: &[Group] = &[
     (crate::owner_packs::CHANNELS, crate::owner_packs::handle),
     (crate::owner_presets::CHANNELS, crate::owner_presets::handle),
     (crate::owner_studios::CHANNELS, crate::owner_studios::handle),
+    (crate::owner_compiler::CHANNELS, crate::owner_compiler::handle),
+    (crate::owner_tools::CHANNELS, crate::owner_tools::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -218,6 +224,8 @@ impl Owner {
             net,
             catalog,
             ready: crate::ready_presets::ReadyPresets::new(&ud, None),
+            kept: crate::owner_tools::Kept::default(),
+            game_icons: Arc::new(crate::game_icons::GameIcons::new(&ud)),
             fingerprints: crate::fingerprints::Fingerprints::new(&ud),
             notice: crate::notice_text::NoticeText::default(),
             download_stats,

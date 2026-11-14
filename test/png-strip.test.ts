@@ -32,6 +32,18 @@ test('a PNG goes out and back the same, and an RGB one with every row filter rea
   assert.equal(decodePng(Buffer.from('not a png')), null);
 });
 
+test('a palette PNG reads as RGBA, its tRNS as the opacity of each colour', () => {
+  // two pixels, indices 1 and 0, filter none; colour 0 half clear by tRNS
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(2, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8; ihdr[9] = 3;
+  const chunk = (kind: string, body: Buffer) => { const h = Buffer.alloc(8); h.writeUInt32BE(body.length, 0); h.write(kind, 4, 'latin1'); return Buffer.concat([h, body, Buffer.alloc(4)]); };
+  const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), chunk('IHDR', ihdr),
+    chunk('PLTE', Buffer.from([10, 20, 30, 200, 100, 50])), chunk('tRNS', Buffer.from([128])),
+    chunk('IDAT', zlib.deflateSync(Buffer.from([0, 1, 0]))), chunk('IEND', Buffer.alloc(0))]);
+  assert.deepEqual([...decodePng(png)!.rgba], [200, 100, 50, 255, 10, 20, 30, 128]);
+  const noPalette = Buffer.concat([png.subarray(0, 33), png.subarray(png.indexOf('IDAT') - 4)]);
+  assert.equal(decodePng(noPalette), null, 'a palette picture without its palette is not read');
+});
+
 test("six faces become one strip in their order, +X first; faces that do not match make none", () => {
   const colours: [number, number, number][] = [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0], [255, 255, 255], [0, 0, 0]];
   const strip = decodePng(cubeStrip(colours.map((c) => face(4, c)))!)!;

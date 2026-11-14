@@ -7,29 +7,34 @@
  * times its weight; Terrorblade's blades) came out black.
  *
  * The main process has no image codec of its own (Electron's is not there in the tests), so this is
- * one for what the toolchain writes: 8-bit, not interlaced, grey, grey with alpha, RGB or RGBA. */
+ * one for what the toolchain writes: 8-bit, not interlaced, grey, grey with alpha, RGB, RGBA or a
+ * palette (the game ships some of its portraits that way). */
 import zlib from 'node:zlib';
 
 /** The faces' suffixes, in the order the strip lays them out. */
 export const CUBE_FACES = ['rt', 'lf', 'bk', 'ft', 'up', 'dn'] as const;
 
 const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 4: 2, 6: 4 };
+// grey, RGB, palette (one index a pixel), grey with alpha, RGBA
+const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
 
 /** A PNG's pixels as RGBA, or null for one this does not read. */
 export function decodePng(png: Buffer): { width: number; height: number; rgba: Buffer } | null {
   if (png.length < 33 || !png.subarray(0, 8).equals(SIGNATURE)) return null;
   let at = 8, width = 0, height = 0, type = -1, depth = 0, interlace = 0;
   const data: Buffer[] = [];
+  let palette: Buffer | null = null, alphas: Buffer | null = null;
   while (at + 8 <= png.length) {
     const length = png.readUInt32BE(at), kind = png.toString('latin1', at + 4, at + 8), body = png.subarray(at + 8, at + 8 + length);
     if (kind === 'IHDR') { width = body.readUInt32BE(0); height = body.readUInt32BE(4); depth = body[8]; type = body[9]; interlace = body[12]; }
     else if (kind === 'IDAT') data.push(body);
+    else if (kind === 'PLTE') palette = body;
+    else if (kind === 'tRNS') alphas = body;
     else if (kind === 'IEND') break;
     at += 12 + length;
   }
   const channels = CHANNELS[type];
-  if (!channels || depth !== 8 || interlace || !width || !height) return null;
+  if (!channels || depth !== 8 || interlace || !width || !height || (type === 3 && !palette)) return null;
   const raw = zlib.inflateSync(Buffer.concat(data));
   const stride = width * channels, pixels = Buffer.alloc(stride * height);
   for (let y = 0; y < height; y++) {
@@ -51,6 +56,13 @@ export function decodePng(png: Buffer): { width: number; height: number; rgba: B
   const rgba = Buffer.alloc(width * height * 4);
   for (let i = 0; i < width * height; i++) {
     const s = i * channels;
+    if (type === 3) {
+      // a palette picture: the index names a colour, and tRNS (when there is one) its opacity
+      const k = pixels[s], c = palette!.subarray(k * 3, k * 3 + 3);
+      rgba[i * 4] = c[0] ?? 0; rgba[i * 4 + 1] = c[1] ?? 0; rgba[i * 4 + 2] = c[2] ?? 0;
+      rgba[i * 4 + 3] = alphas && k < alphas.length ? alphas[k] : 255;
+      continue;
+    }
     const [r, g, b] = channels >= 3 ? [pixels[s], pixels[s + 1], pixels[s + 2]] : [pixels[s], pixels[s], pixels[s]];
     rgba[i * 4] = r; rgba[i * 4 + 1] = g; rgba[i * 4 + 2] = b;
     rgba[i * 4 + 3] = channels === 4 ? pixels[s + 3] : channels === 2 ? pixels[s + 1] : 255;
