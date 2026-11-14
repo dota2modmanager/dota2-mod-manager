@@ -1,5 +1,6 @@
 # The Rust half of the app (docs/rust-migration.md): the crates' own tests, the parity tests that
-# hold them to the TypeScript they replace, and the Tauri shell built on Windows. Not a required
+# hold them to the TypeScript they replace, and the Tauri shell built and clicked through on Windows
+# and Linux (the AppImage). Not a required
 # check yet: the shell is not what users install until it covers every channel.
 name: Rust
 
@@ -51,3 +52,58 @@ jobs:
         run: node tools/ui-build.mjs --tauri
       - name: Build the shell
         run: cargo build -p dota2-mod-manager
+      # the clicks release.yml makes on the installed build, here on the shell this commit builds
+      # (src-tauri/src/harness.rs answers MM_EVAL the way src/dev-harness.ts does)
+      - name: Install, switch off, switch on and remove a mod by clicking
+        shell: bash
+        run: node tools/e2e.mjs --app target/debug/dota2-mod-manager.exe
+      - name: What the window answered
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: e2e-tauri-windows
+          path: e2e-output/
+          if-no-files-found: warn
+
+  appimage:
+    name: Tauri AppImage on Linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm ci
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      # what Tauri needs on Linux (WebKitGTK, the tray, icons), and xvfb for a window
+      - name: System libraries
+        timeout-minutes: 10
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb
+      - name: Build the AppImage
+        run: npx tauri build --bundles appimage
+      # A runner has no FUSE to mount an AppImage with, so it is unpacked. AppRun is the program
+      # the AppImage would have started.
+      - name: Unpack it
+        run: |
+          set -euo pipefail
+          img=$(ls target/release/bundle/appimage/*.AppImage | head -1)
+          ls -l "$img"
+          chmod +x "$img"
+          "$img" --appimage-extract > /dev/null
+          ls squashfs-root
+      - name: Install, switch off, switch on and remove a mod by clicking
+        run: xvfb-run -a node tools/e2e.mjs --app squashfs-root/AppRun
+      - name: What the window answered
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: tauri-appimage
+          path: |
+            e2e-output/
+            target/release/bundle/appimage/*.AppImage
+          if-no-files-found: warn

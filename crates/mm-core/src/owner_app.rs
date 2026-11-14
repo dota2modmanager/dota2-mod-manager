@@ -149,9 +149,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             json!(is_maximized(o))
         }
         "win:isMaximized" => json!(is_maximized(o)),
-        // a Tauri build updates through its own updater; there is no portable copy to fetch beside it
-        "update:fetchPortable" => json!({ "error": t("Это не портативная сборка", &[]) }),
-        "update:revealPortable" => json!({ "error": t("Файл не найден", &[]) }),
+        "update:fetchPortable" => fetch_portable(o),
+        "update:revealPortable" => reveal_portable(o, &a0),
         "update:install" => {
             let _ = o.shell.request("app.updateInstall", vec![]);
             Value::Null
@@ -227,4 +226,54 @@ fn stars(o: &Owner) -> Value {
     let Some(n) = n else { return old };
     let _ = std::fs::write(&file, json!({ "stars": n, "at": crate::js::json_number(now) }).to_string());
     json!(n)
+}
+
+/// A portable copy cannot install over itself (src/portable_update.rs): the new build is put
+/// beside the running one, and the window is told where, so the person closes this one and
+/// starts that (src/ipc-window.ts update:fetchPortable).
+fn fetch_portable(o: &Owner) -> Value {
+    let Some(dir) = crate::portable_update::portable_dir() else {
+        return json!({ "error": t("Это не портативная сборка", &[]) });
+    };
+    // learned when the check finds a version, minutes after the start
+    let version = crate::owner_update::with(o, |u| u.portable_version().map(str::to_string)).flatten();
+    let Some(version) = version else {
+        return json!({ "error": t("Обновления нет", &[]) });
+    };
+    let label = format!("v{version}");
+    let net = o.core().net.clone();
+    let got = crate::portable_update::fetch_beside(
+        &net,
+        &version,
+        Some(&dir),
+        &crate::portable_update::sources(),
+        &mut |loaded, total| {
+            o.progress(json!({ "type": "download", "label": label, "loaded": loaded, "total": total }))
+        },
+        &mut |m| o.diag(m),
+    );
+    match got {
+        Ok(f) => {
+            o.progress(json!({ "type": "done", "label": label }));
+            o.diag(&format!("portable update fetched: {}", f.name));
+            json!({ "ok": true, "name": f.name, "path": f.path, "already": f.already.unwrap_or(false) })
+        }
+        Err(e) => {
+            o.progress(json!({ "type": "error", "label": label, "message": e }));
+            json!({ "error": e })
+        }
+    }
+}
+
+/// Shows the build just fetched in Explorer; only ever a file beside the running exe.
+fn reveal_portable(o: &Owner, file: &Value) -> Value {
+    let file = PathBuf::from(crate::js::string(file));
+    let beside = crate::portable_update::portable_dir()
+        .zip(file.parent().map(Path::to_path_buf))
+        .is_some_and(|(dir, parent)| std::path::absolute(dir).ok() == std::path::absolute(parent).ok());
+    if !beside || !file.is_file() {
+        return json!({ "error": t("Файл не найден", &[]) });
+    }
+    let _ = o.shell.request("shell.showItemInFolder", vec![json!(file)]);
+    json!({ "ok": true })
 }
