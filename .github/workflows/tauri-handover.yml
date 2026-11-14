@@ -1,0 +1,118 @@
+name: Tauri handover
+
+# The way over from the Electron build to the Tauri one, rehearsed before a release relies on it
+# (docs/rust-migration.md, "Updates and removal under Tauri").
+#
+# The last published Electron release is installed from its own page, given a mark in its userData,
+# then the Tauri installer built from this commit is run over it the way electron-updater runs an
+# update (`--updated /S --force-run`). The Tauri build has to land in the Electron build's folder
+# under the same exe name, take its place in Windows' list of programs, claim d2mm:// links, start
+# again, and leave userData alone. Then its own uninstaller removes it, silently, asking nothing.
+#
+# On a pull request that touches the installer's hooks or the shell's packaging, weekly, and by
+# hand. Not a required check: it builds the whole shell in release.
+
+on:
+  pull_request:
+    paths:
+      - 'src-tauri/windows/**'
+      - 'src-tauri/tauri.conf.json'
+      - 'src-tauri/Cargo.toml'
+      - '.github/workflows/tauri-handover.yml'
+  schedule:
+    - cron: '41 5 * * 2'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tauri-handover-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  handover:
+    name: Install the Tauri build over the last Electron release
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # unsigned, no update manifest: the installer only has to exist on this runner
+      - name: Build the Tauri installer
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx tauri build --bundles nsis
+          cp target/release/bundle/nsis/*-setup.exe tauri-setup.exe
+
+      - name: Download the installer of the last release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          last=$(gh release list --repo "$REPO" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
+          [ -n "$last" ] || { echo "::error::no published release to hand over from"; exit 1; }
+          echo "handing over from $last"
+          gh release download "$last" --repo "$REPO" --pattern Dota-2-Mod-Manager-Setup.exe --output previous.exe
+
+      - name: Install the last Electron release and mark its data
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath .\previous.exe -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the last release's installer exited with $($p.ExitCode)" }
+          $dir = "$env:LOCALAPPDATA\Programs\dota2-mod-manager"
+          if (-not (Test-Path "$dir\Dota 2 Mod Manager.exe")) { throw "the last release is not in $dir" }
+          $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\c6184bef-ce59-56eb-9f33-76c285700bc8'
+          if (-not (Test-Path $key)) { throw 'the last release wrote no uninstall entry under the GUID hooks.nsh looks for' }
+          $data = "$env:APPDATA\Dota 2 Mod Manager"
+          New-Item -ItemType Directory -Force $data | Out-Null
+          Set-Content -Path "$data\handover-mark.txt" -Value 'kept' -Encoding utf8
+          "DIR=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Run the Tauri installer the way electron-updater does
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath .\tauri-setup.exe -ArgumentList '--updated','/S','--force-run' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the Tauri installer exited with $($p.ExitCode)" }
+          $exe = "$env:DIR\Dota 2 Mod Manager.exe"
+          if (-not (Test-Path $exe)) { throw "no Dota 2 Mod Manager.exe in $env:DIR after the handover" }
+          if (Test-Path "$env:DIR\Uninstall Dota 2 Mod Manager.exe") { throw 'the Electron uninstaller is still there' }
+          if (-not (Test-Path "$env:DIR\uninstall.exe")) { throw "the Tauri uninstaller is not in $env:DIR" }
+          if (Test-Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\c6184bef-ce59-56eb-9f33-76c285700bc8') { throw 'the Electron uninstall entry is still listed' }
+          $cmd = (Get-ItemProperty 'HKCU:\Software\Classes\d2mm\shell\open\command').'(default)'
+          if ($cmd -ne "`"$exe`" `"%1`"") { throw "d2mm:// opens $cmd" }
+          if ((Get-Content "$env:APPDATA\Dota 2 Mod Manager\handover-mark.txt") -ne 'kept') { throw 'userData was touched' }
+          # --force-run: the app starts again once it is in place
+          $up = $null
+          for ($i = 0; $i -lt 30 -and -not $up; $i++) {
+            Start-Sleep -Seconds 1
+            $up = Get-Process | Where-Object { $_.Path -eq $exe }
+          }
+          if (-not $up) { throw 'the app did not start again after the handover' }
+          $up | Stop-Process -Force
+          "handed over: $exe $((Get-Item $exe).VersionInfo.ProductVersion)"
+
+      - name: Remove it silently with its own uninstaller
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "$env:DIR\uninstall.exe" -ArgumentList '/S' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "the uninstaller exited with $($p.ExitCode)" }
+          $exe = "$env:DIR\Dota 2 Mod Manager.exe"
+          for ($i = 0; $i -lt 60 -and (Test-Path $exe); $i++) { Start-Sleep -Seconds 1 }
+          if (Test-Path $exe) { throw "the uninstaller left $exe behind" }
+          if (Test-Path 'HKCU:\Software\Classes\d2mm') { throw 'd2mm:// still points at the removed app' }
+          if (-not (Test-Path "$env:APPDATA\Dota 2 Mod Manager\handover-mark.txt")) { throw 'a silent removal took userData' }
+          'removed, userData kept'

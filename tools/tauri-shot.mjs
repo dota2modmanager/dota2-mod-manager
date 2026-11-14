@@ -25,7 +25,11 @@ const arg = (name, fallback = null) => {
 const out = path.resolve(arg('out', path.join(root, 'e2e-output', 'tauri.png')));
 const wait = Number(arg('wait', '8000'));
 const profile = process.argv.includes('--release') ? 'release' : 'debug';
-const exe = path.join(root, 'target', profile, process.platform === 'win32' ? 'dota2-mod-manager.exe' : 'dota2-mod-manager');
+// cargo names the binary after the crate; `tauri build` renames it to mainBinaryName (tauri.conf.json)
+const exe = [
+  path.join(root, 'target', profile, process.platform === 'win32' ? 'dota2-mod-manager.exe' : 'dota2-mod-manager'),
+  path.join(root, 'target', profile, process.platform === 'win32' ? 'Dota 2 Mod Manager.exe' : 'Dota 2 Mod Manager'),
+].find((p) => fs.existsSync(p)) || path.join(root, 'target', profile, 'dota2-mod-manager');
 const port = 9300 + Math.floor(Math.random() * 500);
 
 if (!fs.existsSync(exe)) { console.error(`no build at ${exe}: cargo build -p dota2-mod-manager${profile === 'release' ? ' --release' : ''}`); process.exit(1); }
