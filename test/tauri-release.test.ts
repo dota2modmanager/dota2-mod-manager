@@ -64,15 +64,15 @@ test('a build signed with the key tauri.conf.json names passes, and any other is
   const file = Buffer.from('an installer');
   const { pubkey, sig } = minisign(file);
   assert.equal(checkSignature(pubkey, sig, file), null);
-  assert.match(checkSignature(pubkey, sig, Buffer.from('another installer')), /does not match the file/);
+  assert.match(String(checkSignature(pubkey, sig, Buffer.from('another installer'))), /does not match the file/);
   // a key generated again by mistake: what every installed copy would refuse
   const other = minisign(file, Buffer.from('fedcba9876543210', 'hex'));
-  assert.match(checkSignature(pubkey, other.sig, file), /another key/);
+  assert.match(String(checkSignature(pubkey, other.sig, file)), /another key/);
   // the same key id but another key behind it
-  assert.match(checkSignature(pubkey, minisign(file).sig, file), /does not match the file/);
+  assert.match(String(checkSignature(pubkey, minisign(file).sig, file)), /does not match the file/);
 });
 
 test('the release refuses a public key that is not minisign Ed25519', async () => {
   const { checkSignature } = await import('../tools/tauri-release.mjs');
-  assert.match(checkSignature(Buffer.from('nonsense\nAAAA\n').toString('base64'), '', Buffer.alloc(0)), /not a minisign/);
+  assert.match(String(checkSignature(Buffer.from('nonsense\nAAAA\n').toString('base64'), '', Buffer.alloc(0))), /not a minisign/);
 });
