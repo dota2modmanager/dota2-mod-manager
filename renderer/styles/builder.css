@@ -43,7 +43,9 @@
 }
 .hub-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  /* five across, as the game lays its columns out: the portraits grow with the window instead of
+     more of them squeezing into a row */
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--space-1);
 }
 /* upright, as hero selection draws them; the name only on hover, where it does not cover the grid */

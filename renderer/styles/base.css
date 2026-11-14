@@ -112,7 +112,6 @@ img, video { -webkit-user-drag: none; user-select: none; }
 }
 #view-root {
   padding: 22px 26px 90px;
-  max-width: 1500px;
   animation: viewIn 0.35s var(--ease);
 }
 @keyframes viewIn {
