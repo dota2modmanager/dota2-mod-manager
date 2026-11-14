@@ -24,7 +24,7 @@
       { "ext": ["d2mm"], "name": "Dota 2 Mod Manager preset", "mimeType": "application/x-d2mm", "role": "Editor" }
     ],
     "resources": {
-      "../src": "app/src",
+      "../build/stats": "app/build/stats",
       "../CHANGELOG.md": "app/CHANGELOG.md",
       "../CHANGELOG.ru.md": "app/CHANGELOG.ru.md",
       "../package.json": "app/package.json",
