@@ -138,6 +138,7 @@ pub mod owner_creator;
 pub mod owner_foreign;
 pub mod owner_game;
 pub mod owner_library;
+pub mod owner_links;
 pub mod owner_mods;
 pub mod owner_packs;
 pub mod owner_pictures;

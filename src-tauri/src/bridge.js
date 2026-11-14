@@ -89,12 +89,16 @@
     return invoke('plugin:event|listen', { event, target: { kind: 'Any' }, handler: cb });
   };
   const start = () => {
-    listen('mm', (p) => deliver(p.channel, p.args));
+    const events = listen('mm', (p) => deliver(p.channel, p.args));
     listen('tauri://drag-drop', (p) => {
       dropped.clear();
       for (const full of (p && p.paths) || []) dropped.set(full.split(/[\\/]/).pop(), full);
     });
-    invoke('mm_loaded', {}).catch(() => {});
+    /* "loaded" as Electron's did-finish-load means it: the page's scripts have run and subscribed,
+       so what the shell says next (a d2mm:// link the app was started by, whether Dota is open)
+       has someone to hear it. Told any earlier, it went nowhere. */
+    const loaded = () => events.catch(() => {}).then(() => invoke('mm_loaded', {})).catch(() => {});
+    if (document.readyState === 'complete') loaded(); else window.addEventListener('load', loaded, { once: true });
   };
   if (tauri()) start(); else document.addEventListener('DOMContentLoaded', start, { once: true });
 

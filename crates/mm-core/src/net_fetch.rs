@@ -105,9 +105,20 @@ pub fn now_ms() -> f64 {
     std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0.0, |d| d.as_millis() as f64)
 }
 
+/// The system's TLS and the system's trusted roots, as Electron's network stack uses them. ureq's
+/// own default is a bundled root list, which native-tls takes as the only roots allowed: a host
+/// whose chain ends in a root outside that list (the download counter on workers.dev) failed with
+/// "unable to find any user-specified roots".
+pub fn tls() -> ureq::tls::TlsConfig {
+    ureq::tls::TlsConfig::builder()
+        .provider(ureq::tls::TlsProvider::NativeTls)
+        .root_certs(ureq::tls::RootCerts::PlatformVerifier)
+        .build()
+}
+
 fn agent(proxy: Option<&str>, timing: Timing) -> ureq::Agent {
     let head = Some(Duration::from_millis(timing.head_ms));
-    let tls = ureq::tls::TlsConfig::builder().provider(ureq::tls::TlsProvider::NativeTls).build();
+    let tls = tls();
     ureq::Agent::config_builder()
         .http_status_as_error(false)
         .timeout_resolve(head)
@@ -558,7 +569,7 @@ pub fn test_download_proxy(value: &serde_json::Value) -> serde_json::Value {
     let Ok(p) = ureq::Proxy::new(&proxy) else {
         return json!({ "error": "Не удалось подключиться через прокси" });
     };
-    let tls = ureq::tls::TlsConfig::builder().provider(ureq::tls::TlsProvider::NativeTls).build();
+    let tls = tls();
     let agent: ureq::Agent = ureq::Agent::config_builder()
         .http_status_as_error(false)
         .timeout_global(Some(Duration::from_secs(10)))
@@ -570,5 +581,14 @@ pub fn test_download_proxy(value: &serde_json::Value) -> serde_json::Value {
         Ok(r) if r.status().is_success() => json!({ "ok": true }),
         Ok(_) => json!({ "error": "Прокси не ответил успешно" }),
         Err(_) => json!({ "error": "Не удалось подключиться через прокси" }),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn requests_trust_the_systems_roots_not_a_bundled_list() {
+        // a bundled list failed every request to the download counter on workers.dev
+        assert!(matches!(super::tls().root_certs(), ureq::tls::RootCerts::PlatformVerifier));
     }
 }

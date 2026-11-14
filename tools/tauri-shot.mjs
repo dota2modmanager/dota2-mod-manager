@@ -36,7 +36,9 @@ const { chromium } = require('playwright-core');
 
 const t0 = Date.now();
 const since = () => `${((Date.now() - t0) / 1000).toFixed(2)}s`;
-const child = spawn(exe, ['--user-data-dir=sandbox/userdata', '--write-jail=sandbox'], {
+// --link d2mm://...: started by a link, as a click in the browser starts it
+const link = arg('link');
+const child = spawn(exe, ['--user-data-dir=sandbox/userdata', '--write-jail=sandbox', ...(link ? [link] : [])], {
   cwd: root,
   env: {
     ...process.env,

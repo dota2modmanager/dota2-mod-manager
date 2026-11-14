@@ -22,9 +22,10 @@ pub enum Backend {
 }
 
 /// The owner, once its start is over: it runs off the main thread, so the window opens at once
-/// and a call made while the owner is starting waits for it.
+/// and a call made while the owner is starting waits for it. The link the app was started by
+/// waits for the page's first load.
 #[derive(Default)]
-pub struct Owned(OnceLock<Arc<Owner>>);
+pub struct Owned(OnceLock<Arc<Owner>>, std::sync::Mutex<Option<String>>);
 
 impl Owned {
     pub fn get(&self) -> &Arc<Owner> {
@@ -46,7 +47,6 @@ impl mm_core::owner::Shell for TauriShell {
             "win.isMaximized" => Ok(json!(window()?.is_maximized().unwrap_or(false))),
             "win.report" => Ok(report(&self.0)),
             "app.updateInstall" => Err("the updater is not wired yet".into()),
-            "clipboard.writeText" => Err("the shell has no clipboard yet".into()),
             _ => crate::shell::request(&self.0, method, &args),
         }
     }
@@ -97,6 +97,20 @@ fn report(app: &AppHandle) -> Value {
     json!({ "windows": windows, "displays": displays, "gpu": null, "updater": { "available": false, "lastError": null } })
 }
 
+/// The system's languages, most wanted first, as Electron's app.getPreferredSystemLanguages gives
+/// them; `MM_LOCALE` stands in for them in a test run.
+fn system_languages() -> Vec<String> {
+    if let Ok(l) = std::env::var("MM_LOCALE") {
+        return vec![l];
+    }
+    let all: Vec<String> = sys_locale::get_locales().collect();
+    if all.is_empty() {
+        vec!["en-US".into()]
+    } else {
+        all
+    }
+}
+
 /// How the owner starts under the shell.
 pub struct Start {
     pub user_data: PathBuf,
@@ -110,6 +124,7 @@ pub struct Start {
 /// The owner started on a thread of its own; the watches and the start's fetches follow once it is up.
 pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
     let owned = Arc::new(Owned::default());
+    *owned.1.lock().unwrap_or_else(|e| e.into_inner()) = mm_core::owner_links::first(&s.argv);
     let (cell, app) = (owned.clone(), app.clone());
     std::thread::spawn(move || {
         let opts = mm_core::owner::Options {
@@ -118,7 +133,7 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
             app_root: s.app_root,
             downloads: s.downloads,
             uninstall: mm_core::uninstall::is_uninstall_run(&s.argv),
-            system_languages: s.first_run.then(|| vec![std::env::var("MM_LOCALE").unwrap_or_else(|_| "en-US".into())]),
+            system_languages: s.first_run.then(system_languages),
             find_game: Box::new(mm_core::steam::find_dota_game_path),
             dota_running: Box::new(mm_core::game_watch::dota_is_running),
             now: mm_core::net_fetch::now_ms,
@@ -169,7 +184,13 @@ impl Backend {
     pub fn loaded(&self) {
         match self {
             Backend::Host(h) => h.notify(json!({ "t": "loaded" })),
-            Backend::Owner(o) => mm_core::owner_watch::page_loaded(o.get()),
+            Backend::Owner(o) => {
+                mm_core::owner_watch::page_loaded(o.get());
+                // launched BY a link: the page has to exist before it can be told
+                if let Some(cold) = o.1.lock().unwrap_or_else(|e| e.into_inner()).take() {
+                    mm_core::owner_links::take(o.get(), Some(&cold));
+                }
+            }
         }
     }
 
@@ -193,8 +214,7 @@ impl Backend {
     pub fn second(&self, argv: Vec<String>) {
         match self {
             Backend::Host(h) => h.notify(json!({ "t": "second", "argv": argv })),
-            // the links are not the owner's yet (docs/rust-migration.md, step 2)
-            Backend::Owner(o) => o.get().diag("a second start's link is not taken yet under the Rust owner"),
+            Backend::Owner(o) => mm_core::owner_links::take(o.get(), mm_core::owner_links::first(&argv).as_deref()),
         }
     }
 

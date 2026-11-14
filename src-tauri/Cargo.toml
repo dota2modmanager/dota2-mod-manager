@@ -17,6 +17,8 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-dialog = "2"
+# the system's languages in order, for the first start's UI language (Electron's getPreferredSystemLanguages)
+sys-locale = "0.3"
 tauri-plugin-opener = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-notification = "2"
