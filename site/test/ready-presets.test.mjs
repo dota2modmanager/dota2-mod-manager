@@ -11,7 +11,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { decodePresetLink } from '../../src/preset-link.ts';
+import { decodePresetLink } from './helpers/app-links.mjs';
 
 const dist = path.join(import.meta.dirname, '..', 'dist');
 const list = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, '..', '..', 'config', 'presets.json'), 'utf-8')).presets;
