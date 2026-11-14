@@ -6,7 +6,9 @@
 # and it does not go red because the live catalog changed overnight.
 #
 # Both systems the app ships for, because the code that breaks is rarely the same on the two:
-# processes, file locks and Steam's layout all take a different branch on Windows.
+# processes, file locks and Steam's layout all take a different branch on Windows. The window is
+# the Tauri shell this commit builds (src-tauri/), driven through its harness (harness.rs answers
+# MM_EVAL beside MM_SHOT); release.yml clicks the installed build the same way.
 name: Window
 
 on:
@@ -25,7 +27,7 @@ jobs:
   linux:
     name: Install a mod through the window
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -35,22 +37,27 @@ jobs:
 
       - run: npm ci
 
-      # Electron needs an X server that a runner does not have.
-      - name: Install xvfb
-        # A mirror that stops answering held this step for two hours on 2026-10-01. apt drops a
-        # silent connection after 30 s and tries another, and the step gives up at ten minutes.
+      # the runner image carries rustup; stable is whatever it names today
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # What Tauri needs on Linux (WebKitGTK, the tray, icons), and xvfb for a window. A mirror
+      # that stops answering held a step for two hours on 2026-10-01: apt drops a silent
+      # connection after 30 s and tries another, and the step gives up at ten minutes.
+      - name: System libraries
         timeout-minutes: 10
-        # The Ubuntu image ships xvfb (actions/runner-images, Ubuntu 24.04), so apt runs only when it is
-        # missing. On 2026-10-07 two runs spent their ten minutes waiting on azure.archive.ubuntu.com
-        # for a package that was already installed.
         run: |
-          if command -v Xvfb >/dev/null && command -v xvfb-run >/dev/null; then
-            echo "xvfb is already on the runner"
-          else
-            sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 install -y xvfb
-          fi
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev xvfb
+
+      - name: The page for the shell
+        run: node tools/ui-build.mjs --tauri
+
+      - name: Build the shell
+        run: cargo build -p dota2-mod-manager
+
       - name: Click through installing a mod, removing it, and the removal window
-        run: xvfb-run -a node tools/e2e.mjs
+        run: xvfb-run -a node tools/e2e.mjs --app target/debug/dota2-mod-manager
 
       - name: What the window showed
         if: always()
@@ -63,7 +70,7 @@ jobs:
   windows:
     name: Install a mod through the window on Windows
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -73,8 +80,15 @@ jobs:
 
       - run: npm ci
 
+      - name: The page for the shell
+        run: node tools/ui-build.mjs --tauri
+
+      - name: Build the shell
+        run: cargo build -p dota2-mod-manager
+
       - name: Click through installing a mod, removing it, and the removal window
-        run: node tools/e2e.mjs
+        shell: bash
+        run: node tools/e2e.mjs --app target/debug/dota2-mod-manager.exe
 
       - name: What the window showed
         if: always()
