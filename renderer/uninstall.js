@@ -115,7 +115,7 @@ async function main() {
   $('#okBtn').addEventListener('click', async () => {
     if (ran) return window.uninstall.done(ran.data);
     const b = boxes();
-    for (const box of document.querySelectorAll('.uninstall-opt input')) box.disabled = true;
+    for (const box of /** @type {NodeListOf<HTMLInputElement>} */ (document.querySelectorAll('.uninstall-opt input'))) box.disabled = true;
     $('#okBtn').disabled = true;
     $('#cancelBtn').disabled = true;
     $('#closeBtn').disabled = true;
