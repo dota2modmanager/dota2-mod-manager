@@ -11,6 +11,33 @@ use serde_json::{json, Value};
 use sha1::{Digest, Sha1};
 use std::time::Instant;
 
+/// What `vpk-build` packs: a folder's files by their path under it, sorted so a build is the same
+/// bytes every time, or the pairs a list.json names.
+fn build_entries(src: &Path) -> Result<Vec<vpk::Entry>, String> {
+    let read = |f: &Path| std::fs::read(f).map(vpk::Bytes::from).map_err(|x| format!("{}: {x}", f.display()));
+    if src.is_dir() {
+        let mut files = Vec::new();
+        let mut stack = vec![src.to_path_buf()];
+        while let Some(dir) = stack.pop() {
+            for e in std::fs::read_dir(&dir).map_err(|x| x.to_string())? {
+                let p = e.map_err(|x| x.to_string())?.path();
+                if p.is_dir() {
+                    stack.push(p);
+                } else {
+                    let rel = p.strip_prefix(src).map_err(|x| x.to_string())?.to_string_lossy().replace('\\', "/");
+                    files.push((rel, p));
+                }
+            }
+        }
+        files.sort();
+        return files.iter().map(|(rel, p)| Ok(vpk::entry_at(rel, read(p)?))).collect();
+    }
+    let list: Vec<(String, String)> =
+        serde_json::from_str(&std::fs::read_to_string(src).map_err(|x| x.to_string())?).map_err(|x| x.to_string())?;
+    let base = src.parent().unwrap_or(Path::new(""));
+    list.iter().map(|(rel, f)| Ok(vpk::entry_at(rel, read(&base.join(f))?))).collect()
+}
+
 fn run(args: &[String]) -> Result<Value, String> {
     let cmd = args.first().map(String::as_str).unwrap_or("");
     let arg = |i: usize| args.get(i).map(String::as_str).ok_or_else(|| format!("{cmd}: missing argument {i}"));
@@ -30,6 +57,19 @@ fn run(args: &[String]) -> Result<Value, String> {
             let out = vpk::merge_to_single(Path::new(arg(1)?)).map_err(e)?;
             std::fs::write(arg(2)?, &out).map_err(|x| x.to_string())?;
             Ok(json!(out.len()))
+        }
+        // a single-file VPK from a folder (every file under it, at its path inside the folder) or
+        // from a list.json of [path inside the VPK, file on disk] pairs; the sandbox and the test
+        // fixtures build theirs this way
+        "vpk-build" => {
+            let out = Path::new(arg(1)?);
+            let entries = build_entries(Path::new(arg(2)?))?;
+            let buf = vpk::build(&entries);
+            if let Some(dir) = out.parent().filter(|d| !d.as_os_str().is_empty()) {
+                std::fs::create_dir_all(dir).map_err(|x| x.to_string())?;
+            }
+            std::fs::write(out, &buf).map_err(|x| x.to_string())?;
+            Ok(json!({ "entries": entries.len(), "size": buf.len() }))
         }
         "vpk-read" => {
             let index = vpk::Index::open(Path::new(arg(1)?)).map_err(e)?;
