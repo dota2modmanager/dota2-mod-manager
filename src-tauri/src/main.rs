@@ -9,6 +9,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod backend;
+mod harness;
 mod native;
 mod ported;
 mod shell;
@@ -117,8 +118,22 @@ fn mm_send(window: tauri::WebviewWindow, owner: tauri::State<'_, Owner>, channel
 
 /// The page has loaded: Electron's 'did-finish-load' (the game watch, a cold link).
 #[tauri::command]
-fn mm_loaded(owner: tauri::State<'_, Owner>) {
+fn mm_loaded(owner: tauri::State<'_, Owner>, window: tauri::WebviewWindow, harness: tauri::State<'_, Harnessed>) {
     owner.0.loaded();
+    if let Some(h) = &harness.0 {
+        harness::loaded(h, &window);
+    }
+}
+
+/// MM_SHOT's run, when this is one (src-tauri/src/harness.rs).
+struct Harnessed(Option<harness::Harness>);
+
+/// The harness script's answer, written beside MM_SHOT.
+#[tauri::command]
+fn mm_shot_done(harness: tauri::State<'_, Harnessed>, result: Option<String>, error: Option<String>) {
+    if let Some(h) = &harness.0 {
+        harness::done(h, result, error);
+    }
 }
 
 /// A Ctrl key the page passed on: Electron's before-input-event, which scales the content.
@@ -157,6 +172,13 @@ fn init_script() -> String {
 
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
+    // The bare exe is the portable build: its data lives beside it and it fetches a new version
+    // beside itself rather than installing one (src/portable_update.rs). A checkout's build is not.
+    let portable = std::env::current_exe()
+        .ok()
+        .filter(|_| !cfg!(debug_assertions))
+        .and_then(|exe| mm_core::portable_update::portable_dir_of(&exe));
+    mm_core::portable_update::set_portable_dir(portable.clone());
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
@@ -187,7 +209,8 @@ fn main() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(update::Pending::default())
-        .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key])
+        .manage(Harnessed(harness::wanted(flag(&argv, "write-jail").is_some(), |k| std::env::var(k).ok())))
+        .invoke_handler(tauri::generate_handler![mm_invoke, mm_send, mm_loaded, mm_key, mm_shot_done])
         // the catalog's pictures, which bridge.js points the page's images at
         .register_asynchronous_uri_scheme_protocol(mm_core::preview_cache::SCHEME, |ctx, req, responder| {
             let app = ctx.app_handle().clone();
@@ -201,6 +224,8 @@ fn main() {
             let handle = app.handle().clone();
             let user_data = flag(&argv, "user-data-dir")
                 .map(PathBuf::from)
+                // a read-only folder (the exe dropped into Program Files) keeps the ordinary place
+                .or_else(|| portable.as_deref().and_then(mm_core::portable_update::data_beside))
                 .or_else(|| std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("Dota 2 Mod Manager")))
                 .unwrap_or_else(|| app.path().app_data_dir().unwrap_or_default());
             let user_data = std::path::absolute(&user_data).unwrap_or(user_data);
@@ -231,6 +256,7 @@ fn main() {
                 return Ok(());
             }
             let jailed = flag(&argv, "write-jail").is_some();
+            let user_data_for_webview = user_data.clone();
             window::open(
                 app,
                 owner,
@@ -242,10 +268,12 @@ fn main() {
                     login_allowed: mm_core::tray::login_item_allowed(
                         cfg!(windows),
                         !cfg!(debug_assertions),
-                        false,
+                        portable.is_some(),
                         jailed,
                     ),
                     init_script: init_script(),
+                    // WebView2 keeps its cache beside the data too, not in %LOCALAPPDATA%
+                    webview_data: portable.as_ref().map(|_| user_data_for_webview.join("webview")),
                 },
             )?;
             Ok(())

@@ -117,9 +117,43 @@ pub fn parse_manifest(text: &str) -> Result<Manifest, String> {
     Ok(Manifest { file, size, sha256, version })
 }
 
+/// The folder beside a portable exe that holds its settings, library and cache.
+pub const DATA_DIR: &str = "Dota 2 Mod Manager Data";
+/// What the Tauri installer leaves beside the exe it installs.
+pub const UNINSTALLER: &str = "uninstall.exe";
+
+static PORTABLE: std::sync::OnceLock<Option<PathBuf>> = std::sync::OnceLock::new();
+
+/// Whether the exe at `exe` is a portable copy, and if so the folder it lives in.
+///
+/// The Tauri build ships one exe twice: inside the installer, and bare as the portable build.
+/// An installed copy always has the installer's uninstall.exe beside it; a bare one does not.
+/// (Electron's portable build unpacked itself into a temp folder and named the real one in
+/// PORTABLE_EXECUTABLE_DIR; the Tauri exe runs where it lies.)
+pub fn portable_dir_of(exe: &Path) -> Option<PathBuf> {
+    let dir = exe.parent()?;
+    (!dir.join(UNINSTALLER).exists()).then(|| dir.to_path_buf())
+}
+
+/// Called once by the shell at start: this run's answer to [`portable_dir`].
+pub fn set_portable_dir(dir: Option<PathBuf>) {
+    let _ = PORTABLE.set(dir);
+}
+
 /// Where the running portable exe lives, or None when this is not a portable copy.
 pub fn portable_dir() -> Option<PathBuf> {
-    std::env::var_os("PORTABLE_EXECUTABLE_DIR").filter(|v| !v.is_empty()).map(PathBuf::from)
+    PORTABLE.get().cloned().flatten()
+}
+
+/// The data folder beside a portable exe, made and writable; None when the folder is read-only
+/// (the exe dropped into Program Files), so the ordinary location is used instead (src/main.ts).
+pub fn data_beside(dir: &Path) -> Option<PathBuf> {
+    let beside = dir.join(DATA_DIR);
+    std::fs::create_dir_all(&beside).ok()?;
+    let probe = beside.join(".write-probe");
+    std::fs::write(&probe, b"").ok()?;
+    let _ = std::fs::remove_file(&probe);
+    Some(beside)
 }
 
 /// Where the new build landed.
@@ -203,6 +237,20 @@ pub fn fetch_beside(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_bare_exe_is_portable_and_an_installed_one_is_not() {
+        let dir = std::env::temp_dir().join(format!("mm-portable-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let exe = dir.join("Dota 2 Mod Manager.exe");
+        assert_eq!(portable_dir_of(&exe), Some(dir.clone()));
+        let data = data_beside(&dir).unwrap();
+        assert_eq!(data, dir.join(DATA_DIR));
+        assert!(data.is_dir());
+        std::fs::write(dir.join(UNINSTALLER), b"").unwrap();
+        assert_eq!(portable_dir_of(&exe), None);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn a_manifest_is_read_and_a_bad_one_refused() {

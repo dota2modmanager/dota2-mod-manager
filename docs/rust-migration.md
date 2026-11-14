@@ -363,6 +363,21 @@ The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How i
   points at this program. `.github/workflows/tauri-handover.yml` rehearses all of it on a runner
   against the last published release.
 
+- The portable build is the same exe without the installer around it. An installed copy always
+  has the installer's `uninstall.exe` beside it, so a release exe without one is portable
+  (`portable_update::portable_dir_of`). Its data goes in `Dota 2 Mod Manager Data` beside it, and
+  WebView2's profile into `webview` inside that, unless the folder is read-only. Then the ordinary
+  place is used, as in Electron. It is told a new version exists and, on a click, fetches it beside
+  itself against `portable.yml` (`update:fetchPortable`); it never installs.
+
+- MM_SHOT and MM_EVAL work under Tauri too (`src-tauri/src/harness.rs`), on a run held by
+  `--write-jail`. A webview has no `capturePage`, so no picture is taken; the answer is written to
+  `<shot>.eval.json`, and `tools/e2e.mjs --app <exe>` drives a Tauri build the way it drives an
+  Electron one. The pointer switches (hover, menu, drag, wheel) are `tools/tauri-shot.mjs`'s job.
+- The write jail under Tauri holds the game folder (`installer::validate_game_path` refuses a game
+  outside it) but does not yet route the shell's other writes through it, as src/write-jail.ts
+  does by patching `fs`.
+
 Still to do: CI building the signed NSIS installer and the manifests beside each release and on
 the mirror, and the Electron release that points its update at that installer.
 
