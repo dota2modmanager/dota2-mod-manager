@@ -131,9 +131,15 @@ const downloadProxy: Check = (v) => {
   return result.ok ? null : result.error;
 };
 
+/** A value the page sent, as text for a refusal: String() itself throws on an object whose
+ * toString is not a function, which turned a refusal into a crash. */
+function shown(v: unknown): string {
+  try { return String(v); } catch { return Object.prototype.toString.call(v); }
+}
+
 // the value's check depends on the key, so checkArgs runs it once the key is known to be one
 const settingsSet: Check[] = [
-  (key) => (typeof key === 'string' && Object.hasOwn(WINDOW_SETTINGS, key) ? null : `the window may not set ${String(key).slice(0, 60)}`),
+  (key) => (typeof key === 'string' && Object.hasOwn(WINDOW_SETTINGS, key) ? null : `the window may not set ${shown(key).slice(0, 60)}`),
   () => null,
 ];
 
