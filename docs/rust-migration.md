@@ -309,10 +309,11 @@ What the owner still does differently, or not yet:
   and the game's state, `mods.list` and `settings.get`, no console errors, no Node process.
   d2mm:// links go to the window under the flag too (`owner_links.rs`): the one the app was
   started by once the page has loaded, and one a second start hands over.
-  Not there yet under the flag: the
-  clipboard, installing an update (the updater plugin is not wired), the graphics card in the
-  support report, the first start's language (taken from `MM_LOCALE`, else English, as the host
-  does), and the uninstall window closed without an answer as code 3.
+  The first start's language comes from the system's languages (`sys-locale`), as Electron's
+  `getPreferredSystemLanguages`; `MM_LOCALE` stands in for them in a test run.
+  Not there yet under the flag: installing an update (the updater plugin is not wired), the
+  graphics card in the support report, and the uninstall window, which the Tauri shell does not
+  open yet under either side (it belongs with the installer's uninstall hooks).
 - The game watch and the crash watch after Play run in the owner (`owner_watch.rs`): asked every
   five seconds, every second while Dota is open, told to the page on a change and afresh after a
   reload.

@@ -47,7 +47,6 @@ impl mm_core::owner::Shell for TauriShell {
             "win.isMaximized" => Ok(json!(window()?.is_maximized().unwrap_or(false))),
             "win.report" => Ok(report(&self.0)),
             "app.updateInstall" => Err("the updater is not wired yet".into()),
-            "clipboard.writeText" => Err("the shell has no clipboard yet".into()),
             _ => crate::shell::request(&self.0, method, &args),
         }
     }
@@ -98,6 +97,20 @@ fn report(app: &AppHandle) -> Value {
     json!({ "windows": windows, "displays": displays, "gpu": null, "updater": { "available": false, "lastError": null } })
 }
 
+/// The system's languages, most wanted first, as Electron's app.getPreferredSystemLanguages gives
+/// them; `MM_LOCALE` stands in for them in a test run.
+fn system_languages() -> Vec<String> {
+    if let Ok(l) = std::env::var("MM_LOCALE") {
+        return vec![l];
+    }
+    let all: Vec<String> = sys_locale::get_locales().collect();
+    if all.is_empty() {
+        vec!["en-US".into()]
+    } else {
+        all
+    }
+}
+
 /// How the owner starts under the shell.
 pub struct Start {
     pub user_data: PathBuf,
@@ -120,7 +133,7 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
             app_root: s.app_root,
             downloads: s.downloads,
             uninstall: mm_core::uninstall::is_uninstall_run(&s.argv),
-            system_languages: s.first_run.then(|| vec![std::env::var("MM_LOCALE").unwrap_or_else(|_| "en-US".into())]),
+            system_languages: s.first_run.then(system_languages),
             find_game: Box::new(mm_core::steam::find_dota_game_path),
             dota_running: Box::new(mm_core::game_watch::dota_is_running),
             now: mm_core::net_fetch::now_ms,
