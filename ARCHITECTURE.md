@@ -42,7 +42,7 @@ ones to show a script is not; the window e2e fails on any refusal in the app's l
 
 | Folder | Files | What is in it |
 |---|---|---|
-| `app/` | 21 | The app itself: settings, language, its window and tray, updates, logs, support and Discord. |
+| `app/` | 22 | The app itself: settings, language, its window and tray, updates, logs, support and Discord. |
 | `arcana/` | 11 | Arcanas, personas and their bases, gems and the rank look. |
 | `catalog/` | 15 | The mod catalog and everything fetched over the network: mirrors, the remote config, pictures, counters, links. |
 | `formats/` | 18 | File formats the game and the tools speak: KeyValues, VPK, compiled resources, textures, images, archives. |
@@ -708,6 +708,7 @@ that location is not writable.
 | `src/presets-service.ts`, `src/preset-plan.ts` | Presets: applying, packing and receiving one, and how one travels to somebody else |
 | `src/preset-install.ts` | Putting a preset on: an own one with mods to fetch back, a received one to resolve; the window and the command line share it |
 | `src/cli.ts` | The command line: `--apply <link>`, `--list`, `--disable-all`, run to an exit code with no window |
+| `crates/mm-core/src/app/cli.rs`, `src-tauri/src/command_line.rs` | The same command line under Tauri: read and run over the owner the window uses (its preset flow, the installer, the library), before any window exists; the shell takes the single-instance plugin's own lock to answer 3, and on Windows the console it was started from to print |
 | `src/pumpkin.ts` | The title bar pumpkin's key, checked once against its worker (`tools/pumpkin-worker`), and what it opens |
 | `src/scream-guard.ts` | What the pumpkin opens stays with the install that opened it: a copy found anywhere else is switched off and marked |
 | `src/diagnostics.ts`, `src/diagnostics-files.ts`, `src/diagnostics-render.ts` | The support report: what it gathers, what it reads off the disk, and how it is laid out |

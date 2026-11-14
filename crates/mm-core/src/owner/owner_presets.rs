@@ -374,8 +374,9 @@ fn take_ready(o: &Owner, id: &str) -> Value {
 }
 
 /// A preset put on: an own one (`own`) or a received one resolved, over the catalog's downloads.
-/// The core is held for the whole of it, downloads included.
-fn flow(o: &Owner, preset: &Value, own: bool) -> Value {
+/// The core is held for the whole of it, downloads included. The command line (app/cli.rs) comes
+/// through here too.
+pub fn flow(o: &Owner, preset: &Value, own: bool) -> Value {
     let cosmetics_blocked = o.blocked("cosmetics").map(|b| text(b.get("error")));
     let (outcome, rebuild) = {
         let mut c = o.core();
