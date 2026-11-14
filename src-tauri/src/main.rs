@@ -250,6 +250,27 @@ fn main() {
                 },
             )));
             app.manage(Owner(owner.clone()));
+            // Linux: the .desktop entry that tells the desktop this program opens d2mm:// links and
+            // presets, pointing at the AppImage the person ran (src/deep-links.ts). A jailed run
+            // writes nothing outside its folder.
+            if cfg!(target_os = "linux") && flag(&argv, "write-jail").is_none() {
+                let exe = std::env::var("APPIMAGE")
+                    .ok()
+                    .filter(|v| !v.is_empty())
+                    .or_else(|| std::env::current_exe().ok().map(|p| p.to_string_lossy().into_owned()));
+                if let (Some(exe), Some(home)) = (exe, std::env::var_os("HOME")) {
+                    let icon = app_root(app).join("build").join("icon.png");
+                    let o = owner.0.get().clone();
+                    mm_core::deep_links::install_desktop_entry(
+                        std::env::consts::OS,
+                        &exe,
+                        &PathBuf::from(home),
+                        icon.exists().then_some(icon.as_path()),
+                        &|m| o.diag(m),
+                        &mm_core::deep_links::refresh_desktop_database,
+                    );
+                }
+            }
             // the uninstaller's run: its one window and nothing else, no tray (src/main.ts)
             if mm_core::uninstall::is_uninstall_run(&argv) {
                 uninstall::open(app, std::env::var_os("MM_QUIET").is_some())?;

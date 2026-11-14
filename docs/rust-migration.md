@@ -378,8 +378,13 @@ The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How i
   outside it) but does not yet route the shell's other writes through it, as src/write-jail.ts
   does by patching `fs`.
 
-Still to do: CI building the signed NSIS installer and the manifests beside each release and on
-the mirror, and the Electron release that points its update at that installer.
+- A release is built from the Tauri shell (`release.yml`, `tools/tauri-release.mjs`) under the
+  names a release always carried. `latest.yml` and `latest-linux.yml` name the Tauri installer and
+  AppImage, so every Electron copy's electron-updater fetches it and the installer takes the
+  install over. `latest.json` and `beta.json` carry both platforms' minisign signatures for the
+  Tauri copies; the mirror's copies name the mirror's files (`tools/mirror-plan.js retargetJson`).
+  Each build checks its signature against `plugins.updater.pubkey` before anything is uploaded:
+  a build signed with any other key would be refused by every installed copy.
 
 ## Moving a piece
 

@@ -11,8 +11,9 @@
  */
 const { betaName } = require('./mirror-plan.js');
 
-/** What electron-updater reads on each channel, and what src/portable-update.ts reads. */
-const FEEDS = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml'];
+/** What electron-updater reads on each channel, what src/portable-update.ts reads, and what
+ *  the Tauri builds' updater reads (tools/tauri-release.mjs). */
+const FEEDS = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json'];
 /** What those feeds point at. */
 const BINARIES = ['Dota-2-Mod-Manager-Setup.exe', 'Dota-2-Mod-Manager-Portable.exe', 'Dota-2-Mod-Manager.AppImage'];
 /** What somebody checking a download reads: checksums, their signed bundle, the SBOM. */
@@ -77,7 +78,7 @@ function channelHeads(releases) {
 
 /** The version a feed file announces, or null. */
 function feedVersion(text) {
-  const m = /^version:\s*['"]?([^\s'"]+)/m.exec(String(text || ''));
+  const m = /^\s*"?version"?:\s*['"]?([^\s'",]+)/m.exec(String(text || ''));
   return m ? m[1] : null;
 }
 
@@ -91,10 +92,10 @@ function mirrorExpectation({ stable, beta }) {
   if (!stable) return [];
   const sizeIn = (rel, name) => ((rel.assets || []).find((a) => a.name === name) || {}).size;
   const want = [];
-  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml']) want.push({ name, version: stable.version });
+  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', 'latest.json']) want.push({ name, version: stable.version });
   for (const name of BINARIES) want.push({ name, size: sizeIn(stable, name) });
   const tester = beta || stable;
-  for (const name of ['beta.yml', 'beta-linux.yml']) want.push({ name, version: tester.version });
+  for (const name of ['beta.yml', 'beta-linux.yml', 'beta.json']) want.push({ name, version: tester.version });
   if (beta) for (const name of BINARIES) want.push({ name: betaName(name), size: sizeIn(beta, name) });
   return want;
 }

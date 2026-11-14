@@ -132,8 +132,10 @@ test('release.yml shows a release to nobody until both builds on it installed a 
     return m ? m[1].replace(/[[\]\s]/g, '').split(',') : [];
   };
   assert.match(job('build'), /gh release create[^\n]*--draft/, 'the build job opens the release in public instead of as a draft');
-  // electron-builder publishes a release it has to create itself, unless it is told to make a draft
-  assert.equal((text.match(/EP_DRAFT: 'true'/g) || []).length, 2, 'an electron-builder step without EP_DRAFT can publish the release');
+  // electron-builder published a release it had to create itself; the Tauri build only uploads
+  // into the draft the build job opened
+  assert.doesNotMatch(text, /electron-builder[^\n]*--publish/, 'electron-builder can publish the release itself');
+  for (const n of ['build', 'linux']) assert.match(job(n), /npx tauri build[\s\S]*gh release upload "\$TAG"/, `${n} does not upload its Tauri build into the draft`);
   // Every file is fingerprinted and signed for before anything tries it (2026-09-16).
   const checksums = job('checksums');
   assert.ok(checksums, 'release.yml has no checksums job');

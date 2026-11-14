@@ -105,11 +105,13 @@ test('a beta shares the folder with the release, and never its file names', () =
   assert.deepEqual(beta.uploads.map((u) => u.name), [
     'beta.yml',
     'beta-linux.yml',
+    'beta.json',
     'Dota-2-Mod-Manager-Setup-beta.exe',
     'Dota-2-Mod-Manager-Portable-beta.exe',
     'Dota-2-Mod-Manager-beta.AppImage',
   ]);
   assert.equal(beta.uploads.filter((u) => u.retarget).length, 2, 'both feeds have to ask for the -beta copies');
+  assert.equal(beta.uploads.find((u) => u.name === 'beta.json').json, 'beta', 'and so does the Tauri one');
   assert.equal(beta.uploads.some((u) => u.name === 'latest.yml'), false, 'a beta never writes the release feed');
 });
 
@@ -130,6 +132,8 @@ test('a release carries the beta feed too, and it costs two files rather than a 
     'Dota-2-Mod-Manager.AppImage -> Dota-2-Mod-Manager.AppImage',
     'latest.yml -> beta.yml',
     'latest-linux.yml -> beta-linux.yml',
+    'latest.json -> latest.json',
+    'latest.json -> beta.json',
   ]);
   assert.equal(out.uploads.filter((u) => /\.(exe|AppImage)$/.test(u.name)).length, 3, 'one copy of each binary, not two');
 });
@@ -182,4 +186,24 @@ test('a full bucket still takes a new version of what it holds, at the cost of t
   assert.equal(fits({ used: 100, budget: 90, size: 1 }), false, 'a new object does not fit');
   assert.equal(fits({ used: 80, budget: 90, already: 10, size: 20 }), true, 'exactly at the budget');
   assert.equal(fits({ used: 80, budget: 90, already: 10, size: 21 }), false);
+});
+
+test("the mirror's Tauri feed names the mirror's files, a beta's its -beta copies", () => {
+  /* tauri-plugin-updater fetches each platform's url as written. The release's feed names GitHub,
+     so a copy on the mirror left as it was would send a copy that cannot reach GitHub straight
+     back there. */
+  const { retargetJson, MIRROR } = require('../tools/mirror-plan.js');
+  const feed = JSON.stringify({
+    version: '3.9.0',
+    platforms: {
+      'windows-x86_64': { signature: 'w', url: 'https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v3.9.0/Dota-2-Mod-Manager-Setup.exe' },
+      'linux-x86_64': { signature: 'l', url: 'https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v3.9.0/Dota-2-Mod-Manager.AppImage' },
+    },
+  });
+  const release = JSON.parse(retargetJson(feed, 'release'));
+  assert.equal(release.platforms['windows-x86_64'].url, `${MIRROR}Dota-2-Mod-Manager-Setup.exe`);
+  assert.equal(release.platforms['linux-x86_64'].signature, 'l');
+  const beta = JSON.parse(retargetJson(feed, 'beta'));
+  assert.equal(beta.platforms['windows-x86_64'].url, `${MIRROR}Dota-2-Mod-Manager-Setup-beta.exe`);
+  assert.equal(beta.platforms['linux-x86_64'].url, `${MIRROR}Dota-2-Mod-Manager-beta.AppImage`);
 });

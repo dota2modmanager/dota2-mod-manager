@@ -14,14 +14,16 @@ const rel = (tag, extra = {}) => ({
 });
 
 test('every release carries the beta feed and the proof, a beta included', () => {
-  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', 'SHA256SUMS', 'SHA256SUMS.intoto.jsonl']) {
+  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json', 'SHA256SUMS', 'SHA256SUMS.intoto.jsonl']) {
     assert.ok(state.REQUIRED_ASSETS.includes(name), name);
   }
   // 2.7.1 as it went out: the beta feed was to be added after publishing, and never was
   const shipped = ['Dota-2-Mod-Manager-Portable.exe', 'Dota-2-Mod-Manager-Setup.exe', 'Dota-2-Mod-Manager-Setup.exe.blockmap',
     'Dota-2-Mod-Manager.AppImage', 'dota2-mod-manager.cdx.json', 'latest-linux.yml', 'latest.yml', 'portable.yml', 'SHA256SUMS', 'SHA256SUMS.intoto.jsonl'];
-  assert.deepEqual(state.missingAssets(shipped), ['beta.yml', 'beta-linux.yml']);
-  assert.deepEqual(state.missingAssets([...shipped, 'beta.yml', 'beta-linux.yml']), []);
+  assert.deepEqual(state.missingAssets(shipped), ['beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json']);
+  assert.deepEqual(state.missingAssets([...shipped, 'beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json']), []);
+  // the Tauri feed announces its version in JSON
+  assert.equal(state.feedVersion(JSON.stringify({ version: '3.9.0', notes: '' }, null, 2)), '3.9.0');
 });
 
 test('versions sort the way semantic versioning says, a beta before its release', () => {
