@@ -94,6 +94,7 @@ export const WINDOW_SETTINGS: Record<string, Check> = {
   discordPresence: bool,
   countDownloads: bool,
   everyoneWearsMine: bool,
+  everyoneExcluded: list(str(64), 300),
   favorites: list(str(500), 20000),
   itemLooks: list(shape({ id: str(60, 1), hero: str(200, 1), name: str(80, 1), picks: list(LOOK_PICK, 40), at: num(0, 1e14) }), 2000),
   langPromptSeen: bool,

@@ -86,6 +86,10 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
             if matches!(arg(args, 0).as_str(), Some("discordPresence" | "uiLang")) {
                 crate::owner_presence::apply(o);
             }
+            // the table is what these change; the bar at the bottom counts the build
+            if r.is_ok() && matches!(arg(args, 0).as_str(), Some("everyoneWearsMine" | "everyoneExcluded")) {
+                drop(o.refresh_schema_in_background());
+            }
             r
         }
         "settings:moveLangFiles" => {

@@ -146,6 +146,18 @@ pub fn everyone_wears(
     read: &dyn Fn(&str) -> Option<Vec<u8>>,
     heroes: Option<&[String]>,
 ) -> Result<Vec<SchemaPatch>, KvError> {
+    Ok(everyone_wears_by_hero(text, list, beneath, read, heroes)?.into_iter().map(|(_, p)| p).collect())
+}
+
+/// [`everyone_wears`], each patch with the hero it dresses (npc_dota_hero_*), so the budget
+/// (crate::item_builder_everyone_budget) can take or leave a hero whole.
+pub fn everyone_wears_by_hero(
+    text: &[u8],
+    list: &[SchemaPatch],
+    beneath: &[Entry],
+    read: &dyn Fn(&str) -> Option<Vec<u8>>,
+    heroes: Option<&[String]>,
+) -> Result<Vec<(String, SchemaPatch)>, KvError> {
     let mut files: HashMap<String, &Entry> = HashMap::new();
     for en in list.iter().flat_map(|p| p.assets.iter()).chain(beneath) {
         files.entry(en.path().to_lowercase()).or_insert(en);
@@ -259,7 +271,10 @@ pub fn everyone_wears(
         let base = blocks.get(stock.id.as_str()).copied().unwrap_or(&text[stock.start..stock.end]);
         let model = Some(item.model.as_str()).filter(|m| !m.is_empty());
         let block = block_in_every_style(&as_item(base, text, &item.id, item.start, model)?, raw)?;
-        out.push(SchemaPatch { id: item.id.clone(), block, assets, source: format!("{}: everybody's", stock.name) });
+        out.push((
+            hero,
+            SchemaPatch { id: item.id.clone(), block, assets, source: format!("{}: everybody's", stock.name) },
+        ));
     }
     Ok(out)
 }
