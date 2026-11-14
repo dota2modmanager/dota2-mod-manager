@@ -197,10 +197,13 @@ const motion = [
   { click: '.rail-item[data-cat="couriers"]', after: 1100 },
   { click: '.rail-item[data-cat="hero-items"]', after: 1300 },
   { click: '.rail-item[data-cat="heroes"]', after: 1300 },
+  // the chips live in the list; the hero grid has only a search
+  { click: '.seg-btn[data-layout="list"]', after: 1300 },
   { click: '.fchip[data-tag="anime"]', after: 1600 },
   { click: '.fchip[data-tag="anime"]', after: 1600 },
   { click: '#installedChip', after: 1600 },
   { click: '#installedChip', after: 1600 },
+  { click: '.seg-btn[data-layout="grid"]', after: 1100 },
   { click: '.rail-item[data-cat="terrains"]', after: 1300 },
   { hover: '.grid .card:nth-child(2 of .card)', hold: 500 },
   { click: '.grid .card:nth-child(2 of .card) .card-name', after: 1600 },

@@ -164,7 +164,8 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   const installable = all.some(canBeInstalled);
   const toolbar = toolbarModel(mods.length, { tags, slots, groups, heroes, categoryId, installable, all });
   if (byHero && heroGridWanted(f)) {
-    const tiles = await heroTiles(mods, (cat: string, m: object) => isInstalled(cat, m as Mod));
+    // every hero: the grid is for finding one, the list's filters narrow the list
+    const tiles = await heroTiles(all, (cat: string, m: object) => isInstalled(cat, m as Mod));
     await paint(() => showScreen({ kind: 'heroes', key: `cat:${categoryId}:heroes`, title: catName(categoryId), toolbar, tiles }, actions));
     return;
   }

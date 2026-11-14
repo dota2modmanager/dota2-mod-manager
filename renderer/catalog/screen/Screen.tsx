@@ -31,7 +31,6 @@ export function Screen({ model, actions }: Props) {
       return (
         <Fragment key={model.key}>
           <div className="view-header"><h1 className="view-title">{model.title}</h1></div>
-          <Toolbar model={model.toolbar} actions={actions} />
           <HeroGrid tiles={model.tiles} actions={actions} />
         </Fragment>
       );

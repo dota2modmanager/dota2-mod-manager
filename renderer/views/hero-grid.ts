@@ -51,9 +51,9 @@ export function setHeroLayout(v: 'grid' | 'list'): void {
   try { localStorage.setItem(LAYOUT_KEY, v); } catch { /* the default then */ }
 }
 
-/** The grid, unless a hero is picked, a sort asks for mods in an order, or the list was chosen. */
+/** The grid, unless a hero is picked or the list was chosen. The grid has no sort of its own, so a sort picked in the list stays there. */
 export function heroGridWanted(filters: Filters): boolean {
-  return !filters.hero && filters.sort === 'default' && heroLayout() === 'grid';
+  return !filters.hero && heroLayout() === 'grid';
 }
 
 // Portraits come out of the player's own game (src/game-icons.ts heroPortraits): upright, as the
