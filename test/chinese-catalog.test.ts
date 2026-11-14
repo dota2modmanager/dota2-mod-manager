@@ -15,7 +15,7 @@ import { effectNames } from '../renderer/core/records.ts';
 import type { CosmeticSlot } from '../renderer/catalog/types.ts';
 
 test('catalog titles cover the inspected catalog and retain only technical/name identifiers', () => {
-  assert.equal(Object.keys(translations).length, 1586);
+  assert.equal(Object.keys(translations).length, 1588);
   for (const [original, translated] of Object.entries(translations)) {
     assert.match(translated, /[\u3400-\u9fff]/, original);
     const remaining = translated.replace(/M1A2|Windows XP|Dota2?|Linux|Source|VPK|Steam|Discord|Eul/gi, '');
@@ -23,6 +23,17 @@ test('catalog titles cover the inspected catalog and retain only technical/name 
     assert.equal(catalogName(original, 'zh-CN'), translated);
     for (const lang of ['en', 'ru']) assert.equal(catalogName(original, lang), original);
   }
+});
+
+test('Warcraft titles keep the franchise name together without changing ordinary colors or weapons', () => {
+  assert.equal(catalogName('Warcraft III', 'zh-CN'), '魔兽争霸 3');
+  assert.equal(catalogName('Warcraft III Roshan', 'zh-CN'), '魔兽争霸 3 肉山');
+  assert.equal(catalogName('Warcraft III Font', 'zh-CN'), '魔兽争霸 3 字体');
+  assert.equal(catalogName('Warcraft III Neutrals', 'zh-CN'), '魔兽争霸 3 中立生物');
+  assert.equal(catalogName('Frozen Throne', 'zh-CN'), '冰封王座');
+  assert.equal(catalogName('Rainy Day', 'zh-CN'), '雨天');
+  assert.equal(catalogName('Frozen Throne', 'en'), 'Frozen Throne');
+  assert.equal(catalogName('Black King Bar', 'zh-CN'), '黑皇杖');
 });
 
 test('hero sounds, skills, styles and categories display understandable Chinese', () => {
