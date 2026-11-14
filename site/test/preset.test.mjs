@@ -3,7 +3,7 @@
  *
  * The page is where a preset pasted into Discord lands for somebody who may not have the app yet,
  * so it has to unpack the build from the link and show it, offer the two ways on, and fit a
- * phone. The link comes from the app's own encoder (src/preset-link.ts) rather than from a
+ * phone. The link comes from the app's own encoder (test/helpers/app-links.mjs, held to the app by test/app-links.test.ts) rather than from a
  * string typed here, so a change to the format on one side fails this test instead of every link
  * shared after the release.
  *
@@ -12,7 +12,7 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { serveDist, launch, openPage, findOverflow, isOffline, snap } from './harness.mjs';
-import { encodePresetLink } from '../../src/preset-link.ts';
+import { encodePresetLink } from './helpers/app-links.mjs';
 
 let server, browser;
 before(async () => {

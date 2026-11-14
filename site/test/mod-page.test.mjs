@@ -12,8 +12,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 import { DIST, serveDist, launch, openPage, findOverflow, isOffline, snap } from './harness.mjs';
-import { decodePresetLink } from '../../src/preset-link.ts';
-import { parseModLink } from '../../src/deep-links.ts';
+import { decodePresetLink } from './helpers/app-links.mjs';
+import { parseModLink } from './helpers/app-links.mjs';
 
 const ORIGIN = 'https://dota2modmanager.com';
 const data = JSON.parse(fs.readFileSync(path.join(DIST, 'catalog', 'data.json'), 'utf-8'));
