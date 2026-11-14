@@ -1,10 +1,9 @@
 //! Dota 2 Mod Manager under Tauri.
 //!
 //! The window is the same React page Electron loads (renderer/, built to out/renderer-tauri),
-//! with the same window.api: preload.js itself runs in the page against src/bridge.js. Each call
-//! is answered by Rust when the channel has moved (src/native.rs, src/ported.rs) and by the
-//! TypeScript main process otherwise, which runs under Node as a child (src/sidecar.rs).
-//! docs/rust-migration.md tracks which is which.
+//! with the same window.api: preload.js itself runs in the page against src/bridge.js. The title
+//! bar's buttons are the shell's (src/native.rs); every other call is the Rust owner's
+//! (src/backend.rs, mm_core::owner). docs/rust-migration.md has how it got here.
 
 // no console window behind the app in a release build
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -13,7 +12,6 @@ mod backend;
 mod native;
 mod ported;
 mod shell;
-mod sidecar;
 mod window;
 
 use std::path::PathBuf;
@@ -22,10 +20,10 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::Manager;
 
-use backend::Backend;
-use sidecar::{Answer, HostPaths, Sidecar};
+use backend::{Answer, Backend};
 
-struct Host(Arc<Backend>);
+/// The owner, as the commands reach it.
+struct Owner(Arc<Backend>);
 
 fn args_of(v: Value) -> Vec<Value> {
     match v {
@@ -36,7 +34,7 @@ fn args_of(v: Value) -> Vec<Value> {
 }
 
 /// An answer for the page. One that is only bytes (a 3D preview's slice, a video) goes back raw,
-/// as an ArrayBuffer instead of base64 inside JSON. Any other answer goes as the host wrote it,
+/// as an ArrayBuffer instead of base64 inside JSON. Any other answer goes as the owner wrote it,
 /// unparsed; one with bytes deeper inside is wrapped as {"$mmb": ...} so the bridge knows to
 /// decode it, and the rest is not walked again at all.
 fn answer(a: Answer) -> Result<tauri::ipc::Response, String> {
@@ -56,30 +54,25 @@ fn answer(a: Answer) -> Result<tauri::ipc::Response, String> {
     }
 }
 
-/// ipcRenderer.invoke: Rust's answer when the channel is Rust's, the host's otherwise.
+/// ipcRenderer.invoke: the title bar's buttons answered here, everything else by the owner.
 #[tauri::command]
 async fn mm_invoke(
     app: tauri::AppHandle,
-    host: tauri::State<'_, Host>,
+    owner: tauri::State<'_, Owner>,
     channel: String,
     args: Value,
 ) -> Result<tauri::ipc::Response, String> {
-    let host = host.0.clone();
+    let owner = owner.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
         let list = args_of(args);
-        // what the channel may be handed, before Rust or the host acts on it (src/window-guard.ts)
+        // what the channel may be handed, before anything acts on it (src/window-guard.ts)
         if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
             eprintln!("[mm-shell] ipc: refused {channel}: {why}");
             return Err(format!("refused: {why}"));
         }
-        // the window's own buttons are the shell's; with the Rust owner, every other channel is its
-        let own = match &*host {
-            Backend::Owner(_) => native::window(&app, &channel),
-            Backend::Host(_) => native::handle(&app, &channel, &list),
-        };
-        let res = match own {
+        let res = match native::window(&app, &channel) {
             Some(res) => res.map(|v| Answer::Json(v.to_string())),
-            None => host.invoke(&channel, list.clone()),
+            None => owner.invoke(&channel, list.clone()),
         };
         after(&app, &channel, &list, res.is_ok());
         answer(res?)
@@ -88,8 +81,8 @@ async fn mm_invoke(
     .map_err(|e| e.to_string())?
 }
 
-/// What the shell does after the host answered a channel it also cares about: the scale the page
-/// set, and the tray after its switch or the language changed (the host wrote settings.json).
+/// What the shell does after the owner answered a channel it also cares about: the scale the page
+/// set, and the tray after its switch or the language changed.
 fn after(app: &tauri::AppHandle, channel: &str, args: &[Value], ok: bool) {
     let Some(shell) = app.try_state::<Arc<window::Shell>>() else { return };
     match channel {
@@ -103,19 +96,19 @@ fn after(app: &tauri::AppHandle, channel: &str, args: &[Value], ok: bool) {
 
 /// ipcRenderer.send: no answer.
 #[tauri::command]
-fn mm_send(host: tauri::State<'_, Host>, channel: String, args: Value) {
+fn mm_send(owner: tauri::State<'_, Owner>, channel: String, args: Value) {
     let list = args_of(args);
     if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
         eprintln!("[mm-shell] ipc: refused {channel}: {why}");
         return;
     }
-    host.0.send(&channel, list);
+    owner.0.send(&channel, list);
 }
 
-/// The page has loaded: the host's 'did-finish-load' listeners run (the game watch, a cold link).
+/// The page has loaded: Electron's 'did-finish-load' (the game watch, a cold link).
 #[tauri::command]
-fn mm_loaded(host: tauri::State<'_, Host>) {
-    host.0.loaded();
+fn mm_loaded(owner: tauri::State<'_, Owner>) {
+    owner.0.loaded();
 }
 
 /// A Ctrl key the page passed on: Electron's before-input-event, which scales the content.
@@ -130,20 +123,14 @@ fn flag(args: &[String], name: &str) -> Option<String> {
     args.iter().find_map(|a| a.strip_prefix(&prefix).map(String::from))
 }
 
-fn host_paths(app: &tauri::App) -> HostPaths {
-    // a checkout: the repository this binary was built in; an install: the bundled copy
-    let root = if cfg!(debug_assertions) {
+/// Where the build's own files are (the changelogs, the counter's token): a checkout's repository
+/// in a debug build, the bundled copy in an install.
+fn app_root(app: &tauri::App) -> PathBuf {
+    if cfg!(debug_assertions) {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf()
     } else {
         app.path().resource_dir().map(|d| d.join("app")).unwrap_or_default()
-    };
-    let bundled_node =
-        app.path().resource_dir().ok().map(|d| d.join("node").join(if cfg!(windows) { "node.exe" } else { "node" }));
-    let node = std::env::var_os("MM_NODE")
-        .map(PathBuf::from)
-        .or(bundled_node.filter(|p| p.exists()))
-        .unwrap_or_else(|| PathBuf::from("node"));
-    HostPaths { node, script: root.join("src-tauri").join("host").join("host.ts"), root }
+    }
 }
 
 fn init_script() -> String {
@@ -173,9 +160,9 @@ fn main() {
                 let _ = w.show();
                 let _ = w.set_focus();
             }
-            // a preset or mod link clicked while the app runs (src/deep-links.ts, the host's)
-            if let Some(host) = app.try_state::<Host>() {
-                host.0.second(argv);
+            // a preset or mod link clicked while the app runs (src/deep-links.ts)
+            if let Some(owner) = app.try_state::<Owner>() {
+                owner.0.second(argv);
             }
         }))
         .plugin(tauri_plugin_notification::init())
@@ -206,44 +193,24 @@ fn main() {
             app.manage(ported::Shared::new());
             let first_run = !user_data.join("settings.json").exists();
             let area = window::work_area(app);
-            let mut env = vec![
-                ("MM_USER_DATA".to_string(), user_data.to_string_lossy().into_owned()),
-                ("MM_APP_VERSION".to_string(), app.package_info().version.to_string()),
-                ("MM_PACKAGED".to_string(), if cfg!(debug_assertions) { "0" } else { "1" }.to_string()),
-                ("MM_SHELL".to_string(), "tauri".to_string()),
-            ];
-            // the host's screen stand-in picks a first run's scale from these, as Electron's would
-            if let Some(a) = area {
-                env.push(("MM_WORK_W".to_string(), a.width.to_string()));
-                env.push(("MM_WORK_H".to_string(), a.height.to_string()));
-            }
-            // the switches src/main.ts reads off its own command line (--write-jail, --background...)
-            let pass: Vec<String> = argv.iter().skip(1).filter(|a| a.starts_with("--")).cloned().collect();
-            let paths = host_paths(app);
-            app.manage(ported::AppRoot(paths.root.clone()));
-            let host = Arc::new(if backend::rust_owns() {
-                // the shell's own process is held to the folder too: it writes the game itself now
-                mm_core::write_jail::install(&mm_core::write_jail::from_argv(&argv));
-                eprintln!("[mm-shell] the Rust owner answers the window (MM_RUST_OWNS=1)");
-                Backend::Owner(backend::start_owner(
-                    &handle,
-                    backend::Start {
-                        user_data: user_data.clone(),
-                        app_version: app.package_info().version.to_string(),
-                        app_root: paths.root.clone(),
-                        downloads: app.path().download_dir().unwrap_or_default(),
-                        argv: argv.clone(),
-                        first_run,
-                    },
-                ))
-            } else {
-                Backend::Host(Sidecar::start(handle.clone(), paths, env, pass)?)
-            });
-            app.manage(Host(host.clone()));
+            // the shell's process writes the game itself, so a sandbox run holds it to the folder
+            mm_core::write_jail::install(&mm_core::write_jail::from_argv(&argv));
+            let owner = Arc::new(Backend(backend::start_owner(
+                &handle,
+                backend::Start {
+                    user_data: user_data.clone(),
+                    app_version: app.package_info().version.to_string(),
+                    app_root: app_root(app),
+                    downloads: app.path().download_dir().unwrap_or_default(),
+                    argv: argv.clone(),
+                    first_run,
+                },
+            )));
+            app.manage(Owner(owner.clone()));
             let jailed = flag(&argv, "write-jail").is_some();
             window::open(
                 app,
-                host,
+                owner,
                 window::Open {
                     user_data,
                     area,
@@ -264,8 +231,8 @@ fn main() {
         .expect("the Tauri shell failed to build")
         .run(|app, event| {
             if let tauri::RunEvent::Exit = event {
-                if let Some(host) = app.try_state::<Host>() {
-                    host.0.stop();
+                if let Some(owner) = app.try_state::<Owner>() {
+                    owner.0.stop();
                 }
             }
         });

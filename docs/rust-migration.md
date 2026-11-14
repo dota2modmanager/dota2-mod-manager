@@ -31,40 +31,33 @@ preload.js          window.api, kept as the one description of the API the page 
 
 No Node, no Electron, no `src/*.ts`. Every IPC channel answered in Rust.
 
-## How it runs during the move
+## How it runs now
 
 ```
 renderer (WebView2)
    │ window.api.*  (preload.js, run against src-tauri/src/bridge.js)
    ▼
 Tauri command mm_invoke(channel, args)
-   ├─ src-tauri/src/native.rs, ported.rs   channels Rust owns
-   └─ src-tauri/src/sidecar.rs             everything else ─► node src-tauri/host/host.ts
-                                                              └─ imports src/main.ts unchanged,
-                                                                 with a stand-in for Electron
+   ├─ src-tauri/src/native.rs     the title bar's buttons
+   └─ src-tauri/src/backend.rs    every other channel ─► mm_core::owner (one state, one lock)
+                                                         └─ asks the shell (TauriShell) for
+                                                            dialogs, links, the window
 ```
 
 - `preload.js` is injected into the page as Tauri's initialization script with a stand-in
   `require('electron')` (`bridge.js`). The page gets the exact `window.api` it gets in Electron.
-- `host.ts` runs the whole TypeScript main process under plain Node. `src/electron.ts` resolves
-  Electron on each use, so the host answers that `require` with its own `app`, `ipcMain`,
-  `BrowserWindow`, `dialog`, `shell`... Dialogs, links and the window itself are asked of Rust
-  (`src-tauri/src/shell.rs`). Wire format: top of `host.ts`.
-- Bytes cross both boundaries as `{ "$b64": "..." }`. An answer that is only bytes (a 3D
-  preview slice, a video) leaves Rust raw (`tauri::ipc::Response`), and the page gets it as a
+- The owner (`crates/mm-core/src/owner.rs`) holds settings.json, the library, the installer and
+  the services, and answers every channel the TypeScript main process registered, group by group
+  in `owner_*.rs`, one per `src/ipc-*.ts`. No Node process runs.
+- Bytes cross the boundary as `{ "$b64": "..." }`. An answer that is only bytes (a 3D preview
+  slice, a video) leaves Rust raw (`tauri::ipc::Response`), and the page gets it as a
   `Uint8Array` without a second base64 pass.
-- The host writes an invoke's answer on a line of its own (`R <id> j|b|e <json>`, `writeResult` in
-  `host.ts`), and Rust hands the JSON text to the page without parsing it; only an answer with
-  bytes inside is decoded again in the page. For `cosmetics:slots` (3.8 MB, every start of the item
-  builder) that took the bridge from ~250 ms to ~50 ms on top of the host's own ~270 ms.
-  `MM_TRACE=1` prints each answer's work and send time on the host's stderr
-  (`tools/tauri-shot.mjs` passes it through).
-- So the Tauri build works in full from the first commit, and every channel moved to Rust is a
-  channel the host no longer answers. When the count reaches all of them, the host, Node and
-  `src/` go.
+- `src-tauri/host/host.ts`, the TypeScript main process under plain Node with a stand-in for
+  Electron, answered the window until step 3. It stays only as the TypeScript side of the owner's
+  parity tests (`test/rust-owner.test.ts`), and goes with `src/`.
 
-The Electron build stays the one users get until the Tauri build covers everything and has
-been through the sandbox and the e2e run. Both build from the same `renderer/`.
+The Electron build stays the one users get until the Tauri build is packaged, updates itself and
+has been through the sandbox and the e2e run. Both build from the same `renderer/`.
 
 ## Comparing a pure function
 
@@ -260,12 +253,13 @@ How it is done, so it can be built in steps without a release in between that ha
    answered over it group by group, each group checked on the sandbox's Tauri build. All of it
    behind `MM_RUST_OWNS=1`, so main keeps working on the host while it grows.
 3. When every channel that touches either file is answered there, the flag becomes the default
-   and the host loses those channels in the same change.
+   and the host loses those channels in the same change. Done: the shell always starts the owner, and
+   `sidecar.rs` and the Node host are gone from it (`MM_RUST_OWNS` is no longer read).
 
 Every call the shell takes is already checked against `channel_args.rs` before Rust or the host
 sees it.
 
-### Step 2 so far
+### Step 2 and 3 so far
 
 The owner is `crates/mm-core/src/owner.rs`: one `Core` behind a lock (settings, the library, the
 installer, the item table's service, the upkeep, the network, the catalog and the services with
@@ -302,16 +296,16 @@ What the owner still does differently, or not yet:
   release, and leaves Electron's and Chrome's versions out. What only the window's process knows
   (its windows, the screens, the graphics card, the updater) is asked of the shell as
   `win.report`; a shell that does not answer gives null for the first three and an updater.
-- In the shell (`src-tauri/src/backend.rs`), `MM_RUST_OWNS=1` starts the owner on a thread of its
-  own instead of the Node host, installs the write jail in the shell's own process, and routes
-  every channel but the title bar's buttons to it; events reach the page as the host's did.
+- In the shell (`src-tauri/src/backend.rs`) the owner starts on a thread of its own, the write
+  jail holds the shell's own process, and every channel but the title bar's buttons goes to it.
   Checked on the sandbox's Tauri build: Home with the catalog, the version, its notes, the stars
-  and the game's state, `mods.list` and `settings.get`, no console errors, no Node process.
-  d2mm:// links go to the window under the flag too (`owner_links.rs`): the one the app was
+  and the game's state; a catalog mod installed, switched off and removed through `window.api`
+  with the sandbox's game untouched; no console errors, no Node process.
+  d2mm:// links go to the window (`owner_links.rs`): the one the app was
   started by once the page has loaded, and one a second start hands over.
   The first start's language comes from the system's languages (`sys-locale`), as Electron's
   `getPreferredSystemLanguages`; `MM_LOCALE` stands in for them in a test run.
-  Not there yet under the flag: installing an update (the updater plugin is not wired), the
+  Not there yet: installing an update (the updater plugin is not wired), the
   graphics card in the support report, and the uninstall window, which the Tauri shell does not
   open yet under either side (it belongs with the installer's uninstall hooks).
 - The game watch and the crash watch after Play run in the owner (`owner_watch.rs`): asked every

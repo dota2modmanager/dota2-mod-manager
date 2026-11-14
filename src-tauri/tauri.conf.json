@@ -21,7 +21,6 @@
     "icon": ["../build/icon.png", "../build/icon.ico"],
     "resources": {
       "../src": "app/src",
-      "../src-tauri/host": "app/src-tauri/host",
       "../renderer/uninstall.html": "app/renderer/uninstall.html",
       "../CHANGELOG.md": "app/CHANGELOG.md",
       "../CHANGELOG.ru.md": "app/CHANGELOG.ru.md",
