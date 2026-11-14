@@ -196,6 +196,8 @@ fn make_icon(app: &AppHandle) -> tauri::Result<TrayIcon> {
 
 /// How the window opens.
 pub struct Open {
+    /// where WebView2 keeps its profile; None for its own default (%LOCALAPPDATA%)
+    pub webview_data: Option<PathBuf>,
     pub user_data: PathBuf,
     pub area: Option<Area>,
     /// no settings.json before this start: the scale is picked for the screen
@@ -222,7 +224,11 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
     app.manage(shell.clone());
     let opener = app.handle().clone();
     let popups = app.handle().clone();
-    let win = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+    let mut builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()));
+    if let Some(dir) = &o.webview_data {
+        builder = builder.data_directory(dir.clone());
+    }
+    let win = builder
         .title("Dota 2 Mod Manager")
         .inner_size(fit.width, fit.height)
         .min_inner_size(fit.min_width, fit.min_height)

@@ -59,7 +59,9 @@ it closes Dota, copies the console log and removes the mod.
 
 **Ask first, every time.** The bench moves the mouse, presses keys and fills the screen for about
 three minutes. It refuses to start while Dota runs or while someone used the computer in the last
-two minutes. A party invite from a stranger once covered the screen; the bench declines invites
+two minutes. Once the owner says yes, start it in the background after a wait
+(`sleep 135 && npm run dota:bench -- ...`) and tell them to leave the computer alone; `--now` only
+with their yes for that run. A party invite from a stranger once covered the screen; the bench declines invites
 now.
 
 Read the results:

@@ -35,6 +35,18 @@ attachments and hitboxes. In the Scream set:
 
 A slot you do not use keeps its stock model. Hide one with its material ([recolor.md](recolor.md)).
 
+**Check which file the game loads for the slot.** A slot's name and its stock file's name can
+differ, and a hero can carry two files for what looks like one slot. One hero's default weapon is
+not its `weapon.vmdl` but another model in the same folder holding the weapon in the hand and a
+chain over the shoulder; a new weapon written into `weapon.vmdl` never showed, and the old one with
+its chain stayed. Read the default item's `model_player` in `items_game.txt` (`npm run item-plan`
+prints it) and replace that file. Keep the attachment points the hero's abilities use on it
+(`attach_chain` and the like): an ability effect starts from them.
+
+**A slot can be a whole limb.** Some heroes have an arm or a leg as an item. Replace it with your
+own (a mirrored copy of the other hand, a sleeve), and hide what of the body is under it with the
+translucency map.
+
 ## 3. Build on the skeleton, never move the bones
 
 - Rigid parts (a mask, a weapon) are weighted 100% to one bone. Do not touch the armature: every
@@ -47,6 +59,19 @@ A slot you do not use keeps its stock model. Hide one with its material ([recolo
   goes on a bone no mesh and no cloth uses. Necrophos has `scarf_0_L/R` and `scarf_end_L/R`. Look
   for unused bones in the decompiled vmdl (bones no default item weights). Do not use bones the
   game simulates as cloth (beard bones): the simulation ignores their animation.
+- **Check the weight sums after every join.** A part joined from pieces built with different
+  deform layers, or a bmesh operation run after the layer was made, can add one piece's weights
+  onto another's: a fur cuff came out at a sum of 2.6 and moved more than twice as far as the
+  wrist. Normalise after joining, and print the largest sum per object before export.
+- **Clothes that follow the skin are shells of it.** Copy the body's faces under the garment,
+  subdivide, push them out along the normals (0.05-0.07 m), and keep their weights. Sleeves built
+  as tubes along the bone line slid off the arm in poses; a shell bends exactly as the skin does.
+  Smooth a shell's edge loops with Taubin smoothing (alternating shrink and inflate): plain
+  Laplacian smoothing shrank the loops until the fur trims laid on them vanished.
+- **A garment from several shells reads as pieces.** Torso, skirt and shoulders built apart showed
+  skin between them and seams where their shading differed. Build the torso down to under the
+  belt and let the belt cover the join; mirror one finished shoulder to the other instead of
+  building both.
 - Budget: the Scream cloak with props was about 18k triangles after decimating the props. Decimate
   downloaded models, and keep textures at 1024 px or less.
 
@@ -151,6 +176,56 @@ append a `JiggleBoneList` to the root's children with one `JiggleBone` per bone 
 - **Build an A/B pair**, the same part with and without the list: it tells whether a tilt in the game
   is the physics or the model.
 
+### Cloth instead of jiggle
+
+For a part that should hang and lean (a hat that keeps its shape and tilts on turns, a braid, a
+hanging belly), cloth reads better than jiggle: the arcana hair of one hero is cloth, and a jiggle
+hat kept flicking on idle head turns. `scripts/cloth.py` writes it into the part's vmdl the way
+Valve's ModelDoc sources do (a `Softbody` node with a `ClothChain` per chain of bones, the first
+bone pinned, the rest pulled back to the animated pose):
+
+```
+python scripts/cloth.py "<addon>/models/heroes/<hero>/hat.vmdl" \
+  "<install>/content/dota/particles/models/heroes/tidehunter/tidehunter_chain_model.vmdl" \
+  4:0.9:0.65:hat_0,hat_1,hat_2
+```
+
+- The cloth has no collision with the body. The stray radius (inches a node may wander from the
+  pose) is what keeps a tip out of the head: 3-4 for a hat.
+- Chains have no links between them. A wide surface split into three chains (a belly) drifted
+  apart in poses and crumpled into folds; hold such chains firmly (goal strength near 1, a small
+  radius), or keep a wide surface on the skeleton.
+- Check the compiled model: its PHYS block holds `m_pFeModel` with one node per chain bone when the
+  cloth took. An empty block compiles without a word.
+- Bones the game simulates as cloth ignore clips ([animations.md](animations.md)).
+
+### A face: expressions, teeth, a beard
+
+- **An expression is in the hero's morphs.** A hero's head carries facial morph targets (FACS:
+  `lipCornerPuller`, `cheekRaiser`, `upperLipRaiser`, `squint`, `browLowerer`...). Bake a mix of
+  them into a copy of the head (shape keys applied at the weights you want), put the copy in a slot
+  with the head's material, and hide the body's head with the translucency map. A grin made this
+  way moves with the jaw like the original.
+- **Teeth built vertex by vertex** (a rounded box per tooth, upper row on the head, lower row on the
+  jaw) read in the game; flat plates did not. Keep the upper row's top under the lip line all the
+  way: corner teeth raised with a smile curve came out on the cheeks.
+- **No lip as a separate tube.** A lip roll laid along the mouth looked stuck on, slim or full.
+  Fix the head's own edge: delete slivers (faces whose shortest edge is under a quarter of their
+  longest) and stray strands inside an oval round the mouth, weld (`remove_doubles` 0.0005), fill
+  the holes with `holes_fill`, copy UVs from the neighbouring loops, then set the front edge to a
+  target curve. Laplacian smoothing along the edge pulled the lip inward and down.
+- **Beards from other heroes do not fit.** Their meshes are low and shaped for their own face, and
+  every fit left facets and poking strands. An item made for this hero (a style of one of its own
+  beards) fit with no work; try those first, and give it your material if the colour is wrong.
+
+### Shading a cloth without patches
+
+An occlusion bake through smart-project UVs, blurred or noised in UV space, came out as a patchwork
+in the game: each UV island got its own blur. Compute the shading per vertex instead (rays for
+occlusion, distance to the trims and straps, 3D noise), store it in a vertex colour, and bake that
+through an emission shader to a non-colour float image with a 16 px margin. Neighbouring islands
+then agree along every seam.
+
 ## 6. Materials
 
 Write a `.vmat` per material with `hero.vfx` ([recolor.md](recolor.md) lists the keys). Starting
@@ -173,6 +248,13 @@ values that read well next to Valve's art:
 `F_USE_STATUS_EFFECTS_PROXY` lets status effects (Ghost Shroud, stuns, Diffusal) tint your part
 like the hero. Cloth: specular 4 / 0.2, rim 0.3. A glowing blade: `F_MASKS_1` with a
 `TextureSelfIllumMask`, `g_flSelfIllumScale` 1.6, bloom colour and scale 2.5.
+
+**Give every material masks, as Valve's do.** Without them, white fur and a bright cloth drew a
+white halo past the silhouette on a hero whose scene is lit brightly (the same materials were fine
+on another hero), and turning bloom off did not remove it. `F_MASKS_1` and `F_MASKS_2` with the
+rim, self-illumination, detail, diffuse warp and metalness masks black and the specular mask dark
+grey (about 40 of 255) took the halo away and gave the cloth its shading back. Leave the glow masks
+white only on what should glow.
 
 ## 7. Compile and pack
 

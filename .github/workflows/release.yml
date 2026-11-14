@@ -70,18 +70,21 @@ jobs:
   build:
     needs: gate
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
 
       # Make the release before anything is uploaded into it.
       #
@@ -123,33 +126,36 @@ jobs:
             gh release create "$TAG" --repo "$REPO" --title "${TAG#v}" --notes-file notes.md --draft $EXTRA
           fi
 
-      # EP_DRAFT keeps electron-builder uploading into the draft above. Without it, a release it
-      # had to create for itself would come out public.
       # the catalog download counter's token, from a secret into the build and never into git
       - name: Give the build the download counter's token
         run: node tools/stats-token.mjs
         env:
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
 
-      - name: Build and upload the installer to the draft
-        run: npx electron-builder --win --publish always
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EP_DRAFT: 'true'
-
-      # The portable build cannot install over itself, so the app downloads the new one and
-      # leaves it beside the old one. That download is only worth anything if there is
-      # something to check it against, and this is it: name, size and SHA-256 of the exe this
-      # run built. The app fetches it from GitHub with no mirror in the way.
-      - name: Publish the portable manifest
+      # The Tauri build (src-tauri/), under the names a release has always carried
+      # (tools/tauri-release.mjs). The installer is signed for tauri-plugin-updater with the
+      # project's minisign key; latest.yml names it for the Electron copies people have now, whose
+      # electron-updater runs it and whose install it takes over (src-tauri/windows/hooks.nsh).
+      # The portable build is the same exe without the installer around it, and portable.yml is
+      # what it checks a new one against: it cannot install over itself, so it fetches the new one
+      # beside itself (crates/mm-core/src/portable_update.rs).
+      - name: Build the installer and the portable exe, and upload them to the draft
+        if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: |
-          node tools/portable-manifest.js dist "${TAG#v}"
-          gh release upload "$TAG" dist/portable.yml --repo "$REPO" --clobber
+          set -euo pipefail
+          npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          node tools/tauri-release.mjs windows dist "${TAG#v}"
+          cat dist/latest.yml dist/portable.yml
+          gh release upload "$TAG" --repo "$REPO" --clobber \
+            dist/Dota-2-Mod-Manager-Setup.exe dist/Dota-2-Mod-Manager-Setup.exe.sig \
+            dist/Dota-2-Mod-Manager-Portable.exe dist/latest.yml dist/portable.yml
 
       # A second release on the same tag is what broke 2.2.0, and nothing showed it until somebody
       # read the API by hand. Checked here on the draft; whether it became the latest is checked
@@ -171,32 +177,40 @@ jobs:
             echo "::error::the release for $TAG is already public, before any job has tried the build"
             exit 1
           fi
-          for want in latest.yml portable.yml Dota-2-Mod-Manager-Setup.exe Dota-2-Mod-Manager-Portable.exe; do
+          for want in latest.yml portable.yml Dota-2-Mod-Manager-Setup.exe Dota-2-Mod-Manager-Setup.exe.sig Dota-2-Mod-Manager-Portable.exe; do
             echo "$release" | jq -r '.[0].assets[].name' | grep -qx "$want" \
               || { echo "::error::$want is missing from the draft"; exit 1; }
           done
           echo "one release, still a draft, carrying the installer and the manifests"
 
-  # Linux ships from the same tag, and after the Windows job rather than beside it.
-  # electron-builder creates a release when it finds none, and two builds creating one for the
-  # same tag is exactly what left 2.2.0 with its update file on a second page. By the time this
-  # runs the release exists and there is only something to upload into.
+  # Linux ships from the same tag, and after the Windows job rather than beside it: the draft
+  # exists by then, and there is only something to upload into.
   linux:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # what Tauri builds against on Linux: WebKitGTK, the tray, icons
+      - name: System libraries
+        timeout-minutes: 10
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
 
       - name: Give the build the download counter's token
         run: node tools/stats-token.mjs
@@ -204,10 +218,19 @@ jobs:
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
 
       - name: Build and upload the AppImage to the draft
-        run: npx electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ github.token }}
-          EP_DRAFT: 'true'
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          set -euo pipefail
+          npx tauri build --bundles appimage --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          node tools/tauri-release.mjs linux dist "${TAG#v}"
+          cat dist/latest-linux.yml
+          gh release upload "$TAG" --repo "$REPO" --clobber \
+            dist/Dota-2-Mod-Manager.AppImage dist/Dota-2-Mod-Manager.AppImage.sig dist/latest-linux.yml
 
       # The same look the Windows job takes at itself. latest-linux.yml is what an installed
       # AppImage reads to find out there is a newer one. The tag endpoint does not return a
@@ -219,7 +242,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           names=$(gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[].name")
-          for want in Dota-2-Mod-Manager.AppImage latest-linux.yml; do
+          for want in Dota-2-Mod-Manager.AppImage Dota-2-Mod-Manager.AppImage.sig latest-linux.yml; do
             echo "$names" | grep -qx "$want" \
               || { echo "::error::$want is missing from the draft"; exit 1; }
           done
@@ -262,7 +285,7 @@ jobs:
           gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[] | \"\(.id) \(.name)\"" > assets.txt
           while read -r id name; do
             # a rerun finds this job's own files already there; they are written fresh below
-            case "$name" in SHA256SUMS|SHA256SUMS.intoto.jsonl|dota2-mod-manager.cdx.json|beta.yml|beta-linux.yml) continue ;; esac
+            case "$name" in SHA256SUMS|SHA256SUMS.intoto.jsonl|dota2-mod-manager.cdx.json|beta.yml|beta-linux.yml|latest.json|beta.json) continue ;; esac
             gh api -H "Accept: application/octet-stream" "repos/$REPO/releases/assets/$id" > "release/$name"
           done < assets.txt
           ls -l release
@@ -277,6 +300,21 @@ jobs:
           set -euo pipefail
           cp release/latest.yml release/beta.yml
           cp release/latest-linux.yml release/beta-linux.yml
+
+      # What the Tauri builds' updater reads: both platforms' signatures, from the .sig files the
+      # two builds left on the draft, in one feed per channel (tools/tauri-release.mjs). The notes
+      # are this version's section of the changelog, as on the release page.
+      - name: Write the Tauri feeds
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          awk -v v="${TAG#v}" '
+            $0 ~ "^## " v "([^-0-9A-Za-z.]|$)" { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          node tools/tauri-release.mjs feeds release "${TAG#v}" notes.md
 
       # From the lockfile alone: what the app ships, without the tools that build it.
       - name: Write the SBOM
@@ -302,7 +340,7 @@ jobs:
 
       # OpenSSF Scorecard's Signed-Releases check looks for a signature among a release's files, and
       # checking a download without asking GitHub needs the bundle anyway.
-      - name: Put SHA256SUMS, the SBOM, the provenance bundle and the beta feed on the draft
+      - name: Put SHA256SUMS, the SBOM, the provenance bundle and the feeds on the draft
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -312,7 +350,7 @@ jobs:
           set -euo pipefail
           cp "$BUNDLE" SHA256SUMS.intoto.jsonl
           gh release upload "$TAG" SHA256SUMS SHA256SUMS.intoto.jsonl release/dota2-mod-manager.cdx.json \
-            release/beta.yml release/beta-linux.yml --repo "$REPO" --clobber
+            release/beta.yml release/beta-linux.yml release/latest.json release/beta.json --repo "$REPO" --clobber
 
   # Install the build that is about to go out, and use it.
   #
@@ -374,8 +412,11 @@ jobs:
         run: |
           $p = Start-Process -FilePath .\setup.exe -ArgumentList '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "the installer exited with $($p.ExitCode)" }
-          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'Dota 2 Mod Manager.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'the installer finished and put no Dota 2 Mod Manager.exe under LOCALAPPDATA\Programs' }
+          # a fresh Tauri install goes to %LOCALAPPDATA%\Dota 2 Mod Manager; one over an Electron
+          # install stays in that install's folder under Programs (src-tauri/windows/hooks.nsh)
+          $exe = @("$env:LOCALAPPDATA\Dota 2 Mod Manager", "$env:LOCALAPPDATA\Programs") | Where-Object { Test-Path $_ } |
+            ForEach-Object { Get-ChildItem $_ -Recurse -Filter 'Dota 2 Mod Manager.exe' } | Select-Object -First 1
+          if (-not $exe) { throw 'the installer finished and put no Dota 2 Mod Manager.exe under LOCALAPPDATA' }
           "APP=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "installed: $($exe.FullName)"
 

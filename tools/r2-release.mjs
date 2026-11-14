@@ -34,7 +34,7 @@
  */
 import { createRequire } from 'node:module';
 import { createR2 } from './r2-client.js';
-import { releasePlan, currentPlan, retargetFeed, staleReleaseFiles, UPDATES } from './mirror-plan.js';
+import { releasePlan, currentPlan, retargetFeed, retargetJson, staleReleaseFiles, UPDATES } from './mirror-plan.js';
 
 const require = createRequire(import.meta.url);
 const { channelHeads, mirrorExpectation, mirrorDrift, feedVersion } = require('./release-state.js');
@@ -134,7 +134,7 @@ async function publish(plan, releases) {
     const asset = release && (release.assets || []).find((a) => a.name === u.asset);
     try {
       if (!asset) throw new Error(`v${u.version} carries no ${u.asset}`);
-      if (!u.name.endsWith('.yml') && before.get(key) === asset.size) {
+      if (!/\.(yml|json)$/.test(u.name) && before.get(key) === asset.size) {
         uploaded.add(key);
         console.log(`already there ${u.name} (${(asset.size / 1024 ** 2).toFixed(0)} MB)`);
         continue;
@@ -142,6 +142,8 @@ async function publish(plan, releases) {
       let body = await download(asset.browser_download_url);
       // a beta's feed has to ask for the -beta copies of the files it names
       if (u.retarget) body = Buffer.from(retargetFeed(body.toString('utf-8')), 'utf-8');
+      // a Tauri feed names its files by full address: the mirror's copy names the mirror's files
+      if (u.json) body = Buffer.from(retargetJson(body.toString('utf-8'), u.json), 'utf-8');
       if (!dry) await retry(`upload ${u.name}`, () => r2.put(key, body, u.type));
       uploaded.add(key);
       console.log(`${dry ? 'would upload' : 'uploaded'} ${key} from v${u.version} (${(body.length / 1024 ** 2).toFixed(1)} MB)`);

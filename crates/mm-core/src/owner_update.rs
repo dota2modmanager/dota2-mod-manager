@@ -28,7 +28,8 @@ pub fn start(o: &Arc<Owner>, inner: Box<dyn UpdaterLike + Send>) {
     let (ch, tell, log) = (Arc::downgrade(o), Arc::downgrade(o), Arc::downgrade(o));
     let driver = Updater::new(
         inner,
-        false,
+        // a portable copy is told a version exists and fetches it beside itself on a click
+        crate::portable_update::portable_dir().is_some(),
         Box::new(move || ch.upgrade().map(|o| channel(&o)).unwrap_or_else(|| "latest".into())),
         Box::new(move |news| {
             if let Some(o) = tell.upgrade() {

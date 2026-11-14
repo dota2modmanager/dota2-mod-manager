@@ -141,6 +141,13 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
             now: mm_core::net_fetch::now_ms,
         };
         let owner = Owner::start(opts, Arc::new(TauriShell(app)));
+        // a jailed run says so first, as src/write-jail.ts jailLogTo does: e2e.mjs looks for it.
+        // Under Tauri the jail holds the game folder (installer::validate_game_path); the other
+        // writes are not yet routed through it (docs/rust-migration.md)
+        let roots = mm_core::write_jail::roots();
+        if !roots.is_empty() {
+            owner.diag(&format!("write jail: writes held to {} (game folder)", roots.join(" | ")));
+        }
         // the uninstaller's run puts the game right and asks; no catalog, no watches (src/main.ts)
         if !owner.opts.uninstall {
             mm_core::owner_watch::start(&owner);

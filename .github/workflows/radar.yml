@@ -64,6 +64,7 @@ jobs:
           FINGERPRINTS_DEPLOY_KEY: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: node tools/check-credentials.mjs
 
       # The webhook address is a credential. The script never prints it, including in an error.

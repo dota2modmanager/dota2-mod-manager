@@ -20,11 +20,15 @@
     "active": true,
     "targets": ["nsis"],
     "icon": ["../build/icon.png", "../build/icon.ico"],
+    "fileAssociations": [
+      { "ext": ["d2mm"], "name": "Dota 2 Mod Manager preset", "mimeType": "application/x-d2mm", "role": "Editor" }
+    ],
     "resources": {
       "../src": "app/src",
       "../CHANGELOG.md": "app/CHANGELOG.md",
       "../CHANGELOG.ru.md": "app/CHANGELOG.ru.md",
-      "../package.json": "app/package.json"
+      "../package.json": "app/package.json",
+      "../build/icon.png": "app/build/icon.png"
     },
     "windows": {
       "nsis": {

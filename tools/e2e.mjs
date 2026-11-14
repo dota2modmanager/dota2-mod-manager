@@ -359,7 +359,9 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   let exitCode = null;
   child.on('exit', (code) => { exitCode = code; });
   const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline && !startError && exitCode === null && !fs.existsSync(shot) && !fs.existsSync(`${shot}.err.txt`)) await sleep(1000);
+  // the Tauri build answers in <shot>.eval.json and takes no picture (src-tauri/src/harness.rs)
+  const answered = () => fs.existsSync(shot) || fs.existsSync(`${shot}.err.txt`) || fs.existsSync(`${shot}.eval.json`);
+  while (Date.now() < deadline && !startError && exitCode === null && !answered()) await sleep(1000);
   await sleep(1500);
   stop(child);
   await sleep(2500); // let Windows release the files before the disk is read

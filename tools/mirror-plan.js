@@ -119,6 +119,8 @@ const BINARIES = [
 ];
 
 const UPDATES = 'updates/';
+/** Where the bucket's updates/ is served from: the Tauri feeds name their files by full address. */
+const MIRROR = 'https://cdn.dota2modmanager.com/updates/';
 /** A beta's binaries, so they can sit beside a release's without replacing them. */
 const BETA_MARK = '-beta';
 const betaName = (name) => name.replace(/(\.[^.]+)$/, `${BETA_MARK}$1`);
@@ -151,6 +153,8 @@ function releasePlan(version) {
         // the two feeds a tester reads, rewritten to ask for the -beta binaries
         { asset: 'beta.yml', name: 'beta.yml', type: 'text/yaml', retarget: true },
         { asset: 'beta-linux.yml', name: 'beta-linux.yml', type: 'text/yaml', retarget: true },
+        // the Tauri builds' feed for a tester, pointing at the mirror's -beta copies
+        { asset: 'beta.json', name: 'beta.json', type: 'application/json', json: 'beta' },
         ...BINARIES.map(([asset, type]) => ({ asset, name: betaName(asset), type })),
       ],
     };
@@ -164,6 +168,9 @@ function releasePlan(version) {
       // the release, under the names the beta channel reads, pointing at the same binaries
       { asset: 'latest.yml', name: 'beta.yml', type: 'text/yaml' },
       { asset: 'latest-linux.yml', name: 'beta-linux.yml', type: 'text/yaml' },
+      // the Tauri builds' feeds, pointing at the mirror's own copies rather than at GitHub
+      { asset: 'latest.json', name: 'latest.json', type: 'application/json', json: 'release' },
+      { asset: 'latest.json', name: 'beta.json', type: 'application/json', json: 'release' },
     ]),
   };
 }
@@ -178,6 +185,23 @@ function retargetFeed(text) {
   return String(text).replace(/(Dota-2-Mod-Manager[A-Za-z-]*)(\.(?:exe|AppImage))/g, (all, stem, ext) => (
     stem.endsWith(BETA_MARK) ? all : `${stem}${BETA_MARK}${ext}`
   ));
+}
+
+/**
+ * A Tauri feed (tools/tauri-release.mjs) that asks the mirror for its files. tauri-plugin-updater
+ * fetches each platform's `url` as written, and the release's feed names GitHub, so the mirror's
+ * copy has to name the mirror, and a beta's the -beta copies. The signatures describe the bytes,
+ * which do not change with the address.
+ * @param {string} text  the .json as the release published it
+ * @param {'release'|'beta'} kind
+ */
+function retargetJson(text, kind) {
+  const feed = JSON.parse(String(text));
+  for (const p of Object.values(feed.platforms || {})) {
+    const file = String(p.url).split('/').pop();
+    p.url = `${MIRROR}${kind === 'beta' ? betaName(file) : file}`;
+  }
+  return `${JSON.stringify(feed, null, 2)}\n`;
 }
 
 /**
@@ -226,6 +250,6 @@ function previewPaths(listing) {
 }
 
 module.exports = {
-  previewPaths, staleCopies, publishedHash, checkBody, budgetNote, fits, releasePlan, retargetFeed, staleReleaseFiles, currentPlan,
-  UPDATES, BETA_MARK, betaName,
+  previewPaths, staleCopies, publishedHash, checkBody, budgetNote, fits, releasePlan, retargetFeed, retargetJson, staleReleaseFiles, currentPlan,
+  UPDATES, MIRROR, BETA_MARK, betaName,
 };

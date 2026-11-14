@@ -133,6 +133,20 @@ export const CHECKS = {
     return ok('active', res.json.expires_at);
   },
 
+  /* The minisign key the Tauri build's updates are signed with. Nothing can be asked of a service
+     here: the key unlocks only with scrypt, and the question that matters, whether it is the key
+     tauri.conf.json names, is asked by every release itself (tools/tauri-release.mjs
+     checkSignature). This catches the secret gone, or pasted as something else. */
+  async TAURI_SIGNING_PRIVATE_KEY(env) {
+    if (!env.TAURI_SIGNING_PRIVATE_KEY) return missing('TAURI_SIGNING_PRIVATE_KEY');
+    const lines = Buffer.from(env.TAURI_SIGNING_PRIVATE_KEY.trim(), 'base64').toString('utf8').split('\n');
+    const key = Buffer.from(lines[1] || '', 'base64');
+    if (!/^untrusted comment:/.test(lines[0] || '') || key.subarray(0, 2).toString() !== 'Ed' || key.length < 150) {
+      return failed('TAURI_SIGNING_PRIVATE_KEY is not a minisign secret key as `tauri signer generate` writes it');
+    }
+    return ok('a minisign secret key; each release checks it is the one tauri.conf.json names');
+  },
+
   /* Optional: a release built without it counts nothing and says so. The counter answers an empty
      batch of hits with 204 for the right token and 403 for any other, and an empty batch counts
      nothing, so this asks exactly the question without touching a number. */
