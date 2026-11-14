@@ -415,3 +415,47 @@ test('folders, the download cache, launching Dota, the version, its notes and th
     { call: ['ui:setZoom', 'nonsense'] },
   ]);
 });
+
+test('the remote config, the game patch and its repair, the item table, cosmetics, tools, arcanas and map looks answer as the TypeScript does', { skip }, async () => {
+  const base = await withMods(path.join(tmpRoot('game-base'), 'b'), OFFLINE);
+  await compare('game', base, [
+    { call: ['game:steamDownloads'] },
+    { call: ['game:steamProperties'] },
+    { call: ['config:state'] },
+    { call: ['config:noticeSeen', 'first'] },
+    { call: ['config:noticeSeen', 42] },
+    { call: ['config:noticeSeen', 'first'] },
+    { call: ['config:state'] },
+    { call: ['patch:state'] },
+    { call: ['patch:repairState'] },
+    { call: ['patch:repairSeen'] },
+    { call: ['schema:cancel'], note: 'nothing building' },
+    { call: ['patch:setEnabled', true] },
+    { call: ['patch:state'] },
+    { call: ['cosmetics:slots'] },
+    { call: ['cosmetics:pickSet', 'no such set', 0] },
+    { call: ['cosmetics:pick', 'weather', '11549', 'Weather Ash', null] },
+    { call: ['cosmetics:pick', 'weather', '11549', 'Weather Ash', null], note: 'already this' },
+    { call: ['patch:state'] },
+    { call: ['schema:cancel'], note: 'the build is over' },
+    { call: ['schema:refresh'] },
+    { call: ['patch:repairNow'] },
+    { call: ['patch:repairSeen'] },
+    { call: ['patch:repairState'] },
+    { call: ['patch:repairApp'] },
+    { call: ['tools:state'] },
+    { call: ['tools:install', 'nope'] },
+    { call: ['tools:remove', 'vrf'] },
+    { call: ['arcana:state'] },
+    { call: ['arcana:install', 'nope', '#ff0000', 'mod'] },
+    { call: ['map:state'] },
+    { call: ['map:install', 'towers', null, null] },
+    { call: ['map:install', 'castles', null, null] },
+    { call: ['map:install', 'towers', '12936', null] },
+    { call: ['arcana:install', 'terrorblade-arcana', [255, 0, 0], 'recolor'] },
+    { call: ['arcana:state'] },
+    { call: ['patch:setEnabled', false] },
+    { call: ['patch:state'] },
+    { call: ['mods:list'] },
+  ]);
+});

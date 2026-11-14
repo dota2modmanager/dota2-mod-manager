@@ -126,8 +126,13 @@ export function blind(v: unknown, t: Twin): unknown {
   let out = text;
   for (const f of forms) out = out.split(f).join('<ROOT>');
   // a moment read off the clock (ms since 1970, 2020 to 2040) differs by the milliseconds between
-  // the two processes, so it is compared as being one, not by its value
-  return JSON.parse(out, (_k, x) => (typeof x === 'number' && x > 1.577e12 && x < 2.209e12 ? '<TIME>' : x));
+  // the two processes, so it is compared as being one, not by its value; a generated record's
+  // `code` is the stamp of whichever code built it, which is the one thing the two must not share
+  return JSON.parse(out, function (k, x) {
+    if (typeof x === 'number' && x > 1.577e12 && x < 2.209e12) return '<TIME>';
+    if (k === 'code' && typeof x === 'string' && (this as Record<string, unknown>).set) return '<CODE>';
+    return x;
+  });
 }
 
 /** sha1 of every file under a folder, by its path inside. */

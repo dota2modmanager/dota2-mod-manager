@@ -45,6 +45,7 @@ pub struct Kept {
     finder: EffectFinder,
     icons: Option<AbilityIconsService>,
     rank: Option<RankLookService>,
+    arcana: Option<crate::arcana_service::ArcanaService>,
 }
 
 impl Kept {
@@ -54,6 +55,14 @@ impl Kept {
         if self.key.as_ref() != Some(&key) {
             *self = Kept { key: Some(key), ..Kept::default() };
         }
+    }
+
+    /// The arcana window's service for this game (it keeps what it read of the game's files).
+    pub fn arcana(&mut self, game: &Option<PathBuf>) -> &mut crate::arcana_service::ArcanaService {
+        self.fit(game);
+        self.arcana.get_or_insert_with(|| {
+            crate::arcana_service::ArcanaService::new(game.clone(), Some(crate::schema_service::builder_stamp()))
+        })
     }
 }
 

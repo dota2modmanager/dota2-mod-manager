@@ -80,6 +80,10 @@ pub struct Core {
     pub counting: Arc<AtomicBool>,
     /// which of the game's items a mod's models are (src/mod-id.ts), for the game in the settings
     pub mod_id: Arc<crate::mod_id::ModIdentity>,
+    /// Cancel on the build bar: what the game wore before the change that started the build
+    pub undo: crate::build_undo::BuildUndo,
+    /// the repair after a patch asked for last; a retry of an older one stands down
+    pub repair_gen: u64,
     /// the app's log, which the installer writes to as well
     log: Arc<Mutex<Vec<String>>>,
     /// the game folder and language folder the installer was made for
@@ -124,6 +128,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_compiler::CHANNELS, crate::owner_compiler::handle),
     (crate::owner_tools::CHANNELS, crate::owner_tools::handle),
     (crate::owner_app::CHANNELS, crate::owner_app::handle),
+    (crate::owner_game::CHANNELS, crate::owner_game::handle),
 ];
 
 /// The app's game folder, when one is set.
@@ -232,6 +237,8 @@ impl Owner {
             download_stats,
             counting,
             mod_id,
+            undo: crate::build_undo::BuildUndo::default(),
+            repair_gen: 0,
             log: log.clone(),
             made_for,
         };
@@ -258,9 +265,10 @@ impl Owner {
         let mut core = self.core();
         let c = &mut *core;
         let mut lines: Vec<String> = Vec::new();
+        let mut filled = None;
         {
             let mut log = |m: String| lines.push(m);
-            let mut deployed = |_: std::collections::HashSet<String>| {};
+            let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
             let mut ctx = crate::schema_service::Ctx {
                 inst: &c.installer,
                 lib: &mut c.library,
@@ -279,6 +287,11 @@ impl Owner {
                 &mut |name, ctx| other_step(name, ctx),
                 (self.opts.now)(),
             );
+        }
+        after_deploys(c, filled, &mut lines);
+        // the picture Cancel goes back to: the game as it is now, unless a build is still owed
+        if !c.settings.get("schemaPending").is_some_and(crate::js::truthy) {
+            c.undo.mark(&c.installer, &c.library, &c.settings);
         }
         drop(core);
         for l in lines {
@@ -357,6 +370,21 @@ impl Owner {
         rx
     }
 
+    /// Stop the build of the item table that is running, if one is: false when none was.
+    pub fn cancel_builds(&self) -> bool {
+        let mut b = self.builds.lock().unwrap_or_else(|e| e.into_inner());
+        if b.pending == 0 {
+            return false;
+        }
+        b.generation += 1;
+        true
+    }
+
+    /// The owner itself, for work that outlives the call (a retry later).
+    pub fn me(&self) -> Option<Arc<Owner>> {
+        self.me.upgrade()
+    }
+
     /// Wait until no build of the item table is running or asked for (the Play button waits on it).
     pub fn settled(&self) {
         let mut b = self.builds.lock().unwrap_or_else(|e| e.into_inner());
@@ -373,17 +401,22 @@ impl Owner {
         let healed = {
             let mut core = self.core();
             let c = &mut *core;
-            let mut log = |m: String| lines.push(m);
-            let mut deployed = |_: std::collections::HashSet<String>| {};
-            let mut ctx = crate::schema_service::Ctx {
-                inst: &c.installer,
-                lib: &mut c.library,
-                settings: &mut c.settings,
-                bases: None,
-                log: &mut log,
-                on_deployed: &mut deployed,
+            let mut filled = None;
+            let healed = {
+                let mut log = |m: String| lines.push(m);
+                let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
+                let mut ctx = crate::schema_service::Ctx {
+                    inst: &c.installer,
+                    lib: &mut c.library,
+                    settings: &mut c.settings,
+                    bases: None,
+                    log: &mut log,
+                    on_deployed: &mut deployed,
+                };
+                c.schema.heal(&mut ctx, true)
             };
-            c.schema.heal(&mut ctx, true)
+            after_deploys(c, filled, &mut lines);
+            healed
         };
         for l in lines {
             self.diag(&l);
@@ -404,26 +437,31 @@ impl Owner {
         let out = {
             let mut core = self.core();
             let c = &mut *core;
-            let mut log = |m: String| lines.push(m);
-            let mut deployed = |_: std::collections::HashSet<String>| {};
-            let mut ctx = crate::schema_service::Ctx {
-                inst: &c.installer,
-                lib: &mut c.library,
-                settings: &mut c.settings,
-                bases: None,
-                log: &mut log,
-                on_deployed: &mut deployed,
+            let mut filled = None;
+            let out = {
+                let mut log = |m: String| lines.push(m);
+                let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
+                let mut ctx = crate::schema_service::Ctx {
+                    inst: &c.installer,
+                    lib: &mut c.library,
+                    settings: &mut c.settings,
+                    bases: None,
+                    log: &mut log,
+                    on_deployed: &mut deployed,
+                };
+                let mut progress = |done: usize, total: usize| {
+                    if total == 0 || (!shown && (self.opts.now)() - started < 400.0) {
+                        return;
+                    }
+                    shown = true;
+                    self.progress(
+                        json!({ "type": "count", "label": label, "done": done, "total": total, "cancel": "schema" }),
+                    );
+                };
+                c.schema.refresh(&mut ctx, stop, &mut progress)
             };
-            let mut progress = |done: usize, total: usize| {
-                if total == 0 || (!shown && (self.opts.now)() - started < 400.0) {
-                    return;
-                }
-                shown = true;
-                self.progress(
-                    json!({ "type": "count", "label": label, "done": done, "total": total, "cancel": "schema" }),
-                );
-            };
-            c.schema.refresh(&mut ctx, stop, &mut progress)
+            after_deploys(c, filled, &mut lines);
+            out
         };
         if shown {
             self.progress(json!({ "type": "done" }));
@@ -433,6 +471,17 @@ impl Owner {
         }
         serde_json::to_value(out).unwrap_or(Value::Null)
     }
+}
+
+/// What follows a table written or dropped (src/services.ts onDeployed): the arcanas give way to
+/// the builder's picks over the paths they share, and Cancel's picture is taken again.
+fn after_deploys(c: &mut Core, filled: Option<std::collections::HashSet<String>>, lines: &mut Vec<String>) {
+    let Some(filled) = filled else { return };
+    let game = c.game();
+    let filled: std::collections::BTreeSet<String> = filled.into_iter().collect();
+    let arcana = c.kept.arcana(&game);
+    arcana.give_way(&c.installer, &mut c.library, &filled, None, &mut |m| lines.push(m));
+    c.undo.mark(&c.installer, &c.library, &c.settings);
 }
 
 /// The start's steps that need more than the upkeep holds (src/game-upkeep.ts atStart).
