@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * How far the move to Rust has got: every IPC channel the window can call (src/channel-args.ts),
+ * How far the move to Rust has got: every IPC channel the window can call (the argument table in
+ * crates/mm-core/src/owner/channel_args.rs, which refuses any channel it does not list),
  * and which of them Rust answers: the title bar's buttons in the shell (a `"channel" =>` arm in
  * src-tauri/src/*.rs) and every channel the state's owner lists (`CHANNELS` in
  * crates/mm-core/src/owner_*.rs). Anything left would reach no one under Tauri.
@@ -10,11 +11,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 const root = path.resolve(import.meta.dirname, '..');
-const { CHANNEL_ARGS } = await import(pathToFileURL(path.join(root, 'src', 'channel-args.ts')).href);
-const all = Object.keys(CHANNEL_ARGS).sort();
+const table = fs.readFileSync(path.join(root, 'crates', 'mm-core', 'src', 'owner', 'channel_args.rs'), 'utf8');
+// a channel opens a row of the table, `("mods:update", vec![...])`, or stands in the list of those with none
+const all = [...new Set([...table.matchAll(/(?:^\s*|\(\s*)"([a-zA-Z0-9]+:[a-zA-Z0-9:_-]+)",/gm)].map((m) => m[1]))].sort();
 
 const CHANNEL = /"([a-zA-Z0-9]+:[a-zA-Z0-9:_-]+)"/g;
 const rust = new Set();

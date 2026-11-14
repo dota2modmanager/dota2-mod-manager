@@ -19,17 +19,28 @@ test('every Russian string has an English twin', () => {
   assert.equal(run.status, 0, `\n${run.stdout}${run.stderr}`);
 });
 
-test('the check reads the main process\'s modules, whatever language they are written in', () => {
+test('the check reads every Rust module of the core and the shell', () => {
   /* It read src/*.js only, and when src/ became TypeScript the main side shrank to main.js
-     without a word: "every string has a twin" held because nothing was being looked at. */
-  const { SIDES } = require('../tools/check-i18n');
-  const main = SIDES.find((s) => s.name === 'main').files;
+     without a word: "every string has a twin" held because nothing was being looked at. The
+     main side is Rust now, in folders, and every one of them has to be read. */
+  const { SIDES, scanRust } = require('../tools/check-i18n');
+  const main = SIDES.find((s) => s.name === 'main');
+  assert.equal(main.dict, 'crates/mm-core/data/i18n-en.json');
+  assert.ok(main.files.length > 150, `the Rust modules were found (${main.files.length})`);
+  for (const f of ['crates/mm-core/src/game/patcher.rs', 'crates/mm-core/src/owner/mod.rs', 'src-tauri/src/main.rs']) assert.ok(main.files.includes(f), f);
   const fs = require('fs');
-  const modules = fs.readdirSync(path.join(__dirname, '..', 'src'))
-    .filter((f) => /\.[jt]s$/.test(f) && !f.endsWith('.d.ts') && f !== 'i18n.ts' && f !== 'i18n-en.ts')
-    .map((f) => `src/${f}`);
-  assert.ok(modules.length > 40, 'src/ was found');
-  assert.deepEqual(modules.filter((f) => !main.includes(f)), [], 'every src/ module is read');
+  const calls = main.files.reduce((n, f) => n + scanRust(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'), ['t']).length, 0);
+  assert.ok(calls > 200, `the t("...") calls were found (${calls})`);
+});
+
+test('a Rust call is read with its escapes, and a key in a variable is left alone', () => {
+  const { scanRust } = require('../tools/check-i18n');
+  const src = [
+    'let a = t("Не найден {0}", &[x]);',
+    String.raw`let b = crate::i18n::t("Строка \"в кавычках\"\n", &[]);`,
+    'let c = t(line, &[]);',
+  ].join('\n');
+  assert.deepEqual(scanRust(src, ['t']).map((h) => [h.key, h.line]), [['Не найден {0}', 1], ['Строка "в кавычках"\n', 2]]);
 });
 
 test('a string after a JSX closing tag is still found, and a real regex is still skipped', () => {

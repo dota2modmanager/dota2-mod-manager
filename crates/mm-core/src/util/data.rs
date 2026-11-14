@@ -1,5 +1,5 @@
-//! The tables the TypeScript modules hold, as tools/rust-data.mjs writes them to
-//! crates/mm-core/data/: lists of [key, value] pairs in the module's order, read once.
+//! The tables in crates/mm-core/data/ (the strings, hero names, arcana and notice tables): lists
+//! of [key, value] pairs in the order a lookup wants them, read once. The JSON is the source.
 
 use indexmap::IndexMap;
 use std::sync::OnceLock;
