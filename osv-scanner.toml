@@ -25,3 +25,18 @@ reason = "Build-time only (electron-builder -> @electron/get 3 -> global-agent -
 id = "GHSA-g3hv-75wg-m249"
 ignoreUntil = 2027-01-08
 reason = "Build and lint tools only (electron-builder, eslint); every one asks for minimatch below 11, the only fixed major, and the patterns come from this repository's configs. Nothing of it ships inside the app."
+
+# glib 0.18 and the proc-macro-error it builds with reach the app only on Linux: Tauri's tray icon
+# (tray-icon -> libappindicator -> gtk 0.18 -> atk -> glib). The glib flaw is in
+# VariantStrIter, which nothing here calls; proc-macro-error is a build-time macro helper that is
+# unmaintained, not a flaw. Tauri moves to gtk-rs 0.20 with its GTK 4 port; until then no version
+# of Tauri 2 drops them.
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0429"
+ignoreUntil = 2027-01-08
+reason = "Linux only, through Tauri's tray icon (gtk 0.18 -> glib 0.18); the unsound VariantStrIter is never called here. No Tauri 2 release takes glib 0.20."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0370"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable: a build-time macro helper of glib-macros 0.18, Linux only, through Tauri's tray icon."
