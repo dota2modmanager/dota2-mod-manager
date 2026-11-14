@@ -102,6 +102,25 @@
   };
   if (tauri()) start(); else document.addEventListener('DOMContentLoaded', start, { once: true });
 
+  // The title bar moves the window. Electron reads that from -webkit-app-region: drag; WebView2
+  // honours it too, but recomputes the regions synchronously at every step of a resize, about
+  // 900 ms each (measured 2026-11-14), so dragging an edge stalled and leaving a maximized window
+  // froze for seconds. Here the regions are switched off, and a press where the CSS marks the bar
+  // draggable (--drag: 1 beside each app-region rule) asks Rust to move the window, a second
+  // press in a row to maximize it, as a native caption does.
+  const noRegions = () => {
+    const off = document.createElement('style');
+    off.textContent = '*, *::before, *::after { -webkit-app-region: no-drag !important; }';
+    document.head.append(off);
+  };
+  if (document.head) noRegions(); else document.addEventListener('DOMContentLoaded', noRegions, { once: true });
+  document.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || !(e.target instanceof Element)) return;
+    if (getComputedStyle(e.target).getPropertyValue('--drag').trim() !== '1') return;
+    e.preventDefault();
+    invoke('mm_drag', { toggle: e.detail === 2 }).catch(() => {});
+  }, true);
+
   // Ctrl +/-/0 scale the content, as Electron's before-input-event did (src/main-window.ts)
   window.addEventListener('keydown', (e) => {
     if (!e.ctrlKey || e.altKey || !['=', '+', '-', '_', '0'].includes(e.key)) return;

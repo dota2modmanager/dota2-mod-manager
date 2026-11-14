@@ -28,9 +28,9 @@
   background: color-mix(in srgb, var(--md-surface) 78%, transparent);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
-  -webkit-app-region: drag;
+  -webkit-app-region: drag; --drag: 1;
 }
-#titlebar button, #titlebar input, #titlebar .tb-search { -webkit-app-region: no-drag; }
+#titlebar button, #titlebar input, #titlebar .tb-search { -webkit-app-region: no-drag; --drag: 0; }
 
 .tb-brand {
   display: flex;
@@ -112,7 +112,7 @@
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  -webkit-app-region: no-drag;  /* the strip is swiped, so it cannot also drag the window */
+  -webkit-app-region: no-drag; --drag: 0;  /* the strip is swiped, so it cannot also drag the window */
   overscroll-behavior-x: contain;
 }
 #tbNav::-webkit-scrollbar { display: none; }
@@ -163,7 +163,7 @@
 
 /* Help, standing where the Guides tab used to. Not a tab: it leaves the app instead of
    changing what is showing, so it reads as a mark rather than a place. */
-.tb-help { position: relative; flex-shrink: 0; -webkit-app-region: no-drag; }
+.tb-help { position: relative; flex-shrink: 0; -webkit-app-region: no-drag; --drag: 0; }
 .tb-help-btn {
   display: inline-flex;
   align-items: center;
@@ -302,7 +302,7 @@
 .tb-queue-count:empty { display: none; }
 
 /* Discord account, between the search and the window buttons */
-.tb-account { display: flex; align-items: center; margin-left: 10px; -webkit-app-region: no-drag; }
+.tb-account { display: flex; align-items: center; margin-left: 10px; -webkit-app-region: no-drag; --drag: 0; }
 .tb-account:empty { display: none; }
 .tb-login, .tb-user {
   display: inline-flex; align-items: center; gap: 7px;
@@ -446,7 +446,7 @@
   border-radius: var(--radius-full); color: var(--text-muted);
   font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer;
   transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag; --drag: 0;
 }
 .sb-btn .ms { font-size: 17px; }
 /* the folder and the switch are one tool, about the mods on disk: one pill, split down the middle */
@@ -489,7 +489,7 @@
 }
 
 .btn-play {
-  -webkit-app-region: no-drag; height: 34px; padding: 0 var(--space-5); box-sizing: border-box;
+  -webkit-app-region: no-drag; --drag: 0; height: 34px; padding: 0 var(--space-5); box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.2px;
 }

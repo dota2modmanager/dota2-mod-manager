@@ -52,3 +52,37 @@ test('a page that has already loaded is told so at once', async () => {
   await tick();
   assert.deepEqual(p.calls.filter((c) => c === 'mm_loaded'), ['mm_loaded']);
 });
+
+// The title bar moves the window by a command, not by -webkit-app-region: WebView2 recomputes the
+// regions at every step of a resize, about 900 ms each, so the regions are switched off.
+test('a press where the CSS marks the bar draggable moves the window, a second one maximizes it', () => {
+  const calls: { cmd: string; args: unknown }[] = [];
+  const handlers: Record<string, (e: unknown) => void> = {};
+  const styles: string[] = [];
+  class Element { drag: string; constructor(drag: string) { this.drag = drag; } }
+  const window = {
+    __TAURI_INTERNALS__: { transformCallback: () => 1, invoke: (cmd: string, args: unknown) => { calls.push({ cmd, args }); return Promise.resolve(); } },
+    addEventListener: () => {},
+  };
+  const document = {
+    readyState: 'complete',
+    head: { append: (el: { textContent: string }) => styles.push(el.textContent) },
+    createElement: () => ({ textContent: '' }),
+    addEventListener: (name: string, cb: (e: unknown) => void) => { handlers[name] = cb; },
+  };
+  const getComputedStyle = (el: Element) => ({ getPropertyValue: (p: string) => (p === '--drag' ? ` ${el.drag}` : '') });
+  vm.runInNewContext(SOURCE, { window, document, Element, getComputedStyle, navigator: { userAgent: 'test' }, btoa, atob, console });
+  assert.ok(styles.some((s) => s.includes('-webkit-app-region: no-drag !important')), 'the regions are off');
+  const press = (drag: string, detail = 1, button = 0) => {
+    let prevented = false;
+    handlers.mousedown({ button, detail, target: new Element(drag), preventDefault: () => { prevented = true; } });
+    return prevented;
+  };
+  const drags = () => calls.filter((c) => c.cmd === 'mm_drag').map((c) => c.args);
+  assert.equal(press('1'), true);
+  press('1', 2);
+  press('0');
+  press('', 1);
+  press('1', 1, 2);
+  assert.equal(JSON.stringify(drags()), JSON.stringify([{ toggle: false }, { toggle: true }]));
+});

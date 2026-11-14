@@ -713,12 +713,12 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
   justify-content: space-between;
   padding-left: var(--space-4);
   border-bottom: 1px solid var(--border);
-  -webkit-app-region: drag; /* frameless: the bar moves the window */
+  -webkit-app-region: drag; --drag: 1; /* frameless: the bar moves the window */
 }
 .uninstall-brand { display: flex; align-items: center; gap: var(--space-2); color: var(--primary-soft); }
 .uninstall-brand-name { font-family: var(--font-head); font-weight: var(--weight-bold); font-size: var(--text-sm); color: var(--text); }
 .uninstall-close {
-  -webkit-app-region: no-drag;
+  -webkit-app-region: no-drag; --drag: 0;
   width: 44px;
   height: 100%;
   border: none;

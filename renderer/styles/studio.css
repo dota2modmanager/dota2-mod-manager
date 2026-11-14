@@ -88,7 +88,7 @@
 
 /* ---- the title bar's parts 3.0 added ---- */
 /* Settings as a gear: a place, so still a tab with the underline, but no word */
-.tb-icon-tab { padding: 0 var(--space-2); -webkit-app-region: no-drag; }
+.tb-icon-tab { padding: 0 var(--space-2); -webkit-app-region: no-drag; --drag: 0; }
 .tb-icon-tab .ms { font-size: var(--icon-md); }
 /* something in the Workshop not opened yet */
 .tb-new {
