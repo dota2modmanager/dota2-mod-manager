@@ -108,7 +108,11 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
             import_paths(o, &paths)
         }
         "mods:importBuffers" => import_buffers(o, &arg(args, 0)),
-        "mods:list" => list(o),
+        "mods:list" => {
+            let r = list(o);
+            crate::owner_presence::refresh(o);
+            r
+        }
         "mods:switchOffStaleTerrains" => {
             let mut c = o.core();
             let ages = terrain_ages(&c);

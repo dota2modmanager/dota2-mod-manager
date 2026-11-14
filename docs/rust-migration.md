@@ -285,8 +285,12 @@ What the owner still does differently, or not yet:
 - One lock for the state, held through an item table build, a preset's downloads and a compile.
   The 3D preview and the pictures read what they need under it and work without it; the rest
   waits on its turn. A long build therefore holds other channels back until it is done.
-- The start's steps not ported: the arcana bases (`bases: None`), the patch watcher, the Discord status (`refreshPresence` is a no-op), and the refreshes
-  of the remote config, the fingerprints and the ready presets.
+- The start's steps in the owner: the arcana bases (`owner_bases.rs`: read from disk without a
+  lock, brought down on a thread of their own, the table built again when one lands), the patch
+  watcher (`owner_watch.rs start_patch`, rearmed when the game folder changes), the Discord status
+  (`owner_presence.rs`, connected by the shell only), and the fetches of the remote config, its
+  mirrors, the fingerprints and the ready presets (`owner_start.rs`). The cached mirrors count
+  from the first moment, as in `src/services.ts`.
 - The repair after a patch runs without `updateImpact` and `rebuildGenerated` (both `None`), and
   the arcana gives way to the builder's picks after a refresh, not in the middle of it.
 - `catalog:load` does not warm the previews' store afterwards.

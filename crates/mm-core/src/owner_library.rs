@@ -101,6 +101,7 @@ fn set_master(o: &Owner, on: bool) -> Value {
         Ok(changed) => {
             // the item table and the cosmetics in it: taken off with the rest, built again when back on
             drop(o.refresh_schema_in_background());
+            crate::owner_presence::refresh(o);
             json!({ "ok": true, "changed": changed })
         }
         Err(e) => json!({ "error": e }),

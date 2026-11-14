@@ -13,7 +13,7 @@
 
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Condvar, Mutex, MutexGuard, Weak};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock, Weak};
 
 use serde_json::{json, Value};
 
@@ -60,7 +60,7 @@ pub struct Core {
     pub installer: Installer,
     pub schema: SchemaService,
     pub upkeep: GameUpkeep,
-    pub remote: crate::remote_config::RemoteConfig,
+    pub remote: Arc<crate::remote_config::RemoteConfig>,
     /// the support prompt counts a launch on its first question of the run
     pub launch_counted: bool,
     /// the tab the window shows, for the Discord status
@@ -69,7 +69,9 @@ pub struct Core {
     pub net: Arc<crate::net_fetch::Net>,
     pub catalog: crate::catalog::Catalog,
     /// the ready-made presets, from the last good copy until the start's fetch lands
-    pub ready: crate::ready_presets::ReadyPresets,
+    pub ready: Arc<crate::ready_presets::ReadyPresets>,
+    /// the arcana bases the builds read, brought down when one is asked for (owner_bases.rs)
+    pub bases: Arc<crate::owner_bases::OwnerBases>,
     /// the studios' services with indexes of their own (owner_tools.rs)
     pub kept: crate::owner_tools::Kept,
     /// pictures out of the game, shared with the work done without the lock
@@ -119,6 +121,10 @@ pub struct Owner {
     builds_done: Condvar,
     /// one build at a time
     build_turn: Mutex<()>,
+    /// Dota's patches noticed while the app is open, once the shell starts watching (owner_watch.rs)
+    pub patch_watcher: OnceLock<Arc<crate::patch_watch::PatchWatcher>>,
+    /// the Discord status, once the shell connects it (owner_presence.rs)
+    pub presence: OnceLock<crate::discord_presence::Presence>,
 }
 
 #[derive(Default)]
@@ -215,6 +221,8 @@ impl Owner {
         let installer = make_installer(&made_for, &ud, &mod_id, &log);
         let schema = SchemaService::new(&ud, true);
         let net = Arc::new(crate::net_fetch::Net::new(opts.now));
+        // the second copies of the catalog the last config named, before anything is fetched
+        net.chain().apply_mirrors(&remote.mirrors());
         if let Ok(Some(p)) =
             crate::net_fetch::validate_download_proxy(settings.get("downloadProxy").unwrap_or(&Value::Null))
         {
@@ -247,12 +255,13 @@ impl Owner {
             installer,
             schema,
             upkeep,
-            remote,
+            remote: Arc::new(remote),
             launch_counted: false,
             presence_view: "catalog".into(),
             net: net.clone(),
             catalog,
-            ready: crate::ready_presets::ReadyPresets::new(&ud, None),
+            ready: Arc::new(crate::ready_presets::ReadyPresets::new(&ud, None)),
+            bases: crate::owner_bases::OwnerBases::new(&ud, net.clone(), now, log.clone()),
             kept: crate::owner_tools::Kept::default(),
             game_icons: Arc::new(crate::game_icons::GameIcons::new(&ud)),
             wiki: Arc::new(crate::wiki_icons::WikiIcons::new(&ud, net.clone(), now, &opts.app_version)),
@@ -285,7 +294,11 @@ impl Owner {
             builds: Mutex::new(Builds::default()),
             builds_done: Condvar::new(),
             build_turn: Mutex::new(()),
+            patch_watcher: OnceLock::new(),
+            presence: OnceLock::new(),
         });
+        let bases = owner.core().bases.clone();
+        bases.attach(Arc::downgrade(&owner));
         owner.start_steps();
         owner.started.store(true, Ordering::SeqCst);
         owner
@@ -303,7 +316,7 @@ impl Owner {
                 inst: &c.installer,
                 lib: &mut c.library,
                 settings: &mut c.settings,
-                bases: None,
+                bases: Some(&*c.bases),
                 log: &mut log,
                 on_deployed: &mut deployed,
             };
@@ -410,6 +423,13 @@ impl Owner {
         true
     }
 
+    /// The game folder changed: the patch watcher looks at the new one.
+    pub fn rearm_patch_watch(&self) {
+        if let Some(w) = self.patch_watcher.get() {
+            w.rearm();
+        }
+    }
+
     /// The owner itself, for work that outlives the call (a retry later).
     pub fn me(&self) -> Option<Arc<Owner>> {
         self.me.upgrade()
@@ -439,7 +459,7 @@ impl Owner {
                     inst: &c.installer,
                     lib: &mut c.library,
                     settings: &mut c.settings,
-                    bases: None,
+                    bases: Some(&*c.bases),
                     log: &mut log,
                     on_deployed: &mut deployed,
                 };
@@ -475,7 +495,7 @@ impl Owner {
                     inst: &c.installer,
                     lib: &mut c.library,
                     settings: &mut c.settings,
-                    bases: None,
+                    bases: Some(&*c.bases),
                     log: &mut log,
                     on_deployed: &mut deployed,
                 };
@@ -510,7 +530,7 @@ fn after_deploys(c: &mut Core, filled: Option<std::collections::HashSet<String>>
     let game = c.game();
     let filled: std::collections::BTreeSet<String> = filled.into_iter().collect();
     let arcana = c.kept.arcana(&game);
-    arcana.give_way(&c.installer, &mut c.library, &filled, None, &mut |m| lines.push(m));
+    arcana.give_way(&c.installer, &mut c.library, &filled, Some(&*c.bases), &mut |m| lines.push(m));
     c.undo.mark(&c.installer, &c.library, &c.settings);
 }
 

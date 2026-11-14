@@ -78,7 +78,14 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
             Ok(json!({ "ok": true }))
         }
         "settings:get" => Ok(view(&mut o.core(), true)),
-        "settings:set" => settings_set(o, args),
+        "settings:set" => {
+            let r = settings_set(o, args);
+            // the status text is localized, so a language change has to redraw it too
+            if matches!(arg(args, 0).as_str(), Some("discordPresence" | "uiLang")) {
+                crate::owner_presence::apply(o);
+            }
+            r
+        }
         "settings:moveLangFiles" => {
             let c = o.core();
             match c.game() {
@@ -95,6 +102,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
             let found = (o.opts.find_game)().filter(|f| !f.is_empty());
             if let Some(f) = &found {
                 set(&mut o.core(), "dotaGamePath", json!(f))?;
+                // the watcher is looking at the folder that was current a moment ago
+                o.rearm_patch_watch();
             }
             Ok(json!(found))
         }
@@ -102,6 +111,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
         "presence:view" => {
             let view = arg(args, 0);
             o.core().presence_view = view.as_str().map_or("catalog".into(), String::from);
+            crate::owner_presence::refresh(o);
             Ok(Value::Null)
         }
         "account:signOut" => {
@@ -168,5 +178,6 @@ fn browse_dota(o: &Owner) -> R {
     }
     let text = p.to_string_lossy().into_owned();
     set(&mut o.core(), "dotaGamePath", json!(text))?;
+    o.rearm_patch_watch();
     Ok(json!({ "path": text }))
 }

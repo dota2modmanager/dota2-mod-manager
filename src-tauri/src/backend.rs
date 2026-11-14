@@ -107,7 +107,7 @@ pub struct Start {
     pub first_run: bool,
 }
 
-/// The owner started on a thread of its own; the game watch starts once it is up.
+/// The owner started on a thread of its own; the watches and the start's fetches follow once it is up.
 pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
     let owned = Arc::new(Owned::default());
     let (cell, app) = (owned.clone(), app.clone());
@@ -125,6 +125,9 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
         };
         let owner = Owner::start(opts, Arc::new(TauriShell(app)));
         mm_core::owner_watch::start(&owner);
+        mm_core::owner_watch::start_patch(&owner);
+        mm_core::owner_start::refresh(&owner);
+        mm_core::owner_presence::start(&owner);
         let _ = cell.0.set(owner);
     });
     owned
@@ -196,8 +199,13 @@ impl Backend {
     }
 
     pub fn stop(&self) {
-        if let Backend::Host(h) = self {
-            h.stop();
+        match self {
+            Backend::Host(h) => h.stop(),
+            Backend::Owner(o) => {
+                if let Some(w) = o.0.get().and_then(|o| o.patch_watcher.get()) {
+                    w.stop();
+                }
+            }
         }
     }
 }

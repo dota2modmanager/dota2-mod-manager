@@ -86,7 +86,7 @@ pub fn repair_after_patch(o: &Owner, reason: Value) {
                 inst: &c.installer,
                 lib: &mut c.library,
                 settings: &mut c.settings,
-                bases: None,
+                bases: Some(&*c.bases),
                 log: &mut log,
                 on_deployed: &mut deployed,
             };
@@ -245,7 +245,7 @@ fn set_enabled(o: &Owner, on: bool) -> Value {
             inst: &c.installer,
             lib: &mut c.library,
             settings: &mut c.settings,
-            bases: None,
+            bases: Some(&*c.bases),
             log: &mut log,
             on_deployed: &mut deployed,
         };
@@ -477,10 +477,13 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 let c = &mut *core;
                 let game = c.game();
                 let svc = c.kept.arcana(&game);
-                let r =
-                    svc.install(&c.installer, &mut c.library, (&a0, &arg(args, 1), &arg(args, 2)), None, &mut |m| {
-                        lines.push(m)
-                    });
+                let r = svc.install(
+                    &c.installer,
+                    &mut c.library,
+                    (&a0, &arg(args, 1), &arg(args, 2)),
+                    Some(&*c.bases),
+                    &mut |m| lines.push(m),
+                );
                 if r.is_ok() {
                     crate::owner_packs::after_deploy_master(c);
                 }
