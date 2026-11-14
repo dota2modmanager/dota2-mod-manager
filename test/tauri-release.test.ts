@@ -76,3 +76,18 @@ test('the release refuses a public key that is not minisign Ed25519', async () =
   const { checkSignature } = await import('../tools/tauri-release.mjs');
   assert.match(String(checkSignature(Buffer.from('nonsense\nAAAA\n').toString('base64'), '', Buffer.alloc(0))), /not a minisign/);
 });
+
+test('the release bundles the download token where the app reads it, and no longer ships src/', async () => {
+  const fs = await import('node:fs');
+  const path = await import('node:path');
+  const root = path.resolve(import.meta.dirname, '..');
+  const conf = JSON.parse(fs.readFileSync(path.join(root, 'src-tauri', 'tauri.conf.json'), 'utf8'));
+  const res: Record<string, string> = conf.bundle.resources;
+  assert.equal(res['../build/stats'], 'app/build/stats');
+  assert.ok(!Object.keys(res).some((k) => k === '../src' || k.startsWith('../src/')), 'src/ is not part of the build');
+  assert.ok(fs.existsSync(path.join(root, 'build', 'stats')), 'the bundled folder exists in a checkout without the token');
+  const tool = fs.readFileSync(path.join(root, 'tools', 'stats-token.mjs'), 'utf8');
+  assert.match(tool, /'build', 'stats', 'download-stats\.token'/);
+  const owner = fs.readFileSync(path.join(root, 'crates', 'mm-core', 'src', 'owner', 'mod.rs'), 'utf8');
+  assert.match(owner, /join\("build"\)\.join\("stats"\)\.join\("download-stats\.token"\)/);
+});
