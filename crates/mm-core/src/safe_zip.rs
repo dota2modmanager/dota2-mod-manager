@@ -159,7 +159,9 @@ impl OpenedZip {
             if size >= lim.ratio_floor && packed > 0 && size as f64 / packed as f64 > lim.ratio {
                 return Err(t("{0}: архив сжат подозрительно плотно", &[json!(name)]));
             }
-            let rel = entry.name().replace('\\', "/");
+            // zip 9 answers a name it cannot decode with an error; zip 2 never failed here, so such a
+            // name keeps the lossy reading above instead of failing the whole archive
+            let rel = entry.name().map(|n| n.into_owned()).unwrap_or(raw).replace('\\', "/");
             if is_unsafe_name(&rel) {
                 continue;
             }

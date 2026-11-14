@@ -15,10 +15,11 @@ function renderer(lang, storageThrows = false) {
     window: {}, console,
     localStorage: { getItem: () => { if (storageThrows) throw new Error('unavailable'); return lang; } },
   });
-  for (const name of ['catalog', 'library', 'app']) {
+  for (const name of ['catalog', 'library', 'app', 'more']) {
     vm.runInContext(read(`renderer/locales/zh-CN-${name}.js`), context);
   }
-  vm.runInContext(read('renderer/i18n.js') + '\nthis.english = EN;', context);
+  vm.runInContext(`{\n${read('renderer/locales/en-more.js')}\n}`, context);
+  vm.runInContext(read('renderer/i18n.js') + '\nthis.english = { ...window.EN_MORE, ...EN };', context);
   return context;
 }
 
@@ -45,6 +46,8 @@ test('Chinese is restored before the renderer draws, with a Chinese date and num
   assert.equal(context.window.I18N_LANG, 'zh-CN');
   assert.equal(context.window.i18nLocale(), 'zh-CN');
   assert.equal(context.window.tr('Настройки'), '设置');
+  assert.equal(context.window.tr('Файлы игры'), '游戏文件');
+  assert.equal(vm.runInContext('L`Обработано героев: ${3} из ${10}`', context), '已处理英雄：3 / 10');
   assert.equal(context.window.tr('Разор'), '雷泽');
   assert.equal(context.window.tr('Гребень Разора'), '雷泽的头冠');
   assert.equal(vm.runInContext('L`Надето: ${"Official item"}`', context), '已装备：Official item');

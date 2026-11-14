@@ -1322,7 +1322,7 @@
   "Audex": "奥德克斯",
   "HondaC": "本田西",
   "Nothing": "空白",
-  "Warcraft III": "魔兽争霸 三",
+  "Warcraft III": "魔兽争霸 3",
   "Pusia": "普西亚",
   "Skeleton Black Ping": "骷髅 黑色 信号",
   "Skeleton Blue Ping": "骷髅 蓝色 信号",
@@ -1380,7 +1380,7 @@
   "Sora Main Menu": "空 主菜单",
   "Stairs Guy Main Menu": "阶梯 男子 主菜单",
   "ReZero Subaru Phone Horn": "从零开始的异世界生活 昴 电话 号角",
-  "Warcraft III / AllStars Voices": "魔兽争霸 三 / 全明星 语音",
+  "Warcraft III / AllStars Voices": "魔兽争霸 3 / 全明星语音",
   "Dark Carnival Serega Pirat": "暗黑 嘉年华 谢廖加·海盗",
   "Dark Carnival Team Spirit": "暗黑 嘉年华 灵魂战队",
   "Dark Carnival Dora": "暗黑 嘉年华 朵拉",
@@ -1584,5 +1584,7 @@
   "Guardians of the Lost Path Radiant": "失落之径的卫士 - 天辉防御塔",
   "Guardians of the Lost Path Dire": "失落之径的卫士 - 夜魇防御塔",
   "Stoneclaw Scavengers Radiant": "石爪清道夫天辉防御塔",
-  "Stoneclaw Scavengers Dire": "石爪清道夫夜魇防御塔"
+  "Stoneclaw Scavengers Dire": "石爪清道夫夜魇防御塔",
+  "Frozen Throne": "冰封王座",
+  "Rainy Day": "雨天"
 }

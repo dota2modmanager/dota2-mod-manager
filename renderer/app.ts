@@ -10,6 +10,7 @@
 import './locales/zh-CN-catalog.js';
 import './locales/zh-CN-library.js';
 import './locales/zh-CN-app.js';
+import './locales/zh-CN-more.js';
 import './locales/en-more.js';
 import './i18n.js';
 import './shell/errors.ts';
