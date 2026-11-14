@@ -53,4 +53,59 @@ Var d2mmWipeData
     RMDir /r "$APPDATA\Dota 2 Mod Manager"
     RMDir /r "$LOCALAPPDATA\${BUNDLEID}"
   ${EndIf}
+  ; the d2mm:// handler goes with the program, unless an update puts it straight back or it is
+  ; another program's by now
+  ${If} $UpdateMode <> 1
+    ReadRegStr $R7 HKCU "Software\Classes\d2mm\shell\open\command" ""
+    ${If} $R7 == '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
+      DeleteRegKey HKCU "Software\Classes\d2mm"
+    ${EndIf}
+  ${EndIf}
+!macroend
+
+; ---------- the way over from the Electron build ----------
+;
+; The last Electron release hands its update to this installer: electron-updater runs it as
+; `setup.exe --updated /S --force-run`. The Electron build lives in
+; %LOCALAPPDATA%\Programs\dota2-mod-manager under electron-builder's own keys (the GUID is
+; electron-builder's uuid v5 of the appId com.thefleece.dota2modmanager). This build moves into
+; that same folder, under the same exe name (tauri.conf.json mainBinaryName), so a taskbar pin, a
+; shortcut and the sign-in entry keep pointing at a program that is there. userData stays where
+; both builds keep it, %APPDATA%\Dota 2 Mod Manager.
+!define D2MM_ELECTRON_KEY "Software\c6184bef-ce59-56eb-9f33-76c285700bc8"
+!define D2MM_ELECTRON_UNINSTALL "Software\Microsoft\Windows\CurrentVersion\Uninstall\c6184bef-ce59-56eb-9f33-76c285700bc8"
+!define D2MM_ELECTRON_UNINSTALLER "Uninstall Dota 2 Mod Manager.exe"
+
+!macro NSIS_HOOK_PREINSTALL
+  ReadRegStr $R0 HKCU "${D2MM_ELECTRON_KEY}" "InstallLocation"
+  ${If} $R0 != ""
+  ${AndIf} ${FileExists} "$R0\*.*"
+    StrCpy $INSTDIR $R0
+    SetOutPath $INSTDIR
+    ; the Electron copy may still be in the tray: its files cannot go while it runs
+    !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+    ; Its own uninstaller, told it is an update (build/installer.nsh asks nothing then and keeps
+    ; the shortcuts and the app's data), run in place so it waits for it to finish.
+    ${If} ${FileExists} "$R0\${D2MM_ELECTRON_UNINSTALLER}"
+      ExecWait '"$R0\${D2MM_ELECTRON_UNINSTALLER}" /S --updated /KEEP_APP_DATA _?=$R0'
+      Delete "$R0\${D2MM_ELECTRON_UNINSTALLER}"
+    ${EndIf}
+    DeleteRegKey HKCU "${D2MM_ELECTRON_UNINSTALL}"
+    DeleteRegKey HKCU "${D2MM_ELECTRON_KEY}"
+    SetOutPath $INSTDIR
+  ${EndIf}
+!macroend
+
+!macro NSIS_HOOK_POSTINSTALL
+  ; d2mm:// links (a preset, a mod) open this app, as Electron's setAsDefaultProtocolClient did
+  WriteRegStr HKCU "Software\Classes\d2mm" "" "URL:d2mm"
+  WriteRegStr HKCU "Software\Classes\d2mm" "URL Protocol" ""
+  WriteRegStr HKCU "Software\Classes\d2mm\shell\open\command" "" '"$INSTDIR\${MAINBINARYNAME}.exe" "%1"'
+  ; electron-updater asks the installer to start the app again once it is in place
+  ${GetParameters} $R8
+  ClearErrors
+  ${GetOptions} $R8 "--force-run" $R9
+  ${IfNot} ${Errors}
+    Exec '"$INSTDIR\${MAINBINARYNAME}.exe"'
+  ${EndIf}
 !macroend

@@ -346,10 +346,20 @@ The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How i
   first: a copy in the tray would take the `--uninstall` start as a second instance and end it
   unasked.
 
+- The way over: the last Electron release hands its update to the Tauri installer, which
+  electron-updater runs as `setup.exe --updated /S --force-run`. The installer's
+  `NSIS_HOOK_PREINSTALL` finds the Electron build by electron-builder's keys (the GUID is its uuid
+  v5 of the appId), moves into that folder (`%LOCALAPPDATA%\Programs\dota2-mod-manager`), runs the
+  Electron uninstaller as an update (no questions, shortcuts and data kept), and removes its
+  entries. The exe keeps its name (`mainBinaryName`), so taskbar pins, shortcuts and the sign-in
+  entry keep pointing at a program that is there. userData stays in `%APPDATA%\Dota 2 Mod Manager`.
+  `NSIS_HOOK_POSTINSTALL` claims `d2mm://`, as Electron's `setAsDefaultProtocolClient` did, and
+  starts the app again on `--force-run`. The uninstaller removes the handler only when it still
+  points at this program. `.github/workflows/tauri-handover.yml` rehearses all of it on a runner
+  against the last published release.
+
 Still to do: CI building the signed NSIS installer and the manifests beside each release and on
-the mirror, and the way over. The last Electron release has to install the Tauri build, through
-electron-updater's NSIS step, into the same folder and under the same app id, keeping userData
-where it is (`%APPDATA%\Dota 2 Mod Manager`).
+the mirror, and the Electron release that points its update at that installer.
 
 ## Moving a piece
 
