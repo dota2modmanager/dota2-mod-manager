@@ -8,8 +8,8 @@
 // GOLDEN_RECORD=1 writes what was seen back to the file; otherwise a case missing from it fails.
 // Inputs carry paths, which differ between systems, so each system has a file of its own; where
 // there is none yet, `on` is false and only the comparison with the TypeScript runs. A fresh
-// temporary folder (mkdtemp's random characters after its prefix's last dash, with anything a
-// test appends to them) reads as <TMP>/<its prefix> on both the
+// temporary folder (mkdtemp's six random characters after its prefix's dash; anything a test
+// appends to them stays) reads as <TMP>/<its prefix> on both the
 // input and the answer side, in any spelling of the separators, so a run does not change a key.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -24,7 +24,7 @@ const SEP = String.raw`[\\/]+`;
 const escaped = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 const parts = (p: string) => p.split(/[\\/]+/).filter(Boolean).map(escaped);
 const roots = [...new Set([os.tmpdir(), fs.realpathSync.native(os.tmpdir())])].map(parts);
-const TMP = new RegExp(String.raw`(?:${roots.map((r) => r.join(SEP)).join('|')})${SEP}([^\\/"]*?-)[A-Za-z0-9]+(?=[\\/"]|$)`, 'gi');
+const TMP = new RegExp(String.raw`(?:${roots.map((r) => r.join(SEP)).join('|')})${SEP}([^\\/"]*-)[A-Za-z0-9]{6}`, 'gi');
 
 /** A string with every fresh temporary folder in it named the same way on every run. */
 export const stable = (s: string) => s.replace(TMP, '<TMP>/$1');
@@ -81,7 +81,14 @@ export class Golden {
   }
 
   note(name: string, args: unknown[], answer: unknown, whole: boolean) {
-    (this.seen[name] ??= {})[this.key(args)] = Golden.form(answer, whole);
+    const cases = (this.seen[name] ??= {});
+    const key = this.key(args);
+    const form = Golden.form(answer, whole);
+    // two calls that read as one key must answer alike, or the record keeps only the last
+    if (key in cases && JSON.stringify(cases[key]) !== JSON.stringify(form)) {
+      throw new Error(`${name}(${stable(JSON.stringify(args)).slice(0, 200)}): two calls share a key and answer differently`);
+    }
+    cases[key] = form;
   }
 
   /** Writes what this run saw over the functions it ran; the others keep their record. */
