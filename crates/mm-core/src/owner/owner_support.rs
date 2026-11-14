@@ -37,8 +37,12 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         }
         "diag:export" => export(o).unwrap_or_else(|e| json!({ "error": e })),
         "catalog:load" => {
-            let c = o.core();
-            match c.catalog.load(&c.net, crate::js::truthy(&a0)) {
+            // the fetch held every other call of the window for a second at each start
+            let (catalog, net) = {
+                let c = o.core();
+                (c.catalog.clone(), c.net.clone())
+            };
+            match catalog.load(&net, crate::js::truthy(&a0)) {
                 Ok(data) => data,
                 // the kind of failure travels with the words: the screen says "you are offline"
                 // instead of printing a socket error at somebody who turned their wifi off

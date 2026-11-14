@@ -91,6 +91,12 @@ pub fn normalize_catalog(mods: &mut Value) {
     });
 }
 
+/// A cache file replaced whole: the download counts and the presets read mods.json while a refresh,
+/// off the owner's lock, may be writing it.
+fn write(file: &Path, text: impl AsRef<[u8]>) -> Result<(), String> {
+    crate::atomic_file::write_file_atomic(file, text.as_ref()).map_err(|e| e.to_string())
+}
+
 /// The catalog on disk and on the wire.
 pub struct Catalog {
     pub cache_dir: PathBuf,
@@ -100,6 +106,9 @@ pub struct Catalog {
     /// the published archive hashes: None until read, Some(None) when there are none
     hashes: Mutex<Option<Option<Value>>>,
     now: Clock,
+    /// one load at a time: a load runs without the owner's lock (its fetch can take seconds), and
+    /// two refreshes writing the same files at once would leave either's half
+    turn: Mutex<()>,
 }
 
 impl Catalog {
@@ -112,6 +121,7 @@ impl Catalog {
             public_key: public_key.unwrap_or(signature::CATALOG_PUBLIC_KEY).into(),
             hashes: Mutex::new(None),
             now,
+            turn: Mutex::new(()),
         }
     }
 
@@ -165,26 +175,26 @@ impl Catalog {
     pub fn refresh(&self, net: &Net) -> Result<(), String> {
         for name in DATA_FILES {
             let text = self.fetch_signed(net, name)?;
-            std::fs::write(self.cache_path(name), text).map_err(|e| e.to_string())?;
+            write(&self.cache_path(name), text)?;
         }
         // the hashes, which the app is allowed to do without
         match self
             .fetch_signed(net, HASH_FILE)
-            .and_then(|t| std::fs::write(self.cache_path(HASH_FILE), t).map_err(|e| e.to_string()))
+            .and_then(|t| write(&self.cache_path(HASH_FILE), t))
         {
             Ok(()) => {}
             Err(_) => *self.hashes.lock().unwrap_or_else(|e| e.into_inner()) = None,
         }
-        std::fs::write(
-            self.cache_path("meta.json"),
+        write(
+            &self.cache_path("meta.json"),
             crate::js::stringify(&json!({ "fetchedAt": crate::js::json_number((self.now)()) }), ""),
         )
-        .map_err(|e| e.to_string())
     }
 
     /// The three files as the window is handed them; a catalog that could not be fetched is not
     /// no catalog, so a failed refresh over a cache says why it is old instead of failing.
     pub fn load(&self, net: &Net, force_refresh: bool) -> Result<Value, String> {
+        let _turn = self.turn.lock().unwrap_or_else(|e| e.into_inner());
         let mut stale = None;
         if force_refresh || !self.has_cache() {
             if let Err(e) = self.refresh(net) {

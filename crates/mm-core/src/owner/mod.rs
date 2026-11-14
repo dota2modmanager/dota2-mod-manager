@@ -94,7 +94,8 @@ pub struct Core {
     pub presence_view: String,
     /// the network, through the user's proxy
     pub net: Arc<crate::net_fetch::Net>,
-    pub catalog: crate::catalog::Catalog,
+    /// shared, so a load (a fetch at worst) runs without the lock
+    pub catalog: Arc<crate::catalog::Catalog>,
     /// the ready-made presets, from the last good copy until the start's fetch lands
     pub ready: Arc<crate::ready_presets::ReadyPresets>,
     /// the arcana bases the builds read, brought down when one is asked for (owner_bases.rs)
@@ -258,7 +259,7 @@ impl Owner {
             net.set_proxy(Some(&p));
         }
         let now = opts.now;
-        let catalog = crate::catalog::Catalog::new(&ud, None, None, Box::new(now));
+        let catalog = Arc::new(crate::catalog::Catalog::new(&ud, None, None, Box::new(now)));
         let counting = Arc::new(AtomicBool::new(settings.get("countDownloads") != Some(&Value::Bool(false))));
         let on = counting.clone();
         // the counter's token is written beside the build by CI, never committed
