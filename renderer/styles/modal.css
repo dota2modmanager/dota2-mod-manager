@@ -683,29 +683,56 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
 @media (prefers-reduced-motion: reduce) { .support-wait:disabled::after { animation: none; transform: scaleX(1); } }
 
 /* ============ The window the uninstaller opens ============
-   Its own small page (renderer/uninstall.html), not a screen of the app: no titlebar, no
-   rail, no status bar, and it lives for a few seconds. It borrows the tokens and the buttons
-   so that the last thing somebody sees of this app still looks like it. */
+   Its own small page (renderer/uninstall.html), not a screen of the app: no rail, no status
+   bar, and it lives for a few seconds. It borrows the title bar's mark, the background, the
+   checkbox and the buttons, so the last thing somebody sees of this app still looks like it.
+   The questions are one list, not three cards: they are three answers to one question. */
 .uninstall-body {
-  background: var(--bg-base);
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(155deg, var(--bg-base) 0%, var(--bg-deep) 100%);
   color: var(--text);
   font-family: var(--font-body);
   font-weight: var(--weight-body);
-  height: 100vh;
+}
+.uninstall-bar {
+  height: var(--tb-h);
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  -webkit-app-region: drag; /* frameless, so the whole page moves the window */
+  justify-content: space-between;
+  padding-left: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag; /* frameless: the bar moves the window */
 }
-.uninstall-shell {
+.uninstall-brand { display: flex; align-items: center; gap: var(--space-2); color: var(--primary-soft); }
+.uninstall-brand-name { font-family: var(--font-head); font-weight: var(--weight-bold); font-size: var(--text-sm); color: var(--text); }
+.uninstall-close {
   -webkit-app-region: no-drag;
-  width: 100%;
-  padding: var(--space-6);
+  width: 44px;
+  height: 100%;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+/* closing is cancelling, so it is not painted the red of a delete */
+.uninstall-close:hover { background: var(--surface-hover); color: var(--text); }
+.uninstall-close:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.uninstall-close:disabled { opacity: 0.4; cursor: default; }
+.uninstall-shell {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: var(--space-5) var(--space-6) var(--space-5);
 }
-.uninstall-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
-.uninstall-head .ms { font-size: var(--icon-xl); color: var(--danger); }
 .uninstall-title {
   margin: 0;
   font-family: var(--font-head);
@@ -713,33 +740,59 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
 }
-.uninstall-sub { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--text-muted); }
-.uninstall-opts { display: grid; gap: var(--space-3); }
+.uninstall-sub { margin: var(--space-2) 0 0; font-size: var(--text-sm); line-height: var(--leading-normal); color: var(--text-muted); }
+.uninstall-opts {
+  margin-top: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
 .uninstall-opt {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease-standard);
+  transition: background var(--dur-fast) var(--ease-standard);
 }
-.uninstall-opt:hover { border-color: var(--border-strong); }
-.uninstall-opt input { margin-top: var(--space-px); accent-color: var(--primary); flex-shrink: 0; }
-.uninstall-opt-body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.uninstall-opt + .uninstall-opt { border-top: 1px solid var(--border); }
+.uninstall-opt:hover { background: var(--surface-hover); }
+.uninstall-opt .lib-check { margin-top: var(--space-px); }
+.uninstall-opt-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .uninstall-opt-body b { font-size: var(--text-base); font-weight: var(--weight-semibold); }
-.uninstall-opt-body small {
+.uninstall-opt-body small { font-size: var(--text-sm); line-height: var(--leading-normal); color: var(--text-muted); }
+.uninstall-opt-size {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.uninstall-opt:has(:checked) .uninstall-opt-size { color: var(--text); }
+/* nothing of that kind to take: the row stays so the list reads the same, but quieter */
+.uninstall-opt.is-off { cursor: default; }
+.uninstall-opt.is-off:hover { background: none; }
+.uninstall-opt.is-off .uninstall-opt-body b { color: var(--text-muted); }
+.uninstall-opt.is-off .uninstall-opt-body small { color: var(--text-faint); }
+.uninstall-opt.is-off .lib-check { opacity: 0.4; cursor: default; }
+.uninstall-opt .lib-check:disabled:hover { border-color: var(--border-strong); }
+.uninstall-foot {
+  margin-top: auto;
+  padding-top: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.uninstall-total {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
-.uninstall-note {
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-sm);
-  line-height: var(--leading-relaxed);
-  color: var(--text-faint);
-  min-height: 1em;
-}
-.uninstall-shell .confirm-actions { margin-top: var(--space-5); }
+.uninstall-total.is-error { color: var(--danger); }
+.uninstall-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }

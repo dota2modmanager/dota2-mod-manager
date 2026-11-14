@@ -16,24 +16,29 @@
   <link rel="stylesheet" href="styles/modal.css">
 </head>
 <body class="uninstall-body">
-  <div class="uninstall-shell">
-    <div class="uninstall-head">
-      <span class="ms">delete_sweep</span>
-      <div>
-        <h1 class="uninstall-title" id="title">Удалить Dota 2 Mod Manager</h1>
-        <p class="uninstall-sub" id="sub">Что забрать с собой</p>
-      </div>
-    </div>
+  <!-- the app's own title bar, cut down to the mark and a close: the window has no frame -->
+  <header class="uninstall-bar">
+    <span class="uninstall-brand">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2l7 4v8l-7 8-7-8V6z"/><path d="M12 8v6"/><path d="M9 11h6"/></svg>
+      <span class="uninstall-brand-name">Mod Manager</span>
+    </span>
+    <button class="uninstall-close" id="closeBtn" aria-label="Cancel"><svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></button>
+  </header>
+
+  <main class="uninstall-shell">
+    <h1 class="uninstall-title" id="title">Удалить Dota 2 Mod Manager</h1>
+    <p class="uninstall-sub" id="sub"></p>
 
     <div class="uninstall-opts" id="opts"></div>
 
-    <p class="uninstall-note" id="note"></p>
-
-    <div class="confirm-actions">
-      <button class="btn" id="cancelBtn">Отмена</button>
-      <button class="btn btn-danger-solid" id="okBtn">Удалить</button>
-    </div>
-  </div>
+    <footer class="uninstall-foot">
+      <p class="uninstall-total" id="total" aria-live="polite"></p>
+      <div class="uninstall-actions">
+        <button class="btn" id="cancelBtn">Отмена</button>
+        <button class="btn btn-danger-solid" id="okBtn">Удалить</button>
+      </div>
+    </footer>
+  </main>
   <script src="locales/zh-CN-catalog.js"></script>
   <script src="locales/zh-CN-library.js"></script>
   <script src="locales/zh-CN-app.js"></script>

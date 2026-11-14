@@ -4,7 +4,8 @@
  * to the game's own files, the mods sitting in the game's language folder, and its folder of
  * settings, caches and the downloaded toolchain. Each one is a question rather than a
  * decision made on somebody's behalf, and each says how much it is talking about, because
- * "delete all data" means nothing until you know it is 340 MB of pictures.
+ * "delete all data" means nothing until you know it is 340 MB of pictures. The footer adds
+ * up what the ticked ones free, so the answer is in front of the button that acts on it.
  *
  * Nothing here reaches the network or the rest of the app: see preload-uninstall.js.
  */
@@ -13,15 +14,16 @@
 const $ = (sel) => document.querySelector(sel);
 const MB = (bytes) => (bytes / 1048576).toFixed(bytes > 10485760 ? 0 : 1);
 
-/** One question, drawn the same way whatever it is about. */
-function optionHtml({ id, checked, title, note }) {
+/** One question, drawn the same way whatever it is about: a box, what it does, what it costs. */
+function optionHtml({ id, checked, disabled, title, note, size }) {
   return `
-    <label class="uninstall-opt">
-      <input type="checkbox" id="${id}"${checked ? ' checked' : ''}>
+    <label class="uninstall-opt${disabled ? ' is-off' : ''}">
+      <input type="checkbox" class="lib-check" id="${id}"${checked ? ' checked' : ''}${disabled ? ' disabled' : ''}>
       <span class="uninstall-opt-body">
         <b>${title}</b>
         <small>${note}</small>
       </span>
+      ${size ? `<span class="uninstall-opt-size">${size}</span>` : ''}
     </label>`;
 }
 
@@ -43,6 +45,7 @@ async function main() {
   $('#sub').textContent = L`Программа будет удалена. Отметь, что забрать вместе с ней.`;
   $('#cancelBtn').textContent = L`Отмена`;
   $('#okBtn').textContent = L`Удалить`;
+  $('#closeBtn').setAttribute('aria-label', L`Отмена`);
 
   const opts = [];
   // Only worth asking when there is an edit to undo. Left first and checked, because a game
@@ -58,20 +61,25 @@ async function main() {
   /* Off by default, both of them. Ticking "delete 276 MB of mods" for somebody is the app
    * making a decision that is theirs, and it is the decision that cannot be undone. Putting
    * the game back is different and stays on: a game left carrying our edit with the one
-   * program that can undo it now gone is the outcome nobody can fix afterwards. */
+   * program that can undo it now gone is the outcome nobody can fix afterwards.
+   * With nothing installed the row stays, quieter and shut, so the list reads the same
+   * every time and says plainly that there is nothing of that kind to take. */
   opts.push({
     id: 'optMods',
     checked: false,
+    disabled: !plan.mods,
     title: L`Удалить установленные моды`,
     note: plan.mods
-      ? L`${plan.mods} шт., ${MB(plan.modBytes)} МБ в папке игры. Иначе останутся лежать там, и управлять ими будет нечем.`
+      ? L`${plan.mods} шт. в папке игры. Иначе останутся лежать там, и управлять ими будет нечем.`
       : L`Модов не установлено.`,
+    size: plan.mods ? `${MB(plan.modBytes)} ${L`МБ`}` : '',
   });
   opts.push({
     id: 'optData',
     checked: false,
     title: L`Удалить данные приложения`,
-    note: L`Настройки, библиотека, кэш картинок и скачанные инструменты — ${MB(plan.dataBytes)} МБ.`,
+    note: L`Настройки, библиотека, кэш картинок и скачанные инструменты.`,
+    size: `${MB(plan.dataBytes)} ${L`МБ`}`,
   });
   $('#opts').innerHTML = opts.map(optionHtml).join('');
 
@@ -80,29 +88,48 @@ async function main() {
     mods: !!$('#optMods')?.checked,
     data: !!$('#optData')?.checked,
   });
-  const paintNote = () => {
+  const paintTotal = () => {
     const b = boxes();
-    $('#note').textContent = (b.revert || b.mods || b.data)
-      ? ''
-      : L`Ничего не отмечено — будет удалена только сама программа.`;
+    const bytes = (b.mods ? plan.modBytes || 0 : 0) + (b.data ? plan.dataBytes || 0 : 0);
+    const total = $('#total');
+    total.classList.remove('is-error');
+    total.textContent = bytes
+      ? L`Освободится ${MB(bytes)} МБ`
+      : b.revert
+        ? L`Игра вернётся к своим файлам`
+        : L`Удалится только сама программа`;
   };
-  $('#opts').addEventListener('change', paintNote);
-  paintNote();
+  $('#opts').addEventListener('change', paintTotal);
+  paintTotal();
 
-  $('#cancelBtn').addEventListener('click', () => window.uninstall.cancel());
+  const cancel = () => {
+    if (!$('#cancelBtn').disabled) window.uninstall.cancel();
+  };
+  $('#cancelBtn').addEventListener('click', cancel);
+  $('#closeBtn').addEventListener('click', cancel);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') cancel();
+  });
+
+  let ran = null; // the choices once the removal ran: the button then only lets go
   $('#okBtn').addEventListener('click', async () => {
+    if (ran) return window.uninstall.done(ran.data);
+    const b = boxes();
+    for (const box of document.querySelectorAll('.uninstall-opt input')) box.disabled = true;
     $('#okBtn').disabled = true;
     $('#cancelBtn').disabled = true;
+    $('#closeBtn').disabled = true;
     $('#okBtn').textContent = L`Удаляю…`;
-    const b = boxes();
     const r = await window.uninstall.run(b);
     // What could not be removed is said plainly and then let go: the uninstaller takes the
     // program either way, and a window that refuses to close is worse than a leftover file.
     if (r?.errors?.length) {
-      $('#note').textContent = L`Не удалось убрать ${r.errors.length}: ${r.errors.slice(0, 2).join('; ')}`;
+      const total = $('#total');
+      total.classList.add('is-error');
+      total.textContent = L`Не удалось убрать ${r.errors.length}: ${r.errors.slice(0, 2).join('; ')}`;
       $('#okBtn').textContent = L`Продолжить`;
       $('#okBtn').disabled = false;
-      $('#okBtn').onclick = () => window.uninstall.done(b.data);
+      ran = b;
       return;
     }
     // the app's own folder is taken by the uninstaller a moment from now, not from in here

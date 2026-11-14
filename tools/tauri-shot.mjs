@@ -9,6 +9,7 @@
  *
  *   node tools/tauri-shot.mjs [--out shot.png] [--click "sel1||key:Escape||sel2"] [--wait 8000] [--release]
  *       [--eval "js expression"]   printed after the shot
+ *       [--uninstall]              the uninstaller's run: its window, and the exit code it ends with
  *
  * Always on the sandbox (npm run sandbox:seed) and always with --write-jail=sandbox.
  */
@@ -42,7 +43,8 @@ const t0 = Date.now();
 const since = () => `${((Date.now() - t0) / 1000).toFixed(2)}s`;
 // --link d2mm://...: started by a link, as a click in the browser starts it
 const link = arg('link');
-const child = spawn(exe, ['--user-data-dir=sandbox/userdata', '--write-jail=sandbox', ...(link ? [link] : [])], {
+const uninstall = process.argv.includes('--uninstall');
+const child = spawn(exe, ['--user-data-dir=sandbox/userdata', '--write-jail=sandbox', ...(link ? [link] : []), ...(uninstall ? ['--uninstall'] : [])], {
   cwd: root,
   env: {
     ...process.env,
@@ -53,6 +55,8 @@ const child = spawn(exe, ['--user-data-dir=sandbox/userdata', '--write-jail=sand
 });
 const hostLog = [];
 child.stderr.on('data', (d) => { hostLog.push(String(d)); if (process.env.MM_TRACE) process.stderr.write(d); });
+// the uninstaller reads the exit code as the answer (build/installer.nsh)
+const exited = new Promise((resolve) => child.on('exit', (code) => resolve(code)));
 
 let browser;
 const finish = (code) => {
@@ -76,9 +80,26 @@ try {
   page.on('pageerror', (e) => errors.push(String(e)));
   // runs in the page, where window and document are
   // eslint-disable-next-line no-undef
-  await page.waitForFunction(() => window.api && document.querySelector('#root, #app, main, body > div'), null, { timeout: 30_000 });
-  console.log(`page has window.api ${since()}`);
+  await page.waitForFunction(() => (window.api || window.uninstall) && document.querySelector('#root, #app, main, body > div'), null, { timeout: 30_000 });
+  console.log(`page has its bridge ${since()}`);
   await page.waitForTimeout(wait);
+  const js = arg('eval');
+  if (uninstall) {
+    // the shot before the clicks: a click that answers ends the run, and the window with it
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    await page.screenshot({ path: out });
+    console.log(`shot ${out} ${since()}`);
+    if (js) console.log(JSON.stringify(await page.evaluate(js), null, 2));
+    for (const sel of (arg('click') || '').split('||').filter(Boolean)) {
+      if (sel.startsWith('key:')) await page.keyboard.press(sel.slice(4)).catch(() => {});
+      else await page.click(sel, { timeout: 10_000 }).catch(() => {});
+    }
+    const code = await Promise.race([exited, new Promise((r) => setTimeout(() => r('still running'), 15_000))]);
+    console.log(`exit code: ${code}`);
+    console.log(errors.length ? `console errors:\n  ${errors.join('\n  ')}` : 'console: no errors');
+    await browser.close().catch(() => {});
+    finish(0);
+  }
   for (const sel of (arg('click') || '').split('||').filter(Boolean)) {
     if (sel.startsWith('key:')) await page.keyboard.press(sel.slice(4));
     else await page.click(sel, { timeout: 10_000 });
@@ -87,7 +108,6 @@ try {
   fs.mkdirSync(path.dirname(out), { recursive: true });
   await page.screenshot({ path: out });
   console.log(`shot ${out} ${since()}`);
-  const js = arg('eval');
   if (js) console.log(JSON.stringify(await page.evaluate(js), null, 2));
   console.log(errors.length ? `console errors:\n  ${errors.join('\n  ')}` : 'console: no errors');
   await browser.close().catch(() => {});
