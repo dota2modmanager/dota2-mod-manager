@@ -75,7 +75,7 @@ pub fn pack_from_records(
     inst: &Installer,
     name: &str,
     rec_ids: &[Value],
-    deploy: &mut dyn FnMut(&Value),
+    deploy: &mut dyn FnMut(&mut Library, &Value),
 ) -> Result<Option<Value>, String> {
     let recs: Vec<Value> =
         rec_ids.iter().filter_map(|id| lib.find(id).cloned()).filter(|r| packable_record(Some(r))).collect();
@@ -95,7 +95,7 @@ pub fn pack_from_records(
     }
     lib.update(&id, &json!({ "members": members }), None).map_err(io)?;
     let target = lib.find(&id).cloned().unwrap_or(target);
-    deploy(&target);
+    deploy(lib, &target);
     Ok(Some(target))
 }
 

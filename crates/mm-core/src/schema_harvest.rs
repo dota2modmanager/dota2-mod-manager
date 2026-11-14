@@ -111,6 +111,19 @@ pub struct Migrated {
     pub freed_mb: f64,
 }
 
+/// Whether the sweep below looks at this record: a mod with a pak of its own not looked at yet.
+fn to_scan(rec: &Value) -> bool {
+    !(rec.get("kind").and_then(Value::as_str) == Some("pack")
+        || rec.get("schema").is_some_and(Value::is_array)
+        || rec.get("schemaChecked").is_some_and(crate::js::truthy))
+        && files_of(rec).is_some_and(|files| files.iter().any(|f| f.root == "lang" && is_dir_vpk(&f.rel_path)))
+}
+
+/// Whether [`migrate`] has anything to look at, so the game's 50 MB table is read only then.
+pub fn wants_migrate(lib: &Library) -> bool {
+    lib.list().iter().any(to_scan)
+}
+
 /// Mods installed before the lifting existed still carry the whole-game tables inside their VPK:
 /// a stale item table and a stale localization copy. Swept once, each record marked as looked at.
 pub fn migrate(inst: &Installer, lib: &mut Library, vanilla: &[u8]) -> Migrated {
@@ -120,16 +133,10 @@ pub fn migrate(inst: &Installer, lib: &mut Library, vanilla: &[u8]) -> Migrated 
     }
     let records: Vec<Value> = lib.list().to_vec();
     for rec in records {
-        if rec.get("kind").and_then(Value::as_str) == Some("pack")
-            || rec.get("schema").is_some_and(Value::is_array)
-            || rec.get("schemaChecked").is_some_and(crate::js::truthy)
-        {
+        if !to_scan(&rec) {
             continue;
         }
         let Some(files) = files_of(&rec) else { continue };
-        if !files.iter().any(|f| f.root == "lang" && is_dir_vpk(&f.rel_path)) {
-            continue;
-        }
         out.scanned += 1;
         let before = inst.installed_size(&files).unwrap_or(0) as f64;
         let res = harvest(inst, lib, &rec, vanilla);

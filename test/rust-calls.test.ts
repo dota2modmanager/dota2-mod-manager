@@ -7457,7 +7457,9 @@ test('GLB chunks, embedded pictures and the fallback snapshot in Rust answer as 
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-test('style meshes, particle roots and the Crest preview in Rust answer as the TypeScript ones do', { skip }, async () => {
+test('style meshes, particle roots and the Crest preview in Rust answer as the TypeScript ones do', { skip }, async (t) => {
+  // the Crest's part reads the item table out of the sandbox's pak01
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
   const crypto = await import('node:crypto');
   const { writeGlb } = await import('../src/glb-embed.ts');
   const sm = await import('../src/model-style-meshes.ts');
@@ -8192,6 +8194,7 @@ test('a mod\'s own picture in Rust is made and kept as the TypeScript does it', 
 });
 
 test('the removal in Rust stops on the same command lines and asks and removes as the TypeScript does', { skip }, async (t) => {
+  if (!fs.existsSync(path.join(sandboxGame, 'dota', 'pak01_dir.vpk'))) { t.skip('no sandbox (npm run sandbox:seed)'); return; }
   const args = await import('../src/uninstall-args.ts');
   const { Installer } = await import('../src/installer.ts');
   const { Library } = await import('../src/library.ts');

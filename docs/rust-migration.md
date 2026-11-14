@@ -265,6 +265,52 @@ How it is done, so it can be built in steps without a release in between that ha
 Every call the shell takes is already checked against `channel_args.rs` before Rust or the host
 sees it.
 
+### Step 2 so far
+
+The owner is `crates/mm-core/src/owner.rs`: one `Core` behind a lock (settings, the library, the
+installer, the item table's service, the upkeep, the network, the catalog and the services with
+indexes of their own), and the channels in groups, one `owner_*.rs` per `src/ipc-*.ts` module.
+`mm-cli owner` puts it on the host's own wire (`crates/mm-cli/src/owner_wire.rs`), so
+`test/rust-owner.test.ts` runs the TypeScript main process and the owner over twin copies of one
+sandbox state, hands both the same calls and the same answers from the shell, and compares what
+each answers, asks, writes to the game folder, settings.json and the manifest (and, for the
+support report, what its zip holds).
+
+On 2026-11-14 the owner answers every channel the TypeScript registers, 173 of them, the
+uninstaller's four only on a run started with `--uninstall`. Its log is a file of its own,
+`logs/app.log` beside the TypeScript's, a megabyte and then `app.log.1` (`app_log.rs`).
+
+What the owner still does differently, or not yet:
+
+- One lock for the state, held through an item table build, a preset's downloads and a compile.
+  The 3D preview and the pictures read what they need under it and work without it; the rest
+  waits on its turn. A long build therefore holds other channels back until it is done.
+- The start's steps not ported: the arcana bases (`bases: None`), the patch watcher, the game
+  watch and the crash watch, the Discord status (`refreshPresence` is a no-op), and the refreshes
+  of the remote config, the fingerprints and the ready presets.
+- The repair after a patch runs without `updateImpact` and `rebuildGenerated` (both `None`), and
+  the arcana gives way to the builder's picks after a refresh, not in the middle of it.
+- `catalog:load` does not warm the previews' store afterwards.
+- A failed connection is worded by each stack's own network code ("fetch failed" against the
+  system's words); the parity compares `offline`, which the window acts on, and not the words.
+- An arcana's record carries the stamp of the code that built it, `rs-0.1.0` here, so an arcana
+  built by the TypeScript app is built once more after the upgrade.
+- The support report's `app` section names the runtime as `win32 x64`, without the system's
+  release, and leaves Electron's and Chrome's versions out. What only the window's process knows
+  (its windows, the screens, the graphics card, the updater) is asked of the shell as
+  `win.report`; a shell that does not answer gives null for the first three and an updater.
+- The shell's part, still to write in `src-tauri`: `win.report`, `win.isMaximized`,
+  `app.updateInstall`, `app.exit` with the uninstaller's code, the uninstall window closed
+  without an answer as code 3, and the `patch-repair` event.
+- Checked in the parity only by unit tests: the wiki's pictures (the parity runs offline); the 3D
+  preview's real exports reach only `no-body` in the sandbox, whose pak01 has no models.
+- `account:signIn` is left out of the parity: after the browser fails to open, the TypeScript
+  keeps its port until the sign-in times out, so the second process could not have it. The
+  sign-in itself is compared through `discord_auth.rs`'s own script.
+
+Found on the way: the host's window (`src-tauri/host/host.ts`) had no `getSize`, so the support
+report failed under Tauri with a TypeError; it answers 1280x800 now, as its other sizes do.
+
 ## Updates and removal under Tauri
 
 The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`); what is left is the

@@ -10393,7 +10393,8 @@ reflection at all, and a metal the game shows by its cube map (Razor's Severing 
 times its weight; Terrorblade's blades) came out black.
 
 The main process has no image codec of its own (Electron's is not there in the tests), so this is
-one for what the toolchain writes: 8-bit, not interlaced, grey, grey with alpha, RGB or RGBA.
+one for what the toolchain writes: 8-bit, not interlaced, grey, grey with alpha, RGB, RGBA or a
+palette (the game ships some of its portraits that way).
 
 ### `CUBE_FACES`
 
