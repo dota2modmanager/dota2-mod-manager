@@ -48,11 +48,13 @@
   "license": "GPL-3.0-or-later",
   "homepage": "https://github.com/dota2modmanager/dota2-mod-manager",
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
     "@vitejs/plugin-react": "^6.2.1",
     "axe-core": "^4.14.0",
+    "dota-loadout": "file:vendor/dota-loadout",
     "electron": "^45.2.3",
     "electron-builder": "^26.18.0",
     "eslint": "^10.14.0",
@@ -63,8 +65,7 @@
     "react-dom": "^19.3.1",
     "three": "^0.187.0",
     "typescript": "^5.9.3",
-    "vite": "^8.3.6",
-    "dota-loadout": "file:vendor/dota-loadout"
+    "vite": "^8.3.6"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",

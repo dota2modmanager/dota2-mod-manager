@@ -46,7 +46,7 @@ impl mm_core::owner::Shell for TauriShell {
         match method {
             "win.isMaximized" => Ok(json!(window()?.is_maximized().unwrap_or(false))),
             "win.report" => Ok(report(&self.0)),
-            "app.updateInstall" => Err("the updater is not wired yet".into()),
+            "app.updateInstall" => crate::update::install(&self.0),
             _ => crate::shell::request(&self.0, method, &args),
         }
     }
@@ -119,13 +119,15 @@ pub struct Start {
     pub downloads: PathBuf,
     pub argv: Vec<String>,
     pub first_run: bool,
+    /// whether this build looks for new versions of itself
+    pub updates: bool,
 }
 
 /// The owner started on a thread of its own; the watches and the start's fetches follow once it is up.
 pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
     let owned = Arc::new(Owned::default());
     *owned.1.lock().unwrap_or_else(|e| e.into_inner()) = mm_core::owner_links::first(&s.argv);
-    let (cell, app) = (owned.clone(), app.clone());
+    let (cell, app, app_for_updates) = (owned.clone(), app.clone(), app.clone());
     std::thread::spawn(move || {
         let opts = mm_core::owner::Options {
             user_data: s.user_data,
@@ -139,10 +141,17 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
             now: mm_core::net_fetch::now_ms,
         };
         let owner = Owner::start(opts, Arc::new(TauriShell(app)));
-        mm_core::owner_watch::start(&owner);
-        mm_core::owner_watch::start_patch(&owner);
-        mm_core::owner_start::refresh(&owner);
-        mm_core::owner_presence::start(&owner);
+        // the uninstaller's run puts the game right and asks; no catalog, no watches (src/main.ts)
+        if !owner.opts.uninstall {
+            mm_core::owner_watch::start(&owner);
+            mm_core::owner_watch::start_patch(&owner);
+            mm_core::owner_start::refresh(&owner);
+            mm_core::owner_presence::start(&owner);
+            if s.updates {
+                let it = crate::update::TauriUpdater::new(app_for_updates, Arc::downgrade(&owner));
+                mm_core::owner_update::start(&owner, Box::new(it));
+            }
+        }
         let _ = cell.0.set(owner);
     });
     owned
