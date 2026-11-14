@@ -107,7 +107,8 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
   };
 
   useEffect(() => {
-    let gone = false;
+    // an object, so a check after an await reads what the cleanup set since
+    const life = { gone: false };
     const session = lifetime.current!;
     motionRequest.current++;
     setBusy(false);
@@ -115,7 +116,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
     void (async () => {
       try {
         const r: Awaited<ReturnType<Preview3dApi['models']>> = await window.api.preview3d.models(hero, slots);
-        if (gone) return;
+        if (life.gone) return;
         if (!r.ok) {
           onSettled?.({ sig, ok: false });
           setStatus(r.reason === 'no-tool' ? { kind: 'no-tool' }
@@ -123,9 +124,9 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
           return;
         }
         const { mountScene, createSceneViewport } = await import('./scene.ts');
-        if (gone || !host.current) return;
+        if (life.gone || !host.current) return;
         const update = mountQueue.current.catch(() => {}).then(async () => {
-          if (gone || session.signal.aborted || !host.current) return;
+          if (life.gone || session.signal.aborted || !host.current) return;
           const previous = scene.current;
           const initialGems = latestGems.current;
           const options: SceneOptions = {
@@ -135,7 +136,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
             attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources,
           };
           const parts = r.parts.map(p => p.glb);
-          const current = () => !gone && !session.signal.aborted;
+          const current = () => !life.gone && !session.signal.aborted;
           const reused = savedView.current?.hero === hero && await previous?.replace(r.body, parts, options, current);
           if (!current()) return;
           let shown = previous!;
@@ -151,14 +152,14 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
           if (initialGems !== latestGems.current) await shown.gems(latestGems.current);
           shown.paint(latestPaint.current);
           savedView.current = { hero, view: shown.view() };
-          if (gone) return;
+          if (life.gone) return;
           body.current = r.model;
           setMotions(r.motions);
           // an item that swaps the body takes the clips of the old one with it
           if (wanted.current && !r.motions.some((m) => m.name === wanted.current)) { wanted.current = ''; setMotion(''); }
           if (wanted.current && !reused) {
             void shown.play(wanted.current, motionFile, handBack(r.motions, wanted.current)).catch(() => {
-              if (!gone) setNoMotions(true);
+              if (!life.gone) setNoMotions(true);
             });
           }
           setStatus({ kind: 'shown', missing: r.missing });
@@ -167,13 +168,13 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
         mountQueue.current = update;
         await update;
       } catch (err) {
-        if (!gone) {
+        if (!life.gone) {
           setStatus({ kind: 'failed', text: String((err as Error)?.message || err) });
           onSettled?.({ sig, ok: false });
         }
       }
     })();
-    return () => { gone = true; };
+    return () => { life.gone = true; };
     // the slots are what `sig` says; a new array each draw is not a new look
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hero, sig, attempt, still]);

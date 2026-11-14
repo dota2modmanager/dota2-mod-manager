@@ -30,8 +30,9 @@ const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 /** Roles a person operates: each needs a name a screen reader can say. */
 const CONTROLS = new Set(['button', 'link', 'checkbox', 'switch', 'textbox', 'searchbox', 'combobox', 'listbox', 'menuitem',
   'tab', 'slider', 'spinbutton', 'radio', 'menuitemcheckbox', 'menuitemradio', 'option', 'treeitem']);
-/** A Material Symbols ligature: lowercase words joined by underscores. */
-const LIGATURE = /\b[a-z]+(?:_[a-z]+)+\b/;
+/** A Material Symbols ligature: lowercase words joined by underscores. A game folder such as
+ * dota_russian is a word a control may well carry (the mod folder picker), not an icon. */
+const LIGATURE = /\b(?!dota_)[a-z]+(?:_[a-z]+)+\b/;
 // one mod, small, whose archive the sandbox carries (tools/sandbox-mods.json)
 const MOD = 'IO Purple';
 /** What has the focus, where it is, and whether it shows. */

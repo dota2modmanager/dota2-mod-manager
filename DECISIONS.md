@@ -556,6 +556,18 @@ come back as questions together, around when `electron-builder` 27 is out of alp
 
 *Check:* `osv-scanner.toml`, `npm ls minimatch` and `npm ls minimatch --omit=dev`.
 
+### glib on Linux, through Tauri's tray icon
+
+The Linux build carries `glib` 0.18 (RUSTSEC-2024-0429, an unsound iterator over a GVariant's
+strings) and `proc-macro-error` 1 (RUSTSEC-2024-0370, unmaintained), both through Tauri's tray
+icon: `tray-icon` -> `libappindicator` -> `gtk` 0.18. Nothing here calls `VariantStrIter`, and the
+macro helper runs only at build time. glib is fixed in 0.20, which no Tauri 2 release takes; it
+comes with Tauri's GTK 4 port. Windows builds do not contain either.
+
+Both are accepted in `osv-scanner.toml` until 2027-01-08, with the other two.
+
+*Check:* `osv-scanner.toml`, `cargo tree -i glib --target all`.
+
 ### The installer is not signed
 
 Windows SmartScreen says "unknown publisher" on first run. SignPath Foundation, which signs open
