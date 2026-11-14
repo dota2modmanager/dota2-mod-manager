@@ -158,4 +158,19 @@ export function tree(dir: string): Record<string, string> {
 
 export const readJson = (f: string): unknown => (fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null);
 
-export const tmpRoot = (name: string): string => fs.mkdtempSync(path.join(os.tmpdir(), `mm-owner-${name}-`));
+/* Each run copies the sandbox's game a few times over (some 200 MB a copy), so the copies go when
+ * the process ends: left behind, a few dozen runs filled a 60 GB hole in the temp folder.
+ * OWNER_KEEP=1 keeps them, to look at what a failing run left. */
+const made: string[] = [];
+process.on('exit', () => {
+  if (process.env.OWNER_KEEP) return;
+  for (const d of made) {
+    try { fs.rmSync(d, { recursive: true, force: true }); } catch { /* a process still holds a file */ }
+  }
+});
+
+export const tmpRoot = (name: string): string => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), `mm-owner-${name}-`));
+  made.push(d);
+  return d;
+};
