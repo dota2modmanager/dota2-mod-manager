@@ -509,9 +509,9 @@ test('heroes\' portraits, the tiles\' pictures and the mods\' clips answer as th
   const paks = mods.flatMap((r) => (r.files || []).map((f) => f.relPath)).filter((p) => p.endsWith('_dir.vpk'));
   withVrf(base);
   await compare('pictures', base, [
-    { call: ['cosmetics:heroPortraits', ['axe', 'crystal_maiden', '../up', 7], false] },
-    { call: ['cosmetics:heroPortraits', ['axe', 'nobody_at_all'], true] },
-    { call: ['cosmetics:heroPortraitsByName', ['Axe', 'Crystal Maiden', 'Nobody At All']] },
+    { call: ['cosmetics:heroPortraits', ['axe', 'crystal_maiden', '../up', 7], false], pixels: true },
+    { call: ['cosmetics:heroPortraits', ['axe', 'nobody_at_all'], true], pixels: true },
+    { call: ['cosmetics:heroPortraitsByName', ['Axe', 'Crystal Maiden', 'Nobody At All']], pixels: true },
     { call: ['cosmetics:icons', ['Weather Ash', 'Nonexistent Thing', 'hero:Io|generic:pack', ...paks.flatMap((p) => [`modart:${p}|hero:Io`, `modvid:${p}`, `modtex:${p}`])]], pixels: true },
     { call: ['cosmetics:icons', paks.map((p) => `modart:${p}`)], note: 'again, from the cache', pixels: true },
     ...paks.map((p) => ({ call: ['preview:video', `modvid:${p}`] as [string, ...unknown[]] })),
