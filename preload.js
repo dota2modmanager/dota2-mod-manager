@@ -177,10 +177,9 @@ contextBridge.exposeInMainWorld('api', {
     paint: (file) => ipcRenderer.invoke('decor:paint', file).then(wholeAnswer),
     modModel: (file, model) => ipcRenderer.invoke('decor:modModel', file, model).then(wholeAnswer),
   },
-  background: {
-    state: () => ipcRenderer.invoke('background:state'),
-    install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
-  },
+  background: { state: () => ipcRenderer.invoke('background:state'), install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur) },
+  // a hero's portrait and movie in the hero picker of the user's own
+  portraits: { state: () => ipcRenderer.invoke('portraits:state'), hero: (h) => ipcRenderer.invoke('portraits:hero', h), set: (h, stills, movie, drop, source) => ipcRenderer.invoke('portraits:set', h, stills, movie, drop, source) },
   // a hero's ability icons picked from his own cosmetics'
   icons: {
     heroes: () => ipcRenderer.invoke('icons:heroes'),

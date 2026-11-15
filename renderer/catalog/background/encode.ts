@@ -21,8 +21,23 @@ export function fitSize(w: number, h: number, max = { w: 1920, h: 1080 }): { wid
   return { width: even(w), height: even(h) };
 }
 
+/** An exact size to cut every frame to, filling it from the middle (a hero picker movie), instead of fitting the source in. */
+export interface Into { width: number; height: number; seconds: number }
+
+const sizeOf = (src: CanvasImageSource): [number, number] => {
+  const s = src as { displayWidth?: number; displayHeight?: number; videoWidth?: number; videoHeight?: number; width?: number; height?: number };
+  return [s.displayWidth || s.videoWidth || Number(s.width) || 1, s.displayHeight || s.videoHeight || Number(s.height) || 1];
+};
+
+/** The part of a source of size sw x sh that fills w x h from its middle. */
+export function coverRect(sw: number, sh: number, w: number, h: number): [number, number, number, number] {
+  const scale = Math.max(w / sw, h / sh);
+  const cw = w / scale, ch = h / scale;
+  return [(sw - cw) / 2, (sh - ch) / 2, cw, ch];
+}
+
 /** The encoder, fed frames drawn on one canvas; it hands back the file when told the clip is done. */
-async function encoder(width: number, height: number, motion: boolean) {
+async function encoder(width: number, height: number, motion: boolean, cover = false) {
   const frames: Frame[] = [];
   let failed: Error | null = null;
   const enc = new VideoEncoder({
@@ -35,7 +50,7 @@ async function encoder(width: number, height: number, motion: boolean) {
   });
   const config: VideoEncoderConfig = {
     codec: 'vp09.00.40.08', width, height, framerate: motion ? 30 : 1,
-    bitrate: motion ? Math.min(8_000_000, Math.round(width * height * 2.4)) : 2_000_000, latencyMode: 'quality',
+    bitrate: cover ? 1_500_000 : motion ? Math.min(8_000_000, Math.round(width * height * 2.4)) : 2_000_000, latencyMode: 'quality',
   };
   if (!(await VideoEncoder.isConfigSupported(config)).supported) throw new Error(L`Этот компьютер не умеет кодировать VP9`);
   enc.configure(config);
@@ -48,7 +63,8 @@ async function encoder(width: number, height: number, motion: boolean) {
       if (failed) throw failed;
       g.fillStyle = '#000';
       g.fillRect(0, 0, width, height);
-      g.drawImage(src, 0, 0, width, height);
+      if (cover) g.drawImage(src, ...coverRect(...sizeOf(src), width, height), 0, 0, width, height);
+      else g.drawImage(src, 0, 0, width, height);
       const frame = new VideoFrame(canvas, { timestamp: Math.round(time), duration: Math.round(duration) });
       const key = time - lastKey >= KEY_EVERY_US;
       if (key) lastKey = time;
@@ -65,10 +81,10 @@ async function encoder(width: number, height: number, motion: boolean) {
   };
 }
 
-async function fromStill(file: Blob): Promise<Encoded> {
+async function fromStill(file: Blob, into?: Into): Promise<Encoded> {
   const bmp = await createImageBitmap(file);
-  const { width, height } = fitSize(bmp.width, bmp.height);
-  const enc = await encoder(width, height, false);
+  const { width, height } = into ?? fitSize(bmp.width, bmp.height);
+  const enc = await encoder(width, height, false, !!into);
   const us = STILL_SECONDS * 1_000_000;
   // two frames a second apart: one frame alone is a clip some players never start
   enc.add(bmp, 0, us / 2);
@@ -77,16 +93,16 @@ async function fromStill(file: Blob): Promise<Encoded> {
   return { webm: await enc.done(us), width, height, seconds: STILL_SECONDS };
 }
 
-async function fromAnimation(file: Blob, type: string, progress: (p: number) => void): Promise<Encoded> {
+async function fromAnimation(file: Blob, type: string, progress: (p: number) => void, into?: Into): Promise<Encoded> {
   const dec = new ImageDecoder({ data: await file.arrayBuffer(), type });
   await dec.tracks.ready;
   const count = dec.tracks.selectedTrack?.frameCount ?? 1;
   const first = (await dec.decode({ frameIndex: 0 })).image;
-  const { width, height } = fitSize(first.displayWidth, first.displayHeight);
+  const { width, height } = into ?? fitSize(first.displayWidth, first.displayHeight);
   first.close();
-  const enc = await encoder(width, height, true);
+  const enc = await encoder(width, height, true, !!into);
   let time = 0;
-  for (let i = 0; i < count && time < MAX_SECONDS * 1_000_000; i++) {
+  for (let i = 0; i < count && time < (into?.seconds ?? MAX_SECONDS) * 1_000_000; i++) {
     const { image } = await dec.decode({ frameIndex: i });
     // a GIF frame with no delay shows for a tenth of a second, as browsers show it
     const duration = image.duration && image.duration > 10_000 ? image.duration : 100_000;
@@ -99,7 +115,7 @@ async function fromAnimation(file: Blob, type: string, progress: (p: number) => 
   return { webm: await enc.done(time), width, height, seconds: time / 1_000_000 };
 }
 
-async function fromVideo(file: Blob, progress: (p: number) => void): Promise<Encoded> {
+async function fromVideo(file: Blob, progress: (p: number) => void, into?: Into): Promise<Encoded> {
   const url = URL.createObjectURL(file);
   const video = document.createElement('video');
   video.muted = true;
@@ -107,9 +123,10 @@ async function fromVideo(file: Blob, progress: (p: number) => void): Promise<Enc
   video.src = url;
   try {
     await new Promise<void>((ok, fail) => { video.onloadedmetadata = () => ok(); video.onerror = () => fail(new Error(L`Это видео окно открыть не смогло`)); });
-    const { width, height } = fitSize(video.videoWidth, video.videoHeight);
-    const enc = await encoder(width, height, true);
-    const end = Math.min(video.duration || MAX_SECONDS, MAX_SECONDS);
+    const { width, height } = into ?? fitSize(video.videoWidth, video.videoHeight);
+    const enc = await encoder(width, height, true, !!into);
+    const most = into?.seconds ?? MAX_SECONDS;
+    const end = Math.min(video.duration || most, most);
     let last = -1;
     await new Promise<void>((ok, fail) => {
       const take = (_now: number, meta: VideoFrameCallbackMetadata) => {
@@ -143,10 +160,10 @@ export function sourceKind(type: string): 'still' | 'animation' | 'video' | null
 }
 
 /** The file as the menu's WebM. An animated WebP with one frame comes out as a still would. */
-export async function encodeBackground(file: File, progress: (p: number) => void = () => {}): Promise<Encoded> {
+export async function encodeBackground(file: File, progress: (p: number) => void = () => {}, into?: Into): Promise<Encoded> {
   const kind = sourceKind(file.type);
   if (!kind) throw new Error(L`Нужна картинка, GIF или видео`);
-  const out = kind === 'still' ? await fromStill(file) : kind === 'video' ? await fromVideo(file, progress) : await fromAnimation(file, file.type, progress);
+  const out = kind === 'still' ? await fromStill(file, into) : kind === 'video' ? await fromVideo(file, progress, into) : await fromAnimation(file, file.type, progress, into);
   if (out.webm.length > MAX_BYTES) throw new Error(L`Получилось больше 40 МБ: возьми ролик короче`);
   return out;
 }
