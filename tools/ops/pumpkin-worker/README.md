@@ -2,7 +2,7 @@
 
 A Cloudflare Worker at `https://pumpkin.dota2modmanager.com` that hands out one key per caught
 runner on the site and lets each key be spent by one install of the app. What it does and why is
-at the top of `worker.mjs`; the tests are `test/pumpkin-worker.test.ts`.
+at the top of `worker.mjs`.
 
 ## What it runs on
 

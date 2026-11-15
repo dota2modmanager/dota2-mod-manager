@@ -9,7 +9,7 @@ the first item. This page is the order of work.
 
 Dota 2 Mod Manager already installs arcanas and item sets from its own builder in the app, with
 hand-rebuilt bases for the arcanas that broke when built from the game's files
-(`src/arcana-bases.ts`). Ask the user to check the app first, and build by hand only what it does
+(`crates/mm-core/src/arcana/arcana_bases.rs`). Ask the user to check the app first, and build by hand only what it does
 not offer.
 
 ## Order of work
@@ -28,11 +28,12 @@ not offer.
    | `activity` (an activity modifier, e.g. `abysm`) | keep Valve's activities on every sequence the server can pick and make the plain one play the item's clips ([below](#an-immortal-or-set-without-the-item)); take the modifier off only where no plain twin exists |
    | `ability_icon`, `icon_replacement_hero*` | the pictures under the plain names in `panorama/images` |
 
-   In the repo an item is a set in `src/arcana.ts` (`ARCANA_SETS`) with helpers for each row:
-   `withChildren` (hang created particles on a host, each on its own control point), `asModel`
+   In the repo an item is a set in `crates/mm-core/data/arcana-sets.json` with helpers for each row
+   in `crates/mm-core/src/arcana/mod.rs`: `with_children` (hang created particles on a host, each on
+   its own control point), `as_model`
    (drops the item's modifier and also takes the activity off the plain animations: the old way,
    right in demo mode, not checked in a lobby; do not copy it for a new item, follow the
-   `activity` row), `bakeTint` (gem colours written in).
+   `activity` row), `bake_tint` (gem colours written in).
 3. **Doctor:** `npm run doctor -- <mod.vpk>`. Nothing may be reported.
 4. **Bench:** `npm run dota:bench -- --vpk <mod.vpk> --hero <hero> --short`, then read
    `verdict.json` (`swings: true` means the attack animation plays).
@@ -64,8 +65,8 @@ hero their behaviour:
 The game gives a gem's colour to particles as control point 15 (`C_INIT_RemapCPtoVector` /
 `C_OP_RemapCPtoVector` into the colour field) and to materials as `$GemColor` in a VfxEval
 expression. For a player without the item the gem is absent: bake the colour into the particles'
-starting colours (`bakeTint`) and replace the material's read with a constant
-(`src/material.ts`). A particle can carry several tints; all of them apply in order, initializers
+starting colours (`bake_tint`) and replace the material's read with a constant
+(`crates/mm-core/src/formats/material.rs`). A particle can carry several tints; all of them apply in order, initializers
 first, and the last one wins.
 
 ## Traps met on items

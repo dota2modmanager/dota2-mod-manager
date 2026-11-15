@@ -50,3 +50,22 @@ test('every relative link in the front-door documents points at a file that exis
   }
   assert.deepEqual(broken, []);
 });
+
+// A path written as code is a link too, only one nothing clicks: when the file it names went (a
+// module ported, a test removed), the sentence kept pointing at it. DECISIONS.md is a record of
+// what was, and names files that are gone on purpose; the changelogs and incidents likewise.
+test('every repository path written as code in the documents is a file that exists', () => {
+  const docs = tracked.filter((f) => f.endsWith('.md') && !/^(vendor|site\/src\/content)\//.test(f) && !/(^|\/)(CHANGELOG[^/]*|DECISIONS)\.md$/.test(f) && !f.startsWith('docs/incidents/'));
+  const known = new Set(tracked);
+  const dirs = new Set(tracked.flatMap((f) => f.split('/').slice(0, -1).map((_, i, a) => a.slice(0, i + 1).join('/'))));
+  const gone = [];
+  for (const f of docs) {
+    const text = fs.readFileSync(path.join(ROOT, f), 'utf8').replace(/```[\s\S]*?```/g, '');
+    for (const m of text.matchAll(/`((?:crates|src-tauri|src|renderer|tools|test|docs|\.github|site)\/[A-Za-z0-9_./-]*[A-Za-z0-9_])`/g)) {
+      const p = m[1].replace(/\/$/, '');
+      if (/[*<]/.test(p)) continue;
+      if (!known.has(p) && !dirs.has(p)) gone.push(`${f}: ${p}`);
+    }
+  }
+  assert.deepEqual(gone, []);
+});
