@@ -5,6 +5,7 @@ import crypto from 'node:crypto';
 import type { LibFile, LibRecord, ModIdentity, Preset, PackMember, PresetEntry, PresetPick } from './types.ts';
 import { writeFileAtomic } from './atomic-file.ts';
 import { FileTx } from './file-tx.ts';
+import { pickOf } from './library-pick.ts';
 
 /** A record as far as telling mods apart goes. No category means an import. */
 type ModLike = { name: string; categoryId?: string; styleLabel?: string | null; fp?: string | null };
@@ -171,7 +172,7 @@ export class Library {
 
   /** A look on the library's books (a cosmetic record with a slot and an item), and the look as a preset keeps it. */
   static isPick = (rec: LibRecord | null | undefined): rec is LibRecord => !!rec && rec.categoryId === 'cosmetic' && !!rec.slot && !!rec.itemId;
-  static pickOf = (rec: LibRecord): PresetPick => ({ slot: String(rec.slot), itemId: String(rec.itemId), name: rec.name, effectId: String(rec.effectId || ''), ...(typeof rec.targetItemId === 'string' && rec.targetItemId ? { targetItemId: rec.targetItemId } : {}) });
+  static pickOf = pickOf;
 
   /* What a preset remembers about one mod: the same self-contained identity that already
    * travels inside a .d2mm (see src/preset-share.ts), so what is stored and what is shared

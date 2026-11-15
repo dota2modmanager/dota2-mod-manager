@@ -109,7 +109,7 @@ export function createTableBuild({ library, bases, log }: {
   /** A pick built, or the one built before for the same key; its files are read a pause apart (gameAssetEntriesSteps). */
   function* builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): Generator<typeof PAUSE, ItemPick> {
     if (rec.targetItemId) {
-      validateReplacement ||= createReplacementValidator(vanillaText);
+      validateReplacement ||= createReplacementValidator(vanillaText, yield* itemBuilder.itemSlotsSteps(vanillaText));
       validateReplacement(String(rec.slot || ''), String(rec.itemId), rec.targetItemId);
     }
     let pick = built.get(key);
@@ -151,7 +151,7 @@ export function createTableBuild({ library, bases, log }: {
    * over (schema.deploy).
    */
   function* buildSteps(vanillaText: string, game: string): Generator<BuildYield, { list: schema.SchemaPatch[]; beneath: VpkEntry[]; filesShared: FilesShared }> {
-    if (builtFrom !== vanillaText || builtGame !== game) { built.clear(); shared.clear(); builtFrom = vanillaText; builtGame = game; }
+    if (builtFrom !== vanillaText || builtGame !== game) { built.clear(); shared.clear(); validateReplacement = null; builtFrom = vanillaText; builtGame = game; }
     const used = new Set<string>();
     // what the picks are built from, made a pause at a time before the first pick needs it: the
     // table's list of items (300 ms), the game's index (270 ms) and the arcana bases (a read of up

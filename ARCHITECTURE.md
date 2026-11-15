@@ -627,7 +627,7 @@ that location is not writable.
 | `src/steps.ts` | Long work as generators that pause every few dozen milliseconds, run at once with `drain` or a step at a time in the background, so the main process never holds the thread the window draws on for long (issue #286) |
 | `src/file-tx.ts`, `src/file-tx-journal.ts` | One transaction per change to the game folder, and the journal that finishes or undoes it after a crash |
 | `src/atomic-file.ts` | `manifest.json` and `settings.json` replaced in one step |
-| `src/library.ts` | `manifest.json`: installed records and presets |
+| `src/library.ts`, `src/library-pick.ts` | `manifest.json`: installed records and presets, and cosmetic picks saved in a preset |
 | `src/settings.ts`, `src/settings-view.ts` | `settings.json` and its defaults, and everything the Settings screen is told in one answer |
 | `src/support-prompt.ts` | When the window asking for support opens on its own: from the third launch, a week between reminders, three at most, never again after the user helped |
 | `src/catalog.ts`, `src/catalog-signature.ts` | Catalog data and who is allowed to change it |
@@ -652,7 +652,7 @@ that location is not writable.
 | `src/build-undo.ts` | Cancel on the table's bar: the build stops before it writes, and the records the table reads go back to how they were at the last table written, so My mods and the game agree ([#425](https://github.com/dota2modmanager/dota2-mod-manager/issues/425)) |
 | `src/quit-after-build.ts` | Quitting while the item table is written waits for it, up to a limit, so the game is not left a change behind My mods |
 | `src/cosmetic-names.ts` | Official Chinese item names, and every text token of the game in the app's language (`gameTokens`), from the installed game's localization tokens; read-only and cached per game build and language |
-| `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts`, `src/item-builder-donor.ts`, `src/item-builder-unusual.ts`, `src/item-builder-kinetic.ts`, `src/item-skin.ts` | The item builder: what it offers each hero and slot, the effects, the game's unusual effects ([#393](https://github.com/dota2modmanager/dota2-mod-manager/issues/393)), another item's effect on the one worn ([#383](https://github.com/dota2modmanager/dota2-mod-manager/issues/383)), and what a pick writes |
+| `src/item-builder.ts`, `src/item-builder-slots.ts`, `src/item-builder-effects.ts`, `src/item-builder-donor.ts`, `src/item-builder-unusual.ts`, `src/item-builder-kinetic.ts`, `src/item-skin.ts`, `src/item-replacement.ts` | The item builder: what it offers each hero and slot, its effects, and validation for replacing one wearable with another |
 | `src/item-builder-ability-fx.ts`, `src/item-builder-fx-patch.ts` | An item's ability effects without its model, as the game's hidden `ability_effects_N` loadout slots wear them (Bracers of the Cavern Luminar's Enchant Totem on other arms): a slot per hero and ability an item of his fits (`can_equip_as_ability_effects`), named by the ability his script gives it, the item's modifiers marked for that slot written into the slot's stock item, which every hero shares, so each slot's picks of all heroes are one block; their files ahead of the other picks', as the slot wins in the game, and kept on when a set goes on |
 | `src/item-builder-personas.ts` | Personas: the slot a persona is picked in and one for each of its own, each worn under one of the plain hero's slots over the persona's base, the game's own item where nothing is picked, and the rule that a hero with a persona on wears its items alone |
 | `src/persona-base-effects.ts` | A persona's base without another item's effects: an effect folder none of the persona's own items names goes, with the plain paths that lead into it (the Acolyte's base carried Magus Apex's orbs) |
@@ -716,7 +716,7 @@ that location is not writable.
 | `src/remove-everything.ts` | Every mod out of the game and the patch reverted, in one go: the uninstaller and the Settings button share it |
 | `src/folder-size.ts` | Bytes under a folder, for the caches in Settings and the removal window |
 | `src/types.ts` | The shapes the main process hands between its modules |
-| `src/i18n.ts`, `src/i18n-en.ts`, `src/i18n-zh-CN.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
+| `src/i18n.ts`, `src/i18n-en.ts`, `src/i18n-zh-CN.ts`, `src/i18n-en-item-builder.ts`, `src/i18n-zh-CN-item-builder.ts`, `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese, for the main process and the window |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*`, `renderer/studio/*`, `renderer/home/*` | The screens, in React; Home is where the window opens and where the name in the title bar leads; Items is the catalog screen with the game's looks (`views/catalog/sections.ts`), the Workshop gathers the tools built from the game's own files |

@@ -7,7 +7,11 @@ import { isStockTerrorbladeBlade } from './hero-particle-styles.ts';
 import { heroLoadoutParticles } from './particle-spec.ts';
 import { normalizeAssetPath } from './item-builder-assets.ts';
 import { isSelectorSlot, personaLayouts } from './item-builder-personas.ts';
+import type { LibRecord } from './types.ts';
 export { wornSkin } from './item-builder-assets.ts';
+
+/** A preview slot with its stock item and an optional unsaved selection. */
+export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } };
 
 /**
  * The model an item puts on in the style picked, and the body it swaps the hero for. The build
@@ -30,6 +34,11 @@ export function itemModel(text: string, itemId: string, key: string | undefined,
   } catch { /* an item the table has lost: its block's own model, if any */ }
   const item = findItem(text, itemId);
   return { model: item ? itemFields(text, item).get('model_player') || null : null, body };
+}
+
+/** Resolve the model for a library pick, including its optional replacement target. */
+export function itemModelForPick(text: string, pick: Pick<LibRecord, 'itemId' | 'effectId' | 'targetItemId'>, hero: string, stock: string | null) {
+  return itemModel(text, String(pick.itemId), pick.effectId, hero, stock, pick.targetItemId);
 }
 
 /** A material group explicitly addressed to the hero body, even on a wearable. */

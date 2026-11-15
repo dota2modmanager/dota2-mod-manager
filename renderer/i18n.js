@@ -217,7 +217,7 @@ const EN = {
   'Надето: {0}': 'Equipped: {0}',
   'Надеть': 'Equip',
   'Надеваю…': 'Equipping…',
-  'Сохранить эффекты': 'Save effects', 'Есть баги': 'Has bugs', 'Сломана': 'Broken', 'Не проверено': 'Not checked', 'Сохранить стиль': 'Save style', 'Стиль': 'Style', 'стиль {0}': 'style {0}', 'Сохранить замену': 'Save replacement', 'Заменить предмет': 'Replace item', 'Стандартный предмет': 'Default item', 'Этот вид увидишь только ты; он будет у всех, кто носит заменяемый предмет.': 'Only you see the change; it appears on everyone wearing the replaced item.',
+  'Сохранить эффекты': 'Save effects', 'Есть баги': 'Has bugs', 'Сломана': 'Broken', 'Не проверено': 'Not checked', 'Сохранить стиль': 'Save style', 'Стиль': 'Style', 'стиль {0}': 'style {0}',
   'Вернуть стандартный': 'Back to default',
   'Можно выбрать несколько. Иней и Снег держатся не на всех моделях.':
     'You can pick several. Frostbloom and Snow do not hold on every model.',

@@ -20,7 +20,7 @@ import { offeredUnusual } from './item-builder-unusual.ts';
 import { offeredKinetic } from './item-builder-kinetic.ts';
 import { namedFxSlots } from './item-builder-ability-fx.ts';
 import { hasBase } from './arcana-bases.ts';
-import { createReplacementValidator } from './item-replacement.ts';
+import { createReplacementValidator, type ReplacementValidator } from './item-replacement.ts';
 
 /** A persona's own piece: weapon_persona_1 (src/item-builder-personas.ts). */
 const PERSONA_PIECE = /_persona_\d+$/;
@@ -46,11 +46,6 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
   // (see pickCosmetic), the same rule the app already applies to cursor sets.
   function cosmeticRecordFor(slot: string): LibRecord | null {
     return library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false) || null;
-  }
-
-  function validateTarget(slot: string, itemId: string, targetItemId: unknown, text?: string): string {
-    if (targetItemId === undefined || targetItemId === '') return '';
-    return createReplacementValidator(text ?? vanilla())(slot, itemId, targetItemId);
   }
 
   /**
@@ -151,11 +146,13 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * the game alone, for a caller that picks several and writes once (pickSet).
    * @param opts.targetItemId  a same-slot wearable to replace, rather than the hero's default
    */
-  function pickCosmetic(slot: string, itemId: string | number, itemName: string | null | undefined, effectId: string | string[] | null | undefined = null, { write = true, targetItemId }: { write?: boolean; targetItemId?: string } = {}): LibRecord | null {
+  function pickCosmetic(slot: string, itemId: string | number, itemName: string | null | undefined, effectId: string | string[] | null | undefined = null, { write = true, targetItemId, replacementValidator }: { write?: boolean; targetItemId?: string; replacementValidator?: ReplacementValidator } = {}): LibRecord | null {
     const id = String(itemId);
     const name = itemName || id;
     const isItem = slot === 'items' || String(slot || '').startsWith('item:');
-    const target = validateTarget(slot, id, targetItemId);
+    const target = targetItemId
+      ? (replacementValidator ?? createReplacementValidator(vanilla()))(slot, id, targetItemId)
+      : '';
     // the item builder's effects, as one string in one order (item-builder.js effectKey)
     const effect = isItem ? itemBuilder.effectKey(effectId) : '';
     const live = cosmeticRecordFor(slot);
@@ -202,8 +199,10 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * with fewer looks wears its first.
    */
   function pickSet(setId: string | number, { write = true, style = 0 } = {}): { applied: number; pieces: number } {
-    const set = itemBuilder.itemSets(vanilla()).find((x) => x.id === String(setId));
+    const text = vanilla();
+    const set = itemBuilder.itemSets(text).find((x) => x.id === String(setId));
     if (!set) throw new Error(t('Набор не найден'));
+    const replacementValidator = createReplacementValidator(text);
     const fits = set.pieces.flatMap((p) => (p.fits && p.slot ? [p] : []));
     const hero = `item:${set.heroIds.join('+')}:`;
     for (const r of library.list()) {
@@ -217,6 +216,7 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
       const kept = live && live.itemId === p.itemId ? String(live.effectId || '').split(',').filter((id) => id && !/^style-\d+$/.test(id)) : [];
       pickCosmetic(p.slot, p.itemId, p.name, [...kept, ...(n > 0 && n < (p.styles || 1) ? [`style-${n}`] : [])], {
         write: false, targetItemId: live?.itemId === p.itemId ? String(live.targetItemId || '') : undefined,
+        replacementValidator,
       });
     }
     if (write) refresh();
@@ -240,12 +240,15 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     if (!/^item:[a-z0-9_+]+:$/.test(String(hero || '')) || !Array.isArray(picks)) throw new Error(t('Образ не найден'));
     const wear = picks.filter((p) => p && typeof p.slot === 'string' && p.slot.startsWith(hero) && /^[a-z0-9_]+$/.test(p.slot.slice(hero.length)) && /^\d+$/.test(String(p.itemId)));
     const targetPicks = wear.filter((p) => p.targetItemId !== undefined);
+    let replacementValidator: ReplacementValidator | undefined;
     if (targetPicks.length) {
-      const text = vanilla();
-      for (const p of targetPicks) validateTarget(p.slot, p.itemId, p.targetItemId, text);
+      replacementValidator = createReplacementValidator(vanilla());
+      for (const p of targetPicks) replacementValidator(p.slot, p.itemId, p.targetItemId);
     }
     offTheHero(hero, new Set(wear.map((p) => p.slot)));
-    for (const p of wear) pickCosmetic(p.slot, p.itemId, p.name || p.itemId, p.effectId || '', { write: false, targetItemId: p.targetItemId });
+    for (const p of wear) pickCosmetic(p.slot, p.itemId, p.name || p.itemId, p.effectId || '', {
+      write: false, targetItemId: p.targetItemId, replacementValidator,
+    });
     if (write) refresh();
     return { applied: wear.length, picks: picks.length };
   }

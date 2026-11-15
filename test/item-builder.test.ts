@@ -12,6 +12,7 @@ import * as builder from '../src/item-builder.ts';
 import * as vpk from '../src/vpk.ts';
 import { Library } from '../src/library.ts';
 import { createSchemaService, type SchemaInstaller } from '../src/schema-service.ts';
+import { createReplacementValidator } from '../src/item-replacement.ts';
 import type { Settings } from '../src/settings.ts';
 import { readKv3, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
@@ -709,6 +710,12 @@ test("a set's piece carries its own rarity, as the slot offering it does", () =>
   const sniper = builder.itemSets(text).find((s) => s.name === 'Sniper Set');
   assert.deepEqual(sniper?.pieces.filter((p) => p.fits).map((p) => [p.name, 'rarity' in p ? p.rarity : undefined]),
     [['Golden Full-Bore Bonanza', 'mythical'], ['No visuals here', undefined]]);
+});
+
+test('replacement validation reuses the wearable slots already read by a build', () => {
+  const slots = builder.itemSlots(itemSetTable());
+  const validate = createReplacementValidator('not an items_game table', slots);
+  assert.equal(validate('item:sniper:back', '9455', '9951'), '9951');
 });
 
 test("a saved look goes on in one write, and the hero's other picks go off, kept in My mods (issue #527)", (t) => {

@@ -1,6 +1,9 @@
 /* Native dialogs, errors and labels in English, keyed by the exact Russian source string. */
 // English dictionary. Key = canonical Russian string with {n} placeholders.
+import ITEM_BUILDER_EN from './i18n-en-item-builder.ts';
+
 const EN = {
+  ...ITEM_BUILDER_EN,
   // ---- errors / dialogs (main process) ----
   'Выбери папку game внутри dota 2 beta': 'Pick the "game" folder inside "dota 2 beta"',
   'В этой папке не найдена Dota 2 (нет подпапки dota)': 'No Dota 2 here (there is no "dota" subfolder)',
@@ -14,7 +17,6 @@ const EN = {
   'Не тот цвет': 'Not a colour',
   'Нет такой арканы': 'No such arcana',
   'Деревья: Radiant {0}, Dire {1}': 'Trees: Radiant {0}, Dire {1}',
-  'Предметы героев: {0}': 'Hero items: {0}',
   'Башни: Radiant {0}, Dire {1}': 'Towers: Radiant {0}, Dire {1}',
   'как в игре': 'as in the game',
   'Такого вида нет в игре': 'The game has no such look',
@@ -31,13 +33,12 @@ const EN = {
   // the two counted passes of an import, shown on the progress bar
   'Копирование модов': 'Copying mods',
   'Разбор модов': 'Reading mods',
-  'Сборка предметов': 'Building items',
   'Нет _dir.vpk для разбора': 'No _dir.vpk to split',
   'В файле меньше двух героев — разбирать нечего': 'Fewer than two heroes in the file — nothing to split',
   'Совпадение с каталогом не найдено': 'No catalog match found',
   'Файл не найден в папке модов': 'That file is not in the mods folder',
   'Мод': 'Mod',
-  'У мода нет слота pakNN': 'This mod has no pakNN slot', 'Предмет {0} нельзя заменить предметом {1} в этом слоте': 'Item {0} cannot be replaced by item {1} in this slot',
+  'У мода нет слота pakNN': 'This mod has no pakNN slot',
   'Папка курсора не найдена': 'Cursor folder not found',
   'Файлы курсора не сохранены — переустанови мод': 'This cursor’s files were not kept — reinstall the mod',
   'Выбери минимум 2 мода (или пак и мод / два пака)': 'Pick at least 2 mods (or a pack and a mod / two packs)',
@@ -288,7 +289,6 @@ const EN = {
   'Картинка мода': "The mod's picture",
   'Картинки и видео': 'Pictures and videos',
   'Сохранить мод для каталога': 'Save the mod for the catalog',
-  'Эффекты способности {0}': 'Ability effects {0}',
   'Эффекты: {0}': 'Effects: {0}',
   'У предмета {0} нет эффектов для этой способности': 'Item {0} has no effects for this ability',
   'Открыть': 'Open',

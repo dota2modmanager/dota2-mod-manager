@@ -88,7 +88,9 @@ the code, not in this page.
 | [`src/hero-showcase.ts`](#srchero-showcasets) | How the game stages a hero on its loadout, for the 3D preview (issue #417), out of the game's |
 | [`src/hud-scale-service.ts`](#srchud-scale-servicets) | The in-game HUD laid out by hand, as a record in My mods (issue #420; the CSS is |
 | [`src/hud-scale.ts`](#srchud-scalets) | The in-game HUD laid out by hand (issues #420 and later): the stylesheet that lays the HUD out, |
+| [`src/i18n-en-item-builder.ts`](#srci18n-en-item-builderts) | Native English strings for item-builder dialogs and validation, keyed by their Russian source. |
 | [`src/i18n-en.ts`](#srci18n-ents) | Native dialogs, errors and labels in English, keyed by the exact Russian source string. |
+| [`src/i18n-zh-CN-item-builder.ts`](#srci18n-zh-CN-item-builderts) | Native Simplified Chinese strings for item-builder dialogs and validation. |
 | [`src/i18n-zh-CN.ts`](#srci18n-zh-CNts) | Native dialogs, errors and labels in Simplified Chinese. Russian remains the source key. |
 | [`src/i18n.ts`](#srci18nts) | Minimal i18n for the main process (src/). |
 | [`src/icon-match.ts`](#srcicon-matchts) | Which wiki file is an item's picture: the file names to try first, and how a wiki's listing is |
@@ -124,6 +126,7 @@ the code, not in this page.
 | [`src/item-files.ts`](#srcitem-filests) | The item builder's picks as files alone: a look the game takes from a pak in the language folder, |
 | [`src/item-icons-drop.ts`](#srcitem-icons-dropts) | A mod with its item pictures taken out. A hero's arcana from the catalog often brings its own |
 | [`src/item-portraits.ts`](#srcitem-portraitsts) | A hero's HUD portrait and minimap icon as an item builder pick makes them, written once for the |
+| [`src/item-replacement.ts`](#srcitem-replacementts) | Validate a picked item replacing another item in the same game slot. |
 | [`src/item-skin.ts`](#srcitem-skints) | Which material set an item's visuals wear its model in (src/model-skin.ts makes a model wear it). |
 | [`src/item-sounds.ts`](#srcitem-soundsts) | An item's sounds and voice, as a mod gives them to a hero who does not own the item. |
 | [`src/item-visuals.ts`](#srcitem-visualsts) | What an item does to the game, read from its block in items_game ("visuals"), and what a mod |
@@ -132,6 +135,7 @@ the code, not in this page.
 | [`src/kv3-write.ts`](#srckv3-writets) | A KV3 block written anew from its tree (src/kv3.ts), for changes that are more than a number: |
 | [`src/kv3.ts`](#srckv3ts) | Binary KV3, the format Source 2 compiles particles and most other resources into: read far |
 | [`src/large-answer.ts`](#srclarge-answerts) | An answer too big for one IPC message. |
+| [`src/library-pick.ts`](#srclibrary-pickts) | A library cosmetic as the self-contained pick a preset keeps. |
 | [`src/library.ts`](#srclibraryts) | Library: manifest of installed mods + presets |
 | [`src/loadout-material.ts`](#srcloadout-materialts) | Native Dota material inputs for the bundled loadout shader. PBR metalness is not a substitute |
 | [`src/loadout-resources.ts`](#srcloadout-resourcests) | Complete effect dependencies for the real loadout runtime, shared by hero and recolor views. |
@@ -4181,15 +4185,31 @@ Equipment metadata used to build the desktop preview.
 
 Hands on from [`src/item-builder-assets.ts`](#srcitem-builder-assetsts): `wornSkin`.
 
+### `PreviewSlot`
+
+```ts
+export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }
+```
+
+A preview slot with its stock item and an optional unsaved selection.
+
 ### `itemModel`
 
 ```ts
-export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> }
+export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null, targetItemId?: string): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> }
 ```
 
 The model an item puts on in the style picked, and the body it swaps the hero for. The build
 copies the item's model over the stock one (`stock`); its other copies are particles and other
 units' models, which the hero does not wear.
+
+### `itemModelForPick`
+
+```ts
+export function itemModelForPick(text: string, pick: Pick<LibRecord, 'itemId' | 'effectId' | 'targetItemId'>, hero: string, stock: string | null)
+```
+
+Resolve the model for a library pick, including its optional replacement target.
 
 ### `bodySkinFor`
 
@@ -4259,7 +4279,7 @@ The hidden body_head slot supplies the face independently of a hat or hair.
 ### `previewEquipment`
 
 ```ts
-export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[], slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string } }[])
+export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[], slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }[])
 ```
 
 Overlay temporary builder picks on the installed loadout, without changing either input.
@@ -4303,15 +4323,7 @@ the game a wearable follows the hero's bones by name; the window does the same (
 catalog/preview3d/scene.ts). An arcana that swaps the whole hero brings its own body, as the
 build does (src/item-builder.ts itemEffectPatch, the copy that names a hero).
 
-Hands on from [`src/hero-preview-picks.ts`](#srchero-preview-picksts): `entityModel`, `wornExtras`, `wornSkin`.
-
-### `PreviewSlot`
-
-```ts
-export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } }
-```
-
-A preview slot with its stock item and an optional unsaved selection.
+Hands on from [`src/hero-preview-picks.ts`](#srchero-preview-picksts): `entityModel`, `wornExtras`, `wornSkin`, `PreviewSlot`.
 
 ### `HeroModels`
 
@@ -4557,9 +4569,21 @@ export function withLayout(css: string, raw: unknown): string
 The CSS ValveResourceFormat read out of the style, with the layout at its end. The tool's own
 banner comment goes, and rules this added before are replaced rather than stacked.
 
+## src/i18n-en-item-builder.ts
+
+Native English strings for item-builder dialogs and validation, keyed by their Russian source.
+
+_Exports nothing._
+
 ## src/i18n-en.ts
 
 Native dialogs, errors and labels in English, keyed by the exact Russian source string.
+
+_Exports nothing._
+
+## src/i18n-zh-CN-item-builder.ts
+
+Native Simplified Chinese strings for item-builder dialogs and validation.
 
 _Exports nothing._
 
@@ -6936,8 +6960,8 @@ item's model_player, and no swap of the hero's model or of a stock model left in
 when it is created, and a reconnect keeps them.
 
 ```
-@param targetId  the stock item to write it over, where its slot does not say: a persona's
-(src/item-builder-personas.ts personaRecords)
+@param targetId  an explicit item to write it over: a selected same-slot wearable or a
+persona's host item (src/item-builder-personas.ts personaRecords); otherwise the default
 @param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
 item that swaps one; without it the swap stays in the table and shows in hero demo only
 @param refit  the model another pick makes of this one's, to wear in its place where the game
@@ -7153,6 +7177,26 @@ export function portraitEntries(gamePath: string, portraits: PortraitSwap[], spr
 
 The portrait settings and sprite sheet of every pick, to go into the build ahead of the picks' own
 files. A hero whose own model the game does not name is left out and said in `log`.
+
+## src/item-replacement.ts
+
+Validate a picked item replacing another item in the same game slot.
+
+### `ReplacementValidator`
+
+```ts
+export type ReplacementValidator = (slot: string, itemId: string, targetItemId: unknown) => string
+```
+
+Validate a saved target for a picked item and return the validated target id.
+
+### `createReplacementValidator`
+
+```ts
+export function createReplacementValidator(text: string, listedSlots?: readonly ItemSlot[]): ReplacementValidator
+```
+
+Build a validator, optionally reusing wearable slots already read by a pausing walk.
 
 ## src/item-skin.ts
 
@@ -7554,6 +7598,18 @@ export function createLargeAnswers({ now = Date.now, smallest = SMALLEST, slice 
 ```
 
 The store behind one channel's answers.
+
+## src/library-pick.ts
+
+A library cosmetic as the self-contained pick a preset keeps.
+
+### `pickOf`
+
+```ts
+export function pickOf(rec: LibRecord): PresetPick
+```
+
+Turn one cosmetic record into the look saved in a preset.
 
 ## src/library.ts
 
@@ -10787,7 +10843,7 @@ says nothing about them, and they are not asked about either.
 ### `presetsService`
 
 ```ts
-export function presetsService({ catalog, installer, library, schemaService, deployAndApply, settings }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; settings?: Pick<Settings, 'get' | 'set'>; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown; }; deployAndApply: (pack: LibRecord) => unknown
+export function presetsService({ catalog, installer, library, schemaService, deployAndApply, settings }: { catalog: Pick<Catalog, 'load'>; installer: PresetInstaller; library: Library; settings?: Pick<Settings, 'get' | 'set'>; schemaService: { refreshInBackground(): Promise<unknown>; pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean; targetItemId?: string }): unknown; }; deployAndApply: (pack: LibRecord) => unknown
 ```
 
 Everything about presets that needs the running app's services.
@@ -14062,7 +14118,7 @@ A mod as a preset remembers it: what it is, not which installation of it (src/pr
 ### `PresetPick`
 
 ```ts
-export interface PresetPick { slot: string; itemId: string; name: string; effectId: string }
+export interface PresetPick { slot: string; itemId: string; name: string; effectId: string; targetItemId?: string }
 ```
 
 A free look or an item builder pick as a preset remembers it: the slot, the item, its effects.

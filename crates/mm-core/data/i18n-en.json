@@ -2,6 +2,7 @@
 ["Выбери папку game внутри dota 2 beta","Pick the \"game\" folder inside \"dota 2 beta\""],
 ["В этой папке не найдена Dota 2 (нет подпапки dota)","No Dota 2 here (there is no \"dota\" subfolder)"],
 ["Уже установлено","Already installed"],
+["Предмет {0} нельзя заменить предметом {1} в этом слоте","Item {0} cannot be replaced by item {1} in this slot"],
 ["Мод не найден","Mod not found"],
 ["Жульничество наказуемо гадостью","Cheating is punished with something nasty"],
 ["Для этой системы ({0}) нет сборки {1}","There is no build of {1} for this system ({0})"],

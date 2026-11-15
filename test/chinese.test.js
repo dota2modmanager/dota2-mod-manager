@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { setLang, getLang, t } = require('../src/i18n.ts');
+const nativeEnglish = require('../src/i18n-en.ts').default;
 const nativeChinese = require('../src/i18n-zh-CN.ts').default;
 
 const root = path.resolve(__dirname, '..');
@@ -35,9 +36,7 @@ function complete(english, chinese) {
 test('Simplified Chinese covers every renderer and native key, keeping every placeholder', () => {
   const context = renderer('zh-CN');
   complete(context.english, context.window.ZH_CN);
-  const nativeSource = read('src/i18n-en.ts').match(/const EN = (\{[\s\S]*?\}) satisfies Record<string, string>;/);
-  assert.ok(nativeSource, 'native dictionary found');
-  complete(vm.runInNewContext(`(${nativeSource[1]})`), nativeChinese);
+  complete(nativeEnglish, nativeChinese);
   assert.deepEqual(Object.keys(context.window.ZH_CN_PLURAL).sort(), Object.keys(context.window.EN_PLURAL).sort());
 });
 
