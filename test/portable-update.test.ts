@@ -12,7 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { rust } from './helpers/ts-or-rust.ts';
+import { rust } from './helpers/rust.ts';
 
 // the app's side is crates/mm-core/src/app/portable_update.rs, asked through mm-cli
 const parseManifest = (text: string) => {

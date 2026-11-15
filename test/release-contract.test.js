@@ -98,7 +98,7 @@ test('the lookups that read a section find a beta by its own heading', () => {
     const end = rest.findIndex((l) => /^## /.test(l));
     return rest.slice(0, end === -1 ? undefined : end).join('\n').trim();
   };
-  const { rust } = require('./helpers/ts-or-rust.ts');
+  const { rust } = require('./helpers/rust.ts');
   const popup = (v) => rust('release-notes.changelogSection', text, v); // the app's "What's new" (app_info.rs)
   const { changelogSection } = require('../tools/release-state.js');
   const preflight = (v) => changelogSection(text, v); // what the gate checks before building
