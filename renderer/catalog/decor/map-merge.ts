@@ -192,7 +192,7 @@ export async function mergeMeshesAsync(meshes: THREE.Mesh[], keyOf: (m: THREE.Me
   for (const m of results.flat()) {
     const b = list[m.id];
     const geo = new THREE.BufferGeometry();
-    for (const [name, a] of Object.entries(m.attrs)) geo.setAttribute(name, new THREE.BufferAttribute(a.array, a.size));
+    for (const [name, a] of m.attrs) geo.setAttribute(name, new THREE.BufferAttribute(a.array, a.size));
     geo.setIndex(new THREE.BufferAttribute(m.index, 1));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(m.sphere[0], m.sphere[1], m.sphere[2]), m.sphere[3]);
     const mesh = new THREE.Mesh(geo, b.material);

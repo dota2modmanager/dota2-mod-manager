@@ -4,16 +4,21 @@
  * floats on the window's thread first was most of the three seconds the window froze. Each job is
  * one merged mesh, its parts a geometry and the matrix that places it: positions take the matrix,
  * normals its rotation, the rest come as they are; a part whose matrix mirrors it has its
- * triangles turned round, as a mirrored object shows them. */
+ * triangles turned round, as a mirrored object shows them.
+ *
+ * What comes in a message is not trusted to name things: a kind picks its array out of a table of
+ * its own, attributes go into a Map and back as a list of pairs, never as an object's properties
+ * by a name the message gave, and the triangles are written with set(). */
 
 export type Kind = 'f32' | 'i8' | 'u8' | 'i16' | 'u16' | 'i32' | 'u32';
 export interface View { buf: number; kind: Kind; offset: number; stride: number; size: number; normalized: boolean; count: number }
 export interface Geo { attrs: Record<string, View>; index: { buf: number; kind: Kind; offset: number; length: number } | null; count: number }
 export interface Part { geo: number; matrix: number[]; flip: boolean }
 export interface Job { id: number; parts: Part[] }
-export interface Merged { id: number; attrs: Record<string, { array: Float32Array; size: number }>; index: Uint32Array; sphere: [number, number, number, number] }
+export interface Merged { id: number; attrs: [string, { array: Float32Array; size: number }][]; index: Uint32Array; sphere: [number, number, number, number] }
 
-const CTOR = { f32: Float32Array, i8: Int8Array, u8: Uint8Array, i16: Int16Array, u16: Uint16Array, i32: Int32Array, u32: Uint32Array };
+type Ctor = Float32ArrayConstructor | Int8ArrayConstructor | Uint8ArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor;
+const CTORS = new Map<string, Ctor>([['f32', Float32Array], ['i8', Int8Array], ['u8', Uint8Array], ['i16', Int16Array], ['u16', Uint16Array], ['i32', Int32Array], ['u32', Uint32Array]]);
 const SCALE: Record<Kind, number> = { f32: 1, i8: 127, u8: 255, i16: 32767, u16: 65535, i32: 1, u32: 1 };
 
 export function kindOf(a: ArrayLike<number>): Kind {
@@ -41,19 +46,24 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
   const arr = (buf: number, kind: Kind) => {
     const k = `${buf}|${kind}`;
     let a = typed.get(k);
-    if (!a) { const b = buffers[buf]; a = new CTOR[kind](b, 0, Math.floor(b.byteLength / CTOR[kind].BYTES_PER_ELEMENT)); typed.set(k, a); }
+    if (!a) {
+      const C = CTORS.get(kind), b = buffers[buf];
+      if (!C || !(b instanceof ArrayBuffer)) throw new Error(`merge: no buffer ${buf} of ${kind}`);
+      a = new C(b, 0, Math.floor(b.byteLength / C.BYTES_PER_ELEMENT));
+      typed.set(k, a);
+    }
     return a;
   };
   let verts = 0, idx = 0;
   for (const p of job.parts) { const g = geos[p.geo]; verts += g.count; idx += g.index ? g.index.length : g.count; }
   const first = geos[job.parts[0].geo];
-  const attrs: Merged['attrs'] = {};
-  for (const [name, a] of Object.entries(first.attrs)) attrs[name] = { array: new Float32Array(verts * a.size), size: a.size };
+  const attrs = new Map<string, { array: Float32Array; size: number }>();
+  for (const [name, a] of Object.entries(first.attrs)) attrs.set(name, { array: new Float32Array(verts * a.size), size: a.size });
   const index = new Uint32Array(idx);
   let vAt = 0, iAt = 0;
   for (const p of job.parts) {
     const g = geos[p.geo], m = p.matrix;
-    for (const [name, out] of Object.entries(attrs)) {
+    for (const [name, out] of attrs) {
       const v = g.attrs[name];
       if (!v) continue;
       const src = arr(v.buf, v.kind), o = out.array, s = v.size, base = vAt * s;
@@ -85,16 +95,14 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
     const n = g.index ? g.index.length : g.count;
     for (let t = 0; t < n; t += 3) {
       const a = ix ? ix[io + t] : t, b = ix ? ix[io + t + 1] : t + 1, c = ix ? ix[io + t + 2] : t + 2;
-      index[iAt + t] = vAt + a;
       // a mirrored part: the same triangle the other way round
-      index[iAt + t + 1] = vAt + (p.flip ? c : b);
-      index[iAt + t + 2] = vAt + (p.flip ? b : c);
+      index.set([vAt + a, vAt + (p.flip ? c : b), vAt + (p.flip ? b : c)], iAt + t);
     }
     vAt += g.count;
     iAt += n;
   }
   // the bounding sphere here too: on the window's thread it was half a second over the whole map
-  const p = attrs.position?.array ?? new Float32Array(0);
+  const p = attrs.get('position')?.array ?? new Float32Array(0);
   let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;
   for (let i = 0; i < p.length; i += 3) {
     const x = p[i], y = p[i + 1], z = p[i + 2];
@@ -103,16 +111,18 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, cz = (z0 + z1) / 2;
   let r2 = 0;
   for (let i = 0; i < p.length; i += 3) r2 = Math.max(r2, (p[i] - cx) ** 2 + (p[i + 1] - cy) ** 2 + (p[i + 2] - cz) ** 2);
-  return { id: job.id, attrs, index, sphere: [cx, cy, cz, Math.sqrt(r2)] };
+  return { id: job.id, attrs: [...attrs], index, sphere: [cx, cy, cz, Math.sqrt(r2)] };
 }
 
 // as a worker: the buffers and a batch of jobs in, the merged meshes out, their buffers handed over
-const scope = globalThis as unknown as { onmessage: ((e: MessageEvent) => void) | null; postMessage: (m: unknown, t: Transferable[]) => void; document?: unknown };
+const scope = globalThis as unknown as { onmessage: ((e: MessageEvent) => void) | null; postMessage: (m: unknown, t: Transferable[]) => void; document?: unknown; location?: { origin: string } };
 if (typeof scope.document === 'undefined' && typeof self !== 'undefined') {
   scope.onmessage = (e: MessageEvent<{ buffers: ArrayBuffer[]; geos: Geo[]; jobs: Job[] }>) => {
+    // a dedicated worker hears only the window that made it (origin ''); anything else is not its
+    if (e.origin !== '' && e.origin !== scope.location?.origin) return;
     const out = e.data.jobs.map((j) => merge(e.data.buffers, e.data.geos, j));
     const transfer: Transferable[] = [];
-    for (const m of out) { transfer.push(m.index.buffer); for (const a of Object.values(m.attrs)) transfer.push(a.array.buffer); }
+    for (const m of out) { transfer.push(m.index.buffer); for (const [, a] of m.attrs) transfer.push(a.array.buffer); }
     scope.postMessage(out, transfer);
   };
 }
