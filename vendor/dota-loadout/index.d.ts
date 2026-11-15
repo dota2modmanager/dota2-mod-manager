@@ -14,15 +14,15 @@ export interface Hero {
  update(dt:number,camera:THREE.Camera):void;
 }
 export class HeroViewer {
- constructor(canvas:HTMLCanvasElement,options?:{assets?:string;controls?:boolean|'hero';wheel?:'zoom'|'turn'|false;framing?:'hero'|'full';pixelRatio?:number;textureScale?:number;bloom?:number|false;softParticles?:boolean;onFrame?:(dt:number)=>void;onAfterUpdate?:()=>void;onAnimation?:(name:string)=>void});
+ constructor(canvas:HTMLCanvasElement,options?:{assets?:string;controls?:boolean|'hero';wheel?:'zoom'|'turn'|false;framing?:'hero'|'full';pixelRatio?:number;textureScale?:number;bloom?:number|false;softParticles?:boolean;onFrame?:(dt:number)=>void;onAfterUpdate?:()=>void;onAnimation?:(name:string)=>void;beforeShow?:()=>Promise<void>});
  canvas:HTMLCanvasElement; camera:THREE.PerspectiveCamera; renderer:THREE.WebGLRenderer; scene:THREE.Scene; hero:Hero|null;
  paused:boolean; loading:number; readonly animations:Animation[];
  view:{center:THREE.Vector3;size?:THREE.Vector3;distance:number;zoom:number;zoomTarget:number;pitch:number};
  turn:{angle:number;target:number;velocity:number};
  load(source:{manifest:SceneManifest;url:(path:string)=>string},prepare?:(hero:Hero)=>Promise<void>):Promise<unknown>;
- play(name:string):number; unload():void; fit():void; place():void; frame():void; dispose():void;
+ play(name:string):number; unload():void; park():void; fit():void; place():void; frame():void; dispose():void;
 }
-export function buildHero(manifest:SceneManifest,url:(path:string)=>string,manager:THREE.LoadingManager,time:{value:number},light:Record<string,{value:unknown}>,textureScale?:number):Promise<Hero & {effects:{sim:{particles:{pos:THREE.Vector3;age:number}[];cps:Map<number,{pos:THREE.Vector3}>}}[];dispose():void}>;
+export function buildHero(manifest:SceneManifest,url:(path:string)=>string,manager:THREE.LoadingManager,time:{value:number},light:Record<string,{value:unknown}>,textureScale?:number,warm?:((objects:THREE.Object3D[])=>Promise<void>)|null):Promise<Hero & {effects:{sim:{particles:{pos:THREE.Vector3;age:number}[];cps:Map<number,{pos:THREE.Vector3}>}}[];dispose():void}>;
 /** The game's axes and inches to the scene's: Y up, metres. */
 export const SOURCE_TO_GLTF: THREE.Matrix4;
 /** A control point of a system: where it is and how it is turned. */

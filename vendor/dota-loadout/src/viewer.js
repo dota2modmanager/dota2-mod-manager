@@ -106,7 +106,7 @@ void main() {
     manager.onStart = () => { pendingTextures = true; };
     manager.onProgress = (_, loaded, total) => this.options.onProgress?.(loaded, total);
     manager.onLoad = () => { pendingTextures = false; finishTextures?.(); };
-    const hero = await buildHero(manifest, url, manager, this.time, this.light, this.textureScale);
+    const hero = await buildHero(manifest, url, manager, this.time, this.light, this.textureScale, (objects) => this.warm(objects));
     try {
       if (ticket === this.loading) await prepare?.(hero);
     } catch (error) {
@@ -115,8 +115,10 @@ void main() {
     }
     // Textures load in the background; the hero shows once they are all in.
     if (pendingTextures && ticket === this.loading) await new Promise(done => { finishTextures = done; });
+    if (ticket === this.loading) await this.warm([hero.lib.group, hero.turntable]);
     if (ticket !== this.loading) { hero.dispose(); return null; }
-    this.unload(); this.hero = hero; this.scene.add(hero.lib.group, hero.turntable);
+    this.unload(); this.parked?.dispose(); this.parked = null;
+    this.hero = hero; this.scene.add(hero.lib.group, hero.turntable);
     this.applyLighting(manifest.lighting || DEFAULT_LIGHTING, hero);
     this.turn.angle = this.turn.target = this.turn.velocity = 0; this.view.zoom = this.view.zoomTarget = 1; this.view.pitch = 0;
     this.fit();
@@ -143,6 +145,53 @@ void main() {
   // A kinetic gem in what a slot wears: its activities ([[activity, modifier]], from the manifest's
   // kinetic list), or null; the hero's animations take its modifiers.
   kinetic(slot, activities) { this.hero?.kinetic(slot, activities); }
+  // Desktop preview extension. What is about to be shown, made ready before it is: its textures
+  // sent to the GPU a few per frame and its shaders compiled in parallel. Left to the first frame
+  // that drew it, that frame took 150-700 ms (a hero, measured 2026-11-15) and anything scrolling
+  // beside the preview stopped dead for it. The programs are compiled for the HDR target the
+  // frame draws into, so they are the ones the frame asks for.
+  async warm(objects) {
+    const r = this.renderer; if (!r) return;
+    const textures = new Set();
+    for (const o of objects) o.traverse((m) => {
+      for (const mat of m.material ? [].concat(m.material) : []) {
+        for (const v of Object.values(mat)) if (v?.isTexture) textures.add(v);
+        for (const u of Object.values(mat.uniforms || {})) if (u?.value?.isTexture) textures.add(u.value);
+      }
+    });
+    // an effect's sprite sheet may still be on its way: a moment for it, then on without it
+    const giveUp = performance.now() + 1500;
+    while ([...textures].some((t) => !t.image) && performance.now() < giveUp) await new Promise(requestAnimationFrame);
+    let since = performance.now();
+    for (const t of textures) {
+      if (!t.image) continue;
+      try { r.initTexture(t); } catch { /* drawn the old way, on first use */ }
+      if (performance.now() - since > 6) { await new Promise(requestAnimationFrame); since = performance.now(); }
+    }
+    if (!r.compileAsync) return;
+    // compile() walks only what is visible, and an effect's meshes stay hidden until it has
+    // particles: shown for the walk, which is synchronous, and hidden again straight after
+    const holder = new THREE.Group(); for (const o of objects) if (!o.parent) holder.add(o);
+    const hidden = []; for (const o of objects) o.traverse((m) => { if (!m.visible) { hidden.push(m); m.visible = true; } });
+    const before = r.getRenderTarget(); r.setRenderTarget(this.hdr);
+    let compiling;
+    try { compiling = r.compileAsync(holder.children.length ? holder : objects[0], this.camera, this.scene); } finally {
+      r.setRenderTarget(before); for (const m of hidden) m.visible = false;
+    }
+    try { await compiling; } catch { /* drawn the old way, on first use */ }
+    for (const o of [...holder.children]) holder.remove(o);
+    // what is left of the cost (shadow and effect shaders) comes with the first frame that draws
+    // it: the page may ask for that frame to wait for a better moment (options.beforeShow)
+    await this.options.beforeShow?.();
+  }
+  // Desktop preview extension. The hero off the stage but not let go, for a viewer kept for the
+  // next window: his materials hold their shader programs, and the next hero's warm-up finds
+  // most of them made instead of linking them again. He goes once the next one is on.
+  park() {
+    this.loading++; if (!this.hero) return;
+    this.parked?.dispose(); this.parked = this.hero; this.hero = null;
+    this.scene.remove(this.parked.lib.group, this.parked.turntable);
+  }
   unload() { if (!this.hero) return; this.scene.remove(this.hero.lib.group, this.hero.turntable); this.hero.dispose(); this.hero = null; }
 
   get animations() { return this.hero?.animations || []; }
@@ -251,7 +300,7 @@ void main() {
   }
 
   dispose() {
-    this.loading++; this.renderer.setAnimationLoop(null); this.resize.disconnect(); this.intersection.disconnect(); this.unload();
+    this.loading++; this.renderer.setAnimationLoop(null); this.resize.disconnect(); this.intersection.disconnect(); this.unload(); this.parked?.dispose(); this.parked = null;
     const c = this.canvas; c.removeEventListener('pointerdown', this.onDown); c.removeEventListener('pointermove', this.onMove); c.removeEventListener('pointerup', this.onUp); c.removeEventListener('pointercancel', this.onUp); c.removeEventListener('wheel', this.onWheel);
     this.hdr.dispose(); this.bloom?.dispose(); if (this.soft) { this.soft.target.dispose(); this.soft.material.dispose(); SOFT.uSoft.value = false; } this.output.geometry.dispose(); this.output.material.dispose(); this.renderer.dispose();
   }
@@ -271,7 +320,7 @@ const shrink = (scale) => (scale >= 1 ? undefined : (t) => {
   const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * scale)); c.height = Math.max(1, Math.round(img.height * scale));
   c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); t.image = c; t.needsUpdate = true;
 });
-export async function buildHero(manifest, url, manager, time, light, textureScale = 1) {
+export async function buildHero(manifest, url, manager, time, light, textureScale = 1, warm = null) {
   // Each texture once (particle models make materials of their own, many a second).
   const made = [], textureCache = new Map(), textureOf = (loader, address, scope = '') => (file, srgb = false) => {
     const href = address(`textures/${file}`), key = `${scope}${href}#${srgb}`; if (textureCache.has(key)) return textureCache.get(key);
@@ -921,6 +970,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
           lib.add({ systems: m.systems, snapshots: m.snapshots, textures: Object.fromEntries(Object.entries(m.textures || {}).map(([k, v]) => [k, { ...v, file: source.url(`fx/${v.file}`) }])) });
           scenes.forEach((sc, i) => dress(sc.scene, m.materials, tex, source.url(''), itemCube, m.skins?.[s.models[i]]?.[(s.skin || 0) - 1]));
           await new Promise((done) => { if (!itemManager.itemsTotal || itemManager.itemsLoaded >= itemManager.itemsTotal) done(); else { itemManager.onLoad = done; itemManager.onError = () => {}; } });
+          // desktop preview extension: ready on the GPU before it is put on (Viewer.warm)
+          if (warm) await warm(scenes.map((sc) => sc.scene));
           let companion = null;
           if (s.companion) {
             const c = s.companion, gltf = await loader.loadAsync(source.url(m.models[c.model])), group = new THREE.Group(), mixer = new THREE.AnimationMixer(gltf.scene);

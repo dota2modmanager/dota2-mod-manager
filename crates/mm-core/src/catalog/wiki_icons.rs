@@ -123,7 +123,8 @@ impl WikiIcons {
         match resolve() {
             Got::Hit(buf, mime) => {
                 let _ = std::fs::create_dir_all(&self.dir);
-                let _ = std::fs::write(&file, &buf);
+                // whole or not at all: a call alongside reads this file (game_icons::write_whole)
+                crate::game_icons::write_whole(&file, &buf);
                 let mut m = self.misses.lock().unwrap_or_else(|e| e.into_inner());
                 if m.remove(key).is_some() {
                     self.save_misses(&m);

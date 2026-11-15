@@ -45,7 +45,7 @@ export function recPreviewUrl(rec: Pictured | LibRecord | Member): string | null
 export function thumbHtml(cls: string, url: string | null | undefined): string {
   if (!url) return `<div class="${cls}"></div>`;
   if (isVideo(url)) return `<video class="${cls}" src="${esc(url)}" muted playsinline preload="metadata"></video>`;
-  return `<img class="${cls}" src="${esc(url)}" loading="lazy" alt="">`;
+  return `<img decoding="async" class="${cls}" src="${esc(url)}" loading="lazy" alt="">`;
 }
 
 // A stand-in for a record with no picture of its own and no catalog match: a cursor set

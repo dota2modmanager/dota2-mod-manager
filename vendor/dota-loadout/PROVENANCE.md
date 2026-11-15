@@ -7,4 +7,4 @@
 - The port author contributed their modifications to this GPL-3.0-or-later application. Upstream MIT notices are retained in LICENSE and the source headers.
 - Game assets are read locally and are not included. No upstream hosted asset service is used by the desktop adapter.
 
-Desktop integration changes: export buildHero for headless regression checks; honor explicit parent attachment drivers. The pedestal asset was contributed by the port author.
+Desktop integration changes: export buildHero for headless regression checks; honor explicit parent attachment drivers; warm (textures to the GPU a few per frame and shaders compiled in parallel) a hero and each worn item before they are shown. The pedestal asset was contributed by the port author.
