@@ -20,9 +20,11 @@ on:
 permissions:
   contents: read
 
+# one warm-up at a time; the next merge waits instead of cancelling this one, since a cancelled
+# run marks that commit on main with a red cross that means nothing
 concurrency:
   group: rust-cache-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   warm:

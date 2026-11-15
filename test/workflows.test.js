@@ -583,3 +583,9 @@ test('every job gives up on its own, well before the six hours GitHub would wait
   assert.ok(jobs >= 30, `only ${jobs} jobs found, so the walk stopped finding them`);
   assert.deepEqual(missing, [], missing.join('\n'));
 });
+
+test('the cache warm-up on main is never cancelled by the next merge', () => {
+  /* 6d88972a (#682) carried a red cross on main because the next merge cancelled its warm-up. */
+  const text = read('rust-cache.yml');
+  assert.match(text, /concurrency:\r?\n\s+group: [^\n]+\n\s+cancel-in-progress: false/, 'a merge cancels the warm-up before it');
+});
