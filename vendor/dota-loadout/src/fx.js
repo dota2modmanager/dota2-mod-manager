@@ -778,6 +778,16 @@ const OP = {
       }
     };
   },
+  // The average of a field over the system's particles, remapped into one component of a control
+  // point: the rain's drops now set how many rings its splashes make (CP 7, read by impact_b's rate).
+  C_OP_RemapAverageScalarValuetoCP(d) {
+    const f = field(d.m_nField, F.Alpha), cp = d.m_nOutControlPointNumber ?? 1, comp = d.m_nOutVectorField ?? 0;
+    const i0 = d.m_flInputMin ?? 0, i1 = d.m_flInputMax ?? 1, o0 = d.m_flOutputMin ?? 0, o1 = d.m_flOutputMax ?? 1;
+    return (ps, dt, s) => {
+      let sum = 0; for (const p of ps) sum += p.getS(f);
+      const v = s.cp(cp).pos.clone(); v.setComponent(comp, remapClamped(ps.length ? sum / ps.length : 0, i0, i1, o0, o1)); setCPValue(s, cp, v);
+    };
+  },
   // Control points for this system and its children.
   C_OP_SetSingleControlPointPosition(d) {
     const cp = d.m_nCP1 ?? 1, pos = vector(d.m_vecCP1Pos, [128, 0, 0]), once = d.m_bSetOnce, world = d.m_bUseWorldLocation, head = d.m_nHeadLocation ?? 0; let done = false;
@@ -924,6 +934,22 @@ const OP = {
     const cp = d.m_nControlPointNumber ?? 0, dist = d.m_flDistance ?? 0, inside = d.m_bCullInside, off = vec(d.m_vecPointOffset);
     return (ps, dt, s) => { const c = s.cp(cp).pos.clone().add(off); for (const p of ps) { const far = p.pos.distanceTo(c) > dist; if (far !== !!inside) p.dead = true; } };
   },
+  // The weather's: a particle that leaves the sphere round the control point (scaled per axis, so
+  // [1, 1, 0] is an endless column) comes back in on the far side, its speed kept. The rain and the
+  // snow stay round the view as it moves instead of being left behind where they were born.
+  C_OP_MovementLoopInsideSphere(d) {
+    const cp = d.m_nCP ?? 0, dist = d.m_flDistance ?? 100, scale = vec(d.m_vecScale, [1, 1, 1]);
+    return (ps, dt, s) => {
+      if (dist <= 0) return;
+      const c = s.cp(cp).pos;
+      for (const p of ps) {
+        const v = p.pos.clone().sub(c).multiply(scale), l = v.length();
+        if (l <= dist) continue;
+        const shift = v.multiplyScalar(-2 * dist / l);
+        p.pos.add(shift); p.prev.add(shift);
+      }
+    };
+  },
   C_OP_MovementRotateParticleAroundAxis(d) {
     const axis = vec(d.m_vecRotAxis, [0, 0, 1]).normalize(), rate = number(d.m_flRotRate, 180), cp = d.m_TransformInput?.m_nControlPoint ?? d.m_nCP ?? 0, local = d.m_bLocalSpace;
     return (ps, dt, s, str) => { const c = s.cp(cp), ax = local ? axis.clone().applyQuaternion(c.quat) : axis, q = new THREE.Quaternion().setFromAxisAngle(ax, rate(null, s) * Math.PI / 180 * dt * str);
@@ -1040,6 +1066,17 @@ Object.assign(OP, {
 
 // Constraints (m_Constraints): run after the operators, they move particles and say whether they did.
 Object.assign(OP, {
+  // A particle that goes under a plane (the ground, for what crawls on it: the plague's centipedes)
+  // is put back onto it, its fall stopped. The plane passes through a point, by the control point
+  // unless it is global, and faces up unless it says otherwise.
+  C_OP_PlanarConstraint(d) {
+    const at = vec(d.m_PointOnPlane), normal = vec(d.m_PlaneNormal, [0, 0, 1]).normalize(), global = d.m_bGlobalOrigin, cp = d.m_nControlPointNumber ?? 0;
+    return (ps, dt, s) => {
+      const o = global ? at : at.clone().add(s.cp(cp).pos); let moved = false;
+      for (const p of ps) { const below = p.pos.clone().sub(o).dot(normal); if (below >= 0) continue; p.pos.addScaledVector(normal, -below); const back = p.prev.clone().sub(o).dot(normal); if (back < 0) p.prev.addScaledVector(normal, -back); moved = true; }
+      return moved;
+    };
+  },
   // A particle outside the shell between the two distances from the centre snaps onto it (a negative
   // maximum: no outer shell); its previous position stays, so the snap shows as velocity.
   C_OP_ConstrainDistance(d) {
@@ -1469,7 +1506,7 @@ attribute vec4 color; attribute vec4 uvA; attribute vec4 uvB; attribute float bl
 varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
 void main() { vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB = mix(uvB.xy, uvB.zw, uv); vBlend = blend; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const fragmentShader = `
-uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform float studioGemMix; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
+uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool studioRefract; uniform float refractShade; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform float studioGemMix; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
 uniform sampler2D tSceneDepth; uniform vec2 uSceneSize; uniform float uNear, uFar, uFeather; uniform bool uSoft;
 varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
 // m_nTextureChannels: which of the texture's channels give the alpha (the game's spritecard; as
@@ -1493,6 +1530,14 @@ vec4 channelMix(vec4 t) {
 }
 float viewDepth(float d) { float z = d * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - z * (uFar - uNear)); }
 void main() {
+  // A refracting card (a puddle, rain on the river) bends what lies behind it by its normal map. Without
+  // the scene behind as a texture it is shaded instead, through mod2x: lit on one side of each ripple,
+  // dark on the other, a little darker overall where it is wet; flat, it changes nothing.
+  if (studioRefract) {
+    vec4 nt = texture2D(map, vUvA); vec2 n = nt.rg * 2.0 - 1.0; float ra = nt.a * vColor.a;
+    float shade = clamp(0.5 + (n.x + n.y) * refractShade, 0.0, 1.0) - 0.04;
+    gl_FragColor = vec4(vec3(mix(0.5, shade, ra)), ra); return;
+  }
   vec4 t = texture2D(map, vUvA); if (blendFrames) t = mix(t, texture2D(map, vUvB), vBlend); if (studioRecolor) t.rgb = vec3(max(t.r, max(t.g, t.b))); t = channelMix(t);
   t.rgb = mix(t.rgb, vec3(max(t.r, max(t.g, t.b))), studioGemMix);
   vec3 c = vColor.rgb * t.rgb; float a = t.a * vColor.a;
@@ -1529,7 +1574,7 @@ function material(texInfo, r) {
   const feather = /ON_/.test(r.m_nFeatheringMode || '') ? number(r.m_flFeatheringMaxDist, FEATHER)(null, null) * 0.0254 : 0;
   const m = new THREE.ShaderMaterial({
     vertexShader, fragmentShader, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    uniforms: { studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
+    uniforms: { studioRefract: { value: r.studioRefract === true }, refractShade: { value: 0.6 * Math.min(1, Math.abs(r.m_flRefractAmount ?? 0.1)) }, studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false }, ...SOFT, uFeather: { value: feather },
       channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') } },
   });
@@ -1609,6 +1654,15 @@ class BlobRenderer {
  update(ps,s){this.surface.reset();const live=ps.filter(p=>p.alpha>1/255);this.surface.visible=!!live.length;if(!live.length)return;const box=new THREE.Box3();for(const p of live)box.expandByPoint(p.pos);const radius=Math.max(this.r.m_cutoffRadius??13,...live.map(p=>p.radius)),center=box.getCenter(new THREE.Vector3()),extent=Math.max(32,box.getSize(new THREE.Vector3()).length()+radius*4);this.surface.position.copy(center);this.surface.scale.setScalar(extent/2);for(const p of live.slice(0,256)){const point=p.pos.clone().sub(center).divideScalar(extent).addScalar(.5),r=Math.max(this.r.m_renderRadius??4,p.radius*.5)/extent,c=scaled(this.colorScale,p,s);this.surface.addBall(point.x,point.y,point.z,r*r*92,12,new THREE.Color().setRGB(...c));}this.material.opacity=Math.min(1,Math.max(...live.map(p=>p.alpha)));this.surface.update();}
  dispose(){this.lib.group.remove(this.surface);this.surface.geometry.dispose();this.material.dispose();}
 }
+// VisibilityInputs by distance: a card's alpha by how far it is from the eye, m_flDistanceInputMin..Max
+// onto m_flAlphaScaleMin..Max (the aurora's beams fade as the camera nears them); none without a
+// distance (the puddles' inputs are the projected size, which the runtime does not have). Only where
+// the scene asks (the map's weather): the hero preview's effects keep drawing as they did.
+function visibility(r) {
+  const v = r.VisibilityInputs; if (!v || (v.m_flDistanceInputMin === undefined && v.m_flDistanceInputMax === undefined)) return null;
+  const d0 = v.m_flDistanceInputMin ?? 0, d1 = v.m_flDistanceInputMax ?? 0, a0 = v.m_flAlphaScaleMin ?? 0, a1 = v.m_flAlphaScaleMax ?? 1;
+  return d1 > d0 ? (dist) => remapClamped(dist, d0, d1, a0, a1) : null;
+}
 class SpriteRenderer {
   dispose() { this.batch.dispose(); }
   constructor(r, lib, sim) {
@@ -1617,7 +1671,7 @@ class SpriteRenderer {
     this.minSize = number(r.m_flMinSize, 0)(); this.maxSize = number(r.m_flMaxSize, 5000)(); this.fadeStart = number(r.m_flStartFadeSize, 1e8)(); this.fadeEnd = number(r.m_flEndFadeSize, 2e8)();
     // Cards lying in a plane fade as they turn edge-on to the eye: full where the dot of their normal
     // and the way to the eye is the start one, gone at the end one (the defaults, 1 and 2, never fade).
-    this.dotStart = r.m_flStartFadeDot ?? 1; this.dotEnd = r.m_flEndFadeDot ?? 2;
+    this.dotStart = r.m_flStartFadeDot ?? 1; this.dotEnd = r.m_flEndFadeDot ?? 2; this.seen = lib.options.distanceFade ? visibility(r) : null;
   }
   update(ps, s, camera, gi) {
     const b = this.batch, { right, up, eye } = billboard(camera, gi); b.begin();
@@ -1625,6 +1679,7 @@ class SpriteRenderer {
       // Screen-size limits: a card that grows too large on screen fades, and its size is clamped.
       const dist = eye.distanceTo(p.pos); let r = p.radius * this.radiusScale(p, s), fade = 1;
       if (r > this.fadeStart * dist) { if (r >= this.fadeEnd * dist) continue; fade = 1 - remap(r, this.fadeStart * dist, this.fadeEnd * dist); }
+      if (this.seen) fade *= this.seen(dist);
       r = Math.min(Math.max(r, this.minSize * dist), this.maxSize * dist);
       const flat = this.orient === 'PARTICLE_ORIENTATION_ALIGN_TO_PARTICLE_NORMAL' ? p.normal : this.orient === 'PARTICLE_ORIENTATION_WORLD_Z_ALIGNED' ? Z : null;
       if (flat && this.dotEnd < this.dotStart) { const d = Math.abs(flat.clone().normalize().dot(eye.clone().sub(p.pos).normalize())); fade *= saturate((d - this.dotEnd) / (this.dotStart - this.dotEnd)); }
@@ -1657,6 +1712,7 @@ class TrailRenderer {
     this.radiusScale = number(r.m_flRadiusScale, 1); this.tail = number(r.m_flTailAlphaScale, 1); this.head = number(r.m_flHeadAlphaScale, 1); this.ignoreDT = r.m_bIgnoreDT;
     this.lengthScale = r.m_flLengthScale ?? 1; this.fadeIn = r.m_flLengthFadeInTime ?? 0; this.ratio = r.m_flConstrainRadiusToLengthRatio ?? 1; this.shift = r.m_flForwardShift ?? 0;
     const tc = r.m_vecTexturesInput?.[0]?.m_TextureControls; this.flipV = tc && number(tc.m_flFinalTextureScaleV, 1)() < 0; this.rate = r.m_flAnimationRate ?? 0.1; this.type = r.m_nAnimationType;
+    this.seen = lib.options.distanceFade ? visibility(r) : null;
   }
   // RenderTrails: a card from the particle back toward its previous position, as long as the
   // movement times m_flTrailLength (per second unless m_bIgnoreDT), no wider than it is long.
@@ -1665,7 +1721,7 @@ class TrailRenderer {
     for (const p of ps) {
       const diff = p.prev.clone().sub(p.pos), dl = diff.length(); if (dl < 1e-6) continue; const dir = diff.divideScalar(dl);
       let len = this.lengthScale * p.trail * dl * oneOverDt; if (this.fadeIn > 0) len *= Math.min(1, p.age / this.fadeIn); len = Math.min(this.max, Math.max(this.min, len)); if (len <= 0) continue;
-      const hw = Math.min(p.radius * this.radiusScale(p, s), this.ratio * len), a = p.alpha * p.alpha2; if (hw <= 0 || a < 1 / 255) continue;
+      const hw = Math.min(p.radius * this.radiusScale(p, s), this.ratio * len), a = p.alpha * p.alpha2 * (this.seen ? this.seen(eye.distanceTo(p.pos)) : 1); if (hw <= 0 || a < 1 / 255) continue;
       const center = p.pos.clone().addScaledVector(dir, len * (0.5 - this.shift)), V = dir.clone().multiplyScalar(len / 2);
       let U = dir.clone().cross(eye.clone().sub(p.pos)); if (U.lengthSq() < 1e-8) U = dir.clone().cross(new THREE.Vector3(0, 0, 1)); U.normalize().multiplyScalar(hw);
       const f = sheetFrame(this.info, p, this.rate, this.type); let uv = f ? f.a : FULL, uv2 = f ? f.b : FULL;
@@ -1788,7 +1844,9 @@ export class Library {
     if (r._class === 'C_OP_RenderModels') return this.models ? new ModelRenderer(r, this, sim) : null;
     if (!this.texture(r).texture) return null;
     switch (r._class) {
-      case 'C_OP_RenderSprites': return r.m_bRefract ? null : new SpriteRenderer(r, this, sim);
+      // a refracting card is left out, unless the scene asked for it shaded (the map's weather: puddles)
+      case 'C_OP_RenderSprites': return !r.m_bRefract ? new SpriteRenderer(r, this, sim)
+        : this.options.refract ? new SpriteRenderer({ ...r, m_nOutputBlendMode: 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X', studioRefract: true }, this, sim) : null;
       case 'C_OP_RenderTrails': return new TrailRenderer(r, this, sim);
       case 'C_OP_RenderRopes': return new RopeRenderer(r, this, sim);
       case 'C_OP_RenderDeferredLight': return null;

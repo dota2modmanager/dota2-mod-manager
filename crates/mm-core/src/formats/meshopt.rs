@@ -304,3 +304,196 @@ pub fn encode_vertex_buffer_v0(data: &[u8], count: usize, size: usize) -> Result
     out.extend_from_slice(&first);
     Ok(out)
 }
+
+/// meshoptimizer's index buffer encoder, version 1 (header 0xe1), as `encodeIndexBuffer` of the
+/// `meshoptimizer` package writes it: the map's triangles for the window go out in
+/// EXT_meshopt_compression's TRIANGLES mode (map_scene.rs), which three.js's MeshoptDecoder reads.
+///
+/// Each triangle is a code byte: an edge it shares with one of the last sixteen triangles and a
+/// vertex from the last sixteen seen, or the next vertex never seen, or an index written apart as
+/// a zigzag varint delta from the last one written. The aux table at the end both decodes the
+/// codes that name two vertices and pads the stream for the decoder.
+pub fn encode_index_buffer(indices: &[u32]) -> Result<Vec<u8>, String> {
+    const AUX: [u8; 16] = [0x00, 0x76, 0x87, 0x56, 0x67, 0x78, 0xa9, 0x86, 0x65, 0x89, 0x68, 0x98, 0x01, 0x69, 0, 0];
+    const ORDER: [[usize; 3]; 3] = [[0, 1, 2], [1, 2, 0], [2, 0, 1]];
+    const FEC_MAX: i32 = 13;
+    if !indices.len().is_multiple_of(3) {
+        return Err(format!("meshopt: {} indices are no whole triangles", indices.len()));
+    }
+    let mut edges = [[u32::MAX; 2]; 16];
+    let mut verts = [u32::MAX; 16];
+    let (mut edge_at, mut vert_at) = (0usize, 0usize);
+    let (mut next, mut last) = (0u32, 0u32);
+    let mut code: Vec<u8> = Vec::with_capacity(indices.len() / 3);
+    let mut data: Vec<u8> = Vec::new();
+
+    let get_edge = |e: &[[u32; 2]; 16], at: usize, a: u32, b: u32, c: u32| -> i32 {
+        for i in 0..16 {
+            let x = e[(at.wrapping_sub(1 + i)) & 15];
+            if x == [a, b] {
+                return (i << 2) as i32;
+            }
+            if x == [b, c] {
+                return ((i << 2) | 1) as i32;
+            }
+            if x == [c, a] {
+                return ((i << 2) | 2) as i32;
+            }
+        }
+        -1
+    };
+    let get_vert = |v: &[u32; 16], at: usize, x: u32| -> i32 {
+        (0..16).find(|i| v[(at.wrapping_sub(1 + i)) & 15] == x).map_or(-1, |i| i as i32)
+    };
+    let write_index = |data: &mut Vec<u8>, index: u32, last: u32| {
+        let d = index.wrapping_sub(last) as i32;
+        let mut v = ((d << 1) ^ (d >> 31)) as u32;
+        loop {
+            if v < 128 {
+                data.push(v as u8);
+                break;
+            }
+            data.push((v & 127) as u8 | 128);
+            v >>= 7;
+        }
+    };
+
+    for t in indices.as_chunks::<3>().0 {
+        let fer = get_edge(&edges, edge_at, t[0], t[1], t[2]);
+        if fer >= 0 && (fer >> 2) < 15 {
+            let o = ORDER[(fer & 3) as usize];
+            let (a, b, c) = (t[o[0]], t[o[1]], t[o[2]]);
+            let fe = fer >> 2;
+            let fc = get_vert(&verts, vert_at, c);
+            let mut fec = if (1..FEC_MAX).contains(&fc) {
+                fc
+            } else if c == next {
+                next += 1;
+                0
+            } else {
+                15
+            };
+            if fec == 15 {
+                // strip-like runs: the one before or after the last index written apart
+                if c.wrapping_add(1) == last {
+                    fec = 13;
+                    last = c;
+                }
+                if c == last.wrapping_add(1) {
+                    fec = 14;
+                    last = c;
+                }
+            }
+            code.push(((fe << 4) | fec) as u8);
+            if fec == 15 {
+                write_index(&mut data, c, last);
+                last = c;
+            }
+            if fec == 0 || fec >= FEC_MAX {
+                verts[vert_at] = c;
+                vert_at = (vert_at + 1) & 15;
+            }
+            edges[edge_at] = [c, b];
+            edge_at = (edge_at + 1) & 15;
+            edges[edge_at] = [a, c];
+            edge_at = (edge_at + 1) & 15;
+        } else {
+            let rotation = if t[1] == next {
+                1
+            } else if t[2] == next {
+                2
+            } else {
+                0
+            };
+            let o = ORDER[rotation];
+            let (a, b, c) = (t[o[0]], t[o[1]], t[o[2]]);
+            let mut reset = false;
+            if a == 0 && b == 1 && c == 2 && next > 0 {
+                reset = true;
+                next = 0;
+                // the old vertices must not be named again once the count starts over
+                verts = [u32::MAX; 16];
+            }
+            let fb = get_vert(&verts, vert_at, b);
+            let fc = get_vert(&verts, vert_at, c);
+            let fea = if a == next {
+                next += 1;
+                0
+            } else {
+                15
+            };
+            let feb = if (0..14).contains(&fb) {
+                fb + 1
+            } else if b == next {
+                next += 1;
+                0
+            } else {
+                15
+            };
+            let fec = if (0..14).contains(&fc) {
+                fc + 1
+            } else if c == next {
+                next += 1;
+                0
+            } else {
+                15
+            };
+            let aux = ((feb << 4) | fec) as u8;
+            let aux_at = AUX.iter().position(|x| *x == aux);
+            match aux_at {
+                Some(k) if fea == 0 && k < 14 && !reset => code.push(0xf0 | k as u8),
+                _ => {
+                    code.push(0xf0 | 14 | fea as u8);
+                    data.push(aux);
+                }
+            }
+            for (f, v) in [(fea, a), (feb, b), (fec, c)] {
+                if f == 15 {
+                    write_index(&mut data, v, last);
+                    last = v;
+                }
+            }
+            for (f, v) in [(fea, a), (feb, b), (fec, c)] {
+                if f == 0 || f == 15 {
+                    verts[vert_at] = v;
+                    vert_at = (vert_at + 1) & 15;
+                }
+            }
+            for e in [[b, a], [c, b], [a, c]] {
+                edges[edge_at] = e;
+                edge_at = (edge_at + 1) & 15;
+            }
+        }
+    }
+    let mut out = Vec::with_capacity(1 + code.len() + data.len() + 16);
+    out.push(0xe1);
+    out.extend_from_slice(&code);
+    out.extend_from_slice(&data);
+    out.extend_from_slice(&AUX);
+    Ok(out)
+}
+
+#[cfg(test)]
+mod index_tests {
+    /// The bytes the `meshoptimizer` package's encodeIndexBuffer gives for the same triangles.
+    #[test]
+    fn triangles_come_out_as_meshoptimizer_writes_them() {
+        let a = super::encode_index_buffer(&[0, 1, 2, 2, 1, 3, 4, 5, 6, 7, 8, 9, 3, 1, 10, 0, 1, 2]).unwrap();
+        assert_eq!(
+            a,
+            vec![
+                225, 240, 16, 240, 240, 112, 254, 0, 0, 118, 135, 86, 103, 120, 169, 134, 101, 137, 104, 152, 1, 105,
+                0, 0
+            ]
+        );
+        let b = super::encode_index_buffer(&[5, 9, 2, 2, 9, 100, 70000, 3, 2, 1, 2, 3]).unwrap();
+        assert_eq!(
+            b,
+            vec![
+                225, 255, 31, 255, 31, 255, 10, 8, 13, 196, 1, 242, 152, 196, 8, 217, 197, 8, 3, 0, 118, 135, 86, 103,
+                120, 169, 134, 101, 137, 104, 152, 1, 105, 0, 0
+            ]
+        );
+        assert!(super::encode_index_buffer(&[1, 2]).is_err());
+    }
+}

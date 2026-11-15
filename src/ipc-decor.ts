@@ -1,25 +1,18 @@
-/* The channels of the window for the map without its decor: what is off the map now and how much
- * each group takes on this map, and the groups taken off. The thinking is in src/map-decor.ts; a
- * build reads the map and copies one of the game's materials, no tools. */
+/* The Optimization window's channels. They are Rust's alone (crates/mm-core/src/looks/map_decor.rs,
+ * map_optimize.rs, owner_preview3d.rs): the Node host registers them so the window's calls have a
+ * handler here too, and answers as a game with nothing to offer: no map read, nothing to build. */
 import { electron } from './electron.ts';
-import { errorText } from './error-text.ts';
 import type { AppContext } from './app-context.ts';
 
-/** Register this module's channels, over the services src/main.ts hands it. */
-export function registerDecorIpc({ mapDecor, afterDeployMaster, blocked }: Pick<AppContext, 'mapDecor' | 'afterDeployMaster' | 'blocked'>): void {
+/** Register this module's channels: an install still answers to the guard while Dota runs. */
+export function registerDecorIpc({ blocked }: Pick<AppContext, 'blocked'>): void {
   const { ipcMain } = electron();
-  ipcMain.handle('decor:state', async () => {
-    try { return { ok: true, ...(await mapDecor.state()) }; } catch (err) { return { error: errorText(err) }; }
-  });
-  ipcMain.handle('decor:install', async (e, groups) => {
-    const stop = blocked('install');
-    if (stop) return stop;
-    try {
-      const record = await mapDecor.install(groups);
-      afterDeployMaster();
-      return { ok: true, record };
-    } catch (err) {
-      return { error: errorText(err) };
-    }
-  });
+  ipcMain.handle('decor:state', () => ({ ok: true, installed: null, map: null, counts: null, samples: null }));
+  ipcMain.handle('decor:install', () => blocked('install') ?? { ok: false });
+  ipcMain.handle('decor:scene', () => ({ ready: false, tool: false }));
+  ipcMain.handle('decor:map', () => null);
+  ipcMain.handle('decor:ground', () => null);
+  ipcMain.handle('decor:modTrees', () => null);
+  ipcMain.handle('decor:paint', () => null);
+  ipcMain.handle('decor:modModel', () => null);
 }

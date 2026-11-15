@@ -81,14 +81,44 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             svc.install(installer, library, &a0, log)
         }),
         "decor:state" => {
-            let c = o.core();
-            ok_with(crate::map_decor::MapDecor::new(c.game()).state(&c.installer, &c.library))
+            let mut c = o.core();
+            // the game's terrain and weather items, read out of the item table once per table: a
+            // reading is the whole fifty megabytes, every opening of the window paid it
+            let text = c.game().and_then(|g| c.schema.vanilla(&g).ok());
+            let (terrains, weathers, plain) = match &text {
+                Some(t) => decor_items(t),
+                None => (vec![], vec![], Value::Null),
+            };
+            let map = crate::map_make::MapMake::state(&c.library);
+            let lights = c.game().map(|g| weather_lights(&g)).unwrap_or(Value::Null);
+            ok_with(crate::map_decor::MapDecor::new(c.game()).state(&c.installer, &c.library).map(|mut v| {
+                v["map"] = map;
+                v["weatherLight"] = lights;
+                v["terrains"] = Value::Array(terrains);
+                v["weathers"] = Value::Array(weathers);
+                v["defaultWeather"] = plain;
+                v
+            }))
         }
-        "decor:install" => installed(o, |c, log| {
-            let svc = crate::map_decor::MapDecor::new(c.game());
-            let Core { installer, library, .. } = c;
-            svc.install(installer, library, &a0, log)
-        }),
+        "decor:install" => {
+            // a catalog terrain as the map's base: its archive downloaded as an install would, before
+            // the build takes the app (the download reports its bar meanwhile)
+            let names: Vec<String> =
+                a0.as_array().into_iter().flatten().filter_map(Value::as_str).map(str::to_string).collect();
+            let choice = crate::map_decor::MapChoice::of(names.iter().map(String::as_str));
+            if let Some(crate::map_base::Base::Catalog(file)) = &choice.base {
+                let ud = o.core().user_data.clone();
+                let to = crate::map_base::catalog_map(&ud, file);
+                if !crate::map_base::catalog_kept(&ud, file) {
+                    let got = crate::owner_mods::download(o, "terrains", file, file)
+                        .and_then(|zip| crate::map_base::take_catalog_map(&zip, &to));
+                    if let Err(e) = got {
+                        return json!({ "error": e });
+                    }
+                }
+            }
+            decor_install(o, args)
+        }
         "background:state" => ok_with(Ok(crate::menu_background_service::MenuBackground::state(&o.core().library))),
         "background:install" => {
             let webm = match crate::owner::bytes_of(&a0) {
@@ -209,4 +239,106 @@ fn pumpkin(o: &Owner, channel: &str, typed: &Value) -> Value {
         let _ = o.refresh_schema_in_background().recv();
     }
     out
+}
+
+/// The Optimization pak and the map built (map_decor.rs), the ground's pictures in polygons
+/// compiled first when they are asked for (ground_build.rs).
+/// decor:install: Optimization's groups (map_decor.rs), or with "map" fourth the map of one's own
+/// (map_make.rs). A map built anew is a new map under Optimization, which is built again on it.
+fn decor_install(o: &Owner, args: &[Value]) -> Value {
+    let a0 = arg(args, 0);
+    let is_map = args.get(3).and_then(Value::as_str) == Some("map");
+    installed(o, |c, log| {
+        let ud = c.user_data.clone();
+        let make = crate::map_make::MapMake::new(c.game(), &ud);
+        let decor = crate::map_decor::MapDecor::new(c.game()).with_user_data(&ud);
+        {
+            let Core { installer, library, .. } = &mut *c;
+            make.adopt_legacy(installer, library, log)?;
+        }
+        if !is_map {
+            let Core { installer, library, .. } = c;
+            return decor.install(installer, library, &a0, log);
+        }
+        // the ground's look: its tint ("rrggbb") and polygons, kept in the record beside the rest
+        let mut names: Vec<String> =
+            a0.as_array().into_iter().flatten().filter_map(Value::as_str).map(str::to_string).collect();
+        for (k, i) in [("tint", 1), ("facets", 2)] {
+            let v = args.get(i).and_then(Value::as_str).unwrap_or("");
+            if !v.is_empty() {
+                names.push(format!("{k}:{v}"));
+            }
+        }
+        let style = crate::ground_facets::Style::of(names.iter().map(String::as_str));
+        // the ground in polygons: its pictures cut and compiled before the build (ground_build.rs)
+        let extra = match style.facets {
+            Some(f) => {
+                let pak = c
+                    .game()
+                    .and_then(|g| crate::vpk_shared::shared_index(&g.join("dota").join("pak01_dir.vpk")).ok())
+                    .ok_or_else(|| crate::i18n::t("Не указана папка игры", &[]))?;
+                let grounds = make.grounds(&a0);
+                let glb = c.glb.clone();
+                let (rc, k) = (crate::owner_compiler::compiler(c), crate::owner_compiler::keeper(c));
+                let mut compile = |job: &crate::resource_compiler::CompileJob| {
+                    rc.compile(job, k.as_ref(), &mut crate::run_process::run, &mut |_| {})
+                };
+                crate::ground_build::faceted(&pak, &grounds, f, &|t| glb.sprites(t), &mut compile, log)?
+            }
+            None => vec![],
+        };
+        let Core { installer, library, .. } = c;
+        let rec = make.put(installer, library, &names, extra, false)?;
+        // Optimization took its files off the map that was on: it is built again on this one
+        decor.rebuild_now(installer, library, log);
+        Ok(rec)
+    })
+}
+
+/// The light of each weather in the default map's zones (map_build.rs weather_lights), read once
+/// per map file: the window lights its 3D map from them.
+static WEATHER_LIGHTS: std::sync::Mutex<Option<(String, Value)>> = std::sync::Mutex::new(None);
+
+fn weather_lights(game: &std::path::Path) -> Value {
+    let map = game.join("dota").join("maps").join("dota.vpk");
+    let key = std::fs::metadata(&map)
+        .map(|m| format!("{}|{}|{:?}", map.display(), m.len(), m.modified().ok()))
+        .unwrap_or_default();
+    let mut kept = WEATHER_LIGHTS.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((k, v)) = kept.as_ref() {
+        if *k == key {
+            return v.clone();
+        }
+    }
+    let Ok(ix) = crate::vpk::Index::open(&map) else { return Value::Null };
+    let lumps: Vec<Vec<u8>> =
+        ix.paths().filter(|p| p.ends_with(".vents_c")).filter_map(|p| ix.read(p).ok().flatten()).collect();
+    let v = crate::map_build::weather_lights(&lumps, &crate::map_decor::WEATHER_KEYS);
+    *kept = Some((key, v.clone()));
+    v
+}
+
+/// The terrain items, the weather items and the default weather, kept for the table they were read from.
+type DecorItems = (Vec<Value>, Vec<Value>, Value);
+static DECOR_ITEMS: std::sync::Mutex<Option<(usize, usize, DecorItems)>> = std::sync::Mutex::new(None);
+
+fn decor_items(t: &std::sync::Arc<(Vec<u8>, String)>) -> DecorItems {
+    let key = (std::sync::Arc::as_ptr(t) as usize, t.0.len());
+    let mut kept = DECOR_ITEMS.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some((p, n, items)) = kept.as_ref() {
+        if (*p, *n) == key {
+            return items.clone();
+        }
+    }
+    let terrains: Vec<Value> = crate::map_ground::terrain_items(&t.0)
+        .into_iter()
+        .map(|(id, name, map)| json!({ "id": id, "name": name, "map": map }))
+        .collect();
+    let (weathers, plain) = crate::map_ground::weather_items(&t.0);
+    let weathers: Vec<Value> =
+        weathers.into_iter().map(|(id, name, key)| json!({ "id": id, "name": name, "key": key })).collect();
+    let plain = plain.map_or(Value::Null, |(id, name)| json!({ "id": id, "name": name }));
+    let items = (terrains, weathers, plain);
+    *kept = Some((key.0, key.1, items.clone()));
+    items
 }

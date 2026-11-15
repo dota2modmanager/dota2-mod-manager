@@ -132,5 +132,5 @@ export interface ScreenActions {
   openBackground: (card: HTMLElement) => void;
   openHud: (card: HTMLElement) => void;
   openRank: (card: HTMLElement) => void;
-  openDecor: (card: HTMLElement) => void;
+  openDecor: (card: HTMLElement, kind: 'map' | 'optimize') => void;
 }

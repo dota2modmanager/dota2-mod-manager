@@ -205,7 +205,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   // the 3D preview: a hero and its slots, each with the stock item it dresses (src/hero-preview.ts)
   'preview3d:warm': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1) }), 40)],
   'preview3d:prefetch': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1) }), 40), str(120, 1), list(str(20, 1), 400)],
-  'preview3d:models': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1), tryOn: optional(shape({ itemId: str(20), effectId: str(500) })) }), 40)], 'preview3d:slice': [num(1, Number.MAX_SAFE_INTEGER), num(0, Number.MAX_SAFE_INTEGER)], 'preview3d:motions': [str(200, 1)], 'preview3d:effect': [str(40, 1)], 'preview3d:model': [str(200, 1)], 'sounds:hero': [str(60, 1)], 'sounds:remove': [str(60, 1), str(200, 1)],
+  'preview3d:models': [str(80, 1), list(shape({ slot: str(120, 1), stock: str(20, 1), tryOn: optional(shape({ itemId: str(20), effectId: str(500) })) }), 40)], 'preview3d:slice': [num(1, Number.MAX_SAFE_INTEGER), num(0, Number.MAX_SAFE_INTEGER)], 'preview3d:motions': [str(200, 1)], 'preview3d:effect': [str(200, 1)], 'preview3d:model': [str(200, 1)], 'sounds:hero': [str(60, 1)], 'sounds:remove': [str(60, 1), str(200, 1)],
   'sounds:add': [str(60, 1), str(200, 1), oneOf('replace', 'layer'), num(0.05, 1), bytes(8 * MB), str(200)],
   // the menu's background (src/ipc-background.ts): a WebM the window encoded, or null for a new look alone
   // the in-game HUD's layout (src/ipc-hud.ts): what src/hud-scale.ts cleanParts then puts in range
@@ -221,7 +221,7 @@ export const CHANNEL_ARGS: Record<string, Check[]> = {
   'creator:attach': [ID, num(0, 11), oneOf('vpk', 'picture')],
   'rank:state': [], 'rank:pictures': [], 'rank:install': [json(64 * 1024)],
   // the map without its decor (src/ipc-decor.ts): the groups taken off
-  'decor:state': [], 'decor:install': [list(oneOf('plants', 'debris'), 2)],
+  'decor:state': [], 'decor:scene': [optional(str(220))], 'decor:map': [optional(str(220))], 'decor:install': [list(str(220, 1), 40), optional(str(6)), optional(oneOf(null, '', 'small', 'large')), optional(oneOf(null, '', 'map'))], 'decor:ground': [str(16), optional(oneOf(null, 'small', 'large'))], 'decor:modTrees': [str(200, 1)], 'decor:paint': [str(200, 1)], 'decor:modModel': [str(200, 1), str(200, 1)],
   'background:state': [], 'background:install': [optional(bytes(48 * MB)), optional(str(200)), num(0, 0.9), num(0, 20)],
   // a hero's ability icons from his own cosmetics' (src/ipc-icons.ts): his npc name, an ability, an icon under spellicons or null for the game's
   'icons:heroes': [], 'icons:hero': [str(40, 2)], 'icons:pictures': [list(str(160, 1), 200)],

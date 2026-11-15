@@ -523,7 +523,13 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ),
             ("preview3d:slice", vec![num(1.0, 9007199254740991.0), num(0.0, 9007199254740991.0)]),
             ("preview3d:motions", vec![str_(200, 1)]),
-            ("preview3d:effect", vec![str_(40, 1)]),
+            ("preview3d:effect", vec![str_(200, 1)]),
+            ("decor:ground", vec![str_(16, 0), optional(one_of(&[None, Some("small"), Some("large")]))]),
+            ("decor:modTrees", vec![str_(200, 1)]),
+            ("decor:paint", vec![str_(200, 1)]),
+            ("decor:modModel", vec![str_(200, 1), str_(200, 1)]),
+            ("decor:scene", vec![optional(str_(220, 0))]),
+            ("decor:map", vec![optional(str_(220, 0))]),
             ("preview3d:model", vec![str_(200, 1)]),
             ("sounds:hero", vec![str_(60, 1)]),
             ("sounds:remove", vec![str_(60, 1), str_(200, 1)]),
@@ -563,7 +569,17 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ),
             ("creator:attach", vec![ID(), num(0.0, 11.0), one_of(&[Some("vpk"), Some("picture")])]),
             ("rank:install", vec![json(64 * 1024)]),
-            ("decor:install", vec![list(one_of(&[Some("plants"), Some("debris")]), 2)]),
+            // Optimization's groups, or with "map" fourth the map's names: its base (base:game:winter,
+            // base:catalog:LowPoly.zip), weather (weather:snow) and look; map_decor.rs, map_make.rs read them
+            (
+                "decor:install",
+                vec![
+                    list(str_(220, 1), 40),
+                    optional(str_(6, 0)),
+                    optional(one_of(&[None, Some(""), Some("small"), Some("large")])),
+                    optional(one_of(&[None, Some(""), Some("map")])),
+                ],
+            ),
             (
                 "background:install",
                 vec![optional(bytes(48.0 * MB)), optional(str_(200, 0)), num(0.0, 0.9), num(0.0, 20.0)],
