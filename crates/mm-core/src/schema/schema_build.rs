@@ -118,6 +118,11 @@ fn persona_of(rec: &Value) -> Option<&Value> {
     rec.get("persona").filter(|p| crate::js::truthy(p))
 }
 
+/// The same-slot wearable a pick is written over instead of the hero's default (#679), if any.
+fn replaced_of(rec: &Value) -> Option<&str> {
+    rec.get("targetItemId").and_then(Value::as_str).filter(|t| !t.is_empty())
+}
+
 /// A record's effect ids as the builder takes them: a list, or a comma list.
 fn effect_ids(rec: &Value) -> Vec<String> {
     match rec.get("effectId") {
@@ -160,6 +165,9 @@ fn pick_key(rec: &Value, ready: &[ReadyBase], refit: Option<&str>, scale: Option
     }
     if let Some(p) = persona_of(rec) {
         key += &format!("@{}", p.get("target").map(crate::js::string).unwrap_or_else(|| "undefined".into()));
+    }
+    if let Some(t) = replaced_of(rec) {
+        key += &format!("@replace:{t}");
     }
     if let Some(r) = refit.filter(|r| !r.is_empty()) {
         key += &format!("~{r}");
@@ -344,7 +352,7 @@ impl TableBuild {
                 assets: vec![],
             }
         } else {
-            let target = persona_of(rec).and_then(|p| p.get("target")).and_then(Value::as_str);
+            let target = persona_of(rec).and_then(|p| p.get("target")).and_then(Value::as_str).or(replaced_of(rec));
             let p = item_effect_patch(vanilla, &item_id, &ids, target, Some(&mut resolve), refit)?;
             ItemPick {
                 id: p.id,
@@ -478,12 +486,17 @@ impl TableBuild {
         let mut out: Vec<TablePatch> = Vec::new();
         // each item pick's patch, by where it is in `out`, and its own model
         let mut owned: Vec<(usize, Option<String>)> = Vec::new();
+        // a target saved by an older table, or edited by hand, is checked against this one
+        let mut replacements = crate::item_replacement::Replacements::new(vanilla);
         for (k, rec) in recs.iter().enumerate() {
             if rec.get("categoryId").and_then(Value::as_str) == Some("cosmetic") {
                 let fresh = keys[k].as_ref().is_some_and(|key| !self.built.contains_key(key));
                 let name = name_of(rec);
                 let r: Result<(), String> = (|| {
                     if let Some(key) = &keys[k] {
+                        if replaced_of(rec).is_some() {
+                            replacements.check(&slot_of(rec), &text_of(rec, "itemId"), rec.get("targetItemId"))?;
+                        }
                         let scale = persona_scale_of(rec, &scales);
                         let refit = refits.get(&k).map(String::as_str);
                         let pick =

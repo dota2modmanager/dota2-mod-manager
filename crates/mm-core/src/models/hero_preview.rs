@@ -224,14 +224,10 @@ pub fn plan(text: &[u8], game: &Game, library: &[Value], name: &str, slots: &[Va
         let stock = stock_item.as_ref().map(|f| fields(text, f)).transpose()?;
         let rec_id = rec.as_ref().map(|r| js_str(r.get("itemId")));
         let effect = rec.as_ref().and_then(|r| r.get("effectId")).filter(|v| !v.is_null()).map(crate::js::string);
+        let (own, over) =
+            (stock.as_ref().and_then(|f| f.some("model_player")), rec.as_ref().map(|r| &r["targetItemId"]));
         let picked = match &rec_id {
-            Some(id) => Some(picks::item_model(
-                text,
-                id,
-                effect.as_deref(),
-                &hero,
-                stock.as_ref().and_then(|f| f.some("model_player")),
-            )?),
+            Some(id) => Some(picks::item_model(text, id, effect.as_deref(), &hero, own, over.and_then(Value::as_str))?),
             None => None,
         };
         let block = match &rec_id {

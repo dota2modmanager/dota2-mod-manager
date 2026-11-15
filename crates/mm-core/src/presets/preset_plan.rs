@@ -388,11 +388,13 @@ pub fn shared_preset_status(lib: &Library, inst: &Installer, preset: &Value, cat
         }
         Some("cosmetic") => {
             let effect = |v: &Value| or_empty(v.get("effectId"));
+            let target = |v: &Value| or_empty(v.get("targetItemId"));
             let have = lib.list().iter().find(|r| {
                 r.get("categoryId").and_then(Value::as_str) == Some("cosmetic")
                     && r.get("slot") == e.get("slot")
                     && r.get("itemId") == e.get("itemId")
                     && effect(r) == effect(e)
+                    && target(r) == target(e)
             });
             if have.is_some_and(|h| h.get("enabled") != Some(&Value::Bool(false))) {
                 installed += 1;

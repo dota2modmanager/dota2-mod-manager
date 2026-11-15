@@ -73,8 +73,8 @@ pub use presets::{
     preset_install, preset_link, preset_plan, preset_share, presets_service, ready_presets, ready_presets_format,
 };
 pub use schema::{
-    background_builds, build_undo, item_files, item_files_service, schema_build, schema_cosmetics, schema_deploy,
-    schema_harvest, schema_merge, schema_service,
+    background_builds, build_undo, item_files, item_files_service, item_replacement, schema_build, schema_cosmetics,
+    schema_deploy, schema_harvest, schema_merge, schema_service,
 };
 pub use tools::{creator, resource_compiler, run_process, toolchain, wine, workshop_tools};
 pub use util::{data, js, memo};
