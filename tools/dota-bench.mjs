@@ -51,6 +51,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import { attackVerdict, readDiffs } from './dota-bench/verdict.mjs';
 import { placeSchema } from './dota-bench/schema.mjs';
 import { hear } from './dota-bench/hear.mjs';
@@ -142,15 +143,9 @@ async function until(test, ms, what) {
 
 /** The mod into a free slot of the language folder, through the app's installer; its file. */
 async function install(vpk, game, lang) {
-  const { Installer } = await import('../src/installer.ts');
-  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-bench-'));
-  const inst = new Installer({ userDataDir: scratch, getGamePath: () => game, getLangSuffix: () => lang, onProgress: () => {} });
-  inst.ensureLangFolder();
-  const pak = inst.allocatePak(inst.usedPakNames(), true);
-  const to = path.join(inst.langFolder(), pak);
-  inst.writeInto(fs.readFileSync(vpk), to);
-  fs.rmSync(scratch, { recursive: true, force: true });
-  return to;
+  // the app's own installer (crates/mm-core/src/install/), through mm-cli (tools/mm-cli.js)
+  const { mm } = createRequire(import.meta.url)('./mm-cli.js');
+  return mm('bench-install', game, lang, vpk);
 }
 
 async function main() {

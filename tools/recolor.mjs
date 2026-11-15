@@ -9,13 +9,15 @@
  *   npm run recolor -- ff3c28 --arcana             the arcana itself, for a player who has not got it
  *   npm run recolor -- --gem "Creators Light" --set techies-arcana   a prismatic gem's colour, by its name
  *
- * The files come out of the game's own pak01 (src/recolor.ts, src/arcana.ts). Without --game, the
+ * The files come out of the game's own pak01 (crates/mm-core/src/looks/recolor.rs, crates/mm-core/src/arcana/). Without --game, the
  * game folder the app has in its settings is used. Import the VPK in My mods like any other.
  */
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+
+// the app's own code, through mm-cli (tools/mm-cli.js)
+const { mm, call, jsonFile, vpkFile, appGame } = createRequire(import.meta.url)('./mm-cli.js');
 
 /** "255,193,220", "#ffc1dc" or "ffc1dc" as [r, g, b], or null. */
 export function parseColor(text) {
@@ -26,18 +28,12 @@ export function parseColor(text) {
   return parts.length === 3 && parts.every((n) => Number.isInteger(n) && n >= 0 && n <= 255) ? parts : null;
 }
 
-function appGame() {
-  const base = process.env.APPDATA || path.join(os.homedir(), '.config');
-  try { return JSON.parse(fs.readFileSync(path.join(base, 'Dota 2 Mod Manager', 'settings.json'), 'utf8')).dotaGamePath || null; } catch { return null; }
-}
 
-/** A prismatic gem's colour by its name, out of the game's items_game (src/gem-colors.ts). */
+/** A prismatic gem's colour by its name, out of the game's items_game (crates/mm-core/src/arcana/gem_colors.rs). */
 export async function gemTarget(game, name) {
-  const { sharedVpkIndex } = await import('../src/vpk.ts');
-  const { gemColors, findGem } = await import('../src/gem-colors.ts');
-  const text = sharedVpkIndex(path.join(game, 'dota', 'pak01_dir.vpk')).read('scripts/items/items_game.txt').toString('latin1');
-  const gems = gemColors(text);
-  const gem = findGem(gems, name);
+  const table = { $file: vpkFile(path.join(game, 'dota', 'pak01_dir.vpk'), 'scripts/items/items_game.txt') };
+  const gems = call('gem-colors.colors', table);
+  const gem = call('gem-colors.find', table, name);
   if (!gem) throw new Error(`no gem "${name}"; the game has: ${gems.map((g) => g.name).join(', ')}`);
   console.log(`${gem.name}: #${gem.rgb.map((n) => n.toString(16).padStart(2, '0')).join('')}`);
   return gem.rgb;
@@ -52,14 +48,11 @@ async function main(argv) {
     : parseColor(argv.find((a, i) => !a.startsWith('--') && !['--out', '--game', '--set', '--gem'].includes(argv[i - 1])));
   if (!target) throw new Error('give a colour: 255,193,220 or #ffc1dc, or --gem "<name>"');
   const set = opt('--set') || 'terrorblade-arcana';
-  const { buildRecolor, RECOLOR_SETS } = await import('../src/recolor.ts');
-  const { buildArcana } = await import('../src/arcana.ts');
   const hex = target.map((n) => n.toString(16).padStart(2, '0')).join('');
   const out = path.resolve(opt('--out') || `${set}${arcana ? '-mod' : ''}-${hex}_dir.vpk`);
   const pak01 = path.join(game, 'dota', 'pak01_dir.vpk');
-  const r = arcana ? { skipped: 0, ...buildArcana({ pak01, set, target }) } : buildRecolor({ pak01, set, target });
-  fs.writeFileSync(out, r.vpk);
-  console.log(`${RECOLOR_SETS[set].name}${arcana ? ' as a mod' : ''} in #${hex}: ${r.changed} colours in ${r.files} files -> ${out}`);
+  const r = mm('build', arcana ? 'arcana' : 'recolor', out, jsonFile({ pak01, set, target }));
+  console.log(`${mm('look-sets').recolor[set] || set}${arcana ? ' as a mod' : ''} in #${hex}: ${r.changed} colours in ${r.files} files -> ${out}`);
   if (r.skipped) console.log(`${r.skipped} colours left as they were: a channel with no bytes of its own`);
   for (const f of r.failed) console.log(`not read, left as Valve ships it: ${f.path} (${f.error})`);
 }

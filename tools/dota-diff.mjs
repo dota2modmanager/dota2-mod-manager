@@ -34,7 +34,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { HERO_ALIAS, heroKey, heroDisplayName } from '../src/hero-names.ts';
+import { createRequire } from 'node:module';
+
+// the app's own code, through mm-cli (tools/mm-cli.js), and the hero spellings it reads
+const { mm, jsonFile } = createRequire(import.meta.url)('./mm-cli.js');
+const HERO_ALIAS = Object.fromEntries(JSON.parse(fs.readFileSync(new URL('../crates/mm-core/data/hero-alias.json', import.meta.url), 'utf8')));
 
 const REPO = 'SteamTracking/GameTracking-Dota2';
 const FILES = {
@@ -91,7 +95,7 @@ const HERO_PATHS = [
 
 /* The hero a path belongs to, as the game's id, or null. Valve does not use one folder name per
  * hero: Nyx Assassin's model is under nerubian_assassin and his item effects under nyx_assassin,
- * and a persona has a folder of its own (antimage_female, invoker_kid). src/hero-names.ts knows
+ * and a persona has a folder of its own (antimage_female, invoker_kid). The app's hero names know
  * those spellings, so one hero is one row of the report rather than two (#228).
  */
 export function heroOf(p) {
@@ -104,15 +108,16 @@ export function heroOf(p) {
 
 /** Per hero, by the name people know it by: how many of its files were added, changed and removed, busiest first. */
 export function byHero(diff) {
+  const hits = ['added', 'modified', 'removed'].flatMap((kind) => diff[kind].map((p) => [kind, heroOf(p)]).filter(([, h]) => h));
+  // each hero's key and name from the app's hero names (crates/mm-core/src/game/hero_names.rs), in one call
+  const heroes = [...new Set(hits.map(([, h]) => h))];
+  const named = heroes.length ? mm('call', jsonFile(heroes.flatMap((h) => [['hero-names.heroKey', h], ['hero-names.heroDisplayName', h]]))) : [];
+  const of = new Map(heroes.map((h, i) => [h, { key: named[2 * i].ok, name: named[2 * i + 1].ok }]));
   const rows = new Map();
-  for (const kind of ['added', 'modified', 'removed']) {
-    for (const p of diff[kind]) {
-      const h = heroOf(p);
-      if (!h) continue;
-      const key = heroKey(h);
-      if (!rows.has(key)) rows.set(key, { hero: heroDisplayName(h), added: 0, modified: 0, removed: 0 });
-      rows.get(key)[kind]++;
-    }
+  for (const [kind, h] of hits) {
+    const { key, name } = of.get(h);
+    if (!rows.has(key)) rows.set(key, { hero: name, added: 0, modified: 0, removed: 0 });
+    rows.get(key)[kind]++;
   }
   return [...rows.values()].sort((a, b) => (b.added + b.modified + b.removed) - (a.added + a.modified + a.removed) || a.hero.localeCompare(b.hero));
 }
@@ -241,13 +246,12 @@ export function vpksIn(targets) {
 }
 
 async function modsReport(targets, diff) {
-  const { listVpkPathsFile } = await import('../src/vpk.ts');
   const changed = new Set(diff.modified);
   const gone = new Set(diff.removed);
   const out = [];
   for (const vpk of vpksIn(targets)) {
     let paths;
-    try { paths = listVpkPathsFile(vpk); } catch (e) { out.push({ vpk, error: e.message }); continue; }
+    try { paths = mm('vpk-entries', vpk).map(([p]) => p); } catch (e) { out.push({ vpk, error: e.message }); continue; }
     out.push({ vpk, files: paths.length, ...modImpact(paths, diff, changed, gone) });
   }
   return out;

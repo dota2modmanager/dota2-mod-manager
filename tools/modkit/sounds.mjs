@@ -19,7 +19,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { runCompiler } from './commands.mjs';
-import { pak01, src } from './game.mjs';
+import { pak01, call, readBlocks, numberOf } from './game.mjs';
 import { heroId, listOf } from './lib.mjs';
 
 /** KV3 text of a node, the way Valve's own sources are written. A {kind:'literal'} prints as is. */
@@ -33,7 +33,7 @@ export function kvText(n, numberOf, ind = 0) {
   if (n.kind === 'string') return JSON.stringify(n.value);
   if (n.kind === 'number') {
     const v = numberOf(n);
-    return n.cell?.float ? (Number.isInteger(v) ? v.toFixed(1) : String(+v.toFixed(6))) : String(v);
+    return n.cell?.float || (n.raw && [5, 19].includes(n.type)) ? (Number.isInteger(v) ? v.toFixed(1) : String(+v.toFixed(6))) : String(v);
   }
   if (n.kind === 'other' && n.type === 2) return n.value ? 'true' : 'false';
   if (n.kind === 'other' && n.type === 13) return 'true';
@@ -97,19 +97,16 @@ export function wavInfo(buf) {
 
 export async function sounds(opts) {
   const { game, index } = await pak01(opts);
-  const { HERO_DISPLAY } = await src('hero-names.ts');
-  const { readKv3, numberOf } = await src('kv3.ts');
-  const { dataBlock } = await src('resource.ts');
   const target = opts._[0];
   if (!target) throw new Error('usage: modkit sounds <hero or soundevents/...vsndevts_c> [--show Event] [--addon a --out dir --replace|--layer|--add Event=file.wav]');
   let rel = target;
   if (!/\.vsndevts_c$/.test(target)) {
-    const hero = heroId(target, HERO_DISPLAY);
+    const hero = call('hero-names.heroIdFromName', target) ?? heroId(target);
     rel = opts.vo ? `soundevents/voscripts/game_sounds_vo_${hero}.vsndevts_c` : `soundevents/game_sounds_heroes/game_sounds_${hero}.vsndevts_c`;
   }
   const raw = index.read(rel);
   if (!raw) throw new Error(`no ${rel} in pak01 (modkit find vsndevts ${target})`);
-  const kv = readKv3(dataBlock(raw).data);
+  const { DATA: kv } = readBlocks(raw, ['DATA']);
   const events = kv.root.members;
   const num = (n) => numberOf(kv, n);
 

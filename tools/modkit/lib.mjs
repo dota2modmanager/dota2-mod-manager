@@ -42,7 +42,7 @@ export function parseColor(text) {
 }
 
 /**
- * The two colours of a two-pass recolour toward `target` (src/recolor.ts shade):
+ * The two colours of a two-pass recolour toward `target` (shade in crates/mm-core/src/looks/recolor.rs):
  * pass 1 to the target's hue at full saturation and brightness, which gives every colour that hue
  * and keeps its own saturation and brightness; pass 2 from that hue at half saturation to the
  * target, which leaves the hue and scales saturation by 2 x the target's and brightness by the
@@ -65,7 +65,7 @@ export function twoPass(target) {
 
 /**
  * The game's own name for a hero ("necrolyte") from what a person writes: the id itself,
- * "Necrophos", "queen of pain". `display` is src/hero-names.ts HERO_DISPLAY (id -> name).
+ * "Necrophos", "queen of pain". `display` maps id -> name.
  */
 export function heroId(text, display = {}) {
   const s = String(text || '').trim().toLowerCase();

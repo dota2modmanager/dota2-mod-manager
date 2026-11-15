@@ -37,11 +37,21 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const {
-  normalize, cmpVersion, SWITCHABLE, BLOCKS_SINCE, MAX_TESTERS, MAX_MIRRORS, CONFIG_PUBLIC_KEY,
-} = require('../src/remote-config.ts');
-const { idHash } = require('../src/beta.ts');
-const { verify } = require('../src/catalog-signature.ts');
+// The rules are the app's own (crates/mm-core/src/catalog/remote_config.rs, beta.rs,
+// catalog_signature.rs), asked through mm-cli config-rules (tools/mm-cli.js).
+const { mm, jsonFile, binFile } = require('./mm-cli.js');
+// pure rules, so each answer is kept: a run asks the same ones many times
+const ruled = new Map();
+const rule = (...op) => {
+  const key = JSON.stringify(op);
+  if (!ruled.has(key)) ruled.set(key, mm('config-rules', jsonFile([op]))[0]);
+  return structuredClone(ruled.get(key));
+};
+const { SWITCHABLE, BLOCKS_SINCE, MAX_TESTERS, MAX_MIRRORS, CONFIG_PUBLIC_KEY } = rule('constants');
+const normalize = (raw) => rule('normalize', raw);
+const cmpVersion = (a, b) => rule('cmp', String(a), String(b));
+const idHash = (id, salt) => rule('idHash', String(id), String(salt));
+const verify = (bytes, sig, key) => rule('verify', binFile(bytes), sig, key);
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CONFIG = path.join(root, 'config', 'app.json');
@@ -323,7 +333,7 @@ export function serialize(config) {
 export function signFor(bytes, privatePem, pinned = CONFIG_PUBLIC_KEY) {
   const sig = crypto.sign(null, bytes, crypto.createPrivateKey(privatePem)).toString('base64');
   if (!verify(bytes, sig, pinned)) {
-    throw new Error('this key is not the one the app pins (CONFIG_PUBLIC_KEY in src/remote-config.ts): '
+    throw new Error('this key is not the one the app pins (CONFIG_PUBLIC_KEY in crates/mm-core/src/catalog/remote_config.rs): '
       + 'every copy would ignore what it signed');
   }
   return `${sig}\n`;

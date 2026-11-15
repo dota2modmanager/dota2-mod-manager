@@ -926,6 +926,104 @@ impl Block {
         }
         o
     }
+
+    /// The tree as JSON with each number's own bytes beside it (`raw`, hex) and each blob's bytes,
+    /// so a tool can change it and give it back to `set_tree`: mm-cli kv3-tree, for tools/modkit.
+    pub fn tree(&self) -> Json {
+        self.tree_node(&self.root)
+    }
+
+    fn tree_node(&self, n: &Node) -> Json {
+        let mut o = match &n.value {
+            Value::Number { ty, cell, raw, .. } => {
+                let bytes = match (raw, cell) {
+                    (Some(r), _) => Some(r.clone()),
+                    (None, Some(c)) => {
+                        Some(self.buffers[c.buffer as usize][c.offset..c.offset + c.width as usize].to_vec())
+                    }
+                    _ => None,
+                };
+                let mut x = json!({ "kind": "number", "type": ty });
+                if let Some(b) = bytes {
+                    x["raw"] = json!(hex(&b));
+                }
+                x
+            }
+            Value::Object(m) => {
+                json!({ "kind": "object", "members": m.iter().map(|(k, v)| json!([k, self.tree_node(v)])).collect::<Vec<_>>() })
+            }
+            Value::Array { items, element, ty } => {
+                let mut a = json!({ "kind": "array", "type": ty, "items": items.iter().map(|x| self.tree_node(x)).collect::<Vec<_>>() });
+                if let Some(e) = element {
+                    a["element"] = json!({ "type": e.ty, "flag": e.flag });
+                }
+                a
+            }
+            _ => self.dump_node(n),
+        };
+        if n.flag != 0 {
+            o["flag"] = json!(n.flag);
+        }
+        o
+    }
+
+    /// The tree `tree` gave, changed, put in place of this block's own; `write` then writes it.
+    /// Numbers carry their bytes (or only their type, for the 0s and 1s stored so).
+    pub fn set_tree(&mut self, j: &Json) -> Result<(), Kv3Error> {
+        let mut blobs = Vec::new();
+        self.root = from_tree(j, &mut blobs)?;
+        self.blobs = blobs;
+        Ok(())
+    }
+}
+
+fn unhex(s: &str) -> Result<Vec<u8>, Kv3Error> {
+    if !s.len().is_multiple_of(2) {
+        return err("odd hex");
+    }
+    (0..s.len()).step_by(2).map(|i| u8::from_str_radix(&s[i..i + 2], 16).map_err(|e| Kv3Error(e.to_string()))).collect()
+}
+
+/// A node of the JSON `Block::tree` writes, back as a node; blobs go to `blobs` in tree order.
+fn from_tree(j: &Json, blobs: &mut Vec<Vec<u8>>) -> Result<Node, Kv3Error> {
+    let ty =
+        || j.get("type").and_then(Json::as_u64).map(|t| t as u8).ok_or_else(|| Kv3Error("a node with no type".into()));
+    let value = match j.get("kind").and_then(Json::as_str).unwrap_or("") {
+        "object" => {
+            let mut m = IndexMap::new();
+            for pair in j.get("members").and_then(Json::as_array).into_iter().flatten() {
+                let k = pair.get(0).and_then(Json::as_str).ok_or_else(|| Kv3Error("a member with no name".into()))?;
+                m.insert(k.to_string(), from_tree(pair.get(1).unwrap_or(&Json::Null), blobs)?);
+            }
+            Value::Object(m)
+        }
+        "array" => {
+            let items = j
+                .get("items")
+                .and_then(Json::as_array)
+                .into_iter()
+                .flatten()
+                .map(|x| from_tree(x, blobs))
+                .collect::<Result<_, _>>()?;
+            let element = j.get("element").filter(|e| !e.is_null()).map(|e| Element {
+                ty: e.get("type").and_then(Json::as_u64).unwrap_or(0) as u8,
+                flag: e.get("flag").and_then(Json::as_u64).unwrap_or(0) as u8,
+            });
+            Value::Array { items, element, ty: ty()? }
+        }
+        "number" => {
+            let raw = j.get("raw").and_then(Json::as_str).map(unhex).transpose()?;
+            Value::Number { ty: ty()?, cell: None, type_at: None, raw }
+        }
+        "string" => Value::Str(j.get("value").and_then(Json::as_str).unwrap_or("").to_string()),
+        "blob" => {
+            blobs.push(unhex(j.get("data").and_then(Json::as_str).unwrap_or(""))?);
+            Value::Blob(blobs.len() - 1)
+        }
+        "other" => Value::Other { ty: ty()?, value: j.get("value").and_then(Json::as_u64).map(|v| v as u8) },
+        k => return err(format!("a node of kind {k:?}")),
+    };
+    Ok(Node { value, flag: j.get("flag").and_then(Json::as_u64).unwrap_or(0) as u8 })
 }
 
 fn cell_json(c: Cell) -> Json {
@@ -1222,6 +1320,23 @@ pub fn write(kv: &Block) -> Result<Vec<u8>, Kv3Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_tree_handed_back_unchanged_writes_the_same_block_and_a_changed_number_lands() {
+        let kv = read(&tiny()).unwrap();
+        let t = kv.tree();
+        let mut back = read(&tiny()).unwrap();
+        back.set_tree(&t).unwrap();
+        let again = read(&write(&back).unwrap()).unwrap();
+        assert_eq!(again.tree(), t);
+        // a = 5 is an int32: its bytes changed in the tree are what the block then holds
+        let mut t2 = t.clone();
+        t2["members"][0][1]["raw"] = json!("07000000");
+        back.set_tree(&t2).unwrap();
+        let changed = read(&write(&back).unwrap()).unwrap();
+        assert_eq!(changed.number_of(changed.root.get("a").unwrap()), Some(7.0));
+        assert!(back.set_tree(&json!({ "kind": "nope" })).is_err());
+    }
 
     /// A version 2 block by hand: { a = 5, b = "x", c = [1.5f32] typed }, LZ4 literals.
     fn tiny() -> Vec<u8> {

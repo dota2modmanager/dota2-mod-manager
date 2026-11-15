@@ -7,38 +7,33 @@
  *   npm run tower-looks -- 17538 --side dire             New Bloom's dragon towers for Dire
  *   npm run tower-looks -- 17538 --side both --out towers.vpk --game "<...>\dota 2 beta\game"
  *
- * The files come out of the game's own pak01 (src/tower-looks.ts). Without --game, the game folder
+ * The files come out of the game's own pak01 (crates/mm-core/src/looks/tower_looks.rs). Without --game, the game folder
  * the app has in its settings is used. Import the VPK in My mods like any other.
  */
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
 
-function appGame() {
-  const base = process.env.APPDATA || path.join(os.homedir(), '.config');
-  try { return JSON.parse(fs.readFileSync(path.join(base, 'Dota 2 Mod Manager', 'settings.json'), 'utf8')).dotaGamePath || null; } catch { return null; }
-}
+// the app's own code, through mm-cli (tools/mm-cli.js)
+const { mm, call, jsonFile, vpkFile, appGame } = createRequire(import.meta.url)('./mm-cli.js');
+
 
 async function main(argv) {
   const opt = (name) => { const i = argv.indexOf(name); return i === -1 ? null : argv[i + 1]; };
   const game = opt('--game') || appGame();
   if (!game) throw new Error('no game folder: pass --game "<...>\\dota 2 beta\\game"');
-  const { sharedVpkIndex } = await import('../src/vpk.ts');
-  const { towerLooks, buildTowerLook } = await import('../src/tower-looks.ts');
   const pak01 = path.join(game, 'dota', 'pak01_dir.vpk');
-  const text = sharedVpkIndex(pak01).read('scripts/items/items_game.txt').toString('latin1');
+  const table = vpkFile(pak01, 'scripts/items/items_game.txt');
   const id = argv.find((a, i) => /^\d+$/.test(a) && !['--out', '--game', '--side'].includes(argv[i - 1]));
   if (!id) {
-    for (const l of towerLooks(text)) console.log(`${l.id}  ${l.name}  (${l.sides.join(', ')})`);
+    for (const l of call('tower-looks.looks', { $file: table })) console.log(`${l.id}  ${l.name}  (${l.sides.join(', ')})`);
     return;
   }
   const side = opt('--side') || 'radiant';
   if (!['radiant', 'dire', 'both'].includes(side)) throw new Error('--side is radiant, dire or both');
-  const r = buildTowerLook({ pak01, text, id, sides: side === 'both' ? ['radiant', 'dire'] : [side] });
   const out = path.resolve(opt('--out') || `towers-${id}-${side}_dir.vpk`);
-  fs.writeFileSync(out, r.vpk);
-  console.log(`${r.name} for ${side}: ${r.files} files -> ${out}`);
+  const r = mm('build', 'towers', out, jsonFile({ pak01, table, radiant: side === 'dire' ? null : id, dire: side === 'radiant' ? null : id }));
+  console.log(`${[...new Set(r.names)].join(', ') || id} for ${side}: ${r.files} files -> ${out}`);
   for (const f of r.missing) console.log(`not in the game, left out: ${f}`);
   for (const s of r.skipped) console.log(`a file cannot carry it, left out: ${s}`);
 }
