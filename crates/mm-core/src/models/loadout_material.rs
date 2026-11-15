@@ -81,6 +81,18 @@ struct Struct {
 
 /// An older material: the field offsets recorded in the resource itself.
 fn ntro(file: &[u8]) -> R<serde_json::Map<String, Value>> {
+    ntro_with(file, None)
+}
+
+/// Each vector parameter of an older (NTRO) material by its name, and where its four float32s
+/// lie in the DATA block: what a change of a colour writes over (map_optimize.rs darken).
+pub fn ntro_vectors(file: &[u8]) -> R<Vec<(String, usize)>> {
+    let mut out = Vec::new();
+    ntro_with(file, Some(&mut out))?;
+    Ok(out)
+}
+
+fn ntro_with(file: &[u8], mut vectors: Option<&mut Vec<(String, usize)>>) -> R<serde_json::Map<String, Value>> {
     let block = resource::data(file, "NTRO", 0).map_err(|e| e.0)?;
     let data = resource::data(file, "DATA", 0).map_err(|e| e.0)?;
     let mut structs: IndexMap<String, Struct> = IndexMap::new();
@@ -153,6 +165,9 @@ fn ntro(file: &[u8]) -> R<serde_json::Map<String, Value>> {
             let p = first + i * row.size;
             let v = p + value;
             let m_name = cstr(data, p + name + u32_at(data, p + name)?)?;
+            if let ("Vector", Some(list)) = (ty, vectors.as_deref_mut()) {
+                list.push((m_name.clone(), usize::try_from(v).map_err(|_| "out of range".to_string())?));
+            }
             let m_value = match ty {
                 "Texture" => Value::String(ids.get(&u64::from_le_bytes(bytes(data, v)?)).cloned().unwrap_or_default()),
                 "Vector" => Value::Array(

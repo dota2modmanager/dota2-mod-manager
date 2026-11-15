@@ -92,8 +92,10 @@ async function groups(): Promise<StudioGroup[]> {
         status: towers.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('towers', el) })] : []),
       ...(trees ? [tile({ id: 'trees', icon: 'park', title: L`Деревья из игры`, text: L`Деревья любого сезона, свои на каждой стороне.`,
         status: trees.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('trees', el) })] : []),
-      tile({ id: 'decor', icon: 'grass', title: L`Карта без декора`, text: L`Трава, цветы, камни и мусор убраны с карты: чище видно, легче видеокарте.`,
-        status: decorLead('optimization')?.installed ? on(L`Убран`) : undefined, open: (el) => openDecor(el) }),
+      tile({ id: 'map-make', icon: 'landscape', title: L`Своя карта`, text: L`Ландшафт, погода, тёмная карта, лоу-поли земля и деревья, в 3D до установки.`,
+        status: decorLead('terrains')?.installed ? on(L`Стоит`) : undefined, open: (el) => openDecor(el, 'map') }),
+      tile({ id: 'decor', icon: 'speed', title: L`Оптимизация`, text: L`Декор, вода, эффекты и свет: убери лишнее с карты, которая стоит, и посмотри в 3D, что пропадёт.`,
+        status: decorLead('optimization')?.installed ? on(L`Стоит`) : undefined, open: (el) => openDecor(el, 'optimize') }),
     ] },
     { id: 'ui', title: L`Интерфейс`, tiles: [
       tile({ id: 'background', icon: 'wallpaper', title: L`Свой фон главного меню`, text: L`Картинка, GIF или видео вместо фона меню.`,

@@ -948,9 +948,14 @@ pub fn effect(
     glb: &dyn Exporter,
     id: &str,
 ) -> R<Option<EffectPicture>> {
-    let modifier = match crate::data::item_effects().iter().find(|e| e.id == id) {
-        Some(e) => Some(e.modifier.clone()),
-        None => crate::unusual_effects::unusual_item_effect(text, id).map_err(err)?.map(|e| e.modifier),
+    // a particle of the game by its path (the Optimization window's scene), or an effect by its id
+    let modifier = if id.starts_with("particles/") && id.ends_with(".vpcf") {
+        Some(id.to_string())
+    } else {
+        match crate::data::item_effects().iter().find(|e| e.id == id) {
+            Some(e) => Some(e.modifier.clone()),
+            None => crate::unusual_effects::unusual_item_effect(text, id).map_err(err)?.map(|e| e.modifier),
+        }
     };
     let (Some(read), Some(modifier)) = (read, modifier) else { return Ok(None) };
     let mut r = |p: &str| read(p);

@@ -26,7 +26,6 @@ import type { createHudScale } from './hud-scale-service.ts';
 import type { createEffectEdit } from './effect-edit-service.ts';
 import type { createEffectFinder } from './effect-finder.ts';
 import type { createRankLook } from './rank-look-service.ts';
-import type { createMapDecor } from './map-decor.ts';
 import type { createHeroPaint } from './hero-paint-service.ts';
 import type { createAbilityIcons } from './ability-icons-service.ts';
 import type { createAbilitySounds } from './ability-sounds-service.ts';
@@ -88,8 +87,6 @@ export interface AppContext {
   effectFinder: ReturnType<typeof createEffectFinder>;
   /** the rank medal and hero levels of the player's own screen (src/rank-look-service.ts) */
   rankLook: ReturnType<typeof createRankLook>;
-  /** the map without its decor (src/map-decor.ts) */
-  mapDecor: ReturnType<typeof createMapDecor>;
   /** a hero recoloured part by part (src/hero-paint-service.ts) */
   heroPaint: ReturnType<typeof createHeroPaint>;
   /** a hero's ability icons picked from his own cosmetics' (src/ability-icons-service.ts) */

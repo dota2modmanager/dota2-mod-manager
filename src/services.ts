@@ -34,7 +34,6 @@ import { createHudScale } from './hud-scale-service.ts';
 import { createEffectEdit } from './effect-edit-service.ts';
 import { createEffectFinder } from './effect-finder.ts';
 import { sharedVpkIndex } from './vpk.ts';
-import { createMapDecor } from './map-decor.ts';
 import { createRankLook } from './rank-look-service.ts';
 import { createHeroPaint } from './hero-paint-service.ts';
 import { createAbilityIcons } from './ability-icons-service.ts';
@@ -199,8 +198,6 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
   // the rank medal and hero levels of the player's own screen (src/rank-look-service.ts)
   const rankLook = createRankLook({ gamePath: () => settings.get('dotaGamePath'), installer, library, vrf: () => toolchain.pathOf('vrf'),
     onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
-  // the map without its decor, from the map's own list of materials (src/map-decor.ts)
-  const mapDecor = createMapDecor({ gamePath: () => settings.get('dotaGamePath'), installer, library, onRebuilt: (id) => { updateImpact.clear(id); }, log: diag });
   // a hero recoloured part by part, out of the game's own files (src/hero-paint-service.ts)
   const heroPaint = createHeroPaint({ gamePath: () => settings.get('dotaGamePath'), installer, library, vanilla: () => schemaService.vanilla(), repaint: electronRepaint,
     vrf: () => toolchain.pathOf('vrf'), compile: (job) => compiler.compile(job),
@@ -257,7 +254,7 @@ export function createServices({ userData, appVersion, sendProgress, diag, fetch
 
   return {
     previewStore, settings, catalog, library, fingerprints, installer, presenceStatus, schemaService, updateImpact, cursors, adopt,
-    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, mapDecor, heroPaint, abilityIcons, abilitySounds, buildUndo, heroPreview,
+    remoteConfig, readyPresets, icons, toolchain, compiler, toolsKeeper, keepTools, gameIcons, modPreviews, arcana, mapLooks, menuBackground, hudScale, effectEdit, effectFinder, rankLook, heroPaint, abilityIcons, abilitySounds, buildUndo, heroPreview,
     afterDeployMaster, deployAndApply, presets, importVpkPaths, importVpkBuffers, downloadStats, countInstall,
   };
 }

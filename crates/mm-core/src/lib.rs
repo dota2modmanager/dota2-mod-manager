@@ -51,9 +51,10 @@ pub use item_builder::{
     item_portraits, item_skin, item_sounds, item_visuals, unusual_effects,
 };
 pub use looks::{
-    cursors, effect_edit, effect_edit_service, effect_finder, hero_paint_service, hud_scale, hud_scale_service,
-    map_decor, map_looks_service, menu_background, menu_background_service, pumpkin, recolor, recolor_layers,
-    recolor_modes, tower_looks, tree_sets,
+    cursors, effect_edit, effect_edit_service, effect_finder, ground_build, ground_facets, hero_paint_service,
+    hud_scale, hud_scale_service, map_base, map_build, map_decor, map_ground, map_light, map_looks_service, map_make,
+    map_mod_trees, map_optimize, map_paint, map_scene, menu_background, menu_background_service, pumpkin, recolor,
+    recolor_layers, recolor_modes, tower_looks, tree_sets,
 };
 pub use models::{
     courier_models, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks, hero_showcase,

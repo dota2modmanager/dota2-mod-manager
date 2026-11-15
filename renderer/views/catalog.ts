@@ -157,7 +157,7 @@ const actions: ScreenActions = {
   openBackground: (card) => void openBackground(card),
   openHud: (card) => void openHud(card),
   openRank: (card) => void openRank(card),
-  openDecor: (card) => void openDecor(card),
+  openDecor: (card, kind) => void openDecor(card, kind),
 };
 
 async function renderCatalog(): Promise<void> {

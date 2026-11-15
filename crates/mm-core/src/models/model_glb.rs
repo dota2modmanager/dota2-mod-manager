@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Condvar, Mutex};
 use std::time::Instant;
 
-use indexmap::IndexMap;
+use indexmap::{IndexMap, IndexSet};
 use sha1::{Digest, Sha1};
 
 /// A model path as the game names it, compiled or not, or None for one that is not a model.
@@ -353,6 +353,98 @@ impl ModelGlb {
         out
     }
 
+    /// The game's own map whole, light enough for the Optimization window (map_scene.rs): exported
+    /// once per game build, made light, and the toolchain's heavy export removed. None without
+    /// the game or the toolchain, or when the export failed (said in the log).
+    pub fn map_world(&self, word: Option<&str>) -> Option<PathBuf> {
+        let game = (self.game)()?;
+        // another of the game's maps (a terrain: "winter" for dota_winter.vpk), each in a cache of its own
+        let word = word.filter(|w| !w.is_empty() && w.len() <= 16 && w.bytes().all(|b| b.is_ascii_alphanumeric()));
+        let map = game.join("dota").join("maps").join(word.map_or("dota.vpk".to_string(), |w| format!("dota_{w}.vpk")));
+        self.map_world_at(&map, &word.map_or("map".to_string(), |w| format!("map-{w}")))
+    }
+
+    /// The same for any map archive (a catalog terrain's maps/dota.vpk), cached under `key`.
+    pub fn map_world_at(&self, map: &Path, key: &str) -> Option<PathBuf> {
+        let game = (self.game)()?;
+        let exe = (self.vrf)()?;
+        let root = self.build_root(&game).join(key);
+        let light = root.join(crate::map_scene::LIGHT_FILE);
+        if light.is_file() {
+            return Some(light);
+        }
+        let map = map.to_path_buf();
+        if !map.is_file() {
+            return None;
+        }
+        self.export_once(&root, &["maps/dota/world".to_string()], |_| {
+            if light.is_file() {
+                return;
+            }
+            let started = Instant::now();
+            let raw = root.join("export");
+            let made = (|| -> Result<(), String> {
+                std::fs::create_dir_all(&raw).map_err(|e| e.to_string())?;
+                let world = raw.join("world.glb");
+                (self.run)(&exe, &crate::map_scene::export_args(&map.to_string_lossy(), &world.to_string_lossy()))?;
+                let bytes = crate::map_scene::slim(&world, 256)?;
+                let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
+                std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
+                std::fs::rename(&part, &light).map_err(|e| e.to_string())
+            })();
+            // the heavy export is a few hundred megabytes the light copy no longer needs, and so is
+            // a light copy made the old way
+            let _ = std::fs::remove_dir_all(&raw);
+            for e in std::fs::read_dir(&root).into_iter().flatten().flatten() {
+                let name = e.file_name().to_string_lossy().into_owned();
+                if name.ends_with(".glb") && name != crate::map_scene::LIGHT_FILE {
+                    let _ = std::fs::remove_file(e.path());
+                }
+            }
+            match made {
+                Ok(()) => (self.log)(&format!("map 3d: made in {} ms", started.elapsed().as_millis())),
+                Err(e) => self.error("map 3d: export", &e),
+            }
+        });
+        light.is_file().then_some(light)
+    }
+
+    /// A folder of this build's cache for loose game files of one source (a catalog mod's
+    /// models, map_mod_trees.rs), by a key of the caller's; None without the game.
+    pub fn loose_root(&self, key: &str) -> Option<PathBuf> {
+        let game = (self.game)()?;
+        let hash = format!("{:x}", Sha1::digest(key.as_bytes()));
+        Some(self.build_root(&game).join("mods").join(&hash[..12]))
+    }
+
+    /// The GLB of a model among the loose files under `root` (map_mod_trees::source_of), exported
+    /// once; None when it is not there or the export failed.
+    pub fn loose(&self, root: &Path, model: &str) -> Option<PathBuf> {
+        let exe = (self.vrf)()?;
+        let file = model_file(model)?;
+        let out = root.join("glb");
+        if let Some(found) = found_glb(&out, &file) {
+            return Some(found);
+        }
+        let at = file.split('/').fold(crate::map_mod_trees::source_of(root), |p, part| p.join(part));
+        if !at.is_file() {
+            return None;
+        }
+        self.export_once(&out, std::slice::from_ref(&file), |_| {
+            let to = glb_at(&out, &file);
+            let r = std::fs::create_dir_all(to.parent().unwrap_or(&out)).map_err(|e| e.to_string()).and_then(|()| {
+                (self.run)(
+                    &exe,
+                    &export_args(&at.to_string_lossy(), &to.to_string_lossy(), &[], &Clips::Some(vec![]), false),
+                )
+            });
+            if let Err(e) = r {
+                self.error("models 3d: mod export", &e);
+            }
+        });
+        found_glb(&out, &file)
+    }
+
     /// The GLB of a model in another material set, or None where it has no such set. The model
     /// is exported with the set made its own (model_skin.rs), alone in a little game folder whose
     /// gameinfo.gi points at the real game. `bytes`: the model's file out of the archive; `clips`:
@@ -448,6 +540,57 @@ impl ModelGlb {
             for (key, file) in sprite_frames(&root, t) {
                 out.insert(key, std::fs::read(file).ok());
             }
+        }
+        out
+    }
+
+    /// The pictures of textures out of any archive (a catalog terrain's pak), as PNG, cached under
+    /// `key`; the list is cut into pieces exported side by side, one toolchain run each, since a run
+    /// is mostly one core reading the archive. None for a texture the archive has not got.
+    pub fn sprites_in(&self, vpk: &Path, key: &str, textures: &[String]) -> IndexMap<String, Option<Vec<u8>>> {
+        let mut out: IndexMap<String, Option<Vec<u8>>> = textures.iter().map(|t| (t.clone(), None)).collect();
+        let ok = |t: &str| {
+            t.ends_with(".vtex")
+                && !t.contains("..")
+                && t.bytes().all(|c| c.is_ascii_alphanumeric() || b"_/.-".contains(&c))
+        };
+        let (Some(game), Some(exe)) = ((self.game)(), (self.vrf)()) else { return out };
+        let root = self.build_root(&game).join(format!("sprites-{key}"));
+        let wanted: Vec<String> = textures
+            .iter()
+            .filter(|t| ok(t) && sprite_at(&root, t).is_none())
+            .cloned()
+            .collect::<IndexSet<_>>()
+            .into_iter()
+            .collect();
+        if !wanted.is_empty() && std::fs::create_dir_all(&root).is_ok() {
+            let started = Instant::now();
+            let pieces = self.max.min(wanted.len()).max(1);
+            let size = wanted.len().div_ceil(pieces);
+            std::thread::scope(|scope| {
+                for chunk in wanted.chunks(size) {
+                    let (exe, root) = (&exe, &root);
+                    scope.spawn(move || {
+                        let list = chunk.iter().map(|t| format!("{t}_c")).collect::<Vec<_>>().join(",");
+                        let args: Vec<String> =
+                            ["-i", &vpk.to_string_lossy(), "-o", &root.to_string_lossy(), "-d", "-f", &list]
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect();
+                        if let Err(e) = (self.run)(exe, &args) {
+                            self.error("sprites: export", &e);
+                        }
+                    });
+                }
+            });
+            (self.log)(&format!(
+                "sprites: {} of {key} in {pieces} runs, {} ms",
+                wanted.len(),
+                started.elapsed().as_millis()
+            ));
+        }
+        for t in textures.iter().filter(|t| ok(t)) {
+            out.insert(t.clone(), sprite_at(&root, t).and_then(|a| std::fs::read(a).ok()));
         }
         out
     }

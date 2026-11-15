@@ -20,6 +20,12 @@ pub const CHANNELS: &[&str] = &[
     "preview3d:motions",
     "preview3d:effect",
     "preview3d:model",
+    "decor:scene",
+    "decor:map",
+    "decor:ground",
+    "decor:modTrees",
+    "decor:paint",
+    "decor:modModel",
 ];
 
 /// one warm-up at a time: a second would only queue behind the first's exports
@@ -27,6 +33,45 @@ static WARMING: AtomicBool = AtomicBool::new(false);
 
 pub fn handle(o: &Owner, channel: &str, args: &[Value]) -> Option<R> {
     CHANNELS.contains(&channel).then(|| Ok(answer(o, channel, args)))
+}
+
+/// The light copy of a map the window shows: the default one, a game terrain's ("winter" or
+/// "game:winter"), or a catalog terrain's ("catalog:LowPoly.zip"), downloaded as an install would
+/// the first time when `fetch`.
+fn world_of(o: &Owner, a0: &Value, fetch: bool) -> Option<std::path::PathBuf> {
+    let name = Some(crate::js::string(a0)).filter(|w| !w.is_empty() && w != "undefined" && w != "null");
+    let (glb, ud, game) = {
+        let c = o.core();
+        (c.glb.clone(), c.user_data.clone(), c.game())
+    };
+    let base = name
+        .as_deref()
+        .map(|n| crate::map_base::Base::parse(n).unwrap_or_else(|| crate::map_base::Base::Game(n.to_string())));
+    match base {
+        None => glb.map_world(None),
+        Some(crate::map_base::Base::Game(w)) => glb.map_world(Some(&w)),
+        Some(crate::map_base::Base::Catalog(f)) => {
+            let file = crate::map_base::catalog_map(&ud, &f);
+            if !crate::map_base::catalog_kept(&ud, &f) && fetch {
+                let got = crate::owner_mods::download(o, "terrains", &f, &f)
+                    .and_then(|zip| crate::map_base::take_catalog_map(&zip, &file));
+                if let Err(e) = got {
+                    o.diag(&format!("decor scene: {e}"));
+                    return None;
+                }
+            }
+            let game = game?;
+            crate::map_base::point_at_game(&game, &ud, &f);
+            // "2": the copies made before the gameinfo.gi had no materials
+            let key = format!("map-cat2-{}", file.parent()?.file_name()?.to_string_lossy());
+            // a pak of materials draws on the default map, in its materials
+            if !file.is_file() {
+                let preview = crate::map_base::catalog_preview(&game, &ud, &f)?;
+                return glb.map_world_at(&preview, &key);
+            }
+            glb.map_world_at(&file, &key)
+        }
+    }
 }
 
 fn b64(b: &[u8]) -> Value {
@@ -215,6 +260,172 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                     Value::Null
                 }
             }
+        }
+        // the game's whole map for the Optimization window: exported and made light once per build
+        // (minutes the first time), then served on the mm-map scheme
+        "decor:scene" => {
+            let tool = has_tool(&o.core());
+            if !tool {
+                return json!({ "ready": false, "tool": false });
+            }
+            match world_of(o, &a0, true) {
+                Some(p) => {
+                    let size = std::fs::metadata(&p).map_or(0, |m| m.len());
+                    json!({ "ready": true, "tool": true, "size": size })
+                }
+                None => json!({ "ready": false, "tool": true }),
+            }
+        }
+        // the light map decor:scene made, as bytes alone: the shell hands those to the page raw
+        "decor:map" => match world_of(o, &a0, false).and_then(|p| std::fs::read(p).ok()) {
+            Some(b) => b64(&b),
+            None => Value::Null,
+        },
+        // a catalog terrain for the map's 3D view: a whole map ({kind: "map"}, decor:scene draws it), or
+        // a pak of materials put on the default map in place: what it hides, each other material's
+        // picture and tint, the ground's layers (map_paint.rs). Its pictures come out side by side.
+        "decor:paint" => {
+            let file = crate::js::string(&a0);
+            let (ud, game, glb) = {
+                let c = o.core();
+                (c.user_data.clone(), c.game(), c.glb.clone())
+            };
+            let Some(game) = game else { return Value::Null };
+            if !crate::map_base::catalog_kept(&ud, &file) {
+                let to = crate::map_base::catalog_map(&ud, &file);
+                if let Err(e) = crate::owner_mods::download(o, "terrains", &file, &file)
+                    .and_then(|zip| crate::map_base::take_catalog_map(&zip, &to))
+                {
+                    return json!({ "error": e });
+                }
+            }
+            let pak = crate::map_base::catalog_pak(&ud, &file);
+            if !pak.is_file() {
+                return json!({ "kind": "map" });
+            }
+            crate::map_base::point_at_game(&game, &ud, &file);
+            let Ok(ix) = crate::vpk::Index::open(&pak) else { return Value::Null };
+            let look = crate::map_paint::pak_look(&ix);
+            let key =
+                pak.parent().and_then(|p| p.file_name()).map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+            let pictures = glb.sprites_in(&pak, &key, &look.textures());
+            let png = |t: &str| pictures.get(t).cloned().flatten().map(|b| b64(&b));
+            let plain: Map<String, Value> = look
+                .plain
+                .iter()
+                .map(|(n, (t, tint))| (n.clone(), json!({ "png": t.as_deref().and_then(png), "tint": tint })))
+                .collect();
+            let grounds: Map<String, Value> = look
+                .grounds
+                .iter()
+                .filter_map(|(n, layers)| {
+                    let list: Vec<Value> = layers
+                        .iter()
+                        .filter_map(|(t, tint, scale)| Some(json!({ "png": png(t)?, "tint": tint, "scale": scale })))
+                        .collect();
+                    (list.len() == layers.len()).then(|| (n.clone(), Value::Array(list)))
+                })
+                .collect();
+            pack(o, json!({ "kind": "pak", "hidden": look.hidden, "plain": plain, "grounds": grounds }))
+        }
+        // a catalog Trees mod for the map's 3D view: its archive downloaded as an install would,
+        // its models unpacked (map_mod_trees.rs), and the tree models it brings
+        "decor:modTrees" => {
+            let file = crate::js::string(&a0);
+            let (root, game) = {
+                let c = o.core();
+                (c.glb.loose_root(&format!("trees/{file}")), c.game())
+            };
+            let (Some(root), Some(game)) = (root, game) else { return Value::Null };
+            if let Some(models) = crate::map_mod_trees::listed(&root) {
+                return json!({ "models": models });
+            }
+            let zip = match crate::owner_mods::download(o, "trees", &file, &file) {
+                Ok(p) => p,
+                Err(e) => return json!({ "error": e }),
+            };
+            match crate::map_mod_trees::unpack(&zip, &root, &game.join("dota")) {
+                Ok(models) => json!({ "models": models }),
+                Err(e) => {
+                    o.diag(&format!("decor mod trees: {e}"));
+                    json!({ "error": e })
+                }
+            }
+        }
+        // one of those models as a GLB, its pictures inside
+        "decor:modModel" => {
+            let (file, model) = (crate::js::string(&a0), crate::js::string(args.get(1).unwrap_or(&Value::Null)));
+            let glb = o.core().glb.clone();
+            let Some(root) = glb.loose_root(&format!("trees/{file}")) else { return Value::Null };
+            match glb.loose(&root, &model).map(|p| crate::glb_embed::embed_glb(&p)) {
+                Some(Ok(b)) => pack(o, b64(&b)),
+                Some(Err(e)) => {
+                    o.diag(&format!("decor mod model: {e}"));
+                    Value::Null
+                }
+                None => Value::Null,
+            }
+        }
+        // another map's ground for the map's 3D view: for each of the map's grounds it has one for,
+        // that ground's layers, each picture as a PNG out of the toolchain, its tint and its scale
+        // (word, facets): an empty word is this map's own ground; facets ("small", "large") turn each
+        // picture into flat triangles of its own colours (ground_facets.rs), as the build does
+        "decor:ground" => {
+            let word = Some(crate::js::string(&a0)).filter(|w| !w.is_empty() && w != "undefined" && w != "null");
+            let facets = args.get(1).and_then(Value::as_str).and_then(crate::ground_facets::Facets::parse);
+            let (pairs, pak, glb) = {
+                let c = o.core();
+                let game = c.game();
+                let decor = crate::map_decor::MapDecor::new(game.clone());
+                let pairs = match &word {
+                    Some(w) => decor.ground_pairs_of(&c.installer, w).unwrap_or_default(),
+                    None => decor
+                        .own_grounds(&c.installer)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|m| (m.clone(), m))
+                        .collect(),
+                };
+                let pak =
+                    game.and_then(|g| crate::vpk_shared::shared_index(&g.join("dota").join("pak01_dir.vpk")).ok());
+                (pairs, pak, c.glb.clone())
+            };
+            let Some(pak) = pak else { return Value::Null };
+            let mut rows = Vec::new();
+            let mut textures: Vec<String> = Vec::new();
+            for (ours, theirs) in &pairs {
+                let file = pak.read(&format!("{theirs}_c")).ok().flatten();
+                let Some(m) = crate::loadout_material::read_loadout_material(file.as_deref()) else { continue };
+                let layers = crate::map_ground::layers_of(&m);
+                for l in &layers {
+                    if !textures.contains(&l.0) {
+                        textures.push(l.0.clone());
+                    }
+                }
+                rows.push((ours.clone(), layers));
+            }
+            let mut pictures = glb.sprites(&textures);
+            if let Some(f) = facets {
+                for png in pictures.values_mut().flatten() {
+                    if let Ok(made) = crate::ground_facets::facet_png(png, f) {
+                        *png = made;
+                    }
+                }
+            }
+            let mut out = Map::new();
+            for (ours, layers) in rows {
+                let list: Vec<Value> = layers
+                    .iter()
+                    .filter_map(|(t, tint, scale)| {
+                        let png = pictures.get(t).cloned().flatten()?;
+                        Some(json!({ "png": b64(&png), "tint": tint, "scale": scale }))
+                    })
+                    .collect();
+                if !list.is_empty() && list.len() == layers.len() {
+                    out.insert(ours, Value::Array(list));
+                }
+            }
+            pack(o, json!({ "materials": out }))
         }
         "preview3d:model" => {
             let i = inputs(o);
