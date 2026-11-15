@@ -644,6 +644,16 @@ pub fn stable_sort<T: Clone>(v: &mut [T], mut cmp: impl FnMut(&T, &T) -> Orderin
 
 /// Hero item slots built from real default_item entries, with one list of paid items per slot.
 pub fn item_slots(text: &[u8]) -> Result<Vec<ItemSlot>, KvError> {
+    slots_of(text, false)
+}
+
+/// Every hero's slots in their stock items, those with nothing to pick for them too: a catalog
+/// mod's 3D stage dresses a hero the item builder leaves out (one with no paid items yet).
+pub fn stock_item_slots(text: &[u8]) -> Result<Vec<ItemSlot>, KvError> {
+    slots_of(text, true)
+}
+
+fn slots_of(text: &[u8], bare_too: bool) -> Result<Vec<ItemSlot>, KvError> {
     let items = items_of(text)?;
     let mut hero_cache: HashMap<String, Vec<String>> = HashMap::new();
     let mut heroes_of = |item: &SchemaItem| -> Result<Vec<String>, KvError> {
@@ -748,7 +758,7 @@ pub fn item_slots(text: &[u8]) -> Result<Vec<ItemSlot>, KvError> {
     for s in fx_slots(text, &items, &mut heroes_of)? {
         slots.insert(s.slot.clone(), s);
     }
-    let mut out: Vec<ItemSlot> = slots.into_values().filter(|s| !s.options.is_empty()).collect();
+    let mut out: Vec<ItemSlot> = slots.into_values().filter(|s| bare_too || !s.options.is_empty()).collect();
     for s in out.iter_mut() {
         stable_sort(&mut s.options, |a, b| locale_compare(&a.name, &b.name));
     }

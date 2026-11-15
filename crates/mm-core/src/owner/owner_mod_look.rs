@@ -87,7 +87,7 @@ fn mod_hero(o: &Owner, args: &[Value]) -> Value {
 fn mod_models(o: &Owner, args: &[Value]) -> Value {
     let (category, file, hero) =
         (crate::js::string(&arg(args, 0)), crate::js::string(&arg(args, 1)), crate::js::string(&arg(args, 2)));
-    let slots = arg(args, 3).as_array().cloned().unwrap_or_default();
+    let asked = arg(args, 3).as_array().cloned().unwrap_or_default();
     let started = (o.opts.now)();
     let (tool, glb, vanilla) = {
         let mut core = o.core();
@@ -108,6 +108,7 @@ fn mod_models(o: &Owner, args: &[Value]) -> Value {
     };
     let (Some(ix), Some(vanilla)) = (pak01(o), vanilla) else { return json!({ "ok": false, "reason": "no-game" }) };
     let text = look.items_game().unwrap_or_else(|| vanilla.0.clone());
+    let slots = stock_slots(&text, &hero).unwrap_or(asked);
     let read = |p: &str| look.read(p).or_else(|| ix.read(p).ok().flatten());
     let has = |p: &str| look.has(p) || ix.has(p);
     let paths = || look.paths().map(String::from).chain(ix.paths().map(String::from)).collect::<Vec<_>>();
@@ -131,6 +132,20 @@ fn mod_models(o: &Owner, args: &[Value]) -> Value {
             json!({ "ok": false, "reason": "no-body", "error": e })
         }
     }
+}
+
+/// Every slot of the hero in its stock item, out of the item table. The item builder's slots leave
+/// out a hero with nothing to pick (one with no paid items yet): there the stage had no weapon,
+/// and a mod of that weapon showed nothing.
+fn stock_slots(text: &[u8], hero: &str) -> Option<Vec<Value>> {
+    let short = hero.trim_start_matches("npc_dota_hero_");
+    let all = crate::item_builder_slots::stock_item_slots(text).ok()?;
+    let mine: Vec<Value> = all
+        .iter()
+        .filter(|s| s.ability_fx.is_none() && !s.target_id.is_empty() && s.hero_ids.iter().any(|h| h == short))
+        .map(|s| json!({ "slot": s.slot, "stock": s.target_id }))
+        .collect();
+    (!mine.is_empty()).then_some(mine)
 }
 
 fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {

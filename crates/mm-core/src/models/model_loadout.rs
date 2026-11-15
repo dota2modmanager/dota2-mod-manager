@@ -228,6 +228,12 @@ pub fn loadout_sequence(seqs: &[Sequence], modifiers: &[String]) -> Option<Strin
             .map(|s| (s.name.clone(), mods(s).into_iter().filter(|m| m != "loadout").collect()))
             .collect();
     }
+    // a hero's debut film (Kez's kez_debut_anim_idle) is a loadout too, and walks off the stage:
+    // it stands only for a hero with nothing else
+    let debut = |n: &str| n.to_lowercase().contains("debut");
+    if loadouts.iter().any(|(n, _)| !debut(n)) {
+        loadouts.retain(|(n, _)| !debut(n));
+    }
     let mut fits: Vec<&(String, Vec<String>)> =
         loadouts.iter().filter(|(_, m)| !m.is_empty() && m.iter().all(|x| worn.contains(x))).collect();
     fits.sort_by_key(|f| std::cmp::Reverse(f.1.len()));
@@ -272,4 +278,24 @@ pub fn item_activities(block: &str) -> Vec<String> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn seq(name: &str, acts: &[&str]) -> Sequence {
+        Sequence { name: name.into(), acts: acts.iter().map(|a| a.to_string()).collect() }
+    }
+
+    #[test]
+    fn a_debut_film_is_not_the_stance() {
+        let seqs = [seq("kez_debut_anim_idle", &[LOADOUT]), seq("idle_loadout_postgame", &[LOADOUT])];
+        assert_eq!(loadout_sequence(&seqs, &[]).as_deref(), Some("idle_loadout_postgame"));
+        // nor when the worn weapon's modifier names it
+        let worn = [seq("kez_debut_anim_idle", &[LOADOUT, "katana"]), seq("idle_loadout_postgame", &[LOADOUT])];
+        assert_eq!(loadout_sequence(&worn, &["katana".into()]).as_deref(), Some("idle_loadout_postgame"));
+        // a hero with nothing else still stands in it
+        assert_eq!(loadout_sequence(&seqs[..1], &[]).as_deref(), Some("kez_debut_anim_idle"));
+    }
 }
