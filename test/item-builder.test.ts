@@ -736,7 +736,7 @@ test("a saved look goes on in one write, and the hero's other picks go off, kept
   const backBeforeInvalidLook = picks().find((r) => r.slot === 'item:sniper:back')!;
   assert.throws(() => service.wearLook('item:sniper:', [
     { slot: 'item:sniper:back', itemId: '9455', targetItemId: '9457' },
-  ]), /cannot be replaced/i);
+  ]), /cannot replace/i);
   assert.equal(library.find(backBeforeInvalidLook.id)?.enabled, true, 'an invalid replacement leaves the current look untouched');
   writes = 0;
   const res = service.wearLook('item:sniper:', [
@@ -752,7 +752,7 @@ test("a saved look goes on in one write, and the hero's other picks go off, kept
     ['item:sniper:head', '9457', 'fire'],
   ]);
   assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.targetItemId, '9951', 'the replacement target is part of the saved look');
-  assert.throws(() => service.pickCosmetic('item:sniper:back', '9455', 'Golden Full-Bore Bonanza', '', { write: false, targetItemId: '9457' }), /cannot be replaced/i);
+  assert.throws(() => service.pickCosmetic('item:sniper:back', '9455', 'Golden Full-Bore Bonanza', '', { write: false, targetItemId: '9457' }), /cannot replace/i);
   assert.equal(library.find(arcana!.id)?.enabled, false, 'the arcana went off, kept in My mods');
   assert.throws(() => service.wearLook('item:../:', []), /Look not found/);
 

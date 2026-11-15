@@ -14,7 +14,7 @@ export function createReplacementValidator(text: string, listedSlots?: readonly 
   return (slot: string, itemId: string, targetItemId: unknown): string => {
     if (targetItemId === undefined) return '';
     if (typeof targetItemId !== 'string') {
-      throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, String(targetItemId)));
+      throw new Error(t('Предметом {0} нельзя заменить предмет {1} в этом слоте', itemId, String(targetItemId)));
     }
     if (!targetItemId) return '';
     let options: Set<string> | undefined;
@@ -28,7 +28,7 @@ export function createReplacementValidator(text: string, listedSlots?: readonly 
       options = wearableTargets.get(slot);
     }
     if (!options?.has(itemId) || !options.has(targetItemId) || itemId === targetItemId) {
-      throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, targetItemId));
+      throw new Error(t('Предметом {0} нельзя заменить предмет {1} в этом слоте', itemId, targetItemId));
     }
     return targetItemId;
   };
