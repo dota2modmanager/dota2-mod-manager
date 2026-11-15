@@ -12,7 +12,7 @@ Work in `work/` at the repo root: git ignores it. This rewrites the colours writ
 and `particles/status_fx/status_effect_<hero>*`). Add an item's folder with
 `--include particles/econ/items/<hero>/<item>/`.
 
-It works in two passes (`src/recolor.ts` `shade`). The first gives every colour the target's hue
+It works in two passes (`shade` in `crates/mm-core/src/looks/recolor.rs`). The first gives every colour the target's hue
 and keeps its own saturation and brightness; the second scales saturation and brightness toward
 the target. A single pass that rotates hues by one angle fails on heroes whose effects span
 several hues: Necrophos' greens run from yellow-green to teal and came out purple and orange.
@@ -100,13 +100,13 @@ starts only effects it knows.
 A model can start effects of its own: the compiled model's key values hold a `particle_cfg_list`,
 and the game runs every system listed there while the model is worn, with no entry in the item
 table. Write it into the compiled `.vmdl_c` after the compile with the app's own writer,
-`withParticles` in `src/model-particles.ts`. Inside such a system the control point driver with
+`with_particles` in `crates/mm-core/src/models/model_particles.rs`. Inside such a system the control point driver with
 `m_entityName = "self"` is the item and `"parent"` is the hero.
 
 To spread an effect over the item itself (sparkles along a weapon), do what the app's effect
 studio does for unusual effects: give the model hitboxes over its own vertices
-(`withSurfaceHitboxes` in `src/model-hitboxes.ts`, a set named `mm_surface`; await
-`MeshoptDecoder.ready` from `meshoptimizer` first, or it returns nothing), then
+(`with_surface_hitboxes` in `crates/mm-core/src/models/model_hitboxes.rs`, a set named
+`mm_surface`), then
 `C_INIT_CreateOnModel` with `m_HitboxSetName = "mm_surface"` and `C_OP_LockToBone`. The console
 says "Hitbox indexing is incorrect for set mm_surface"; it works regardless. Effects placed by an
 offset from an attachment instead drifted off the item and hung in the air.

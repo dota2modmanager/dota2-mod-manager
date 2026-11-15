@@ -7,7 +7,8 @@ that opens it. `/preset link:<link>` does the same for a link you paste.
 
 It runs on Discord's HTTP interactions, so it is a Cloudflare Worker with nothing to keep running.
 It cannot read the channel by itself and only answers when asked. `worker.mjs` decodes the link the way
-the app does (`src/preset-link.ts`), and `test/preset-bot.test.ts` holds the two to the same answers.
+the app does (`crates/mm-core/src/presets/preset_link.rs`); a change to the link's format has to
+land in both.
 Names, covers and mod pages come from the site's public `/catalog/data.json`.
 
 ## What it runs on
