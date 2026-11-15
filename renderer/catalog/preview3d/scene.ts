@@ -2,7 +2,7 @@
  * materials and HDR stay in that library; this module owns IPC data and React lifecycle only. */
 import { Mesh, Vector3 } from 'three';
 import { SceneSource, readGlb } from 'dota-loadout/studio';
-import type { Attachment, HeroStage, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
+import type { Attachment, Companion, HeroStage, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
 import type { StudioView } from './studio-settings.ts';
 import { loadoutTextures } from './loadout-textures.ts';
 import { loadoutAttachments, loadoutEffects, ownerOf, visibleGlb } from './loadout-source.ts';
@@ -32,6 +32,8 @@ export interface SceneOptions {
   gems?:readonly PreviewGem[];partSlots?:string[];paint?:PreviewPaint;
   particles?:{part:number;def:ParticleDef}[];sprites?:Record<string,Uint8Array>;resources?:LoadoutResources;
   hidden?:{body:string[];parts:string[][]};isolated?:boolean;onWarnings?:(warnings:string[])=>void;
+  /** the hero's other forms and summons, beside him on their own clips */
+  companions?:Companion[];
 }
 
 export { createSceneViewport, type SceneViewport };
@@ -44,6 +46,9 @@ const sameBytes = (a: Uint8Array, b: Uint8Array) => {
   const second = new Uint32Array(b.buffer, b.byteOffset, first.length);
   return first.every((word, i) => word === second[i]);
 };
+
+const sameCompanions = (a: Companion[] = [], b: Companion[] = []) =>
+  a.length === b.length && a.every((c, i) => c.model === b[i].model && c.clip === b[i].clip && sameBytes(c.glb, b[i].glb));
 
 export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Array[],options:SceneOptions={}, sharedViewport?:SceneViewport):Promise<HeroScene>{
   const {signal}=options;signal?.throwIfAborted();
@@ -93,6 +98,8 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     source.manifest.attachments.hero=loadoutAttachments(options.attachments?.body??[]);
     parts.forEach((part,i)=>{const owner=ownerOf(i);source.addGlb(visibleGlb(part,options.hidden?.parts[i]??[]),{key:owner,owner,itemId:owner});source.manifest.attachments[owner]=loadoutAttachments(options.attachments?.parts[i]??[]);});
     source.manifest.terrorbladeWeaponOwners = weaponOwners(options);
+    // beside the hero, not on his bones: vendor/dota-loadout's viewer stands each on its own clip
+    source.manifest.companions=(options.isolated?[]:options.companions??[]).map((c,i)=>{const owner='companion-'+i;source.addGlb(c.glb,{key:owner,owner,model:c.model});delete source.manifest.attachments[owner];return {owner,clip:c.clip};});
     if(!options.isolated){const response=await fetch(new URL('./studio-pedestal.glb',import.meta.url),{signal});if(!response.ok)throw Error('Cannot load local pedestal');const pedestal=new Uint8Array(await response.arrayBuffer());check();source.addGlb(pedestal,{key:'pedestal',owner:'pedestal'});source.manifest.studioPedestal=true;}
     if(options.clip&&source.manifest.animations)source.manifest.animations.idle=options.clip;
     if(options.stage?.background)host.style.setProperty('--stage-tint',`rgb(${options.stage.background.map(x=>Math.round(x*255)).join(',')})`);
@@ -163,7 +170,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
         const hero = live.hero;
         if (!hero || suspended || options.isolated || next.heroModel !== look.heroModel || next.clip !== look.clip ||
           next.still !== look.still || !same(next.stage, look.stage) || !same(next.hidden?.body, look.hidden?.body) ||
-          !same(next.attachments?.body, look.attachments?.body) || !sameBytes(body, nextBody)) return false;
+          !same(next.attachments?.body, look.attachments?.body) || !sameBytes(body, nextBody) || !sameCompanions(look.companions, next.companions)) return false;
         const changes: {owner:string;source:SceneSource|null}[] = [];
         for (let i = 0; i < Math.max(wornParts.length, nextParts.length); i++) {
           const old = wornParts[i], updated = nextParts[i];

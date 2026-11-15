@@ -58,4 +58,7 @@ export function registerPreview3dIpc({ heroPreview, toolchain, diag }: Pick<AppC
     if (!toolchain.pathOf('vrf')) return null;
     try { return large.pack(await heroPreview.model(file)); } catch (err) { diag(`preview 3d model: ${errorText(err)}`); return null; }
   });
+  // a catalog mod in 3D before it goes in: the Rust core alone answers these (owner_mod_look.rs)
+  ipcMain.handle('preview3d:modHero', () => ({ error: 'unsupported' }));
+  ipcMain.handle('preview3d:modModels', () => ({ ok: false, reason: 'no-mod' }));
 }

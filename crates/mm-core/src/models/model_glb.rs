@@ -56,6 +56,31 @@ pub fn game_info(dota: &str) -> String {
     )
 }
 
+/// A folder of files just written, removed: a scanner reading a fresh file holds it a moment, and
+/// a folder still holding it is not removed, so this tries a few times before it leaves it.
+pub fn remove_soon(dir: &Path) {
+    for wait in [0u64, 100, 300, 800] {
+        std::thread::sleep(std::time::Duration::from_millis(wait));
+        if std::fs::remove_dir_all(dir).is_ok() || !dir.exists() {
+            return;
+        }
+    }
+}
+
+/// The folders of earlier runs under a mod's root that a held file kept from going (remove_soon):
+/// any a minute old, so none of a run still going is touched.
+fn sweep(root: &Path) {
+    let old = |e: &std::fs::DirEntry| {
+        e.metadata().and_then(|m| m.modified()).ok().and_then(|t| t.elapsed().ok()).is_some_and(|d| d.as_secs() > 60)
+    };
+    for e in std::fs::read_dir(root).into_iter().flatten().flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        if (name.starts_with("pending-") || name == "vpk") && old(&e) {
+            let _ = std::fs::remove_dir_all(e.path());
+        }
+    }
+}
+
 /// A clip name no model has: the bones without any animation.
 const NO_CLIP: &str = "mm-no-clip";
 
@@ -420,9 +445,21 @@ impl ModelGlb {
     /// The GLB of a model among the loose files under `root` (map_mod_trees::source_of), exported
     /// once; None when it is not there or the export failed.
     pub fn loose(&self, root: &Path, model: &str) -> Option<PathBuf> {
+        self.loose_with(root, model, &[])
+    }
+
+    /// The same under these clips (a catalog hero mod's body keeps its loadout and idle, mod_look.rs);
+    /// each list of clips is a file of its own.
+    pub fn loose_with(&self, root: &Path, model: &str, clips: &[String]) -> Option<PathBuf> {
         let exe = (self.vrf)()?;
         let file = model_file(model)?;
-        let out = root.join("glb");
+        let out = if clips.is_empty() {
+            root.join("glb")
+        } else {
+            let joined: String =
+                clips.join("-").chars().filter(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == '-').collect();
+            root.join(format!("glb-{joined}"))
+        };
         if let Some(found) = found_glb(&out, &file) {
             return Some(found);
         }
@@ -435,7 +472,13 @@ impl ModelGlb {
             let r = std::fs::create_dir_all(to.parent().unwrap_or(&out)).map_err(|e| e.to_string()).and_then(|()| {
                 (self.run)(
                     &exe,
-                    &export_args(&at.to_string_lossy(), &to.to_string_lossy(), &[], &Clips::Some(vec![]), false),
+                    &export_args(
+                        &at.to_string_lossy(),
+                        &to.to_string_lossy(),
+                        &[],
+                        &Clips::Some(clips.to_vec()),
+                        false,
+                    ),
                 )
             });
             if let Err(e) = r {
@@ -591,6 +634,85 @@ impl ModelGlb {
         }
         for t in textures.iter().filter(|t| ok(t)) {
             out.insert(t.clone(), sprite_at(&root, t).and_then(|a| std::fs::read(a).ok()));
+        }
+        out
+    }
+
+    /// The pictures of textures among the loose files under `root` (map_mod_trees::source_of), as
+    /// PNG plus their sheets' frames, decoded once into root/sprites. The ones not decoded yet are
+    /// copied into a folder of their own and that folder decoded in one run, so a mod's textures
+    /// the preview never asks for are not decoded at all. None for a texture the folder lacks.
+    pub fn loose_sprites(&self, root: &Path, textures: &[String]) -> IndexMap<String, Option<Vec<u8>>> {
+        let mut out: IndexMap<String, Option<Vec<u8>>> = textures.iter().map(|t| (t.clone(), None)).collect();
+        // a mod's own pictures sit where its author put them, under names its author gave them
+        // ("qizlik/material/body_color_psd(2)_png.vtex"): anything but a way out of the folder
+        let ok = |t: &str| {
+            t.ends_with(".vtex")
+                && !t.starts_with('/')
+                && !t.split('/').any(|part| part.is_empty() || part == "." || part == "..")
+                && t.chars().all(|c| !c.is_control() && !"\\:*?\"<>|".contains(c))
+        };
+        let Some(exe) = (self.vrf)() else { return out };
+        sweep(root);
+        let source = crate::map_mod_trees::source_of(root);
+        let decoded = root.join("sprites");
+        let at = |t: &str| t.split('/').fold(source.clone(), |p, part| p.join(part)).with_extension("vtex_c");
+        let wanted: Vec<String> = textures
+            .iter()
+            .filter(|t| ok(t) && sprite_at(&decoded, t).is_none() && at(t).is_file())
+            .cloned()
+            .collect::<IndexSet<_>>()
+            .into_iter()
+            .collect();
+        if !wanted.is_empty() {
+            self.export_once(&decoded, &wanted, |wanted| {
+                let started = Instant::now();
+                // a folder per run: two of a mod's lists decode side by side (the body's and the particles')
+                static RUN: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+                let n = RUN.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                let pending = root.join(format!("pending-{}-{n}", std::process::id()));
+                let r = (|| -> Result<(), String> {
+                    for t in wanted {
+                        let to = t.split('/').fold(pending.clone(), |p, part| p.join(part)).with_extension("vtex_c");
+                        std::fs::create_dir_all(to.parent().unwrap_or(&pending)).map_err(|e| e.to_string())?;
+                        std::fs::copy(at(t), &to).map_err(|e| e.to_string())?;
+                    }
+                    std::fs::create_dir_all(&decoded).map_err(|e| e.to_string())?;
+                    let threads = self.max.to_string();
+                    let args: Vec<String> = [
+                        "-i",
+                        &pending.to_string_lossy(),
+                        "--recursive",
+                        "-e",
+                        "vtex_c",
+                        "-o",
+                        &decoded.to_string_lossy(),
+                        "-d",
+                        "--threads",
+                        &threads,
+                    ]
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect();
+                    (self.run)(&exe, &args)
+                })();
+                remove_soon(&pending);
+                match r {
+                    Ok(()) => (self.log)(&format!(
+                        "sprites: {} of a mod in {} ms",
+                        wanted.len(),
+                        started.elapsed().as_millis()
+                    )),
+                    Err(e) => self.error("sprites: mod export", &e),
+                }
+            });
+        }
+        for t in textures.iter().filter(|t| ok(t)) {
+            let found = sprite_at(&decoded, t).or_else(|| cube_at(&decoded, t));
+            out.insert(t.clone(), found.and_then(|a| std::fs::read(a).ok()));
+            for (key, file) in sprite_frames(&decoded, t) {
+                out.insert(key, std::fs::read(file).ok());
+            }
         }
         out
     }

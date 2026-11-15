@@ -5,7 +5,7 @@
  * change of items, or plays once and hands back if it is a motion with an end; the clips come in
  * one file the first time one is asked for. */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Motion, Preview3dApi, PreviewSlot } from '../../api/preview3d.ts';
+import type { ModelsAnswer, Motion, PreviewSlot } from '../../api/preview3d.ts';
 import type { HeroScene, SceneOptions, SceneViewport } from './scene.ts';
 import { Dropdown } from '../../ui/Dropdown.tsx';
 import { motionLabels } from './motion-label.ts';
@@ -15,6 +15,7 @@ import type { PreviewGem } from '../builder/gems.ts';
 import { NO_PAINT, type PreviewPaint } from '../paint/preview-paint.ts';
 
 const noGems: readonly PreviewGem[] = [];
+const gameModels = (hero: string, slots: PreviewSlot[]) => window.api.preview3d.models(hero, slots);
 
 type Status = { kind: 'loading' } | { kind: 'shown'; missing: string[] } | { kind: 'no-tool' } | { kind: 'failed'; text: string };
 
@@ -51,9 +52,12 @@ function motionWord(act: string, ability: string | null): string | null {
 /**
  * @param fallback  what the stage shows when the models cannot be had (the hero window's portrait), the reason under it
  * @param paint     the recolour window's colours (catalog/paint/preview-paint.ts), drawn as they change
+ * @param load      where the models come from: the game's (the item builder), or a catalog mod's over them (the mod window)
+ * @param waiting   what the stage says while they come
  */
-export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, still = false, fallback, onSettled }: {
+export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, still = false, fallback, onSettled, load = gameModels, waiting }: {
   hero: string; slots: PreviewSlot[]; sig: string; gems?: readonly PreviewGem[]; paint?: PreviewPaint; still?: boolean; fallback?: ReactNode; onSettled?: (result: { sig: string; ok: boolean }) => void;
+  load?: (hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>; waiting?: string;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const savedView = useRef<{ hero: string; view: StudioView } | null>(null);
@@ -115,12 +119,12 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
     setStatus(current => current.kind === 'shown' ? current : { kind: 'loading' });
     void (async () => {
       try {
-        const r: Awaited<ReturnType<Preview3dApi['models']>> = await window.api.preview3d.models(hero, slots);
+        const r = await load(hero, slots);
         if (life.gone) return;
         if (!r.ok) {
           onSettled?.({ sig, ok: false });
           setStatus(r.reason === 'no-tool' ? { kind: 'no-tool' }
-            : { kind: 'failed', text: r.reason === 'no-game' ? L`Не найдена папка игры` : L`Не удалось достать модель героя из игры` });
+            : { kind: 'failed', text: r.reason === 'no-game' ? L`Не найдена папка игры` : r.reason === 'no-mod' ? r.error || L`Не удалось скачать мод` : L`Не удалось достать модель героя из игры` });
           return;
         }
         const { mountScene, createSceneViewport } = await import('./scene.ts');
@@ -133,7 +137,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
             signal: session.signal, gems: initialGems, paint: latestPaint.current, partSlots: r.parts.map(p => p.slot),
             viewState: savedView.current?.hero === hero ? previous?.view() ?? savedView.current.view : undefined,
             still, label: L`Герой в 3D`, clip: r.clip, heroModel: r.model, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
-            attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources,
+            attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources, companions: r.companions,
           };
           const parts = r.parts.map(p => p.glb);
           const current = () => !life.gone && !session.signal.aborted;
@@ -227,7 +231,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
         </div>
       )}
       {status.kind === 'loading' && (
-        <div className="preview3d-note"><span className="ms">progress_activity</span>{L`Достаю модели из игры…`}</div>
+        <div className="preview3d-note"><span className="ms">progress_activity</span>{waiting || L`Достаю модели из игры…`}</div>
       )}
       {status.kind === 'no-tool' && (
         <div className="preview3d-note">

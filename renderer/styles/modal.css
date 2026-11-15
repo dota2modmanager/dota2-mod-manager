@@ -804,3 +804,34 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
 }
 .uninstall-total.is-error { color: var(--danger); }
 .uninstall-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
+
+/* A hero's mod (catalog/modal/ModStage.tsx): the hero in 3D on the left, the window's text on the
+   right; the mod's picture stands on the stage until the hero comes, dimmed under the note. */
+.modal-content:has(> .modal-layer > .modal-split) { width: min(1180px, calc(94vw / var(--content-zoom))); overflow: hidden; }
+.modal-split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); height: min(640px, calc(84vh / var(--content-zoom))); }
+.modal-stage { position: relative; min-height: 0; border-radius: var(--radius-lg) 0 0 var(--radius-lg); overflow: hidden; }
+.modal-stage .preview3d { position: absolute; inset: 0; height: auto; margin: 0; border: 0; border-radius: 0; }
+.modal-stage-picture { position: absolute; inset: 0; }
+.modal-stage-picture img, .modal-stage-picture video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal-stage .preview3d:not([data-status='shown']):not([data-status='failed']) .modal-stage-picture { opacity: 0.35; filter: blur(2px); }
+.modal-stage .preview3d-missing { left: var(--space-3); right: var(--space-3); bottom: var(--space-3); z-index: 2; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); background: rgba(10, 14, 20, 0.7); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-stage .preview3d-note { z-index: 2; color: #e6edf5; }
+.modal-side { position: relative; min-width: 0; overflow-y: auto; border-left: 1px solid var(--border); }
+.modal-side .modal-body { padding-top: var(--space-5); }
+.modal-side .preview-toggle { position: static; margin: 0 22px 22px; }
+@media (max-width: 760px) {
+  .modal-split { grid-template-columns: 1fr; grid-template-rows: 320px auto; height: auto; }
+  .modal-content:has(> .modal-layer > .modal-split) { overflow-y: auto; }
+  .modal-stage { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .modal-side { border-left: 0; overflow: visible; }
+}
+
+/* who made the mod (catalog/modal/Creator.tsx) */
+.mod-creator { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.mod-creator-badge { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; color: var(--md-on-primary, #fff); background: color-mix(in srgb, var(--md-primary) 70%, var(--bg-deep)); }
+.mod-creator-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mod-creator-label { font-size: var(--text-xs); color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+.mod-creator-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mod-creator-count { font-size: var(--text-xs); color: var(--text-muted); }
+.mod-creator .btn { flex-shrink: 0; }
+.modal-side .modal-title-row { padding-right: var(--space-7); }

@@ -78,7 +78,7 @@ fn b64(b: &[u8]) -> Value {
     json!({ "$b64": base64::engine::general_purpose::STANDARD.encode(b) })
 }
 
-fn has_tool(c: &Core) -> bool {
+pub(crate) fn has_tool(c: &Core) -> bool {
     crate::toolchain::Toolchain::new(&c.user_data, None).path_of("vrf").is_some()
 }
 
@@ -109,7 +109,7 @@ fn inputs(o: &Owner) -> Inputs {
     }
 }
 
-fn pack(o: &Owner, v: Value) -> Value {
+pub(crate) fn pack(o: &Owner, v: Value) -> Value {
     let now = (o.opts.now)();
     o.core().large.pack(v, now)
 }
@@ -138,7 +138,7 @@ fn models(o: &Owner, hero: &str, slots: &[Value], with_tool: Option<bool>) -> Re
     got
 }
 
-fn shown(m: &crate::hero_preview::Shown) -> Value {
+pub(crate) fn shown(m: &crate::hero_preview::Shown) -> Value {
     let sprites: Map<String, Value> = m.sprites.iter().map(|(k, v)| (k.clone(), b64(v))).collect();
     json!({
         "ok": true,
@@ -157,6 +157,7 @@ fn shown(m: &crate::hero_preview::Shown) -> Value {
         "particles": m.particles,
         "sprites": sprites,
         "resources": m.resources,
+        "companions": m.companions.iter().map(|c| json!({ "model": c.model, "clip": c.clip, "glb": b64(&c.glb) })).collect::<Vec<_>>(),
     })
 }
 
