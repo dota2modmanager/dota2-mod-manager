@@ -21,12 +21,19 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
-const { RAW_BASE } = require('../src/catalog.ts');
-const { fingerprintVpk, fingerprintFiles, listVpkPaths, analyzeVpkPaths, subjectHeroes } = require('../src/vpk.ts');
+const os = require('os');
+const { mm } = require('./mm-cli.js');
 const { jsonLinesFile } = require('./json-lines');
 
 // tools aren't mods (they're utilities/programs) — never fingerprint them
 const SKIP_CATEGORIES = new Set(['tools']);
+
+// the app's own code reads the archives (tools/mm-cli.js); it is handed them as files in here
+const RAW_BASE = mm('catalog-base');
+const TMP = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-fingerprints-'));
+process.on('exit', () => fs.rmSync(TMP, { recursive: true, force: true }));
+let tmpN = 0;
+const tmpFile = (data) => { const p = path.join(TMP, String(tmpN++)); fs.writeFileSync(p, data); return p; };
 
 function parseArgs(argv) {
   const a = {};
@@ -98,38 +105,31 @@ function looseFiles(entries, categoryId) {
 // terrains ship maps/dota.vpk), and falls back to hashing loose files (cursors, fonts).
 // Returns { fp, type: 'vpk'|'files' } or null when there's nothing to fingerprint.
 /**
- * Which heroes a mod is actually about, read out of the archive it is packed in.
+ * A VPK mod's fingerprint, and what it is about, read out of the archive it is packed in.
  *
- * The catalog does not record this: a hero mod is a name and a file, and "Bare Brewmaster"
- * says Brewmaster only to a human. The app works it out from the model paths inside the VPK
- * at install time, and this job already has every one of those archives open, so it costs a
- * second parse rather than another thousand downloads.
+ * The catalog does not record which heroes a mod is about: a hero mod is a name and a file, and
+ * "Bare Brewmaster" says Brewmaster only to a human. The app works it out from the model paths
+ * inside the VPK at install time, and this job already has every one of those archives open, so
+ * it costs a second parse rather than another thousand downloads.
+ *
+ * `paths` are the files a pak mod puts in the language folder, for tools/dota-watch.mjs to hold
+ * against what a Dota update changed. A whole-map terrain (maps/dota.vpk) replaces one file
+ * outside pak01, and the paths inside it are the map's own, so it has none: null, which also
+ * marks it as read.
  */
-function heroesOf(vpkBuf) {
+function vpkPrint(buf, isPak) {
+  const file = tmpFile(buf);
   try {
-    const a = analyzeVpkPaths(listVpkPaths(vpkBuf));
-    return {
-      kind: a.kind,
-      subjects: subjectHeroes(a).map((h) => ({ id: h.id, name: h.name, slots: h.slots, models: h.models })),
-    };
-  } catch {
-    return { kind: null, subjects: [] };
+    const a = mm('vpk-analyze', file);
+    return { fp: a.fp, type: 'vpk', kind: a.kind, subjects: a.subjects, paths: isPak ? a.paths : null };
+  } finally {
+    fs.rmSync(file, { force: true });
   }
-}
-
-/**
- * The files a pak mod puts in the language folder, for tools/dota-watch.mjs to hold against what a
- * Dota update changed. A whole-map terrain (maps/dota.vpk) replaces one file outside pak01, and the
- * paths inside it are the map's own, so it has none: null, which also marks it as read.
- */
-function pathsOf(vpkBuf, isPak) {
-  if (!isPak) return null;
-  try { return listVpkPaths(vpkBuf).sort(); } catch { return null; }
 }
 
 function fingerprintBuf(buf, fileRef, categoryId) {
   const lower = fileRef.toLowerCase();
-  if (lower.endsWith('.vpk')) return { fp: fingerprintVpk(buf), type: 'vpk', ...heroesOf(buf), paths: pathsOf(buf, true) };
+  if (lower.endsWith('.vpk')) return vpkPrint(buf, true);
   if (!lower.endsWith('.zip')) return null;
 
   const zip = new AdmZip(buf);
@@ -138,8 +138,7 @@ function fingerprintBuf(buf, fileRef, categoryId) {
     || entries.find((e) => e.entryName.toLowerCase().endsWith('.vpk'));
   if (vpkEntry) {
     try {
-      const inner = vpkEntry.getData();
-      return { fp: fingerprintVpk(inner), type: 'vpk', ...heroesOf(inner), paths: pathsOf(inner, vpkEntry.entryName.toLowerCase().endsWith('_dir.vpk')) };
+      return vpkPrint(vpkEntry.getData(), vpkEntry.entryName.toLowerCase().endsWith('_dir.vpk'));
     } catch { /* fall through */ }
   }
   const files = looseFiles(entries, categoryId);
@@ -148,7 +147,14 @@ function fingerprintBuf(buf, fileRef, categoryId) {
   // (fonts): "are all of this mod's files present in panorama/fonts with matching content?"
   const hashes = {};
   for (const f of files) hashes[f.path] = crypto.createHash('sha1').update(f.data).digest('hex');
-  return { fp: fingerprintFiles(files), type: 'files', hashes };
+  const dir = fs.mkdtempSync(path.join(TMP, 'files-'));
+  try {
+    const list = files.map((x, i) => { fs.writeFileSync(path.join(dir, String(i)), x.data); return [x.path, String(i)]; });
+    fs.writeFileSync(path.join(dir, 'list.json'), JSON.stringify(list));
+    return { fp: mm('files-fingerprint', path.join(dir, 'list.json')), type: 'files', hashes };
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 // a stable per-mod version marker from the catalog, so unchanged mods are skipped
