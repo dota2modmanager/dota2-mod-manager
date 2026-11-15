@@ -51,7 +51,7 @@ export function CosmeticCard({ item, index, onOpen, onFavChanged }: Props) {
       style={{ '--i': Math.min(index, 28) } as CSSProperties} onClick={(e) => onOpen(item.slot, item.id, e.currentTarget)}>
       <div className="card-media">
         <span className="card-thumb" data-name={item.name} data-owned="react" ref={thumb}>
-          {icon ? <img src={icon} alt="" loading="lazy" /> : <div className="noimg"><span className="ms">{item.fallbackIcon}</span></div>}
+          {icon ? <img decoding="async" src={icon} alt="" loading="lazy" /> : <div className="noimg"><span className="ms">{item.fallbackIcon}</span></div>}
         </span>
         <div className="card-actions">
           <button className={`fav-btn ${fav ? 'on' : ''}`} data-fav={item.favKey} data-owned="react"

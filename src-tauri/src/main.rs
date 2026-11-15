@@ -11,6 +11,7 @@
 mod backend;
 mod command_line;
 mod harness;
+mod icons;
 mod native;
 mod ported;
 mod shell;
@@ -83,6 +84,11 @@ async fn mm_invoke(
             Some(res) => res.map(|v| Answer::Json(v.to_string())),
             None => owner.invoke(&channel, list.clone()),
         };
+        // item pictures go to the page as mm-icon addresses, not as data URIs (src/icons.rs)
+        let res = res.map(|a| match a {
+            Answer::Json(s) => Answer::Json(app.state::<icons::Icons>().rewrite(&channel, s)),
+            other => other,
+        });
         after(&app, &channel, &list, res.is_ok());
         answer(res?)
     })
@@ -243,12 +249,19 @@ fn main() {
                 responder.respond(app.state::<ported::Shared>().picture(&ud, &path));
             });
         })
+        // the pictures src/icons.rs took out of the picture channels' answers
+        .register_asynchronous_uri_scheme_protocol(icons::SCHEME, |ctx, req, responder| {
+            let app = ctx.app_handle().clone();
+            let path = req.uri().path().to_string();
+            std::thread::spawn(move || responder.respond(app.state::<icons::Icons>().respond(&path)));
+        })
         .setup(move |app| {
             let handle = app.handle().clone();
             // the same folder the command line finds (src/command_line.rs)
             let user_data = command_line::user_data_dir(&argv, portable.as_deref(), &app.config().identifier);
             app.manage(ported::UserData(user_data.clone()));
             app.manage(ported::Shared::new());
+            app.manage(icons::Icons::default());
             let first_run = !user_data.join("settings.json").exists();
             let area = window::work_area(app);
             // the shell's process writes the game itself, so a sandbox run holds it to the folder

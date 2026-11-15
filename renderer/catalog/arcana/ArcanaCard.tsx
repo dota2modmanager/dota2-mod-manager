@@ -21,7 +21,7 @@ export function ArcanaCard({ m, index, onOpen }: { m: ArcanaCardModel; index: nu
   return (
     <CardShell moves={false} installed={Boolean(m.installed)} dataKey={`builtin|arcana|${m.set}`} index={index} onClick={(e) => onOpen(m.set, e.currentTarget)}>
       <div className={`card-media ${isCutOut(picture) ? 'cutout' : ''}`}>
-        {picture ? <img src={picture} alt="" /> : <div className="noimg"><span className="ms">palette</span></div>}
+        {picture ? <img decoding="async" src={picture} alt="" /> : <div className="noimg"><span className="ms">palette</span></div>}
       </div>
       <div className="card-body">
         <CardName>{arcanaWords(m.set, m.name).card()}</CardName>

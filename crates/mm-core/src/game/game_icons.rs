@@ -22,6 +22,23 @@ pub struct GameIcons {
     index: Mutex<Option<(String, HashMap<String, String>)>>,
 }
 
+/// How the cached pictures are made. 2: a block-compressed icon is cut to the size the game
+/// shows (vtex.rs fill_size); before, an item's 256x170 picture was kept as the 256x256 texture
+/// it is stored in, with 86 rows of smear under it.
+const CACHE_KIND: u32 = 2;
+
+/// A cached picture written whole or not at all (GameIcons::keep says why): to a name of its own,
+/// then renamed in. A rename that loses to a reader holding the file leaves the one there.
+pub(crate) fn write_whole(file: &Path, buf: &[u8]) -> bool {
+    let tmp = file.with_extension(format!("{}.part", uuid::Uuid::new_v4().simple()));
+    if std::fs::write(&tmp, buf).is_err() {
+        return false;
+    }
+    let ok = std::fs::rename(&tmp, file).is_ok() || file.exists();
+    let _ = std::fs::remove_file(&tmp);
+    ok
+}
+
 fn safe_name(image_path: &str) -> String {
     let hex: String = Sha1::digest(image_path.as_bytes()).iter().map(|b| format!("{b:02x}")).collect();
     format!("{}.png", &hex[..16])
@@ -38,6 +55,13 @@ impl GameIcons {
 
     fn cache_file(&self, image_path: &str) -> PathBuf {
         self.root.join(safe_name(image_path))
+    }
+
+    /// A picture into the cache whole or not at all. Batches are asked for in parallel, and two
+    /// item names often share one picture: written in place, one call read the PNG while another
+    /// was still writing it, and the window drew the top of the item over a smear of grey rows.
+    fn keep(&self, image_path: &str, png: &[u8]) -> bool {
+        write_whole(&self.cache_file(image_path), png)
     }
 
     fn cached_uri(&self, image_path: &str) -> Option<String> {
@@ -96,10 +120,12 @@ impl GameIcons {
         log(format!("game icons: {} items know where their picture is", map.len()));
         if let Some(now) = &stamp {
             let marker = self.root.join("stamp");
-            if std::fs::read_to_string(&marker).ok().as_deref() != Some(now.as_str()) {
+            // the stamp carries how the pictures were made too, so a cache made wrong goes with it
+            let mark = format!("{now}|{CACHE_KIND}");
+            if std::fs::read_to_string(&marker).ok().as_deref() != Some(mark.as_str()) {
                 let _ = std::fs::remove_dir_all(&self.root);
                 let _ = std::fs::create_dir_all(&self.root);
-                let _ = std::fs::write(&marker, now);
+                let _ = std::fs::write(&marker, &mark);
             }
             *held = Some((now.clone(), map.clone()));
         }
@@ -110,16 +136,23 @@ impl GameIcons {
     fn take_ready_made(&self, game: &Path, paths: &[String], log: &mut dyn FnMut(String)) -> Vec<String> {
         let Ok(ix) = crate::vpk_shared::shared_index(&Self::pak(game)) else { return paths.to_vec() };
         let _ = std::fs::create_dir_all(&self.root);
+        // Each picture is decoded from its texture and written as PNG on a core of its own: one
+        // after another, a batch nobody had opened before took a few hundred milliseconds, and
+        // a slot's first screen waited for all of it.
+        use rayon::prelude::*;
+        let done: Vec<Result<bool, String>> = paths
+            .par_iter()
+            .map(|p| match ix.read(&texture_path(p)) {
+                Ok(Some(buf)) => Ok(crate::vtex::picture_from_vtex(&buf).is_some_and(|png| self.keep(p, &png))),
+                Ok(None) => Ok(false),
+                Err(e) => Err(e.to_string()),
+            })
+            .collect();
         let mut left = Vec::new();
-        for p in paths {
-            match ix.read(&texture_path(p)) {
-                Ok(Some(buf)) => match crate::vtex::picture_from_vtex(&buf) {
-                    Some(png) => {
-                        let _ = std::fs::write(self.cache_file(p), png);
-                    }
-                    None => left.push(p.clone()),
-                },
-                Ok(None) => left.push(p.clone()),
+        for (p, r) in paths.iter().zip(done) {
+            match r {
+                Ok(true) => {}
+                Ok(false) => left.push(p.clone()),
                 Err(e) => {
                     log(format!("game icons: {p} unreadable ({e})"));
                     left.push(p.clone());
@@ -160,8 +193,8 @@ impl GameIcons {
                     for part in format!("{p}_png.png").split('/') {
                         from.push(part);
                     }
-                    if from.exists() {
-                        let _ = std::fs::copy(&from, self.cache_file(p));
+                    if let Ok(png) = std::fs::read(&from) {
+                        self.keep(p, &png);
                     }
                 }
                 Ok(())

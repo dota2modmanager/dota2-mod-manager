@@ -76,7 +76,7 @@ function Columns({ tiles, actions }: { tiles: HeroTileModel[]; actions: ScreenAc
                 return (
                   <button key={t.hero} className={`hero-tile hub-tile ${t.installed ? 'installed' : ''} ${art ? '' : 'no-art'}`} data-hero={t.hero}
                     style={{ '--i': Math.min(i++, 40) } as CSSProperties} title={name} aria-label={name} onClick={() => actions.pickHero(t.hero)}>
-                    <span className="hero-art">{art ? <img src={art} alt="" loading="lazy" /> : <span className="ms">person</span>}</span>
+                    <span className="hero-art">{art ? <img decoding="async" src={art} alt="" loading="lazy" /> : <span className="ms">person</span>}</span>
                     {t.installed && <span className="hero-installed ms" aria-hidden="true">check_circle</span>}
                     <span className="hero-name">{name}</span>
                   </button>
@@ -100,7 +100,7 @@ function FlatGrid({ tiles, actions }: { tiles: HeroTileModel[]; actions: ScreenA
             style={{ '--i': Math.min(i, 40) } as CSSProperties} title={name} onClick={() => actions.pickHero(t.hero)}>
             <span className="hero-art">
               {t.art
-                ? <img src={t.art} alt="" loading="lazy" className={t.standIn ? 'stand-in' : undefined} />
+                ? <img decoding="async" src={t.art} alt="" loading="lazy" className={t.standIn ? 'stand-in' : undefined} />
                 : <span className="ms">person</span>}
             </span>
             <span className="hero-count">{t.count}</span>

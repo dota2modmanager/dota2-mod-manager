@@ -33,11 +33,49 @@ function announce(names: string[]): void {
   for (const n of names) for (const fn of listeners.get(n) || []) fn();
 }
 
+/* The batch's pictures fetched and decoded before any tile is told about them. Under Tauri they
+ * are addresses on the mm-icon scheme (src-tauri/src/icons.rs), and an <img> handed a fresh one
+ * stood empty for a frame or two and then decoded on the frame it was drawn in, which is a
+ * hitch in the middle of a scroll. img.decode() does that work off the page's thread first, so
+ * the tile swaps straight to a picture. A slow one does not hold the batch past a moment. */
+const decoded = (srcs: (string | null | undefined)[]): Promise<unknown> => Promise.race([
+  Promise.allSettled(srcs.filter((s): s is string => !!s && !s.startsWith('data:')).map((s) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = s;
+    return img.decode();
+  })),
+  new Promise((done) => setTimeout(done, 1500)),
+]);
+
+/* Batches go out several at a time and small. One after another, a slot of forty items waited
+ * for each batch of 24 to be read out of the game before asking for the next, and the first
+ * screen came with the whole first batch. Each call is answered on a thread of its own, so
+ * smaller batches in parallel put the first pictures up sooner and the rest alongside them.
+ * Names already on their way are not asked for twice. */
+const BATCH = 12;
+const AT_ONCE = 4;
+const asked = new Set<string>();
+
 export async function loadCosmeticIcons(names: string[], onEach: (names: string[]) => void): Promise<void> {
-  const want = [...new Set(names)].filter((n) => n && !cosIconCache.has(n));
-  for (let i = 0; i < want.length; i += 24) {
-    const chunk = want.slice(i, i + 24);
+  const want = [...new Set(names)].filter((n) => n && !cosIconCache.has(n) && !asked.has(n));
+  for (const n of want) asked.add(n);
+  const chunks: string[][] = [];
+  for (let i = 0; i < want.length; i += BATCH) chunks.push(want.slice(i, i + BATCH));
+  let next = 0;
+  const worker = async (): Promise<void> => {
+    while (next < chunks.length) {
+      const chunk = chunks[next++];
+      try { await loadChunk(chunk, onEach); } finally { for (const n of chunk) asked.delete(n); }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(AT_ONCE, chunks.length) }, worker));
+}
+
+async function loadChunk(chunk: string[], onEach: (names: string[]) => void): Promise<void> {
+  {
     const { pictures, decode } = await window.api.cosmetics.icons(chunk);
+    await decoded(chunk.map((n) => pictures[n]));
     for (const n of chunk) cosIconCache.set(n, pictures[n] || null);
     announce(chunk);
     onEach(chunk);
@@ -119,7 +157,11 @@ export function watchIconFor(el: HTMLElement, name: string | null | undefined): 
           loadCosmeticIcons(names, () => {}).catch(() => {});
         }, 80);
       }
-    }, { rootMargin: '200px' });
+      // A screen and a half ahead. The tiles scroll inside #main or a window's own list, whose
+      // clip cut the old 200px rootMargin away (the same trap as ui/growing.ts), so a tile was
+      // only asked for once it was on screen and a fast scroll ran through empty boxes.
+      // scrollMargin is the margin every scrolling box between the tile and the window gets.
+    }, { rootMargin: '1200px 0px', scrollMargin: '1200px 0px' } as IntersectionObserverInit);
   }
   shared.observe(el);
   return () => shared?.unobserve(el);

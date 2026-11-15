@@ -19,10 +19,13 @@
      (library/drag.ts), and an entrance holding transform would pin it where it stood */
   animation: cardIn 0.35s var(--ease) backwards;
   animation-delay: calc(var(--i) * 18ms);
-  /* the frosted buttons on a row (.btn, backdrop-filter) blur the row itself, not the page under
-     it: while the entrance held opacity, that is what it did, and the buttons are drawn for it */
-  will-change: opacity;
 }
+/* A row's buttons are not frosted. A .btn blurs what is under it, and under a row's button is the
+   row: there is nothing to see through, only a blur drawn again on every frame of a scroll, a
+   few per row and hundreds in a long list. It also cost every row a layer of its own: the blur
+   saw through the row while its entrance held opacity, so the rows carried will-change: opacity
+   for good, and a list of six hundred was six hundred layers to move on each frame. */
+.lib-row .btn, .card .btn { backdrop-filter: none; }
 .lib-row:hover { border-color: var(--border-strong); background: var(--surface-hover); }
 /* a row moved in the order from its menu, on its way: over its neighbour, lifted the way a dragged
    one is, and solid, so the two names never print over each other (library/row-motion.ts) */

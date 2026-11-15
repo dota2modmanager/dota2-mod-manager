@@ -1,14 +1,14 @@
 /* Desktop adapter for the desktop preview's patched dota-loadout. Rendering, simulation, skinning,
  * materials and HDR stay in that library; this module owns IPC data and React lifecycle only. */
 import { Mesh, Vector3 } from 'three';
-import { HeroViewer } from 'dota-loadout';
 import { SceneSource, readGlb } from 'dota-loadout/studio';
 import type { Attachment, HeroStage, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
 import type { StudioView } from './studio-settings.ts';
 import { loadoutTextures } from './loadout-textures.ts';
 import { loadoutAttachments, loadoutEffects, ownerOf, visibleGlb } from './loadout-source.ts';
-import { loadoutControls, loadoutView, restoreLoadoutView } from './loadout-controls.ts';
+import { loadoutView, restoreLoadoutView } from './loadout-controls.ts';
 import { loadoutParticleBounds } from './loadout-bounds.ts';
+import { createSceneViewport, type SceneViewport } from './viewport.ts';
 
 import { loadoutGem, loadoutMaterialGem } from './loadout-gems.ts';
 import type { PreviewGem } from '../builder/gems.ts';
@@ -34,33 +34,7 @@ export interface SceneOptions {
   hidden?:{body:string[];parts:string[][]};isolated?:boolean;onWarnings?:(warnings:string[])=>void;
 }
 
-/** A window owns one WebGL context; scene data can be replaced inside it. */
-export function createSceneViewport(host: HTMLElement, label = '') {
-  const canvas = document.createElement('canvas');
-  canvas.setAttribute('aria-label', label);
-  canvas.style.cssText = 'width:100%;height:100%;display:block;touch-action:none';
-  host.append(canvas);
-  const viewport = {
-    afterUpdate: () => {},
-    viewer: new HeroViewer(canvas, {
-      assets: 'file:///unused-local-assets/', controls: true, wheel: 'zoom',
-      framing: 'full', textureScale: 1, bloom: .35, softParticles: true,
-      onFrame: dt => controls.tick(dt),
-      onAfterUpdate: () => viewport.afterUpdate(),
-    }),
-    canvas,
-    dispose() {
-      controls.dispose();
-      viewport.viewer.dispose();
-      canvas.remove();
-      host.style.removeProperty('--stage-tint');
-    },
-  };
-  const controls = loadoutControls(viewport.viewer);
-  return viewport;
-}
-
-export type SceneViewport = ReturnType<typeof createSceneViewport>;
+export { createSceneViewport, type SceneViewport };
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 const sameBytes = (a: Uint8Array, b: Uint8Array) => {
