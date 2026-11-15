@@ -56,6 +56,13 @@ function call(name, ...args) {
   return r.ok;
 }
 
+/** Bytes in a file in the scratch folder. */
+function binFile(bytes) {
+  const file = path.join(tmpDir(), `${n++}.bin`);
+  fs.writeFileSync(file, bytes);
+  return file;
+}
+
 /** One file out of a VPK (the game's pak01, say), copied into the scratch folder: its path there. */
 function vpkFile(vpk, rel) {
   const dir = fs.mkdtempSync(path.join(tmpDir(), 'x-'));
@@ -70,4 +77,4 @@ function appGame() {
   try { return JSON.parse(fs.readFileSync(path.join(base, 'Dota 2 Mod Manager', 'settings.json'), 'utf8')).dotaGamePath || null; } catch { return null; }
 }
 
-module.exports = { MM_CLI, ensureMmCli, mm, call, jsonFile, vpkFile, appGame };
+module.exports = { MM_CLI, ensureMmCli, mm, call, jsonFile, binFile, vpkFile, appGame };

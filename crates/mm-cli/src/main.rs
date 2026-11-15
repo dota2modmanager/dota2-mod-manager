@@ -139,6 +139,7 @@ fn run(args: &[String]) -> Result<Value, String> {
         }
         // a look built out of the game into a VPK (builds.rs)
         "look-sets" => Ok(builds::sets()),
+        "config-rules" => builds::config_rules(Path::new(arg(1)?)),
         "build" => builds::run(arg(1)?, Path::new(arg(2)?), Path::new(arg(3)?)),
         "vpk-build" => {
             let out = Path::new(arg(1)?);

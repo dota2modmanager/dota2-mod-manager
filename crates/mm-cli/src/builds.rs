@@ -65,6 +65,35 @@ pub fn run(kind: &str, out: &Path, args_file: &Path) -> Result<Value, String> {
     Ok(report)
 }
 
+/// `mm-cli config-rules <ops.json>`: the rules the app reads its remote config by, for
+/// tools/rollback.mjs to write one the app will honour. Each op is answered in turn:
+/// ["normalize", raw], ["cmp", a, b], ["idHash", id, salt], ["verify", file, signature, key],
+/// ["constants"].
+pub fn config_rules(ops_file: &Path) -> Result<Value, String> {
+    use mm_core::{beta, catalog_signature, remote_config as rc};
+    let ops: Vec<Vec<Value>> = serde_json::from_str(&std::fs::read_to_string(ops_file).map_err(|e| e.to_string())?)
+        .map_err(|e| format!("{}: {e}", ops_file.display()))?;
+    let st = |op: &[Value], i: usize| op.get(i).and_then(Value::as_str).unwrap_or("").to_string();
+    let mut out = Vec::new();
+    for op in &ops {
+        out.push(match st(op, 0).as_str() {
+            "normalize" => rc::normalize(op.get(1).unwrap_or(&Value::Null)),
+            "cmp" => json!(rc::cmp_version(&st(op, 1), &st(op, 2))),
+            "idHash" => json!(beta::id_hash(&st(op, 1), &st(op, 2))),
+            "verify" => {
+                let bytes = std::fs::read(st(op, 1)).map_err(|e| e.to_string())?;
+                json!(catalog_signature::verify(&bytes, &st(op, 2), &st(op, 3)))
+            }
+            "constants" => json!({
+                "SWITCHABLE": rc::SWITCHABLE, "BLOCKS_SINCE": rc::BLOCKS_SINCE, "MAX_TESTERS": rc::MAX_TESTERS,
+                "MAX_MIRRORS": rc::MAX_MIRRORS, "CONFIG_PUBLIC_KEY": rc::CONFIG_PUBLIC_KEY,
+            }),
+            other => return Err(format!("config-rules: no op {other}")),
+        });
+    }
+    Ok(json!(out))
+}
+
 /// `mm-cli look-sets`: the tree sets and the recolour sets' names, for the tools to list.
 pub fn sets() -> Value {
     let trees: Vec<Value> =

@@ -27,6 +27,11 @@ opt-level = 3
 strip = true
 panic = "unwind"
 
+# Line numbers in a panic, not the whole debug info: mm-cli is started once per call by the
+# tools and the tests, and a 240 MB debug binary took 0.7 s to start on Windows (86 MB, 0.34 s).
+[profile.dev]
+debug = "line-tables-only"
+
 # the hot loops (VPK, KeyValues, hashing) are worth optimising even in a debug build
 [profile.dev.package."*"]
 opt-level = 2
