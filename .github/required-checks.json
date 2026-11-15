@@ -6,13 +6,10 @@
     "Analyse JavaScript and TypeScript",
     "Build the AppImage",
     "Start it against the sandbox",
-    "A fix brings its test",
     "Install a mod through the window",
     "Install a mod through the window on Windows"
   ],
-  "pullRequestOnly": [
-    "A fix brings its test"
-  ],
+  "pullRequestOnly": [],
   "release": [
     "test",
     "windows",

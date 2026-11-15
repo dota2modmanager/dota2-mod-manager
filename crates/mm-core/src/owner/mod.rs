@@ -23,6 +23,7 @@ pub mod owner_foreign;
 pub mod owner_game;
 pub mod owner_library;
 pub mod owner_links;
+pub mod owner_mod_look;
 pub mod owner_mods;
 pub mod owner_packs;
 pub mod owner_pictures;
@@ -183,6 +184,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_game::CHANNELS, crate::owner_game::handle),
     (crate::owner_pictures::CHANNELS, crate::owner_pictures::handle),
     (crate::owner_preview3d::CHANNELS, crate::owner_preview3d::handle),
+    (crate::owner_mod_look::CHANNELS, crate::owner_mod_look::handle),
     (crate::owner_creator::CHANNELS, crate::owner_creator::handle),
     (crate::owner_support::CHANNELS, crate::owner_support::handle),
     (crate::owner_uninstall::CHANNELS, crate::owner_uninstall::handle),

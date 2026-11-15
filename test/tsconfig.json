@@ -31,5 +31,5 @@
     "resolveJsonModule": true,
     "checkJs": false
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "../renderer/globals.d.ts"]
 }

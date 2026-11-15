@@ -294,7 +294,6 @@ is loading a tracker, and nothing has to be committed for the picture to move.
 | [Mirror](.github/workflows/mirror.yml) | Pushes the same history to [GitLab](https://gitlab.com/TheFleece/dota2-mod-manager), so the code outlives this repository |
 | [Search report](.github/workflows/seo.yml) | Weekly, not per push: downloads, update checks, and visits from Google, Bing and Yandex, posted to [one public issue](https://github.com/dota2modmanager/dota2-mod-manager/issues/3) with every earlier week above it |
 | [Radar](.github/workflows/radar.yml) | Daily, not per push: rewrites the pinned "Project status" issue with what waits on a decision, what is red and what is about to expire, and messages the maintainer about anything overdue |
-| [Pull request rules](.github/workflows/pull-request.yml) | On every pull request: a change that fixes something changes a test too, or says in a `No-Test-Because:` line why it cannot |
 | [Labels](.github/workflows/labels.yml) | Keeps the repository's labels equal to `.github/labels.json` |
 | [Dependency updates](.github/workflows/dependency-updates.yml) | On Dependabot's pull requests: a minor or patch update queues itself to merge, and goes in once every required check passes; anything bigger gets a label and waits for the maintainer |
 | [Scorecard](.github/workflows/scorecard.yml) | Weekly and on every change to main: OpenSSF Scorecard grades how the repository is kept (pinned actions, token permissions, branch protection, signed releases) and publishes the score behind the badge above |

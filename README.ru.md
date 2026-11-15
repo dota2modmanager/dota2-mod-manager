@@ -293,7 +293,6 @@ v1.14rc7 проверяет принадлежность перед чистко
 | [Зеркало](.github/workflows/mirror.yml) | Толкает ту же историю на [GitLab](https://gitlab.com/TheFleece/dota2-mod-manager), чтобы код пережил этот репозиторий |
 | [Отчёт о поиске](.github/workflows/seo.yml) | Раз в неделю, а не на каждый пуш: скачивания, проверки обновлений и переходы из Google, Bing и Яндекса. Всё уходит в [одно открытое issue](https://github.com/dota2modmanager/dota2-mod-manager/issues/3), прошлые недели там же выше |
 | [Радар](.github/workflows/radar.yml) | Раз в день, а не на каждый пуш: переписывает закреплённое issue «Project status» (что ждёт решения, что красное, что скоро истекает) и пишет мейнтейнеру обо всём просроченном |
-| [Правила PR](.github/workflows/pull-request.yml) | На каждом pull request: изменение, которое что-то чинит, меняет и тест или объясняет строкой `No-Test-Because:`, почему не может |
 | [Метки](.github/workflows/labels.yml) | Держит метки репозитория равными `.github/labels.json` |
 | [Обновления зависимостей](.github/workflows/dependency-updates.yml) | На PR от Dependabot: minor и patch сами встают в очередь на слияние и сливаются, когда прошли все обязательные проверки и мейнтейнер поставил апрув; всё крупнее получает метку и ждёт мейнтейнера |
 | [Scorecard](.github/workflows/scorecard.yml) | Раз в неделю и на каждое изменение main: OpenSSF Scorecard оценивает, как содержится репозиторий (закреплённые actions, права токенов, защита ветки, подписанные релизы), и публикует оценку за значком выше |

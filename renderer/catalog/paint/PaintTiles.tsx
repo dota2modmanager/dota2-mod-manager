@@ -66,7 +66,7 @@ export function AbilityTile({ name, picture, effect, icon, actions }: {
   return (
     <div className={`paint-tile ${on ? 'on' : ''} ${picked(effect, icon) ? 'sel' : ''}`}>
       <Pic layer={effect ?? icon} label={name} cls={`paint-pic ${effect?.on ? 'fx' : ''}`} style={ring(effect)} actions={actions}>
-        {shown ? <img src={shown} alt="" draggable={false} /> : <span className="ms">bolt</span>}
+        {shown ? <img decoding="async" src={shown} alt="" draggable={false} /> : <span className="ms">bolt</span>}
       </Pic>
       <span className="paint-tile-name" title={name}>{name}</span>
       <span className="paint-chips">
@@ -102,7 +102,7 @@ export function HeroLayers({ name, picture, effects, portrait, body, actions }: 
   return (
     <div className="paint-hero-row">
       <Pic layer={portrait} label={L`Иконка и портрет`} cls={`paint-portrait ${effects?.on ? 'fx' : ''}`} style={ring(effects)} actions={actions}>
-        {shown ? <img src={shown} alt="" draggable={false} /> : <span className="ms">person</span>}
+        {shown ? <img decoding="async" src={shown} alt="" draggable={false} /> : <span className="ms">person</span>}
       </Pic>
       <div className="paint-hero-side">
         <span className="paint-hero-name">{name}</span>

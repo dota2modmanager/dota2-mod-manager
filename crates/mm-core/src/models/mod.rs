@@ -1,6 +1,7 @@
 //! Models, particles and the 3D preview.
 
 pub mod courier_models;
+pub mod hero_companions;
 pub mod hero_particle_styles;
 pub mod hero_preview;
 pub mod hero_preview_fx;
@@ -9,6 +10,7 @@ pub mod hero_showcase;
 pub mod loadout_material;
 pub mod loadout_resources;
 pub mod loadout_sheet;
+pub mod mod_look;
 pub mod model_attachments;
 pub mod model_bodygroups;
 pub mod model_cloth;

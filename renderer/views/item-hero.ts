@@ -95,14 +95,16 @@ function heroPreview(slots: CosmeticSlot[], active: SlotState | null) {
   const dressed = slots.filter((s) => s.targetId && !s.abilityFx);
   if (!hero || !dressed.length) return null;
   const tryOn = tryOnPick(active);
-  const previewSlots = dressed.map(s => ({
-    slot: s.slot, stock: s.targetId as string, ...(s.slot === active?.slot && tryOn ? { tryOn } : {}),
-  }));
+  const previewSlots = dressed.map(s => {
+    const live = pickedIn(s.slot);
+    const selected = s.slot === active?.slot && tryOn ? tryOn : live;
+    return { slot: s.slot, stock: selected?.targetItemId || s.targetId as string, ...(s.slot === active?.slot && tryOn ? { tryOn } : {}) };
+  });
   const pick = (slot: typeof previewSlots[number]) => slot.tryOn ?? pickedIn(slot.slot);
   return {
     hero,
     slots: previewSlots,
-    sig: JSON.stringify(previewSlots.map(s => [s.slot, s.stock, pick(s)?.itemId ?? '', pick(s)?.effectId ?? ''])),
+    sig: JSON.stringify(previewSlots.map(s => [s.slot, s.stock, pick(s)?.itemId ?? '', pick(s)?.effectId ?? '', pick(s)?.targetItemId ?? ''])),
     open: previewOpen,
     gemSlots: Object.fromEntries(previewSlots.flatMap((s, i) => {
       const item = pick(s);

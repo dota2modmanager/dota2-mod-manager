@@ -19,6 +19,12 @@ pub trait Exporter {
     fn glbs(&self, models: &[String], clips: &Clips, materials: bool) -> IndexMap<String, Option<PathBuf>>;
     /// None where this exporter makes no pictures.
     fn sprites(&self, textures: &[String]) -> Option<IndexMap<String, Option<Vec<u8>>>>;
+    /// Whether a texture is one this exporter brings over the game's (a catalog mod's, mod_look.rs).
+    /// The toolchain packs a model's colour into its GLB from the game's file of the same name,
+    /// so a recolour's own colour has to be handed in beside it.
+    fn own(&self, _texture: &str) -> bool {
+        false
+    }
 }
 
 impl Exporter for ModelGlb {
@@ -38,11 +44,15 @@ fn plain(p: &str) -> String {
     l.strip_suffix("_c").map(String::from).unwrap_or(l)
 }
 
-/// /^(?:models|materials|particles)\/[\w/.-]+\.(?:vpcf|vmat|vtex|vmdl|vsnap|vmesh)$/ and no `..` part.
+/// /^[\w.-]+\/[\w/.-]+\.(?:vpcf|vmat|vtex|vmdl|vsnap|vmesh)$/ and no `..` part. Any first folder:
+/// a mod keeps its meshes and materials where its author likes ("denk/models/...vmesh",
+/// "amir4an/materials/...vmat"), and taking only models/, materials/ and particles/ left its
+/// pieces without their materials, drawn in the game's colours.
 fn safe(p: &str) -> bool {
-    let Some(rest) = ["models/", "materials/", "particles/"].iter().find_map(|r| p.strip_prefix(r)) else {
+    let Some((first, rest)) = p.split_once('/') else { return false };
+    if first.is_empty() || !first.bytes().all(|c| c.is_ascii_alphanumeric() || b"_.-".contains(&c)) {
         return false;
-    };
+    }
     let Some(dot) = rest.rfind('.') else { return false };
     let (body, ext) = (&rest[..dot], &rest[dot + 1..]);
     // the greedy [\w/.-]+ gives back to the last dot it can end at
@@ -269,8 +279,20 @@ fn roles(recover_color: bool) -> Vec<(&'static str, &'static str)> {
     r
 }
 
+/// Whether a material's colour goes in beside the GLB: the GLB has none, or the exporter brings its own.
+fn recover(row: &Prepared, path: &str, m: &NativeMaterial, glb: &dyn Exporter) -> bool {
+    row.missing_color.contains(path) || texture(m, "g_tColor").is_some_and(|t| glb.own(&plain(t)))
+}
+
 fn texture<'a>(m: &'a NativeMaterial, key: &str) -> Option<&'a String> {
-    m.textures.get(key).filter(|t| !t.is_empty())
+    m.textures.get(key).filter(|t| !t.is_empty() && !(placeholder_mask(key, t)))
+}
+
+/// The game's flat white stand-in (materials/default/default_detailmask) given as a mask. Custom
+/// models carry it in their masks: read as one, every pixel is full metal, which the preview
+/// without the game's reflections draws black. As no mask, the model shows its colours.
+fn placeholder_mask(key: &str, texture: &str) -> bool {
+    matches!(key, "g_tMasks1" | "g_tMasks2") && texture.to_lowercase().starts_with("materials/default/")
 }
 
 struct Prepared {
@@ -367,7 +389,7 @@ pub fn loadout_models(
     let mut wanted: Vec<String> = Vec::new();
     for row in prepared.iter().flatten() {
         for (path, m) in &row.materials {
-            for (_, k) in roles(row.missing_color.contains(path)) {
+            for (_, k) in roles(recover(row, path, m, glb)) {
                 if let Some(t) = texture(m, k) {
                     let t = plain(t);
                     if !wanted.contains(&t) {
@@ -385,7 +407,7 @@ pub fn loadout_models(
             let mut mats = Map::new();
             for (path, m) in &row.materials {
                 let mut images = Map::new();
-                for (field, k) in roles(row.missing_color.contains(path)) {
+                for (field, k) in roles(recover(&row, path, m, glb)) {
                     if let Some(bytes) = texture(m, k).and_then(|t| pictures.get(&plain(t)).cloned().flatten()) {
                         let data = base64::engine::general_purpose::STANDARD.encode(bytes);
                         images.insert(field.into(), json!({ "mime": "image/png", "data": data }));
@@ -420,4 +442,28 @@ pub fn loadout_texture_paths(models: &[String], read: Read) -> Vec<String> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod placeholder_tests {
+    use super::*;
+
+    #[test]
+    fn the_games_white_stand_in_is_no_mask() {
+        assert!(placeholder_mask("g_tMasks1", "materials/default/default_detailmask_tga_4450da58.vtex"));
+        assert!(!placeholder_mask("g_tMasks1", "materials/models/heroes/pudge/masks1_tga_1.vtex"));
+        assert!(!placeholder_mask("g_tNormal", "materials/default/default_normal_tga_7652cb.vtex"));
+    }
+
+    #[test]
+    fn a_mods_own_folders_are_read() {
+        assert!(safe("denk/models/arc/arc_immortal_back/arc_immortal_back_denk.vmesh"));
+        assert!(safe("amir4an/materials/models/heroes/arc_warden/back.vmat"));
+        assert!(safe("materials/models/heroes/pudge/pudge.vmat"));
+        assert!(!safe("../materials/x.vmat"));
+        assert!(!safe("/materials/x.vmat"));
+        assert!(!safe("materials/../x.vmat"));
+        assert!(!safe("x.vmat"));
+        assert!(!safe("materials/x.txt"));
+    }
 }

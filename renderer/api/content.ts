@@ -122,7 +122,7 @@ export interface CosmeticsApi {
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
   heroPortraits: (ids: string[], tall?: boolean) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
-  pick: (slot: string, itemId: string, itemName: string, effectId: string) => Promise<Reply<{ record: LibRecord }>>;
+  pick: (slot: string, itemId: string, itemName: string, effectId: string, targetItemId?: string) => Promise<Reply<{ record: LibRecord }>>;
   /** style: the look each piece that has it goes on in, 0 for the first */
   pickSet: (setId: string, style?: number) => Promise<Reply<{ applied: number; pieces: number }>>;
   wearLook: (hero: string, picks: LookPick[]) => Promise<Reply<{ applied: number; picks: number }>>;
@@ -188,17 +188,10 @@ export interface RankMedal { tier: number; stars: number; top: 0 | 5000 | 100 | 
 /** The medal (null: the player's own), a level per hero, and one for every hero not named. */
 export interface RankLook { medal: RankMedal | null; levels: Record<string, number>; every: number | null }
 
+/** The Optimization window: its own file, renderer/api/decor.ts. */
+export type { DecorApi, DecorGroup, DecorSample, GroundLayer } from './decor.ts';
+
 /** The rank medal and hero levels of the player's own screen (src/rank-look-service.ts). */
-/** A kind of decor taken off the map (src/map-decor.ts). */
-export type DecorGroup = 'plants' | 'debris';
-
-/** The map without its decor (src/ipc-decor.ts). */
-export interface DecorApi {
-  /** the groups off the map now, and how many materials each takes on this map */
-  state: () => Promise<Reply<{ installed: { id: string; groups: DecorGroup[]; enabled: boolean } | null; counts: Record<DecorGroup, number> | null }>>;
-  install: (groups: DecorGroup[]) => Promise<Reply<{ record: LibRecord }>>;
-}
-
 export interface RankApi {
   /** the look on now, the heroes of this patch, and whether ValveResourceFormat is downloaded */
   state: () => Promise<Reply<{ installed: { id: string; look: RankLook; enabled: boolean } | null; heroes: { id: string; name: string }[]; vrf: boolean }>>;

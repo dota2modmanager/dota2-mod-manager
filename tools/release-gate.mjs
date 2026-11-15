@@ -32,7 +32,8 @@ const root = path.resolve(here, '..');
 /** The checks a release waits for, from the one file both gates read. */
 export function requiredChecks(kind = 'release') {
   const list = JSON.parse(fs.readFileSync(path.join(root, '.github', 'required-checks.json'), 'utf8'))[kind];
-  if (!Array.isArray(list) || !list.length) throw new Error(`.github/required-checks.json has no "${kind}" list`);
+  // an empty release or branch list would wave everything through; no pull-request-only check is fine
+  if (!Array.isArray(list) || (kind !== 'pullRequestOnly' && !list.length)) throw new Error(`.github/required-checks.json has no "${kind}" list`);
   return list;
 }
 

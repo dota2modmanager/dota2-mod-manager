@@ -148,6 +148,10 @@ const EN = {
   "Со стилями": "With styles",
   "Стиль набора": "Set style",
   "Надеть в этом стиле": "Equip in this style",
+  "Сохранить замену": "Save replacement",
+  "Заменить предмет": "Replace item",
+  "Стандартный предмет": "Default item",
+  "Этот вид увидишь только ты; он будет у всех, кто носит заменяемый предмет.": "Only you see the change; it appears on everyone wearing the replaced item.",
   // the hero's window laid out as the game's loadout: slot tabs, effect shelves
   "Сохрани надетое": "Save what is on",
   "Открыть слот: эффекты и стиль": "Open the slot: effects and style",
@@ -251,5 +255,12 @@ const EN = {
   "Эмблема рисуется на кольце под выбранным героем. Пока она включена, приложение само держит в autoexec.cfg команду r_draw_selected_ring 1. Если стоит Minify, выключи в нём Misc Optimization: она прячет это кольцо.": "An emblem is drawn on the ring under the selected hero. While one is on, the app keeps the command r_draw_selected_ring 1 in autoexec.cfg for you. If you use Minify, turn off its Misc Optimization: it hides that ring.",
   "В этом моде нет иконок предметов": "This mod has no item icons",
   "Это и есть «небезопасный режим» прошлых версий. Выключишь его, и приложение вернёт gameinfo и dota.signatures как у Valve, а VPK-моды продолжат работать.": "This is the “unsafe mode” of earlier versions. Turn it off and the app puts gameinfo and dota.signatures back the way Valve ships them, while VPK mods keep working.",
+  "Не удалось скачать мод": "Could not download the mod",
+  "Собираю героя с файлами мода…": "Putting the hero together with the mod’s files…",
+  "Не понял, для какого героя этот мод": "Could not tell which hero this mod is for",
+  "Скачиваю мод…": "Downloading the mod…",
+  "Создатель": "Creator",
+  "Модов в каталоге: {0}": "Mods in the catalog: {0}",
+  "Ещё в этой категории: {0}": "More in this category: {0}",
 };
 window.EN_MORE = EN;

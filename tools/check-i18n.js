@@ -228,7 +228,7 @@ function scanRust(src, names) {
 const SIDES = [
   // the window's dictionary is i18n.js plus the screens 3.0 added (renderer/locales/en-more.js),
   // which i18n.js reads as a fallback: one table, kept in two files so neither outgrows its budget
-  { name: 'renderer', dict: 'renderer/i18n.js', more: ['renderer/locales/en-more.js'], calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js', 'renderer/locales/en-more.js']) },
+  { name: 'renderer', dict: 'renderer/i18n.js', more: ['renderer/locales/en-more.js', 'renderer/locales/en-decor.js'], calls: ['L', 'tr'], files: jsFiles('renderer', ['renderer/i18n.js', 'renderer/locales/en-more.js', 'renderer/locales/en-decor.js']) },
   // the native dialogs, tray and notices: Rust, keyed by the Russian text like the window
   { name: 'main', dict: 'crates/mm-core/data/i18n-en.json', rust: true, calls: ['t'], files: rsFiles('crates/mm-core/src', 'src-tauri/src') },
 ];

@@ -12,6 +12,7 @@ import './locales/zh-CN-library.js';
 import './locales/zh-CN-app.js';
 import './locales/zh-CN-more.js';
 import './locales/en-more.js';
+import './locales/en-decor.js';
 import './i18n.js';
 import './shell/errors.ts';
 import './ui/scroll-watch.ts';

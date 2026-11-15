@@ -32,6 +32,9 @@ function load(src: string): Promise<HTMLImageElement> {
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error('picture'));
+    // an item picture is an mm-icon address under Tauri (src-tauri/src/icons.rs): asked for
+    // without CORS it would leave the canvas below unreadable
+    if (!src.startsWith('data:') && !src.startsWith('blob:')) img.crossOrigin = 'anonymous';
     img.src = src;
   });
 }

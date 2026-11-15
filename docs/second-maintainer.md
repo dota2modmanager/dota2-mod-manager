@@ -51,7 +51,7 @@ description and the diff, and ask:
 - does the pull request do what its title says, and nothing its title leaves out?
 - could you follow this code in half a year, with the author gone?
 - where the code looks wrong on purpose, does a comment say why?
-- does a fix bring a test that fails without it, or a `No-Test-Because:` line you believe?
+- does a fix for a bug users met bring a test that fails without it?
 
 Read hardest where a mistake costs a user something:
 

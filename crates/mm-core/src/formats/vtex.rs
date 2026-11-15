@@ -180,11 +180,86 @@ pub fn picture_from_vtex(buf: &[u8]) -> Option<Vec<u8>> {
         return Some(png.to_vec());
     }
     let (w, h, rgba) = rgba_from_vtex(buf)?;
-    Some(crate::png_strip::encode_png(w, h, &rgba))
+    let (width, height) = (w as usize, h as usize);
+    match fill_size(buf).filter(|&(fw, fh)| fw <= width && fh <= height && (fw, fh) != (width, height)) {
+        Some((fw, fh)) => {
+            let mut cut = Vec::with_capacity(fw * fh * 4);
+            for y in 0..fh {
+                cut.extend_from_slice(&rgba[y * width * 4..(y * width + fw) * 4]);
+            }
+            Some(crate::png_strip::encode_png(fw as u32, fh as u32, &cut))
+        }
+        None => Some(crate::png_strip::encode_png(w, h, &rgba)),
+    }
+}
+
+/// The picture's own size when the compiler filled it out to a power of two: the texture's
+/// "fill to power of two" extra data (type 3: a u16, then width and height, as Source 2 Viewer
+/// reads it). An item icon is 256x170 kept in a 256x256 texture; drawn whole, the 86 rows under
+/// the item were a smear of whatever the compressor left there.
+fn fill_size(buf: &[u8]) -> Option<(usize, usize)> {
+    const FILL_TO_POWER_OF_TWO: u32 = 3;
+    if buf.len() < 16 {
+        return None;
+    }
+    let blocks_at = 8 + u32_at(buf, 8) as usize;
+    let data = (0..u32_at(buf, 12) as usize).find_map(|i| {
+        let at = blocks_at + i * 12;
+        (at + 12 <= buf.len() && &buf[at..at + 4] == b"DATA").then(|| at + 4 + u32_at(buf, at + 4) as usize)
+    })?;
+    if data + 40 > buf.len() {
+        return None;
+    }
+    let first = data + 32 + u32_at(buf, data + 32) as usize;
+    for i in 0..u32_at(buf, data + 36).min(16) as usize {
+        let e = first + i * 12;
+        if e + 12 > buf.len() {
+            return None;
+        }
+        if u32_at(buf, e) != FILL_TO_POWER_OF_TWO {
+            continue;
+        }
+        let at = e + 4 + u32_at(buf, e + 4) as usize;
+        if at + 6 > buf.len() {
+            return None;
+        }
+        let (w, h) = (u16_at(buf, at + 2) as usize, u16_at(buf, at + 4) as usize);
+        return (w > 0 && h > 0).then_some((w, h));
+    }
+    None
 }
 
 /// A PNG as a data: URL.
 pub fn data_url(png: &[u8]) -> String {
     use base64::Engine;
     format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png))
+}
+
+#[cfg(test)]
+mod tests {
+    /// On the game's own files (MM_TEST_PAK01 = a pak01_dir.vpk): an item icon kept in a texture
+    /// filled out to 256x256 comes out at the 256x170 the game shows. Skipped without the game.
+    #[test]
+    fn an_item_icon_is_cut_to_its_own_size() {
+        let Ok(pak) = std::env::var("MM_TEST_PAK01") else { return };
+        let ix = crate::vpk::Index::open(std::path::Path::new(&pak)).unwrap();
+        let paths: Vec<String> = ix
+            .paths()
+            .filter(|p| p.starts_with("panorama/images/econ/items/") && p.ends_with("_png.vtex_c"))
+            .map(String::from)
+            .collect();
+        let filled = paths
+            .iter()
+            .filter_map(|p| ix.read(p).ok().flatten())
+            .find(|t| {
+                super::png_from_vtex(t).is_none()
+                    && super::rgba_from_vtex(t).is_some_and(|(w, h, _)| (w, h) == (256, 256))
+                    && super::fill_size(t).is_some()
+            })
+            .expect("an item icon filled out to a power of two");
+        let png = super::picture_from_vtex(&filled).unwrap();
+        let size =
+            (u32::from_be_bytes(png[16..20].try_into().unwrap()), u32::from_be_bytes(png[20..24].try_into().unwrap()));
+        assert_eq!(size, (256, 170));
+    }
 }

@@ -7,11 +7,15 @@
  *
  * The first such report from a machine that could look (2026-11-04) showed the wheel reaching the
  * main pane with 1580 px still below, no screen change and no dialog: nothing of ours held it, the
- * browser just did not move. Clicking around let it go. So from the second stuck tick in a row
- * the watch scrolls the pane itself, by the tick's own distance. A tick something took on purpose
- * (the 3D preview zooms on it) is left alone. */
+ * browser just did not move. Clicking around let it go. For a while the watch scrolled the pane
+ * itself from the second stuck tick on; that swallowed the first tick and then jumped a whole
+ * tick at a time, and it felt like somebody else had the wheel. The cause it was covering for is
+ * fixed where it lived: the content zoom sat on #main, the box that scrolls (base.css), and the
+ * pictures arrived as data URIs that stalled the page mid-scroll (src-tauri/src/icons.rs). The
+ * watch only reports now, so a stuck pane that is still out there shows up in the log. A tick
+ * something took on purpose (the 3D preview zooms on it) is left alone. */
 import { scrollerAt, transitioning } from './transitions.ts';
-import { NUDGE_AFTER, stuck, tickPx, type Tick } from '../core/scroll-stuck.ts';
+import { stuck, type Tick } from '../core/scroll-stuck.ts';
 
 const IN_A_ROW = 3;
 const QUIET_MS = 60_000;
@@ -43,8 +47,6 @@ document.addEventListener('wheel', (e) => {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const tick = { dy: e.deltaY, before, after: pane.scrollTop, max: pane.scrollHeight - pane.clientHeight };
     streak = !e.defaultPrevented && stuck(tick) ? streak + 1 : 0;
-    if (streak >= NUDGE_AFTER) pane.scrollBy({ top: tickPx(e.deltaY, e.deltaMode, pane.clientHeight), behavior: 'instant' });
-    // the streak is not reset here: the ticks after the report still need the nudge
     if (streak < IN_A_ROW || Date.now() - said < QUIET_MS) return;
     said = Date.now();
     report(pane, tick, e);

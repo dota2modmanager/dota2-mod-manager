@@ -141,7 +141,6 @@ fn run(args: &[String]) -> Result<Value, String> {
         }
         // a look built out of the game into a VPK (builds.rs)
         "look-sets" => Ok(builds::sets()),
-        "seed-mods" => builds::seed_mods(Path::new(arg(1)?), Path::new(arg(2)?), arg(3)?, Path::new(arg(4)?)),
         "kv3-tree" => modkit::tree(Path::new(arg(1)?), Path::new(arg(2)?)),
         "kv3-put" => modkit::put(Path::new(arg(1)?), Path::new(arg(2)?), Path::new(arg(3)?)),
         "recolor-files" => modkit::recolor_files(Path::new(arg(1)?), Path::new(arg(2)?)),

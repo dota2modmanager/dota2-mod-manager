@@ -98,12 +98,12 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 | Criterion | Answer | URL to give |
 | --- | --- | --- |
-| `build` | Met: `npm ci` then `npm run dist` (electron-builder); CI builds the installer, the portable build and the AppImage for every release | repo .github/workflows/release.yml |
-| `build_common_tools` | Met: npm, electron-builder, GitHub Actions | repo package.json |
-| `build_floss_tools` | Met: Node.js, npm and electron-builder are FLOSS | repo package.json |
-| `test` | Met: `npm test`, more than 80 test files on node:test, released under the project's own licence | repo test/ |
-| `test_invocation` | Met: `npm test` | repo package.json |
-| `test_most` | Met | repo .github/coverage-baseline.json |
+| `build` | Met: `npm ci` then `npm run dist` (`tauri build`, over cargo); CI builds the installer, the portable build and the AppImage for every release | repo .github/workflows/release.yml |
+| `build_common_tools` | Met: cargo, npm, the Tauri CLI, GitHub Actions | repo package.json |
+| `build_floss_tools` | Met: Rust, cargo, Node.js, npm and Tauri are FLOSS | repo package.json |
+| `test` | Met: `npm test` (node:test, the window and the release tools) and `cargo test` (the Rust core), released under the project's own licence | repo test/ |
+| `test_invocation` | Met: `npm test` and `cargo test` | repo package.json |
+| `test_most` | Unmet (SUGGESTED) | none needed |
 | `test_continuous_integration` | Met: the suite runs on Linux and Windows for every push and every pull request | repo .github/workflows/test.yml |
 | `test_policy` | Met | repo CONTRIBUTING.md |
 | `tests_are_added` | Met | repo pull requests |
@@ -114,18 +114,16 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 **Justification for `test_most`**: 
 
-> Coverage is measured on every run and held two ways: an aggregate floor of 90% of lines in the
-> gate, and each file's own number per platform in .github/coverage-baseline.json, which a run
-> below them fails. Measured today it is about 93% of lines and 87% of branches, with the modules
-> that write into the player's game folder above 85%.
+> Coverage is not measured. Since 2026-11-15 the suite keeps the tests that guard a player's game
+> folder, files, update and window, and a bug that already happened once, rather than chasing a
+> coverage number.
 
 **Justification for `test_policy` and `tests_are_added`**:
 
-> CONTRIBUTING.md states that a fix arrives with a test, or with a `No-Test-Because:` line saying
-> why none is possible. A required check on every pull request ("A fix brings its test") enforces
-> it against the diff. Beyond that, `.github/mutants.json` holds deliberate breakages of the
-> promises the tests are supposed to guard, and a weekly run breaks each one to check the suite
-> notices; a mutant that survives is a test that proves nothing.
+> CONTRIBUTING.md states that a fix for a bug that reached users brings the test that would have
+> caught it. Pull requests that add behaviour add its tests: the code that writes into the game
+> folder (the gameinfo patch, the VPK writer, file transactions) carries Rust tests beside it, and
+> new window logic its node:test file.
 
 **Justification for `warnings_strict`**:
 
@@ -213,11 +211,10 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 **Justification for `dynamic_analysis`**:
 
-> Three kinds. The built installer and AppImage are installed and clicked through on Linux and on
+> Two kinds. The built installer and AppImage are installed and clicked through on Linux and on
 > Windows before a release becomes public: install a mod, switch it off, restart, switch it on,
 > remove it, with the game folder checked on disk after every step. The VPK and zip parsers are
-> fuzzed with seeded random input, and every input that broke one is kept as a test. And a weekly
-> mutation run breaks the promises the tests guard, to check the suite notices.
+> fuzzed with seeded random input (`tools/fuzz-parsers.mjs`).
 
 **Justification for `dynamic_analysis_enable_assertions`**:
 
@@ -278,9 +275,9 @@ by hand.
 | `updateable_reused_components` | Met | none needed |
 | `interfaces_current` | Met (SHOULD) | none needed |
 | `automated_integration_testing` | Met | repo .github/workflows/test.yml |
-| `regression_tests_added50` | Met | repo tools/pr-test-rule.mjs |
-| `test_statement_coverage80` | Met | repo .github/coverage-baseline.json |
-| `test_policy_mandated` | Met | repo CONTRIBUTING.md |
+| `regression_tests_added50` | Met: for the last six months a required check held every fix to a test or a stated reason; retired on 2026-11-15, the rule stays in CONTRIBUTING.md | repo CONTRIBUTING.md |
+| `test_statement_coverage80` | Unmet: coverage is no longer measured | none needed |
+| `test_policy_mandated` | Unmet: the written policy covers fixes for bugs users met, not every new piece of functionality | none needed |
 | `tests_documented_added` | Met | repo CONTRIBUTING.md |
 | `warnings_strict` | Met | none needed |
 | `implement_secure_design` | Met | repo docs/assurance-case.md |

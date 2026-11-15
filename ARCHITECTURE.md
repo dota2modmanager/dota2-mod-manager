@@ -556,7 +556,6 @@ says what it owns. The rest:
 | `tools/check-credentials.mjs`, `tools/google-auth.mjs` | Every morning before the radar: tries each secret against its service and writes what works, what fails and when each expires, for the radar to report |
 | `tools/virustotal.mjs` | Reads what the antivirus engines say about each published release and writes the report into its notes; skipped when no key is set |
 | `tools/radar.mjs` | The daily "Project status" issue and the maintainer's overdue alerts; reads expiry dates from `.github/credentials.json` and lists a closed `regression` issue that no file in `docs/incidents/` names |
-| `tools/pr-test-rule.mjs` | The pull request check that a fix changes a test or says why it cannot |
 | `tools/gen-doc-facts.js` | Writes the sentences in the READMEs that come from `package.json`, between `facts:` markers |
 | `tools/sync-labels.mjs` | Makes the repository's labels match `.github/labels.json` |
 | `tools/typecheck.mjs` | Runs `tsc` over the four projects (the two preloads through their JSDoc, then the main process, the tests and the window, all three strict) and holds the error count per file at or below `.github/typecheck-baseline.json` |

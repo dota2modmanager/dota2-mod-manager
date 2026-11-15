@@ -197,7 +197,7 @@ fn fetcher(c: &Core) -> Installer {
 }
 
 /// A download from the catalog, with the bar counting it; the lock is not held meanwhile.
-fn download(o: &Owner, category_id: &str, file_ref: &str, label: &str) -> Result<PathBuf, String> {
+pub(crate) fn download(o: &Owner, category_id: &str, file_ref: &str, label: &str) -> Result<PathBuf, String> {
     let (inst, net) = {
         let c = o.core();
         (fetcher(&c), c.net.clone())

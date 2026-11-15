@@ -35,11 +35,14 @@ export interface LoadoutResources {
 }
 export interface Attachment extends Partial<LoadoutAttachment> { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
 
+/** A hero's other form or summon on the stage (crates/mm-core/src/models/hero_companions.rs). */
+export interface Companion { model: string; clip: string | null; glb: Uint8Array }
+
 /** What a body can be shown doing (src/model-loadout.ts motionList). */
 export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
 
 /** The item builder's 3D preview (src/hero-preview.ts): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
-export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } }
+export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }
 
 export interface Preview3dApi {
   /** Prepare the disk cache for one hero without returning its large 3D data to the window. */
@@ -52,11 +55,20 @@ export interface Preview3dApi {
   model: (file: string) => Promise<Uint8Array | null>;
   /** every clip of a body, without its pictures, as GLB bytes; null without the game or the toolchain */
   motions: (body: string) => Promise<Uint8Array | null>;
-  models: (hero: string, slots: PreviewSlot[]) => Promise<
+  /** the hero a catalog mod is for (its archive downloaded and unpacked the first time), by its files or else by `hint`, its name */
+  modHero: (category: string, file: string, hint: string) => Promise<{ hero?: string | null; error?: string }>;
+  /** the hero in these slots' stock items with the catalog mod's files over the game's, as models answers */
+  modModels: (category: string, file: string, hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>;
+  models: (hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>;
+}
+
+/** What the stage is drawn from: the hero's models, or why there are none. */
+export type ModelsAnswer =
     | {
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
       parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];
       attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources;
+      /** his other forms and summons, stood beside him: the bear, the dragon, the spirits */
+      companions?: Companion[];
     }
-    | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body'; error?: string }>;
-}
+    | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body' | 'no-mod'; error?: string };

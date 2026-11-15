@@ -42,7 +42,7 @@ export function applyInstalled(installed: LibRecord[]): void {
   // Sorted, because the folder is read again on every visit to the Library and the order it
   // comes back in is not promised. Comparing an unsorted join made an identical read look
   // like a change, and the catalog was thrown away for nothing.
-  const sig = installed.map((r) => `${r.id}:${r.enabled === false ? 0 : 1}:${r.slot ?? ''}`).sort().join('|');
+  const sig = installed.map((r) => `${r.id}:${r.enabled === false ? 0 : 1}:${r.slot ?? ''}:${r.targetItemId ?? ''}`).sort().join('|');
   if (sig !== lastInstalledSig) { lastInstalledSig = sig; invalidateViews(); }
 }
 

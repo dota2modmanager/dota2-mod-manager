@@ -169,6 +169,11 @@ pub fn with_references(file: &[u8], paths: &[&str]) -> Result<Vec<u8>, ResourceE
             names.push(p.to_string());
         }
     }
+    set_references(file, &names)
+}
+
+/// The file with its RERL block naming exactly `names`, in this order, each with its id.
+pub fn set_references(file: &[u8], names: &[String]) -> Result<Vec<u8>, ResourceError> {
     let mut entries = vec![0u8; names.len() * 16];
     let mut text = Vec::new();
     let mut at = 8 + entries.len();

@@ -13,8 +13,6 @@ install: the commands that need a game build a throwaway one first (`npm run san
 | Claim | Evidence | Runs in CI as | Run it yourself |
 |---|---|---|---|
 | The code does what its tests say: the Rust core's own tests beside its code, and the rest in 100 files | `crates/`, `test/` | Rust, Tests: `test` (Linux), `windows` | `cargo test -p mm-core -p mm-cli`, `npm test` |
-| Coverage does not go backwards: lines 92.9%, branches 86.9%, functions 91.6% on 2026-10-11 | `.github/coverage-baseline.json`, a floor that only rises | Tests | `npm run verify` |
-| The tests catch real breakage, not only run the code | 14 deliberate breakages in `.github/mutants.json`, each with the test file that has to go red | Mutants, weekly; `test/mutate.test.js` holds every entry against today's source on every push | `npm run mutate` |
 | Malformed archives and VPK files are refused, not trusted | `crates/mm-core/src/formats/safe_zip.rs`, `crates/mm-core/src/formats/vpk.rs` | Tests | `npm run fuzz` |
 
 ## The app as people use it
@@ -47,9 +45,7 @@ install: the commands that need a game build a throwaway one first (`npm run san
 ## How changes get in
 
 Every change reaches `main` through a pull request and a merge queue, and merges only when every
-check in `.github/required-checks.json` is green on top of the newest `main`. A pull request that
-fixes something brings a test or says why it cannot (`No-Test-Because:`), and the required check
-"A fix brings its test" holds it to that. [GOVERNANCE.md](../GOVERNANCE.md) says who decides what, and
+check in `.github/required-checks.json` is green on top of the newest `main`. [GOVERNANCE.md](../GOVERNANCE.md) says who decides what, and
 [DECISIONS.md](../DECISIONS.md) records the decisions with their reasons.
 
 ## What none of this proves

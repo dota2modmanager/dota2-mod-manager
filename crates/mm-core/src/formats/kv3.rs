@@ -786,6 +786,26 @@ impl Block {
         Ok(())
     }
 
+    /// A node of this block as one that can go into another: each number with its own bytes, since
+    /// a cell points into this block's buffers. A blob stays an index of this block's: none here.
+    pub fn detached(&self, node: &Node) -> Node {
+        let value = match &node.value {
+            Value::Number { ty, cell: Some(c), .. } => Value::Number {
+                ty: *ty,
+                cell: None,
+                type_at: None,
+                raw: Some(self.buffers[c.buffer as usize][c.offset..c.offset + c.width as usize].to_vec()),
+            },
+            Value::Number { ty, raw, .. } => Value::Number { ty: *ty, cell: None, type_at: None, raw: raw.clone() },
+            Value::Object(m) => Value::Object(m.iter().map(|(k, n)| (k.clone(), self.detached(n))).collect()),
+            Value::Array { items, element, ty } => {
+                Value::Array { items: items.iter().map(|n| self.detached(n)).collect(), element: *element, ty: *ty }
+            }
+            other => other.clone(),
+        };
+        Node { value, flag: node.flag }
+    }
+
     /// A number node's value: from its bytes, or from its type for the 0s and 1s stored as a type alone.
     pub fn number_of(&self, node: &Node) -> Option<f64> {
         match &node.value {

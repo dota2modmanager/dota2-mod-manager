@@ -301,10 +301,9 @@ No approval is required: the checks are the gate (DECISIONS.md, "Every change re
 through a pull request"). A pull request from outside the project still needs a maintainer to
 merge it, and that is when it is read. The checks: the suite on
 Linux and on Windows, CodeQL, the Linux build and its start-up run,
-installing a mod through the window on Linux and on Windows, and one rule of its own. CodeQL has
-to come back clean as well: a pull request that adds an alert at High or higher does not merge. A pull
-request that fixes something changes a test as well, or carries a line `No-Test-Because: <reason>`
-in a commit message or in its description. `npm run verify` runs the same lint and suite on your
+installing a mod through the window on Linux and on Windows. CodeQL has
+to come back clean as well: a pull request that adds an alert at High or higher does not merge. A fix for a bug that reached
+users brings the test that would have caught it. `npm run verify` runs the same lint and suite on your
 machine before you push.
 
 A version goes out from a tag, as a draft that becomes public only after its installer and its

@@ -51,22 +51,23 @@ pub use item_builder::{
     item_portraits, item_skin, item_sounds, item_visuals, unusual_effects,
 };
 pub use looks::{
-    cursors, effect_edit, effect_edit_service, effect_finder, hero_paint_service, hud_scale, hud_scale_service,
-    map_decor, map_looks_service, menu_background, menu_background_service, pumpkin, recolor, recolor_layers,
-    recolor_modes, tower_looks, tree_sets,
+    cursors, effect_edit, effect_edit_service, effect_finder, ground_build, ground_facets, hero_paint_service,
+    hud_scale, hud_scale_service, map_base, map_build, map_decor, map_ground, map_light, map_looks_service, map_make,
+    map_mod_trees, map_optimize, map_paint, map_scene, menu_background, menu_background_service, pumpkin, recolor,
+    recolor_layers, recolor_modes, tower_looks, tree_sets,
 };
 pub use models::{
-    courier_models, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks, hero_showcase,
-    loadout_material, loadout_resources, loadout_sheet, model_attachments, model_bodygroups, model_cloth, model_glb,
-    model_hitboxes, model_loadout, model_merge, model_particles, model_scale, model_sequences, model_skin,
-    model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec, particle_surface,
+    courier_models, hero_companions, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks,
+    hero_showcase, loadout_material, loadout_resources, loadout_sheet, mod_look, model_attachments, model_bodygroups,
+    model_cloth, model_glb, model_hitboxes, model_loadout, model_merge, model_particles, model_scale, model_sequences,
+    model_skin, model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec, particle_surface,
     razor_crest_preview,
 };
 pub use owner::{
     calls, channel_args, large_answer, owner_app, owner_bases, owner_compiler, owner_creator, owner_foreign,
-    owner_game, owner_library, owner_links, owner_mods, owner_packs, owner_pictures, owner_presence, owner_presets,
-    owner_preview3d, owner_settings, owner_start, owner_studios, owner_support, owner_tools, owner_uninstall,
-    owner_update, owner_watch,
+    owner_game, owner_library, owner_links, owner_mod_look, owner_mods, owner_packs, owner_pictures, owner_presence,
+    owner_presets, owner_preview3d, owner_settings, owner_start, owner_studios, owner_support, owner_tools,
+    owner_uninstall, owner_update, owner_watch,
 };
 pub use presets::{
     preset_install, preset_link, preset_plan, preset_share, presets_service, ready_presets, ready_presets_format,

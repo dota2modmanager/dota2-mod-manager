@@ -108,13 +108,19 @@ img, video { -webkit-user-drag: none; user-select: none; }
   min-height: 0;
 }
 
+/* The scale is on what scrolls, not on the box that scrolls it. With zoom on #main itself the
+   wheel now and then stopped moving it although there was room below, and a click let it go
+   (issue #330, the report of 2026-11-04): Chromium hit-tests and latches a wheel scroll on a
+   zoomed scroller in its zoomed coordinates, and at a fractional zoom - which fitFor hands out on
+   most windows - that missed. On #view-root the same picture comes out, and #main is a plain
+   box at 1:1. */
 #main {
-  zoom: var(--content-zoom);
   flex: 1;
   overflow-y: auto;
   min-width: 0;
 }
 #view-root {
+  zoom: var(--content-zoom);
   padding: 22px 26px 90px;
   animation: viewIn 0.35s var(--ease);
 }
