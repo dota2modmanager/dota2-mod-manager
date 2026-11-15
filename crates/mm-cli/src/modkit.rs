@@ -1,4 +1,4 @@
-//! The app's code that tools/modkit asks for: KV3 blocks as trees and back, a hero's particles
+//! The app's code that tools/mods/modkit asks for: KV3 blocks as trees and back, a hero's particles
 //! recoloured, where Steam put the game, and where a folder's game files start.
 //!
 //!   kv3-tree <file> <names.json>          {name: tree} of each block named (DATA, ANIM, ASEQ...)

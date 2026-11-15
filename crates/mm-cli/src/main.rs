@@ -56,7 +56,7 @@ fn run(args: &[String]) -> Result<Value, String> {
             let buf = std::fs::read(arg(1)?).map_err(|x| x.to_string())?;
             Ok(json!(vpk::fingerprint_vpk(&buf).map_err(e)?))
         }
-        // a mod's VPK as tools/gen-fingerprints.js keeps it: its fingerprint, what kind of mod
+        // a mod's VPK as tools/catalog/gen-fingerprints.js keeps it: its fingerprint, what kind of mod
         // it is, the heroes it is about, and its paths sorted
         "vpk-analyze" => {
             let buf = std::fs::read(arg(1)?).map_err(|x| x.to_string())?;

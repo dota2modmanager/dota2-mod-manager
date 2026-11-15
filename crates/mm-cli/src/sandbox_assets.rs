@@ -1,5 +1,5 @@
 //! `mm-cli sandbox-assets <real pak01_dir.vpk> <items_game.txt> <out dir> <spec.json>`: the files
-//! tools/sandbox.js copies out of the real game into the sandbox's pak01, written under <out dir>
+//! tools/dev/sandbox.js copies out of the real game into the sandbox's pak01, written under <out dir>
 //! at their paths inside the archive, so `vpk-build` can pack the folder. The real archive is tens
 //! of gigabytes; these are the few MB the app needs to show and build what the sandbox tests.
 //!

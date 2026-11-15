@@ -3,8 +3,8 @@
 # Dota has a native Linux build, the mods are the same files in the same folders, and the only
 # Windows-shaped parts of the app were finding Steam and asking whether the game is running.
 # Both now have a Linux branch, and a branch nobody runs is a branch that rots, so this builds
-# the AppImage (the Tauri shell, src-tauri/) and starts it against the sandbox on every change to
-# the code.
+# the AppImage (the Tauri shell, src-tauri/) on every merge to main and on every release tag.
+# Installing a mod through the window on Linux (e2e.yml) checks the same shell before the merge.
 #
 # Nothing here is published. The release still ships Windows only, because "supported" means
 # somebody has run it on a real desktop, and the artifacts below are how that person gets a
@@ -12,23 +12,14 @@
 name: Linux
 
 on:
+  # The AppImage is what a release ships, so it is built on main, where every release is tagged
+  # from, and the release gate waits for it there. Pull requests and the queue skip it.
   push:
     branches: [main]
-    paths:
-      - 'preload.js'
-      - 'renderer/**'
-      - 'crates/**'
-      - 'src-tauri/**'
-      - 'Cargo.lock'
-      - 'tools/sandbox.js'
-      - 'package.json'
-      - '.github/workflows/linux.yml'
-  pull_request:
-  # No paths filter exists for merge_group, so every change the queue lands is built and started.
-  merge_group:
+    tags: ['v*']
   workflow_dispatch:
 
-# The token reads the repository and nothing more. A job that needs more asks for it itself.
+
 permissions:
   contents: read
 
@@ -61,10 +52,10 @@ jobs:
           sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb xdg-utils desktop-file-utils
 
       # Not published: this proves the build works. release.yml builds the one people download.
-      # the target folder from the last build on main: a pull request rebuilds only what it changed
-      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      # its own release build, saved on main for the next merge
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
+          shared-key: release
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build
         run: npx tauri build --bundles appimage
@@ -129,90 +120,3 @@ jobs:
           name: AppImage
           path: target/release/bundle/appimage/*.AppImage
           if-no-files-found: error
-
-  start:
-    name: Start it against the sandbox
-    runs-on: ubuntu-latest
-    timeout-minutes: 40
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: 24
-          cache: npm
-
-      - run: npm ci
-
-      - name: Rust toolchain
-        run: rustup toolchain install stable --profile minimal && rustup default stable
-
-      # WebKitGTK and the tray library the shell links against, and an X server for a window
-      - name: System libraries
-        timeout-minutes: 10
-        run: |
-          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
-          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev xvfb
-
-      # a debug build of the same shell: quicker than the AppImage, and the job above checks that
-      # the target folder from the last build on main: a pull request rebuilds only what it changed
-      # instead of every crate from scratch. Saved from main alone, read everywhere else.
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-      - name: The page and the shell
-        run: node tools/ui-build.mjs --tauri && cargo build -p dota2-mod-manager
-
-      # The tree only: the mods themselves are a few hundred megabytes and prove nothing about
-      # whether the app starts.
-      - name: Seed the sandbox
-        run: node tools/sandbox.js seed --no-mods
-
-      # MM_SHOT is the app's own harness (src-tauri/src/harness.rs): once the page has loaded it
-      # runs MM_EVAL there and writes the answer beside the name, or what went wrong. The run is
-      # held to the sandbox (--write-jail), the only kind of run the harness answers.
-      - name: Start the app and ask the window what it shows
-        env:
-          MM_EVAL: '({ title: document.title, buttons: document.querySelectorAll("button").length })'
-        run: |
-          set -euo pipefail
-          MM_SHOT="$PWD/linux-start.png" xvfb-run -a target/debug/dota2-mod-manager \
-            --user-data-dir=sandbox/userdata --write-jail=sandbox > app.log 2>&1 &
-          pid=$!
-          for _ in $(seq 1 90); do
-            if [ -s linux-start.png.eval.json ] || [ -s linux-start.png.err.txt ]; then break; fi
-            sleep 1
-          done
-          kill "$pid" 2>/dev/null || true
-          if [ ! -s linux-start.png.eval.json ]; then
-            echo "the window never answered:"
-            cat linux-start.png.err.txt 2>/dev/null || true
-            cat app.log
-            exit 1
-          fi
-          cat linux-start.png.eval.json
-
-      # A window can appear with the code behind it already broken. These three phrases are what
-      # a name that does not exist looks like by the time it reaches the log. Two releases in
-      # September shipped exactly this shape of failure.
-      - name: Read the log for code that could not run
-        run: |
-          set -euo pipefail
-          log=sandbox/userdata/logs/app.log
-          [ -f "$log" ] || { echo "no app log was written"; exit 0; }
-          if grep -nE "unhandledrejection|is not defined|is not a function" "$log"; then
-            echo "::error::the app logged a name it could not resolve while starting"
-            exit 1
-          fi
-          echo "the log has no unresolved names in it"
-
-      - name: What it answered
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: first-window
-          path: |
-            linux-start.png.eval.json
-            linux-start.png.err.txt
-            app.log
-            sandbox/userdata/logs/
-          if-no-files-found: warn

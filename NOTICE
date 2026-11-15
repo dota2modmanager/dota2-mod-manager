@@ -118,7 +118,7 @@ unmodified from Google Fonts and remain under their own licenses:
   Material Symbols Rounded, by Google - Apache License 2.0
   https://fonts.google.com/icons
 
-Refresh them with tools/fonts.js, which reads the same stylesheets Google
+Refresh them with tools/dev/fonts.js, which reads the same stylesheets Google
 serves so the weights and character ranges stay the ones the app was built
 against.
 

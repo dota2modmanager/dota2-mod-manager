@@ -264,7 +264,7 @@ impl Owner {
         let catalog = Arc::new(crate::catalog::Catalog::new(&ud, None, None, Box::new(now)));
         let counting = Arc::new(AtomicBool::new(settings.get("countDownloads") != Some(&Value::Bool(false))));
         let on = counting.clone();
-        // the counter's token is written beside the build by CI (tools/stats-token.mjs), never committed
+        // the counter's token is written beside the build by CI (tools/release/stats-token.mjs), never committed
         let token = std::fs::read_to_string(opts.app_root.join("build").join("stats").join("download-stats.token"))
             .ok()
             .map(|t| t.trim().to_string())

@@ -12,7 +12,7 @@
 2.6.5 started checking every mod archive against the SHA-256 the catalog publishes in
 `mod-hashes.json`, and refused an archive that did not match. Three faults met it on the same day.
 
-1. The R2 mirror held old copies. `tools/r2-sync.mjs` skipped any object already in the bucket
+1. The R2 mirror held old copies. `tools/catalog/r2-sync.mjs` skipped any object already in the bucket
    under the same name, so a mod its author had replaced kept its old bytes there: 24 of them, one
    since August. A player who cannot reach GitHub is served from that mirror first.
 2. A download ended at the first mirror whose bytes did not match. The three sources holding the
@@ -32,7 +32,7 @@ serves, and that the published list described either of them.
 
 ## What catches it now
 
-- `tools/mirror-plan.js`: the two decisions the mirror job was missing. It measures each file
+- `tools/catalog/mirror-plan.js`: the two decisions the mirror job was missing. It measures each file
   against the published hash before copying it, and copies again an object whose size no longer
   matches the source.
 - `test/mirror-plan.test.js` "a mod its author replaced is copied again, and one that did not

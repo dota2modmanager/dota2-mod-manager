@@ -1,6 +1,6 @@
 name: Labels
 
-# Keeps the repository's labels equal to .github/labels.json. tools/sync-labels.mjs says why.
+# Keeps the repository's labels equal to .github/labels.json. tools/ops/sync-labels.mjs says why.
 
 on:
   push:
@@ -30,4 +30,4 @@ jobs:
       - name: Make the labels match the file
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node tools/sync-labels.mjs
+        run: node tools/ops/sync-labels.mjs

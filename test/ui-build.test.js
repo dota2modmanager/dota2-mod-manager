@@ -6,7 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 test('changing only the local loadout package makes the built page stale', async (t) => {
-  const { isStale } = await import('../tools/ui-build.mjs');
+  const { isStale } = await import('../tools/dev/ui-build.mjs');
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'studio-ui-build-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const put = (name, time) => {

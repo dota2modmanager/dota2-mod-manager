@@ -3,7 +3,7 @@
 // Russian is the source language here: the text in the code is the key, and English is looked
 // up from it. A key with no English entry falls back to Russian and nothing crashes, which is
 // exactly why it survives review - the app works, it just speaks the wrong language in one
-// dialog. tools/check-i18n.js reads every call site and every dictionary and finds those, and
+// dialog. tools/dev/check-i18n.js reads every call site and every dictionary and finds those, and
 // this test is what makes it run on a pull request instead of on somebody's memory.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -11,7 +11,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 test('every Russian string has an English twin', () => {
-  const script = path.join(__dirname, '..', 'tools', 'check-i18n.js');
+  const script = path.join(__dirname, '..', 'tools', 'dev', 'check-i18n.js');
   const run = spawnSync(process.execPath, [script], { encoding: 'utf8' });
 
   // The checker prints the file, the line and the string for each gap, so its own output is
@@ -23,7 +23,7 @@ test('the check reads every Rust module of the core and the shell', () => {
   /* It read src/*.js only, and when src/ became TypeScript the main side shrank to main.js
      without a word: "every string has a twin" held because nothing was being looked at. The
      main side is Rust now, in folders, and every one of them has to be read. */
-  const { SIDES, scanRust } = require('../tools/check-i18n');
+  const { SIDES, scanRust } = require('../tools/dev/check-i18n');
   const main = SIDES.find((s) => s.name === 'main');
   assert.equal(main.dict, 'crates/mm-core/data/i18n-en.json');
   assert.ok(main.files.length > 150, `the Rust modules were found (${main.files.length})`);
@@ -34,7 +34,7 @@ test('the check reads every Rust module of the core and the shell', () => {
 });
 
 test('a Rust call is read with its escapes, and a key in a variable is left alone', () => {
-  const { scanRust } = require('../tools/check-i18n');
+  const { scanRust } = require('../tools/dev/check-i18n');
   const src = [
     'let a = t("Не найден {0}", &[x]);',
     String.raw`let b = crate::i18n::t("Строка \"в кавычках\"\n", &[]);`,
@@ -45,7 +45,7 @@ test('a Rust call is read with its escapes, and a key in a variable is left alon
 
 test('a string after a JSX closing tag is still found, and a real regex is still skipped', () => {
   // "</span>" read as the start of a regex swallowed the arcana window's L`` up to the next slash
-  const { scan } = require('../tools/check-i18n');
+  const { scan } = require('../tools/dev/check-i18n');
   const keys = (src) => scan(src, ['L']).map((h) => h.key);
   assert.deepEqual(keys('<b><span className="ms">check</span>{L`Установлено`}</b>'), ['Установлено']);
   assert.deepEqual(keys('<input value={x} />{L`Свой цвет`}'), ['Свой цвет']);
@@ -53,7 +53,7 @@ test('a string after a JSX closing tag is still found, and a real regex is still
 });
 
 test('rejects an unchanged English twin', () => {
-  const { checkTranslations } = require('../tools/check-i18n');
+  const { checkTranslations } = require('../tools/dev/check-i18n');
 
   const result = checkTranslations({
     Настройки: 'Настройки',
@@ -63,7 +63,7 @@ test('rejects an unchanged English twin', () => {
 });
 
 test('rejects an English twin containing Cyrillic', () => {
-  const { checkTranslations } = require('../tools/check-i18n');
+  const { checkTranslations } = require('../tools/dev/check-i18n');
 
   const result = checkTranslations({
     Установить: 'Установить мод',
@@ -75,13 +75,13 @@ test('rejects an English twin containing Cyrillic', () => {
 });
 
 test('a twin that reads the same in both languages is allowed by name, and nothing else is', () => {
-  const { checkTranslations } = require('../tools/check-i18n');
+  const { checkTranslations } = require('../tools/dev/check-i18n');
   const result = checkTranslations({ 'Dota 2': 'Dota 2', VPK: 'VPK', '18+': '18+', Моды: 'Mods', Шейдеры: 'Шейдеры' });
   assert.deepEqual(result, { unchanged: ['Шейдеры'], cyrillic: [] });
 });
 
 test('the report names the dictionary, each untranslated twin, and counts them', () => {
-  const { translationReport } = require('../tools/check-i18n');
+  const { translationReport } = require('../tools/dev/check-i18n');
   const report = translationReport({ Настройки: 'Настройки', Установить: 'Установить мод', Моды: 'Mods' }, 'renderer/i18n.js');
   assert.equal(report.count, 2);
   assert.deepEqual(report.lines, [

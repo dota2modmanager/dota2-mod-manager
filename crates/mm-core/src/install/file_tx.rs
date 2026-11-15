@@ -472,3 +472,7 @@ pub fn write_into(buf: &[u8], dest: &Path, tx: Option<&mut FileTx>) -> std::io::
     }
     fs::write(dest, buf)
 }
+
+#[cfg(test)]
+#[path = "file_tx_tests.rs"]
+mod tests;

@@ -33,7 +33,7 @@ export const srcsetFor = (url: string, fullWidth: number) =>
 export const tourUrl = (lang: Lang) => `/video/dota-2-mod-manager-tour-${lang}.webm`;
 export const tourPoster = (lang: Lang) => `/video/dota-2-mod-manager-tour-${lang}.webp`;
 
-/** tools/site-tour.mjs films both languages to about 41 seconds. */
+/** tools/site/site-tour.mjs films both languages to about 41 seconds. */
 export const TOUR_SECONDS = 41;
 export const TOUR_ISO = 'PT41S';
 /** When the clip was first published with the site. */

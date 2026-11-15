@@ -525,7 +525,7 @@ fn no_steam_layout_at_all_is_not_an_override() {
 
 #[test]
 fn an_account_beside_the_library_that_sets_no_language_ends_the_search_there() {
-    // tools/sandbox.js depends on this: with no account of its own, the lookup went on to
+    // tools/dev/sandbox.js depends on this: with no account of its own, the lookup went on to
     // Program Files\Steam and found the developer's own -language dutch
     let env = no_steam();
     let base = Temp::new("pf");

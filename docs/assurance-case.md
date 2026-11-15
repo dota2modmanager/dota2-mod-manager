@@ -3,7 +3,7 @@
 Why this app is safe enough to point at a game folder, argued rather than asserted.
 
 [SECURITY.md](../SECURITY.md) says what you can and cannot expect from it, and
-[ARCHITECTURE.md](../ARCHITECTURE.md) says how it is put together. This file is the argument
+[ARCHITECTURE.md](ARCHITECTURE.md) says how it is put together. This file is the argument
 between the two: what could go wrong, what stops it, and how you can check that for yourself
 instead of taking it on trust.
 
@@ -17,7 +17,7 @@ strangers, and downloads files over a route it does not control.
 
 **Their privacy.** No account is required, nothing about the user is collected, the one count
 (catalog downloads, by mod name) can be switched off, and the list of addresses the app can reach
-is short and public ([PRIVACY.md](../PRIVACY.md)).
+is short and public ([PRIVACY.md](PRIVACY.md)).
 
 ## Trust boundaries
 
@@ -43,7 +43,7 @@ signature by its author against a key pinned in the app, every mod archive is ch
 sha256 from that signed list, and the external tool is pinned by version and hash before anything
 is unpacked. What a failed check costs is decided per file and written out in ARCHITECTURE.md
 under "Who is allowed to have written this".
-*Check:* `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/net_fetch.rs`, `test/toolchain.test.ts`.
+*Check:* `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/net_fetch.rs`.
 
 **A mirror that is wrong about one file.** A failed checksum means one host handed over the wrong
 bytes, not that the mod is bad. The download spends the mirror rather than the mod: that host is
@@ -55,7 +55,7 @@ disowns is refused.
 path. Everything foreign comes through `crates/mm-core/src/formats/safe_zip.rs`, which refuses absolute paths, parent
 traversal, links, and sizes that do not fit the budget it was given. A mod's own catalog record
 cannot turn into a path either.
-*Check:* `test/safe-zip.test.ts` and `crates/mm-core/src/formats/safe_zip.rs`, which throws malformed
+*Check:* `crates/mm-core/src/formats/safe_zip.rs`, which throws malformed
 archives at it rather than only the ones somebody thought of.
 
 **An install that stops half way.** Power cuts, full disks and antivirus locks all land in the
@@ -64,8 +64,8 @@ folder is either as it was or as it should be, and the library record is part of
 Each step is journaled before it is taken (`crates/mm-core/src/install/file_tx.rs`), so a process killed
 halfway is undone, or finished if it got past its commit, on the next start. Valve's own files
 are copied before the first write and put back byte for byte on revert.
-*Check:* `test/file-tx.test.ts`, `crates/mm-core/src/install/file_tx.rs` (each change killed at every write
-it makes, then recovered and compared byte for byte), `test/patcher.test.ts` (the patch
+*Check:* `crates/mm-core/src/install/file_tx_tests.rs`, `crates/mm-core/src/install/file_tx.rs` (each change killed at every write
+it makes, then recovered and compared byte for byte), `crates/mm-core/src/game/patcher_tests.rs` and `crates/mm-core/tests/patcher.rs` (the patch
 round-trips byte for byte).
 
 **Catalog text rendered as code.** Guides are HTML written by people who are not us. They go
@@ -83,7 +83,7 @@ with arguments that fit its entry in `crates/mm-core/src/owner/channel_args.rs`,
 settings it has a control for. Both windows run sandboxed, the page gets two browser permissions,
 and no web contents may open a window, attach a webview or leave the app's pages.
 *Check:* `crates/mm-core/src/owner/channel_args.rs` (every channel has a check, one real call of each passes, a
-list of hostile ones does not, no check throws on any input), `test/api-types.test.js`, and the
+list of hostile ones does not, no check throws on any input), and the
 window e2e, which fails on any call the guard refused.
 
 **Somebody else borrowing the app.** An Electron executable runs as plain Node when an environment
@@ -100,7 +100,7 @@ new version is `config/app.json`: a feature switched off, a notice, the beta lis
 is signed with this project's own key against a key pinned in the app, and a file that does not
 verify is ignored exactly as if it were unreachable. It can only take capability away or point at
 a host whose bytes are checked anyway; it cannot add code.
-*Check:* `crates/mm-core/src/catalog/remote_config.rs`, `test/remote-config.test.ts`.
+*Check:* `crates/mm-core/src/catalog/remote_config.rs`.
 
 **A release that is not ours.** Each release carries `SHA256SUMS` and a Sigstore provenance
 attestation over that list, signed by the release workflow at the tagged commit, so
@@ -112,7 +112,7 @@ not code-signed yet, which is stated plainly rather than hidden.
 **Secrets in the build.** Nothing signs or publishes from a developer machine. The signing key
 for `config/app.json` is not in this repository, the workflows name every secret they use, and a
 test fails the pull request when a workflow asks for one that is not registered.
-*Check:* `test/credentials-check.test.js`, `test/workflows.test.js`.
+*Check:* `tools/ops/check-credentials.mjs`, `test/workflows.test.js`.
 
 ## Secure design, applied
 
@@ -153,6 +153,5 @@ their decision, not a property of this code.
 
 ## Keeping this honest
 
-Every claim above names a file or a test, so a claim that stops being true breaks something.
-`test/decisions.test.js` and `test/docs-current.test.js` hold the documents against the
-repository, and this file is reviewed whenever a boundary above moves.
+Every claim above names a file or a test you can open. `test/repo-shape.test.js` fails when a
+link here points at a file that is gone, and this file is reviewed whenever a boundary above moves.

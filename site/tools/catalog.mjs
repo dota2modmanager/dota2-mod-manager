@@ -25,9 +25,9 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { uniqueSlug } from '../src/lib/slug.ts';
 // One record per line, so the scheduled run that commits these two tables shows which mods
-// changed instead of one line the width of the file. Shared with tools/gen-fingerprints.js,
+// changed instead of one line the width of the file. Shared with tools/catalog/gen-fingerprints.js,
 // which writes the other two files that same workflow pushes.
-import { jsonLinesFile } from '../../tools/json-lines.js';
+import { jsonLinesFile } from '../../tools/catalog/json-lines.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const siteRoot = path.resolve(here, '..');
@@ -189,7 +189,7 @@ async function measure(file) {
 // ---------------------------------------------------------------------------
 
 if (!fs.existsSync(INDEX_IN)) {
-  console.error(`no ${INDEX_IN}. Run "node tools/gen-fingerprints.js" in the repo root first.`);
+  console.error(`no ${INDEX_IN}. Run "node tools/catalog/gen-fingerprints.js" in the repo root first.`);
   process.exit(1);
 }
 

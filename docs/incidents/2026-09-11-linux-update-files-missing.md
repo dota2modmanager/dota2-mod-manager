@@ -30,7 +30,7 @@ The copy ran before one of the two builds it copies had finished.
 - `.github/workflows/release.yml` "Bring the update mirror to what GitHub serves now": a job of its
   own that runs after both builds, and reads back every file of both platforms from the mirror, a
   feed by the version it announces and a binary by its size. Since 2026-09-26 this is
-  `tools/r2-release.mjs --current`; the separate step that only asked for an answer of 200 is gone,
+  `tools/release/r2-release.mjs --current`; the separate step that only asked for an answer of 200 is gone,
   because an old file answers 200 too.
 - `test/release-state.test.js` "the mirror holds the release, and the beta beside it under -beta
   names": the Linux feed and the AppImage are on the list the mirror is held to.

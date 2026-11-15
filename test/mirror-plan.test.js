@@ -2,14 +2,14 @@
  *
  * On 2026-09-10 the mirror held 24 archives their authors had replaced: the sync skipped every
  * object already there under the same name. 2.6.5 had just started checking downloads against
- * the published checksum, so each of those copies was refused. tools/r2-sync.mjs runs only in
+ * the published checksum, so each of those copies was refused. tools/catalog/r2-sync.mjs runs only in
  * CI against the real bucket; these hold the two decisions it was missing.
  */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 
-const { staleCopies, publishedHash, checkBody, fits, previewPaths } = require('../tools/mirror-plan.js');
+const { staleCopies, publishedHash, checkBody, fits, previewPaths } = require('../tools/catalog/mirror-plan.js');
 
 test('the bucket copies every preview the repository lists, covers and clips with them', () => {
   const tree = [
@@ -72,7 +72,7 @@ test('with no published hash, a copy is still a copy', () => {
 test('a mirror that ran out of room says so on the run, rather than in the last line of a green log', () => {
   /* The failure this guards is silence: the sync stops copying, the job is still green, and the
      first anybody hears of it is somebody who cannot install a mod on the day GitHub is down. */
-  const { budgetNote } = require('../tools/mirror-plan.js');
+  const { budgetNote } = require('../tools/catalog/mirror-plan.js');
   const GB = 1024 ** 3;
 
   const full = budgetNote({ used: 9 * GB, budget: 9 * GB, stopped: 'budget' });
@@ -98,7 +98,7 @@ test('a beta shares the folder with the release, and never its file names', () =
   /* The manifests have names of their own; the binaries do not. A beta uploaded under the
      ordinary names would stand where the installer latest.yml describes, and every copy that
      cannot reach GitHub would fetch a build it was never offered and fail its checksum. */
-  const { releasePlan } = require('../tools/mirror-plan.js');
+  const { releasePlan } = require('../tools/catalog/mirror-plan.js');
   const beta = releasePlan('2.7.0-beta.1');
 
   assert.equal(beta.beta, true);
@@ -118,7 +118,7 @@ test('a beta shares the folder with the release, and never its file names', () =
 test('a release carries the beta feed too, and it costs two files rather than a second copy', () => {
   /* The bucket also holds the mod mirror and was at 8.77 GB of the free 10 GB, so the beta
      channel points at the release's own binaries instead of a duplicate set. */
-  const { releasePlan } = require('../tools/mirror-plan.js');
+  const { releasePlan } = require('../tools/catalog/mirror-plan.js');
   const out = releasePlan('2.7.0');
   const named = out.uploads.map((u) => `${u.asset} -> ${u.name}`);
 
@@ -139,7 +139,7 @@ test('a release carries the beta feed too, and it costs two files rather than a 
 });
 
 test("a beta's feed asks for the beta's own files, and the checksums are left alone", () => {
-  const { retargetFeed } = require('../tools/mirror-plan.js');
+  const { retargetFeed } = require('../tools/catalog/mirror-plan.js');
   const yml = [
     'version: 2.7.0-beta.1',
     'files:',
@@ -159,7 +159,7 @@ test("a beta's feed asks for the beta's own files, and the checksums are left al
 });
 
 test('clearing out the last version: a beta touches only its own copies', () => {
-  const { staleReleaseFiles } = require('../tools/mirror-plan.js');
+  const { staleReleaseFiles } = require('../tools/catalog/mirror-plan.js');
   const there = [
     'updates/latest.yml', 'updates/beta.yml',
     'updates/Dota-2-Mod-Manager-Setup.exe', 'updates/Dota-2-Mod-Manager-Setup-beta.exe',
@@ -192,7 +192,7 @@ test("the mirror's Tauri feed names the mirror's files, a beta's its -beta copie
   /* tauri-plugin-updater fetches each platform's url as written. The release's feed names GitHub,
      so a copy on the mirror left as it was would send a copy that cannot reach GitHub straight
      back there. */
-  const { retargetJson, MIRROR } = require('../tools/mirror-plan.js');
+  const { retargetJson, MIRROR } = require('../tools/catalog/mirror-plan.js');
   const feed = JSON.stringify({
     version: '3.9.0',
     platforms: {

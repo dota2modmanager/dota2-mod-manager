@@ -24,7 +24,7 @@ updates:
       # TypeScript 7 is the Go rewrite, and it reads `@param {object}` far more strictly than 5.x:
       # the same tree goes from 66 known errors to 303, nearly all of them "Property does not exist
       # on type 'object'". Measured on 2026-09-22, with the resolution change ruled out separately
-      # (5.9.3 on the same settings gives 64). The ratchet in tools/typecheck.mjs is only worth
+      # (5.9.3 on the same settings gives 64). The ratchet in tools/dev/typecheck.mjs is only worth
       # anything while its number is a real count, so taking 7 means writing out the shapes behind
       # those annotations first. That is a piece of work, not a dependency bump.
       - dependency-name: typescript

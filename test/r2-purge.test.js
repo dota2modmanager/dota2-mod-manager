@@ -8,7 +8,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { purgeCache } = require('../tools/r2-client.js');
+const { purgeCache } = require('../tools/catalog/r2-client.js');
 
 /** Stands in for the Cloudflare API and records what it was asked to drop. */
 function api({ ok = true, errors = [] } = {}) {
@@ -102,7 +102,7 @@ test('the API throwing is reported, not thrown', async (t) => {
 test('the mirror job fails when it replaced files it could not purge', () => {
   /* The purge had never run: CLOUDFLARE_ZONE_ID was not set, purgeCache said so in one log line,
      and the job stayed green while replaced archives kept being served from cache. */
-  const sync = require('fs').readFileSync(require('path').join(__dirname, '..', 'tools', 'r2-sync.mjs'), 'utf8');
+  const sync = require('fs').readFileSync(require('path').join(__dirname, '..', 'tools', 'catalog', 'r2-sync.mjs'), 'utf8');
   assert.match(sync, /const purge = await purgeCache\(replaced\)/, 'r2-sync no longer keeps the purge result');
   assert.match(sync, /replaced\.length && purge && \(purge\.skipped \|\| purge\.failed\)\)[\s\S]{0,400}process\.exitCode = 1/, 'a skipped or refused purge after replacing files no longer fails the job');
 });
@@ -130,7 +130,7 @@ test('the purge URLs use the address the app downloads from, not a secret that c
      URL named the wrong host. The address is written into r2-sync now. */
   const fs = require('fs');
   const path = require('path');
-  const sync = fs.readFileSync(path.join(__dirname, '..', 'tools', 'r2-sync.mjs'), 'utf8');
+  const sync = fs.readFileSync(path.join(__dirname, '..', 'tools', 'catalog', 'r2-sync.mjs'), 'utf8');
   // Plain substring checks, not patterns: a regular expression with a host name in it reads to
   // CodeQL as URL validation missing its anchors, and it raised a high-severity alert on this test.
   const HOST = 'https://cdn.dota2modmanager.com';

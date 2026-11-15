@@ -1,12 +1,12 @@
 // The uninstaller's window under Tauri is a copy of renderer/uninstall.html beside the app's page
-// (tools/ui-build.mjs copyUninstallPage). A file the page links that the copy leaves out is a
+// (tools/dev/ui-build.mjs copyUninstallPage). A file the page links that the copy leaves out is a
 // window without its styles or its script, on the one run nobody can repeat.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { copyUninstallPage, UNINSTALL_PAGE } from '../tools/ui-build.mjs';
+import { copyUninstallPage, UNINSTALL_PAGE } from '../tools/dev/ui-build.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 

@@ -1,7 +1,7 @@
-// Type checking for the window's TypeScript (npm run typecheck, through tools/typecheck.mjs).
+// Type checking for the window's TypeScript (npm run typecheck, through tools/dev/typecheck.mjs).
 //
 // Strict from the first file: the code checked here is written in TypeScript from the start, so
-// it carries no debt worth a baseline, and tools/typecheck.mjs fails on any error in it.
+// it carries no debt worth a baseline, and tools/dev/typecheck.mjs fails on any error in it.
 //
 // allowJs without checkJs: two plain scripts stay JavaScript on purpose. i18n.js and uninstall.js
 // are loaded by the uninstall window as they are, without Vite, and app.ts imports i18n.js first

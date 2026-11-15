@@ -1,7 +1,7 @@
 /* English for the screens 3.0 added (the Workshop, Items, the item table asked for in place,
  * "Game files" in Settings), keyed by the Russian source like i18n.js. i18n.js reads this table
  * when its own has no entry: it is the same dictionary, in a second file so neither outgrows the
- * size budget (tools/size-budget.mjs). tools/check-i18n.js reads both. */
+ * size budget (tools/size-budget.mjs). tools/dev/check-i18n.js reads both. */
 'use strict';
 const EN = {
   "Запускать вместе с Windows и сворачивать в трей": "Start with Windows and hide in the tray",

@@ -1,10 +1,10 @@
-// The feeds a Tauri release carries (tools/tauri-release.mjs). latest.yml is what every installed
+// The feeds a Tauri release carries (tools/release/tauri-release.mjs). latest.yml is what every installed
 // Electron copy reads to find its way over to the Tauri build; latest.json is what a Tauri copy
 // reads afterwards. A wrong field in either is an app that silently stops updating.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { electronFeed, tauriFeed, releaseUrl, SETUP, APPIMAGE } from '../tools/tauri-release.mjs';
+import { electronFeed, tauriFeed, releaseUrl, SETUP, APPIMAGE } from '../tools/release/tauri-release.mjs';
 
 test('latest.yml names the Tauri installer the way electron-builder names its own', () => {
   const bytes = Buffer.from('an installer');
@@ -60,7 +60,7 @@ function minisign(file: Buffer, keyId = Buffer.from('0123456789abcdef', 'hex')) 
 }
 
 test('a build signed with the key tauri.conf.json names passes, and any other is stopped', async () => {
-  const { checkSignature } = await import('../tools/tauri-release.mjs');
+  const { checkSignature } = await import('../tools/release/tauri-release.mjs');
   const file = Buffer.from('an installer');
   const { pubkey, sig } = minisign(file);
   assert.equal(checkSignature(pubkey, sig, file), null);
@@ -73,7 +73,7 @@ test('a build signed with the key tauri.conf.json names passes, and any other is
 });
 
 test('the release refuses a public key that is not minisign Ed25519', async () => {
-  const { checkSignature } = await import('../tools/tauri-release.mjs');
+  const { checkSignature } = await import('../tools/release/tauri-release.mjs');
   assert.match(String(checkSignature(Buffer.from('nonsense\nAAAA\n').toString('base64'), '', Buffer.alloc(0))), /not a minisign/);
 });
 
@@ -86,7 +86,7 @@ test('the release bundles the download token where the app reads it, and no long
   assert.equal(res['../build/stats'], 'app/build/stats');
   assert.ok(!Object.keys(res).some((k) => k === '../src' || k.startsWith('../src/')), 'src/ is not part of the build');
   assert.ok(fs.existsSync(path.join(root, 'build', 'stats')), 'the bundled folder exists in a checkout without the token');
-  const tool = fs.readFileSync(path.join(root, 'tools', 'stats-token.mjs'), 'utf8');
+  const tool = fs.readFileSync(path.join(root, 'tools', 'release', 'stats-token.mjs'), 'utf8');
   assert.match(tool, /'build', 'stats', 'download-stats\.token'/);
   const owner = fs.readFileSync(path.join(root, 'crates', 'mm-core', 'src', 'owner', 'mod.rs'), 'utf8');
   assert.match(owner, /join\("build"\)\.join\("stats"\)\.join\("download-stats\.token"\)/);

@@ -39,7 +39,7 @@ runs, so the file loaded and every handler registered.
 - `crates/mm-core/src/catalog/feature_gate.rs`: the remote switch has one definition, handed to
   every module that asks it, so there is no second copy to leave behind.
 - `eslint.config.js` "no-undef": an undefined name in a JavaScript file fails `npm run verify` and CI.
-- `tools/e2e.mjs`: installs, switches off, switches on and removes a mod by clicking, and checks
+- `tools/dev/e2e.mjs`: installs, switches off, switches on and removes a mod by clicking, and checks
   the game folder after each step. On the 2.6.6 code it stops at Install with this exact error.
 - `.github/workflows/e2e.yml` "Install a mod through the window": runs it on Linux and Windows
   for every pull request, as a required check.

@@ -12,7 +12,7 @@ use crate::remote_config::cmp_version;
 
 /// The section's text for `version` out of one changelog, or None when it has none. A heading is
 /// "## <version>" and then anything that cannot continue a version, so 2.8.0 does not find
-/// 2.8.0-beta.1 (release.yml and tools/release-state.js look sections up the same way).
+/// 2.8.0-beta.1 (release.yml and tools/release/release-state.js look sections up the same way).
 pub fn changelog_section(text: &str, version: &str) -> Option<String> {
     // R: a line ends at \r as well as \n, and `.` crosses neither, as in JavaScript
     let head = Regex::new(&format!(r"(?mR)^## {}(?:[^-0-9A-Za-z.].*)?$", regex::escape(version))).ok()?;

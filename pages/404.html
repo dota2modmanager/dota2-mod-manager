@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Not found · Dota 2 Mod Manager</title>
+<!--
+  GitHub Pages serves this for any unknown path. A preset link whose fragment survived a
+  mangled path can still be rescued here, so try that before showing a dead end.
+-->
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: #0d0d13; color: #e9e7f2; font: 15px/1.65 system-ui, "Segoe UI", Roboto, sans-serif;
+  }
+  .box { width: min(520px, 90vw); padding: 34px 30px; text-align: center; }
+  .logo {
+    width: 54px; height: 54px; margin: 0 auto 18px; border-radius: 14px;
+    background: linear-gradient(140deg, #7c5cff, #b79dff);
+    display: grid; place-items: center; font-weight: 800; font-size: 17px; color: #12101c;
+  }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  p { margin: 0 0 20px; color: #a8a2c0; }
+  .btn {
+    display: inline-block; padding: 11px 22px; border-radius: 10px;
+    background: #7c5cff; color: #fff; text-decoration: none; font-weight: 600;
+  }
+  .btn:hover { background: #8f74ff; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">D2M</div>
+  <h1 id="title">Page not found</h1>
+  <p id="lead">That address doesn't exist here.</p>
+  <a class="btn" id="home" href="../docs/">Go to the start page</a>
+</div>
+<script>
+  var ru = (navigator.language || '').toLowerCase().indexOf('ru') === 0;
+  var code = (location.hash || '').replace(/^#/, '');
+  // a preset link that lost its path still carries the preset — send it to the right page.
+  // Relative, so this keeps working whatever the repository (and therefore the base) is named.
+  if (/^[A-Za-z0-9_-]+$/.test(code)) {
+    location.replace('p/#' + code);
+  } else if (ru) {
+    document.getElementById('title').textContent = 'Страница не найдена';
+    document.getElementById('lead').textContent = 'Такого адреса тут нет.';
+    document.getElementById('home').textContent = 'На главную';
+  }
+</script>
+</body>
+</html>

@@ -23,7 +23,7 @@ interface Props {
 const { copy, big = false, anchor = false } = Astro.props;
 
 const RELEASE = 'https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download';
-/* The same files on our bucket (tools/r2-release.mjs), for the hours GitHub's releases are down. */
+/* The same files on our bucket (tools/release/r2-release.mjs), for the hours GitHub's releases are down. */
 const MIRROR = 'https://cdn.dota2modmanager.com/updates';
 const spare = [
   { name: 'Windows', file: `${MIRROR}/Dota-2-Mod-Manager-Setup.exe` },

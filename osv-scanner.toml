@@ -1,7 +1,7 @@
 # Advisories this project lives with, and until when.
 #
 # OSV-Scanner reads this file, and OpenSSF Scorecard's Vulnerabilities check runs OSV-Scanner, so
-# an entry here is not counted against the project. The radar (tools/radar.mjs) reads it too and
+# an entry here is not counted against the project. The radar (tools/ops/radar.mjs) reads it too and
 # stops asking for a decision until the date runs out, when the advisory comes back as a question.
 # DECISIONS.md, under Known gaps, says why each one is here.
 

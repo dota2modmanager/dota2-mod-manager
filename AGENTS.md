@@ -32,8 +32,8 @@ has no checkout yet, [`skills/dota2-modding/SETUP.md`](skills/dota2-modding/SETU
 https://dota2modmanager.com/ai/setup.md) sets everything up. The rest of this file is about
 changing the app, and none of it is needed to make a mod.
 
-If you change the skill: `npm run modkit` lives in `tools/modkit.mjs` and `tools/modkit/`,
-tested by `test/modkit.test.js`; the skill folder is also a Claude Code plugin
+If you change the skill: `npm run modkit` lives in `tools/mods/modkit.mjs` and `tools/mods/modkit/`;
+the skill folder is also a Claude Code plugin
 (`skills/.claude-plugin/plugin.json`, listed by `.claude-plugin/marketplace.json`), so keep
 the folder free of anything a user should not download.
 
@@ -94,7 +94,7 @@ each cost real time:
 ```bash
 npm run lint              # eslint: names that do not exist, not style
 npm test                  # node:test, no dependencies
-node tools/check-i18n.js  # every Russian string has an English twin
+node tools/dev/check-i18n.js  # every Russian string has an English twin
 npm run sandbox:seed      # a throwaway game tree with real mods in it
 npm run start:sandbox     # the app against that tree, never against a real game
 ```
@@ -117,8 +117,8 @@ npm --prefix site test        # links, markup, every kind of page at 320-1440 px
                               # the catalog and its preset links, a mod's own page, and the
                               # same pages in WebKit
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
-node tools/site-shots.mjs <dir>  # the site's and the README's big pictures, on the real game through a write jail
-node tools/site-tour.mjs <dir>   # the tour on the site, filmed off the app in both languages, after site-shots
+node tools/site/site-shots.mjs <dir>  # the site's and the README's big pictures, on the real game through a write jail
+node tools/site/site-tour.mjs <dir>   # the tour on the site, filmed off the app in both languages, after site-shots
 ```
 
 The tests are what CI runs before the site deploys. The WebKit ones (every browser on an iPhone
@@ -133,7 +133,7 @@ it.
 Four of them check the project against itself rather than checking code:
 
 - `test/release-contract.test.js` — the version, both changelogs and what CI reads all agree.
-- `tools/check-i18n.js` — no Russian string without an English one.
+- `tools/dev/check-i18n.js` — no Russian string without an English one.
 
 If one of these fails, the fix is almost never the test.
 

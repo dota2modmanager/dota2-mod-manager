@@ -28,7 +28,7 @@ assistant follows.
    running, Dota closed) puts the mod in a free slot, starts hero demo, gives the hero level 30,
    Aghanim's Scepter and Shard, shows it close in the inspect, sets it on a dummy and takes 16
    pictures 80 ms apart through the attack. `verdict.json` says whether the attack swings
-   (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
+   (`tools/mods/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
    build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
    with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
    steps the hero so its idle starts over, then films it standing in the inspect, from in front
@@ -44,17 +44,17 @@ assistant follows.
    **A build that changes the item table** (an unusual effect, another item's effect on the pick,
    anything the item builder writes into `items_game`) does nothing from the language folder: the
    game reads the table only through `dota_mods`, the folder the search-path patch registers. Build
-   it in the sandbox, after `node tools/sandbox.js item "<item name>"` has put that item's files
+   it in the sandbox, after `node tools/dev/sandbox.js item "<item name>"` has put that item's files
    into the sandbox's pak01, and pass what the app wrote there:
    `npm run dota:bench -- --schema "sandbox/steamapps/common/dota 2 beta/game/dota_mods/pak01_dir.vpk"`.
    The bench puts it in the game's `dota_mods` for the run and the owner's own table back after
-   (`tools/dota-bench/schema.mjs`). It needs safe mode off in the app; a patch a Dota update left
+   (`tools/mods/dota-bench/schema.mjs`). It needs safe mode off in the app; a patch a Dota update left
    unsigned is applied again, as the app's next start would.
 
    **A sound** (`--sound <the wav>`, without `--short`, `--skills` naming the ability's key) is
    judged by ear of a kind: what the computer plays during the casts is recorded
-   (`tools/dota-bench/record.ps1`, WASAPI loopback), and the sound looked for in it by normalised
-   cross-correlation (`tools/dota-bench/hear.mjs`). `verdict.json` gets `sound: { heard, score, at }`;
+   (`tools/mods/dota-bench/record.ps1`, WASAPI loopback), and the sound looked for in it by normalised
+   cross-correlation (`tools/mods/dota-bench/hear.mjs`). `verdict.json` gets `sound: { heard, score, at }`;
    the recording stays as `heard.wav`. Leave the game's sound on.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
@@ -162,7 +162,7 @@ picture is every hero's.
 | trap | what it looked like | caught by |
 |---|---|---|
 | a child particle on its parent's first control point | a glowing ball in front of the face | doctor |
-| only the first of a particle's gem tints baked | blades brown in red, blue in pink | test in `test/arcana.test.ts` |
+| only the first of a particle's gem tints baked | blades brown in red, blue in pink | fixed in the arcana recipes |
 | the item's modifier left on the animation clips | the hero stood still while its hits landed | doctor (clips), bench verdict |
 | the modifier's entry pointed at the activity instead of taken out | the same | doctor |
 | an empty typed array written typed | the hero and its items one flat colour | writer test |

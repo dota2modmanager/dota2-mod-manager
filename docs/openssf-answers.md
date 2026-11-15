@@ -86,7 +86,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 **Justification for `report_responses`**:
 
 > Every issue opened so far has an answer from the maintainer. CONTRIBUTING.md promises a first
-> reply within 72 hours, and a daily job (`tools/radar.mjs`) measures the project against that
+> reply within 72 hours, and a daily job (`tools/ops/radar.mjs`) measures the project against that
 > promise and messages the maintainer when something is overdue.
 
 **Justification for `vulnerability_report_response`**:
@@ -214,7 +214,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 > Two kinds. The built installer and AppImage are installed and clicked through on Linux and on
 > Windows before a release becomes public: install a mod, switch it off, restart, switch it on,
 > remove it, with the game folder checked on disk after every step. The VPK and zip parsers are
-> fuzzed with seeded random input (`tools/fuzz-parsers.mjs`).
+> fuzzed with seeded random input (`tools/dev/fuzz-parsers.mjs`).
 
 **Justification for `dynamic_analysis_enable_assertions`**:
 
@@ -252,10 +252,10 @@ by hand.
 | `documentation_architecture` | Met | repo ARCHITECTURE.md |
 | `documentation_security` | Met | repo SECURITY.md |
 | `documentation_quick_start` | Met | repo README.md |
-| `documentation_current` | Met | repo test/docs-current.test.js |
+| `documentation_current` | Met | docs/DECISIONS.md, read against the repository with a date at its top; test/repo-shape.test.js fails on a dead link |
 | `documentation_achievements` | Met | repo README.md |
 | `accessibility_best_practices` | Met (SHOULD) | repo renderer |
-| `internationalization` | Met (SHOULD) | repo tools/check-i18n.js |
+| `internationalization` | Met (SHOULD) | repo tools/dev/check-i18n.js |
 | `sites_password_security` | N/A | none needed |
 | `maintenance_or_update` | Met | repo RELEASING.md |
 | `report_tracker` | Met | https://github.com/dota2modmanager/dota2-mod-manager/issues |
@@ -301,9 +301,9 @@ by hand.
 All three are done.
 
 - The badge is in both READMEs, beside Scorecard.
-- `tools/radar.mjs` reads the entry every morning and compares it with `.bestpractices.json`. An
+- `tools/ops/radar.mjs` reads the entry every morning and compares it with `.bestpractices.json`. An
   answer written here that the entry never took is a line in the status issue, because the robot
   on the form fills blanks and leaves saved answers alone, so the two drift apart in silence.
 - Silver is written out above, and was awarded on 2026-09-23. It stood at 98% until
   `access_continuity` turned Met with the move to an organization that day;
-  [GOVERNANCE.md](../GOVERNANCE.md), section Continuity, says why.
+  [GOVERNANCE.md](GOVERNANCE.md), section Continuity, says why.
