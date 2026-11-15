@@ -12,6 +12,7 @@ import * as builder from '../src/item-builder.ts';
 import * as vpk from '../src/vpk.ts';
 import { Library } from '../src/library.ts';
 import { createSchemaService, type SchemaInstaller } from '../src/schema-service.ts';
+import { createReplacementValidator } from '../src/item-replacement.ts';
 import type { Settings } from '../src/settings.ts';
 import { readKv3, type Kv3Node } from '../src/kv3.ts';
 import { resourceBlock } from '../src/resource.ts';
@@ -444,6 +445,13 @@ test('a wearable resolves to the matching default item by hero and slot', () => 
   assert.equal(builder.defaultItemForWearable(text, '9903')?.id, '9902', 'an arcana dresses its stock item like any wearable');
 });
 
+test('a wearable can replace another item in its own hero slot', () => {
+  const patched = builder.itemEffectPatch(itemWearableTable(), '9903', '', '9456');
+  assert.equal(patched.id, '9456');
+  assert.match(patched.block, /^"9456"/);
+  assert.match(patched.block, /"item_slot"\s+"back"/);
+});
+
 test('item effects keep the donor body, rewrite only the stock header and collect asset copies', () => {
   const text = itemWearableTable();
   const plain = builder.itemEffectPatch(text, '9455', '');
@@ -704,6 +712,12 @@ test("a set's piece carries its own rarity, as the slot offering it does", () =>
     [['Golden Full-Bore Bonanza', 'mythical'], ['No visuals here', undefined]]);
 });
 
+test('replacement validation reuses the wearable slots already read by a build', () => {
+  const slots = builder.itemSlots(itemSetTable());
+  const validate = createReplacementValidator('not an items_game table', slots);
+  assert.equal(validate('item:sniper:back', '9455', '9951'), '9951');
+});
+
 test("a saved look goes on in one write, and the hero's other picks go off, kept in My mods (issue #527)", (t) => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'd2mm-looks-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -719,10 +733,15 @@ test("a saved look goes on in one write, and the hero's other picks go off, kept
   const arcana = service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
   service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape');
   service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
+  const backBeforeInvalidLook = picks().find((r) => r.slot === 'item:sniper:back')!;
+  assert.throws(() => service.wearLook('item:sniper:', [
+    { slot: 'item:sniper:back', itemId: '9455', targetItemId: '9457' },
+  ]), /cannot replace/i);
+  assert.equal(library.find(backBeforeInvalidLook.id)?.enabled, true, 'an invalid replacement leaves the current look untouched');
   writes = 0;
   const res = service.wearLook('item:sniper:', [
     { slot: 'item:sniper:head', itemId: '9457', name: 'No visuals here', effectId: 'fire' },
-    { slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza' },
+    { slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza', targetItemId: '9951' },
     { slot: 'item:bloodseeker:weapon', itemId: '1', name: 'not this hero' },
   ]);
   assert.deepEqual(res, { applied: 2, picks: 3 }, "another hero's pick in the list is skipped and counted");
@@ -732,12 +751,15 @@ test("a saved look goes on in one write, and the hero's other picks go off, kept
     ['item:sniper:back', '9455', ''],
     ['item:sniper:head', '9457', 'fire'],
   ]);
+  assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.targetItemId, '9951', 'the replacement target is part of the saved look');
+  assert.throws(() => service.pickCosmetic('item:sniper:back', '9455', 'Golden Full-Bore Bonanza', '', { write: false, targetItemId: '9457' }), /cannot replace/i);
   assert.equal(library.find(arcana!.id)?.enabled, false, 'the arcana went off, kept in My mods');
   assert.throws(() => service.wearLook('item:../:', []), /Look not found/);
 
   // a style a piece does not have leaves it in its first
   service.pickSet('9960', { style: 1 });
   assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.effectId || '', '');
+  assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.targetItemId, '9951', 'keeping the same set piece keeps its replacement target');
 });
 
 /** A hero's stock base and its arcana, as items_game has Juggernaut's: a whole other hero model,

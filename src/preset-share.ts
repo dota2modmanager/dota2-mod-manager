@@ -71,7 +71,8 @@ function normalizeEntry(raw: unknown, { allowPack = true } = {}): PresetEntry | 
     const slot = str(raw.slot, 60);
     const itemId = str(raw.itemId, 20);
     if (!slot || !itemId) return null;
-    return { kind: 'cosmetic', name, slot, itemId, effectId: str(raw.effectId, 60) };
+    const targetItemId = str(raw.targetItemId, 20);
+    return { kind: 'cosmetic', name, slot, itemId, effectId: str(raw.effectId, 60), ...(targetItemId ? { targetItemId } : {}) };
   }
   if (raw.kind === 'pack' && allowPack) {
     const members = (Array.isArray(raw.members) ? raw.members : [])

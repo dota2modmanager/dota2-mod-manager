@@ -7,17 +7,21 @@ import { isStockTerrorbladeBlade } from './hero-particle-styles.ts';
 import { heroLoadoutParticles } from './particle-spec.ts';
 import { normalizeAssetPath } from './item-builder-assets.ts';
 import { isSelectorSlot, personaLayouts } from './item-builder-personas.ts';
+import type { LibRecord } from './types.ts';
 export { wornSkin } from './item-builder-assets.ts';
+
+/** A preview slot with its stock item and an optional unsaved selection. */
+export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } };
 
 /**
  * The model an item puts on in the style picked, and the body it swaps the hero for. The build
  * copies the item's model over the stock one (`stock`); its other copies are particles and other
  * units' models, which the hero does not wear.
  */
-export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> } {
+export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null, targetItemId?: string): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> } {
   let body: string | null = null;
   try {
-    const patch = itemEffectPatch(text, itemId, key || '');
+    const patch = itemEffectPatch(text, itemId, key || '', targetItemId);
     const copies = patch.assetCopies;
     const replacements = new Map(copies.flatMap((c) => 'to' in c && /\.vpcf$/i.test(c.to)
       ? [[c.to.toLowerCase(), c.from.toLowerCase()] as const] : []));
@@ -30,6 +34,11 @@ export function itemModel(text: string, itemId: string, key: string | undefined,
   } catch { /* an item the table has lost: its block's own model, if any */ }
   const item = findItem(text, itemId);
   return { model: item ? itemFields(text, item).get('model_player') || null : null, body };
+}
+
+/** Resolve the model for a library pick, including its optional replacement target. */
+export function itemModelForPick(text: string, pick: Pick<LibRecord, 'itemId' | 'effectId' | 'targetItemId'>, hero: string, stock: string | null) {
+  return itemModel(text, String(pick.itemId), pick.effectId, hero, stock, pick.targetItemId);
 }
 
 /** A material group explicitly addressed to the hero body, even on a wearable. */
@@ -134,7 +143,7 @@ export function previewStockHead(text: string, hero: string, body: string, index
 
 /** Overlay temporary builder picks on the installed loadout, without changing either input. */
 export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[],
-  slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string } }[]) {
+  slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }[]) {
   const staged = new Map(slots.flatMap(s => s.tryOn ? [[s.slot, s.tryOn] as const] : []));
   return [
     ...installed.filter(r => !staged.has(String(r.slot))),

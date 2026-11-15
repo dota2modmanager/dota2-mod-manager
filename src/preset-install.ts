@@ -133,7 +133,7 @@ export function createPresetInstall({
         if (entry.kind === 'cosmetic') {
           if (blocked('cosmetics')) return [];
           // the table is built once for the whole preset, at the end
-          const rec = schemaService.pickCosmetic(entry.slot, entry.itemId, entry.name, entry.effectId, { write: false });
+          const rec = schemaService.pickCosmetic(entry.slot, entry.itemId, entry.name, entry.effectId, { write: false, targetItemId: entry.targetItemId });
           schemaTouched = true;
           return rec ? [rec.id] : [];
         }

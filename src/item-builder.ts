@@ -230,8 +230,8 @@ export function withoutFileSwaps(visuals: string, units: Set<string>, stock: Set
  * item's model_player, and no swap of the hero's model or of a stock model left in the visuals
  * (withoutFileSwaps says why). The particles keep the paid item's paths: the game loads a particle
  * when it is created, and a reconnect keeps them.
- * @param targetId  the stock item to write it over, where its slot does not say: a persona's
- *   (src/item-builder-personas.ts personaRecords)
+ * @param targetId  an explicit item to write it over: a selected same-slot wearable or a
+ *   persona's host item (src/item-builder-personas.ts personaRecords); otherwise the default
  * @param summon  the plain models of the hero's summons (item-builder-assets.ts summonModels), for an
  *   item that swaps one; without it the swap stays in the table and shows in hero demo only
  * @param refit  the model another pick makes of this one's, to wear in its place where the game

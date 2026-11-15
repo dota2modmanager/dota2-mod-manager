@@ -148,6 +148,10 @@ const EN = {
   "Со стилями": "With styles",
   "Стиль набора": "Set style",
   "Надеть в этом стиле": "Equip in this style",
+  "Сохранить замену": "Save replacement",
+  "Заменить предмет": "Replace item",
+  "Стандартный предмет": "Default item",
+  "Этот вид увидишь только ты; он будет у всех, кто носит заменяемый предмет.": "Only you see the change; it appears on everyone wearing the replaced item.",
   // the hero's window laid out as the game's loadout: slot tabs, effect shelves
   "Сохрани надетое": "Save what is on",
   "Открыть слот: эффекты и стиль": "Open the slot: effects and style",

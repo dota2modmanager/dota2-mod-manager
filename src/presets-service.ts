@@ -62,7 +62,7 @@ export function presetIsOn(library: Library, preset: Preset): boolean {
   const wanted = new Set(library.presetModIds(preset));
   if (library.list().some((r) => Library.inPreset(r) && (r.enabled !== false) !== wanted.has(r.id))) return false;
   if (!Array.isArray(preset.picks)) return true;
-  const key = (p: PresetPick) => `${p.slot}|${p.itemId}|${p.effectId || ''}`;
+  const key = (p: PresetPick) => `${p.slot}|${p.itemId}|${p.effectId || ''}|${p.targetItemId || ''}`;
   const on = new Set(library.picksOn().map(key));
   const named = new Set(preset.picks.map(key));
   return on.size === named.size && [...on].every((k) => named.has(k));
@@ -83,7 +83,7 @@ export function presetsService({ catalog, installer, library, schemaService, dep
   settings?: Pick<Settings, 'get' | 'set'>;
   schemaService: {
     refreshInBackground(): Promise<unknown>;
-    pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean }): unknown;
+    pickCosmetic(slot: string, itemId: string, name: string, effectId: string, opts: { write: boolean; targetItemId?: string }): unknown;
   };
   deployAndApply: (pack: LibRecord) => unknown;
 }) {
@@ -196,7 +196,7 @@ export function presetsService({ catalog, installer, library, schemaService, dep
       }
       for (const p of preset.picks) {
         try {
-          schemaService.pickCosmetic(p.slot, p.itemId, p.name, p.effectId, { write: false });
+          schemaService.pickCosmetic(p.slot, p.itemId, p.name, p.effectId, { write: false, targetItemId: p.targetItemId });
           schemaTouched = true;
         } catch (err) {
           errors.push(`${p.name}: ${(err as Error).message}`);

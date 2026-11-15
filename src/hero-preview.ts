@@ -31,11 +31,11 @@ import type { UnusualEffect } from './unusual-effects.ts';
 import { itemParticles, modelAttachments, particleDef, particleTextures, type Attachment, type ParticleDef } from './particle-spec.ts';
 import type { createModelGlb } from './model-glb.ts';
 import type { Library } from './library.ts';
-import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, personaPreviewSlots, previewEquipment, previewBladeReplacements, previewCrestParticles, previewHeroParticles, previewStockHead, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
+import { bodySkinFor, entityModel, itemModelForPick, monkeyKingCrown, personaPreviewSlots, previewEquipment, previewBladeReplacements, previewCrestParticles, previewHeroParticles, previewStockHead, previewParticleReplacements, wornExtras, wornSkin } from './hero-preview-picks.ts';
+import type { PreviewSlot } from './hero-preview-picks.ts';
 
 export { entityModel, wornExtras, wornSkin } from './hero-preview-picks.ts';
-/** A preview slot with its stock item and an optional unsaved selection. */
-export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } };
+export type { PreviewSlot } from './hero-preview-picks.ts';
 
 /** What the window gets: each model's bytes, or why there are none. */
 export type HeroModels =
@@ -92,7 +92,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       const rec = equipped.find((r) => r.slot === s.slot);
       const stockItem = (!rec && s.slot.endsWith(':head') && crown) || findItem(text, given.get(s.slot.split(':').pop() || '') || s.stock);
       const stock = stockItem ? itemFields(text, stockItem) : null;
-      const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null) : null;
+      const picked = rec ? itemModelForPick(text, rec, hero, stock?.get('model_player') || null) : null;
       const block = rec ? findItem(text, String(rec.itemId)) : null;
       const worn = block || stockItem;
       const visuals = worn ? itemVisuals(text, worn) : null;

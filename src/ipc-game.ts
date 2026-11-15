@@ -225,11 +225,11 @@ export function registerGameIpc({
   // handle it (see touchesSchema above), this is only for the initial choice. The table is built
   // in the background and answered once it is written: the app goes on meanwhile, and the bar at
   // the bottom counts a long build.
-  ipcMain.handle('cosmetics:pick', async (e, slot, itemId, itemName, effectId) => {
+  ipcMain.handle('cosmetics:pick', async (e, slot, itemId, itemName, effectId, targetItemId) => {
     const stop = blocked('cosmetics');
     if (stop) return stop;
     try {
-      const rec = schemaService.pickCosmetic(slot, itemId, itemName, effectId, { write: false });
+      const rec = schemaService.pickCosmetic(slot, itemId, itemName, effectId, { write: false, targetItemId });
       await schemaService.refreshInBackground();
       return { ok: true, record: rec };
     } catch (err) {

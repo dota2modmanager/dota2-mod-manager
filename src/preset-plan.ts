@@ -25,12 +25,12 @@ export type ShareEntry =
   | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: string | null; size: number }
   | { kind: 'missing'; name: string; reason: string }
   | { kind: 'embedded'; name: string; categoryId: string; info: string; fp: string | null; size: number; loadData: () => Buffer }
-  | { kind: 'cosmetic'; name: string; slot: string; itemId: string; effectId: string }
+  | { kind: 'cosmetic'; name: string; slot: string; itemId: string; effectId: string; targetItemId?: string }
   | { kind: 'pack'; name: string; members: ShareEntry[] };
 
 /** A share entry without its loader, as the window is shown it; `key` is what it sends back to leave one out. */
 /** What a link carries of a preset: catalog mods by name, and its looks by slot (src/preset-link.ts). */
-type LinkMod = { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null } | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId: string };
+type LinkMod = { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null } | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId: string; targetItemId?: string };
 type PlanRow = { key: string; kind: string; name: string; size: number; info: string; reason: string; members?: PlanRow[] };
 
 /** What of the installer the plan reads: what a record is, and where its bytes are. */

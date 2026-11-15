@@ -27,6 +27,8 @@ export interface LibRecord {
   slot?: string;
   itemId?: string;
   effectId?: string;
+  /** a builder pick can replace another wearable in the same hero slot */
+  targetItemId?: string;
   /** what the files are, when fingerprinted: two installs of the same mod share it */
   fp?: string | null;
   /** a pack's members */
@@ -64,7 +66,7 @@ export interface PackMember {
 export type PresetEntry =
   | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: string | null }
   | { kind: 'embedded'; name: string; file: string; categoryId: string; size: number; fp: string | null; info: string }
-  | { kind: 'cosmetic'; name: string; slot: string; itemId: string; effectId: string }
+  | { kind: 'cosmetic'; name: string; slot: string; itemId: string; effectId: string; targetItemId?: string }
   | { kind: 'pack'; name: string; members: PresetEntry[] }
   | { kind: 'missing'; name: string; reason: string };
 
@@ -77,7 +79,7 @@ export interface ModIdentity {
 }
 
 /** A free look or an item builder pick as a preset remembers it: the slot, the item, its effects. */
-export interface PresetPick { slot: string; itemId: string; name: string; effectId: string }
+export interface PresetPick { slot: string; itemId: string; name: string; effectId: string; targetItemId?: string }
 
 /** A saved build, or one received as a .d2mm and not installed yet (`wanted`). */
 export interface Preset {

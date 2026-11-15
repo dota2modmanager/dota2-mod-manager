@@ -33,6 +33,25 @@ test('the button puts on only what differs from what the game shows', async () =
   assert.equal(stagedItemAction(effects, live, staged('42', ['fire'])).label, 'Сохранить эффекты');
 });
 
+test('changing the target item is a staged replacement, including returning to the default', async () => {
+  const { stagedItemAction } = await load();
+  const live = { itemId: '42', effectId: 'fire', targetItemId: '100' };
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), targetItemId: '200' }).label, 'Сохранить замену');
+  assert.equal(stagedItemAction(effects, live, staged('42', ['fire'])).label, 'Сохранить замену');
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), targetItemId: '100' }).off, true);
+});
+
+test('replacement targets are searchable and exclude the picked item', async () => {
+  const { replacementOptions } = await load();
+  const options = [
+    { id: '', name: 'Default item' },
+    { id: 'crimson', name: 'Crimson Shoulders' },
+    { id: 'purple', name: 'Purple Shoulders' },
+  ];
+  assert.deepEqual(replacementOptions(options, 'crimson', 'purple').map((o) => o.id), ['purple']);
+  assert.deepEqual(replacementOptions(options, 'crimson', '').map((o) => o.id), ['', 'purple']);
+});
+
 test('effects are written in the order the slot offers them, and read back as a list', async () => {
   const { effectKey, liveEffects } = await load();
   assert.equal(effectKey(effects, ['ghost', 'fire', 'nope']), 'fire,ghost');

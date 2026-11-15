@@ -123,7 +123,7 @@ contextBridge.exposeInMainWorld('api', {
     icons: (names) => ipcRenderer.invoke('cosmetics:icons', names),
     heroPortraits: (ids, tall) => ipcRenderer.invoke('cosmetics:heroPortraits', ids, tall),
     heroPortraitsByName: (names) => ipcRenderer.invoke('cosmetics:heroPortraitsByName', names),
-    pick: (slot, itemId, itemName, effectId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId),
+    pick: (slot, itemId, itemName, effectId, targetItemId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId, targetItemId),
     pickSet: (setId, style) => ipcRenderer.invoke('cosmetics:pickSet', setId, style),
     wearLook: (hero, picks) => ipcRenderer.invoke('cosmetics:wearLook', hero, picks),
   },

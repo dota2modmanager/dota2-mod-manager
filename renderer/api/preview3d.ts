@@ -39,7 +39,7 @@ export interface Attachment extends Partial<LoadoutAttachment> { name: string; b
 export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
 
 /** The item builder's 3D preview (src/hero-preview.ts): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
-export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } }
+export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }
 
 export interface Preview3dApi {
   /** Prepare the disk cache for one hero without returning its large 3D data to the window. */
