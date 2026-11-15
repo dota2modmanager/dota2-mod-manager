@@ -261,8 +261,8 @@ mod tests {
         assert!(own.iter().all(|t| (*t as usize) < tris.len()));
         // the grid's edges are its opposite edges: the moved points match across the seam
         let p = points(5, &mut Rng(9));
-        for i in 0..=5 {
-            assert!((p[i][5].0 - p[i][0].0 - 5.0).abs() < 1e-9 && (p[5][i].1 - p[0][i].1 - 5.0).abs() < 1e-9);
+        for (i, row) in p.iter().enumerate().take(6) {
+            assert!((row[5].0 - row[0].0 - 5.0).abs() < 1e-9 && (p[5][i].1 - p[0][i].1 - 5.0).abs() < 1e-9);
         }
     }
 

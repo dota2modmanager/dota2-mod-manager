@@ -60,4 +60,7 @@ jobs:
         run: cargo build -p mm-cli -p dota2-mod-manager && cargo test -p mm-core -p mm-cli --no-run
       - name: Clippy
         if: runner.os == 'Linux'
-        run: cargo clippy -p mm-core -p mm-cli -- -D warnings
+        run: cargo clippy -p mm-core -p mm-cli --all-targets -- -D warnings
+      - name: Clippy on the shell
+        if: runner.os == 'Windows'
+        run: cargo clippy -p dota2-mod-manager --all-targets -- -D warnings

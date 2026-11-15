@@ -36,5 +36,6 @@ jobs:
           save-if: false
       - name: Crate tests
         run: cargo fmt --all -- --check && cargo test -p mm-core -p mm-cli
+      # the tests too: code that only a test reads is still code someone copies
       - name: Clippy
-        run: cargo clippy -p mm-core -p mm-cli -- -D warnings
+        run: cargo clippy -p mm-core -p mm-cli --all-targets -- -D warnings
