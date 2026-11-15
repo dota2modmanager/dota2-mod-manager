@@ -23,11 +23,11 @@ is short and public ([PRIVACY.md](../PRIVACY.md)).
 
 | # | Boundary | What crosses it | Where it is enforced |
 |---|---|---|---|
-| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `src/net.ts`, `src/catalog-signature.ts`, `src/remote-config.ts`, `src/toolchain.ts` |
-| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `src/safe-zip.ts`, `src/vpk.ts`, `src/file-tx.ts` |
-| 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `src/ipc-*.ts` modules |
-| 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `src/installer.ts`, `src/overlays.ts`, `src/patcher.ts` |
-| 5 | The user and everything above | Files they drop, presets from other people | `src/import.ts`, `src/preset-share.ts`, `src/adopt.ts` |
+| 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `crates/mm-core/src/catalog/net_fetch.rs`, `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/remote_config.rs`, `crates/mm-core/src/tools/toolchain.rs` |
+| 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `crates/mm-core/src/formats/safe_zip.rs`, `crates/mm-core/src/formats/vpk.rs`, `crates/mm-core/src/install/file_tx.rs` |
+| 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `crates/mm-core/src/owner/owner_*.rs` modules |
+| 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `crates/mm-core/src/install/installer.rs`, `crates/mm-core/src/install/overlays.rs`, `crates/mm-core/src/game/patcher.rs` |
+| 5 | The user and everything above | Files they drop, presets from other people | `crates/mm-core/src/install/import.rs`, `crates/mm-core/src/presets/preset_share.rs`, `crates/mm-core/src/install/adopt.rs` |
 
 Each boundary has one door. That is the design: there is a single place where a foreign zip is
 opened, a single place where a download is fetched, a single place where a mod becomes a record
@@ -43,28 +43,28 @@ signature by its author against a key pinned in the app, every mod archive is ch
 sha256 from that signed list, and the external tool is pinned by version and hash before anything
 is unpacked. What a failed check costs is decided per file and written out in ARCHITECTURE.md
 under "Who is allowed to have written this".
-*Check:* `test/catalog-signature.test.ts`, `test/net.test.ts`, `test/toolchain.test.ts`.
+*Check:* `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/net_fetch.rs`, `test/toolchain.test.ts`.
 
 **A mirror that is wrong about one file.** A failed checksum means one host handed over the wrong
 bytes, not that the mod is bad. The download spends the mirror rather than the mod: that host is
 stood down for this file and the next one is asked from the start. Only a file every mirror
 disowns is refused.
-*Check:* `test/net.test.ts`, "a mirror serving a stale copy costs that mirror its turn".
+*Check:* `crates/mm-core/src/catalog/net_fetch.rs`, "a mirror serving a stale copy costs that mirror its turn".
 
 **An archive that wants to write somewhere else.** A file name inside a zip is a name, never a
-path. Everything foreign comes through `src/safe-zip.ts`, which refuses absolute paths, parent
+path. Everything foreign comes through `crates/mm-core/src/formats/safe_zip.rs`, which refuses absolute paths, parent
 traversal, links, and sizes that do not fit the budget it was given. A mod's own catalog record
 cannot turn into a path either.
-*Check:* `test/safe-zip.test.ts` and `test/safe-zip-fuzz.test.js`, which throws malformed
+*Check:* `test/safe-zip.test.ts` and `crates/mm-core/src/formats/safe_zip.rs`, which throws malformed
 archives at it rather than only the ones somebody thought of.
 
 **An install that stops half way.** Power cuts, full disks and antivirus locks all land in the
-middle of writing. Writes go through `src/file-tx.ts`, which stages and then commits, so the game
+middle of writing. Writes go through `crates/mm-core/src/install/file_tx.rs`, which stages and then commits, so the game
 folder is either as it was or as it should be, and the library record is part of the same change.
-Each step is journaled before it is taken (`src/file-tx-journal.ts`), so a process killed
+Each step is journaled before it is taken (`crates/mm-core/src/install/file_tx.rs`), so a process killed
 halfway is undone, or finished if it got past its commit, on the next start. Valve's own files
 are copied before the first write and put back byte for byte on revert.
-*Check:* `test/file-tx.test.ts`, `test/file-tx-crash.test.ts` (each change killed at every write
+*Check:* `test/file-tx.test.ts`, `crates/mm-core/src/install/file_tx.rs` (each change killed at every write
 it makes, then recovered and compared byte for byte), `test/patcher.test.ts` (the patch
 round-trips byte for byte).
 
@@ -73,17 +73,17 @@ through an allowlist of tags, and the window runs under a content security polic
 scripts, no node integration and context isolation on, so text that got through would still have
 nothing to reach.
 *Check:* `renderer/ui/guide.ts` (`sanitizeGuideHtml`), `renderer/index.html` (the policy itself),
-`src/main-window.ts` (`contextIsolation: true`, `nodeIntegration: false`).
+`crates/mm-core/src/app/main_window.rs` (`contextIsolation: true`, `nodeIntegration: false`).
 
 **The window asking for something the app should not do.** The renderer cannot touch the
 filesystem or start a process, and the policy limits what it may fetch to pictures from two
 hosts. Everything else it does is a channel `preload.js` exposes. Every channel sits behind
-`src/window-guard.ts`: a call is answered only from the top frame of the app's own page and only
-with arguments that fit its entry in `src/channel-args.ts`, and the window may change only the
+`crates/mm-core/src/owner/channel_args.rs`: a call is answered only from the top frame of the app's own page and only
+with arguments that fit its entry in `crates/mm-core/src/owner/channel_args.rs`, and the window may change only the
 settings it has a control for. Both windows run sandboxed, the page gets two browser permissions,
 and no web contents may open a window, attach a webview or leave the app's pages.
-*Check:* `test/window-guard.test.ts` (every channel has a check, one real call of each passes, a
-list of hostile ones does not, no check throws on any input), `test/ipc-contract.test.js`, and the
+*Check:* `crates/mm-core/src/owner/channel_args.rs` (every channel has a check, one real call of each passes, a
+list of hostile ones does not, no check throws on any input), `test/api-types.test.js`, and the
 window e2e, which fails on any call the guard refused.
 
 **Somebody else borrowing the app.** An Electron executable runs as plain Node when an environment
@@ -91,8 +91,8 @@ variable asks it to, loads code named in `NODE_OPTIONS`, and opens a debugger on
 program people download, each is a way for something else on the machine to run its own code
 under this app's name. The packaged app has all three switched off in the binary with Electron's
 fuses, refuses an `app.asar` changed after the build, and will not load a loose folder in its place.
-*Check:* `test/electron-fuses.test.js` (the fuses, and that nothing in the app needs what they take
-away); the PR rehearsal `.github/workflows/update.yml` and the release's install jobs run the fused
+*Check:* `src-tauri/tauri.conf.json` (the fuses, and that nothing in the app needs what they take
+away); the PR rehearsal `.github/workflows/tauri-handover.yml` and the release's install jobs run the fused
 build.
 
 **Us, after the release.** The one thing this project can change on a machine without shipping a
@@ -100,7 +100,7 @@ new version is `config/app.json`: a feature switched off, a notice, the beta lis
 is signed with this project's own key against a key pinned in the app, and a file that does not
 verify is ignored exactly as if it were unreachable. It can only take capability away or point at
 a host whose bytes are checked anyway; it cannot add code.
-*Check:* `test/remote-config-signature.test.ts`, `test/remote-config.test.ts`.
+*Check:* `crates/mm-core/src/catalog/remote_config.rs`, `test/remote-config.test.ts`.
 
 **A release that is not ours.** Each release carries `SHA256SUMS` and a Sigstore provenance
 attestation over that list, signed by the release workflow at the tagged commit, so

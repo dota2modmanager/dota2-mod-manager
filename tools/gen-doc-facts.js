@@ -57,9 +57,12 @@ function render(pkg, bundled = bundledPackages()) {
   const total = ship.length + window.length + build.length;
   const inWindowEn = window.length ? ` ${list(window, 'and')} are built into its window,` : '';
   const inWindowRu = window.length ? ` ${list(window, 'и')} собраны в его окно,` : '';
+  // since 4.0 the app is Rust and no npm package ships in it
+  const shipEn = ship.length ? ` ${list(ship, 'and')} ship inside the app,` : ' none of them ships inside the app:';
+  const shipRu = ship.length ? ` ${list(ship, 'и')} едут внутри приложения,` : ' ни одна не едет внутри приложения:';
   return {
-    'deps-en': `\`package.json\` lists ${EN[total] || total}: ${list(ship, 'and')} ship inside the app,${inWindowEn} ${list(build, 'and')} only build or check it.`,
-    'deps-ru': `В \`package.json\` их ${RU[total] || total}: ${list(ship, 'и')} едут внутри приложения,${inWindowRu} ${list(build, 'и')} только собирают или проверяют его.`,
+    'deps-en': `\`package.json\` lists ${EN[total] || total}${ship.length ? ':' : ','}${shipEn}${inWindowEn} ${list(build, 'and')} only build or check it.`,
+    'deps-ru': `В \`package.json\` их ${RU[total] || total}${ship.length ? ':' : ','}${shipRu}${inWindowRu} ${list(build, 'и')} только собирают или проверяют его.`,
   };
 }
 

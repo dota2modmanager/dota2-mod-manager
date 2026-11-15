@@ -12,7 +12,15 @@ import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-import { parseManifest, releaseUrl } from '../src/portable-update.ts';
+import { rust } from './helpers/ts-or-rust.ts';
+
+// the app's side is crates/mm-core/src/app/portable_update.rs, asked through mm-cli
+const parseManifest = (text: string) => {
+  const [a] = rust('portable-update.parseManifest', [text]) as ({ ok: { file: string; size: number; sha256: string } } | { error: string })[];
+  if ('error' in a) throw new Error(a.error);
+  return a.ok;
+};
+const releaseUrl = (version: string, file: string) => (rust('portable-update.urls', [version, file]) as string[])[0];
 import portableManifestJs from '../tools/portable-manifest.js';
 const { build } = portableManifestJs;
 

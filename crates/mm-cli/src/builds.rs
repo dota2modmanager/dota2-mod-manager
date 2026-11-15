@@ -120,3 +120,25 @@ pub fn bench_install(game: &Path, lang: &str, vpk_file: &Path) -> Result<Value, 
     mm_core::file_tx::write_into(&bytes, &to, None).map_err(|e| e.to_string())?;
     Ok(json!(to))
 }
+
+/// `mm-cli seed-mods <userData> <game> <language suffix> <mods.json>`: mods installed into a state
+/// the way the app installs them, each with its library record, for test/rust-owner.test.ts to
+/// build its base states with. mods.json is [[category, name, file, fileRef]].
+pub fn seed_mods(ud: &Path, game: &Path, lang: &str, mods_file: &Path) -> Result<Value, String> {
+    use mm_core::{file_tx::FileTx, generated_pak::files_json, installer_write::InstallJob, library::Library};
+    let mods: Vec<(String, String, String, String)> =
+        serde_json::from_str(&std::fs::read_to_string(mods_file).map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
+    let inst = mm_core::installer::Installer::new(Some(game.to_path_buf()), lang);
+    let mut lib = Library::new(ud);
+    let mut ids = Vec::new();
+    for (category_id, mod_name, file, file_ref) in &mods {
+        let local = Path::new(file);
+        let job = InstallJob { category_id, mod_name, local };
+        let files = FileTx::run(None, Box::new(|_| {}), |tx| inst.install_into(tx, &job))?;
+        let rec = json!({ "name": mod_name, "categoryId": category_id, "styleLabel": null, "fileRef": file_ref, "files": files_json(&files) });
+        let added = lib.add(&rec, None).map_err(|e| e.to_string())?;
+        ids.push(added.get("id").cloned().unwrap_or(Value::Null));
+    }
+    Ok(json!(ids))
+}

@@ -55,10 +55,10 @@ description and the diff, and ask:
 
 Read hardest where a mistake costs a user something:
 
-- anything that writes into the game folder (`src/patcher.ts`, `src/vpk.ts`, `src/gamelang.ts`,
-  `src/schema.ts`, `src/file-tx.ts`, `src/overlays.ts`),
-- anything that decides what gets downloaded or whether it is trusted (`src/net.ts`,
-  `src/catalog-signature.ts`, `src/remote-config.ts`),
+- anything that writes into the game folder (`crates/mm-core/src/game/patcher.rs`, `crates/mm-core/src/formats/vpk.rs`, `crates/mm-core/src/game/gamelang.rs`,
+  `crates/mm-core/src/schema/mod.rs`, `crates/mm-core/src/install/file_tx.rs`, `crates/mm-core/src/install/overlays.rs`),
+- anything that decides what gets downloaded or whether it is trusted (`crates/mm-core/src/catalog/net_fetch.rs`,
+  `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/remote_config.rs`),
 - the workflows, the release workflow above all,
 - and any text a user reads, where a second reader catches what the first stopped seeing.
 

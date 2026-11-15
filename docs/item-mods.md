@@ -4,7 +4,7 @@ A player who does not own an item can still see it: the item's models, particles
 already in their game's `pak01`, and a mod can put them under the names the plain hero uses. This
 page is how to build one, what the game does with each part, and where it went wrong the first
 time. The worked example is Terrorblade's arcana, Fractal Horns of Inner Abysm
-([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), `src/arcana.ts`). It took
+([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), `crates/mm-core/src/arcana/mod.rs`). It took
 two days, most of them on two traps that the tools below now catch in seconds.
 
 Making a mod with an AI assistant? [`skills/dota2-modding`](../skills/dota2-modding/SKILL.md)
@@ -15,12 +15,12 @@ assistant follows.
 
 1. **Plan.** `npm run item-plan -- "<item name>"` (or its id) reads the item's `visuals` from
    `items_game` and lists every change it makes, how a build gives it, and whether the code
-   already does (`src/item-visuals.ts`). Sounds, the kill effect and voice lines come with the item
+   already does (`crates/mm-core/src/item_builder/item_visuals.rs`). Sounds, the kill effect and voice lines come with the item
    at play time; the plan says so instead of leaving you to find out.
-2. **Build.** An item is a set in `src/arcana.ts` (`ARCANA_SETS`: models, pictures, the particle
-   that hosts what the item creates) and `src/recolor.ts` (`RECOLOR_SETS`: the folders whose colour
+2. **Build.** An item is a set in `crates/mm-core/src/arcana/mod.rs` (`ARCANA_SETS`: models, pictures, the particle
+   that hosts what the item creates) and `crates/mm-core/src/looks/recolor.rs` (`RECOLOR_SETS`: the folders whose colour
    follows the gem). `npm run recolor -- <colour> --arcana` writes the VPK.
-3. **Check without the game.** `npm run doctor -- <mod_dir.vpk>` (`src/mod-doctor.ts`) reads the
+3. **Check without the game.** `npm run doctor -- <mod_dir.vpk>` (`crates/mm-core/src/app/mod_doctor.rs`) reads the
    mod against `pak01`: animations that need a modifier only the item switches on, in the clips
    and in the sequences; a particle child that is missing or drawn on another attachment than it
    is made for. It takes seconds.
@@ -86,7 +86,7 @@ match loads what the server's own item table names: the stock paths. Joining a m
 loads the paid models with the hero, so a table naming them looks right; after a reconnect it does
 not, and the console says `Attempting to set nonresident model ... for item Def 459` while the hero
 wears an ERROR model. So a built item names the stock path its VPK fills, and drops the
-`entity_model` and `model` swaps the files already make (`src/item-builder.ts`, `withoutFileSwaps`).
+`entity_model` and `model` swaps the files already make (`crates/mm-core/src/item_builder/mod.rs`, `withoutFileSwaps`).
 A slot whose stock item has no model at all, such as Earthshaker's head, has no path to fill, and
 its pick still shows only until a reconnect.
 
@@ -95,10 +95,10 @@ the catalog's hero mods at 30 and up: an arcana mod from the catalog does not co
 
 **Resources.** A compiled file (`*_c`) is a header and a table of blocks: `DATA`, `RERL` (the
 resources it names), and for a model `ANIM`, `ASEQ`, `AGRP`, `MRPH`, `CTRL` and the mesh blocks.
-`src/resource.ts` replaces a block and moves the later ones, each start aligned to 16 bytes. A RERL
+`crates/mm-core/src/formats/resource.rs` replaces a block and moves the later ones, each start aligned to 16 bytes. A RERL
 entry's id is MurmurHash64B of the path, seed `0xEDABCDEF`.
 
-**KV3** (`src/kv3.ts`, `src/kv3-write.ts`). The blocks are binary KV3, versions 1 to 5,
+**KV3** (`crates/mm-core/src/formats/kv3.rs`, `crates/mm-core/src/formats/kv3.rs`). The blocks are binary KV3, versions 1 to 5,
 compressed with LZ4 or (version 5, a model's `ANIM`) zstd. Version 5 keeps the strings in the
 first buffer and the values in the second; elements of a type-25 array sit in the first. Rules the
 writer keeps: a typed array stays typed and its element type is kept; arrays with a one-byte
@@ -123,7 +123,7 @@ control point 15 (strength in control point 16) and to materials as `$GemColor`.
   2026-11-04 with the item picked in the item builder (`--schema`): the effects take the colour,
   the blades' teal is the model's own material and stays.
 - A material reads it in a VfxEval expression, `exists($GemColor) ? $GemColor : float3(...)`. The
-  build replaces the read with a constant (`src/material.ts`): the attribute's token is MurmurHash2
+  build replaces the read with a constant (`crates/mm-core/src/formats/material.rs`): the attribute's token is MurmurHash2
   of the lowercased name, seed `0x31415926`; opcodes 0x19 ATTRIBUTE, 0x1F EXISTS, 0x04 BRANCH,
   0x02 JUMP, 0x07 FLOAT, 0x06 FUNC, 0x00 RETURN, and every jump after a change moves with it.
 
@@ -152,7 +152,7 @@ the same way has not been checked in a lobby.
 
 **Portraits and icons.** The HUD draws the hero's model with the camera and lights that
 `scripts/npc/portraits.txt` gives its path, so an arcana model under the plain path brings its own
-settings under that path (`src/item-portraits.ts`). The hero's portrait, minimap icon and ability
+settings under that path (`crates/mm-core/src/item_builder/item_portraits.rs`). The hero's portrait, minimap icon and ability
 icons are pictures in `panorama/images` copied over the plain ones; the minimap also cuts its icon
 out of a sprite sheet named in `scripts/mod_textures.txt`. Shop item pictures are left alone: one
 picture is every hero's.
@@ -176,4 +176,4 @@ has to number its sequences as the hero's does. The numbers are the model's sequ
 which also counts clips a sequence plays under a name of their own (`@@cast_ghost_shroud`); the
 "Scream" Necrophos model lost one of those in a recompile and numbered every sequence from 30 on
 one lower than the game. The doctor compares that list now (`sequenceNumbersOf` in
-`src/mod-doctor.ts`), and `npm run modkit -- clips` puts Valve's names and numbers back.
+`crates/mm-core/src/app/mod_doctor.rs`), and `npm run modkit -- clips` puts Valve's names and numbers back.

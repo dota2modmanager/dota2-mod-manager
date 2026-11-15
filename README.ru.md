@@ -204,8 +204,8 @@ sha256sum --check --ignore-missing SHA256SUMS
   Если после патча в игре что-то выглядит не так, начинать стоит с него
 
 Загрузки лежат в `%APPDATA%/dota2-mod-manager/downloads`, манифест установки рядом. Полная
-картина — в [ARCHITECTURE.md](ARCHITECTURE.md), а все модули перечислены в
-[docs/API.md](docs/API.md), который генерируется из исходников, а не пишется руками.
+картина — в [ARCHITECTURE.md](ARCHITECTURE.md), а каждый вызов окна в приложение описан типами в
+[renderer/api/](renderer/api/).
 
 <br>
 
@@ -238,7 +238,7 @@ v1.14rc7 проверяет принадлежность перед чистко
 | [Моды с помощью ИИ](https://dota2modmanager.com/ru/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | Скилл, которым ассистент собирает моды, и как мод предмета собирается из файлов игры |
 | [Все цифры, проверяемые](https://dota2modmanager.com/ru/facts/) | Версия, платформы, счётчики и как проверить каждую |
 | [docs/catalog-data.md](docs/catalog-data.md) | Весь каталог модов одним JSON-файлом, поле за полем: для твоего бота, сайта или скрипта |
-| [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Кто за какое решение отвечает и что экспортирует каждый модуль |
+| [ARCHITECTURE.md](ARCHITECTURE.md) · [renderer/api/](renderer/api/) | Кто за какое решение отвечает и какие вызовы делает окно |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | Как работать над проектом, с ИИ-ассистентом и без, и как сообщить о дыре |
 | [docs/assurance-case.md](docs/assurance-case.md) | Что может пойти не так, что этому мешает и какой тест это держит |
 | [docs/evidence.md](docs/evidence.md) | Каждое заявление проекта: какая задача CI его проверяет и как проверить самому (на английском) |
@@ -284,7 +284,7 @@ v1.14rc7 проверяет принадлежность перед чистко
 
 | | |
 |---|---|
-| [Тесты](.github/workflows/test.yml) | Сначала eslint, потом весь набор с порогом покрытия, на Linux и на Windows. Часть тестов проверяет не модуль, а проект на согласие с самим собой: у каждого IPC-канала есть обработчик и каждый обработчик запускается, каждый импорт в renderer находится, у каждой русской строки есть английский близнец, версия и оба чейнджлога сходятся, `docs/API.md` соответствует исходникам, а `DECISIONS.md` соответствует репозиторию |
+| [Тесты](.github/workflows/test.yml) | Сначала eslint, потом весь набор с порогом покрытия, на Linux и на Windows. Часть тестов проверяет не модуль, а проект на согласие с самим собой: каждый импорт в renderer находится, у каждой русской строки есть английский близнец, версия и оба чейнджлога сходятся, вызовы окна сходятся с мостом, а `DECISIONS.md` соответствует репозиторию |
 | [CodeQL](.github/workflows/codeql.yml) | Анализ на безопасность и качество, плюс прогон раз в неделю |
 | [Linux](.github/workflows/linux.yml) | Собирает AppImage, запускает приложение на песочнице, снимает первое окно и читает лог на код, который не смог выполниться |
 | [Окно](.github/workflows/e2e.yml) | На Linux и на Windows: кликами в окне ставит мод, выключает, включает и удаляет его, сверяя папку игры на диске после каждого запуска. Без сети, на тестовом каталоге |
@@ -310,15 +310,14 @@ v1.14rc7 проверяет принадлежность перед чистко
 npm install
 npm start                 # запустить приложение
 npm test                  # весь набор тестов, без фреймворков и моков
-npm run test:coverage     # то же с порогом, который держит CI
-npm run docs              # пересобрать docs/API.md из src/
+npm run docs              # пересобрать блоки фактов и список инцидентов
 npm run sandbox:seed      # одноразовое дерево игры с настоящими модами
 npm run start:sandbox     # приложение против него, а не против своей игры
 npm run dota:diff         # что поменялось между двумя сборками Доты (6944 6952 или две последние)
 ```
 
-Node 24, Electron 45. Главный процесс на TypeScript, Node запускает его без сборки, а окно на
-TypeScript и React, его собирает Vite. Каждый релиз
+Tauri 2 и Rust. Ядро приложения на Rust в `crates/mm-core/`, окно на TypeScript и React, его
+собирает Vite, а Node 24 гоняет тесты и инструменты. Каждый релиз
 делает [`release.yml`](.github/workflows/release.yml) из того коммита, на который указывает тег.
 
 **Если задумал больше, чем починку — сначала issue.** Это одно сообщение, и оно спасает от
@@ -362,7 +361,7 @@ GPL — в [NOTICE](NOTICE).
 | [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Каждая сборка Доты текстом. Её читают проверки репозитория, чтобы сказать, что поменял патч. Не приложение | Не указана. Читается по сети, ничего из неё сюда не копируется |
 
 <!-- facts:deps-ru -->
-В `package.json` их 22: `adm-zip`, `electron-updater`, `meshoptimizer` и `undici` едут внутри приложения, `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` и `three` собраны в его окно, `@tauri-apps/cli`, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` и `vite` только собирают или проверяют его.
+В `package.json` их 18, ни одна не едет внутри приложения: `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` и `three` собраны в его окно, `@tauri-apps/cli`, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `adm-zip`, `axe-core`, `eslint`, `fast-check`, `meshoptimizer`, `typescript` и `vite` только собирают или проверяют его.
 <!-- /facts:deps-ru -->
 Тесты не зависят ни от чего, а в `tools/` одна зависимость, `vite`: она собирает окно. Чтение и запись VPK, разбор KeyValues, защита от zip-бомб и логика обновления написаны
 здесь, потому что каждая зависимость — это чужак с правом записи в папку игры на десятках тысяч
@@ -370,7 +369,7 @@ GPL — в [NOTICE](NOTICE).
 
 Валвовский `vpk.exe` сюда сознательно **не** добавлен и добавлен не будет: он проприетарный, а
 проект, который его везёт, уже не открытый в том смысле, в каком это понимает SignPath. Поэтому
-и существует `src/vpk.ts`.
+и существует `crates/mm-core/src/formats/vpk.rs`.
 
 <br>
 

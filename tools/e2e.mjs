@@ -37,7 +37,7 @@
  * it has to report its new version and find the mod, its state and the favourite where they were.
  *
  * The app's log must not contain an unresolved name at any point, nor a call the IPC gate refused,
- * nor a write the sandbox jail stopped: every launch is held to sandbox/ (src/write-jail.ts).
+ * nor a write the sandbox jail stopped: every launch is held to sandbox/ (crates/mm-core/src/app/write_jail.rs).
  *
  * Usage:
  *   node tools/e2e.mjs            # under `xvfb-run -a` on Linux
@@ -51,7 +51,6 @@ import crypto from 'node:crypto';
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { ensureUi } from './ui-build.mjs';
 
 const require = createRequire(import.meta.url);
 const { mm } = require('./mm-cli.js');
@@ -71,10 +70,13 @@ const FIXTURES = path.join(root, 'test', 'fixtures', 'e2e');
 const OUT = path.join(root, 'e2e-output');
 // the app's note of which files in the language folder are its own, rewritten on every change
 const OWNERSHIP = 'dota2modmanager.json';
-// --app <path>: a packaged build instead of this source tree. release.yml passes the installed
-// exe and the unpacked AppImage from the draft release, so what gets clicked is what goes out.
+// --app <path>: a packaged build instead of this source tree's debug build (cargo build -p
+// dota2-mod-manager). release.yml passes the installed exe and the unpacked AppImage from the
+// draft release, so what gets clicked is what goes out.
 const appAt = process.argv.indexOf('--app');
 const APP = appAt > 0 && process.argv[appAt + 1] ? path.resolve(process.argv[appAt + 1]) : null;
+const DEBUG_APP = path.join(root, 'target', 'debug', `dota2-mod-manager${process.platform === 'win32' ? '.exe' : ''}`);
+const BIN = APP || DEBUG_APP;
 // --upgrade <setup.exe>: --app is the release before this one, and this installer replaces it
 // between the first launch and the second (release.yml, "Update the last release")
 const upgradeAt = process.argv.indexOf('--upgrade');
@@ -348,10 +350,10 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   const shot = path.join(OUT, `${label}.png`);
   for (const f of [shot, `${shot}.eval.json`, `${shot}.err.txt`]) fs.rmSync(f, { force: true });
   const log = fs.openSync(path.join(OUT, `${label}.electron.log`), 'w');
-  // held to the sandbox: a write anywhere else is refused and fails the run (src/write-jail.ts)
+  // held to the sandbox: a write anywhere else is refused and fails the run (crates/mm-core/src/app/write_jail.rs)
   const args = [`--user-data-dir=${USERDATA}`, `--write-jail=${SANDBOX}`, ...extraArgs];
   if (process.platform === 'linux') args.push('--no-sandbox');
-  const child = spawn(APP || require('electron'), APP ? args : ['.', ...args], {
+  const child = spawn(BIN, args, {
     cwd: root,
     env: { ...process.env, MM_SHOT: shot, ...env },
     stdio: ['ignore', log, log],
@@ -374,7 +376,7 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   const evaluated = readIfThere(`${shot}.eval.json`);
   return {
     result: evaluated ? JSON.parse(evaluated) : null,
-    error: startError ? `could not start ${APP || 'electron'}: ${startError.message}` : readIfThere(`${shot}.err.txt`),
+    error: startError ? `could not start ${BIN}: ${startError.message}` : readIfThere(`${shot}.err.txt`),
     timedOut: Date.now() >= deadline,
     exitCode,
   };
@@ -428,7 +430,7 @@ const invokedDirectly = process.argv[1] && path.resolve(process.argv[1]) === fil
 if (invokedDirectly) {
   if (UPGRADE && !APP) throw new Error('--upgrade replaces an installed app: name it with --app');
   // a checkout runs the page Vite built (an installed app carries its own)
-  if (!APP) await ensureUi();
+  if (!fs.existsSync(BIN)) throw new Error(`${BIN} is not built: npm run build:app`);
   const keep = process.argv.includes('--keep');
   const node = process.execPath;
   const report = { steps: [] };

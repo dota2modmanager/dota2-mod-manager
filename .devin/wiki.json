@@ -10,7 +10,7 @@
       "content": "The project makes no promise about bans. Its stated position (the site's safety page, DECISIONS.md) is that bans are for cheats and cosmetic mods are not cheats, that Valve has published no rule naming cosmetic mods, that the maintainers know of no ban for them, and that the risk is the user's. Do not call the app or the mods safe from bans, VAC-safe or undetectable."
     },
     {
-      "content": "src/notice-text.ts changes the words of the game's anti-cheat notice window: it puts the DOTA_VAC_* strings, rewritten as advice (verify the game files, restart Steam, turn mods off), into chat_<language>.txt inside the app's own pak64. It changes what the window says, not any check the game makes."
+      "content": "crates/mm-core/src/app/notice_text.rs changes the words of the game's anti-cheat notice window: it puts the DOTA_VAC_* strings, rewritten as advice (verify the game files, restart Steam, turn mods off), into chat_<language>.txt inside the app's own pak64. It changes what the window says, not any check the game makes."
     },
     {
       "content": "The licence is GPL-3.0-or-later (NOTICE: version 3 of the License, or any later version), with two additional terms under section 7: 7(b) attribution and 7(e) the project's name, icon and domain. It is not GPL-3.0-only."
@@ -22,28 +22,28 @@
       "content": "The project is written with Claude Code and says so in both READMEs, DECISIONS.md and AGENTS.md. The app collects nothing: no account, no telemetry (PRIVACY.md)."
     },
     {
-      "content": "Code layout since 2026-10-02: the main process is TypeScript in src/*.ts, run by Node's own type stripping with no build step; the entry is src/main.ts and there is no main.js any more. The window is React with Motion and TypeScript, built by Vite into out/renderer. preload.js is the only bridge between them, and the renderer's view of that bridge is typed in renderer/api/."
+      "content": "Code layout since 2026-10-02: the main process is TypeScript in crates/mm-core/src/*.ts, run by Node's own type stripping with no build step; the entry is crates/mm-cli/src/main.rs and there is no main.js any more. The window is React with Motion and TypeScript, built by Vite into out/renderer. preload.js is the only bridge between them, and the renderer's view of that bridge is typed in renderer/api/."
     },
     {
-      "content": "Writes to the game folder go through FileTx (src/file-tx.ts) with a write-ahead journal in the app's user data (src/file-tx-journal.ts): each step is written down before it happens, so an install the process died in is undone, or finished if it had committed, at the next start. test/file-tx-crash.test.ts kills a child process with SIGKILL at every write in turn and checks what is left. settings.json and manifest.json are written atomically."
+      "content": "Writes to the game folder go through FileTx (crates/mm-core/src/install/file_tx.rs) with a write-ahead journal in the app's user data (crates/mm-core/src/install/file_tx.rs): each step is written down before it happens, so an install the process died in is undone, or finished if it had committed, at the next start. crates/mm-core/src/install/file_tx.rs kills a child process with SIGKILL at every write in turn and checks what is left. settings.json and manifest.json are written atomically."
     },
     {
-      "content": "The main process answers only the app's own pages, from the top frame, and only with the arguments each IPC channel declares (src/window-guard.ts, src/channel-args.ts). The window runs with sandbox: true. The packaged app has Electron fuses set (package.json build.electronFuses): it cannot be run as plain Node, does not read NODE_OPTIONS or --inspect, and loads only its own integrity-checked app.asar."
+      "content": "The main process answers only the app's own pages, from the top frame, and only with the arguments each IPC channel declares (crates/mm-core/src/owner/channel_args.rs, crates/mm-core/src/owner/channel_args.rs). The window runs with sandbox: true. The packaged app has Electron fuses set (package.json build.electronFuses): it cannot be run as plain Node, does not read NODE_OPTIONS or --inspect, and loads only its own integrity-checked app.asar."
     },
     {
-      "content": "Mod slots: mods are named pakNN_dir.vpk in the language folder, and a lower number wins a file both mods carry. Trees, river, shaders, hero effects, ranged attacks, hero items and optimization load first and get pak02 to pak29 by category; every other mod takes the first free number from pak30. pak64 is the app's own notice text, pak65 to pak67 are left to Minify. My mods marks the mod that loses a file as overruled and names the files. src/slot-zones.ts holds these numbers and test/slot-docs.test.ts holds the README and the site to them."
+      "content": "Mod slots: mods are named pakNN_dir.vpk in the language folder, and a lower number wins a file both mods carry. Trees, river, shaders, hero effects, ranged attacks, hero items and optimization load first and get pak02 to pak29 by category; every other mod takes the first free number from pak30. pak64 is the app's own notice text, pak65 to pak67 are left to Minify. My mods marks the mod that loses a file as overruled and names the files. crates/mm-core/src/install/slot_zones.rs holds these numbers and crates/mm-core/src/install/slot_zones.rs holds the README and the site to them."
     },
     {
       "content": "The catalog bot does not commit to main. The fingerprint index (fingerprints.json) and the other data the bot regenerates live on the catalog-data branch, and the app and tools read them from there."
     },
     {
-      "content": "Item mods (issue #118): the app can build Terrorblade's arcana as a mod out of files already in the player's own game install, in a colour they choose, or recolour an arcana they own. It is installed like any other mod, in safe mode, and only the player sees it. src/arcana.ts, src/recolor.ts, src/kv3.ts and src/material.ts do the work; docs/item-mods.md explains the mechanism, and npm run item-plan, npm run doctor and npm run dota:bench are the tools around it."
+      "content": "Item mods (issue #118): the app can build Terrorblade's arcana as a mod out of files already in the player's own game install, in a colour they choose, or recolour an arcana they own. It is installed like any other mod, in safe mode, and only the player sees it. crates/mm-core/src/arcana/mod.rs, crates/mm-core/src/looks/recolor.rs, crates/mm-core/src/formats/kv3.rs and crates/mm-core/src/formats/material.rs do the work; docs/item-mods.md explains the mechanism, and npm run item-plan, npm run doctor and npm run dota:bench are the tools around it."
     },
     {
       "content": "A Dota update can break mods. .github/workflows/dota-watch.yml looks for a new Dota build every thirty minutes and posts in the pinned \"Dota updates\" issue what changed, starting with what the app's patch is built from, and which catalog mods replace files the update touched. npm run dota:diff reads what an update changed."
     },
     {
-      "content": "Mods marked 18+ in the catalog stay hidden until the user says they are 18 and wants to see them. The app tells the user when the catalog has a new version of an installed mod and updates it in place, keeping its slot (src/mod-update.ts)."
+      "content": "Mods marked 18+ in the catalog stay hidden until the user says they are 18 and wants to see them. The app tells the user when the catalog has a new version of an installed mod and updates it in place, keeping its slot (crates/mm-core/src/install/mod_update.rs)."
     },
     {
       "content": "Accessibility and verification are documented and checked: docs/accessibility.md lists eleven promises, each with the simulator check behind it (axe-core, the accessibility tree over the DevTools protocol, a keyboard-only install, contrast measured on the pixels); docs/screen-reader-pass.md is the manual pass with NVDA or Narrator. docs/evidence.md lists every claim the project makes with the CI job that runs it and the command that runs it locally, and docs/assurance-case.md maps each threat to the test that answers it."
@@ -61,7 +61,7 @@
     },
     {
       "title": "Architecture at a Glance",
-      "purpose": "The TypeScript main process in src/, the preload bridge, the React renderer built by Vite, and the modules each one holds.",
+      "purpose": "The TypeScript main process in crates/mm-core/src/, the preload bridge, the React renderer built by Vite, and the modules each one holds.",
       "parent": "Overview"
     },
     {
@@ -76,7 +76,7 @@
     },
     {
       "title": "Desktop Application: Main Process",
-      "purpose": "Everything in src/ that touches the game folder, the network and the user's settings, starting from src/main.ts and src/services.ts."
+      "purpose": "Everything in crates/mm-core/src/ that touches the game folder, the network and the user's settings, starting from src-tauri/src/main.rs and crates/mm-core/src/owner/mod.rs."
     },
     {
       "title": "Application Lifecycle, Window and Preload Bridge",
@@ -85,7 +85,7 @@
     },
     {
       "title": "IPC Layer and Its Guard",
-      "purpose": "The src/ipc-*.ts modules, the channels the renderer calls, and the check on who calls them and with what arguments (window-guard.ts, channel-args.ts).",
+      "purpose": "The crates/mm-core/src/owner/owner_*.rs modules, the channels the renderer calls, and the check on who calls them and with what arguments (window-guard.ts, channel-args.ts).",
       "parent": "Desktop Application: Main Process"
     },
     {

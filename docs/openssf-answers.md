@@ -36,7 +36,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | `floss_license_osi` | Met: GPL-3.0 is OSI approved | repo LICENSE |
 | `license_location` | Met: LICENSE in the repository root | repo LICENSE |
 | `documentation_basics` | Met | site, and repo README.md |
-| `documentation_interface` | Met | repo docs/API.md, generated from the source by `npm run docs` and checked in CI |
+| `documentation_interface` | Met | repo renderer/api/, the typed window calls, held against preload.js in CI |
 | `sites_https` | Met: github.com, dota2modmanager.com and cdn.dota2modmanager.com are TLS only | site |
 | `discussion` | Met: GitHub Issues and Discussions, plus the project's Discord | repo issues |
 | `english` | Met: every document in the repository is English; README.ru.md and CHANGELOG.ru.md are twins for Russian users | repo README.md |
@@ -46,8 +46,8 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 > The app is a desktop program, and its external interfaces are documented in three places: the
 > window itself is described with screenshots on the site, the `d2mm://` link format and the
-> settings file are described in ARCHITECTURE.md, and every exported function of every module is
-> in docs/API.md, which is generated from the source and fails CI when it drifts.
+> settings file are described in ARCHITECTURE.md, and every call the window makes into the app is
+> in renderer/api/, typed and held against the bridge in preload.js, which fails CI when they drift.
 
 ## Change control
 
@@ -139,15 +139,15 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | --- | --- | --- |
 | `know_secure_design` | Met | repo ARCHITECTURE.md, "Who is allowed to have written this" |
 | `know_common_errors` | Met | repo docs/incidents/ |
-| `crypto_published` | Met: SHA-256 and Ed25519 from Node's own crypto, TLS from the platform | repo src/catalog.ts |
-| `crypto_call` | Met: node:crypto only, no cryptography of the project's own | repo src/catalog.ts |
+| `crypto_published` | Met: SHA-256 and Ed25519 from Node's own crypto, TLS from the platform | repo crates/mm-core/src/catalog/mod.rs |
+| `crypto_call` | Met: node:crypto only, no cryptography of the project's own | repo crates/mm-core/src/catalog/mod.rs |
 | `crypto_floss` | Met | repo package.json |
-| `crypto_keylength` | Met: SHA-256 and Ed25519 | repo src/remote-config.ts |
-| `crypto_working` | Met | repo src/remote-config.ts |
-| `crypto_weaknesses` | Met | repo src/catalog.ts |
-| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo src/net.ts |
-| `crypto_password_storage` | N/A: the app stores no passwords | repo src/discord-auth.ts |
-| `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo src/discord-auth.ts |
+| `crypto_keylength` | Met: SHA-256 and Ed25519 | repo crates/mm-core/src/catalog/remote_config.rs |
+| `crypto_working` | Met | repo crates/mm-core/src/catalog/remote_config.rs |
+| `crypto_weaknesses` | Met | repo crates/mm-core/src/catalog/mod.rs |
+| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo crates/mm-core/src/catalog/net_fetch.rs |
+| `crypto_password_storage` | N/A: the app stores no passwords | repo crates/mm-core/src/app/discord_auth.rs |
+| `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo crates/mm-core/src/app/discord_auth.rs |
 | `delivery_mitm` | Met: downloads and updates are HTTPS from GitHub releases or the project's own CDN | repo SECURITY.md |
 | `delivery_unsigned` | Met | repo SECURITY.md |
 | `vulnerabilities_fixed_60_days` | Met | repo security advisories |
@@ -255,7 +255,7 @@ by hand.
 | `documentation_architecture` | Met | repo ARCHITECTURE.md |
 | `documentation_security` | Met | repo SECURITY.md |
 | `documentation_quick_start` | Met | repo README.md |
-| `documentation_current` | Met | repo docs/API.md |
+| `documentation_current` | Met | repo test/docs-current.test.js |
 | `documentation_achievements` | Met | repo README.md |
 | `accessibility_best_practices` | Met (SHOULD) | repo renderer |
 | `internationalization` | Met (SHOULD) | repo tools/check-i18n.js |

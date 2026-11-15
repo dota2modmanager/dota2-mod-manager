@@ -98,7 +98,8 @@ test('the lookups that read a section find a beta by its own heading', () => {
     const end = rest.findIndex((l) => /^## /.test(l));
     return rest.slice(0, end === -1 ? undefined : end).join('\n').trim();
   };
-  const popup = (v) => require('../src/release-notes.ts').changelogSection(text, v); // the app's "What's new"
+  const { rust } = require('./helpers/ts-or-rust.ts');
+  const popup = (v) => rust('release-notes.changelogSection', text, v); // the app's "What's new" (app_info.rs)
   const { changelogSection } = require('../tools/release-state.js');
   const preflight = (v) => changelogSection(text, v); // what the gate checks before building
   for (text of texts) {
@@ -116,17 +117,17 @@ test('both changelogs still reach the two places that read them', () => {
   /* They travel by different roads, and only one of them is the workflow.
    *
    * CI lifts the tagged section out of CHANGELOG.md for the release page and the Discord post.
-   * The Russian one never goes near CI: it is packaged into the build by package.json, and
-   * src/release-notes.ts reads it off disk to fill the "what's new" popup for a Russian
-   * UI. Drop it from the packaged files and Russian users get an empty popup while every check
+   * The Russian one never goes near CI: tauri.conf.json packs both files into the build, and
+   * crates/mm-core/src/app/app_info.rs reads them off disk to fill the "what's new" popup for a
+   * Russian UI. Drop one from the bundle and Russian users get an empty popup while every check
    * above still passes - which is the shape of the incident this file is named after. */
   assert.match(read('.github/workflows/release.yml'), /CHANGELOG\.md/,
     'release.yml no longer reads CHANGELOG.md for the release page');
 
-  const packaged = JSON.parse(read('package.json')).build.files;
+  const packaged = JSON.parse(read('src-tauri/tauri.conf.json')).bundle.resources;
   for (const f of ['CHANGELOG.md', 'CHANGELOG.ru.md']) {
-    assert.ok(packaged.includes(f), `${f} is not packaged, so the app cannot show its notes`);
+    assert.ok(`../${f}` in packaged, `${f} is not packaged, so the app cannot show its notes`);
   }
-  assert.match(read('src/release-notes.ts'), /CHANGELOG\.ru\.md/,
+  assert.match(read('crates/mm-core/src/app/app_info.rs'), /CHANGELOG\.ru\.md/,
     'nothing reads the Russian changelog any more');
 });

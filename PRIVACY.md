@@ -43,7 +43,7 @@ the catalog's author runs as a Cloudflare Worker, the same one the catalog site 
 - **If it is down.** Nothing changes: an install never waits for the counter, and a request
   that fails is dropped, not retried.
 
-The code is `src/download-stats.ts`. A build only counts when it carries the counter's token,
+The code is `crates/mm-core/src/catalog/download_stats.rs`. A build only counts when it carries the counter's token,
 which the release workflow puts in from a repository secret (`tools/stats-token.mjs`); a build
 you make yourself counts nothing.
 
@@ -55,22 +55,22 @@ the host it is sent to.
 
 | Host | What for | Where in the code |
 |---|---|---|
-| `raw.githubusercontent.com` | The mod catalog (`Dota2PornFxWeb`), the fingerprint map, and the remote config that lets a broken feature be switched off without a release | `src/catalog.ts`, `src/fingerprints.ts`, `src/remote-config.ts` |
-| `github.com` | Update checks and downloading a new version from Releases | `electron-updater`, `src/updater.ts`, `src/portable-update.ts` |
-| `cdn.dota2modmanager.com` | A copy of the catalog's preview pictures, the pinned toolchain, and since 2.6.5 the app's own updates, so all of that still works when GitHub is unreachable | `src/net.ts`, `renderer/ui/media.ts`, `src/portable-update.ts` |
-| `huggingface.co` | Another copy of the catalog's mod archives, kept by the catalog's author, tried after the catalog's own host. It is named in the signed remote config rather than in the app, and a download from it counts only if it matches the hash the catalog publishes | `config/app.json`, `src/remote-config.ts`, `src/net.ts` |
-| `dota2modmanager.com` | A mirror of the small catalog files, same reason, and the one copy where a file and its signature are always from the same moment | `src/net.ts`, `src/catalog.ts` |
-| `cdn.jsdelivr.net`, `ghproxy.net`, `gh-proxy.com`, `ghfast.top` | Public GitHub mirrors, tried only when the ones above fail. The list itself is remote config, so a mirror that misbehaves can be dropped without a release | `src/net.ts` |
-| `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `src/icons.ts` |
-| `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `src/download-stats.ts` |
-| `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `src/discord-auth.ts` |
+| `raw.githubusercontent.com` | The mod catalog (`Dota2PornFxWeb`), the fingerprint map, and the remote config that lets a broken feature be switched off without a release | `crates/mm-core/src/catalog/mod.rs`, `crates/mm-core/src/catalog/fingerprints.rs`, `crates/mm-core/src/catalog/remote_config.rs` |
+| `github.com` | Update checks and downloading a new version from Releases | `electron-updater`, `crates/mm-core/src/app/updater.rs`, `crates/mm-core/src/app/portable_update.rs` |
+| `cdn.dota2modmanager.com` | A copy of the catalog's preview pictures, the pinned toolchain, and since 2.6.5 the app's own updates, so all of that still works when GitHub is unreachable | `crates/mm-core/src/catalog/net_fetch.rs`, `renderer/ui/media.ts`, `crates/mm-core/src/app/portable_update.rs` |
+| `huggingface.co` | Another copy of the catalog's mod archives, kept by the catalog's author, tried after the catalog's own host. It is named in the signed remote config rather than in the app, and a download from it counts only if it matches the hash the catalog publishes | `config/app.json`, `crates/mm-core/src/catalog/remote_config.rs`, `crates/mm-core/src/catalog/net_fetch.rs` |
+| `dota2modmanager.com` | A mirror of the small catalog files, same reason, and the one copy where a file and its signature are always from the same moment | `crates/mm-core/src/catalog/net_fetch.rs`, `crates/mm-core/src/catalog/mod.rs` |
+| `cdn.jsdelivr.net`, `ghproxy.net`, `gh-proxy.com`, `ghfast.top` | Public GitHub mirrors, tried only when the ones above fail. The list itself is remote config, so a mirror that misbehaves can be dropped without a release | `crates/mm-core/src/catalog/net_fetch.rs` |
+| `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `crates/mm-core/src/game/game_icons.rs` |
+| `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `crates/mm-core/src/catalog/download_stats.rs` |
+| `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `crates/mm-core/src/app/discord_auth.rs` |
 
 **A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
 default. When it is set, the catalog, the fingerprint map, mod archives, the remote config, the
 toolchain and the portable build's updates go through it, so the proxy learns which of the hosts
 above the app asks and when. What it carries is still HTTPS end to end and still checked against
 the catalog's signed hashes, so it cannot change a file unnoticed. The installed app's own updates,
-the Discord sign-in and the item pictures do not use it (`src/download-proxy.ts`).
+the Discord sign-in and the item pictures do not use it (`crates/mm-core/src/catalog/net_mirrors.rs`).
 
 The app never contacts Valve or Steam, and never touches your Steam account. It reads Steam's
 own configuration files on disk to find where Dota is installed and which language it is set
@@ -97,7 +97,7 @@ started, and a button that opens dota2modmanager.com. The app sends that over th
 connection Discord opens for games (a named pipe on Windows, a socket on Linux), not over the
 internet. Discord then shows it to the people who can see your profile, the way it shows any game
 you play. It is on unless you switch it off in Settings, and switching it off closes the
-connection. The code is `src/discord-presence.ts`.
+connection. The code is `crates/mm-core/src/app/discord_presence.rs`.
 
 ## Preset links
 
