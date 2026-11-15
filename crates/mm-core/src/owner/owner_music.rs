@@ -44,7 +44,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 let svc = OwnMusic::new(&c.user_data, c.game());
                 let (rc, k) = (crate::owner_compiler::compiler(&c), crate::owner_compiler::keeper(&c));
                 let mut compile = |job: &crate::resource_compiler::CompileJob| {
-                    rc.compile(job, k.as_ref(), &mut crate::run_process::run, &mut |_| {})
+                    rc.compile_together(job, k.as_ref(), &mut crate::run_process::run_low, &mut |_| {})
                 };
                 let Core { installer, library, .. } = &mut *c;
                 let r = svc.install(installer, library, &songs, places, &mut compile, &mut |m| lines.push(m));

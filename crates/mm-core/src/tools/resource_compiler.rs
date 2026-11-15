@@ -272,6 +272,30 @@ impl ResourceCompiler {
         run: RunProcess,
         log: &mut dyn FnMut(String),
     ) -> Result<Vec<Entry>, String> {
+        self.compile_as(job, keeper, run, log, false)
+    }
+
+    /// [`Self::compile`] with every file of the job in one run of the compiler (its -filelist):
+    /// the tools load once instead of once a file, which is most of the time a run takes. For a
+    /// job of many files that do not lean on each other, the music's songs and events.
+    pub fn compile_together(
+        &self,
+        job: &CompileJob,
+        keeper: Option<&ToolsKeeper>,
+        run: RunProcess,
+        log: &mut dyn FnMut(String),
+    ) -> Result<Vec<Entry>, String> {
+        self.compile_as(job, keeper, run, log, true)
+    }
+
+    fn compile_as(
+        &self,
+        job: &CompileJob,
+        keeper: Option<&ToolsKeeper>,
+        run: RunProcess,
+        log: &mut dyn FnMut(String),
+        together: bool,
+    ) -> Result<Vec<Entry>, String> {
         let addon_ok = (1..=64).contains(&job.id.len())
             && job.id.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'_');
         if !addon_ok {
@@ -301,21 +325,33 @@ impl ResourceCompiler {
                 std::fs::write(&to, &f.data).map_err(io)?;
             }
             let cwd = exe.parent().map(Path::to_path_buf);
-            for rel in &job.compile {
-                let source = content.join(rel);
-                let src = match &wine {
-                    Some(_) => wine_path(&source),
-                    None => source.to_string_lossy().into_owned(),
-                };
-                let args: Vec<String> = vec!["-nop4".into(), "-f".into(), "-i".into(), src];
+            let in_tool = |p: &Path| match &wine {
+                Some(_) => wine_path(p),
+                None => p.to_string_lossy().into_owned(),
+            };
+            // one run over a list of every source, named after the first; or a run a source
+            let runs: Vec<(String, Vec<String>)> = if together && job.compile.len() > 1 {
+                let list = content.join("d2mm_files.txt");
+                let lines: Vec<String> = job.compile.iter().map(|rel| in_tool(&content.join(rel))).collect();
+                std::fs::write(&list, lines.join("\r\n")).map_err(io)?;
+                vec![(job.compile[0].clone(), vec!["-nop4".into(), "-f".into(), "-filelist".into(), in_tool(&list)])]
+            } else {
+                job.compile
+                    .iter()
+                    .map(|rel| {
+                        (rel.clone(), vec!["-nop4".into(), "-f".into(), "-i".into(), in_tool(&content.join(rel))])
+                    })
+                    .collect()
+            };
+            for (rel, args) in &runs {
                 let started = std::time::Instant::now();
                 let (code, said) = match &wine {
                     Some(w) => {
                         let mut all = vec![exe.to_string_lossy().into_owned()];
-                        all.extend(args);
+                        all.extend(args.iter().cloned());
                         run(&w.to_string_lossy(), &all, cwd.as_deref(), &wine_env(&self.prefix()), COMPILE_TIMEOUT_MS)?
                     }
-                    None => run(&exe.to_string_lossy(), &args, cwd.as_deref(), &[], COMPILE_TIMEOUT_MS)?,
+                    None => run(&exe.to_string_lossy(), args, cwd.as_deref(), &[], COMPILE_TIMEOUT_MS)?,
                 };
                 log(format!(
                     "resourcecompiler: {rel} exited with {code} after {} s",
@@ -325,6 +361,10 @@ impl ResourceCompiler {
                 if code != 0 && said.to_lowercase().contains("schema mismatches reported") {
                     return Err(t("Workshop Tools в игре от разных обновлений, и resourcecompiler.exe отказывается собирать. В Steam открой свойства Dota 2, «Установленные файлы», и проверь целостность файлов. Если не помогло, Valve ещё не обновили Workshop Tools под этот патч: подожди их обновления", &[]));
                 }
+                // in one run over a list, the source whose file did not come out is the one to name
+                let missing =
+                    if together { job.compile.iter().find(|r| !out.join(compiled_of(r)).exists()) } else { None };
+                let rel = missing.unwrap_or(rel);
                 if code != 0 || !out.join(compiled_of(rel)).exists() {
                     let why = Some(tail(&said, 8)).filter(|s| !s.is_empty()).unwrap_or_else(|| format!("exit {code}"));
                     return Err(t("resourcecompiler.exe не собрал {0}: {1}", &[json!(rel), json!(why)]));
