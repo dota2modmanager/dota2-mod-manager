@@ -28,7 +28,7 @@ install: the commands that need a game build a throwaway one first (`npm run san
 |---|---|---|---|
 | Every threat the project knows about has an answer and a test | [docs/assurance-case.md](assurance-case.md), a claim per threat with the test that holds it | Tests | read it, then run the tests it names |
 | The window can only ask the main process for what the UI offers | `crates/mm-core/src/owner/channel_args.rs` | Tests | `npm test` |
-| The packaged app cannot be run as plain Node or have a debugger attached | `build.electronFuses` in `package.json`, held by `src-tauri/tauri.conf.json` | Tests; the Update job runs the fused build | `npm test` |
+| The packaged app takes no debugger and no other browser from the environment | `webview_switch` in `src-tauri/src/main.rs`; the `tauri` crate is built without `devtools` | Tests (the shell's, on Windows) | `cargo test -p dota2-mod-manager` |
 | No known weakness pattern in the code | CodeQL; no open alerts on 2026-10-11 | CodeQL: "Analyse JavaScript and TypeScript", required | the Security tab |
 | The project follows OpenSSF practice | [Scorecard](https://scorecard.dev/viewer/?uri=github.com/dota2modmanager/dota2-mod-manager), [Best Practices silver](https://www.bestpractices.dev/projects/14721); [docs/openssf-answers.md](openssf-answers.md) has the answers given | Scorecard, weekly | the links |
 

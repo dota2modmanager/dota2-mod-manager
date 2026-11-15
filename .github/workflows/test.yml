@@ -120,9 +120,10 @@ jobs:
       # the Tauri shell, which nothing else compiles before the merge queue: a change to mm-core
       # that breaks it would pass every check here and fail only in the queue. Clippy needs the
       # page's folder to exist, not the page, so an empty one stands in for the UI build.
-      - name: Clippy on the shell
+      # the shell is Windows-only in what it holds (WebView2's switches, the uninstaller), so its tests run here
+      - name: Clippy and tests on the shell
         shell: bash
-        run: mkdir -p out/renderer-tauri && cargo clippy -p dota2-mod-manager --all-targets -- -D warnings
+        run: mkdir -p out/renderer-tauri && cargo clippy -p dota2-mod-manager --all-targets -- -D warnings && cargo test -p dota2-mod-manager
 
       - name: Run tests
         run: npm test

@@ -86,14 +86,14 @@ and no web contents may open a window, attach a webview or leave the app's pages
 list of hostile ones does not, no check throws on any input), and the
 window e2e, which fails on any call the guard refused.
 
-**Somebody else borrowing the app.** An Electron executable runs as plain Node when an environment
-variable asks it to, loads code named in `NODE_OPTIONS`, and opens a debugger on `--inspect`; for a
-program people download, each is a way for something else on the machine to run its own code
-under this app's name. The packaged app has all three switched off in the binary with Electron's
-fuses, refuses an `app.asar` changed after the build, and will not load a loose folder in its place.
-*Check:* `src-tauri/tauri.conf.json` (the fuses, and that nothing in the app needs what they take
-away); the PR rehearsal `.github/workflows/tauri-handover.yml` and the release's install jobs run the fused
-build.
+**Somebody else borrowing the app.** WebView2, the browser the window runs in, takes switches
+from the environment: one opens a DevTools port, one loads a different browser, one attaches a
+script debugger. For a program people download, each is a way for something else on the machine
+to run its own code in a window that can write the game. A release build drops every `WEBVIEW2_`
+variable before the window exists. The `tauri` crate is built without its `devtools` feature, so
+the inspector is not in the binary, and the page is compiled into the executable, so there is no
+loose folder to swap. *Check:* `every_webview_switch_is_dropped_and_nothing_else` in
+`src-tauri/src/main.rs`, run with the shell's tests on every pull request.
 
 **Us, after the release.** The one thing this project can change on a machine without shipping a
 new version is `config/app.json`: a feature switched off, a notice, the beta list, a mirror. It

@@ -192,7 +192,23 @@ fn init_script() -> String {
     )
 }
 
+/// WebView2 takes switches from the environment: WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS opens a
+/// DevTools port, WEBVIEW2_BROWSER_EXECUTABLE_FOLDER loads another browser, and
+/// WEBVIEW2_PIPE_FOR_SCRIPT_DEBUGGER attaches a debugger. Any of them lets another program on the
+/// machine run its own code in the window, and the window can write the game. A release build
+/// drops them all; a checkout's build keeps them for tools/dev/tauri-shot.mjs.
+fn webview_switch(name: &std::ffi::OsStr) -> bool {
+    name.to_str().is_some_and(|n| n.to_ascii_uppercase().starts_with("WEBVIEW2_"))
+}
+
 fn main() {
+    if !cfg!(debug_assertions) {
+        // before any thread starts, so nothing reads the environment while it changes
+        let switches: Vec<_> = std::env::vars_os().map(|(k, _)| k).filter(|k| webview_switch(k)).collect();
+        for name in switches {
+            std::env::remove_var(name);
+        }
+    }
     let argv: Vec<String> = std::env::args().collect();
     // The bare exe is the portable build: its data lives beside it and it fetches a new version
     // beside itself rather than installing one (src/portable_update.rs). A checkout's build is not.
@@ -347,6 +363,20 @@ fn main() {
 mod tests {
     use super::*;
     use tauri::ipc::{InvokeResponseBody, IpcResponse};
+
+    #[test]
+    fn every_webview_switch_is_dropped_and_nothing_else() {
+        for name in [
+            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+            "webview2_browser_executable_folder",
+            "WEBVIEW2_PIPE_FOR_SCRIPT_DEBUGGER",
+        ] {
+            assert!(webview_switch(std::ffi::OsStr::new(name)), "{name}");
+        }
+        for name in ["PATH", "MM_SHOT", "XWEBVIEW2_X", "WEBVIEW2"] {
+            assert!(!webview_switch(std::ffi::OsStr::new(name)), "{name}");
+        }
+    }
 
     fn body(a: Answer) -> InvokeResponseBody {
         answer(a).unwrap().body().unwrap()
