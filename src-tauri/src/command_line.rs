@@ -43,6 +43,10 @@ pub fn run(argv: &[String], portable: Option<&std::path::Path>, ctx: &tauri::Con
     let user_data = user_data_dir(argv, portable, identifier);
     // a sandbox run is held to its folder here as in a window (src-tauri/src/main.rs setup)
     mm_core::write_jail::install(&mm_core::write_jail::from_argv(argv));
+    if let Err(e) = mm_core::write_jail::refuse_outside("user data", &user_data) {
+        io.err(&e);
+        return Some(cli::USAGE);
+    }
     let opts = mm_core::owner::Options {
         system_languages: (!user_data.join("settings.json").exists()).then(crate::backend::system_languages),
         user_data,
