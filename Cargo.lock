@@ -2456,6 +2456,8 @@ name = "mm-cli"
 version = "0.1.0"
 dependencies = [
  "mm-core",
+ "regex",
+ "serde",
  "serde_json",
  "sha1",
 ]

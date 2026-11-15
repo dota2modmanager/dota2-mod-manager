@@ -8,5 +8,7 @@ repository.workspace = true
 
 [dependencies]
 mm-core.workspace = true
+serde.workspace = true
 serde_json.workspace = true
+regex = "1"
 sha1 = "0.10"

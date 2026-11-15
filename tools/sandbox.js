@@ -22,11 +22,11 @@
  */
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const crypto = require('crypto');
 const { crc32 } = require('zlib');
+const { execFileSync } = require('child_process');
 
-const { readVpkEntryFile, buildVpk } = require('../src/vpk.ts');
-const { Catalog, RAW_BASE } = require('../src/catalog.ts');
 const { pinGamePath } = require('./sandbox-pin.js');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -47,9 +47,46 @@ const MAX_MODS = 14;
 const log = (...a) => console.log(...a);
 const mkdir = (p) => fs.mkdirSync(p, { recursive: true });
 
+/* The app's own code for everything that reads or writes a VPK or the table: mm-cli, the Rust
+ * core on the command line (crates/mm-cli). Built here the first time it is needed. */
+const MM_CLI = path.join(ROOT, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
+function mm(...args) {
+  if (!fs.existsSync(MM_CLI)) {
+    log('building mm-cli (cargo build -p mm-cli)');
+    execFileSync('cargo', ['build', '-p', 'mm-cli'], { cwd: ROOT, stdio: 'inherit' });
+  }
+  return JSON.parse(execFileSync(MM_CLI, args, { encoding: 'utf8', maxBuffer: 1 << 28 }));
+}
+
+/** A folder to stage a VPK's files in, at their paths inside it; `vpk-build` packs it. */
+function stage(name) {
+  return fs.mkdtempSync(path.join(os.tmpdir(), `mm-sandbox-${name}-`));
+}
+function writeJson(file, value) {
+  fs.writeFileSync(file, JSON.stringify(value));
+  return file;
+}
+function put(dir, rel, data) {
+  const to = path.join(dir, ...rel.split('/'));
+  mkdir(path.dirname(to));
+  fs.writeFileSync(to, data);
+}
+/** The staged folder packed into `out`, through a .new file so a failed build leaves the old one. */
+function pack(dir, out) {
+  mm('vpk-build', `${out}.new`, dir);
+  fs.renameSync(`${out}.new`, out);
+  fs.rmSync(dir, { recursive: true, force: true });
+}
+/** A spec.json for `mm-cli sandbox-assets`, written beside the staged folder. */
+function assets(pak, schemaFile, dir, spec) {
+  const file = `${dir}.spec.json`;
+  fs.writeFileSync(file, JSON.stringify(spec));
+  try { return mm('sandbox-assets', pak, schemaFile, dir, file); } finally { fs.rmSync(file, { force: true }); }
+}
+
 // ---------- files the fake game needs ----------
 
-// Valve's own SearchPaths block. src/patcher.ts reads this out of gameinfo.gi to build the
+// Valve's own SearchPaths block. The patcher (crates/mm-core/src/game/patcher.rs) reads this out of gameinfo.gi to build the
 // patched branch file, and the language line is what makes dota_<audio lang> mount at all
 // (measured 2026-07-30) - so it has to be verbatim, not paraphrased. Its key has been
 // Game_AudioLanguage since build 6946 (2026-10-07); the engine no longer reads Game_Language.
@@ -184,39 +221,9 @@ const BUILDER_SAMPLE = [
   'Compendium Rider of Avarice Helmet',
 ];
 
-/**
- * The files the item builder needs to build these items with any of its effects or the game's
- * unusual ones: what their visuals name and what a build copies, in compiled paths.
- */
-function itemAssets(ix, schemaText, names) {
-  const builder = require('../src/item-builder.ts');
-  const { offeredUnusual } = require('../src/item-builder-unusual.ts');
-  const compiled = (p) => { const c = String(p).toLowerCase().replace(/\\/g, '/'); return c.endsWith('_c') ? c : `${c}_c`; };
-  const effects = [null, ...builder.itemEffects().map((fx) => fx.id), ...offeredUnusual(schemaText, () => true).map((fx) => fx.id)];
-  const want = new Set();
-  const found = [];
-  for (const sl of builder.itemSlots(schemaText)) {
-    for (const o of sl.options.filter((x) => names.includes(x.name))) {
-      found.push(o.name);
-      for (const fx of effects) {
-        let built;
-        try { built = builder.itemEffectPatch(schemaText, o.id, fx); } catch { continue; }
-        for (const m of built.block.matchAll(/"((?:models|particles|materials)\/[^"]+\.(?:vmdl|vpcf|vmat|vtex))"/gi)) want.add(compiled(m[1]));
-        for (const c of built.assetCopies) { want.add(compiled(c.from)); want.add(compiled(c.to)); }
-      }
-    }
-  }
-  const out = [];
-  for (const rel of want) {
-    const data = ix.read(rel);
-    if (data) out.push(entry(rel, data));
-  }
-  return { entries: out, found: [...new Set(found)] };
-}
-
-/** `item`: the named items' files added to the sandbox's pak01, for building them in the app. */
+/** `item`: the named items' files added to the sandbox's pak01, for building them in the app, with
+ * every effect the item builder can put on them and the game's unusual ones. */
 function item() {
-  const { openVpkIndex, listVpkPathsFile } = require('../src/vpk.ts');
   const args = process.argv.slice(3);
   const at = args.indexOf('--game');
   const game = at === -1 ? GAME : path.resolve(args[at + 1]);
@@ -229,140 +236,15 @@ function item() {
     return;
   }
   const pak = path.join(game, 'dota', 'pak01_dir.vpk');
-  const own = openVpkIndex(pak);
-  const schemaText = own.read(SCHEMA_REL).toString('latin1');
-  const { entries, found } = itemAssets(openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk')), schemaText, names);
+  const dir = stage('item');
+  const had = mm('vpk-extract', pak, dir).length;
+  const { found } = assets(path.join(real, 'dota', 'pak01_dir.vpk'), path.join(dir, ...SCHEMA_REL.split('/')), dir, { items: names, unusual: true });
   const missing = names.filter((n) => !found.includes(n));
   if (missing.length) log('  not an item the builder offers:', missing.join(', '));
-  const have = new Set(listVpkPathsFile(pak));
-  const added = entries.filter((e) => !have.has(e.name === ' ' ? e.folder : `${e.folder}/${e.name}.${e.ext}`));
-  const kept = [...have].map((rel) => entry(rel, own.read(rel)));
-  fs.writeFileSync(`${pak}.new`, buildVpk([...kept, ...added]));
-  fs.renameSync(`${pak}.new`, pak);
-  log(`  ${added.length} files of ${found.join(', ') || 'nothing'} added to ${pak}`);
-}
-
-function builderAssets(real, schemaText) {
-  const { openVpkIndex } = require('../src/vpk.ts');
-  const builder = require('../src/item-builder.ts');
-  const out = [];
-  try {
-    const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
-    const want = new Set();
-    const slots = builder.itemSlots(schemaText);
-    // every hero the game has, not only those with items in this schema: the catalog's hero grid
-    // puts each in its attribute's column, and a hero without its script lands under "Other"
-    const { gameHeroIdsSteps } = require('../src/item-builder-details.ts');
-    const { drain } = require('../src/steps.ts');
-    for (const id of new Set([...slots.flatMap((sl) => sl.heroIds), ...drain(gameHeroIdsSteps(ix))])) {
-      want.add(`panorama/images/heroes/npc_dota_hero_${id}_png.vtex_c`);
-      want.add(`panorama/images/heroes/selection/npc_dota_hero_${id}_png.vtex_c`);
-      // the hero's script: its main attribute puts it in its group of the hub (src/item-builder-details.ts)
-      want.add(`scripts/npc/heroes/npc_dota_hero_${id}.txt`);
-    }
-    const compiled = (p) => { const c = String(p).toLowerCase().replace(/\\/g, '/'); return c.endsWith('_c') ? c : `${c}_c`; };
-    const effects = builder.itemEffects().map((fx) => fx.id);
-    for (const sl of slots) {
-      for (const o of sl.options.filter((x) => BUILDER_SAMPLE.includes(x.name))) {
-        for (const fx of effects) {
-          const built = builder.itemEffectPatch(schemaText, o.id, fx);
-          for (const m of built.block.matchAll(/"((?:models|particles|materials)\/[^"]+\.(?:vmdl|vpcf|vmat|vtex))"/gi)) want.add(compiled(m[1]));
-          for (const c of built.assetCopies) { want.add(compiled(c.from)); want.add(compiled(c.to)); }
-        }
-      }
-    }
-    for (const rel of want) {
-      const data = ix.read(rel);
-      if (data) out.push(entry(rel, data));
-    }
-  } catch (e) {
-    log('  could not copy the item builder\'s files:', e.message);
-  }
-  return out;
-}
-
-/* The game's text in the three languages the app speaks (dota_ and items_ of english, russian and
- * schinese): the names of styles, rarities and events, the sets' descriptions and the Chinese item
- * names are read out of these (src/cosmetic-names.ts gameTokens). About 28 MB. */
-function textAssets(real) {
-  const { openVpkIndex } = require('../src/vpk.ts');
-  const out = [];
-  try {
-    const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
-    for (const file of ['dota', 'items']) {
-      for (const lang of ['english', 'russian', 'schinese']) {
-        const rel = `resource/localization/${file}_${lang}.txt`;
-        const data = ix.read(rel);
-        if (data) out.push(entry(rel, data));
-      }
-    }
-  } catch (e) {
-    log('  could not copy the game\'s text files:', e.message);
-  }
-  return out;
-}
-
-/* The chat file of every language the game ships, which src/notice-text.ts builds the
- * anti-cheat notice on. Under half a kilobyte each. */
-function noticeAssets(real) {
-  const { openVpkIndex } = require('../src/vpk.ts');
-  const { DOTA_LANGUAGES } = require('../src/gamelang.ts');
-  const out = [];
-  try {
-    const ix = openVpkIndex(path.join(real, 'dota', 'pak01_dir.vpk'));
-    for (const lang of DOTA_LANGUAGES) {
-      const rel = `resource/localization/chat_${lang}.txt`;
-      const data = ix.read(rel);
-      if (data) out.push(entry(rel, data));
-    }
-  } catch (e) {
-    log('  could not copy the chat files:', e.message);
-  }
-  return out;
-}
-
-/* What the arcana window builds from (src/arcana.ts, src/recolor.ts): Terrorblade's particles and
- * materials, the arcana's models, its pictures and the plain ones they stand in for. About 450
- * files, a few MB, so the window shows its card in the sandbox and builds a real mod there. */
-function arcanaAssets(real) {
-  const { openVpkIndex, listVpkPathsFile } = require('../src/vpk.ts');
-  const { RECOLOR_SETS } = require('../src/recolor.ts');
-  const { ARCANA_SETS } = require('../src/arcana.ts');
-  const out = [];
-  try {
-    const pak = path.join(real, 'dota', 'pak01_dir.vpk');
-    const ix = openVpkIndex(pak);
-    const set = RECOLOR_SETS['terrorblade-arcana'];
-    const arcana = ARCANA_SETS['terrorblade-arcana'];
-    const prefixes = [...set.own, ...set.shared, ...set.materials];
-    const wanted = (p) => (/\.(vpcf_c|vmat_c)$/.test(p) && prefixes.some((f) => p.startsWith(f)))
-      || Object.values(arcana.models).some((m) => m.from === p) || Object.keys(arcana.models).includes(p)
-      || (p.startsWith('panorama/images/') && p.includes('terrorblade') && (p.includes('_alt1') || p.includes('arcana') || !p.includes('/econ/')));
-    for (const rel of listVpkPathsFile(pak).filter(wanted)) {
-      const data = ix.read(rel);
-      if (data) out.push(entry(rel, data));
-    }
-  } catch (e) {
-    log('  could not copy the arcana files:', e.message);
-  }
-  return out;
-}
-
-/** One inline-data VPK entry in the shape buildVpk() wants. */
-function entry(relPath, data) {
-  const norm = relPath.replace(/\\/g, '/').toLowerCase();
-  const slash = norm.lastIndexOf('/');
-  const file = slash === -1 ? norm : norm.slice(slash + 1);
-  const folder = slash === -1 ? ' ' : norm.slice(0, slash);
-  const dot = file.lastIndexOf('.');
-  return {
-    ext: dot === -1 ? ' ' : file.slice(dot + 1),
-    folder,
-    name: dot === -1 ? file : file.slice(0, dot),
-    data,
-    preload: Buffer.alloc(0),
-    crc: crc32(data) >>> 0,
-  };
+  const count = (d) => fs.readdirSync(d, { recursive: true, withFileTypes: true }).filter((e) => e.isFile()).length;
+  const added = count(dir) - had;
+  pack(dir, pak);
+  log(`  ${added} files of ${found.join(', ') || 'nothing'} added to ${pak}`);
 }
 
 // Minimal but structurally real items_game.txt, used only when the real game is not
@@ -428,7 +310,7 @@ function buildGameTree() {
      mode was on: the simulation's game session found that on 2026-09-24. Valve ships the file
      without it, so that is what the sandbox starts from. */
   const branchFile = path.join(GAME, 'dota', 'gameinfo_branchspecific.gi');
-  fs.writeFileSync(branchFile, require('../src/patcher.ts').stripPatch(fs.readFileSync(branchFile, 'latin1')), 'latin1');
+  mm('strip-patch', branchFile);
 
   /* The signature list, in the one place a real installation keeps one.
    *
@@ -447,37 +329,41 @@ function buildGameTree() {
   fs.writeFileSync(path.join(GAME, 'dota', 'steam.inf'), STEAM_INF);
   fs.writeFileSync(path.join(LIB, 'appmanifest_570.acf'), APPMANIFEST);
 
-  // game/dota/pak01_dir.vpk carrying the schema. Built with our own buildVpk, so the sandbox
-  // also exercises the writer: if buildVpk regresses, seeding fails loudly instead of later.
-  let schema = FALLBACK_SCHEMA;
+  // game/dota/pak01_dir.vpk carrying the schema. Built with the app's own writer (mm-cli
+  // vpk-build), so the sandbox also exercises it: if it regresses, seeding fails loudly.
+  const dir = stage('pak01');
+  const schemaFile = path.join(dir, ...SCHEMA_REL.split('/'));
   let origin = 'fallback stub';
+  let extras = 0;
   if (real) {
+    const realPak = path.join(real, 'dota', 'pak01_dir.vpk');
     try {
-      const hit = readVpkEntryFile(path.join(real, 'dota', 'pak01_dir.vpk'), SCHEMA_REL);
-      if (hit && hit.data.length) {
-        schema = hit.data.toString('latin1');
-        origin = `real game (${(hit.data.length / 1024 / 1024).toFixed(1)} MB)`;
-      }
+      const want = writeJson(`${dir}.want.json`, [SCHEMA_REL]);
+      try { mm('vpk-extract', realPak, dir, want); } finally { fs.rmSync(want, { force: true }); }
+      if (fs.existsSync(schemaFile) && fs.statSync(schemaFile).size) origin = `real game (${(fs.statSync(schemaFile).size / 1024 / 1024).toFixed(1)} MB)`;
     } catch (e) {
       log('  could not read the real schema, using the stub:', e.message);
     }
+    if (origin !== 'fallback stub') {
+      try {
+        extras = assets(realPak, schemaFile, dir, { items: BUILDER_SAMPLE, heroes: true, text: true, chat: true, arcana: true }).written;
+      } catch (e) {
+        log('  could not copy the item builder\'s, the notice\'s and the arcana\'s files:', e.message);
+      }
+    }
   }
-  const extras = real && origin !== 'fallback stub' ? [...builderAssets(real, schema), ...noticeAssets(real), ...textAssets(real), ...arcanaAssets(real)] : [];
-  fs.writeFileSync(
-    path.join(GAME, 'dota', 'pak01_dir.vpk'),
-    buildVpk([entry(SCHEMA_REL, Buffer.from(schema, 'latin1')), ...extras])
-  );
+  if (origin === 'fallback stub') put(dir, SCHEMA_REL, Buffer.from(FALLBACK_SCHEMA, 'latin1'));
+  pack(dir, path.join(GAME, 'dota', 'pak01_dir.vpk'));
   log(`  items_game.txt from ${origin}`);
-  if (extras.length) log(`  ${extras.length} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat and text files, Terrorblade)`);
+  if (extras) log(`  ${extras} files for the item builder, the anti-cheat notice and the arcana (portraits, sample wearables, effects, chat and text files, Terrorblade)`);
 
   // dota_russian: Valve's gameinfo plus stand-ins for the voice paks. langFolders() decides
   // "this folder holds Valve content" by the presence of pak01_*, and the 2.0 feature
   // "Russian folder, English voices" disables exactly pak01_dir.vpk - so both must exist.
   fs.writeFileSync(path.join(GAME, 'dota_russian', 'gameinfo.gi'), LANG_GAMEINFO('russian'));
-  fs.writeFileSync(
-    path.join(GAME, 'dota_russian', 'pak01_dir.vpk'),
-    buildVpk([entry('sounds/vo/announcer_placeholder.vsnd_c', Buffer.from('sandbox voice-over stand-in'))])
-  );
+  const voice = stage('voice');
+  put(voice, 'sounds/vo/announcer_placeholder.vsnd_c', Buffer.from('sandbox voice-over stand-in'));
+  pack(voice, path.join(GAME, 'dota_russian', 'pak01_dir.vpk'));
   fs.writeFileSync(path.join(GAME, 'dota_russian', 'pak01_000.vpk'), Buffer.alloc(1024, 0x5a));
 
   if (copied.length) log('  copied from the real install:', copied.join(', '));
@@ -510,9 +396,8 @@ function snapshotPristine() {
 
 async function downloadMods() {
   mkdir(MODS);
-  const catalog = new Catalog(USERDATA);
-  log('fetching the catalog from', RAW_BASE);
-  const data = await catalog.load({ forceRefresh: true });
+  log('fetching the catalog');
+  const { rawBase: RAW_BASE, data } = mm('catalog-load', USERDATA);
   const byCategory = data.mods?.modsData || {};
 
   const wanted = [];

@@ -2,6 +2,7 @@
 //! prints JSON the test compares with what the TypeScript module answers for the same input.
 
 mod owner_wire;
+mod sandbox_assets;
 
 use std::path::Path;
 use std::process::ExitCode;
@@ -61,6 +62,49 @@ fn run(args: &[String]) -> Result<Value, String> {
         // a single-file VPK from a folder (every file under it, at its path inside the folder) or
         // from a list.json of [path inside the VPK, file on disk] pairs; the sandbox and the test
         // fixtures build theirs this way
+        // files of a VPK written to a folder at their paths inside it: every file, or those a
+        // paths.json lists; prints the paths written
+        "vpk-extract" => {
+            let index = vpk::Index::open(Path::new(arg(1)?)).map_err(e)?;
+            let out = Path::new(arg(2)?);
+            let wanted: Vec<String> = match args.get(3) {
+                Some(list) => serde_json::from_str(&std::fs::read_to_string(list).map_err(|x| x.to_string())?)
+                    .map_err(|x| x.to_string())?,
+                None => index.paths().map(String::from).collect(),
+            };
+            let mut written = Vec::new();
+            for rel in &wanted {
+                if let Some(data) = index.read(rel).map_err(e)? {
+                    let to = out.join(rel);
+                    if let Some(dir) = to.parent() {
+                        std::fs::create_dir_all(dir).map_err(|x| x.to_string())?;
+                    }
+                    std::fs::write(&to, data).map_err(|x| x.to_string())?;
+                    written.push(rel.clone());
+                }
+            }
+            Ok(json!(written))
+        }
+        // the files the sandbox copies out of the real game (sandbox_assets.rs)
+        "sandbox-assets" => {
+            sandbox_assets::run(Path::new(arg(1)?), Path::new(arg(2)?), Path::new(arg(3)?), Path::new(arg(4)?))
+        }
+        // the catalog fetched fresh into <user data>/catalog-cache, as the app fetches it, and where
+        // its files are served from
+        "catalog-load" => {
+            let catalog =
+                mm_core::catalog::Catalog::new(Path::new(arg(1)?), None, None, Box::new(mm_core::net_fetch::now_ms));
+            let data = catalog.load(&mm_core::net_fetch::Net::default(), true)?;
+            Ok(json!({ "rawBase": mm_core::catalog::RAW_BASE, "data": data }))
+        }
+        // a gameinfo_branchspecific.gi with this app's search path taken out, in place
+        "strip-patch" => {
+            let file = Path::new(arg(1)?);
+            let text = mm_core::kv::latin1(&std::fs::read(file).map_err(|x| x.to_string())?);
+            std::fs::write(file, mm_core::kv::to_latin1(&mm_core::patcher_gameinfo::strip_patch(&text)))
+                .map_err(|x| x.to_string())?;
+            Ok(Value::Null)
+        }
         "vpk-build" => {
             let out = Path::new(arg(1)?);
             let entries = build_entries(Path::new(arg(2)?))?;
