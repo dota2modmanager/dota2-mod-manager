@@ -43,6 +43,11 @@ jobs:
 
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build mm-cli
         run: cargo build -p mm-cli
 
@@ -105,6 +110,11 @@ jobs:
 
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build mm-cli
         run: cargo build -p mm-cli
 
