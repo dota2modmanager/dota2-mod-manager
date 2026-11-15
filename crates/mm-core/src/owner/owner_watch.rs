@@ -273,4 +273,91 @@ mod tests {
         drop(o);
         let _ = std::fs::remove_dir_all(ud);
     }
+
+    /// A Dota update that reaches a mod the app built out of the game's files: the mod is built
+    /// again rather than reported, and keeps no mark. Without the rebuild handed to the repair it
+    /// stayed marked and named in the banner, and nothing built it again.
+    #[test]
+    fn a_patch_reaching_a_mod_the_app_built_builds_it_again_and_leaves_no_mark() {
+        let ud = std::env::temp_dir().join(format!("mm-owner-rebuilt-{}", uuid::Uuid::new_v4().simple()));
+        let game = ud.join("game");
+        let dota = game.join("dota");
+        std::fs::create_dir_all(&dota).unwrap();
+        let gameinfo = "\"GameInfo\"\n{\n\tFileSystem\n\t{\n\t\tSearchPaths\n\t\t{\n\t\t\tGame\t\tdota\n\t\t\tMod\t\tdota\n\t\t}\n\t}\n}\n";
+        std::fs::write(dota.join("gameinfo.gi"), gameinfo).unwrap();
+        std::fs::write(
+            dota.join("gameinfo_branchspecific.gi"),
+            "\"GameInfo\"\r\n{\r\n\tFileSystem\r\n\t{\r\n\t\tSteamAppId\t\t570\r\n\t}\r\n}\r\n",
+        )
+        .unwrap();
+        const LAYOUT: &str = "panorama/layout/hud/hud.vxml_c";
+        let pak = |layout: &[u8]| {
+            let table: crate::vpk::Bytes = b"\"items_game\"\n{\n}\n".to_vec().into();
+            crate::vpk::build(&[
+                crate::vpk::entry_at(crate::schema::SCHEMA_REL, table),
+                crate::vpk::entry_at(LAYOUT, layout.to_vec().into()),
+            ])
+        };
+        std::fs::write(dota.join("pak01_dir.vpk"), pak(b"before")).unwrap();
+        let settings =
+            json!({ "dotaGamePath": game.to_string_lossy(), "gameStamp": crate::patch_watch::game_stamp(Some(&game)) });
+        std::fs::write(ud.join("settings.json"), settings.to_string()).unwrap();
+        let told = Arc::new(Told::default());
+        let o = Owner::start(
+            Options {
+                user_data: ud.clone(),
+                app_version: "9.9.9".into(),
+                app_root: ud.clone(),
+                downloads: ud.clone(),
+                uninstall: false,
+                system_languages: None,
+                find_game: Box::new(|| None),
+                dota_running: Box::new(|| false),
+                now,
+            },
+            told.clone(),
+        );
+        // the HUD layout the app built: its own pak in the language folder, over the game's layout
+        let id = {
+            let mut c = o.core();
+            let folder = c.installer.lang_folder().unwrap();
+            std::fs::create_dir_all(&folder).unwrap();
+            let mine = crate::vpk::build(&[crate::vpk::entry_at(LAYOUT, b"ours".to_vec().into())]);
+            std::fs::write(folder.join("pak60_dir.vpk"), mine).unwrap();
+            let rec = json!({ "name": "HUD layout", "files": [{ "root": "lang", "relPath": "pak60_dir.vpk" }] });
+            let made = c.library.add(&rec, None).unwrap();
+            c.library.update(&made["id"], &json!({ "generated": { "hud": 1.2 } }), None).unwrap();
+            crate::js::string(&made["id"])
+        };
+        // the first look takes note of the game as it is
+        crate::owner_game::repair_after_patch(&o, json!("manual"));
+        o.take_log();
+        told.0.lock().unwrap().clear();
+        // the update: the layout the mod replaces is a different file now
+        std::fs::write(dota.join("pak01_dir.vpk"), pak(b"after the patch")).unwrap();
+        crate::owner_game::repair_after_patch(&o, json!("manual"));
+        let mut log = o.take_log();
+        assert!(log.iter().any(|l| l.contains("reached 1 mod(s): HUD layout")), "{log:?}");
+        let sent: Vec<Value> =
+            told.0.lock().unwrap().iter().filter(|(ch, _)| ch == "patch-repair").map(|(_, v)| v.clone()).collect();
+        assert_eq!(sent.len(), 1, "{sent:?}");
+        assert!(sent[0].get("touched").is_none(), "a mod built again is not in the banner: {sent:?}");
+        let marks = {
+            let c = o.core();
+            let mods = crate::update_impact::impact_mods(c.library.list(), &|r| {
+                c.installer.lang_file_on_disk(r).unwrap_or_default()
+            });
+            c.impact().marked(&mods)
+        };
+        assert!(!marks.contains_key(&id), "{marks:?}");
+        // the build itself runs behind the repair
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+        while !log.iter().any(|l| l.starts_with("hud layout:")) && std::time::Instant::now() < deadline {
+            std::thread::sleep(std::time::Duration::from_millis(50));
+            log.extend(o.take_log());
+        }
+        assert!(log.iter().any(|l| l.starts_with("hud layout:")), "the layout was built again: {log:?}");
+        drop(o);
+        let _ = std::fs::remove_dir_all(ud);
+    }
 }
