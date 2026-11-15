@@ -53,6 +53,37 @@ fn run(args: &[String]) -> Result<Value, String> {
             let buf = std::fs::read(arg(1)?).map_err(|x| x.to_string())?;
             Ok(json!(vpk::fingerprint_vpk(&buf).map_err(e)?))
         }
+        // a mod's VPK as tools/gen-fingerprints.js keeps it: its fingerprint, what kind of mod
+        // it is, the heroes it is about, and its paths sorted
+        "vpk-analyze" => {
+            let buf = std::fs::read(arg(1)?).map_err(|x| x.to_string())?;
+            let fp = vpk::fingerprint_vpk(&buf).map_err(e)?;
+            let mut paths = vpk::list_paths(&buf).map_err(e)?;
+            let a = mm_core::vpk_analyze::analyze_vpk_paths(&paths);
+            let subjects: Vec<Value> = mm_core::vpk_analyze::subject_heroes(&a)
+                .into_iter()
+                .map(|h| json!({ "id": h.id, "name": h.name, "slots": h.slots, "models": h.models }))
+                .collect();
+            paths.sort();
+            Ok(json!({ "fp": fp, "kind": a.kind, "subjects": subjects, "paths": paths }))
+        }
+        // where the catalog's files are served from
+        "catalog-base" => Ok(json!(mm_core::catalog::RAW_BASE)),
+        // a loose-file mod's fingerprint, from a list.json of [path in the mod, file] pairs
+        // relative to the list
+        "files-fingerprint" => {
+            let list_file = Path::new(arg(1)?);
+            let list: Vec<(String, String)> =
+                serde_json::from_str(&std::fs::read_to_string(list_file).map_err(|x| x.to_string())?)
+                    .map_err(|x| x.to_string())?;
+            let base = list_file.parent().unwrap_or(Path::new(""));
+            let data = list
+                .iter()
+                .map(|(rel, f)| std::fs::read(base.join(f)).map(|d| (rel.clone(), d)).map_err(|x| x.to_string()))
+                .collect::<Result<Vec<_>, _>>()?;
+            let files: Vec<(String, &[u8])> = data.iter().map(|(p, d)| (p.clone(), d.as_slice())).collect();
+            Ok(json!(vpk::fingerprint_files(&files)))
+        }
         // read every entry and build a single file again: the TypeScript mergeVpkToSingle
         "vpk-merge" => {
             let out = vpk::merge_to_single(Path::new(arg(1)?)).map_err(e)?;
