@@ -1,5 +1,5 @@
 {
-  "count": 1945,
+  "count": 1949,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -394,6 +394,7 @@
     "3471ed0b7688a141c75cb1e5978f17aef95d977a": [{"name":"Pudgling","categoryId":"couriers","styleLabel":"Style II","type":"vpk"}],
     "34b9c4da0d24e97e225993d06cb1aae82bac67a8": [{"name":"Sven Blue Angel","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "35188b5ade1d929095dd7771f81f42c2f55edff5": [{"name":"Purple Electric River","categoryId":"river","styleLabel":null,"type":"vpk"}],
+    "353283a4793080406d0abffa6ae7c80fac2a1afc": [{"name":"Phantom Lancer Arima","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "35347ff74bd6f8588f5a3bb059e819b17ff01180": [{"name":"Techies Frostbloom Weapon","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "353884bb14fd96a324a4454033cd02a9efd4862e": [{"name":"Winter 2016 Euls Scepter","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "35414a7bd4a0738110f79bd23a85e900eec7128c": [{"name":"Undying Grim Reformation","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -436,6 +437,7 @@
     "3a0ab58a00fd74914bc6e736643728b8f040f510": [{"name":"Rose Lycoris Mode Cards","categoryId":"parts","styleLabel":null,"type":"vpk"}],
     "3a19b38cc0d40af5045f4bf63c4c633cf2ec00fb": [{"name":"Purple Hud","categoryId":"huds","styleLabel":null,"type":"vpk"}],
     "3a2c5fc06816e54e5ddba3baeea9abe3ab11a4ac": [{"name":"Silencer Whispered Wing","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "3a4e1a3d77602dad9bcc649589c74047317ccf8d": [{"name":"Selfie Kafka Dc","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "3ac5c498d4e31e2456a69f824964c7f0403862b2": [{"name":"LowPoly Shrub Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
     "3acb74a094d9f2d7527e0657b3e60052f90b0bcc": [{"name":"Drow Ranger Pedestal","categoryId":"pedestal","styleLabel":null,"type":"vpk"}],
     "3aceda5f965a41981927fd1cd1c29d75b6d0f5a6": [{"name":"Sven Indomitable Legacy","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
@@ -922,6 +924,7 @@
     "7ae45a7779350dc298e211d349545548aff8197d": [{"name":"Cosmic Alchemist","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7aeac51d30668476bfc83a25154f971eea0b52d2": [{"name":"TI7 Blink Dagger II","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "7af0ebc0d930b66131e5ccf7599e8c60a1739a7a": [{"name":"Crystal Maiden Cirno","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
+    "7b405d5180f220e9016e97f1534d59f8560ea2a2": [{"name":"Jakiro Layn Dlya Krutix","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7b60c09196867cb67203c950d2264e146614663d": [{"name":"Invoker Never","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7b858d0ba59cce832eaeb4b29086f2b1ccb39b2f": [{"name":"Golden Flopjaw the Boxhound","categoryId":"couriers","styleLabel":null,"type":"vpk"}],
     "7ba98f44563fda726a2d32a10c0c4d1c1e6ff812": [{"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"type":"vpk"}],
@@ -1806,6 +1809,7 @@
     "eec0cffa9acaf172c2c29ba1373789fd5c198e2c": [{"name":"Faceless Void Arcana","categoryId":"heroes","styleLabel":"Style II","type":"vpk"}],
     "eef896b29e6b2b026ce69451dacc163fe13409ba": [{"name":"Shadow Fiend Arcana Fixv1","categoryId":"hero-icons","styleLabel":null,"type":"vpk"}],
     "ef0d53c2cb52df75fd6b5d6180e32255bc6fce37": [{"name":"Doom Widged 0.1","categoryId":"parts","styleLabel":null,"type":"vpk"}],
+    "ef2f1b760c5d3e78151aaf568bd23f1a68a5db91": [{"name":"Inbossik Invoker","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "ef47863e18d52292d4869a2f9dc3a29d55f61fed": [{"name":"Witch Doctor Death Ward","categoryId":"hero-sounds","styleLabel":null,"type":"vpk"}],
     "ef4dc52a40ffe51c7cc440b6ed628a5f7e6fb94e": [{"name":"Girl Resting Under Tree","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "ef89b663b6803951c64f3849bbe293c820ac4837": [{"name":"Primal Beast Frostbloom","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],

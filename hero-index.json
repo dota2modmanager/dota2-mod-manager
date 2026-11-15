@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1796,
+  "mods": 1799,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -781,6 +781,7 @@
         {"name":"Avice Aura Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Chaos Invoker","categoryId":"heroes","styleLabel":null,"slots":["shoulder","arms","head","back","belt","misc"]},
         {"name":"Ice Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
+        {"name":"Inbossik Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Invoker Blackguard Magus","categoryId":"heroes","styleLabel":null,"slots":["shoulder","head","misc","back","arms"]},
         {"name":"Invoker Blood","categoryId":"heroes","styleLabel":"Style I","slots":["misc","arms","back","head","shoulder","belt"]},
         {"name":"Invoker Blood","categoryId":"heroes","styleLabel":"Style II","slots":["misc","arms","back","head","shoulder","belt"]},
@@ -843,6 +844,7 @@
         {"name":"Immortal Jakiro","categoryId":"heroes","styleLabel":null,"slots":["wings"]},
         {"name":"Jakiro Himera","categoryId":"heroes","styleLabel":null,"slots":["wings","misc"]},
         {"name":"Jakiro Kiyohime","categoryId":"heroes","styleLabel":null,"slots":["wings","head","tail","back","misc"]},
+        {"name":"Jakiro Layn Dlya Krutix","categoryId":"heroes","styleLabel":null,"slots":["wings","head","tail"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -1464,6 +1466,7 @@
         {"name":"Crimson Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Immortal Phantom Lancer","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Ame","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon","arms"]},
+        {"name":"Phantom Lancer Arima","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Black","categoryId":"heroes","styleLabel":null,"slots":["belt","misc","head","shoulder","weapon"]},
         {"name":"Phantom Lancer Concord Dominion","categoryId":"hero-items","styleLabel":null,"slots":["shoulder"]},
         {"name":"Phantom Lancer Concord Revers","categoryId":"hero-items","styleLabel":null,"slots":["head"]},

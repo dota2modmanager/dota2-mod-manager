@@ -2656,6 +2656,7 @@
     {
       "id": "backgrounds",
       "mods": [
+        {"name":"Selfie Kafka Dc","styleLabel":null,"group":null,"image":{"src":"/mods/selfie-kafka-dc.webp","width":854,"height":480},"author":"qoofix","authorUrl":"https://qoofix.ru","date":1794708399},
         {
           "name": "Cloud Vs Sephiroth By Siriusz",
           "styleLabel": null,
