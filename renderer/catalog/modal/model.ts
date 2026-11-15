@@ -1,6 +1,7 @@
 /* What the mod window shows, worked out by views/catalog/mod-window.ts and drawn by ModModal.tsx. */
 import type { Mod, ModStyle } from '../types.ts';
 import type { ModState } from './status.ts';
+import type { ModStage } from './stage.ts';
 
 export interface PackMember {
   name: string;
@@ -41,6 +42,10 @@ export interface ModModalModel {
   issue: string | null;
   /** what keeps an installed mod out of the game, or changes it there (status.ts) */
   states: ModState[];
+  /** the hero in 3D beside the window, for a hero's or a hero item's mod (stage.ts) */
+  stage: ModStage | null;
+  /** who made it: the first author, with how many mods of theirs the catalog has, and in this category */
+  creator: { name: string; mods: number; here: number } | null;
 }
 
 export interface ModModalActions {
@@ -63,4 +68,6 @@ export interface ModModalActions {
   openExtraLink: (index: number) => void;
   bindCredits: (el: HTMLElement) => void;
   bindGuides: (el: HTMLElement) => void;
+  /** this category narrowed to the author's mods */
+  showAuthor: (name: string) => void;
 }

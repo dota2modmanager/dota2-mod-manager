@@ -127,9 +127,7 @@ contextBridge.exposeInMainWorld('api', {
     pickSet: (setId, style) => ipcRenderer.invoke('cosmetics:pickSet', setId, style),
     wearLook: (hero, picks) => ipcRenderer.invoke('cosmetics:wearLook', hero, picks),
   },
-  // the arcana built out of the game's own files, in a colour of the user's
-  // towers and trees from the game's own looks, per side
-  // the item builder's 3D preview: the hero's models out of the game
+  // the 3D preview: the hero's models out of the game, or a catalog mod's files over them
   preview3d: {
     warm: (hero, slots) => ipcRenderer.invoke('preview3d:warm', hero, slots),
     prefetch: (hero, slots, slot, items) => ipcRenderer.invoke('preview3d:prefetch', hero, slots, slot, items),
@@ -137,6 +135,8 @@ contextBridge.exposeInMainWorld('api', {
     motions: (body) => ipcRenderer.invoke('preview3d:motions', body).then(wholeAnswer),
     effect: (id) => ipcRenderer.invoke('preview3d:effect', id).then(wholeAnswer),
     model: (file) => ipcRenderer.invoke('preview3d:model', file).then(wholeAnswer),
+    modHero: (category, file, hint) => ipcRenderer.invoke('preview3d:modHero', category, file, hint),
+    modModels: (category, file, hero, slots) => ipcRenderer.invoke('preview3d:modModels', category, file, hero, slots).then(wholeAnswer),
   },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),

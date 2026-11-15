@@ -52,11 +52,18 @@ export interface Preview3dApi {
   model: (file: string) => Promise<Uint8Array | null>;
   /** every clip of a body, without its pictures, as GLB bytes; null without the game or the toolchain */
   motions: (body: string) => Promise<Uint8Array | null>;
-  models: (hero: string, slots: PreviewSlot[]) => Promise<
+  /** the hero a catalog mod is for (its archive downloaded and unpacked the first time), by its files or else by `hint`, its name */
+  modHero: (category: string, file: string, hint: string) => Promise<{ hero?: string | null; error?: string }>;
+  /** the hero in these slots' stock items with the catalog mod's files over the game's, as models answers */
+  modModels: (category: string, file: string, hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>;
+  models: (hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>;
+}
+
+/** What the stage is drawn from: the hero's models, or why there are none. */
+export type ModelsAnswer =
     | {
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
       parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];
       attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources;
     }
-    | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body'; error?: string }>;
-}
+    | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body' | 'no-mod'; error?: string };

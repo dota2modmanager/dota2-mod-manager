@@ -9,22 +9,52 @@ import { flatColor } from '../colors.ts';
 import { ModActions } from './ModActions.tsx';
 import { PackList } from './PackList.tsx';
 import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
+import { ModStage } from './ModStage.tsx';
+import { Creator } from './Creator.tsx';
 
 export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalActions }) {
   const favLabel = m.fav ? L`Убрать из избранного` : L`В избранное`;
+  const picture = <Media key={m.mediaUrl || ''} url={m.mediaUrl} autoplay fallbackIcon={m.fallbackIcon} />;
+  const close = (
+    <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}>
+      <span className="ms">close</span>
+    </button>
+  );
+  const play = m.playable && (
+    <button className="preview-toggle" id="previewPlayBtn" onClick={actions.playPreview}>
+      <span className="ms">play_circle</span>{L`Смотреть превью`}
+    </button>
+  );
+  // a hero's mod: the hero in 3D on the left, all the rest beside it; its picture is the stage's until the hero comes
+  if (m.stage) {
+    return (
+      <div className="modal-split">
+        <div className="modal-stage">
+          <ModStage key={`${m.stage.category}|${m.stage.file}`} stage={m.stage} picture={<div className="modal-stage-picture">{picture}</div>} />
+        </div>
+        <div className="modal-side">
+          {close}
+          <Info m={m} actions={actions} favLabel={favLabel} />
+          {play}
+        </div>
+      </div>
+    );
+  }
   return (
     <>
       <div className="modal-media">
-        <Media key={m.mediaUrl || ''} url={m.mediaUrl} autoplay fallbackIcon={m.fallbackIcon} />
-        <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}>
-          <span className="ms">close</span>
-        </button>
-        {m.playable && (
-          <button className="preview-toggle" id="previewPlayBtn" onClick={actions.playPreview}>
-            <span className="ms">play_circle</span>{L`Смотреть превью`}
-          </button>
-        )}
+        {picture}
+        {close}
+        {play}
       </div>
+      <Info m={m} actions={actions} favLabel={favLabel} />
+    </>
+  );
+}
+
+function Info({ m, actions, favLabel }: { m: ModModalModel; actions: ModModalActions; favLabel: string }) {
+  return (
+    <>
       <div className="modal-body">
         <div className="modal-title-row">
           <div className="modal-title" title={m.mod.name}>{catalogName(m.mod.name)}</div>
@@ -70,6 +100,7 @@ export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalAc
             ))}
           </div>
         )}
+        {m.creator && <Creator c={m.creator} onAll={() => actions.showAuthor(m.creator!.name)} />}
         {m.issue && <div className="modal-note warn" role="note"><b>{L`Известная проблема`}:</b> {m.issue}</div>}
         {m.note && <div className="modal-note">{m.note}</div>}
       </div>

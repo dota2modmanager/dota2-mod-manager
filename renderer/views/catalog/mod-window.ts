@@ -19,10 +19,12 @@ import { redrawScreen } from '../../catalog/screen/root.tsx';
 import { showModModal } from '../../catalog/modal/root.tsx';
 import type { ModModalModel } from '../../catalog/modal/model.ts';
 import type { Mod } from '../../catalog/types.ts';
-import { customPacks, saveCustomPacks } from './lists.ts';
+import { categoryMods, customPacks, saveCustomPacks } from './lists.ts';
+import { modStage } from '../../catalog/modal/stage.ts';
+import { creatorOf } from '../../catalog/modal/creator-of.ts';
 import { doInstall, installPack, onInstalling, packMemberName } from './install.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
-import { installing, screen } from './state.ts';
+import { installing, remember, screen, view } from './state.ts';
 import { modIssue } from '../../ui/notice.ts';
 import { catalogOnShow, switchView } from '../../core/router.ts';
 import { modStates } from '../../catalog/modal/status.ts';
@@ -118,6 +120,8 @@ function drawModal(): void {
     note: NOTE[categoryId]?.() ?? null,
     issue: modIssue(categoryId, mod.name),
     states: categoryId === 'tools' ? [] : modStates(installedRec),
+    stage: modStage(categoryId, mod, target),
+    creator: categoryId === 'tools' || isPack ? null : creatorOf(mod, [...state.modIndex.values()].map((x) => x.mod), categoryMods(categoryId)),
   };
 
   showModModal(model, {
@@ -184,6 +188,12 @@ function drawModal(): void {
     },
     bindCredits: (el) => bindCreditChips(el, credits, (url: string) => window.api.misc.openExternal(url)),
     bindGuides: (el) => bindGuides(el),
+    showAuthor: (name) => {
+      view.filters.author = name;
+      remember({ author: name });
+      closeOverlay();
+      void screen.redraw();
+    },
   });
 }
 

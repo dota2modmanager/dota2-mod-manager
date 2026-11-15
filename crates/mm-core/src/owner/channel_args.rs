@@ -521,6 +521,16 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
                     ),
                 ],
             ),
+            ("preview3d:modHero", vec![str_(40, 1), str_(200, 1), str_(200, 0)]),
+            (
+                "preview3d:modModels",
+                vec![
+                    str_(40, 1),
+                    str_(200, 1),
+                    str_(80, 1),
+                    list(shape(vec![("slot", str_(120, 1)), ("stock", str_(20, 1))]), 40),
+                ],
+            ),
             ("preview3d:slice", vec![num(1.0, 9007199254740991.0), num(0.0, 9007199254740991.0)]),
             ("preview3d:motions", vec![str_(200, 1)]),
             ("preview3d:effect", vec![str_(200, 1)]),

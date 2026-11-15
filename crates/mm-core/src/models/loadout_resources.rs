@@ -19,6 +19,12 @@ pub trait Exporter {
     fn glbs(&self, models: &[String], clips: &Clips, materials: bool) -> IndexMap<String, Option<PathBuf>>;
     /// None where this exporter makes no pictures.
     fn sprites(&self, textures: &[String]) -> Option<IndexMap<String, Option<Vec<u8>>>>;
+    /// Whether a texture is one this exporter brings over the game's (a catalog mod's, mod_look.rs).
+    /// The toolchain packs a model's colour into its GLB from the game's file of the same name,
+    /// so a recolour's own colour has to be handed in beside it.
+    fn own(&self, _texture: &str) -> bool {
+        false
+    }
 }
 
 impl Exporter for ModelGlb {
@@ -269,6 +275,11 @@ fn roles(recover_color: bool) -> Vec<(&'static str, &'static str)> {
     r
 }
 
+/// Whether a material's colour goes in beside the GLB: the GLB has none, or the exporter brings its own.
+fn recover(row: &Prepared, path: &str, m: &NativeMaterial, glb: &dyn Exporter) -> bool {
+    row.missing_color.contains(path) || texture(m, "g_tColor").is_some_and(|t| glb.own(&plain(t)))
+}
+
 fn texture<'a>(m: &'a NativeMaterial, key: &str) -> Option<&'a String> {
     m.textures.get(key).filter(|t| !t.is_empty())
 }
@@ -367,7 +378,7 @@ pub fn loadout_models(
     let mut wanted: Vec<String> = Vec::new();
     for row in prepared.iter().flatten() {
         for (path, m) in &row.materials {
-            for (_, k) in roles(row.missing_color.contains(path)) {
+            for (_, k) in roles(recover(row, path, m, glb)) {
                 if let Some(t) = texture(m, k) {
                     let t = plain(t);
                     if !wanted.contains(&t) {
@@ -385,7 +396,7 @@ pub fn loadout_models(
             let mut mats = Map::new();
             for (path, m) in &row.materials {
                 let mut images = Map::new();
-                for (field, k) in roles(row.missing_color.contains(path)) {
+                for (field, k) in roles(recover(&row, path, m, glb)) {
                     if let Some(bytes) = texture(m, k).and_then(|t| pictures.get(&plain(t)).cloned().flatten()) {
                         let data = base64::engine::general_purpose::STANDARD.encode(bytes);
                         images.insert(field.into(), json!({ "mime": "image/png", "data": data }));
