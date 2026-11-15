@@ -748,15 +748,16 @@ one go before the window opened; the build in the background still held the thre
 second at a time. With many items picked the window stayed black
 ([#286](https://github.com/dota2modmanager/dota2-mod-manager/issues/286)).
 
-Long work in the main process is now a generator that pauses every few dozen milliseconds
-(`crates/mm-core/src/schema/background_builds.rs`): run at once with `drain` where the caller needs the answer before it returns,
+Long work in the main process became a generator that paused every few dozen milliseconds: run at once with `drain` where the caller needs the answer before it returns,
 or a step at a time with the rest of the app let in between. The item table, the game's index,
 the list of free looks and the check of a built table all work this way. Measured on the installed
 game with 60 picks and six arcana bases, the longest stretch is 0.27 s, one arcana's model with no
 base; the cold list of free looks at start holds it for 0.08 s.
 
-*Check:* `node --test test/schema-service.test.ts` (the tests under "building in the background"
-and "the window first, the table behind it"), and `crates/mm-core/src/schema/background_builds.rs`.
+Since the Rust core, a build runs on a worker thread instead, and the window's thread never waits
+on it.
+
+*Check:* `refresh_schema_in_background` in `crates/mm-core/src/owner/mod.rs`.
 
 ### No macOS build, and the Linux one is young
 

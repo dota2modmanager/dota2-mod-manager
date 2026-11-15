@@ -128,6 +128,11 @@ fn data_uri(file: &Path) -> Option<String> {
     Some(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(b)))
 }
 
+/// Where the previews are cached: what the cache size counts and removing the tools empties.
+pub fn dir(user_data: &Path) -> PathBuf {
+    user_data.join("icons").join("mods")
+}
+
 /// Pictures for mods that came with none, cached in userData.
 pub struct ModPreviews {
     pub root: PathBuf,
@@ -148,7 +153,7 @@ impl ModPreviews {
         run: Run,
         log: Box<dyn Fn(&str) + Send + Sync>,
     ) -> Self {
-        Self { root: user_data.join("icons").join("mods"), vrf, lang_file_of, images, run, log }
+        Self { root: dir(user_data), vrf, lang_file_of, images, run, log }
     }
 
     pub fn ready(&self) -> bool {
@@ -318,14 +323,6 @@ impl ModPreviews {
         })();
         let _ = std::fs::remove_file(&tmp);
         kept
-    }
-
-    pub fn size(&self) -> u64 {
-        crate::folder_size::folder_size(&self.root)
-    }
-
-    pub fn clear(&self) {
-        let _ = std::fs::remove_dir_all(&self.root);
     }
 }
 

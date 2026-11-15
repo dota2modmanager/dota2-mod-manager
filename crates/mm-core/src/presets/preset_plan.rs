@@ -103,14 +103,6 @@ impl CatalogIndex {
     fn has(&self, rec: &Value) -> bool {
         self.lookup(rec.get("categoryId"), rec.get("name"), rec.get("styleLabel")).is_some()
     }
-
-    pub fn len(&self) -> usize {
-        self.map.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
 }
 
 /// Where an embedded mod's bytes come from once the file is written.
@@ -151,15 +143,6 @@ impl ShareEntry {
                 inst.merge_to_single_vpk(&files_of(files), deltas.as_deref()).map(Some)
             }
         }
-    }
-
-    /// The line with its members, as the window and the file see it.
-    pub fn to_value(&self) -> Value {
-        let mut line = self.line.clone();
-        if self.kind() == "pack" {
-            line.insert("members".into(), Value::Array(self.members.iter().map(ShareEntry::to_value).collect()));
-        }
-        Value::Object(line)
     }
 }
 

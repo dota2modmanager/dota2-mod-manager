@@ -14,8 +14,6 @@ use crate::library::Library;
 use crate::net_fetch::Net;
 use crate::settings::Settings;
 
-/// The worker that keeps the keys and the prize (tools/ops/pumpkin-worker).
-pub const PUMPKIN_HOST: &str = "https://pumpkin.dota2modmanager.com";
 /// What the mod is called in the library.
 pub const PRIZE_NAME: &str = "Necrophos - Scream";
 /// Which night this install has been through: a new number makes everybody walk it again.

@@ -9,7 +9,7 @@ use std::sync::OnceLock;
 
 use indexmap::IndexMap;
 use regex::Regex;
-use serde_json::{json, Value};
+use serde_json::json;
 
 use crate::slot_zones::APP_PAK;
 use crate::vpk;
@@ -314,17 +314,6 @@ impl NoticeText {
             vec![notice_pak()]
         } else {
             Vec::new()
-        }
-    }
-}
-
-/// For the parity test: a plan as JSON.
-pub fn plan_value(p: &Plan) -> Value {
-    match p {
-        Plan::Skip(why) => json!({ "action": "skip", "why": why }),
-        Plan::Remove(why) => json!({ "action": "remove", "why": why }),
-        Plan::Write { bytes, language } => {
-            json!({ "action": "write", "sha1": crate::safe_zip::sha1_hex(bytes), "language": language })
         }
     }
 }

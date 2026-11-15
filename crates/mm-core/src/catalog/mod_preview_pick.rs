@@ -15,17 +15,6 @@ pub enum Kind {
     Video,
 }
 
-impl Kind {
-    pub fn parse(s: &str) -> Option<Kind> {
-        match s {
-            "art" => Some(Kind::Art),
-            "texture" => Some(Kind::Texture),
-            "video" => Some(Kind::Video),
-            _ => None,
-        }
-    }
-}
-
 /// One path segment after `prefix` and nothing more: /^prefix[^/]+suffix$/.
 fn one(p: &str, prefix: &str, suffix: &str) -> bool {
     p.strip_prefix(prefix).and_then(|r| r.strip_suffix(suffix)).is_some_and(|r| !r.is_empty() && !r.contains('/'))

@@ -5,7 +5,6 @@
 
 use indexmap::IndexMap;
 use serde::Serialize;
-use std::collections::HashSet;
 
 use crate::item_builder::effect_key;
 use crate::item_builder_assets::normalize_asset_path;
@@ -89,28 +88,4 @@ pub fn refits_of<K: Clone + Eq + std::hash::Hash>(picks: &IndexMap<K, PickModels
         }
     }
     out
-}
-
-/// One pick as own_models_win sees it: the files its patch brings, and the stock path its own
-/// model goes under, as the entry paths write it.
-pub struct OwnedPick {
-    pub assets: Option<Vec<(String, Vec<u8>)>>,
-    pub own: Option<String>,
-}
-
-/// A pick's own model keeps its stock path: another pick's file at that path is taken out of that pick.
-pub fn own_models_win(picks: &mut [OwnedPick]) {
-    let owned: HashSet<String> = picks.iter().filter_map(|p| p.own.clone().filter(|o| !o.is_empty())).collect();
-    if owned.is_empty() {
-        return;
-    }
-    for p in picks.iter_mut() {
-        let own = p.own.clone();
-        if let Some(assets) = &mut p.assets {
-            assets.retain(|(at, _)| {
-                let at = at.to_lowercase();
-                own.as_deref() == Some(at.as_str()) || !owned.contains(&at)
-            });
-        }
-    }
 }

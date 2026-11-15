@@ -190,7 +190,7 @@ fn grids(o: &Owner) -> crate::hero_grid::HeroGrids {
         data_dir: c.user_data.join("hero-grid"),
         account_dir: Box::new(move || crate::gamelang::steam_account_dir(game.as_deref())),
         net: c.net.clone(),
-        api: "https://api.opendota.com/api/heroStats".into(),
+        api: crate::hero_grid::HERO_STATS_API.into(),
         now: Box::new(now),
     }
 }

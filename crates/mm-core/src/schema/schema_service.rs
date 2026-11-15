@@ -66,12 +66,6 @@ pub struct Refreshed {
     pub cancelled: Option<bool>,
 }
 
-impl crate::background_builds::Outcome for Refreshed {
-    fn cancelled() -> Self {
-        Refreshed { ok: true, cancelled: Some(true), ..Default::default() }
-    }
-}
-
 fn failed(e: impl ToString) -> Refreshed {
     Refreshed { ok: false, error: Some(e.to_string()), ..Default::default() }
 }

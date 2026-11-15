@@ -129,8 +129,3 @@ pub fn with_modifiers(visuals: &[u8], add: &[Vec<u8>]) -> Vec<u8> {
     }
     [head, b"\r\n\t", &add.join(&b"\r\n\t"[..]), b"\r\n", &visuals[close..]].concat()
 }
-
-/// The visuals with the donor's effects added.
-pub fn with_donor_effects(base: &[u8], visuals: &[u8], donor_id: &str) -> Result<Vec<u8>, String> {
-    Ok(with_modifiers(visuals, &donor_additions(base, visuals, donor_id)?))
-}

@@ -3,7 +3,6 @@
 //! The table is bytes (latin1 in the TypeScript), so a block found here splices back unchanged.
 
 // The item table (items_game): reading, merging, building and deploying it, and undoing a build.
-pub mod background_builds;
 pub mod build_undo;
 pub mod item_files;
 pub mod item_files_service;

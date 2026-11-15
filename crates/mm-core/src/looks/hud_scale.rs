@@ -8,8 +8,6 @@ use serde_json::{json, Map, Value};
 use crate::js::{round, to_number, SPACE_CLASS};
 
 pub const STYLE: &str = "panorama/styles/hud/hud_reborn.vcss_c";
-/// The same stylesheet as the compiler's source in an addon.
-pub const SOURCE: &str = "panorama/styles/hud/hud_reborn.css";
 pub const MIN_SCALE: f64 = 60.0;
 pub const MAX_SCALE: f64 = 130.0;
 /// How far a panel can be moved, in the HUD's own pixels (the screen is 1080 high to it).

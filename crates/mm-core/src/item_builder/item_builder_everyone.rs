@@ -135,20 +135,6 @@ fn game_file(read: &dyn Fn(&str) -> Option<Vec<u8>>, at: &str) -> Option<Entry> 
     read(at).map(|d| entry_at(at, Bytes::from(d)))
 }
 
-/// The patches that dress every other wearable of each hero the build dresses as the user's hero
-/// is dressed. Merged after the build's own, whose files and blocks win where both name one.
-/// `list`: the build's patches; `beneath`: the arcana bases' files, under every pick's; `read`: a
-/// file of the game's pak01; `heroes`: only these (without npc_dota_hero_), None for all.
-pub fn everyone_wears(
-    text: &[u8],
-    list: &[SchemaPatch],
-    beneath: &[Entry],
-    read: &dyn Fn(&str) -> Option<Vec<u8>>,
-    heroes: Option<&[String]>,
-) -> Result<Vec<SchemaPatch>, KvError> {
-    Ok(everyone_wears_by_hero(text, list, beneath, read, heroes)?.into_iter().map(|(_, p)| p).collect())
-}
-
 /// [`everyone_wears`], each patch with the hero it dresses (npc_dota_hero_*), so the budget
 /// (crate::item_builder_everyone_budget) can take or leave a hero whole.
 pub fn everyone_wears_by_hero(

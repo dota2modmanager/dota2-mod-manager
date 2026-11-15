@@ -4,7 +4,7 @@
 //! inputs in its extras.
 
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use base64::Engine;
 use indexmap::IndexMap;
@@ -228,12 +228,6 @@ pub struct Wanted {
     pub file: PathBuf,
     pub model: String,
     pub skin: usize,
-}
-
-/// One exported GLB with the game's material inputs in its extras.
-pub fn loadout_model(file: &Path, model: &str, read: Read, glb: &dyn Exporter) -> Result<Vec<u8>, String> {
-    let w = Wanted { file: file.to_path_buf(), model: model.into(), skin: 0 };
-    loadout_models(&[w], read, glb, None)?.pop().flatten().ok_or_else(|| "no model".into())
 }
 
 /// The materials a model's meshes reference, by path.

@@ -89,30 +89,6 @@ pub fn host_build() -> String {
     format!("{os}-{arch}")
 }
 
-/// Whose releases a pin may point at: the owner is what makes a pin mean anything. Two, because
-/// Source 2 Viewer moved from SteamDatabase to its own organisation.
-fn pin_repos(name: &str) -> &'static [&'static str] {
-    match name {
-        "vrf" => &["ValveResourceFormat/ValveResourceFormat", "SteamDatabase/ValveResourceFormat"],
-        _ => &[],
-    }
-}
-
-/// Whether a pin names a version, an executable, a digest, and a release of an owner listed above.
-pub fn valid_pin(pin: &Value, name: Option<&str>) -> bool {
-    let repos = name.map(pin_repos).unwrap_or(&[]);
-    let Some(p) = pin.as_object().filter(|_| !repos.is_empty()) else { return false };
-    let s = |k: &str| p.get(k).and_then(Value::as_str);
-    let from = |url: &str| {
-        let url = url.to_lowercase();
-        repos.iter().any(|r| url.starts_with(&format!("https://github.com/{}/releases/download/", r.to_lowercase())))
-    };
-    s("version").is_some_and(|v| !v.is_empty())
-        && s("exe").is_some_and(|e| !e.is_empty() && !e.contains('/') && !e.contains('\\'))
-        && s("sha256").is_some_and(|h| h.len() == 64 && h.bytes().all(|c| c.is_ascii_hexdigit()))
-        && s("url").is_some_and(from)
-}
-
 /// The bucket's folder of pinned archives: a copy that does not go down with GitHub.
 pub const FALLBACK_BASE: &str = "https://cdn.dota2modmanager.com/tools/";
 

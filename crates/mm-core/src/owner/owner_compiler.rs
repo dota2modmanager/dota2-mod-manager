@@ -8,8 +8,7 @@ use serde_json::{json, Value};
 
 use crate::i18n::t;
 use crate::owner::{Core, Owner, R};
-use crate::resource_compiler::{CompileJob, ResourceCompiler};
-use crate::vpk::Entry;
+use crate::resource_compiler::ResourceCompiler;
 use crate::workshop_tools::ToolsKeeper;
 
 pub const CHANNELS: &[&str] = &[
@@ -45,12 +44,6 @@ pub fn compiler(c: &Core) -> ResourceCompiler {
 /// Windows keeps its tools; elsewhere a copy is kept once they have been seen.
 pub fn keeper(c: &Core) -> Option<ToolsKeeper> {
     (!cfg!(windows)).then(|| ToolsKeeper::new(&c.user_data.join("workshop-tools"), c.game()))
-}
-
-/// One job compiled with the app's compiler.
-pub fn compile(c: &Core, job: &CompileJob, log: &mut dyn FnMut(String)) -> Result<Vec<Entry>, String> {
-    let k = keeper(c);
-    compiler(c).compile(job, k.as_ref(), &mut crate::run_process::run, log)
 }
 
 fn state(o: &Owner) -> Value {

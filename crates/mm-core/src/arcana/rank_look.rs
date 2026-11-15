@@ -46,8 +46,6 @@ pub const LAYOUTS: [&str; 8] = [
     "panorama/layout/hud/dota_hud_top_bar_player.vxml_c",
     "panorama/layout/hud/dota_hud_inspect.vxml_c",
 ];
-/// The script, as the compiler's source, compiled, and as the layouts name it.
-pub const SCRIPT_SOURCE: &str = "panorama/scripts/d2mm_rank_look.js";
 pub const SCRIPT_COMPILED: &str = "panorama/scripts/d2mm_rank_look.vjs_c";
 pub const SCRIPT_REF: &str = "panorama/scripts/d2mm_rank_look.vjs";
 
@@ -56,11 +54,6 @@ pub const TIERS: [&str; 6] = ["BronzeTier", "SilverTier", "GoldTier", "PlatinumT
 /// The first level of each tier: bronze 1-5, silver 6-11, gold 12-17, platinum 18-24, master
 /// 25-29, grandmaster 30 alone (#549).
 pub const TIER_FROM: [f64; 6] = [1.0, 6.0, 12.0, 18.0, 25.0, 30.0];
-
-/// The tier a level earns, 0 (bronze) to 5 (grandmaster).
-pub fn tier_of(level: f64) -> usize {
-    TIER_FROM.iter().filter(|&&from| level >= from).count().saturating_sub(1)
-}
 
 fn hero_ok(h: &str) -> bool {
     Regex::new(r"^[a-z0-9_]{2,40}$").expect("a fixed pattern").is_match(h)

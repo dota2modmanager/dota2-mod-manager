@@ -772,11 +772,6 @@ fn slots_of(text: &[u8], bare_too: bool) -> Result<Vec<ItemSlot>, KvError> {
     Ok(out)
 }
 
-/// Wearable items with visuals and a matching stock default_item, offered under cosmetics/items.
-pub fn item_options(text: &[u8]) -> Result<Vec<SlotOption>, KvError> {
-    Ok(item_slots(text)?.into_iter().flat_map(|s| s.options).collect())
-}
-
 /// The model_player of each stock item any of these heroes wears, as the table writes it.
 pub fn stock_models(text: &[u8], heroes: &[String]) -> Result<Vec<String>, KvError> {
     static SLOT: crate::memo::Slot<HashMap<String, Vec<String>>> = Mutex::new(None);

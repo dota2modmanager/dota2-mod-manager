@@ -16,7 +16,6 @@ const tracked = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8',
 
 const LIMIT = 1000;
 const HELD = {
-  'crates/mm-core/src/owner/calls.rs': 5068,
   'crates/mm-core/src/formats/kv3.rs': 1413,
   'renderer/styles/catalog.css': 1121,
   'crates/mm-core/src/models/hero_preview.rs': 1037,

@@ -5,7 +5,7 @@
 //! all be drawn on top of one another. This is deliberately conservative: meshes are hidden only
 //! when a model has an explicit pair of a primary and an _alt material on separate primitives.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use serde_json::Value;
 
@@ -147,27 +147,6 @@ fn family(model: &str, exact: bool) -> String {
 /// The collection a model is from, for sharing a chosen style.
 pub fn style_family(model: &str) -> String {
     family(model, false)
-}
-
-/// A style chosen on a set's head also picks the exported alt meshes on its siblings.
-pub fn sync_arcana_styles(parts: &mut [Value]) {
-    let model = |p: &Value| p.get("model").map(crate::js::string).unwrap_or_default();
-    let mut chosen: HashMap<String, Value> = HashMap::new();
-    for p in parts.iter() {
-        let f = family(&model(p), true);
-        if p.get("style").is_some_and(crate::js::truthy) && !f.is_empty() {
-            chosen.insert(f, p["style"].clone());
-        }
-    }
-    for p in parts.iter_mut() {
-        let f = family(&model(p), true);
-        if !p.get("style").is_some_and(crate::js::truthy) && !p.get("explicitBaseStyle").is_some_and(crate::js::truthy)
-        {
-            if let Some(s) = chosen.get(&f) {
-                p["style"] = s.clone();
-            }
-        }
-    }
 }
 
 /// (?:^|[\\/_.-])landing_page[\w-]*.*(?:dissolve|blade)|landing_page_blade_dissolve
