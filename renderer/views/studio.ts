@@ -20,6 +20,7 @@ import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
 import { iconsPicked, openAbilityIcons } from './catalog/ability-icons.ts';
 import { backgroundLead, openBackground } from './catalog/background.ts';
+import { openPortraits, portraitsOn, readPortraits } from './catalog/portraits.ts';
 import { hudLead, openHud } from './catalog/hud.ts';
 import { openEffects } from './catalog/effects.ts';
 import { rankLead, openRank } from './catalog/rank.ts';
@@ -68,6 +69,8 @@ async function groups(): Promise<StudioGroup[]> {
   ]);
   const sounds = soundLead('hero-sounds');
   const icons = iconsPicked();
+  await readPortraits();
+  const portraits = portraitsOn();
   const hud = hudLead('huds');
   const tile = (t: Omit<StudioTile, 'fresh'>): StudioTile => ({ ...t, fresh: isNew(t.id) });
 
@@ -79,6 +82,8 @@ async function groups(): Promise<StudioGroup[]> {
         status: sounds?.installed ? on(L`Героев со своими звуками: ${sounds.installed}`) : undefined, open: (el) => openSounds(el) }),
       tile({ id: 'ability-icons', icon: 'imagesmode', title: L`Иконки способностей`, text: L`Любая иконка способности из предметов героя: аркана, стили, наборы.`,
         status: icons ? on(L`Героев со своими иконками: ${icons}`) : undefined, open: (el) => openAbilityIcons(el) }),
+      tile({ id: 'portraits', icon: 'portrait', title: L`Портреты героев`, text: L`Своя картинка и свой ролик героя в выборе героя: было и стало рядом, ролик играет при наведении.`,
+        status: portraits ? on(L`Героев со своими портретами: ${portraits}`) : undefined, open: (el) => openPortraits(el) }),
     ] },
     // arcanas and the immortals whose colour is baked into their effects, one tile each
     { id: 'colors', title: L`Свой цвет предмета`, tiles: arcanas.map((a) => tile({ id: `arcana:${a.set}`, icon: 'palette', picture: a.picture, title: a.name,

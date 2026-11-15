@@ -7,6 +7,7 @@ pub mod effect_finder;
 pub mod ground_build;
 pub mod ground_facets;
 pub mod hero_paint_service;
+pub mod hero_portrait_service;
 pub mod hud_scale;
 pub mod hud_scale_service;
 pub mod map_base;
