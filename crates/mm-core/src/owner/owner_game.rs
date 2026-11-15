@@ -73,7 +73,7 @@ pub fn repair_after_patch(o: &Owner, reason: Value) {
     let running = (o.opts.dota_running)();
     let now = (o.opts.now)();
     let mut lines: Vec<String> = Vec::new();
-    let (after, gen) = {
+    let (after, gen, later) = {
         let mut core = o.core();
         let c = &mut *core;
         c.repair_gen += 1;
@@ -82,7 +82,30 @@ pub fn repair_after_patch(o: &Owner, reason: Value) {
         let mut log = |m: String| lines.push(m);
         let mut diag: Vec<String> = Vec::new();
         let mut deployed = |_: std::collections::HashSet<String>| {};
+        let game = c.game();
+        let note = c.impact();
+        let impact = crate::game_repair::Impact {
+            note: &note,
+            build: game.as_deref().and_then(crate::patch_watch::client_version),
+        };
+        let mut later = Vec::new();
+        let mut built: Vec<String> = Vec::new();
         let after = {
+            let (kept, user_data, bases) = (&mut c.kept, &c.user_data, &*c.bases);
+            let mut rebuild =
+                |inst: &crate::installer::Installer, lib: &mut crate::library::Library, ids: &[String]| {
+                    crate::owner_tools::rebuild_generated(
+                        kept,
+                        &game,
+                        user_data,
+                        Some(bases),
+                        inst,
+                        lib,
+                        ids,
+                        &mut later,
+                        &mut |m| built.push(m),
+                    )
+                };
             let mut ctx = crate::schema_service::Ctx {
                 inst: &c.installer,
                 lib: &mut c.library,
@@ -94,16 +117,17 @@ pub fn repair_after_patch(o: &Owner, reason: Value) {
             c.upkeep.repair.repair_after_patch(
                 &mut c.schema,
                 &mut ctx,
-                None,
-                None,
+                Some(&impact),
+                Some(&mut rebuild),
                 Some(reason.clone()),
                 (running, steam),
                 now,
                 &mut |m| diag.push(m),
             )
         };
+        lines.extend(built);
         lines.extend(diag);
-        (after, gen)
+        (after, gen, later)
     };
     for l in lines {
         o.diag(&l);
@@ -111,9 +135,7 @@ pub fn repair_after_patch(o: &Owner, reason: Value) {
     if let Some(sent) = &after.sent {
         o.shell.event("patch-repair", vec![sent.clone()]);
     }
-    if after.rebuild {
-        drop(o.refresh_schema_in_background());
-    }
+    o.after_repair(later, after.rebuild);
     if after.retry {
         if let Some(me) = o.me() {
             std::thread::spawn(move || {
@@ -258,9 +280,13 @@ fn set_enabled(o: &Owner, on: bool) -> Value {
     out
 }
 
-/// The tool fetched, the bar counting it (src/toolchain.ts ensure). The lock is not held: the
+/// The toolchain with the app's downloads at hand: `f` gets it, the download, and whether GitHub's
+/// raw host is stood down; the lines it logs land in the app's log. The lock is not held: the
 /// toolchain lives in its own folder.
-fn install_tool(o: &Owner, name: &str) -> Value {
+fn with_tools<T>(
+    o: &Owner,
+    f: impl FnOnce(&crate::toolchain::Toolchain, crate::toolchain::Get, bool, &mut dyn FnMut(String)) -> T,
+) -> T {
     let (ud, net) = {
         let c = o.core();
         (c.user_data.clone(), c.net.clone())
@@ -284,12 +310,29 @@ fn install_tool(o: &Owner, name: &str) -> Value {
         Ok((d.bytes, d.sha256))
     };
     let mut lines = Vec::new();
-    let r = tc.ensure(name, &mut get, github_down, &mut |evt| o.progress(evt), &mut |m| lines.push(m));
+    let r = f(&tc, &mut get, github_down, &mut |m| lines.push(m));
     for l in lines {
         o.diag(&l);
     }
+    r
+}
+
+/// The tools on disk brought up to their pins, a while after start: the app takes whatever
+/// version is there, so without this an installed tool would never move to a newer pin.
+pub fn catch_up_tools(o: &Owner) {
+    let r = with_tools(o, |tc, get, down, log| tc.catch_up(get, down, &mut |evt| o.progress(evt), log));
+    if let Err(e) = r {
+        o.diag(&format!("toolchain: could not update: {e}"));
+    }
+}
+
+/// The tool fetched, the bar counting it.
+fn install_tool(o: &Owner, name: &str) -> Value {
+    let r = with_tools(o, |tc, get, down, log| {
+        tc.ensure(name, get, down, &mut |evt| o.progress(evt), log).map(|_| tc.state())
+    });
     match r {
-        Ok(_) => json!({ "ok": true, "tools": tc.state() }),
+        Ok(tools) => json!({ "ok": true, "tools": tools }),
         Err(e) => json!({ "error": e }),
     }
 }

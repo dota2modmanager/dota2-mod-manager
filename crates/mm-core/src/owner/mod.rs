@@ -215,6 +215,11 @@ impl Core {
     pub fn game(&self) -> Option<PathBuf> {
         game_of(&self.settings)
     }
+
+    /// Which installed mods the last Dota update reached, kept in userData.
+    pub fn impact(&self) -> crate::update_impact::UpdateImpact {
+        crate::update_impact::UpdateImpact { file: self.user_data.join("update-impact.json"), game: self.game() }
+    }
 }
 
 impl Owner {
@@ -342,7 +347,30 @@ impl Owner {
         let c = &mut *core;
         let mut lines: Vec<String> = Vec::new();
         let mut filled = None;
-        {
+        let mut later = Vec::new();
+        let mut rebuilt: Vec<String> = Vec::new();
+        let wants = {
+            let game = c.game();
+            let note = c.impact();
+            let impact = crate::game_repair::Impact {
+                note: &note,
+                build: game.as_deref().and_then(crate::patch_watch::client_version),
+            };
+            let (kept, user_data, bases) = (&mut c.kept, &c.user_data, &*c.bases);
+            let mut rebuild = |inst: &Installer, lib: &mut Library, ids: &[String]| {
+                let mut log = |m: String| rebuilt.push(m);
+                crate::owner_tools::rebuild_generated(
+                    kept,
+                    &game,
+                    user_data,
+                    Some(bases),
+                    inst,
+                    lib,
+                    ids,
+                    &mut later,
+                    &mut log,
+                )
+            };
             let mut log = |m: String| lines.push(m);
             let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
             let mut ctx = crate::schema_service::Ctx {
@@ -358,12 +386,13 @@ impl Owner {
                 &mut c.schema,
                 &mut ctx,
                 &mut || running(),
-                None,
-                None,
+                Some(&impact),
+                Some(&mut rebuild),
                 &mut |name, ctx| other_step(name, ctx),
                 (self.opts.now)(),
-            );
-        }
+            )
+        };
+        lines.extend(rebuilt);
         after_deploys(c, filled, &mut lines);
         // the picture Cancel goes back to: the game as it is now, unless a build is still owed
         if !c.settings.get("schemaPending").is_some_and(crate::js::truthy) {
@@ -373,6 +402,27 @@ impl Owner {
         for l in lines {
             self.diag(&l);
         }
+        self.after_repair(later, wants);
+    }
+
+    /// What a repair left to do, off this thread so the window is not held: the item table's build
+    /// if it wants one, and the mods named in `later` built again. The build is asked for before
+    /// this returns, so [`Owner::settled`] waits for it.
+    pub fn after_repair(&self, later: Vec<String>, wants: bool) {
+        if wants {
+            drop(self.refresh_schema_in_background());
+        }
+        if later.is_empty() {
+            return;
+        }
+        let Some(me) = self.me.upgrade() else { return };
+        std::thread::spawn(move || {
+            let mut lines = Vec::new();
+            crate::owner_tools::build_later(&mut me.core(), &later, &mut |m| lines.push(m));
+            for l in lines {
+                me.diag(&l);
+            }
+        });
     }
 
     /// The state, for one channel's turn.

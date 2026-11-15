@@ -332,22 +332,9 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         "paint:install" => installed(o, |c, log| {
             let base = table(c).map(|b| b.0.clone()).unwrap_or_default();
             let svc = crate::hero_paint_service::HeroPaintService::new(c.game(), lang());
-            let exe = vrf(c).map(|p| p.to_string_lossy().into_owned());
-            let (rc, k) = (crate::owner_compiler::compiler(c), crate::owner_compiler::keeper(c));
-            let mut compile = |job: &crate::resource_compiler::CompileJob| {
-                rc.compile(job, k.as_ref(), &mut crate::run_process::run, &mut |_| {})
-            };
-            let tmp = std::env::temp_dir();
-            let mut decode =
-                |exe: &str, vtex: &[u8]| crate::hero_paint_service::vrf_png(exe, vtex, &tmp, &mut run_tool);
-            let mut tools = crate::hero_paint_service::Tools {
-                vrf: exe,
-                repaint: &crate::png_paint::repaint,
-                decode: &mut decode,
-                compile: Some(&mut compile),
-            };
+            let kit = PaintKit::of(c);
             let Core { installer, library, .. } = c;
-            svc.install(installer, library, &base, (&a(0), &a(1), &a(2), &a(3)), &mut tools, log)
+            kit.with(|tools| svc.install(installer, library, &base, (&a(0), &a(1), &a(2), &a(3)), tools, log))
         }),
         _ => json!({ "error": format!("no handler for {channel}") }),
     }
@@ -366,4 +353,123 @@ fn pictures(o: &Owner, names: &Value) -> Value {
         o.diag(&l);
     }
     json!(out)
+}
+
+/// What hero paint's tools are made of, read off the core before its library is lent out.
+struct PaintKit {
+    vrf: Option<String>,
+    compiler: crate::resource_compiler::ResourceCompiler,
+    keeper: Option<crate::workshop_tools::ToolsKeeper>,
+}
+
+impl PaintKit {
+    fn of(c: &Core) -> Self {
+        PaintKit {
+            vrf: vrf(c).map(|p| p.to_string_lossy().into_owned()),
+            compiler: crate::owner_compiler::compiler(c),
+            keeper: crate::owner_compiler::keeper(c),
+        }
+    }
+
+    /// The decoder, the painter and the compiler, for one call.
+    fn with<T>(&self, f: impl FnOnce(&mut crate::hero_paint_service::Tools) -> T) -> T {
+        let mut compile = |job: &crate::resource_compiler::CompileJob| {
+            self.compiler.compile(job, self.keeper.as_ref(), &mut crate::run_process::run, &mut |_| {})
+        };
+        let tmp = std::env::temp_dir();
+        let mut decode = |exe: &str, vtex: &[u8]| crate::hero_paint_service::vrf_png(exe, vtex, &tmp, &mut run_tool);
+        let mut tools = crate::hero_paint_service::Tools {
+            vrf: self.vrf.clone(),
+            repaint: &crate::png_paint::repaint,
+            decode: &mut decode,
+            compile: Some(&mut compile),
+        };
+        f(&mut tools)
+    }
+}
+
+/// After a Dota update, inside the repair: the mods among `ids` the app built out of the game's
+/// files, which get no mark of the patch. The arcana, the map's looks and the menu background are
+/// built again here. The HUD layout, effect edits, rank looks, hero paint and ability icons read
+/// the item table, which the repair holds, so they land in `later` for [`build_later`].
+#[allow(clippy::too_many_arguments)]
+pub fn rebuild_generated(
+    kept: &mut Kept,
+    game: &Option<PathBuf>,
+    user_data: &Path,
+    bases: Option<&dyn crate::arcana_bases::BaseSource>,
+    inst: &crate::installer::Installer,
+    lib: &mut crate::library::Library,
+    ids: &[String],
+    later: &mut Vec<String>,
+    log: &mut dyn FnMut(String),
+) -> Vec<String> {
+    let mut done = kept.arcana(game).rebuild(inst, lib, ids, bases, log);
+    done.extend(crate::map_looks_service::MapLooks::new(game.clone()).rebuild(inst, lib, ids, log));
+    done.extend(
+        crate::menu_background_service::MenuBackground::new(user_data, game.clone()).rebuild(inst, lib, ids, log),
+    );
+    let rank = kept.rank.get_or_insert_with(|| RankLookService::new(game.clone()));
+    let mut owed: Vec<String> = crate::hud_scale_service::HudScale::due(lib, ids).into_iter().collect();
+    owed.extend(EffectEdit::due(lib, ids));
+    owed.extend(rank.due(lib, ids));
+    owed.extend(crate::hero_paint_service::HeroPaintService::new(game.clone(), lang()).due(lib, ids));
+    owed.extend(AbilityIconsService::due(lib, ids));
+    for id in owed {
+        if !done.contains(&id) && !later.contains(&id) {
+            later.push(id);
+        }
+    }
+    done.extend(later.iter().cloned());
+    done
+}
+
+/// The rest of [`rebuild_generated`], once the repair has answered: each of `ids` built again
+/// from the game's new files. Answers whether anything was.
+pub fn build_later(c: &mut Core, ids: &[String], log: &mut dyn FnMut(String)) -> bool {
+    if ids.is_empty() {
+        return false;
+    }
+    let game = c.game();
+    c.kept.fit(&game);
+    let mut any = false;
+    if crate::hud_scale_service::HudScale::due(&c.library, ids).is_some() {
+        let hud = crate::hud_scale_service::HudScale::new(game.clone());
+        any |= hud.rebuild_now(&c.installer, &mut c.library, log).is_some();
+    }
+    for id in EffectEdit::due(&c.library, ids) {
+        any |= with_effects(c, |e, finder, inst, lib| e.rebuild_now(inst, lib, &id, finder, log));
+    }
+    rank(c);
+    let Core { kept, installer, library, .. } = c;
+    let rank = kept.rank.as_mut().expect("made above");
+    if !rank.due(library, ids).is_empty() {
+        any |= rank.rebuild_now(installer, library, log);
+    }
+    let paint = crate::hero_paint_service::HeroPaintService::new(game.clone(), lang());
+    let painted = paint.due(&c.library, ids);
+    if !painted.is_empty() {
+        let base = table(c).map(|b| b.0.clone()).unwrap_or_default();
+        let kit = PaintKit::of(c);
+        let Core { installer, library, .. } = c;
+        kit.with(|tools| {
+            for id in &painted {
+                any |= paint.rebuild_now(installer, library, &base, id, tools, log);
+            }
+        });
+    }
+    if !AbilityIconsService::due(&c.library, ids).is_empty() {
+        match icons(c) {
+            Ok(_) => {
+                let Core { kept, installer, library, .. } = c;
+                let svc = kept.icons.as_ref().expect("made above");
+                any |= !svc.rebuild(installer, library, ids, log).is_empty();
+            }
+            Err(e) => log(format!("ability icons: could not build again after the update: {e}")),
+        }
+    }
+    if any {
+        crate::owner_packs::after_deploy_master(c);
+    }
+    any
 }
