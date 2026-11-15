@@ -87,9 +87,12 @@ fn normalize_entry(raw: &Value, allow_pack: bool) -> Option<Value> {
             if slot.is_empty() || item.is_empty() {
                 return None;
             }
-            Some(
-                json!({ "kind": "cosmetic", "name": name, "slot": slot, "itemId": item, "effectId": text(raw.get("effectId"), 60) }),
-            )
+            let mut pick = json!({ "kind": "cosmetic", "name": name, "slot": slot, "itemId": item, "effectId": text(raw.get("effectId"), 60) });
+            let target = text(raw.get("targetItemId"), 20);
+            if !target.is_empty() {
+                pick["targetItemId"] = json!(target);
+            }
+            Some(pick)
         }
         "pack" if allow_pack => {
             let members: Vec<Value> = raw

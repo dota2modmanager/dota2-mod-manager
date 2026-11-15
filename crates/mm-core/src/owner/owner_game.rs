@@ -386,13 +386,29 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 return stop;
             }
             let effect = arg(args, 3);
-            let picked = crate::schema_cosmetics::pick_cosmetic(
-                &mut o.core().library,
-                &crate::js::string(&a0),
-                &crate::js::string(&arg(args, 1)),
-                arg(args, 2).as_str(),
-                Some(&effect),
-            );
+            let (slot, item) = (crate::js::string(&a0), crate::js::string(&arg(args, 1)));
+            let picked = {
+                let mut core = o.core();
+                let c = &mut *core;
+                let game = c.game();
+                let schema = &mut c.schema;
+                let text = move || -> Result<Vec<u8>, String> {
+                    match game {
+                        None => Err(t("Путь к Dota 2 не задан", &[])),
+                        Some(g) => schema.vanilla(&g).map(|b| b.0.clone()),
+                    }
+                };
+                crate::item_replacement::checked_target(text, &slot, &item, args.get(4)).and_then(|target| {
+                    crate::schema_cosmetics::pick_cosmetic(
+                        &mut c.library,
+                        &slot,
+                        &item,
+                        arg(args, 2).as_str(),
+                        Some(&effect),
+                        &target,
+                    )
+                })
+            };
             match picked {
                 Ok(rec) => {
                     let _ = o.refresh_schema_in_background().recv();

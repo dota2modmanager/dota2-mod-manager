@@ -276,12 +276,15 @@ pub fn set_details(
 /// Pick a look for a slot. A genuinely new item switches off whatever was live there (never
 /// deletes it: a preset may still point at it) and makes a fresh record, or wakes a dormant one
 /// for that same item. Other effects on the same item change that pick. The now-live record.
+/// `target`: a same-slot wearable to write the item over instead of the hero's default, already
+/// checked (`item_replacement`), or "" for the default.
 pub fn pick_cosmetic(
     lib: &mut Library,
     slot: &str,
     item_id: &str,
     item_name: Option<&str>,
     effect_id: Option<&Value>,
+    target: &str,
 ) -> Result<Option<Value>, String> {
     let name = item_name.filter(|n| !n.is_empty()).unwrap_or(item_id);
     let is_item = slot == "items" || slot.starts_with("item:");
@@ -289,18 +292,23 @@ pub fn pick_cosmetic(
     let live = cosmetic_record_for(lib, slot);
     let same_item = |r: &Value| r.get("itemId").map(crate::js::string).as_deref() == Some(item_id);
     if let Some(l) = &live {
-        if same_item(l) && key_of(l.get("effectId")) == effect {
+        if same_item(l) && key_of(l.get("effectId")) == effect && str_of(l, "targetItemId").unwrap_or("") == target {
             return Ok(Some(l.clone()));
         }
     }
-    // the effect a property of the pick: one row per item
+    // the effect and the item replaced are properties of the pick: one row per item
     let set_effect = |lib: &mut Library, id: &Value, mut fields: Map<String, Value>| -> Result<(), String> {
-        if effect.is_empty() {
-            lib.update(id, &Value::Object(fields), None).map_err(io)?;
-            lib.drop_fields(id, &["effectId"], None).map_err(io)?;
-        } else {
-            fields.insert("effectId".into(), json!(effect));
-            lib.update(id, &Value::Object(fields), None).map_err(io)?;
+        let mut gone = Vec::new();
+        for (key, value) in [("effectId", effect.as_str()), ("targetItemId", target)] {
+            if value.is_empty() {
+                gone.push(key);
+            } else {
+                fields.insert(key.into(), json!(value));
+            }
+        }
+        lib.update(id, &Value::Object(fields), None).map_err(io)?;
+        if !gone.is_empty() {
+            lib.drop_fields(id, &gone, None).map_err(io)?;
         }
         Ok(())
     };
@@ -340,6 +348,9 @@ pub fn pick_cosmetic(
             if !effect.is_empty() {
                 f["effectId"] = json!(effect);
             }
+            if !target.is_empty() {
+                f["targetItemId"] = json!(target);
+            }
             lib.update(&rec["id"], &f, None).map_err(io)?;
             rec["id"].clone()
         }
@@ -351,6 +362,19 @@ pub fn pick_cosmetic(
         }
     }
     Ok(lib.find(&id).cloned())
+}
+
+/// A pick as a preset keeps it (slot, itemId, name, effectId, targetItemId) put on; the game's
+/// table is read only to check a target.
+pub fn pick_from(
+    lib: &mut Library,
+    p: &Value,
+    text: impl FnOnce() -> Result<Vec<u8>, String>,
+) -> Result<Option<Value>, String> {
+    let (slot, item) = (crate::js::string(&p["slot"]), crate::js::string(&p["itemId"]));
+    let target = crate::item_replacement::checked_target(text, &slot, &item, p.get("targetItemId"))?;
+    let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
+    pick_cosmetic(lib, &slot, &item, p["name"].as_str(), Some(&effect), &target)
 }
 
 /// Put a whole set on: each piece the builder has a slot for takes that slot, and the hero's other
@@ -368,6 +392,7 @@ pub fn pick_set(lib: &mut Library, text: &[u8], set_id: &str, style: f64) -> Res
     let heroes: Vec<String> =
         set["heroIds"].as_array().map(|a| a.iter().map(crate::js::string).collect()).unwrap_or_default();
     let hero = format!("item:{}:", heroes.join("+"));
+    let mut replacements = crate::item_replacement::Replacements::new(text);
     let persona_piece = regex::Regex::new(r"_persona_\d+$").unwrap();
     let style_re = regex::Regex::new(r"^style-\d+$").unwrap();
     let off: Vec<Value> = lib
@@ -405,14 +430,27 @@ pub fn pick_set(lib: &mut Library, text: &[u8], set_id: &str, style: f64) -> Res
             ids.push(format!("style-{n}"));
         }
         let name = p.get("name").map(crate::js::string);
-        pick_cosmetic(lib, &slot, &item, name.as_deref(), Some(&json!(ids)))?;
+        // the same item stays over the wearable it replaced, checked again against this table
+        let kept = live
+            .as_ref()
+            .filter(|l| l.get("itemId").map(crate::js::string) == Some(item.clone()))
+            .and_then(|l| l.get("targetItemId").cloned());
+        let target = replacements.check(&slot, &item, kept.as_ref())?;
+        pick_cosmetic(lib, &slot, &item, name.as_deref(), Some(&json!(ids)), &target)?;
     }
     Ok((fits.len(), pieces.len()))
 }
 
 /// Put a saved look on: each of its picks as the player left it, the hero's other picks off (kept
 /// in My mods). A pick that is not one of this hero's is skipped and counted. (applied, picks).
-pub fn wear_look(lib: &mut Library, hero: &str, picks: &Value) -> Result<(usize, usize), String> {
+/// `text` is read only when a pick replaces another item, and every such target is checked before
+/// anything changes.
+pub fn wear_look(
+    lib: &mut Library,
+    hero: &str,
+    picks: &Value,
+    text: impl FnOnce() -> Result<Vec<u8>, String>,
+) -> Result<(usize, usize), String> {
     let hero_re = regex::Regex::new(r"^item:[a-z0-9_+]+:$").unwrap();
     let Some(list) = picks.as_array().filter(|_| hero_re.is_match(hero)) else {
         return Err(t("Образ не найден", &[]));
@@ -428,6 +466,17 @@ pub fn wear_look(lib: &mut Library, hero: &str, picks: &Value) -> Result<(usize,
                 && p.get("itemId").is_some_and(|i| digits.is_match(&crate::js::string(i)))
         })
         .collect();
+    let replaces = |p: &&&Value| p.get("targetItemId").is_some_and(|v| !v.is_null() && v.as_str() != Some(""));
+    let table = if wear.iter().any(|p| replaces(&p)) { Some(text()?) } else { None };
+    let mut targets = Vec::with_capacity(wear.len());
+    let mut replacements = table.as_deref().map(crate::item_replacement::Replacements::new);
+    for p in &wear {
+        let item = crate::js::string(&p["itemId"]);
+        targets.push(match replacements.as_mut() {
+            Some(r) => r.check(p["slot"].as_str().unwrap_or(""), &item, p.get("targetItemId"))?,
+            None => String::new(),
+        });
+    }
     let keep: HashSet<&str> = wear.iter().filter_map(|p| p["slot"].as_str()).collect();
     let off: Vec<Value> = lib
         .list()
@@ -442,12 +491,12 @@ pub fn wear_look(lib: &mut Library, hero: &str, picks: &Value) -> Result<(usize,
     for id in off {
         lib.set_enabled(&id, false, None).map_err(io)?;
     }
-    for p in &wear {
+    for (p, target) in wear.iter().zip(&targets) {
         let item = crate::js::string(&p["itemId"]);
         let name =
             p.get("name").filter(|n| crate::js::truthy(n)).map(crate::js::string).unwrap_or_else(|| item.clone());
         let effect = p.get("effectId").filter(|e| crate::js::truthy(e)).cloned().unwrap_or(json!(""));
-        pick_cosmetic(lib, p["slot"].as_str().unwrap_or(""), &item, Some(&name), Some(&effect))?;
+        pick_cosmetic(lib, p["slot"].as_str().unwrap_or(""), &item, Some(&name), Some(&effect), target)?;
     }
     Ok((wear.len(), list.len()))
 }
@@ -479,7 +528,7 @@ pub fn migrate_cosmetic_settings(
                 .find(|(o, _)| *o == id)
                 .map(|(_, n)| n)
                 .unwrap_or_else(|| slot.clone());
-            pick_cosmetic(lib, slot, &id, Some(&name), None)?;
+            pick_cosmetic(lib, slot, &id, Some(&name), None, "")?;
             picked = true;
         }
         Ok(())

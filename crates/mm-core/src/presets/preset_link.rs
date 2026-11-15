@@ -52,7 +52,12 @@ pub fn encode_preset_link(name: &Value, author: &Value, mods: &[Value]) -> Encod
         .map(|m| {
             if m.get("kind").and_then(Value::as_str) == Some("cosmetic") {
                 let effect = m.get("effectId").filter(|e| truthy(e)).cloned().unwrap_or(json!(""));
-                json!([COSMETIC_TAG, get(m, "slot"), get(m, "itemId"), get(m, "name"), effect])
+                let mut e = vec![json!(COSMETIC_TAG), get(m, "slot"), get(m, "itemId"), get(m, "name"), effect];
+                // a sixth field only when the pick replaces another item: older links stay five long
+                if let Some(t) = m.get("targetItemId").and_then(Value::as_str).filter(|t| !t.is_empty()) {
+                    e.push(json!(t));
+                }
+                Value::Array(e)
             } else if m.get("styleLabel").is_some_and(truthy) {
                 json!([get(m, "categoryId"), get(m, "name"), get(m, "styleLabel")])
             } else {
@@ -165,13 +170,17 @@ pub fn decode_preset_link(input: &Value) -> Result<Decoded, String> {
                 if slot.is_empty() || item.is_empty() {
                     return None;
                 }
-                json!({
+                let mut pick = json!({
                     "kind": "cosmetic",
                     "slot": slot,
                     "itemId": item,
                     "name": slice_utf16(&text_of(e.get(3)), 300),
                     "effectId": e.get(4).and_then(Value::as_str).map(|s| slice_utf16(s, 60)).unwrap_or_default(),
-                })
+                });
+                if let Some(t) = e.get(5).and_then(Value::as_str).filter(|t| !t.is_empty()) {
+                    pick["targetItemId"] = json!(slice_utf16(t, 20));
+                }
+                pick
             } else {
                 json!({
                     "kind": "catalog",

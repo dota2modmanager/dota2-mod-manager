@@ -156,7 +156,19 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 return stop;
             }
             let hero = a0.as_str().unwrap_or("").to_string();
-            let worn = crate::schema_cosmetics::wear_look(&mut o.core().library, &hero, &arg(args, 1));
+            let worn = {
+                let mut core = o.core();
+                let c = &mut *core;
+                let game = c.game();
+                let schema = &mut c.schema;
+                let text = move || -> Result<Vec<u8>, String> {
+                    match game {
+                        None => Err(crate::i18n::t("Путь к Dota 2 не задан", &[])),
+                        Some(g) => schema.vanilla(&g).map(|b| b.0.clone()),
+                    }
+                };
+                crate::schema_cosmetics::wear_look(&mut c.library, &hero, &arg(args, 1), text)
+            };
             match worn {
                 Ok((applied, picks)) => {
                     let _ = o.refresh_schema_in_background().recv();

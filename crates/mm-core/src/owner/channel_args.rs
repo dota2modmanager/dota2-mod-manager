@@ -237,6 +237,7 @@ fn look_pick() -> Check {
         ("itemId", str_(20, 1)),
         ("name", str_(500, 0)),
         ("effectId", optional(str_(500, 0))),
+        ("targetItemId", optional(str_(20, 0))),
     ])
 }
 fn str_or_num(s: usize, smin: usize) -> Check {
@@ -498,7 +499,16 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("cosmetics:heroPortraits", vec![list(str_or_num(100, 0), 1000), optional(bool_())]),
             ("cosmetics:heroPortraitsByName", vec![list(str_(200, 0), 1000)]),
             ("cosmetics:icons", vec![list(str_(500, 0), 20000)]),
-            ("cosmetics:pick", vec![str_(100, 1), str_or_num(100, 0), optional(NAME()), optional(str_or_num(100, 0))]),
+            (
+                "cosmetics:pick",
+                vec![
+                    str_(100, 1),
+                    str_or_num(100, 0),
+                    optional(NAME()),
+                    optional(str_or_num(100, 0)),
+                    optional(str_(20, 0)),
+                ],
+            ),
             ("cosmetics:pickSet", vec![str_or_num(100, 1), optional(num(0.0, 64.0))]),
             ("cosmetics:wearLook", vec![str_(200, 1), list(look_pick(), 40)]),
             ("preview:video", vec![str_(500, 1)]),
@@ -515,7 +525,14 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
                         shape(vec![
                             ("slot", str_(120, 1)),
                             ("stock", str_(20, 1)),
-                            ("tryOn", optional(shape(vec![("itemId", str_(20, 0)), ("effectId", str_(500, 0))]))),
+                            (
+                                "tryOn",
+                                optional(shape(vec![
+                                    ("itemId", str_(20, 0)),
+                                    ("effectId", str_(500, 0)),
+                                    ("targetItemId", optional(str_(20, 0))),
+                                ])),
+                            ),
                         ]),
                         40,
                     ),

@@ -1677,13 +1677,11 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 let r: Result<Value, String> = (|| {
                     Ok(match op[0].as_str().unwrap_or("") {
                         "slots" => crate::schema_cosmetics::cosmetic_slots(&lib, game.as_deref(), &text, lang),
-                        "pick" => json!(crate::schema_cosmetics::pick_cosmetic(
-                            &mut lib,
-                            &crate::js::string(&op[1]),
-                            &crate::js::string(&op[2]),
-                            op[3].as_str(),
-                            Some(&op[4])
-                        )?),
+                        "pick" => {
+                            let (slot, item) = (crate::js::string(&op[1]), crate::js::string(&op[2]));
+                            let target = crate::item_replacement::checked_target(|| Ok(text.clone()), &slot, &item, op.get(5))?;
+                            json!(crate::schema_cosmetics::pick_cosmetic(&mut lib, &slot, &item, op[3].as_str(), Some(&op[4]), &target)?)
+                        }
                         "set" => {
                             let (applied, pieces) =
                                 crate::schema_cosmetics::pick_set(&mut lib, &text, &crate::js::string(&op[1]), n(&op[2]))?;
@@ -1691,7 +1689,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                         }
                         "look" => {
                             let (applied, picks) =
-                                crate::schema_cosmetics::wear_look(&mut lib, &crate::js::string(&op[1]), &op[2])?;
+                                crate::schema_cosmetics::wear_look(&mut lib, &crate::js::string(&op[1]), &op[2], || Ok(text.clone()))?;
                             json!({ "applied": applied, "picks": picks })
                         }
                         "settings" => {
@@ -1820,9 +1818,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                         "apply" => {
                             let p = preset()?;
                             let mut pick = |lib: &mut crate::library::Library, p: &Value| -> Result<(), String> {
-                                let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
-                                crate::schema_cosmetics::pick_cosmetic(lib, &crate::js::string(&p["slot"]), &crate::js::string(&p["itemId"]), p["name"].as_str(), Some(&effect))?;
-                                Ok(())
+                                crate::schema_cosmetics::pick_from(lib, p, || Err("no game table here".into())).map(drop)
                             };
                             let a = crate::presets_service::apply_preset(&mut lib, &inst, Some(&mut st), &p, crate::js::truthy(&op[2]), &mut pick)?;
                             json!({ "errors": a.errors, "schemaTouched": a.schema_touched })
@@ -1874,8 +1870,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                         crate::import::install_vpk_buffer(&inst, &std::fs::read(file).map_err(|e| e.to_string())?)
                     };
                     let mut pick = |lib: &mut crate::library::Library, p: &Value| {
-                        let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
-                        crate::schema_cosmetics::pick_cosmetic(lib, &crate::js::string(&p["slot"]), &crate::js::string(&p["itemId"]), p["name"].as_str(), Some(&effect))
+                        crate::schema_cosmetics::pick_from(lib, p, || vanilla.clone().ok_or_else(|| "no game table here".into()))
                     };
                     let mut deploy = |_: &mut crate::library::Library, p: &Value| deployed.push(p["id"].clone());
                     let mut prog = |v: Value| progress.push(v);
@@ -4614,7 +4609,7 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
                 let o = op.as_array().cloned().unwrap_or_default();
                 let st = |i: usize| o.get(i).map(crate::js::string).unwrap_or_default();
                 let r: Result<Value, String> = match o.first().and_then(Value::as_str).unwrap_or("") {
-                    "itemModel" => h::item_model(&text, &st(1), opt(o.get(2)).as_deref(), &st(3), opt(o.get(4)).as_deref()),
+                    "itemModel" => h::item_model(&text, &st(1), opt(o.get(2)).as_deref(), &st(3), opt(o.get(4)).as_deref(), opt(o.get(5)).as_deref()),
                     "bodySkinFor" => h::body_skin_for(st(1).as_bytes(), &st(2), &st(3), o.get(4).is_some_and(crate::js::truthy))
                         .map(|x| x.map_or(Value::Null, crate::js::json_number)),
                     "entityModel" => Ok(json!(h::entity_model(&st(1), &st(2)))),

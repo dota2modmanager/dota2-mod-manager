@@ -299,6 +299,10 @@ impl Library {
         o.insert("itemId".into(), Value::String(template(get(rec, "itemId"))));
         put(&mut o, "name", get(rec, "name"));
         o.insert("effectId".into(), Value::String(js::string(&or_empty(get(rec, "effectId")))));
+        // the wearable it is written over, when not the hero's default (#679); absent on older picks
+        if let Some(t) = get(rec, "targetItemId").and_then(Value::as_str).filter(|t| !t.is_empty()) {
+            o.insert("targetItemId".into(), json!(t));
+        }
         Value::Object(o)
     }
 

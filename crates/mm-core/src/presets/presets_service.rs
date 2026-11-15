@@ -46,8 +46,9 @@ pub fn preset_is_on(lib: &Library, preset: &Value) -> Result<bool, String> {
     let Some(picks) = preset.get("picks").and_then(Value::as_array) else { return Ok(true) };
     let key = |p: &Value| {
         let effect = p.get("effectId").filter(|e| truthy(e)).map(string).unwrap_or_default();
+        let target = p.get("targetItemId").filter(|e| truthy(e)).map(string).unwrap_or_default();
         format!(
-            "{}|{}|{effect}",
+            "{}|{}|{effect}|{target}",
             p.get("slot").map_or("undefined".into(), string),
             p.get("itemId").map_or("undefined".into(), string)
         )

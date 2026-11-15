@@ -19,7 +19,7 @@ use crate::preset_plan::CatalogIndex;
 use crate::settings::Settings;
 
 /// One look on in its slot: the record it is now.
-pub type PickLook = dyn FnMut(&mut Library, &Value) -> Result<Option<Value>, String>;
+pub type PickLook<'a> = dyn FnMut(&mut Library, &Value) -> Result<Option<Value>, String> + 'a;
 
 /// What putting a preset on needs from the app around it.
 pub struct Deps<'a> {
@@ -33,7 +33,7 @@ pub struct Deps<'a> {
     /// a catalog hit downloaded and unpacked into the game: the files it became
     pub fetch: &'a mut dyn FnMut(&Value) -> Result<Vec<Value>, String>,
     /// one look on, without writing the table (`schema_cosmetics::pick_cosmetic`)
-    pub pick: &'a mut PickLook,
+    pub pick: &'a mut PickLook<'a>,
     /// a pack's VPK rebuilt
     pub deploy_pack: &'a mut dyn FnMut(&mut Library, &Value),
     pub progress: &'a mut dyn FnMut(Value),

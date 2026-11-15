@@ -387,7 +387,11 @@ pub fn flow(o: &Owner, preset: &Value, own: bool) -> Value {
     let cat = catalog_index(o);
     let (outcome, rebuild) = {
         let mut c = o.core();
-        let base = if own { None } else { c.game().and_then(|g| c.schema.vanilla(&g).ok()) };
+        // the game's table: a received preset resolves against it, and a pick that replaces
+        // another item is checked against it before it is put on
+        let replaces = preset.to_string().contains("\"targetItemId\"");
+        let base = if own && !replaces { None } else { c.game().and_then(|g| c.schema.vanilla(&g).ok()) };
+        let mut replacements = base.as_ref().map(|b| crate::item_replacement::Replacements::new(&b.0));
         let net = c.net.clone();
         let Core { installer, library, settings, catalog, .. } = &mut *c;
         let inst: &Installer = installer;
@@ -403,13 +407,17 @@ pub fn flow(o: &Owner, preset: &Value, own: bool) -> Value {
         };
         let mut pick = |lib: &mut Library, p: &Value| {
             let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
-            crate::schema_cosmetics::pick_cosmetic(
-                lib,
-                &string(&p["slot"]),
-                &string(&p["itemId"]),
-                p["name"].as_str(),
-                Some(&effect),
-            )
+            let (slot, item) = (string(&p["slot"]), string(&p["itemId"]));
+            let target = match replacements.as_mut() {
+                Some(r) => r.check(&slot, &item, p.get("targetItemId"))?,
+                None => crate::item_replacement::checked_target(
+                    || Err(t("Путь к Dota 2 не задан", &[])),
+                    &slot,
+                    &item,
+                    p.get("targetItemId"),
+                )?,
+            };
+            crate::schema_cosmetics::pick_cosmetic(lib, &slot, &item, p["name"].as_str(), Some(&effect), &target)
         };
         let mut deploy = |lib: &mut Library, p: &Value| {
             let _ = crate::owner_packs::deploy_into(inst, lib, p);

@@ -35,9 +35,18 @@ fn model_player(text: &[u8], item_id: &str) -> R<Option<String>> {
 /// The model an item puts on in the style picked, and the body it swaps the hero for. The build
 /// copies the item's model over the stock one (`stock`); its other copies are particles and other
 /// units' models, which the hero does not wear.
-pub fn item_model(text: &[u8], item_id: &str, key: Option<&str>, hero: &str, stock: Option<&str>) -> R<Value> {
+/// `target`: the same-slot wearable the pick is written over, when not the hero's default.
+pub fn item_model(
+    text: &[u8],
+    item_id: &str,
+    key: Option<&str>,
+    hero: &str,
+    stock: Option<&str>,
+    target: Option<&str>,
+) -> R<Value> {
     let ids: Vec<String> = key.unwrap_or("").split(',').map(String::from).collect();
-    if let Ok(patch) = crate::item_builder::item_effect_patch(text, item_id, &ids, None, None, None) {
+    let target = target.filter(|t| !t.is_empty());
+    if let Ok(patch) = crate::item_builder::item_effect_patch(text, item_id, &ids, target, None, None) {
         let copies = &patch.assets.asset_copies;
         let mut replacements: IndexMap<String, String> = IndexMap::new();
         for c in copies {
