@@ -212,3 +212,13 @@ test('after an update the new version has to say its version and keep the favour
   assert.equal(lost.ok, false, 'a favourite gone means the update lost settings');
   assert.equal(lost.seen.length, 2, 'both are reported even when the first fails');
 });
+
+test('the notice pak and its marker are the ones the Rust core writes', async () => {
+  const { NOTICE_PAK, MARKER } = await load();
+  const rs = (f) => fs.readFileSync(path.join(ROOT, 'crates', 'mm-core', 'src', ...f.split('/')), 'utf8');
+  const pak = rs('install/slot_zones.rs').match(/pub const APP_PAK: u32 = (\d+);/);
+  const marker = rs('app/notice_text.rs').match(/pub const MARKER: &str = "([^"]+)";/);
+  assert.ok(pak && marker, 'APP_PAK and MARKER are where the Rust core keeps them');
+  assert.equal(NOTICE_PAK, `pak${pak[1]}_dir.vpk`);
+  assert.equal(MARKER, marker[1]);
+});
