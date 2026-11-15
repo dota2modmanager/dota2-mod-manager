@@ -6705,7 +6705,8 @@ test('the settings view, the support window\'s timing and the beta gate in Rust 
   const bare = path.join(tmp, 'bare', 'game');
   fs.mkdirSync(bare, { recursive: true });
   const recs = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, files: i % 2 ? [{ root: 'lang', name: 'x' }] : [{ root: 'game', name: 'y' }] }));
-  const games = [game, sandboxGame, bare, '', null, path.join(tmp, 'nope')];
+  // the sandbox only where it is seeded: its view says whether the game is there, which a runner without it answers otherwise
+  const games = [game, ...(fs.existsSync(sandboxGame) ? [sandboxGame] : []), bare, '', null, path.join(tmp, 'nope')];
   const views: unknown[][] = [];
   for (const g of games) for (const folder of ['russian', 'minify', 'koreana']) for (const n of [0, 3]) {
     views.push([{ dotaGamePath: g, uiLang: 'en', minify: 'kept?', zeta: 1 }, recs(n), n > 0, folder, n ? { moved: 2 } : null, n ? null : { laidOut: true }]);
