@@ -1,5 +1,5 @@
 //! `mm-cli parse-each <vpk|zip> <list.json>`: each file of the list read by the parser that opens
-//! other people's files, for tools/fuzz-parsers.mjs. A refusal (an error the parser returns) is
+//! other people's files, for tools/dev/fuzz-parsers.mjs. A refusal (an error the parser returns) is
 //! the parser doing its job; a panic or a slow read is what the fuzzer is looking for. It prints,
 //! per file, {"call": name, "panic": message} or {"call", "ms"} for each call, in the list's order.
 

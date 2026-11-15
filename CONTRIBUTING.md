@@ -8,7 +8,7 @@ mistake here does not throw a stack trace, it silently breaks a game the person 
 but plays every day. So the bar for a change is not "it works on my machine", it is "a stranger's
 game still works after this".
 
-[ARCHITECTURE.md](ARCHITECTURE.md) explains how the app is put together and is worth reading
+[ARCHITECTURE.md](docs/ARCHITECTURE.md) explains how the app is put together and is worth reading
 before a first change.
 
 ## Running it
@@ -136,7 +136,7 @@ different signature than the one underneath it.
 Errors are counted per file in `.github/typecheck-baseline.json`, which has stood at zero since
 2026-09-28, and the check fails when a file goes above its line or when a file that was clean
 starts reporting. Fewer is always fine: fix some,
-then run `node tools/typecheck.mjs --update` to lower the line. Never raise one to make a run pass.
+then run `node tools/dev/typecheck.mjs --update` to lower the line. Never raise one to make a run pass.
 
 `tools/` is not covered: the tools are a mix of both module systems, and one configuration that
 fits neither would report noise instead of mistakes.
@@ -169,8 +169,7 @@ before touching the parser, so the fix has proof.
 Fix it the way you fix anything else, with a test. Then add a file to
 [docs/incidents/](docs/incidents/README.md): what happened, why, why nothing caught it, and what
 catches it now. The last section names the tests, workflow steps and files that stand guard.
-`test/incidents.test.js` fails when one of them is renamed or deleted and the write-up still
-points at it, so removing a guard means saying in the same change what replaced it.
+Removing a guard means saying in the same change, in the write-up, what replaced it.
 
 An issue labelled `regression` gets a write-up with its number in the `Issue` row. The radar lists
 a closed one that no write-up names.
@@ -187,7 +186,7 @@ A string with no English twin falls back to Russian, which means an English spea
 in the middle of their app and nothing crashes to tell anybody. A checker finds those:
 
 ```bash
-node tools/check-i18n.js
+node tools/dev/check-i18n.js
 ```
 
 `npm test` runs it too, and `crates/mm-core/src/app/i18n.rs` checks Chinese coverage and placeholders, so a
@@ -196,7 +195,6 @@ groups use the display-only labels in `zh-CN-mod-names.json` and `zh-CN-catalog-
 `renderer/ui/catalog-name.ts`; original keys, file references and saved records stay unchanged.
 `zh-CN-guide-text.json` translates the inspected catalog's guide text by exact source string;
 changed instructions fall back to the source, and commands, paths and links remain intact.
-`test/chinese-catalog.test.ts` checks label coverage, bilingual search and guide integrity.
 Official item/set labels in Chinese resolve their `item_name` tokens from the installed
 game's `dota_schinese.txt` and `items_schinese.txt`. Original names remain icon/favourite/save keys;
 missing or ambiguous translations keep the original label. Guides and release notes use English
@@ -207,7 +205,6 @@ are not shipped; only catalog display labels are included.
 Chinese hero labels use Valve's [Simplified Chinese hero feed](https://www.dota2.com/datafeed/herolist?language=schinese)
 in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates display labels only:
 filter values, game identifiers, portrait keys and saved equipment keep their original names.
-`test/chinese-heroes.test.ts` imports these TypeScript modules so Node measures their coverage.
 The global search also matches Chinese hero and catalog names alongside the original English.
 Check named abilities against the [official hero data](https://www.dota2.com/datafeed/herodata?language=schinese&hero_id=109),
 not a literal translation of the English or Russian name. Generic numbered ability slots remain
@@ -307,7 +304,7 @@ users brings the test that would have caught it. `npm run verify` runs the same 
 machine before you push.
 
 A version goes out from a tag, as a draft that becomes public only after its installer and its
-AppImage have each installed a mod. [RELEASING.md](RELEASING.md) has the steps, and what to do when
+AppImage have each installed a mod. [RELEASING.md](docs/RELEASING.md) has the steps, and what to do when
 a release goes wrong.
 
 ## Response times
@@ -329,7 +326,7 @@ into a five minute fix.
 Read it before you send it. It names your game folder and the app's own folder, and on Windows
 the second one contains your account name. Nothing else about you is in there, and you are the
 one attaching the file, but a path is still a path. Masking those two is listed in
-[DECISIONS.md](DECISIONS.md#the-diagnostic-report-carries-two-real-paths).
+[DECISIONS.md](docs/DECISIONS.md#the-diagnostic-report-carries-two-real-paths).
 
 Security problems go to [SECURITY.md](SECURITY.md) instead of a public issue.
 

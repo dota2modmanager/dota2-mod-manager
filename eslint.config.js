@@ -11,7 +11,7 @@
  * globals each corner of the codebase really has, so a real mistake is not buried in noise
  * about `document` in the main process.
  *
- * The TypeScript files are outside this file. The type check (tools/typecheck.mjs, over
+ * The TypeScript files are outside this file. The type check (tools/dev/typecheck.mjs, over
  * renderer/ and test/ tsconfig.json) is their lint: it refuses a name that is not there, which is the same rule
  * with the types behind it, and the flags there cover the rest of this list that it can.
  *
@@ -80,7 +80,7 @@ const rules = {
   'no-setter-return': 'error',
   'no-this-before-super': 'error',
   'getter-return': 'error',
-  // used deliberately in tools/check-i18n.js, which disables it by name there
+  // used deliberately in tools/dev/check-i18n.js, which disables it by name there
   'no-new-func': 'error',
 };
 
@@ -105,7 +105,7 @@ module.exports = [
   {
     /* The mail worker runs in Cloudflare's runtime rather than in Node: a module, with fetch and
        friends, and none of Node's own globals. */
-    files: ['tools/email-worker/**/*.js'],
+    files: ['tools/ops/email-worker/**/*.js'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
@@ -121,7 +121,7 @@ module.exports = [
   },
   {
     // the preset bot runs in Cloudflare's runtime, which has the web's streams as globals
-    files: ['tools/preset-bot/**/*.mjs'],
+    files: ['tools/catalog/preset-bot/**/*.mjs'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { ...NODE, DecompressionStream: 'readonly' } },
     rules,
   },

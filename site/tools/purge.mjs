@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const sitemap = path.resolve(here, '..', 'dist', 'sitemap-0.xml');
 const statePath = path.resolve(here, '..', '..', 'indexnow.state.json');
-const { purgeCache } = createRequire(import.meta.url)('../../tools/r2-client.js');
+const { purgeCache } = createRequire(import.meta.url)('../../tools/catalog/r2-client.js');
 
 /** The addresses the last deploy had and this one has not. */
 export function goneSince(ledger, sitemapXml) {

@@ -948,7 +948,7 @@ impl Block {
     }
 
     /// The tree as JSON with each number's own bytes beside it (`raw`, hex) and each blob's bytes,
-    /// so a tool can change it and give it back to `set_tree`: mm-cli kv3-tree, for tools/modkit.
+    /// so a tool can change it and give it back to `set_tree`: mm-cli kv3-tree, for tools/mods/modkit.
     pub fn tree(&self) -> Json {
         self.tree_node(&self.root)
     }

@@ -20,7 +20,7 @@ use crate::net_fetch::{FetchOptions, Net};
 pub type Clock = Box<dyn Fn() -> f64 + Send + Sync>;
 
 pub const CONFIG_URL: &str = "https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json";
-/// Ours, not the catalog author's: tools/sign-catalog.js signs the config and the ready presets.
+/// Ours, not the catalog author's: tools/catalog/sign-catalog.js signs the config and the ready presets.
 pub const CONFIG_PUBLIC_KEY: &str = "MCowBQYDK2VwAyEA8M9IOVLfxK6V1n2fHAHlE9zzCsXFoUAJki8RdqLPBdA=";
 
 /// What the app is willing to be told to switch off; any other name is ignored.

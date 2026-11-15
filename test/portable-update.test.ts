@@ -21,7 +21,7 @@ const parseManifest = (text: string) => {
   return a.ok;
 };
 const releaseUrl = (version: string, file: string) => (rust('portable-update.urls', [version, file]) as string[])[0];
-import portableManifestJs from '../tools/portable-manifest.js';
+import portableManifestJs from '../tools/release/portable-manifest.js';
 const { build } = portableManifestJs;
 
 function tmpDir(t: TestContext) {

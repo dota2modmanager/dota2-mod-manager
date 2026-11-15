@@ -4,16 +4,13 @@
 name: Tests
 
 on:
-  push:
-    branches:
-      - main
-      - v2
+  # Pull requests get the quick checks; the merge queue runs everything once, on top of the newest
+  # main, and main is then that very commit, so a push to main does not run them a third time.
   pull_request:
-  # The merge queue runs the suite again on top of the newest main before a change lands.
   merge_group:
   workflow_dispatch:
 
-# The token reads the repository and nothing more. A job that needs more asks for it itself.
+
 permissions:
   contents: read
 
@@ -43,11 +40,12 @@ jobs:
 
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
-      # the target folder from the last build on main: a pull request rebuilds only what it changed
-      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      # the target folder rust-cache.yml built on main: a pull request rebuilds only what it
+      # changed instead of every crate from scratch.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          shared-key: debug
+          save-if: false
       - name: Build mm-cli
         run: cargo build -p mm-cli
 
@@ -110,11 +108,12 @@ jobs:
 
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
-      # the target folder from the last build on main: a pull request rebuilds only what it changed
-      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      # the target folder rust-cache.yml built on main: a pull request rebuilds only what it
+      # changed instead of every crate from scratch.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          shared-key: debug
+          save-if: false
       - name: Build mm-cli
         run: cargo build -p mm-cli
 

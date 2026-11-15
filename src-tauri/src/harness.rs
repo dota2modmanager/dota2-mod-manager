@@ -1,14 +1,14 @@
 //! MM_SHOT and MM_EVAL under Tauri (src/dev-harness.ts takeShot): the window walked to a state
 //! by switches, a script run in the finished page, and its answer written beside MM_SHOT.
 //!
-//! tools/e2e.mjs drives every launch this way, and release.yml runs it against the installed
+//! tools/dev/e2e.mjs drives every launch this way, and release.yml runs it against the installed
 //! build, so the bytes people download are clicked through before they are published. A webview
 //! has no capturePage, so no picture is taken: MM_SHOT names where the answers go
 //! (`<shot>.eval.json`, or `<shot>.err.txt`), and e2e.mjs waits for those.
 //!
 //! The switches it reads: MM_VIEW, MM_CAT, MM_SEARCH, MM_CLICK, MM_SCROLL, MM_MODAL, MM_PREVIEW,
 //! MM_EVAL and MM_QUIET. Pointer ones (MM_HOVER, MM_MENU, MM_DRAG, MM_WHEEL) need input events
-//! a webview does not take from outside; tools/tauri-shot.mjs does those over DevTools.
+//! a webview does not take from outside; tools/dev/tauri-shot.mjs does those over DevTools.
 //!
 //! Only on a run held to a folder (--write-jail): a test, never a person's copy.
 

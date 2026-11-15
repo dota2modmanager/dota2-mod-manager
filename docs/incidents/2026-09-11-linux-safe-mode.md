@@ -31,6 +31,6 @@ test or sandbox had ever built the way Valve ships it.
 - `crates/mm-core/src/game/patcher_tests.rs` "an_install_with_no_signature_list_is_still_patched_and_says_it_cannot_be_signed": the
   status bar and the self-heal stop treating a missing list as a failure.
 - `crates/mm-core/src/game/patcher_tests.rs` "reverting_puts_both_files_back_exactly_as_they_were": with a list and without one.
-- `tools/sandbox.js` "Linux install in the world that had one": the sandbox writes the list only
+- `tools/dev/sandbox.js` "Linux install in the world that had one": the sandbox writes the list only
   where the platform it runs on keeps one.
 - `.github/workflows/rust.yml`: runs the Rust tests on every push.

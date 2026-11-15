@@ -27,7 +27,7 @@ project's name.
 [dota2modmanager](https://github.com/dota2modmanager) organization; the other three hold the Maintain
 role on the repository, which does not reach its settings or secrets. The organization requires
 two-factor authentication of every member, and all five use it on every service that can publish
-anything. [GOVERNANCE.md](../GOVERNANCE.md) says who decides what.
+anything. [GOVERNANCE.md](GOVERNANCE.md) says who decides what.
 
 ## How a release is built
 
@@ -37,7 +37,7 @@ machine. The commit has to have passed every check in
 needs before it can merge. The release opens as a draft that nobody outside the project can see.
 The installer and the AppImage on it are installed on Windows and Linux by CI and used to install a
 mod before the release is published, and a published release cannot be changed afterwards.
-[RELEASING.md](../RELEASING.md) is the whole procedure.
+[RELEASING.md](RELEASING.md) is the whole procedure.
 
 ## What is signed today
 
@@ -65,7 +65,7 @@ This program sends no information about you or your machine, and has no account.
 reports is a download count: installing a mod from the catalog sends that mod's name to the
 catalog's counter, with no identifier, and Settings can switch it off. It contacts the mod catalog,
 that counter and the update feed; every address it can contact, what for and when, is listed in
-[PRIVACY.md](../PRIVACY.md).
+[PRIVACY.md](PRIVACY.md).
 
 ## What the program does to a machine
 

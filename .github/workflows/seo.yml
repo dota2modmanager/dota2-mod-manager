@@ -61,7 +61,7 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
           RAW: ${{ inputs.raw }}
-        run: node tools/seo-report.mjs --raw "$RAW"
+        run: node tools/site/seo-report.mjs --raw "$RAW"
 
       # Find the issue by listing and matching exactly, not with --search: GitHub's search index
       # is eventually consistent, so an issue created seconds ago is not findable yet, and the
@@ -78,7 +78,7 @@ jobs:
           echo "number=$number" >> "$GITHUB_OUTPUT"
           echo "tracking issue: ${number:-none yet}"
 
-      # Last week's numbers live at the end of last week's comment (tools/seo-state.mjs says
+      # Last week's numbers live at the end of last week's comment (tools/site/seo-state.mjs says
       # why). They used to be saved to the Actions cache by a step that had no matching restore,
       # so every report for a month said "first week" - and a restore would not have helped,
       # because GitHub evicts a cache nobody touched for seven days, which is exactly the gap
@@ -111,7 +111,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SEO_PREVIOUS: seo-previous.md
         run: |
-          node tools/seo-report.mjs
+          node tools/site/seo-report.mjs
           cat seo-report.md
 
       # `gh issue create` prints the new issue's URL and takes no --json, so the number comes

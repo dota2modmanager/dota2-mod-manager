@@ -68,7 +68,7 @@ export function stagedItemAction(
 
 // The effects that ship with a picture, so the shelf shows them at once on any machine. A fixed
 // set, so the screen never has to ask what is in a folder: the builder's own ids, and the game's
-// unusual ones tools/effect-pictures.mjs drew. Any other effect (a patch's new one) is drawn live,
+// unusual ones tools/mods/effect-pictures.mjs drew. Any other effect (a patch's new one) is drawn live,
 // which takes seconds of WebGL each (preview3d/effect-thumb.ts).
 const EFFECT_PICTURES = new Set([
   'bubbles', 'fire', 'frostbloom', 'ghost', 'lightnings', 'sand-storm', 'snow',

@@ -10,7 +10,6 @@
  * (and shown in its folder), then the Discord server opened, so the file is one drag away from
  * the people who can read it. */
 import { $ } from '../core/dom.ts';
-import { announce } from './a11y.ts';
 import { errorHelpUrl, needsWorkshopTools } from './error-help.ts';
 import { HELP_LINKS } from '../core/constants.ts';
 
@@ -40,7 +39,6 @@ export function toast(msg: string, type: ToastKind = 'ok', ms = 4000, action?: T
     el.appendChild(help);
   }
   $('#toasts').appendChild(el);
-  announce(msg);
   let timer = setTimeout(() => el.remove(), ms);
   const hold = () => clearTimeout(timer);
   const release = () => { clearTimeout(timer); timer = setTimeout(() => el.remove(), ms); };

@@ -1,0 +1,54 @@
+# Once a week, cargo-mutants breaks the code that writes into the game folder on purpose (flips a
+# comparison, drops a line, returns early) and checks that some test notices. A mutant nobody
+# catches is a bug the tests would let through. It takes long enough that no pull request waits
+# for it; the result is a report to read, not a check that blocks.
+name: Mutants
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mutants:
+    name: Mutants in the code that writes to the game
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: debug
+          save-if: false
+      - name: cargo-mutants
+        run: cargo install cargo-mutants --version 25.3.1 --locked
+      - name: Break the code and run the tests
+        run: >
+          cargo mutants -p mm-core --no-shuffle --timeout-multiplier 3
+          -f crates/mm-core/src/install/file_tx.rs
+          -f crates/mm-core/src/game/patcher.rs
+          -f crates/mm-core/src/game/patcher_gameinfo.rs
+          -f crates/mm-core/src/game/gamelang.rs
+          -f crates/mm-core/src/formats/vpk_pack.rs
+      - name: The mutants no test caught
+        if: always()
+        run: |
+          {
+            echo '## Missed mutants'
+            echo
+            echo '```'
+            cat mutants.out/missed.txt 2>/dev/null || echo 'none'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: mutants
+          path: mutants.out
+          if-no-files-found: ignore

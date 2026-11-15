@@ -1,23 +1,21 @@
-# The Rust crates on their own: their tests, clippy and fmt. The parity tests that hold them to
-# the TypeScript they replace (docs/rust-migration.md) run in test.yml with the rest of the suite.
-# The Tauri shell they build into is clicked through by the required checks: e2e.yml (Windows
-# and Linux) and linux.yml (the AppImage).
+# The Rust crates on their own: their tests, clippy and fmt. The Tauri shell they build into is
+# clicked through by e2e.yml (Windows and Linux) in the merge queue.
 name: Rust
 
 on:
-  push:
-    branches:
-      - main
+  # Pull requests get the quick checks; the merge queue runs everything once, on top of the newest
+  # main, and main is then that very commit, so a push to main does not run them a third time.
   pull_request:
   merge_group:
   workflow_dispatch:
+
 
 permissions:
   contents: read
 
 jobs:
   crates:
-    name: Rust crates and parity
+    name: Rust crates
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -30,11 +28,12 @@ jobs:
       # the runner image carries rustup; stable is whatever it names today
       - name: Rust toolchain
         run: rustup toolchain install stable --profile minimal -c clippy -c rustfmt && rustup default stable
-      # the target folder from the last build on main: a pull request rebuilds only what it changed
-      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      # the target folder rust-cache.yml built on main: a pull request rebuilds only what it
+      # changed instead of every crate from scratch.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          shared-key: debug
+          save-if: false
       - name: Crate tests
         run: cargo fmt --all -- --check && cargo test -p mm-core -p mm-cli
       - name: Clippy

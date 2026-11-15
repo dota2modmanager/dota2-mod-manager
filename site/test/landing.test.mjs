@@ -415,7 +415,7 @@ async function runDown(page, limit = 200_000) {
 
 /* The chase waits for an app release that takes its key (Landing.astro, data-last), and mm-chase
    lets it run before then; the tests below that need it turn it on that way. The pumpkin's worker
-   (tools/pumpkin-worker) is stood in for, and says what it was asked. */
+   (tools/ops/pumpkin-worker) is stood in for, and says what it was asked. */
 const KEY = 'K7QX-M2PA-9HRT-WZ4N';
 const chasing = async () => {
   const { context, page } = await openPage(browser, server.url, 'desktop');

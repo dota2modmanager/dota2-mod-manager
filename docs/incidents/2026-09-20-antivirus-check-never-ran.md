@@ -45,6 +45,6 @@ project publishes one.
   the job now asks for `actions: write` to be allowed to.
 - `test/workflows.test.js` "the release asks for the antivirus check by name, because the event
   never comes"
-- `tools/radar.mjs`: a workflow with no schedule that runs on a release and has never run once is
+- `tools/ops/radar.mjs`: a workflow with no schedule that runs on a release and has never run once is
   red on the status issue, with what to do about it.
 - `test/radar.test.js` "a workflow that only runs on a release, and never has, is red"

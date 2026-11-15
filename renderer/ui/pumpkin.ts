@@ -8,7 +8,7 @@
  * (settings `pumpkinLit`).
  *
  * Lit, it asks for a key. Keys come from the site, one per person, and each opens one pumpkin
- * (src/pumpkin.ts, tools/pumpkin-worker). The right one opens the bloody night, the tenth theme,
+ * (src/pumpkin.ts, tools/ops/pumpkin-worker). The right one opens the bloody night, the tenth theme,
  * and brings a mod nobody else has yet into My mods. A key another pumpkin already ate is turned
  * away with that said plainly, since that is the one mistake people will make on purpose.
  *

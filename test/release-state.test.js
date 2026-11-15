@@ -1,12 +1,12 @@
-/* What a published release has to carry and what the update mirror has to hold (tools/release-state.js),
- * the lists release.yml checks the draft against and tools/release-watch.mjs repairs the mirror by. */
+/* What a published release has to carry and what the update mirror has to hold (tools/release/release-state.js),
+ * the lists release.yml checks the draft against and tools/release/release-watch.mjs repairs the mirror by. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const state = require('../tools/release-state.js');
-const { currentPlan } = require('../tools/mirror-plan.js');
+const state = require('../tools/release/release-state.js');
+const { currentPlan } = require('../tools/catalog/mirror-plan.js');
 
 const rel = (tag, extra = {}) => ({
   tag_name: tag, draft: false, prerelease: /-/.test(tag), published_at: '2026-09-27T10:00:00Z', body: '',
@@ -128,8 +128,8 @@ test('what the watch holds a release to: published after it began, announced onc
   assert.equal(state.watched(rel('v2.7.1', { published_at: '2026-09-24T12:58:26Z' })), false, '2.7.1 went out unannounced on purpose');
   assert.equal(state.announced({ body: `x\n\n${state.ANNOUNCED}\n` }), true);
   assert.equal(state.announced({ body: 'x' }), false);
-  // the notes as tools/virustotal.mjs writes them, so the two cannot drift apart unnoticed
-  const { withReport, reportSection } = await import('../tools/virustotal.mjs');
+  // the notes as tools/release/virustotal.mjs writes them, so the two cannot drift apart unnoticed
+  const { withReport, reportSection } = await import('../tools/release/virustotal.mjs');
   const body = withReport('Notes.', reportSection([{ name: 'a.exe', url: 'u', flagged: 0, engines: 72 }]));
   assert.equal(state.scanned({ body }), true);
   assert.equal(state.scanned({ body: 'Notes.' }), false);

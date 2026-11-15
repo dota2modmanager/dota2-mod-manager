@@ -1,5 +1,5 @@
 {
-  "_why": "How many type errors each file still has. tools/typecheck.mjs refuses a run where a file has more than its number here, or where a file appears that had none. Lower it by fixing errors and running: node tools/typecheck.mjs --update. Never raise a line to make a run pass.",
+  "_why": "How many type errors each file still has. tools/dev/typecheck.mjs refuses a run where a file has more than its number here, or where a file appears that had none. Lower it by fixing errors and running: node tools/dev/typecheck.mjs --update. Never raise a line to make a run pass.",
   "measured": "2026-09-28",
   "total": 0,
   "files": {}

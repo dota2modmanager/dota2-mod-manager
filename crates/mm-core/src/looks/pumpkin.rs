@@ -1,4 +1,4 @@
-//! The pumpkin's side of the key (src/pumpkin.ts; renderer/ui/pumpkin.ts asks, tools/pumpkin-worker
+//! The pumpkin's side of the key (src/pumpkin.ts; renderer/ui/pumpkin.ts asks, tools/ops/pumpkin-worker
 //! answers). Each key the site hands out opens one pumpkin: the worker ties it to the first install
 //! name that brings it, a random name made here the first time it is needed and sent nowhere else.
 //! The key opens the bloody theme (settings `blood`) and a mod nobody else has yet, downloaded from
@@ -14,7 +14,7 @@ use crate::library::Library;
 use crate::net_fetch::Net;
 use crate::settings::Settings;
 
-/// The worker that keeps the keys and the prize (tools/pumpkin-worker).
+/// The worker that keeps the keys and the prize (tools/ops/pumpkin-worker).
 pub const PUMPKIN_HOST: &str = "https://pumpkin.dota2modmanager.com";
 /// What the mod is called in the library.
 pub const PRIZE_NAME: &str = "Necrophos - Scream";

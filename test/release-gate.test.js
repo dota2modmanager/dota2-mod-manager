@@ -7,8 +7,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const load = () => import('../tools/release-gate.mjs');
-const REQUIRED = ['test', 'windows', 'Analyse JavaScript and TypeScript', 'Build the AppImage', 'Start it against the sandbox'];
+const load = () => import('../tools/release/release-gate.mjs');
+const REQUIRED = ['test', 'windows', 'Analyse JavaScript and TypeScript', 'Build the AppImage'];
 
 const run = (name, conclusion, extra = {}) => ({
   id: extra.id || Math.floor(Math.random() * 1e6) + 10,
@@ -51,7 +51,7 @@ test('a check still running, or not started yet, means wait rather than pass', a
 
   const absent = evaluate(REQUIRED.slice(0, 3).map((n) => run(n, 'success')), REQUIRED);
   assert.equal(absent.state, 'wait');
-  assert.deepEqual(absent.missing, ['Build the AppImage', 'Start it against the sandbox']);
+  assert.deepEqual(absent.missing, ['Build the AppImage']);
 });
 
 test('a failure wins over anything still running', async () => {

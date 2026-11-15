@@ -100,7 +100,7 @@ test('the lookups that read a section find a beta by its own heading', () => {
   };
   const { rust } = require('./helpers/rust.ts');
   const popup = (v) => rust('release-notes.changelogSection', text, v); // the app's "What's new" (app_info.rs)
-  const { changelogSection } = require('../tools/release-state.js');
+  const { changelogSection } = require('../tools/release/release-state.js');
   const preflight = (v) => changelogSection(text, v); // what the gate checks before building
   for (text of texts) {
     for (const find of [awk, popup, preflight]) {

@@ -1,6 +1,6 @@
 //! `mm-cli build <kind> <out.vpk> <args.json>`: the looks the app builds out of the game, written
-//! to a file for the tools that make them by hand (tools/recolor.mjs, tools/tower-looks.mjs,
-//! tools/trees.mjs). It prints what the build says beside the file.
+//! to a file for the tools that make them by hand (tools/mods/recolor.mjs, tools/mods/tower-looks.mjs,
+//! tools/mods/trees.mjs). It prints what the build says beside the file.
 //!
 //!   recolor  {pak01, set, target: [r, g, b]}       an item set in one colour
 //!   arcana   {pak01, set, target: [r, g, b]}       the arcana as a mod, in one colour
@@ -66,7 +66,7 @@ pub fn run(kind: &str, out: &Path, args_file: &Path) -> Result<Value, String> {
 }
 
 /// `mm-cli config-rules <ops.json>`: the rules the app reads its remote config by, for
-/// tools/rollback.mjs to write one the app will honour. Each op is answered in turn:
+/// tools/release/rollback.mjs to write one the app will honour. Each op is answered in turn:
 /// ["normalize", raw], ["cmp", a, b], ["idHash", id, salt], ["verify", file, signature, key],
 /// ["basesListing", manifest, signature], ["constants"].
 pub fn config_rules(ops_file: &Path) -> Result<Value, String> {
@@ -109,7 +109,7 @@ pub fn sets() -> Value {
 }
 
 /// `mm-cli bench-install <game> <language suffix> <vpk>`: a mod into a free slot of the language
-/// folder, the way the app's installer puts one there, for tools/dota-bench.mjs; the file it wrote.
+/// folder, the way the app's installer puts one there, for tools/mods/dota-bench.mjs; the file it wrote.
 pub fn bench_install(game: &Path, lang: &str, vpk_file: &Path) -> Result<Value, String> {
     let inst = mm_core::installer::Installer::new(Some(game.to_path_buf()), lang);
     inst.ensure_lang_folder()?;
