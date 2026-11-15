@@ -13,7 +13,8 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { validateGamePath } = require('../src/steam.ts');
+// a game folder by the files the app takes as one (validate_game_path, crates/mm-core/src/install/installer.rs)
+const isGame = (p) => ['dota/pak01_dir.vpk', 'bin/win64/dota2.exe', 'bin/linuxsteamrt64/dota2'].some((f) => fs.existsSync(path.join(p, ...f.split('/'))));
 
 /**
  * @param {string} userData the sandbox's --user-data-dir
@@ -23,7 +24,7 @@ const { validateGamePath } = require('../src/steam.ts');
  * @returns {string|null} why the run must not start, or null once the path is pinned
  */
 function pinGamePath(userData, game, log = () => {}, version = null) {
-  if (!validateGamePath(game)) return `no sandbox game at ${game}, run: npm run sandbox:seed`;
+  if (!isGame(game)) return `no sandbox game at ${game}, run: npm run sandbox:seed`;
   const file = path.join(userData, 'settings.json');
   let settings;
   try {
