@@ -6,13 +6,10 @@
 //! folder, else the game's) and its models in pak01. Each decor material becomes a copy of the
 //! game's dev/transparent, which draws nothing and casts no shadow.
 
-use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use indexmap::IndexMap;
-use regex::bytes::Regex as BytesRegex;
-use regex::Regex;
 use serde_json::{json, Value};
 
 use crate::generated_pak::{files_json, swap_pak, write_pak};
@@ -21,66 +18,9 @@ use crate::installer::Installer;
 use crate::library::Library;
 use crate::vpk::Index;
 
-/// The groups the window switches on and off: the decor first, then the rest of Optimization
-/// (map_optimize.rs).
-pub const DECOR_GROUPS: [&str; 17] = crate::map_optimize::GROUPS;
-
 /// The material every decor material becomes: the game's own, which draws nothing.
 pub const BLANK: &str = "materials/dev/transparent.vmat_c";
 const MAP_REL: &str = "maps/dota.vpk";
-
-fn group_of(material: &str) -> Option<&'static str> {
-    let plants = Regex::new(r"^materials/(models/(props_nature|props_wildlife)/|nature/card_(grass|flowers))")
-        .expect("a fixed pattern");
-    let debris = Regex::new(
-        r"^materials/(models/(props_debris|props_bones|props_rock|props_magic)/|overlays/(blood|petals|leaves))",
-    )
-    .expect("a fixed pattern");
-    if plants.is_match(material) {
-        Some("plants")
-    } else if debris.is_match(material) {
-        Some("debris")
-    } else {
-        None
-    }
-}
-
-/// Each group's materials, plants then debris.
-pub type Materials = [Vec<String>; 2];
-
-/// Each group's materials on `map`, in pak01, sorted.
-pub fn decor_materials(map: &Index, pak: &Index) -> Result<Materials, String> {
-    let material = BytesRegex::new(r"(?-u)materials/[A-Za-z0-9_/.-]+?\.vmat").expect("a fixed pattern");
-    let model = BytesRegex::new(r"(?-u)models/[A-Za-z0-9_/.-]+?\.vmdl").expect("a fixed pattern");
-    let low = |b: &[u8]| String::from_utf8_lossy(b).to_lowercase();
-    let mut mats: BTreeSet<String> = BTreeSet::new();
-    let mut models: Vec<String> = Vec::new();
-    let mut seen = std::collections::HashSet::new();
-    for p in map.paths().map(str::to_string).collect::<Vec<_>>() {
-        let text = map.read(&p).map_err(|e| e.to_string())?.unwrap_or_default();
-        mats.extend(material.find_iter(&text).map(|m| low(m.as_bytes())));
-        for m in model.find_iter(&text) {
-            let m = low(m.as_bytes());
-            if seen.insert(m.clone()) {
-                models.push(m);
-            }
-        }
-    }
-    for m in &models {
-        if let Some(data) = pak.read(&format!("{m}_c")).map_err(|e| e.to_string())? {
-            mats.extend(material.find_iter(&data).map(|x| low(x.as_bytes())));
-        }
-    }
-    let mut out: Materials = [vec![], vec![]];
-    for m in mats {
-        if let Some(g) = group_of(&m) {
-            if pak.has(&format!("{m}_c")) {
-                out[usize::from(g == "debris")].push(m);
-            }
-        }
-    }
-    Ok(out)
-}
 
 /// The pak: each material of the groups asked for, as the blank one.
 /// The pak of the groups asked for: each file of theirs with what goes in its place.
@@ -189,14 +129,6 @@ pub fn clamp_groups(raw: &Value) -> Vec<&'static str> {
         Some(list) => crate::map_optimize::expand(list.iter().filter_map(Value::as_str)),
         None => vec![],
     }
-}
-
-/// The other map whose ground the window asked for ("ground:winter"), if a well-formed one.
-pub fn ground_of<'a>(names: impl IntoIterator<Item = &'a str>) -> Option<String> {
-    names.into_iter().find_map(|n| {
-        let w = n.strip_prefix("ground:")?;
-        (!w.is_empty() && w.len() <= 16 && w.bytes().all(|b| b.is_ascii_alphanumeric())).then(|| w.to_string())
-    })
 }
 
 /// A map that has a ground of its own for at least this many of the map's grounds is offered.

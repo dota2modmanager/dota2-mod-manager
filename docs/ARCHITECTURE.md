@@ -197,12 +197,10 @@ item table, never from a copy a mod happened to ship.
 
 It is rebuilt on every pick, switch and removal, so `crates/mm-core/src/schema/schema_build.rs` keeps each item builder
 pick as it was built, by item and effects, until the game or the app changes, and builds from the
-window run in the background a step at a time. Electron draws the window from the main process's
-thread, and a build that held it for seconds left the window black after an update (issue #286).
-The long walks (the game's index, the table's items, the soundevents, the check of the built
-table) are generators that pause every few dozen milliseconds (`crates/mm-core/src/schema/background_builds.rs`); a newer request
-stops an older build before it writes, the pak is written without holding the thread, and Play
-waits for the last build. At start and after a Dota patch the repair builds behind the open window.
+window run on a worker thread, so the window keeps drawing while one runs (a build that held the
+window's thread for seconds left it black after an update, issue #286). A newer request stops an
+older build before it writes (`refresh_schema_in_background` in `crates/mm-core/src/owner/mod.rs`),
+and Play waits for the last build. At start and after a Dota patch the repair builds behind the open window.
 
 ### Compiling what has no base
 

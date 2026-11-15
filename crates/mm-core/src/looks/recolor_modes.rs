@@ -25,16 +25,6 @@ pub fn parse_paint(value: &Value) -> Option<(String, &'static str)> {
     Some((c[1].to_ascii_lowercase(), mode))
 }
 
-/// '#rrggbb' for tint, '#rrggbb:mode' for the rest.
-pub fn paint_value(hex: &str, mode: &str) -> String {
-    let hex = hex.to_lowercase();
-    if mode == "tint" {
-        hex
-    } else {
-        format!("{hex}:{mode}")
-    }
-}
-
 /// '#rrggbb' as its three channels (NaN where a pair is not hex, as parseInt has it).
 pub fn rgb_of_hex(hex: &str) -> Rgb {
     // parseInt(pair, 16): the hex digits it starts with, NaN for none

@@ -448,7 +448,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         "tools:state" => {
             let c = o.core();
             let tc = crate::toolchain::Toolchain::new(&c.user_data, None);
-            let previews = crate::folder_size::folder_size(&c.user_data.join("icons").join("mods"));
+            let previews = crate::folder_size::folder_size(&crate::mod_preview::dir(&c.user_data));
             json!({ "tools": tc.state(), "iconCacheBytes": c.game_icons.size() + previews })
         }
         "tools:install" => install_tool(o, &tool_name(&a0)),
@@ -458,7 +458,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             let _ = tc.remove(&tool_name(&a0));
             // the pictures it produced are only reachable through it
             c.game_icons.clear();
-            let _ = std::fs::remove_dir_all(c.user_data.join("icons").join("mods"));
+            let _ = std::fs::remove_dir_all(crate::mod_preview::dir(&c.user_data));
             json!({ "ok": true, "tools": tc.state() })
         }
         "arcana:state" => {

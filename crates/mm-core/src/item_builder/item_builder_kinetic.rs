@@ -130,11 +130,6 @@ pub fn kinetic_gems(text: &[u8]) -> Result<Arc<Gems>, KvError> {
     })
 }
 
-/// The gems a hero's model can play, as the picker offers them. `heroes`: npc_dota_hero_*.
-pub fn offered_kinetic(text: &[u8], heroes: &[String]) -> Result<Vec<OfferedGem>, KvError> {
-    Ok(offered_of(&*kinetic_gems(text)?, heroes))
-}
-
 /// offered_kinetic over the gems already read: the picker asks for every one of its thousand
 /// slots, and reading them again each time hashed the whole items_game a thousand times.
 pub fn offered_of(gems: &Gems, heroes: &[String]) -> Vec<OfferedGem> {

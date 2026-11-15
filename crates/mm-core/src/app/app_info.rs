@@ -1,13 +1,10 @@
 //! What Home shows about the app itself: the release notes out of the changelogs the build
 //! carries (src/release-notes.ts) and the project's star count on GitHub (src/repo-stars.ts).
 
-use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::path::Path;
 
 use regex::Regex;
-use serde_json::Value;
 
-use crate::net_fetch::Net;
 use crate::remote_config::cmp_version;
 
 /// The section's text for `version` out of one changelog, or None when it has none. A heading is
@@ -69,72 +66,4 @@ pub fn release_notes(version: &str, lang: &str, app_path: &Path, seen: Option<&s
     } else {
         parts.iter().map(|(v, b)| format!("## {v}\n\n{b}")).collect::<Vec<_>>().join("\n\n")
     })
-}
-
-/// Where the star count is read: the repository's own record, which carries stargazers_count.
-pub const STARS_API: &str = "https://api.github.com/repos/dota2modmanager/dota2-mod-manager";
-const STARS_FRESH_MS: f64 = 6.0 * 60.0 * 60.0 * 1000.0;
-const STARS_TIMEOUT_MS: u64 = 8000;
-
-type Clock = Box<dyn Fn() -> f64 + Send + Sync>;
-
-fn whole(v: Option<&Value>) -> Option<f64> {
-    v.and_then(Value::as_f64).filter(|n| n.is_finite() && n.fract() == 0.0)
-}
-
-/// The star count for Home, kept in a small file and asked of GitHub again after six hours.
-/// It never fails and never waits long: a count that cannot be had is the last one, or None.
-pub struct RepoStars {
-    cache_file: PathBuf,
-    api: String,
-    net: Arc<Net>,
-    now: Clock,
-    /// (stars, at); the lock is also what makes two asks at once into one
-    cached: Mutex<Option<(f64, f64)>>,
-}
-
-impl RepoStars {
-    pub fn new(cache_file: &Path, api: Option<&str>, net: Arc<Net>, now: Clock) -> RepoStars {
-        let cached = std::fs::read_to_string(cache_file)
-            .ok()
-            .and_then(|t| serde_json::from_str::<Value>(&t).ok())
-            .and_then(|c| {
-                let stars = whole(c.get("stars"))?;
-                let at = c.get("at").and_then(Value::as_f64).filter(|a| a.is_finite())?;
-                Some((stars, at))
-            });
-        RepoStars {
-            cache_file: cache_file.into(),
-            api: api.unwrap_or(STARS_API).into(),
-            net,
-            now,
-            cached: Mutex::new(cached),
-        }
-    }
-
-    /// The count: the kept one while it is fresh, otherwise asked for.
-    pub fn get(&self) -> Option<f64> {
-        let mut cached = self.cached.lock().unwrap_or_else(|e| e.into_inner());
-        if let Some((stars, at)) = *cached {
-            if (self.now)() - at < STARS_FRESH_MS {
-                return Some(stars);
-            }
-        }
-        let last = cached.map(|c| c.0);
-        let headers = [("accept", "application/vnd.github+json")];
-        let Ok((status, body)) = self.net.direct("GET", &self.api, &headers, None, STARS_TIMEOUT_MS) else {
-            return last;
-        };
-        if !(200..300).contains(&status) {
-            return last;
-        }
-        let Some(n) = serde_json::from_slice::<Value>(&body).ok().and_then(|v| whole(v.get("stargazers_count"))) else {
-            return last;
-        };
-        let at = (self.now)();
-        *cached = Some((n, at));
-        let kept = serde_json::json!({ "stars": crate::js::json_number(n), "at": crate::js::json_number(at) });
-        let _ = std::fs::write(&self.cache_file, crate::js::stringify(&kept, ""));
-        Some(n)
-    }
 }

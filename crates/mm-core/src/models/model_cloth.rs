@@ -28,11 +28,6 @@ pub fn without_cloth(model: &[u8]) -> Vec<u8> {
     take().unwrap_or_else(|| model.to_vec())
 }
 
-/// Whether a model carries a cloth simulation.
-pub fn has_cloth(model: &[u8]) -> bool {
-    matches!(fe_model(model), Ok(Some(_)))
-}
-
 /// Whether a hero's body drags the cloth of the wearables under its stock paths: its own cloth's
 /// local force is not 1.
 pub fn drags_cloth(body: Option<&[u8]>) -> bool {

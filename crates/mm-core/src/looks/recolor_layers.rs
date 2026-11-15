@@ -12,8 +12,6 @@ use std::collections::HashSet;
 use regex::Regex;
 use serde::Serialize;
 
-use crate::recolor::{shade, Rgb};
-
 /// One part of a hero that takes a colour of its own.
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct RecolorLayer {
@@ -236,30 +234,6 @@ pub fn with_children(roots: &[String], refs: &mut dyn FnMut(&str) -> Vec<String>
         walk(r, &mut seen, refs);
     }
     seen.into_iter().collect()
-}
-
-/// Pixels moved to the chosen colour in place, as `shade` moves a particle's colours; `bgra` says
-/// red and blue are swapped. How many pixels changed.
-pub fn shade_pixels(pixels: &mut [u8], target: Rgb, bgra: bool) -> usize {
-    let (r, b) = if bgra { (2, 0) } else { (0, 2) };
-    let mut changed = 0;
-    let mut i = 0;
-    while i + 3 < pixels.len() {
-        if pixels[i + 3] != 0 {
-            let from: Rgb = [pixels[i + r] as f64, pixels[i + 1] as f64, pixels[i + b] as f64];
-            let to = shade(from, target, None);
-            if to != from {
-                // a Uint8 store: wrapped and truncated, as a Buffer takes a number
-                let byte = |n: f64| if n.is_finite() { (n.trunc() as i64).rem_euclid(256) as u8 } else { 0 };
-                pixels[i + r] = byte(to[0]);
-                pixels[i + 1] = byte(to[1]);
-                pixels[i + b] = byte(to[2]);
-                changed += 1;
-            }
-        }
-        i += 4;
-    }
-    changed
 }
 
 /// The colour textures a model's materials name, as compiled paths: a model names its meshes and

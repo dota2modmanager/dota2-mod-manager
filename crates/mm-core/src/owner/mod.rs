@@ -417,7 +417,7 @@ impl Owner {
         crate::feature_gate::gate(open, || core.remote.feature(name, lang))
     }
 
-    /// Build the item table again in the background (src/background-builds.ts): a build asked for
+    /// Build the item table again on a worker thread: a build asked for
     /// while one runs stops that one before it writes, and the newest builds from the library as it
     /// is then. The receiver answers once this build, or the one that took over, is done.
     pub fn refresh_schema_in_background(&self) -> std::sync::mpsc::Receiver<Value> {

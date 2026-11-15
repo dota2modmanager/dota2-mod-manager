@@ -364,19 +364,6 @@ pub fn pick_cosmetic(
     Ok(lib.find(&id).cloned())
 }
 
-/// A pick as a preset keeps it (slot, itemId, name, effectId, targetItemId) put on; the game's
-/// table is read only to check a target.
-pub fn pick_from(
-    lib: &mut Library,
-    p: &Value,
-    text: impl FnOnce() -> Result<Vec<u8>, String>,
-) -> Result<Option<Value>, String> {
-    let (slot, item) = (crate::js::string(&p["slot"]), crate::js::string(&p["itemId"]));
-    let target = crate::item_replacement::checked_target(text, &slot, &item, p.get("targetItemId"))?;
-    let effect = p.get("effectId").cloned().unwrap_or(Value::Null);
-    pick_cosmetic(lib, &slot, &item, p["name"].as_str(), Some(&effect), &target)
-}
-
 /// Put a whole set on: each piece the builder has a slot for takes that slot, and the hero's other
 /// picks stay on, but for a persona and an arcana with a base (worn in the set's place). `style`
 /// is the look chosen in the set's window. (applied, pieces).

@@ -23,9 +23,6 @@ use crate::library::Library;
 use crate::resource_compiler::{CompileJob, SourceFile};
 use crate::vpk::{Entry, Index};
 
-/// The longest sound the window takes: 30 s of 48 kHz stereo is 5.5 MB.
-pub const MAX_WAV: usize = 8 * 1024 * 1024;
-
 /// A compile of the caller's: the files it made, at their paths.
 pub type Compile<'a> = &'a mut dyn FnMut(&CompileJob) -> Result<Vec<Entry>, String>;
 

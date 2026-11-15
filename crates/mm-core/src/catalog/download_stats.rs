@@ -105,13 +105,6 @@ fn counts_value(c: &Counts) -> Value {
     Value::Object(c.iter().map(|(k, v)| (k.clone(), crate::js::json_number(*v))).collect::<Map<_, _>>())
 }
 
-/// The token this build was given, or None: printable ASCII, 16 to 512 characters.
-pub fn build_token(file: &Path) -> Option<String> {
-    let t = std::fs::read_to_string(file).ok()?;
-    let t = crate::js::trim(&t);
-    ((16..=512).contains(&t.len()) && t.bytes().all(|b| (0x21..=0x7e).contains(&b))).then(|| t.to_string())
-}
-
 type Clock = Box<dyn Fn() -> f64 + Send + Sync>;
 
 #[derive(Default)]

@@ -5,10 +5,6 @@
 
 use std::path::Path;
 
-/// The side of the map a tree or a tower stands on.
-pub type Side = &'static str;
-pub const SIDES: [Side; 2] = ["radiant", "dire"];
-
 /// The models each side's trees wear on the default map, the most used first.
 pub const DEFAULT_RADIANT: [&str; 8] = [
     "models/props_tree/tree_pine_01.vmdl",

@@ -14,9 +14,6 @@ use crate::kv3;
 pub const DUSK: f64 = 0.75;
 pub const DARK: f64 = 0.5;
 
-/// The entity lump of the default map, inside its map file.
-pub const ENTITIES: &str = "maps/dota/entities/default_ents.vents_c";
-
 /// The keys of a lightinfo that are how much light there is.
 const SCALES: [&str; 4] = ["light_scale_day", "light_scale_night", "ambient_scale_day", "ambient_scale_night"];
 
@@ -51,26 +48,29 @@ pub fn dim_lights(file: &[u8], k: f64) -> Result<(Vec<u8>, usize), String> {
     Ok((crate::resource::replace(file, "DATA", 0, &data).map_err(|e| e.to_string())?, touched))
 }
 
-/// The scales of every lightinfo, in order: what a test reads back.
-pub fn light_scales(file: &[u8]) -> Result<Vec<f64>, String> {
-    let kv =
-        kv3::read(crate::resource::data(file, "DATA", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    if let Some(kv3::Value::Array { items, .. }) = kv.root.get("m_entityKeyValues").map(|n| &n.value) {
-        for e in items {
-            let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
-            if values.get("classname").and_then(kv3::Node::as_str) != Some("ent_dota_lightinfo") {
-                continue;
-            }
-            out.extend(SCALES.iter().filter_map(|k| values.get(k).and_then(|x| kv.number_of(x))));
-        }
-    }
-    Ok(out)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The entity lump of the default map, inside its map file.
+    const ENTITIES: &str = "maps/dota/entities/default_ents.vents_c";
+
+    /// The scales of every lightinfo, in order.
+    fn light_scales(file: &[u8]) -> Result<Vec<f64>, String> {
+        let kv =
+            kv3::read(crate::resource::data(file, "DATA", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+        let mut out = Vec::new();
+        if let Some(kv3::Value::Array { items, .. }) = kv.root.get("m_entityKeyValues").map(|n| &n.value) {
+            for e in items {
+                let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
+                if values.get("classname").and_then(kv3::Node::as_str) != Some("ent_dota_lightinfo") {
+                    continue;
+                }
+                out.extend(SCALES.iter().filter_map(|k| values.get(k).and_then(|x| kv.number_of(x))));
+            }
+        }
+        Ok(out)
+    }
 
     /// The real map (MM_TEST_MAP, a maps/dota.vpk): every lightinfo's light halved, read back.
     #[test]
