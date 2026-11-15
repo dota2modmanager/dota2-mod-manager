@@ -138,6 +138,7 @@ contextBridge.exposeInMainWorld('api', {
     modHero: (category, file, hint) => ipcRenderer.invoke('preview3d:modHero', category, file, hint),
     modModels: (category, file, hero, slots) => ipcRenderer.invoke('preview3d:modModels', category, file, hero, slots).then(wholeAnswer),
   },
+  music: { state: () => ipcRenderer.invoke('music:state'), keep: (song) => ipcRenderer.invoke('music:keep', song), install: (songs, menu, game) => ipcRenderer.invoke('music:install', songs, menu, game) },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),
     hero: (hero) => ipcRenderer.invoke('sounds:hero', hero),

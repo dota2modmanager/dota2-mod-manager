@@ -24,6 +24,7 @@ import { CreatorModal, type CreatorActions, type CreatorModel } from '../../crea
 import { HeroModal } from '../builder/HeroModal.tsx';
 import { PortraitStudio } from '../portraits/PortraitStudio.tsx';
 import type { PortraitStudioActions, PortraitStudioModel } from '../portraits/model.ts';
+import { MusicModal, type MusicModalActions, type MusicModalModel } from '../music/MusicModal.tsx';
 import type * as B from '../builder/model.ts';
 
 const panel = document.getElementById('modalContent') as HTMLElement;
@@ -55,6 +56,7 @@ export const showCreatorModal = (model: CreatorModel, actions: CreatorActions): 
 export const showRankModal = (model: RankModalModel, actions: RankModalActions): void => show(<RankModal m={model} actions={actions} />);
 export const showDecorModal = (model: DecorModalModel, actions: DecorModalActions): void => show(<DecorModal m={model} actions={actions} />);
 export const showPortraitStudio = (model: PortraitStudioModel, actions: PortraitStudioActions): void => show(<PortraitStudio m={model} actions={actions} />);
+export const showMusicModal = (model: MusicModalModel, actions: MusicModalActions): void => show(<MusicModal m={model} actions={actions} />);
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 

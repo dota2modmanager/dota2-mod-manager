@@ -75,7 +75,7 @@ pub fn heroes_with_sounds<'a>(paths: impl Iterator<Item = &'a str>) -> Vec<Strin
 
 /// A tree to write as text: the file's own nodes, and what is made here.
 #[derive(Debug, Clone)]
-enum T {
+pub(crate) enum T {
     Node(Node),
     Obj(IndexMap<String, T>),
     Arr(Vec<T>),
@@ -85,14 +85,14 @@ enum T {
 }
 
 impl T {
-    fn get(&self, key: &str) -> Option<T> {
+    pub(crate) fn get(&self, key: &str) -> Option<T> {
         match self {
             T::Obj(m) => m.get(key).cloned(),
             T::Node(n) => n.get(key).cloned().map(T::Node),
             _ => None,
         }
     }
-    fn members(&self) -> Option<IndexMap<String, T>> {
+    pub(crate) fn members(&self) -> Option<IndexMap<String, T>> {
         match self {
             T::Obj(m) => Some(m.clone()),
             T::Node(Node { value: Value::Object(m), .. }) => {
@@ -101,7 +101,7 @@ impl T {
             _ => None,
         }
     }
-    fn as_str(&self) -> Option<&str> {
+    pub(crate) fn as_str(&self) -> Option<&str> {
         match self {
             T::Str(s) => Some(s),
             T::Node(n) => n.as_str(),
@@ -159,7 +159,7 @@ fn with_layer(ev: &IndexMap<String, T>, layer: &str) -> T {
     T::Obj(m)
 }
 
-const HEADER: &str = "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->";
+pub(crate) const HEADER: &str = "<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->";
 
 /// The hero's events with the user's sounds on them, as the KV3 text the compiler reads, and the
 /// events the game no longer has, passed over.
@@ -216,7 +216,7 @@ fn array(kv: &Block, items: &mut dyn Iterator<Item = T>, ind: usize) -> Result<S
 }
 
 /// KV3 text of a node, the way Valve's own sources are written.
-fn text(kv: &Block, n: &T, ind: usize) -> Result<String, String> {
+pub(crate) fn text(kv: &Block, n: &T, ind: usize) -> Result<String, String> {
     match n {
         T::Lit(s) => Ok(s.clone()),
         T::Str(s) => Ok(quoted(s)),

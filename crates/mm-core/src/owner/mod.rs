@@ -25,6 +25,7 @@ pub mod owner_library;
 pub mod owner_links;
 pub mod owner_mod_look;
 pub mod owner_mods;
+pub mod owner_music;
 pub mod owner_packs;
 pub mod owner_pictures;
 pub mod owner_portraits;
@@ -179,6 +180,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_packs::CHANNELS, crate::owner_packs::handle),
     (crate::owner_presets::CHANNELS, crate::owner_presets::handle),
     (crate::owner_studios::CHANNELS, crate::owner_studios::handle),
+    (crate::owner::owner_music::CHANNELS, crate::owner::owner_music::handle),
     (crate::owner_compiler::CHANNELS, crate::owner_compiler::handle),
     (crate::owner_tools::CHANNELS, crate::owner_tools::handle),
     (crate::owner_app::CHANNELS, crate::owner_app::handle),
