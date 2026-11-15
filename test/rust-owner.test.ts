@@ -16,9 +16,10 @@ import AdmZip from 'adm-zip';
 import { openVpkIndex } from '../src/vpk.ts';
 import { decodePng } from '../src/png-strip.ts';
 
-import { CLI, SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, startTs, tmpRoot, tree, twins, type Proc, type Reply, type Twin } from './helpers/owner-twins.ts';
+import { cliSkip } from './helpers/mm-cli.ts';
+import { SANDBOX_GAME, SANDBOX_MODS, baseState, blind, readJson, startRs, startTs, tmpRoot, tree, twins, type Proc, type Reply, type Twin } from './helpers/owner-twins.ts';
 
-const skip = (!fs.existsSync(CLI) && 'mm-cli is not built (cargo build -p mm-cli)') || (!fs.existsSync(SANDBOX_GAME) && 'no sandbox (npm run sandbox:seed)');
+const skip = cliSkip() || (!fs.existsSync(SANDBOX_GAME) && 'no sandbox (npm run sandbox:seed)');
 
 /** `unsized`: the answer's size is its compressor's, not the state's (a zip deflated by another library).
  * `pixels`: a PNG data URI in the answer is compared by its pixels (two encoders write one picture differently).

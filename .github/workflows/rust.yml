@@ -1,6 +1,7 @@
-# The Rust crates on their own: their tests, clippy and fmt, and the parity tests that hold them
-# to the TypeScript they replace (docs/rust-migration.md). The Tauri shell they build into is
-# clicked through by the required checks: e2e.yml (Windows and Linux) and linux.yml (the AppImage).
+# The Rust crates on their own: their tests, clippy and fmt. The parity tests that hold them to
+# the TypeScript they replace (docs/rust-migration.md) run in test.yml with the rest of the suite.
+# The Tauri shell they build into is clicked through by the required checks: e2e.yml (Windows
+# and Linux) and linux.yml (the AppImage).
 name: Rust
 
 on:
@@ -33,5 +34,3 @@ jobs:
         run: cargo fmt --all -- --check && cargo test -p mm-core -p mm-cli
       - name: Clippy
         run: cargo clippy -p mm-core -p mm-cli -- -D warnings
-      - name: Parity with the TypeScript
-        run: cargo build -p mm-cli && node --test test/rust-parity.test.ts test/rust-parity-kv3.test.ts test/rust-calls.test.ts

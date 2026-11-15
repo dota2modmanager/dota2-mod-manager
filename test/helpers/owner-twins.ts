@@ -14,8 +14,8 @@ import readline from 'node:readline';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { createHash } from 'node:crypto';
 
-export const ROOT = path.resolve(import.meta.dirname, '..', '..');
-export const CLI = path.join(ROOT, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
+export { ROOT, CLI } from './mm-cli.ts';
+import { ROOT, CLI } from './mm-cli.ts';
 export const SANDBOX_GAME = path.join(ROOT, 'sandbox', 'steamapps', 'common', 'dota 2 beta', 'game');
 export const SANDBOX_MODS = path.join(ROOT, 'sandbox', 'mods');
 const MARK = '\u0001MM ';

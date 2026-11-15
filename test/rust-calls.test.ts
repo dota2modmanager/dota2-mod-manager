@@ -17,10 +17,10 @@ import { HERO_ALIAS, HERO_DISPLAY, heroDisplayName, heroIdFromName, heroKey } fr
 import { styleTokens, styleOf, withStyle, inEveryStyle, blockInEveryStyle } from '../src/item-builder-styles.ts';
 import { donorOf, hasOwnEffect, donorAdditions, withModifiers, withDonorEffects } from '../src/item-builder-donor.ts';
 import { blockBounds, eachChild } from '../src/schema-kv.ts';
+import { CLI as cli, cliSkip } from './helpers/mm-cli.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
-const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
-const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
+const skip = cliSkip();
 
 // what each case answered, recorded so Rust can be held to it once the TypeScript is gone
 const golden = new Golden(path.join(root, 'test', 'golden', `rust-calls.${process.platform}.json`));

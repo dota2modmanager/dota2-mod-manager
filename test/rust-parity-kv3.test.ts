@@ -16,10 +16,9 @@ import { readKv3, numberOf, type Kv3Node, type Kv3Block } from '../src/kv3.ts';
 import { writeKv3 } from '../src/kv3-write.ts';
 import { resourceBlocks, resourceBlock, references, resourceId, withReferences } from '../src/resource.ts';
 import { encodeKv3, kv3Block, host, model, particle, resource, rerl, type V } from './helpers/kv3-build.ts';
+import { CLI as cli, cliSkip } from './helpers/mm-cli.ts';
 
-const root = path.resolve(import.meta.dirname, '..');
-const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
-const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
+const skip = cliSkip();
 const rust = (...args: string[]) => JSON.parse(execFileSync(cli, args, { encoding: 'utf8', maxBuffer: 1 << 30 }));
 const sha = (b: Buffer) => crypto.createHash('sha1').update(b).digest('hex');
 const GAME_PAK01 = 'c:/program files (x86)/steam/steamapps/common/dota 2 beta/game/dota/pak01_dir.vpk';
