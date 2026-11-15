@@ -45,18 +45,22 @@
  *   node tools/e2e.mjs --app <p>  # a packaged build: the installed exe, or an unpacked AppImage's AppRun
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { crc32 } from 'node:zlib';
 import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { ensureUi } from './ui-build.mjs';
 
-import { NOTICE_PAK, MARKER } from '../src/notice-text.ts';
-import { listVpkPathsFile } from '../src/vpk.ts';
-
 const require = createRequire(import.meta.url);
+const { mm } = require('./mm-cli.js');
+
+/** The app's anti-cheat notice pak, and the entry that marks it as the app's: APP_PAK in
+ * crates/mm-core/src/install/slot_zones.rs and MARKER in crates/mm-core/src/app/notice_text.rs
+ * (test/e2e-fixture.test.js holds the two to them). */
+export const NOTICE_PAK = 'pak64_dir.vpk';
+export const MARKER = 'dota2modmanager/notice.json';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '..');
 
@@ -82,17 +86,18 @@ export const MOD = { categoryId: 'heroes', hero: 'Brewmaster', name: 'Brewmaster
 
 /** A zip holding one pak01_dir.vpk with one small file in it: the shape most catalog mods have. */
 export function fixtureArchive() {
-  const { buildVpk } = require('../src/vpk.ts');
   const AdmZip = require('adm-zip');
-  const data = Buffer.from('dota2-mod-manager end-to-end fixture\n');
-  const vpk = buildVpk([{
-    ext: 'txt',
-    folder: 'materials/e2e',
-    name: 'fixture_marker',
-    data,
-    preload: Buffer.alloc(0),
-    crc: crc32(data) >>> 0,
-  }]);
+  // packed by the app's own writer (mm-cli vpk-build), from a folder holding the one file
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-e2e-fixture-'));
+  let vpk;
+  try {
+    fs.mkdirSync(path.join(dir, 'files', 'materials', 'e2e'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'files', 'materials', 'e2e', 'fixture_marker.txt'), 'dota2-mod-manager end-to-end fixture\n');
+    mm('vpk-build', path.join(dir, 'pak01_dir.vpk'), path.join(dir, 'files'));
+    vpk = fs.readFileSync(path.join(dir, 'pak01_dir.vpk'));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
   const zip = new AdmZip();
   zip.addFile('pak01_dir.vpk', vpk);
   // a fixed date, so the same fixture is the same bytes on every run and every machine
@@ -142,13 +147,13 @@ function readIfThere(file, encoding = 'utf8') {
 }
 
 /* The one pak the app writes that is not a mod: the game's anti-cheat notice in plain words
- * (src/notice-text.ts). The app keeps it whenever the game has text for it to rewrite. The sandbox
+ * (crates/mm-core/src/app/notice_text.rs). The app keeps it whenever the game has text for it to rewrite. The sandbox
  * tools/sandbox.js seeds from a real game has that text and the one CI builds has none, so the pak
  * comes and goes with the machine rather than with the mod, and every disk check here failed on a
  * developer's machine from the day it arrived (2026-09-26) while CI stayed green. It is set aside
  * from the comparisons, and from the ownership note, once it has shown it is the app's own: its
  * index carries the marker entry. */
-export function setNoticeAside(d, isMarked = () => listVpkPathsFile(path.join(LANG_DIR, NOTICE_PAK)).includes(MARKER)) {
+export function setNoticeAside(d, isMarked = () => mm('vpk-entries', path.join(LANG_DIR, NOTICE_PAK)).some(([p]) => p === MARKER)) {
   const touched = [...d.added, ...d.changed].includes(NOTICE_PAK);
   if (touched && !isMarked()) return d; // somebody else's pak64: it stays in, and the check says so
   const other = (list) => list.filter((n) => n !== NOTICE_PAK);

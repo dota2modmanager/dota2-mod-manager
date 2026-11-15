@@ -25,7 +25,6 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const { crc32 } = require('zlib');
-const { execFileSync } = require('child_process');
 
 const { pinGamePath } = require('./sandbox-pin.js');
 
@@ -47,16 +46,8 @@ const MAX_MODS = 14;
 const log = (...a) => console.log(...a);
 const mkdir = (p) => fs.mkdirSync(p, { recursive: true });
 
-/* The app's own code for everything that reads or writes a VPK or the table: mm-cli, the Rust
- * core on the command line (crates/mm-cli). Built here the first time it is needed. */
-const MM_CLI = path.join(ROOT, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
-function mm(...args) {
-  if (!fs.existsSync(MM_CLI)) {
-    log('building mm-cli (cargo build -p mm-cli)');
-    execFileSync('cargo', ['build', '-p', 'mm-cli'], { cwd: ROOT, stdio: 'inherit' });
-  }
-  return JSON.parse(execFileSync(MM_CLI, args, { encoding: 'utf8', maxBuffer: 1 << 28 }));
-}
+// the app's own code for everything that reads or writes a VPK or the table (tools/mm-cli.js)
+const { mm } = require('./mm-cli.js');
 
 /** A folder to stage a VPK's files in, at their paths inside it; `vpk-build` packs it. */
 function stage(name) {
