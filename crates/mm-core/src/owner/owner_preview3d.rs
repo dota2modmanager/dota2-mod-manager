@@ -157,6 +157,7 @@ pub(crate) fn shown(m: &crate::hero_preview::Shown) -> Value {
         "particles": m.particles,
         "sprites": sprites,
         "resources": m.resources,
+        "companions": m.companions.iter().map(|c| json!({ "model": c.model, "clip": c.clip, "glb": b64(&c.glb) })).collect::<Vec<_>>(),
     })
 }
 

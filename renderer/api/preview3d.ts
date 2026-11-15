@@ -35,6 +35,9 @@ export interface LoadoutResources {
 }
 export interface Attachment extends Partial<LoadoutAttachment> { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
 
+/** A hero's other form or summon on the stage (crates/mm-core/src/models/hero_companions.rs). */
+export interface Companion { model: string; clip: string | null; glb: Uint8Array }
+
 /** What a body can be shown doing (src/model-loadout.ts motionList). */
 export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
 
@@ -65,5 +68,7 @@ export type ModelsAnswer =
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
       parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];
       attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources;
+      /** his other forms and summons, stood beside him: the bear, the dragon, the spirits */
+      companions?: Companion[];
     }
     | { ok: false; reason: 'no-game' | 'no-tool' | 'no-body' | 'no-mod'; error?: string };

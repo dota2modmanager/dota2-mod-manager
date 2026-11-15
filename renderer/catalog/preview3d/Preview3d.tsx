@@ -137,7 +137,7 @@ export function Preview3d({ hero, slots, sig, gems = noGems, paint = NO_PAINT, s
             signal: session.signal, gems: initialGems, paint: latestPaint.current, partSlots: r.parts.map(p => p.slot),
             viewState: savedView.current?.hero === hero ? previous?.view() ?? savedView.current.view : undefined,
             still, label: L`Герой в 3D`, clip: r.clip, heroModel: r.model, stage: r.stage, pedestal: r.pedestal, hidden: { body: r.hidden, parts: r.parts.map((p) => p.hidden) },
-            attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources,
+            attachments: { body: r.attachments, parts: r.parts.map((p) => p.attachments) }, particles: r.particles, sprites: r.sprites, resources: r.resources, companions: r.companions,
           };
           const parts = r.parts.map(p => p.glb);
           const current = () => !life.gone && !session.signal.aborted;

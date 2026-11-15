@@ -57,10 +57,10 @@ pub use looks::{
     recolor_layers, recolor_modes, tower_looks, tree_sets,
 };
 pub use models::{
-    courier_models, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks, hero_showcase,
-    loadout_material, loadout_resources, loadout_sheet, mod_look, model_attachments, model_bodygroups, model_cloth,
-    model_glb, model_hitboxes, model_loadout, model_merge, model_particles, model_scale, model_sequences, model_skin,
-    model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec, particle_surface,
+    courier_models, hero_companions, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks,
+    hero_showcase, loadout_material, loadout_resources, loadout_sheet, mod_look, model_attachments, model_bodygroups,
+    model_cloth, model_glb, model_hitboxes, model_loadout, model_merge, model_particles, model_scale, model_sequences,
+    model_skin, model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec, particle_surface,
     razor_crest_preview,
 };
 pub use owner::{

@@ -430,7 +430,9 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       refitted.push({ w, r });
     }
   };
-  const items = names.filter((k) => k !== 'hero' && k !== 'pedestal' && k !== 'animation-source'), defaults = new Map(), worn = new Map(), wearing = new Map();
+  // companion-N: a form or summon of the hero's, stood beside him on its own bones (below)
+  const isCompanionKey = (k) => k.startsWith('companion-');
+  const items = names.filter((k) => k !== 'hero' && k !== 'pedestal' && k !== 'animation-source' && !isCompanionKey(k)), defaults = new Map(), worn = new Map(), wearing = new Map();
   const heroMeshes = []; root.traverse((o) => { if (o.isMesh) heroMeshes.push(o); });
   for (const name of items) {
     const asset = loaded[name];
@@ -450,6 +452,17 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     putOn(current);
   }
   const turntable = new THREE.Group(); turntable.add(root); if (loaded.pedestal) turntable.add(loaded.pedestal.scene);
+  // The hero's other forms and summons (Lone Druid's bear, Dragon Knight's dragon): whole models of
+  // their own, each on its own clip held in place, put beside him once his pose is known (below).
+  const companions = (manifest.companions || []).map((c) => {
+    const m = loaded[c.owner]; if (!m) return null;
+    const usable = m.animations.filter((x) => x.name && !x.name.startsWith('@') && x.name !== 'bindPose');
+    const clip = usable.find((x) => x.name === c.clip) || usable[0], mixer = new THREE.AnimationMixer(m.scene);
+    if (clip) { holdRootMotion(clip, rootBones(m.scene)); mixer.clipAction(clip).play(); }
+    turntable.add(m.scene);
+    return { ...c, scene: m.scene, mixer };
+  }).filter(Boolean);
+  const isCompanion = (o) => { for (let p = o; p; p = p.parent) if (companions.some((c) => c.scene === p)) return true; return false; };
   const materials = new Map();
   // An item's materials come with it, their textures from its folder: keyed by both.
   // skin: the materials a skin (material group) puts in place of the default ones, by name.
@@ -476,7 +489,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // Animations: the entry once, then the idle loop; the others on request.
   const mixer = new THREE.AnimationMixer(root), clips = new Map(heroModel.animations.map((a) => [a.name, a]));
   for (const [owner, model] of Object.entries(loaded)) {
-    if (owner === 'hero' || owner === 'pedestal') continue;
+    if (owner === 'hero' || owner === 'pedestal' || isCompanionKey(owner)) continue;
     const fitted = worn.get(owner);
     const privateBones = fitted?.privateBones ?? new Map();
     const ownBones = new Map((fitted?.localBones ?? []).flatMap(({ bone, keys }) => keys.map(key => [key, bone])));
@@ -525,10 +538,29 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // Bounds in the idle pose (for framing, shadows and the drag area); then the entry, if any.
   if (idle) start(idleName, 0);
   mixer.update(0); turntable.updateMatrixWorld(true);
+  // Beside the hero, in turn right and left of him, a gap of a quarter of his width apart; the
+  // pedestal is his alone, and the framing below takes them all in.
+  if (companions.length) {
+    for (const c of companions) c.mixer.update(0);
+    turntable.updateMatrixWorld(true);
+    const measure = (o) => new THREE.Box3().setFromObject(o, true);
+    const own = measure(root), width = own.isEmpty() ? 1 : own.max.x - own.min.x, gap = Math.max(width * 0.25, 0.15);
+    let right = own.isEmpty() ? 0.5 : own.max.x, left = own.isEmpty() ? -0.5 : own.min.x;
+    companions.forEach((c, i) => {
+      const b = measure(c.scene), w = b.isEmpty() ? width : b.max.x - b.min.x, mid = b.isEmpty() ? 0 : (b.min.x + b.max.x) / 2;
+      if (i % 2 === 0) { c.scene.position.x = right + gap + w / 2 - mid; right += gap + w; }
+      else { c.scene.position.x = left - gap - w / 2 - mid; left -= gap + w; }
+    });
+    turntable.updateMatrixWorld(true);
+  }
   const samples = [], point = new THREE.Vector3(), heroBox = new THREE.Box3(), box = new THREE.Box3();
   turntable.traverse((o) => { if (!o.isMesh) return; const count = o.geometry.attributes.position.count, step = Math.max(1, Math.ceil(count / 600)); for (let i = 0; i < count; i += step) samples.push([o, i]); });
   const isPedestal = (o) => { for (let p = o; p; p = p.parent) if (p === loaded.pedestal?.scene) return true; return false; };
-  for (const [mesh, i] of samples) { mesh.getVertexPosition(i, point).applyMatrix4(mesh.matrixWorld); box.expandByPoint(point); if (!isPedestal(mesh)) heroBox.expandByPoint(point); }
+  const othersBox = new THREE.Box3();
+  for (const [mesh, i] of samples) {
+    mesh.getVertexPosition(i, point).applyMatrix4(mesh.matrixWorld); box.expandByPoint(point);
+    if (isCompanion(mesh)) othersBox.expandByPoint(point); else if (!isPedestal(mesh)) heroBox.expandByPoint(point);
+  }
   if (heroBox.isEmpty()) heroBox.copy(box);
   if (loaded.pedestal && manifest.studioPedestal) {
     // The asset's top is y=0, matching the hero's native ground plane. Floating
@@ -537,6 +569,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     pedestal.scale.set(radius,radius,radius);turntable.updateMatrixWorld(true);
     box.copy(heroBox).union(new THREE.Box3().setFromObject(pedestal));
   }
+  // the pedestal is sized to the hero alone; the framing takes in those beside him
+  if (!othersBox.isEmpty()) { heroBox.union(othersBox); box.union(othersBox); }
   // Props (Pudge's clown car, Largo's frogs): one copy per event, at the hero, shown while their
   // animation plays from the event's frame on, their own clip kept in step with the hero's time.
   // Added after the bounds, which are the hero's alone. (No prop of the game uses an attachment.)
@@ -905,7 +939,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       }
       // a material made after the paint came (an item put on since) takes it too
       if (studioMaterialPaints) for (const [name, material] of materials) { const p = studioMaterialPaints[name]; material.userData.paint?.(p ? p.slice(0, 3) : null, p ? p[3] : 0); }
-      mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt);
+      mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt); for (const c of companions) c.mixer.update(dt);
       // A later event with the same model in the same animation takes over (Ringmaster's box: built, then broken).
       for (const p of props) p.at = currentName === p.sequence && current ? current.time - p.frame / 30 : -1;
       for (const p of props) { const later = props.some((q) => q !== p && q.file === p.file && q.sequence === p.sequence && q.frame > p.frame && q.at >= 0); p.scene.visible = p.at >= 0 && !later; if (p.scene.visible) p.mixer.setTime(p.at); }
@@ -1001,7 +1035,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     },
     dispose() {
       studioDisposed = true; for (const release of studioParts.values()) release(); studioParts.clear(); loaded['animation-source']?.scene.traverse(o=>{o.geometry?.dispose();for(const material of Array.isArray(o.material)?o.material:[o.material])material?.dispose();}); for (const file of studioPropFiles) disposeProp(propModels[file]); studioPropFiles.clear();
-      mixer.stopAllAction(); for (const p of props) p.mixer.stopAllAction(); turntable.traverse((o) => { o.geometry?.dispose(); });
+      mixer.stopAllAction(); for (const p of props) p.mixer.stopAllAction(); for (const c of companions) c.mixer.stopAllAction(); turntable.traverse((o) => { o.geometry?.dispose(); });
       for (const r of wearing.values()) for (const mesh of r.meshes || []) mesh.geometry?.dispose();
       for (const w of defaults.values()) for (const mesh of w.meshes) mesh.geometry?.dispose();
       for (const m of materials.values()) m.dispose(); for (const t of made) t.dispose(); lib.dispose();

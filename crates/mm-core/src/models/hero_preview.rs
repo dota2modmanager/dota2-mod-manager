@@ -571,6 +571,8 @@ pub struct Shown {
     /// the particles' textures as PNG bytes, by the path they name
     pub sprites: IndexMap<String, Vec<u8>>,
     pub resources: Value,
+    /// his other forms and summons, stood beside him (hero_companions.rs)
+    pub companions: Vec<crate::hero_companions::Companion>,
 }
 
 /// The models, or why there are none: "no-game", "no-tool" or "no-body".
@@ -675,13 +677,22 @@ impl HeroPreview {
             return Ok(HeroModels::Not("no-tool"));
         }
         let Some(game) = game else { return Ok(HeroModels::Not("no-game")) };
-        let p = match plan(text, game, library, hero, slots, log) {
+        let mut p = match plan(text, game, library, hero, slots, log) {
             Ok(p) => p,
             Err(e) => {
                 log(&format!("preview 3d: {e}"));
                 return Ok(HeroModels::Not("no-body"));
             }
         };
+        // a summon slot's pick (a Spirit Bear set) is the summon's model, not something the hero
+        // wears: it stands beside him in the summon's place (hero_companions.rs)
+        let summoned = crate::hero_companions::summon_pick(text, slots, library).or_else(|| {
+            p.parts
+                .iter()
+                .find(|x| x.slot.rsplit(':').next() == Some("summon") && !x.model.is_empty())
+                .map(|x| x.model.clone())
+        });
+        p.parts.retain(|x| x.slot.rsplit(':').next() != Some("summon"));
         let read = game.read;
         let body_clips: Vec<String> = match &p.clip {
             Some(c) if *c != p.idle => vec![c.clone(), p.idle.clone()],
@@ -861,6 +872,10 @@ impl HeroPreview {
         }
         let sprites = if same { early_sprites } else { sprites_of(&defs_of(&particles), &resources, glb) };
         let pedestal = stand.map(|s| crate::glb_embed::embed_glb(&s)).transpose()?;
+        let worn_models: Vec<String> = p.parts.iter().map(|x| x.model.clone()).collect();
+        let others =
+            crate::hero_companions::companion_models(read, game.has, hero, &p.body, &worn_models, summoned.as_deref());
+        let companions = crate::hero_companions::companions(&others, read, glb);
         Ok(HeroModels::Shown(Box::new(Shown {
             body: crate::model_style_meshes::hide_preview_only_meshes(body)?,
             clip: p.clip.clone().unwrap_or_else(|| p.idle.clone()),
@@ -875,6 +890,7 @@ impl HeroPreview {
             particles,
             sprites,
             resources,
+            companions,
         })))
     }
 }
