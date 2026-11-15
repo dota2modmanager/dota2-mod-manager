@@ -377,6 +377,17 @@ impl AbilityIconsService {
         self.apply(inst, lib, hero, Picks::new(), false, log)
     }
 
+    /// After a Dota update: the records among `ids` this service builds, which the app builds
+    /// again once the update's repair has answered (`rebuild`). Nothing counts as built yet.
+    pub fn due(lib: &Library, ids: &[String]) -> Vec<String> {
+        lib.list()
+            .iter()
+            .filter(|r| hero_of(r).is_some())
+            .map(|r| crate::js::string(&id_of(r)))
+            .filter(|id| ids.contains(id))
+            .collect()
+    }
+
     /// After a Dota update: the records among `ids` built again from the game's new pictures; the
     /// ids done.
     pub fn rebuild(

@@ -1,18 +1,30 @@
 //! What the start sets going and does not wait for (src/services.ts): the remote config, then the
 //! catalog's second copies it names; the ready-made presets; the map from a file's fingerprint to
 //! its catalog mod. Each is fetched off the owner's lock, so the window is answered meanwhile, and
-//! being offline leaves the last good copy in place.
+//! being offline leaves the last good copy in place. A while later, the installed tools are brought
+//! up to their pins.
 
 use std::sync::Arc;
 
 use crate::net_fetch::FetchOptions;
 use crate::owner::Owner;
 
-/// The fetches, one after another on a thread of their own.
+/// The fetches, one after another on a thread of their own, and the tools' catch-up after them.
 pub fn refresh(o: &Arc<Owner>) {
-    let o = o.clone();
-    std::thread::spawn(move || refresh_now(&o));
+    let me = o.clone();
+    std::thread::spawn(move || refresh_now(&me));
+    // the tools wait until the start's own downloads are done
+    let me = Arc::downgrade(o);
+    std::thread::spawn(move || {
+        std::thread::sleep(TOOLS_AFTER);
+        if let Some(o) = me.upgrade() {
+            crate::owner_game::catch_up_tools(&o);
+        }
+    });
 }
+
+/// How long after start the installed tools are brought up to their pins.
+pub const TOOLS_AFTER: std::time::Duration = std::time::Duration::from_secs(15);
 
 /// The same, on this thread (the test's way in).
 pub fn refresh_now(o: &Owner) {

@@ -228,4 +228,49 @@ mod tests {
         drop(o);
         let _ = std::fs::remove_dir_all(ud);
     }
+
+    /// Dota updated while the app was closed and the item table is owed a build: the start builds
+    /// it behind the window. The answer that asked for it used to be dropped, and the table stayed
+    /// a patch behind until the user changed something.
+    #[test]
+    fn a_table_owed_a_build_at_start_is_built_in_the_background() {
+        let ud = std::env::temp_dir().join(format!("mm-owner-owed-{}", uuid::Uuid::new_v4().simple()));
+        let game = ud.join("game");
+        let dota = game.join("dota");
+        std::fs::create_dir_all(&dota).unwrap();
+        let gameinfo = "\"GameInfo\"\n{\n\tFileSystem\n\t{\n\t\tSearchPaths\n\t\t{\n\t\t\tGame\t\tdota\n\t\t\tMod\t\tdota\n\t\t}\n\t}\n}\n";
+        std::fs::write(dota.join("gameinfo.gi"), gameinfo).unwrap();
+        std::fs::write(
+            dota.join("gameinfo_branchspecific.gi"),
+            "\"GameInfo\"\r\n{\r\n\tFileSystem\r\n\t{\r\n\t\tSteamAppId\t\t570\r\n\t}\r\n}\r\n",
+        )
+        .unwrap();
+        let table: crate::vpk::Bytes = b"\"items_game\"\n{\n}\n".to_vec().into();
+        let pak = crate::vpk::build(&[crate::vpk::entry_at(crate::schema::SCHEMA_REL, table)]);
+        std::fs::write(dota.join("pak01_dir.vpk"), pak).unwrap();
+        let settings = json!({
+            "dotaGamePath": game.to_string_lossy(), "schemaPatch": true, "schemaPending": true,
+            "gameStamp": crate::patch_watch::game_stamp(Some(&game)),
+        });
+        std::fs::write(ud.join("settings.json"), settings.to_string()).unwrap();
+        let o = Owner::start(
+            Options {
+                user_data: ud.clone(),
+                app_version: "9.9.9".into(),
+                app_root: ud.clone(),
+                downloads: ud.clone(),
+                uninstall: false,
+                system_languages: None,
+                find_game: Box::new(|| None),
+                dota_running: Box::new(|| false),
+                now,
+            },
+            Arc::new(Told::default()),
+        );
+        o.settled();
+        let pending = o.core().settings.get("schemaPending").cloned();
+        assert_eq!(pending, Some(json!(false)), "{:?}", o.take_log());
+        drop(o);
+        let _ = std::fs::remove_dir_all(ud);
+    }
 }

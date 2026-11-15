@@ -69,7 +69,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
             if !id.is_string() || c.library.find(&id).is_none() {
                 return Ok(not_found());
             }
-            impact(&c).clear(&crate::js::string(&id))?;
+            c.impact().clear(&crate::js::string(&id))?;
             json!({ "ok": true })
         }
         "mods:update" => update(o, &arg(args, 0)),
@@ -146,10 +146,6 @@ fn chosen(res: &Value) -> Option<Vec<PathBuf>> {
         .map(|a| a.iter().map(|p| PathBuf::from(crate::js::string(p))).collect())
         .unwrap_or_default();
     (res.get("canceled") != Some(&Value::Bool(true)) && !paths.is_empty()).then_some(paths)
-}
-
-fn impact(c: &Core) -> crate::update_impact::UpdateImpact {
-    crate::update_impact::UpdateImpact { file: c.user_data.join("update-impact.json"), game: c.game() }
 }
 
 fn terrain_ages(c: &Core) -> crate::terrain_age::TerrainAges {
@@ -466,7 +462,7 @@ fn list(o: &Owner) -> Value {
     let lines = std::cell::RefCell::new(Vec::<String>::new());
     let mut c = o.core();
     let ages = terrain_ages(&c);
-    let marks = impact(&c);
+    let marks = c.impact();
     let key = c.settings.get("bloodKey").cloned().unwrap_or(Value::Null);
     let schema_on = c.settings.get("schemaPatch").is_some_and(crate::js::truthy);
     let stuck = serde_json::to_value(c.upkeep.repair.verify_stuck()).unwrap_or(Value::Null);
