@@ -7,7 +7,7 @@
  * triangles turned round, as a mirrored object shows them.
  *
  * What comes in a message is not trusted to name things: a kind picks its array out of a table of
- * its own, attributes go into a Map and back as a list of pairs, never as an object's properties
+ * its own (a switch, each constructor named), attributes go into a Map and back as a list of pairs, never as an object's properties
  * by a name the message gave, and the triangles are written with set(). */
 
 export type Kind = 'f32' | 'i8' | 'u8' | 'i16' | 'u16' | 'i32' | 'u32';
@@ -17,8 +17,19 @@ export interface Part { geo: number; matrix: number[]; flip: boolean }
 export interface Job { id: number; parts: Part[] }
 export interface Merged { id: number; attrs: [string, { array: Float32Array; size: number }][]; index: Uint32Array; sphere: [number, number, number, number] }
 
-type Ctor = Float32ArrayConstructor | Int8ArrayConstructor | Uint8ArrayConstructor | Int16ArrayConstructor | Uint16ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor;
-const CTORS = new Map<string, Ctor>([['f32', Float32Array], ['i8', Int8Array], ['u8', Uint8Array], ['i16', Int16Array], ['u16', Uint16Array], ['i32', Int32Array], ['u32', Uint32Array]]);
+/** A buffer read as the kind of numbers a view says, each constructor named here: none picked by the message's word. */
+function typedView(kind: string, b: ArrayBuffer): ArrayLike<number> | null {
+  switch (kind) {
+    case 'f32': return new Float32Array(b, 0, b.byteLength >> 2);
+    case 'i8': return new Int8Array(b);
+    case 'u8': return new Uint8Array(b);
+    case 'i16': return new Int16Array(b, 0, b.byteLength >> 1);
+    case 'u16': return new Uint16Array(b, 0, b.byteLength >> 1);
+    case 'i32': return new Int32Array(b, 0, b.byteLength >> 2);
+    case 'u32': return new Uint32Array(b, 0, b.byteLength >> 2);
+    default: return null;
+  }
+}
 const SCALE: Record<Kind, number> = { f32: 1, i8: 127, u8: 255, i16: 32767, u16: 65535, i32: 1, u32: 1 };
 
 export function kindOf(a: ArrayLike<number>): Kind {
@@ -47,9 +58,10 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
     const k = `${buf}|${kind}`;
     let a = typed.get(k);
     if (!a) {
-      const C = CTORS.get(kind), b = buffers[buf];
-      if (!C || !(b instanceof ArrayBuffer)) throw new Error(`merge: no buffer ${buf} of ${kind}`);
-      a = new C(b, 0, Math.floor(b.byteLength / C.BYTES_PER_ELEMENT));
+      const b = buffers[buf];
+      const v = b instanceof ArrayBuffer ? typedView(kind, b) : null;
+      if (!v) throw new Error(`merge: no buffer ${buf} of ${kind}`);
+      a = v;
       typed.set(k, a);
     }
     return a;
