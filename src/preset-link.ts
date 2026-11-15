@@ -33,10 +33,10 @@ const COSMETIC_TAG = '$cos';
 /** A mod as a link carries it: a catalog mod by name and style, or a cosmetic pick by slot and item. */
 export type LinkMod =
   | { kind: 'catalog'; categoryId: string; name: string; styleLabel: string | null; fp: null }
-  | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId: string };
+  | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId: string; targetItemId?: string };
 
 /** What goes into a link: anything with a kind, or a plain catalog mod. */
-type ModIn = { kind?: string; categoryId?: string; name: string; styleLabel?: string | null; slot?: string; itemId?: string | number; effectId?: string };
+type ModIn = { kind?: string; categoryId?: string; name: string; styleLabel?: string | null; slot?: string; itemId?: string | number; effectId?: string; targetItemId?: string };
 
 /**
  * @returns the clickable form and the raw one
@@ -46,7 +46,7 @@ export function encodePresetLink({ name, author, mods }: { name: string; author?
     v: 1,
     n: String(name || '').slice(0, 120),
     m: mods.map((m) => (m.kind === 'cosmetic'
-      ? [COSMETIC_TAG, m.slot, m.itemId, m.name, m.effectId || '']
+      ? [COSMETIC_TAG, m.slot, m.itemId, m.name, m.effectId || '', ...(m.targetItemId ? [m.targetItemId] : [])]
       : (m.styleLabel ? [m.categoryId, m.name, m.styleLabel] : [m.categoryId, m.name]))),
   };
   if (author) payload.a = String(author).slice(0, 80);
@@ -91,6 +91,7 @@ export function decodePresetLink(input: unknown): { name: string; author: string
         itemId: String(e[2] ?? '').slice(0, 20),
         name: String(e[3] ?? '').slice(0, 300),
         effectId: typeof e[4] === 'string' ? e[4].slice(0, 60) : '',
+        ...(typeof e[5] === 'string' && e[5] ? { targetItemId: e[5].slice(0, 20) } : {}),
       }
       : {
         kind: 'catalog',

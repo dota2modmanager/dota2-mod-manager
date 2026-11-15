@@ -38,6 +38,7 @@ const EN = {
   'Файл не найден в папке модов': 'That file is not in the mods folder',
   'Мод': 'Mod',
   'У мода нет слота pakNN': 'This mod has no pakNN slot',
+  'Предмет {0} нельзя заменить предметом {1} в этом слоте': 'Item {0} cannot be replaced by item {1} in this slot',
   'Папка курсора не найдена': 'Cursor folder not found',
   'Файлы курсора не сохранены — переустанови мод': 'This cursor’s files were not kept — reinstall the mod',
   'Выбери минимум 2 мода (или пак и мод / два пака)': 'Pick at least 2 mods (or a pack and a mod / two packs)',

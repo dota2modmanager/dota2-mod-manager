@@ -207,6 +207,7 @@
 /* what the tab offers, right: a head, the grid that scrolls, the bar that puts it on */
 .ward-pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .ward-slot { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.ward-replacement-select { flex: 1 1 220px; max-width: 320px; }
 .ward-pane-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
 .ward-slot > .ward-pane-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-2) var(--space-3); }
 .ward-pane-title {

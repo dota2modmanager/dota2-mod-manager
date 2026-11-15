@@ -33,6 +33,14 @@ test('the button puts on only what differs from what the game shows', async () =
   assert.equal(stagedItemAction(effects, live, staged('42', ['fire'])).label, 'Сохранить эффекты');
 });
 
+test('changing the target item is a staged replacement, including returning to the default', async () => {
+  const { stagedItemAction } = await load();
+  const live = { itemId: '42', effectId: 'fire', targetItemId: '100' };
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), targetItemId: '200' }).label, 'Сохранить замену');
+  assert.equal(stagedItemAction(effects, live, staged('42', ['fire'])).label, 'Сохранить замену');
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), targetItemId: '100' }).off, true);
+});
+
 test('effects are written in the order the slot offers them, and read back as a list', async () => {
   const { effectKey, liveEffects } = await load();
   assert.equal(effectKey(effects, ['ghost', 'fire', 'nope']), 'fire,ghost');

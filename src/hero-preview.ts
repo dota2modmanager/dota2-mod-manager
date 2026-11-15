@@ -35,7 +35,7 @@ import { bodySkinFor, entityModel, itemModel, monkeyKingCrown, personaPreviewSlo
 
 export { entityModel, wornExtras, wornSkin } from './hero-preview-picks.ts';
 /** A preview slot with its stock item and an optional unsaved selection. */
-export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string } };
+export type PreviewSlot = { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } };
 
 /** What the window gets: each model's bytes, or why there are none. */
 export type HeroModels =
@@ -92,7 +92,8 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       const rec = equipped.find((r) => r.slot === s.slot);
       const stockItem = (!rec && s.slot.endsWith(':head') && crown) || findItem(text, given.get(s.slot.split(':').pop() || '') || s.stock);
       const stock = stockItem ? itemFields(text, stockItem) : null;
-      const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null) : null;
+      const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null,
+        typeof rec.targetItemId === 'string' ? rec.targetItemId : undefined) : null;
       const block = rec ? findItem(text, String(rec.itemId)) : null;
       const worn = block || stockItem;
       const visuals = worn ? itemVisuals(text, worn) : null;

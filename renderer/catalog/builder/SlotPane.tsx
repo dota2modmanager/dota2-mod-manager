@@ -11,6 +11,7 @@ import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { SlotPaneActions, SlotPaneModel, SlotView } from './model.ts';
 import type { EffectGroup } from './logic.ts';
 import { BuilderFoot, CosThumb, EmptySearch, FxThumb, PickerSearch } from './parts.tsx';
+import { Dropdown } from '../../ui/Dropdown.tsx';
 
 /** The words on an item's note tag (src/arcana-notes.ts); the note itself is its tooltip, and the
  *  chosen item's note is spelled out under its name at the foot, beside the button that puts it on. */
@@ -64,6 +65,13 @@ export function SlotPane({ m, actions, gems, gemCount }: { m: SlotPaneModel; act
         </div>
         {m.view !== 'styles' && m.view !== 'gems' && <PickerSearch id="itemSlotSearch" value={m.query} onChange={actions.search} inputRef={search} />}
       </div>
+      {m.replacement && (
+        <div className="ward-shelf-note ward-replacement">
+          <span>{L`Заменить предмет`} · {L`Только в твоей игре`}</span>
+          <Dropdown label={L`Предмет для замены`} value={m.replacement.value} options={m.replacement.options}
+            first={L`Стандартный предмет`} onPick={actions.replacement} disabled={m.replacement.disabled} className="ward-replacement-select" />
+        </div>
+      )}
       <div className="ward-scroll" key={m.view}>
         {m.view === 'gems' && gems}
         {m.view === 'items' && (

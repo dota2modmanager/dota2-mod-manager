@@ -444,6 +444,13 @@ test('a wearable resolves to the matching default item by hero and slot', () => 
   assert.equal(builder.defaultItemForWearable(text, '9903')?.id, '9902', 'an arcana dresses its stock item like any wearable');
 });
 
+test('a wearable can replace another item in its own hero slot', () => {
+  const patched = builder.itemEffectPatch(itemWearableTable(), '9903', '', '9456');
+  assert.equal(patched.id, '9456');
+  assert.match(patched.block, /^"9456"/);
+  assert.match(patched.block, /"item_slot"\s+"back"/);
+});
+
 test('item effects keep the donor body, rewrite only the stock header and collect asset copies', () => {
   const text = itemWearableTable();
   const plain = builder.itemEffectPatch(text, '9455', '');
@@ -719,10 +726,15 @@ test("a saved look goes on in one write, and the hero's other picks go off, kept
   const arcana = service.pickCosmetic('item:sniper:hero_base', '9970', 'Sniper Arcana');
   service.pickCosmetic('item:sniper:back', '9951', 'Sniper Spare Cape');
   service.pickCosmetic('item:bloodseeker:weapon', '9953', 'Bloodseeker Headmaster Wand');
+  const backBeforeInvalidLook = picks().find((r) => r.slot === 'item:sniper:back')!;
+  assert.throws(() => service.wearLook('item:sniper:', [
+    { slot: 'item:sniper:back', itemId: '9455', targetItemId: '9457' },
+  ]), /cannot be replaced/i);
+  assert.equal(library.find(backBeforeInvalidLook.id)?.enabled, true, 'an invalid replacement leaves the current look untouched');
   writes = 0;
   const res = service.wearLook('item:sniper:', [
     { slot: 'item:sniper:head', itemId: '9457', name: 'No visuals here', effectId: 'fire' },
-    { slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza' },
+    { slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza', targetItemId: '9951' },
     { slot: 'item:bloodseeker:weapon', itemId: '1', name: 'not this hero' },
   ]);
   assert.deepEqual(res, { applied: 2, picks: 3 }, "another hero's pick in the list is skipped and counted");
@@ -732,12 +744,15 @@ test("a saved look goes on in one write, and the hero's other picks go off, kept
     ['item:sniper:back', '9455', ''],
     ['item:sniper:head', '9457', 'fire'],
   ]);
+  assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.targetItemId, '9951', 'the replacement target is part of the saved look');
+  assert.throws(() => service.pickCosmetic('item:sniper:back', '9455', 'Golden Full-Bore Bonanza', '', { write: false, targetItemId: '9457' }), /cannot be replaced/i);
   assert.equal(library.find(arcana!.id)?.enabled, false, 'the arcana went off, kept in My mods');
   assert.throws(() => service.wearLook('item:../:', []), /Look not found/);
 
   // a style a piece does not have leaves it in its first
   service.pickSet('9960', { style: 1 });
   assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.effectId || '', '');
+  assert.equal(picks().find((r) => r.slot === 'item:sniper:back')?.targetItemId, '9951', 'keeping the same set piece keeps its replacement target');
 });
 
 /** A hero's stock base and its arcana, as items_game has Juggernaut's: a whole other hero model,

@@ -122,7 +122,7 @@ export interface CosmeticsApi {
   icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
   heroPortraits: (ids: string[], tall?: boolean) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
-  pick: (slot: string, itemId: string, itemName: string, effectId: string) => Promise<Reply<{ record: LibRecord }>>;
+  pick: (slot: string, itemId: string, itemName: string, effectId: string, targetItemId?: string) => Promise<Reply<{ record: LibRecord }>>;
   /** style: the look each piece that has it goes on in, 0 for the first */
   pickSet: (setId: string, style?: number) => Promise<Reply<{ applied: number; pieces: number }>>;
   wearLook: (hero: string, picks: LookPick[]) => Promise<Reply<{ applied: number; picks: number }>>;

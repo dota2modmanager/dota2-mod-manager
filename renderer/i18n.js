@@ -218,6 +218,11 @@ const EN = {
   'Надеть': 'Equip',
   'Надеваю…': 'Equipping…',
   'Сохранить эффекты': 'Save effects', 'Есть баги': 'Has bugs', 'Сломана': 'Broken', 'Не проверено': 'Not checked', 'Сохранить стиль': 'Save style', 'Стиль': 'Style', 'стиль {0}': 'style {0}',
+  'Сохранить замену': 'Save replacement',
+  'Заменить предмет': 'Replace item',
+  'Только в твоей игре': 'Only in your game',
+  'Предмет для замены': 'Item to replace',
+  'Стандартный предмет': 'Default item',
   'Вернуть стандартный': 'Back to default',
   'Можно выбрать несколько. Иней и Снег держатся не на всех моделях.':
     'You can pick several. Frostbloom and Snow do not hold on every model.',

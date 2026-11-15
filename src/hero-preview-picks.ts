@@ -14,10 +14,10 @@ export { wornSkin } from './item-builder-assets.ts';
  * copies the item's model over the stock one (`stock`); its other copies are particles and other
  * units' models, which the hero does not wear.
  */
-export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> } {
+export function itemModel(text: string, itemId: string, key: string | undefined, hero: string, stock: string | null, targetItemId?: string): { model: string | null; body: string | null; block?: string; replacements?: Map<string, string> } {
   let body: string | null = null;
   try {
-    const patch = itemEffectPatch(text, itemId, key || '');
+    const patch = itemEffectPatch(text, itemId, key || '', targetItemId);
     const copies = patch.assetCopies;
     const replacements = new Map(copies.flatMap((c) => 'to' in c && /\.vpcf$/i.test(c.to)
       ? [[c.to.toLowerCase(), c.from.toLowerCase()] as const] : []));
@@ -134,7 +134,7 @@ export function previewStockHead(text: string, hero: string, body: string, index
 
 /** Overlay temporary builder picks on the installed loadout, without changing either input. */
 export function previewEquipment<T extends { slot?: unknown }>(text: string, installed: readonly T[],
-  slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string } }[]) {
+  slots: readonly { slot: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }[]) {
   const staged = new Map(slots.flatMap(s => s.tryOn ? [[s.slot, s.tryOn] as const] : []));
   return [
     ...installed.filter(r => !staged.has(String(r.slot))),

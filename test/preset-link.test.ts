@@ -67,6 +67,15 @@ test('an item cosmetic keeps its effect id through the link', () => {
   assert.deepEqual(back.mods, [{ kind: 'cosmetic', slot: 'items', itemId: '9455', name: 'Golden Full-Bore Bonanza', effectId: 'frostbloom' }]);
 });
 
+test('an item cosmetic keeps its replacement target, without changing old links', () => {
+  const mods = [{ kind: 'cosmetic', slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza', targetItemId: '9951' }];
+  const back = decodePresetLink(encodePresetLink({ name: 'Replacement', mods }).code);
+  assert.deepEqual(back.mods, [{
+    kind: 'cosmetic', slot: 'item:sniper:back', itemId: '9455', name: 'Golden Full-Bore Bonanza',
+    effectId: '', targetItemId: '9951',
+  }]);
+});
+
 test('a cosmetic missing its slot or its id is dropped rather than half-installed', () => {
   const half = [
     { kind: 'cosmetic', slot: '', itemId: '1', name: 'no slot' },

@@ -47,6 +47,28 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     return library.list().find((r) => r.categoryId === 'cosmetic' && r.slot === slot && r.enabled !== false) || null;
   }
 
+  function validateTarget(slot: string, itemId: string, targetItemId: unknown, text?: string): string {
+    if (targetItemId === undefined) return '';
+    if (typeof targetItemId !== 'string') {
+      throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, String(targetItemId)));
+    }
+    if (!targetItemId) return '';
+    const isItem = slot === 'items' || slot.startsWith('item:');
+    if (!isItem) throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, targetItemId));
+    const source = text ?? vanilla();
+    let options: { id: string; name: string }[];
+    if (slot.startsWith('item:')) {
+      const itemSlot = itemBuilder.itemSlots(source).find((s) => s.slot === slot);
+      options = itemSlot && !itemSlot.persona && !itemSlot.abilityFx ? itemSlot.options : [];
+    } else {
+      options = schema.cosmeticOptions(source, slot);
+    }
+    if (targetItemId === itemId || !options.some((o) => o.id === itemId) || !options.some((o) => o.id === targetItemId)) {
+      throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, targetItemId));
+    }
+    return targetItemId;
+  }
+
   /**
    * Every slot that has both a free "base item" and something to put on it, in one call.
    * The list comes from the installed game, so a slot Valve adds later appears by itself.
@@ -143,21 +165,23 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * reactivates a dormant one for that same item, so flipping back and forth between two
    * looks doesn't spawn a new row each time. Returns the now-live record. `write: false` leaves
    * the game alone, for a caller that picks several and writes once (pickSet).
+   * @param opts.targetItemId  a same-slot wearable to replace, rather than the hero's default
    */
-  function pickCosmetic(slot: string, itemId: string | number, itemName: string | null | undefined, effectId: string | string[] | null | undefined = null, { write = true } = {}): LibRecord | null {
+  function pickCosmetic(slot: string, itemId: string | number, itemName: string | null | undefined, effectId: string | string[] | null | undefined = null, { write = true, targetItemId }: { write?: boolean; targetItemId?: string } = {}): LibRecord | null {
     const id = String(itemId);
     const name = itemName || id;
     const isItem = slot === 'items' || String(slot || '').startsWith('item:');
+    const target = validateTarget(slot, id, targetItemId);
     // the item builder's effects, as one string in one order (item-builder.js effectKey)
     const effect = isItem ? itemBuilder.effectKey(effectId) : '';
     const live = cosmeticRecordFor(slot);
-    if (live && live.itemId === id && itemBuilder.effectKey(live.effectId) === effect) return live; // already this
+    if (live && live.itemId === id && itemBuilder.effectKey(live.effectId) === effect && (String(live.targetItemId || '') === target)) return live; // already this
 
     // Other effects on the same item are that pick changed, not another pick. Each combination
     // used to become a record of its own, and My mods filled with rows of one item's name that
     // told nobody which was which. One row per item, its effects a property of it.
     if (isItem && live && live.itemId === id) {
-      library.update(live.id, { name, effectId: effect || undefined });
+      library.update(live.id, { name, effectId: effect || undefined, targetItemId: target || undefined });
       if (write) refresh();
       return library.find(live.id);
     }
@@ -167,9 +191,9 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
       && r.slot === slot && r.itemId === id && (isItem || itemBuilder.effectKey(r.effectId) === effect));
     // a record found a line above updates, so there is always one here
     const rec = (dormant
-      ? library.update(dormant.id, { name, enabled: true, effectId: effect || undefined })
+      ? library.update(dormant.id, { name, enabled: true, effectId: effect || undefined, targetItemId: target || undefined })
       : library.add({ name, categoryId: 'cosmetic', styleLabel: null, fileRef: null, preview: null, files: [] })) as LibRecord;
-    if (!dormant) library.update(rec.id, { slot, itemId: id, ...(effect ? { effectId: effect } : {}) });
+    if (!dormant) library.update(rec.id, { slot, itemId: id, ...(effect ? { effectId: effect } : {}), ...(target ? { targetItemId: target } : {}) });
     // a persona is worn with its own items alone (src/item-builder-personas.ts): the hero's plain
     // picks go off, kept in My mods to be put back on
     if (isSelectorSlot(slot)) for (const r of displaced(library.list())) library.setEnabled(r.id, false);
@@ -207,7 +231,9 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
     for (const p of fits) {
       const live = cosmeticRecordFor(p.slot);
       const kept = live && live.itemId === p.itemId ? String(live.effectId || '').split(',').filter((id) => id && !/^style-\d+$/.test(id)) : [];
-      pickCosmetic(p.slot, p.itemId, p.name, [...kept, ...(n > 0 && n < (p.styles || 1) ? [`style-${n}`] : [])], { write: false });
+      pickCosmetic(p.slot, p.itemId, p.name, [...kept, ...(n > 0 && n < (p.styles || 1) ? [`style-${n}`] : [])], {
+        write: false, targetItemId: live?.itemId === p.itemId ? String(live.targetItemId || '') : undefined,
+      });
     }
     if (write) refresh();
     return { applied: fits.length, pieces: set.pieces.length };
@@ -226,11 +252,16 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
    * this hero's is skipped and counted.
    * @param hero  the prefix of the hero's slots, "item:axe:"
    */
-  function wearLook(hero: string, picks: { slot: string; itemId: string; name?: string; effectId?: string }[], { write = true } = {}): { applied: number; picks: number } {
+  function wearLook(hero: string, picks: { slot: string; itemId: string; name?: string; effectId?: string; targetItemId?: string }[], { write = true } = {}): { applied: number; picks: number } {
     if (!/^item:[a-z0-9_+]+:$/.test(String(hero || '')) || !Array.isArray(picks)) throw new Error(t('Образ не найден'));
     const wear = picks.filter((p) => p && typeof p.slot === 'string' && p.slot.startsWith(hero) && /^[a-z0-9_]+$/.test(p.slot.slice(hero.length)) && /^\d+$/.test(String(p.itemId)));
+    const targetPicks = wear.filter((p) => p.targetItemId !== undefined);
+    if (targetPicks.length) {
+      const text = vanilla();
+      for (const p of targetPicks) validateTarget(p.slot, p.itemId, p.targetItemId, text);
+    }
     offTheHero(hero, new Set(wear.map((p) => p.slot)));
-    for (const p of wear) pickCosmetic(p.slot, p.itemId, p.name || p.itemId, p.effectId || '', { write: false });
+    for (const p of wear) pickCosmetic(p.slot, p.itemId, p.name || p.itemId, p.effectId || '', { write: false, targetItemId: p.targetItemId });
     if (write) refresh();
     return { applied: wear.length, picks: picks.length };
   }

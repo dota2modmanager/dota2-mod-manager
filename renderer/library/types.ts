@@ -43,6 +43,7 @@ export interface LibRecord {
   /** the item a cosmetic pick dresses the slot in, and its effects, comma separated (src/item-builder.ts) */
   itemId?: string;
   effectId?: string;
+  targetItemId?: string;
   styleLabel?: string | null;
   /** what the analysis says the file is, for an import */
   info?: string;

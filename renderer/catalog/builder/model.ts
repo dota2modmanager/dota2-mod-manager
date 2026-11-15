@@ -55,6 +55,8 @@ export interface SlotPaneModel {
   effects: { none: boolean; enabled: boolean; count: number; picked: number; groups: { group: EffectGroup; list: EffectCard[] }[] } | null;
   /** the slot's items with an effect of their own, to wear on the chosen one; null when none has one */
   donors: { none: boolean; list: { id: string; name: string; picked: boolean }[]; enabled: boolean; count: number } | null;
+  /** optional same-slot item to replace; omitted for persona and ability-effect slots */
+  replacement?: { value: string; options: { value: string; label: string }[]; disabled: boolean };
   summary: { name: string; effects: string };
   action: BuilderAction;
 }
@@ -66,6 +68,7 @@ export interface SlotPaneActions {
   style: (index: number) => void;
   effect: (id: string) => void;
   donor: (id: string) => void;
+  replacement: (id: string) => void;
   apply: () => void;
 }
 

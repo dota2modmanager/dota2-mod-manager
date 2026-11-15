@@ -31,7 +31,7 @@ import type { ScreenActions } from '../catalog/screen/model.ts';
 /** What the catalog hands over, once, before anything here runs (views/catalog.ts). */
 interface BuilderCtx {
   /** the pick itself (views/catalog/cosmetics.ts) */
-  pickCosmetic: (slot: string, o: CosmeticOption, remove: boolean, effectId?: string) => Promise<void>;
+  pickCosmetic: (slot: string, o: CosmeticOption, remove: boolean, effectId?: string, targetItemId?: string) => Promise<void>;
   afterPick: () => Promise<void>;
   /** what the catalog's screen can ask for: the hub keeps all of it but its own filter */
   actions: ScreenActions;
@@ -83,7 +83,7 @@ export const catalogActions = (): ScreenActions => (cat as BuilderCtx).actions;
 // ---------- a slot: its wearables, the effects on top, and the button that puts them on ----------
 
 /** `donor`: the item of the slot whose effect the chosen one wears, '' for none (src/item-builder-donor.ts) */
-export interface SlotState { slot: string; selectedId: string; effectIds: string[]; donor: string; style: number; query: string; view: SlotView; busy: boolean }
+export interface SlotState { slot: string; selectedId: string; effectIds: string[]; donor: string; style: number; targetItemId: string; query: string; view: SlotView; busy: boolean }
 
 /**
  * What a slot's pane starts with: the item on, with its effects and style, unless `select` names another.
@@ -96,7 +96,11 @@ export function slotState(slot: string, { query = '', select = '', view = 'items
   const same = live?.itemId === selectedId;
   const data = slotData(slot);
   if (data) loadCosmeticIcons(data.options.slice(0, 36).map((o) => o.name).filter(Boolean), () => {}).catch(() => {});
-  return { slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '', style: same ? liveStyle(live) : 0, query, view, busy: false };
+  return {
+    slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '',
+    style: same ? liveStyle(live) : 0, targetItemId: same ? String(live?.targetItemId || '') : '',
+    query, view, busy: false,
+  };
 }
 
 /** The staged choice sent to the read-only preview, using the same style and effect encoding as Equip. */
@@ -106,8 +110,9 @@ export function tryOnPick(st: SlotState | null) {
   if (!data || (st.selectedId && !data.options.some(option => option.id === st.selectedId))) return undefined;
   const live = pickedIn(st.slot);
   const effectId = st.selectedId ? effectKey(data.effects, st.effectIds, st.style, st.donor) : '';
-  if ((live?.itemId ?? '') === st.selectedId && (live?.effectId ?? '') === effectId) return undefined;
-  return { itemId: st.selectedId, effectId };
+  if ((live?.itemId ?? '') === st.selectedId && (live?.effectId ?? '') === effectId
+    && String(live?.targetItemId || '') === st.targetItemId) return undefined;
+  return { itemId: st.selectedId, effectId, ...(st.targetItemId ? { targetItemId: st.targetItemId } : {}) };
 }
 
 /** An effect of the game's own (Ethereal Flame and the like), src/item-builder-unusual.ts. */
@@ -167,6 +172,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
       enabled: hasItem,
       count: donors.length,
     } : null,
+    replacement: !data.persona && !data.abilityFx && hasItem ? {
+      value: st.targetItemId,
+      options: data.options.filter((o) => o.id !== st.selectedId).map((o) => ({ value: o.id, label: o.name })),
+      disabled: st.busy,
+    } : undefined,
     summary: { name: chosen ? chosen.name : L`Стандартный`, effects: chosen && names.length ? names.join(', ') : '' },
     action: stagedItemAction(data.effects, live, st),
   };
@@ -178,6 +188,7 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
       choose: (id) => {
         if (st.busy) return;
         st.selectedId = id;
+        if (!id || id === st.targetItemId) st.targetItemId = '';
         if (!id) st.effectIds = []; // the stock item takes no effects
         if (!id || id === st.donor) st.donor = '';
         // another item starts in its first style, or the one it is on in
@@ -199,6 +210,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
         st.donor = id === st.donor ? '' : id;
         redraw();
       },
+      replacement: (id) => {
+        if (st.busy || !st.selectedId) return;
+        st.targetItemId = id;
+        redraw();
+      },
       apply: () => void applySlot(st, chosen, redraw),
     },
   };
@@ -214,7 +230,7 @@ async function applySlot(st: SlotState, chosen: CosmeticOption | null | undefine
   st.busy = true;
   redraw();
   try {
-    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds, st.style, st.donor));
+    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds, st.style, st.donor), st.targetItemId);
   } finally {
     st.busy = false;
     redraw();

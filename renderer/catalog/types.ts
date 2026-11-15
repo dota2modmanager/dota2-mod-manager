@@ -109,7 +109,7 @@ export interface CosmeticSet {
 export type HeroAttribute = 'str' | 'agi' | 'int' | 'all';
 
 /** One pick of a saved look: what goes on a slot, as a pick record has it. */
-export interface LookPick { slot: string; itemId: string; name: string; effectId?: string }
+export interface LookPick { slot: string; itemId: string; name: string; effectId?: string; targetItemId?: string }
 
 /** A hero's saved look (issue #527), kept in the settings under itemLooks, apart from presets. */
 export interface ItemLook { id: string; hero: string; name: string; picks: LookPick[]; at: number }

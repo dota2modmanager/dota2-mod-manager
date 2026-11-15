@@ -10,7 +10,7 @@ type ItemSlot = CosmeticSlot;
 type ItemSet = CosmeticSet;
 type ItemEffect = { id: string; name: string };
 /** What the game shows on a slot now (core/installed.ts pickedIn). */
-interface LivePick { itemId?: string; name?: string; effectId?: string }
+interface LivePick { itemId?: string; name?: string; effectId?: string; targetItemId?: string }
 
 type PickedIn = (slot: string) => LivePick | null | undefined;
 
@@ -52,13 +52,14 @@ export function liveStyle(live: LivePick | null | undefined): number {
 export function stagedItemAction(
   effects: ItemEffect[] | undefined,
   live: LivePick | null | undefined,
-  st: { busy: boolean; selectedId: string; effectIds: string[]; style?: number; donor?: string },
+  st: { busy: boolean; selectedId: string; effectIds: string[]; style?: number; donor?: string; targetItemId?: string },
 ): BuilderAction {
   if (st.busy) return { label: L`Надеваю…`, icon: 'hourglass_top', off: true };
   if (!st.selectedId) {
     return live ? { label: L`Вернуть стандартный`, icon: 'undo', remove: true } : { label: L`Надето`, icon: 'check', off: true };
   }
   if (live?.itemId !== st.selectedId) return { label: L`Надеть`, icon: 'checkroom' };
+  if ((live.targetItemId || '') !== (st.targetItemId || '')) return { label: L`Сохранить замену`, icon: 'swap_horiz' };
   if (effectKey(effects, st.effectIds, 0, st.donor) !== effectKey(effects, liveEffects(live), 0, liveDonor(live))) return { label: L`Сохранить эффекты`, icon: 'auto_awesome' };
   return (st.style || 0) === liveStyle(live)
     ? { label: L`Надето`, icon: 'check', off: true }

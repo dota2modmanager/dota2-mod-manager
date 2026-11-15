@@ -33,6 +33,7 @@ import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import { basesAttachedSteps } from './model-attachments.ts';
 import { lookPatch } from './courier-models.ts';
 import { fxSlotOf, mergeFxPatches } from './item-builder-ability-fx.ts';
+import { t } from './i18n.ts';
 import { abilityFxPatch } from './item-builder-fx-patch.ts';
 import { kineticEntries } from './item-builder-kinetic.ts';
 import type { BaseStore } from './arcana-base-store.ts';
@@ -91,6 +92,7 @@ export function createTableBuild({ library, bases, log }: {
 }) {
   const built = new Map<string, ItemPick>();
   const shared = new Map<string, { key: string; entries: VpkEntry[] }>();
+  let replacementTargets: Map<string, Set<string>> | null = null;
   let builtFrom: string | null = null;
   let builtGame: string | null = null;
   const colored = createColoredBases(log);
@@ -102,10 +104,22 @@ export function createTableBuild({ library, bases, log }: {
   const pickKey = (rec: BuildRecord, ready: ReadyBase[], refit?: string, scale?: number) => {
     const own = ownBase(rec, ready);
     const fx = fxSlotOf(rec.slot);
-    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${fx ? `#fx${fx}` : ''}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${refit ? `~${refit}` : ''}${scale ? `*${scale}` : ''}`;
+    return `${rec.itemId}|${itemBuilder.effectKey(rec.effectId)}${fx ? `#fx${fx}` : ''}${own ? `|${own.base.id}:${baseSignature(own)}` : ''}${rec.persona ? `@${rec.persona.target}` : ''}${rec.targetItemId ? `@replace:${rec.targetItemId}` : ''}${refit ? `~${refit}` : ''}${scale ? `*${scale}` : ''}`;
   };
   /** A pick built, or the one built before for the same key; its files are read a pause apart (gameAssetEntriesSteps). */
   function* builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): Generator<typeof PAUSE, ItemPick> {
+    if (rec.targetItemId) {
+      const slot = String(rec.slot || '');
+      if (!replacementTargets) {
+        replacementTargets = new Map(itemBuilder.itemSlots(vanillaText)
+          .filter((itemSlot) => !itemSlot.persona && !itemSlot.abilityFx)
+          .map((itemSlot) => [itemSlot.slot, new Set(itemSlot.options.map((option) => option.id))] as const));
+      }
+      const options = replacementTargets.get(slot) || new Set<string>();
+      if (!options.has(String(rec.itemId)) || !options.has(rec.targetItemId) || String(rec.itemId) === rec.targetItemId) {
+        throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', rec.itemId, rec.targetItemId));
+      }
+    }
     let pick = built.get(key);
     if (!pick) {
       // a summon's plain model, from the game's unit scripts: read only for an item that swaps one
@@ -113,7 +127,7 @@ export function createTableBuild({ library, bases, log }: {
       // in an ability effects slot the item gives its effects for that ability and no model (src/item-builder-ability-fx.ts)
       const fx = fxSlotOf(rec.slot);
       const made = fx ? abilityFxPatch(vanillaText, String(rec.itemId), rec.effectId, fx, summon)
-        : itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target, summon, refit);
+        : itemBuilder.itemEffectPatch(vanillaText, String(rec.itemId), rec.effectId, rec.persona?.target || rec.targetItemId, summon, refit);
       pick = { ...made, assets: scaledModels(yield* itemBuilder.gameAssetEntriesSteps(game, made.assetCopies, own && ((p) => own.paths.has(p))), scale,
         (p, why) => log(`schema: ${rec.name}: ${p} left at its own size: ${why}`)) };
       built.set(key, pick);
