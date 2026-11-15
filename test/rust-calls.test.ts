@@ -1271,7 +1271,8 @@ test('the game language and Minify in Rust read and move what the TypeScript doe
     { name: 'gamelang.folderFor', ts: gl.folderFor as never, inputs: langs.map((l) => [l]) },
     { name: 'gamelang.readKey', ts: st.readKey as never, inputs: [['"AudioLanguage"  "Russian "', 'AudioLanguage'], [`"audiolanguage"${T}"X"`, 'AudioLanguage'], ['"A" ""', 'A'], ['nothing', 'A']] },
     ...(['bootLanguages', 'langFolders', 'detectLangSuffix'] as const).map((n) => ({ name: `gamelang.${n}`, ts: gl[n] as never, inputs: paths.map((p) => [p]) })),
-    ...(['launchLanguage', 'launchOptions', 'steamLanguage', 'steamAccountDir'] as const).map((n) => ({ name: `gamelang.${n}`, ts: st[n] as never, inputs: paths.map((p) => [p]) })),
+    // these read who is signed in to Steam on this machine, so their answer is the machine's: compared, not recorded
+    ...(['launchLanguage', 'launchOptions', 'steamLanguage', 'steamAccountDir'] as const).map((n) => ({ name: `gamelang.${n}`, ts: st[n] as never, inputs: paths.map((p) => [p]), fresh: true })),
     { name: 'gamelang.voiceInstalled', ts: lf.voiceInstalled as never, inputs: games.flatMap((g) => ['russian', 'koreana', 'dutch', 'english'].map((l) => [g, l])) },
     { name: 'minify.isMinifyFile', ts: mf.isMinifyFile as never, inputs: ['pak65_dir.vpk', 'pak66_000.vpk', 'pak67_dir.vpk.off', 'pak99_dir.vpk.moff', 'pak64_dir.vpk', 'pak65_dir.vpkx', 'pak065_dir.vpk', 'pak99_12.vpk', ''].map((f) => [f]) },
     { name: 'minify.isMinifyPak', ts: mf.isMinifyPak as never, inputs: [...fs.readdirSync(pakDir).map((f) => [path.join(pakDir, f)]), [path.join(tmp, 'none.vpk')]] },
