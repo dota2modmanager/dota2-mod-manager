@@ -10,18 +10,11 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { pak01, src } from './game.mjs';
+import { pak01, readBlocks, writeBlocks, numberOf, setNumber, detached } from './game.mjs';
 
 const memberValue = (n, key) => n.members.get(key)?.value;
 
-/** A node of one KV3 block, with its numbers' bytes copied, to be written into another block. */
-function detached(kv, n) {
-  if (n.kind === 'object') return { ...n, members: new Map([...n.members].map(([k, c]) => [k, detached(kv, c)])) };
-  if (n.kind === 'array') return { ...n, items: n.items.map((c) => detached(kv, c)) };
-  if (n.kind === 'number' && n.cell) return { ...n, cell: null, typeAt: null, raw: Buffer.from(kv.buffers[n.cell.buffer].subarray(n.cell.offset, n.cell.offset + n.cell.width)) };
-  return n;
-}
-const int32 = (n) => { const raw = Buffer.alloc(4); raw.writeInt32LE(n); return { kind: 'number', type: 11, cell: null, typeAt: null, raw }; };
+const int32 = (n) => { const raw = Buffer.alloc(4); raw.writeInt32LE(n); return { kind: 'number', type: 11, raw }; };
 
 /**
  * A sequence plays through a weight list (a bone mask), and the decompile loses which one: every
@@ -101,11 +94,10 @@ export async function model(opts) {
   const rel = `models/heroes/${hero}/${hero}.vmdl_c`;
   const file = index.read(rel);
   if (!file) throw new Error(`no ${rel} in pak01`);
-  const { readKv3, numberOf } = await src('kv3.ts');
-  const { resourceBlock } = await src('resource.ts');
-  const block = (name) => readKv3(resourceBlock(file, name).data).root.members;
+  const kvs = readBlocks(file, ['DATA', 'ASEQ', 'ANIM']);
+  const block = (name) => kvs[name].root.members;
   const bones = block('DATA').get('m_modelSkeleton').members.get('m_boneName').items.map((b) => b.value);
-  const aseqKv = readKv3(resourceBlock(file, 'ASEQ').data);
+  const aseqKv = kvs.ASEQ;
   const names = aseqKv.root.members.get('m_localSequenceNameArray').items.map((s) => s.value);
   const descs = aseqKv.root.members.get('m_localS1SeqDescArray').items;
   const sequences = descs.map((s) => {
@@ -137,10 +129,8 @@ export async function clips(opts) {
   let file = index.read(rel);
   if (!file) throw new Error(`no ${rel} in pak01`);
   const ours = fs.readFileSync(oursPath);
-  const { readKv3, numberOf, setNumber } = await src('kv3.ts');
-  const { writeKv3 } = await src('kv3-write.ts');
-  const { resourceBlock } = await src('resource.ts');
-  const block = (f, name) => readKv3(resourceBlock(f, name).data);
+  const valveKvs = readBlocks(file, ['ANIM', 'ASEQ', 'AGRP']), ourKvs = readBlocks(ours, ['ANIM', 'ASEQ', 'AGRP']);
+  const block = (f, name) => (f === file ? valveKvs : ourKvs)[name];
 
   // 0. a clip's tracks go by their place in the animation's bone channel: the compile must list the
   //    bones there as Valve's does, or Valve's poses copied in below move the wrong bones
@@ -248,9 +238,7 @@ export async function clips(opts) {
     else extra.push(name);
   }
 
-  file = resourceBlock(file, 'ANIM').replace(writeKv3(anim));
-  file = resourceBlock(file, 'ASEQ').replace(writeKv3(aseq));
-  file = resourceBlock(file, 'AGRP').replace(writeKv3(agrp));
+  file = writeBlocks(file, { ANIM: anim, ASEQ: aseq, AGRP: agrp });
   const out = path.join(opts.out, rel);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, file);

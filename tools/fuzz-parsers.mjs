@@ -4,12 +4,12 @@
  *
  * test/vpk-fuzz.test.ts and test/safe-zip-fuzz.test.js run a few hundred cases on every push,
  * which is the right size for a gate. This is the same generators with the brakes off: give it a
- * seed and a number of iterations and leave it running. Anything that escapes as a Node or
- * library error rather than one of this project's own refusals, or that takes longer than the
+ * seed and a number of iterations and leave it running. The parsers are the app's own, in Rust
+ * (mm-cli parse-each); anything that panics instead of refusing, or that takes longer than the
  * budget, is written to fuzz-output/ with the seed that produced it, so it can be replayed exactly.
  *
  *   node tools/fuzz-parsers.mjs                        20000 VPK cases from a random seed
- *   node tools/fuzz-parsers.mjs --target zip           the same for the archive door, src/safe-zip.ts
+ *   node tools/fuzz-parsers.mjs --target zip           the same for the archive door, crates/mm-core/src/formats/safe_zip.rs
  *   node tools/fuzz-parsers.mjs --seed 20260916        the same cases every time
  *   node tools/fuzz-parsers.mjs --iterations 500000    a long run
  *
@@ -17,17 +17,15 @@
  * the target names before fixing the parser, so the fix has proof.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-import { crc32 } from 'node:zlib';
-
 const require = createRequire(import.meta.url);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(root, 'fuzz-output');
-
-const { buildVpk, listVpkPaths, listVpkPathCrcs, listVpkEntries } = require('../src/vpk.ts');
-const { openZip } = require('../src/safe-zip.ts');
+// the parsers are the app's own, in Rust, read through mm-cli parse-each (tools/mm-cli.js)
+const { mm, jsonFile } = require('./mm-cli.js');
 const AdmZip = require('adm-zip');
 
 const arg = (name, fallback) => {
@@ -43,6 +41,8 @@ const SEED = arg('--seed', (Date.now() ^ (process.pid << 16)) >>> 0);
 const ITERATIONS = arg('--iterations', 20000);
 const BUDGET_MS = arg('--budget', 2000);
 const TARGET = text('--target', 'vpk');
+// cases handed to mm-cli at once: one start of it per batch, not per case
+const BATCH = 1000;
 
 /** The same xorshift the tests use, so a seed means the same bytes in all three places. */
 function prng(seed) {
@@ -55,18 +55,25 @@ function prng(seed) {
   };
 }
 
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'mm-fuzz-'));
+process.on('exit', () => fs.rmSync(scratch, { recursive: true, force: true }));
+
 /* ---------- VPK: the same sample and damage as test/vpk-fuzz.test.ts ---------- */
 
 function sampleVpk() {
-  const file = (folder, name, ext, body) => {
-    const data = Buffer.from(body);
-    return { ext, folder, name, data, preload: Buffer.alloc(0), crc: crc32(data) >>> 0 };
+  const files = {
+    'materials/models/heroes/wisp/wisp_color.vtex_c': 'colour bytes',
+    'panorama/images/heroes/npc_dota_hero_wisp_png.vtex_c': 'portrait',
+    'root_file.txt': 'at the archive root',
   };
-  return buildVpk([
-    file('materials/models/heroes/wisp', 'wisp_color', 'vtex_c', 'colour bytes'),
-    file('panorama/images/heroes', 'npc_dota_hero_wisp_png', 'vtex_c', 'portrait'),
-    file(' ', 'root_file', 'txt', 'at the archive root'),
-  ]);
+  const list = Object.entries(files).map(([rel, body], i) => {
+    fs.writeFileSync(path.join(scratch, `sample${i}`), body);
+    return [rel, `sample${i}`];
+  });
+  fs.writeFileSync(path.join(scratch, 'sample.json'), JSON.stringify(list));
+  const out = path.join(scratch, 'sample_dir.vpk');
+  mm('vpk-build', out, path.join(scratch, 'sample.json'));
+  return fs.readFileSync(out);
 }
 
 /** One mutated copy: some bytes flipped past the header, sometimes cut short. */
@@ -80,9 +87,6 @@ function damageVpk(base, random) {
   }
   return buf;
 }
-
-const ourVpkRefusal = (err) => err instanceof Error && !(err instanceof RangeError)
-  && !(err instanceof TypeError) && /^VPK: /.test(String(err.message));
 
 /* ---------- zip: the same sample and damage as test/safe-zip-fuzz.test.js ---------- */
 
@@ -103,28 +107,9 @@ function damageZip(base, random) {
   return buf;
 }
 
-function openAndRead(buf) {
-  const archive = openZip(buf, { label: 'fuzz.zip' });
-  for (const f of archive.files) f.read();
-}
-
 const TARGETS = {
-  vpk: {
-    base: sampleVpk,
-    damage: damageVpk,
-    calls: [['listVpkPaths', listVpkPaths], ['listVpkPathCrcs', listVpkPathCrcs], ['listVpkEntries', listVpkEntries]],
-    ours: ourVpkRefusal,
-    ext: 'vpk',
-    test: 'test/vpk-fuzz.test.ts',
-  },
-  zip: {
-    base: sampleZip,
-    damage: damageZip,
-    calls: [['openZip', openAndRead]],
-    ours: (err) => err instanceof Error && err.safeZip === true,
-    ext: 'zip',
-    test: 'test/safe-zip-fuzz.test.js',
-  },
+  vpk: { base: sampleVpk, damage: damageVpk, ext: 'vpk', test: 'test/vpk-fuzz.test.ts' },
+  zip: { base: sampleZip, damage: damageZip, ext: 'zip', test: 'test/safe-zip-fuzz.test.js' },
 };
 
 const target = TARGETS[TARGET];
@@ -133,34 +118,29 @@ if (!target) {
   process.exit(2);
 }
 
-/** @returns {string|null} why this input is a finding, or null if the parser behaved */
-function check(fn, buf) {
-  const started = Date.now();
-  try {
-    fn(buf);
-  } catch (err) {
-    if (!target.ours(err)) return `${err && err.constructor ? err.constructor.name : typeof err}: ${String(err && err.message).slice(0, 120)}`;
-  }
-  const took = Date.now() - started;
-  return took > BUDGET_MS ? `took ${took}ms` : null;
-}
-
 const random = prng(SEED);
 const base = target.base();
 const findings = [];
 console.log(`${TARGET}: seed ${SEED}, ${ITERATIONS} iterations, budget ${BUDGET_MS}ms per call`);
 
-for (let i = 0; i < ITERATIONS; i++) {
-  const buf = target.damage(base, random);
-  for (const [name, fn] of target.calls) {
-    const why = check(fn, buf);
-    if (!why) continue;
-    fs.mkdirSync(OUT, { recursive: true });
-    const file = path.join(OUT, `${name}-seed${SEED}-${i}.${target.ext}`);
-    fs.writeFileSync(file, buf);
-    findings.push(`${name} on iteration ${i}: ${why} (${path.relative(root, file)})`);
+/** Why a parse is a finding: it panicked, or it took longer than the budget; a refusal is not one. */
+const why = (r) => (r.panic != null ? `panic: ${String(r.panic).slice(0, 120)}` : r.ms > BUDGET_MS ? `took ${r.ms}ms` : null);
+
+for (let start = 0; start < ITERATIONS && findings.length < 20; start += BATCH) {
+  const bufs = [];
+  for (let i = start; i < Math.min(ITERATIONS, start + BATCH); i++) bufs.push(target.damage(base, random));
+  const files = bufs.map((b, k) => { const f = path.join(scratch, `case${k}`); fs.writeFileSync(f, b); return f; });
+  const rows = mm('parse-each', TARGET, jsonFile(files));
+  for (const [k, row] of rows.entries()) {
+    for (const r of row) {
+      const w = why(r);
+      if (!w) continue;
+      fs.mkdirSync(OUT, { recursive: true });
+      const file = path.join(OUT, `${r.call}-seed${SEED}-${start + k}.${target.ext}`);
+      fs.writeFileSync(file, bufs[k]);
+      findings.push(`${r.call} on iteration ${start + k}: ${w} (${path.relative(root, file)})`);
+    }
   }
-  if (findings.length >= 20) break;
 }
 
 for (const line of findings) console.log(`FOUND  ${line}`);

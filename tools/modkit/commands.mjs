@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { pak01, gameFolder, src } from './game.mjs';
+import { pak01, gameFolder, mm, call, jsonFile, readBlocks, writeBlocks, crc32 } from './game.mjs';
 import {
   findPaths, heroId, heroParticlePaths, heroesWithParticles, isSharedTexture, isUnchanged, listOf, parseColor, SOURCE_EXT, twoPass, walkFiles,
 } from './lib.mjs';
@@ -27,8 +27,9 @@ export async function extract(opts) {
   const out = need(opts.out, '--out <folder>');
   const wants = need(opts._.length && opts._, 'a path or folder').map((w) => w.toLowerCase().replace(/\\/g, '/'));
   let n = 0;
-  for (const p of index.paths()) {
-    if (!wants.some((w) => p === w || p.startsWith(w.endsWith('/') ? w : `${w}/`))) continue;
+  const hits = [...index.paths()].filter((p) => wants.some((w) => p === w || p.startsWith(w.endsWith('/') ? w : `${w}/`)));
+  index.prefetch(hits);
+  for (const p of hits) {
     const data = index.read(p);
     if (!data) continue;
     fs.mkdirSync(path.dirname(path.join(out, p)), { recursive: true });
@@ -44,8 +45,7 @@ export async function extract(opts) {
 export async function recolor(opts) {
   const { index } = await pak01(opts);
   const [heroText, colorText] = opts._;
-  const { HERO_DISPLAY } = await src('hero-names.ts');
-  const hero = heroId(need(heroText, 'a hero (necrolyte, "Necrophos")'), HERO_DISPLAY);
+  const hero = call('hero-names.heroIdFromName', need(heroText, 'a hero (necrolyte, "Necrophos")')) ?? heroId(heroText);
   const target = parseColor(colorText);
   if (!target) throw new Error('give a colour: 190,6,6 or #be0606');
   const out = need(opts.out, '--out <folder>');
@@ -55,23 +55,11 @@ export async function recolor(opts) {
     const near = heroesWithParticles(all).filter((h) => h.includes(hero.slice(0, 4)));
     throw new Error(`no particles for "${hero}"${near.length ? `; did you mean ${near.join(', ')}?` : ' (use the game\'s name: necrolyte, nevermore, zuus...)'}`);
   }
-  const { recolorResource, liftForMod2x } = await src('recolor.ts');
   const { first, from } = twoPass(target);
-  let n = 0, colours = 0, lifted = 0;
-  const failed = [];
-  for (const p of files) {
-    try {
-      const raw = index.read(p);
-      const a = opts['one-pass'] ? recolorResource(raw, target, { own: true }) : recolorResource(raw, first, { own: true });
-      const r = !opts['one-pass'] && a.changed ? recolorResource(a.file, target, { own: true, from }) : a;
-      if (!r.changed) continue;
-      // a MOD2X layer keeps some of every channel, or the ground under it takes the colour whole
-      const m = liftForMod2x(r.file);
-      if (m.changed) lifted++;
-      fs.mkdirSync(path.dirname(path.join(out, p)), { recursive: true });
-      fs.writeFileSync(path.join(out, p), m.file); n++; colours += r.changed;
-    } catch (e) { failed.push(`${p}: ${e.message}`); }
-  }
+  // the app's recolour, two passes unless --one-pass; a MOD2X layer then keeps some of every
+  // channel, or the ground under it takes the colour whole (recolor-files in crates/mm-cli)
+  const spec = { files, out, target, ...(opts['one-pass'] ? {} : { first, from }) };
+  const { written: n, colours, lifted, failed } = mm('recolor-files', index.file, jsonFile(spec));
   console.log(`${hero}: ${n} of ${files.length} particle(s) recoloured (${colours} colours) into ${out}`);
   if (lifted) console.log(`${lifted} MOD2X particle(s) keep 30% of every channel, so the ground under them is not tinted whole`);
   if (failed.length) console.log(`left as Valve's (could not read):\n  ${failed.join('\n  ')}`);
@@ -92,11 +80,7 @@ export async function warp(opts) {
   const raw = index.read(effect);
   if (!raw) throw new Error(`no ${effect} in the game: try modkit find status_effect <hero>`);
   if (!index.read(`${to}_c`)) throw new Error(`no ${to}_c in the game: try modkit find colorwarp`);
-  const { readKv3 } = await src('kv3.ts');
-  const { writeKv3 } = await src('kv3-write.ts');
-  const { dataBlock, withReferences } = await src('resource.ts');
-  const block = dataBlock(raw);
-  const kv = readKv3(block.data);
+  const { DATA: kv } = readBlocks(raw, ['DATA']);
   const from = new Set();
   const walk = (n) => {
     if (n.kind === 'string' && /colorwarp[^/]*\.vtex$/i.test(n.value)) { from.add(n.value); n.value = to; }
@@ -106,7 +90,7 @@ export async function warp(opts) {
   walk(kv.root);
   if (!from.size) throw new Error(`${effect} names no colour warp`);
   fs.mkdirSync(path.dirname(path.join(out, effect)), { recursive: true });
-  fs.writeFileSync(path.join(out, effect), withReferences(block.replace(writeKv3(kv)), [to]));
+  fs.writeFileSync(path.join(out, effect), writeBlocks(raw, { DATA: kv }, [to]));
   console.log(`${effect}: ${[...from].join(', ')} -> ${to}, into ${out}`);
 }
 
@@ -120,8 +104,7 @@ export async function warp(opts) {
 export async function pack(opts) {
   const dir = need(opts._[0], 'a folder');
   const out = need(opts.out, '--out <file.vpk>');
-  const { findContentRoot, entryAt, buildVpk } = await src('vpk.ts');
-  const root = findContentRoot(path.resolve(dir));
+  const root = mm('content-root', path.resolve(dir));
   if (!root) throw new Error(`no game folders (models/, materials/, particles/...) under ${dir}`);
   const { index } = opts['keep-unchanged'] ? { index: null } : await pak01(opts);
   const keep = new Set(listOf(opts.keep).map((k) => k.toLowerCase().replace(/\\/g, '/')));
@@ -129,17 +112,18 @@ export async function pack(opts) {
   const dropped = [];
   const shared = [];
   const raw = [];
-  for (const [rel, abs] of walkFiles(root)) {
-    const data = fs.readFileSync(abs);
+  const files = walkFiles(root).map(([rel, abs]) => [rel, abs, fs.readFileSync(abs)]);
+  // only a file whose crc matches the game's is read out of pak01 to compare
+  if (index) index.prefetch(files.map(([rel]) => rel.toLowerCase()).filter((k, i) => index.crc(k) === crc32(files[i][2])));
+  for (const [rel, abs, data] of files) {
     const key = rel.toLowerCase();
     if (index && isUnchanged(key, data, (p) => index.read(p))) { dropped.push(key); continue; }
     if (index && isSharedTexture(key, index, keep)) { shared.push(key); continue; }
     if (SOURCE_EXT.test(key) && !/\.(css|xml)$/.test(key)) raw.push(key);
-    entries.push(entryAt(rel, data));
+    entries.push([rel.replace(/\\/g, '/'), abs]);
   }
   if (!entries.length) throw new Error('nothing to pack: every file is the game\'s own');
-  fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
-  fs.writeFileSync(out, buildVpk(entries));
+  mm('vpk-build', path.resolve(out), jsonFile(entries));
   const mb = (fs.statSync(out).size / 1e6).toFixed(1);
   console.log(`${entries.length} file(s) from ${root} into ${out} (${mb} MB); ${dropped.length} left out as the game's own`);
   if (shared.length) console.log(`left out, textures the game already has (--keep <path> to replace one on purpose):\n  ${shared.join('\n  ')}`);

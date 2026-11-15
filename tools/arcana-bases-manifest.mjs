@@ -13,7 +13,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { blobSha, signedListing } from '../src/arcana-base-store.ts';
+import { createRequire } from 'node:module';
+
+// the app's check of a signed manifest, through mm-cli (tools/mm-cli.js)
+const { mm, jsonFile } = createRequire(import.meta.url)('./mm-cli.js');
+const signedListing = (manifest, sig) => mm('config-rules', jsonFile([['basesListing', manifest, sig]]))[0];
+/** git's hash of a file, what the bases repository's tree names it by (blob_sha in crates/mm-core/src/arcana/arcana_base_store.rs). */
+const blobSha = (data) => crypto.createHash('sha1').update(`blob ${data.length}\0`).update(data).digest('hex');
 
 const [root, keyFile] = process.argv.slice(2);
 if (!root || !fs.existsSync(path.join(root, 'src')) || !keyFile || !fs.existsSync(keyFile)) {

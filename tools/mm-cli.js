@@ -12,8 +12,8 @@ const MM_CLI = path.join(ROOT, 'target', 'debug', process.platform === 'win32' ?
 /** mm-cli built, if it is not yet. */
 function ensureMmCli() {
   if (fs.existsSync(MM_CLI)) return MM_CLI;
-  console.log('building mm-cli (cargo build -p mm-cli)');
-  execFileSync('cargo', ['build', '-p', 'mm-cli'], { cwd: ROOT, stdio: 'inherit' });
+  console.error('building mm-cli (cargo build -p mm-cli)');
+  execFileSync('cargo', ['build', '-p', 'mm-cli'], { cwd: ROOT, stdio: ['ignore', 2, 2] });
   return MM_CLI;
 }
 
@@ -77,4 +77,4 @@ function appGame() {
   try { return JSON.parse(fs.readFileSync(path.join(base, 'Dota 2 Mod Manager', 'settings.json'), 'utf8')).dotaGamePath || null; } catch { return null; }
 }
 
-module.exports = { MM_CLI, ensureMmCli, mm, call, jsonFile, binFile, vpkFile, appGame };
+module.exports = { MM_CLI, ensureMmCli, mm, call, tmpDir, jsonFile, binFile, vpkFile, appGame };

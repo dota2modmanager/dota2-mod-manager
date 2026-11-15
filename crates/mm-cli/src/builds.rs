@@ -68,7 +68,7 @@ pub fn run(kind: &str, out: &Path, args_file: &Path) -> Result<Value, String> {
 /// `mm-cli config-rules <ops.json>`: the rules the app reads its remote config by, for
 /// tools/rollback.mjs to write one the app will honour. Each op is answered in turn:
 /// ["normalize", raw], ["cmp", a, b], ["idHash", id, salt], ["verify", file, signature, key],
-/// ["constants"].
+/// ["basesListing", manifest, signature], ["constants"].
 pub fn config_rules(ops_file: &Path) -> Result<Value, String> {
     use mm_core::{beta, catalog_signature, remote_config as rc};
     let ops: Vec<Vec<Value>> = serde_json::from_str(&std::fs::read_to_string(ops_file).map_err(|e| e.to_string())?)
@@ -83,6 +83,11 @@ pub fn config_rules(ops_file: &Path) -> Result<Value, String> {
             "verify" => {
                 let bytes = std::fs::read(st(op, 1)).map_err(|e| e.to_string())?;
                 json!(catalog_signature::verify(&bytes, &st(op, 2), &st(op, 3)))
+            }
+            // the arcana bases a signed manifest lists, as the app reads it, or null for a bad signature
+            "basesListing" => {
+                let key = mm_core::arcana_base_store::BASES_PUBLIC_KEY;
+                json!(mm_core::arcana_base_store::signed_listing(&st(op, 1), &st(op, 2), key))
             }
             "constants" => json!({
                 "SWITCHABLE": rc::SWITCHABLE, "BLOCKS_SINCE": rc::BLOCKS_SINCE, "MAX_TESTERS": rc::MAX_TESTERS,
@@ -101,4 +106,17 @@ pub fn sets() -> Value {
     let recolor: serde_json::Map<String, Value> =
         mm_core::data::recolor_sets().iter().map(|(id, s)| (id.clone(), json!(s.name))).collect();
     json!({ "trees": trees, "recolor": recolor })
+}
+
+/// `mm-cli bench-install <game> <language suffix> <vpk>`: a mod into a free slot of the language
+/// folder, the way the app's installer puts one there, for tools/dota-bench.mjs; the file it wrote.
+pub fn bench_install(game: &Path, lang: &str, vpk_file: &Path) -> Result<Value, String> {
+    let inst = mm_core::installer::Installer::new(Some(game.to_path_buf()), lang);
+    inst.ensure_lang_folder()?;
+    let mut used = inst.used_pak_names()?;
+    let pak = inst.allocate_pak(&mut used, true)?;
+    let to = inst.lang_folder()?.join(pak);
+    let bytes = std::fs::read(vpk_file).map_err(|e| format!("{}: {e}", vpk_file.display()))?;
+    mm_core::file_tx::write_into(&bytes, &to, None).map_err(|e| e.to_string())?;
+    Ok(json!(to))
 }

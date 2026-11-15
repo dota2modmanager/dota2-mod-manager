@@ -19,7 +19,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { runCompiler } from './commands.mjs';
-import { pak01, src } from './game.mjs';
+import { pak01, mm, call, jsonFile, binFile } from './game.mjs';
 import { escapeRe, heroId, locate, toolCandidates, walkFiles } from './lib.mjs';
 
 /** The panorama pictures of a hero in pak01, compiled path -> PNG path. */
@@ -52,21 +52,35 @@ const MINIMAP_VMAT = 'materials/vgui/hud/minimap_hero_sheet.vmat_c';
 const MINIMAP_PNG = 'panorama/images/mods/minimap_hero_sheet.png';
 
 async function sheetTexture(index) {
-  const { references } = await src('resource.ts');
-  return references(index.read(MINIMAP_VMAT)).find((r) => r.endsWith('.vtex')) + '_c';
+  index.prefetch([MINIMAP_VMAT]);
+  const f = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'modkit-')), 'sheet.vmat_c');
+  fs.writeFileSync(f, index.read(MINIMAP_VMAT));
+  const [{ references }] = mm('resource', jsonFile([f]));
+  fs.rmSync(path.dirname(f), { recursive: true, force: true });
+  return references.find((r) => r.endsWith('.vtex')) + '_c';
 }
 
 export async function pictures(opts) {
   const { game, index } = await pak01(opts);
-  const { HERO_DISPLAY } = await src('hero-names.ts');
-  const hero = heroId(opts._[0] ?? '', HERO_DISPLAY);
+  const hero = opts._[0] ? call('hero-names.heroIdFromName', opts._[0]) ?? heroId(opts._[0]) : null;
   if (!hero || !opts.out) throw new Error('usage: modkit pictures <hero> --out <dir> [--from <pictures dir> --addon <name>]');
   const cellText = index.read('scripts/mod_textures.txt')?.toString('utf8') ?? '';
   const cell = minimapCell(cellText, hero);
   if (typeof opts.from === 'string') return build(opts, game, index, hero, cell);
 
-  const { pngFromVtex } = await src('vtex.ts');
   const found = heroPictures(index.paths(), hero);
+  index.prefetch([...found.keys()]);
+  // the app's reader, asked about every picture at once: a PNG inside the resource as a data: URL,
+  // or null for a block-compressed one
+  const urls = new Map();
+  const ask = (rels) => mm('call', jsonFile(rels.map((r) => ['vtex.png', { $file: binFile(index.read(r)) }])))
+    .forEach((a, i) => urls.set(rels[i], a.ok ?? null));
+  ask([...found.keys()]);
+  const pngFromVtex = (rel) => {
+    if (!urls.has(rel)) ask([rel]);
+    const url = urls.get(rel);
+    return url ? Buffer.from(url.slice(url.indexOf(',') + 1), 'base64') : null;
+  };
   if (!found.size) throw new Error(`no pictures of ${hero} in pak01`);
   const vrf = locate(toolCandidates('vrf'));
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'modkit-'));
@@ -74,7 +88,7 @@ export async function pictures(opts) {
   const toPng = (rel, out) => {
     fs.mkdirSync(path.dirname(out), { recursive: true });
     const data = index.read(rel);
-    const png = pngFromVtex(data);
+    const png = pngFromVtex(rel);
     if (png) { fs.writeFileSync(out, png); return true; }
     if (!vrf) return false;
     // Source2Viewer names its output after the input: decompile into a folder of its own, then move

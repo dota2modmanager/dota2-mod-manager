@@ -2,7 +2,9 @@
 //! prints JSON the test compares with what the TypeScript module answers for the same input.
 
 mod builds;
+mod modkit;
 mod owner_wire;
+mod parse_each;
 mod sandbox_assets;
 
 use std::path::Path;
@@ -139,6 +141,13 @@ fn run(args: &[String]) -> Result<Value, String> {
         }
         // a look built out of the game into a VPK (builds.rs)
         "look-sets" => Ok(builds::sets()),
+        "kv3-tree" => modkit::tree(Path::new(arg(1)?), Path::new(arg(2)?)),
+        "kv3-put" => modkit::put(Path::new(arg(1)?), Path::new(arg(2)?), Path::new(arg(3)?)),
+        "recolor-files" => modkit::recolor_files(Path::new(arg(1)?), Path::new(arg(2)?)),
+        "find-dota" => Ok(json!(mm_core::steam::find_dota_game_path())),
+        "content-root" => Ok(json!(mm_core::vpk_pack::find_content_root(Path::new(arg(1)?), 0))),
+        "bench-install" => builds::bench_install(Path::new(arg(1)?), arg(2)?, Path::new(arg(3)?)),
+        "parse-each" => parse_each::run(arg(1)?, Path::new(arg(2)?)),
         "config-rules" => builds::config_rules(Path::new(arg(1)?)),
         "build" => builds::run(arg(1)?, Path::new(arg(2)?), Path::new(arg(3)?)),
         "vpk-build" => {
