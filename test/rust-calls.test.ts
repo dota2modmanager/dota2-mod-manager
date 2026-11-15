@@ -17,10 +17,10 @@ import { HERO_ALIAS, HERO_DISPLAY, heroDisplayName, heroIdFromName, heroKey } fr
 import { styleTokens, styleOf, withStyle, inEveryStyle, blockInEveryStyle } from '../src/item-builder-styles.ts';
 import { donorOf, hasOwnEffect, donorAdditions, withModifiers, withDonorEffects } from '../src/item-builder-donor.ts';
 import { blockBounds, eachChild } from '../src/schema-kv.ts';
+import { CLI as cli, cliSkip } from './helpers/mm-cli.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
-const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
-const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
+const skip = cliSkip();
 
 // what each case answered, recorded so Rust can be held to it once the TypeScript is gone
 const golden = new Golden(path.join(root, 'test', 'golden', `rust-calls.${process.platform}.json`));
@@ -1271,7 +1271,8 @@ test('the game language and Minify in Rust read and move what the TypeScript doe
     { name: 'gamelang.folderFor', ts: gl.folderFor as never, inputs: langs.map((l) => [l]) },
     { name: 'gamelang.readKey', ts: st.readKey as never, inputs: [['"AudioLanguage"  "Russian "', 'AudioLanguage'], [`"audiolanguage"${T}"X"`, 'AudioLanguage'], ['"A" ""', 'A'], ['nothing', 'A']] },
     ...(['bootLanguages', 'langFolders', 'detectLangSuffix'] as const).map((n) => ({ name: `gamelang.${n}`, ts: gl[n] as never, inputs: paths.map((p) => [p]) })),
-    ...(['launchLanguage', 'launchOptions', 'steamLanguage', 'steamAccountDir'] as const).map((n) => ({ name: `gamelang.${n}`, ts: st[n] as never, inputs: paths.map((p) => [p]) })),
+    // these read who is signed in to Steam on this machine, so their answer is the machine's: compared, not recorded
+    ...(['launchLanguage', 'launchOptions', 'steamLanguage', 'steamAccountDir'] as const).map((n) => ({ name: `gamelang.${n}`, ts: st[n] as never, inputs: paths.map((p) => [p]), fresh: true })),
     { name: 'gamelang.voiceInstalled', ts: lf.voiceInstalled as never, inputs: games.flatMap((g) => ['russian', 'koreana', 'dutch', 'english'].map((l) => [g, l])) },
     { name: 'minify.isMinifyFile', ts: mf.isMinifyFile as never, inputs: ['pak65_dir.vpk', 'pak66_000.vpk', 'pak67_dir.vpk.off', 'pak99_dir.vpk.moff', 'pak64_dir.vpk', 'pak65_dir.vpkx', 'pak065_dir.vpk', 'pak99_12.vpk', ''].map((f) => [f]) },
     { name: 'minify.isMinifyPak', ts: mf.isMinifyPak as never, inputs: [...fs.readdirSync(pakDir).map((f) => [path.join(pakDir, f)]), [path.join(tmp, 'none.vpk')]] },
@@ -6704,7 +6705,8 @@ test('the settings view, the support window\'s timing and the beta gate in Rust 
   const bare = path.join(tmp, 'bare', 'game');
   fs.mkdirSync(bare, { recursive: true });
   const recs = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `r${i}`, files: i % 2 ? [{ root: 'lang', name: 'x' }] : [{ root: 'game', name: 'y' }] }));
-  const games = [game, sandboxGame, bare, '', null, path.join(tmp, 'nope')];
+  // the sandbox only where it is seeded: its view says whether the game is there, which a runner without it answers otherwise
+  const games = [game, ...(fs.existsSync(sandboxGame) ? [sandboxGame] : []), bare, '', null, path.join(tmp, 'nope')];
   const views: unknown[][] = [];
   for (const g of games) for (const folder of ['russian', 'minify', 'koreana']) for (const n of [0, 3]) {
     views.push([{ dotaGamePath: g, uiLang: 'en', minify: 'kept?', zeta: 1 }, recs(n), n > 0, folder, n ? { moved: 2 } : null, n ? null : { laidOut: true }]);

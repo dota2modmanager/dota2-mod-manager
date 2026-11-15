@@ -24,10 +24,12 @@ const SEP = String.raw`[\\/]+`;
 const escaped = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 const parts = (p: string) => p.split(/[\\/]+/).filter(Boolean).map(escaped);
 const roots = [...new Set([os.tmpdir(), fs.realpathSync.native(os.tmpdir())])].map(parts);
+// the checkout itself, which sits somewhere else on every machine and runner
+const REPO = new RegExp(parts(path.resolve(import.meta.dirname, '..', '..')).join(SEP), 'gi');
 const TMP = new RegExp(String.raw`(?:${roots.map((r) => r.join(SEP)).join('|')})${SEP}([^\\/"]*-)[A-Za-z0-9]{6}`, 'gi');
 
-/** A string with every fresh temporary folder in it named the same way on every run. */
-export const stable = (s: string) => s.replace(TMP, '<TMP>/$1');
+/** A string with the checkout and every fresh temporary folder in it named the same way on every run. */
+export const stable = (s: string) => s.replace(REPO, '<ROOT>').replace(TMP, '<TMP>/$1');
 
 /** JSON with every object's keys in order. */
 export function sorted(v: unknown): string {

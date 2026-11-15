@@ -37,6 +37,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # the runner image carries rustup; stable is whatever it names today
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
+      # when it is missing instead of skipping (test/helpers/mm-cli.ts)
+      - name: Build mm-cli
+        run: cargo build -p mm-cli
+
       # The workflows, read the way GitHub reads them.
       #
       # test/workflows.test.js reads these files as text. On 2026-09-26 release.yml reached main
@@ -128,6 +137,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
+      # when it is missing instead of skipping (test/helpers/mm-cli.ts)
+      - name: Build mm-cli
+        run: cargo build -p mm-cli
 
       - name: Run tests
         run: npm test

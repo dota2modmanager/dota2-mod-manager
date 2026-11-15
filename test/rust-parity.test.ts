@@ -12,10 +12,10 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 import { buildVpk, entryAt, listVpkEntries, fingerprintVpk, mergeVpkToSingle, openVpkIndex, crc32 } from '../src/vpk.ts';
+import { CLI as cli, cliSkip } from './helpers/mm-cli.ts';
 
 const root = path.resolve(import.meta.dirname, '..');
-const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
-const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
+const skip = cliSkip();
 const rust = (...args: string[]) => JSON.parse(execFileSync(cli, args, { encoding: 'utf8', maxBuffer: 1 << 30 }));
 
 /** The VPKs to compare on: a few built here, and the sandbox's real ones when it is there. */

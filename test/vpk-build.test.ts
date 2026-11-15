@@ -9,10 +9,9 @@ import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
 import { execFileSync } from 'node:child_process';
+import { CLI as cli, cliSkip } from './helpers/mm-cli.ts';
 
-const root = path.resolve(import.meta.dirname, '..');
-const cli = path.join(root, 'target', 'debug', process.platform === 'win32' ? 'mm-cli.exe' : 'mm-cli');
-const skip = !fs.existsSync(cli) && 'mm-cli is not built (cargo build -p mm-cli)';
+const skip = cliSkip();
 const mm = (...args: string[]) => JSON.parse(execFileSync(cli, args, { encoding: 'utf8' }));
 
 const FILES: Record<string, Buffer> = {
