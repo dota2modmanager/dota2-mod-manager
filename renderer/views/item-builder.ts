@@ -19,7 +19,7 @@
 import { gemSetOf } from '../catalog/builder/gems.ts';
 import { state } from '../core/store.ts';
 import { pickedIn } from '../core/installed.ts';
-import { byName, effectGroup, effectKey, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
+import { byName, effectGroup, effectKey, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, replacementOptions, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
@@ -147,8 +147,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
     view: st.view,
     gem: gem ? { set: gem, equipped: live?.itemId === st.selectedId } : undefined,
     // the hero's own item first: choosing it is how a pick comes off
-    options: byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.view === 'items' ? st.query : '').map((o) => ({
-      id: o.id, name: o.name, picked: o.id === st.selectedId, on: o.id ? live?.itemId === o.id : !live, ...facts(o),
+    options: (st.view === 'replacement'
+      ? replacementOptions([{ id: '', name: L`Стандартный предмет`, tags: [] }, ...data.options], st.selectedId, st.query)
+      : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
+      id: o.id, name: o.name, picked: st.view === 'replacement' ? o.id === st.targetItemId : o.id === st.selectedId,
+      on: st.view !== 'replacement' && (o.id ? live?.itemId === o.id : !live), ...facts(o),
       ...('note' in o && o.note ? { note: o.note } : {}),
     })),
     optionsCount: data.options.length,
@@ -173,8 +176,8 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
       count: donors.length,
     } : null,
     replacement: !data.persona && !data.abilityFx && hasItem ? {
-      value: st.targetItemId,
-      options: data.options.filter((o) => o.id !== st.selectedId).map((o) => ({ value: o.id, label: o.name })),
+      sourceName: chosen?.name || st.selectedId,
+      targetName: data.options.find((o) => o.id === st.targetItemId)?.name || L`Стандартный предмет`,
       disabled: st.busy,
     } : undefined,
     summary: { name: chosen ? chosen.name : L`Стандартный`, effects: chosen && names.length ? names.join(', ') : '' },

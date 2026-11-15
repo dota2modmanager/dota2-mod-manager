@@ -92,8 +92,7 @@ export function createHeroPreview({ glb, library, gamePath, vanilla, log = () =>
       const rec = equipped.find((r) => r.slot === s.slot);
       const stockItem = (!rec && s.slot.endsWith(':head') && crown) || findItem(text, given.get(s.slot.split(':').pop() || '') || s.stock);
       const stock = stockItem ? itemFields(text, stockItem) : null;
-      const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null,
-        typeof rec.targetItemId === 'string' ? rec.targetItemId : undefined) : null;
+      const picked = rec ? itemModel(text, String(rec.itemId), rec.effectId as string | undefined, hero, stock?.get('model_player') || null, typeof rec.targetItemId === 'string' ? rec.targetItemId : undefined) : null;
       const block = rec ? findItem(text, String(rec.itemId)) : null;
       const worn = block || stockItem;
       const visuals = worn ? itemVisuals(text, worn) : null;

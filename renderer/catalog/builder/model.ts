@@ -38,7 +38,7 @@ interface EffectCard {
 }
 
 /** The tabs over a slot's grid: its items, the chosen one's styles, effects on top, another item's effect. */
-export type SlotView = 'items' | 'styles' | 'effects' | 'gems' | 'donors';
+export type SlotView = 'items' | 'replacement' | 'styles' | 'effects' | 'gems' | 'donors';
 
 export interface SlotPaneModel {
   title: string;
@@ -56,7 +56,7 @@ export interface SlotPaneModel {
   /** the slot's items with an effect of their own, to wear on the chosen one; null when none has one */
   donors: { none: boolean; list: { id: string; name: string; picked: boolean }[]; enabled: boolean; count: number } | null;
   /** optional same-slot item to replace; omitted for persona and ability-effect slots */
-  replacement?: { value: string; options: { value: string; label: string }[]; disabled: boolean };
+  replacement?: { sourceName: string; targetName: string; disabled: boolean };
   summary: { name: string; effects: string };
   action: BuilderAction;
 }

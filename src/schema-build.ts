@@ -33,7 +33,7 @@ import { createColoredBases, windowColor } from './arcana-base-color.ts';
 import { basesAttachedSteps } from './model-attachments.ts';
 import { lookPatch } from './courier-models.ts';
 import { fxSlotOf, mergeFxPatches } from './item-builder-ability-fx.ts';
-import { t } from './i18n.ts';
+import { createReplacementValidator } from './item-replacement.ts';
 import { abilityFxPatch } from './item-builder-fx-patch.ts';
 import { kineticEntries } from './item-builder-kinetic.ts';
 import type { BaseStore } from './arcana-base-store.ts';
@@ -92,7 +92,7 @@ export function createTableBuild({ library, bases, log }: {
 }) {
   const built = new Map<string, ItemPick>();
   const shared = new Map<string, { key: string; entries: VpkEntry[] }>();
-  let replacementTargets: Map<string, Set<string>> | null = null;
+  let validateReplacement: ReturnType<typeof createReplacementValidator> | null = null;
   let builtFrom: string | null = null;
   let builtGame: string | null = null;
   const colored = createColoredBases(log);
@@ -109,16 +109,8 @@ export function createTableBuild({ library, bases, log }: {
   /** A pick built, or the one built before for the same key; its files are read a pause apart (gameAssetEntriesSteps). */
   function* builtPick(vanillaText: string, game: string, key: string, rec: BuildRecord, own: ReadyBase | undefined, refit: string | undefined, scale?: number): Generator<typeof PAUSE, ItemPick> {
     if (rec.targetItemId) {
-      const slot = String(rec.slot || '');
-      if (!replacementTargets) {
-        replacementTargets = new Map(itemBuilder.itemSlots(vanillaText)
-          .filter((itemSlot) => !itemSlot.persona && !itemSlot.abilityFx)
-          .map((itemSlot) => [itemSlot.slot, new Set(itemSlot.options.map((option) => option.id))] as const));
-      }
-      const options = replacementTargets.get(slot) || new Set<string>();
-      if (!options.has(String(rec.itemId)) || !options.has(rec.targetItemId) || String(rec.itemId) === rec.targetItemId) {
-        throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', rec.itemId, rec.targetItemId));
-      }
+      validateReplacement ||= createReplacementValidator(vanillaText);
+      validateReplacement(String(rec.slot || ''), String(rec.itemId), rec.targetItemId);
     }
     let pick = built.get(key);
     if (!pick) {

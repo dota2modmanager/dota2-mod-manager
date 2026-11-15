@@ -90,6 +90,11 @@ export const byName = <T extends { name: string }>(list: T[], query: string): T[
   return q ? list.filter((o) => cosmeticNameMatches(o.name, q)) : list;
 };
 
+/** A replacement target is another wearable in the slot; the item being modified is not a target. */
+export function replacementOptions<T extends { id: string; name: string }>(options: T[], sourceId: string, query: string): T[] {
+  return byName(options.filter((option) => option.id !== sourceId), query);
+}
+
 /** A set is found by its own name or by any piece's. */
 export function matchingSets(sets: ItemSet[], query: string): ItemSet[] {
   const q = query.trim().toLowerCase();

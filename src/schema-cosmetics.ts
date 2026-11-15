@@ -20,6 +20,7 @@ import { offeredUnusual } from './item-builder-unusual.ts';
 import { offeredKinetic } from './item-builder-kinetic.ts';
 import { namedFxSlots } from './item-builder-ability-fx.ts';
 import { hasBase } from './arcana-bases.ts';
+import { createReplacementValidator } from './item-replacement.ts';
 
 /** A persona's own piece: weapon_persona_1 (src/item-builder-personas.ts). */
 const PERSONA_PIECE = /_persona_\d+$/;
@@ -48,25 +49,8 @@ export function createCosmetics({ library, settings, gamePath, vanilla, refresh 
   }
 
   function validateTarget(slot: string, itemId: string, targetItemId: unknown, text?: string): string {
-    if (targetItemId === undefined) return '';
-    if (typeof targetItemId !== 'string') {
-      throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, String(targetItemId)));
-    }
-    if (!targetItemId) return '';
-    const isItem = slot === 'items' || slot.startsWith('item:');
-    if (!isItem) throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, targetItemId));
-    const source = text ?? vanilla();
-    let options: { id: string; name: string }[];
-    if (slot.startsWith('item:')) {
-      const itemSlot = itemBuilder.itemSlots(source).find((s) => s.slot === slot);
-      options = itemSlot && !itemSlot.persona && !itemSlot.abilityFx ? itemSlot.options : [];
-    } else {
-      options = schema.cosmeticOptions(source, slot);
-    }
-    if (targetItemId === itemId || !options.some((o) => o.id === itemId) || !options.some((o) => o.id === targetItemId)) {
-      throw new Error(t('Предмет {0} нельзя заменить предметом {1} в этом слоте', itemId, targetItemId));
-    }
-    return targetItemId;
+    if (targetItemId === undefined || targetItemId === '') return '';
+    return createReplacementValidator(text ?? vanilla())(slot, itemId, targetItemId);
   }
 
   /**

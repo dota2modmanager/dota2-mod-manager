@@ -11,7 +11,6 @@ import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import type { SlotPaneActions, SlotPaneModel, SlotView } from './model.ts';
 import type { EffectGroup } from './logic.ts';
 import { BuilderFoot, CosThumb, EmptySearch, FxThumb, PickerSearch } from './parts.tsx';
-import { Dropdown } from '../../ui/Dropdown.tsx';
 
 /** The words on an item's note tag (src/arcana-notes.ts); the note itself is its tooltip, and the
  *  chosen item's note is spelled out under its name at the foot, beside the button that puts it on. */
@@ -45,6 +44,7 @@ export function SlotPane({ m, actions, gems, gemCount }: { m: SlotPaneModel; act
   };
   const tabs: { id: SlotView; label: string; count: number | string; off?: boolean; hint?: string; shortLabel?: string }[] = [
     { id: 'items', label: L`Предметы`, count: m.optionsCount + 1 },
+    ...(m.replacement ? [{ id: 'replacement' as const, label: L`Заменить предмет`, count: m.optionsCount, off: m.replacement.disabled }] : []),
     ...(m.styles ? [{ id: 'styles' as const, label: L`Стиль`, count: m.styles.length }] : []),
     ...(m.effects ? [{ id: 'effects' as const, label: L`Эффекты`, count: m.effects.picked ? `${m.effects.picked} / ${m.effects.count}` : m.effects.count,
       off: !m.effects.enabled, hint: L`Эффект добавляется к предмету: сначала выбери его.` }] : []),
@@ -67,19 +67,18 @@ export function SlotPane({ m, actions, gems, gemCount }: { m: SlotPaneModel; act
       </div>
       {m.replacement && (
         <div className="ward-shelf-note ward-replacement">
-          <span>{L`Заменить предмет`} · {L`Только в твоей игре`}</span>
-          <Dropdown label={L`Предмет для замены`} value={m.replacement.value} options={m.replacement.options}
-            first={L`Стандартный предмет`} onPick={actions.replacement} disabled={m.replacement.disabled} className="ward-replacement-select" />
+          <span className="ward-replacement-flow"><b>{cosmeticName(m.replacement.sourceName)}</b><span aria-hidden="true">→</span><b>{cosmeticName(m.replacement.targetName)}</b></span>
+          <span className="ward-replacement-note" role="note">{L`Этот вид увидишь только ты; он будет у всех, кто носит заменяемый предмет.`}</span>
         </div>
       )}
       <div className="ward-scroll" key={m.view}>
         {m.view === 'gems' && gems}
-        {m.view === 'items' && (
+        {(m.view === 'items' || m.view === 'replacement') && (
           <div className="item-pick-grid ward-grid" id="itemPickGrid">
             {m.options.length ? m.options.map((o, i) => (
               <button key={o.id || 'stock'} className={`card item-pick-card ${o.picked ? 'picked' : ''} ${o.on ? 'installed' : ''}`}
                 data-item-option={o.id} data-rarity={o.rarity || undefined} aria-pressed={o.picked}
-                style={stagger(i)} onClick={() => actions.choose(o.id)}>
+                style={stagger(i)} onClick={() => m.view === 'replacement' ? actions.replacement(o.id) : actions.choose(o.id)}>
                 <div className="card-media">
                   {o.id === '' ? <div className="noimg"><span className="ms">block</span></div> : <CosThumb name={o.name} fallback={m.slotIcon} />}
                   {o.note && <div className="media-tags"><span className="mtag warn" title={o.note.text}>{NOTE_TAG[o.note.status]()}</span></div>}
@@ -87,7 +86,7 @@ export function SlotPane({ m, actions, gems, gemCount }: { m: SlotPaneModel; act
                 <div className="card-body">
                   <div className="card-name" title={o.name}>{cosmeticName(o.name)}</div>
                   <div className="card-meta">
-                    {o.on ? <span className="ward-on">{L`Надето`}</span>
+                    {m.view === 'replacement' ? null : o.on ? <span className="ward-on">{L`Надето`}</span>
                       : <>{o.rarityName && <span className="set-rarity">{o.rarityName}</span>}{o.year && <span>{o.year}</span>}</>}
                   </div>
                 </div>

@@ -207,7 +207,6 @@
 /* what the tab offers, right: a head, the grid that scrolls, the bar that puts it on */
 .ward-pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .ward-slot { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: var(--space-3); }
-.ward-replacement-select { flex: 1 1 220px; max-width: 320px; }
 .ward-pane-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
 .ward-slot > .ward-pane-head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: var(--space-2) var(--space-3); }
 .ward-pane-title {
@@ -271,6 +270,9 @@
 .ward-on { color: var(--installed); font-weight: var(--weight-semibold); display: inline-flex; align-items: center; gap: var(--space-1); }
 .ward-on .ms { font-size: var(--icon-sm); }
 .ward-shelf-note { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); font-size: var(--text-xs); color: var(--text-faint); }
+.ward-replacement { align-items: flex-start; flex-direction: column; }
+.ward-replacement-flow { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--text); }
+.ward-replacement-note { color: var(--text-faint); }
 .ward-empty {
   display: flex;
   flex-direction: column;
