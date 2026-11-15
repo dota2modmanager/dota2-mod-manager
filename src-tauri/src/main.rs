@@ -266,6 +266,8 @@ fn main() {
             let area = window::work_area(app);
             // the shell's process writes the game itself, so a sandbox run holds it to the folder
             mm_core::write_jail::install(&mm_core::write_jail::from_argv(&argv));
+            // its own settings and library too: outside the jail they are the installed app's
+            mm_core::write_jail::refuse_outside("user data", &user_data)?;
             let owner = Arc::new(Backend(backend::start_owner(
                 &handle,
                 backend::Start {
