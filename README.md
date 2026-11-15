@@ -206,8 +206,8 @@ Nothing is injected into Dota's process, and no file of the game is opened while
   if something in the game looks wrong after a patch, that is where to look first
 
 Downloads live in `%APPDATA%/dota2-mod-manager/downloads`, the install manifest beside them.
-The full picture is in [ARCHITECTURE.md](ARCHITECTURE.md), and every module is listed in
-[docs/API.md](docs/API.md), which is generated from the source rather than written.
+The full picture is in [ARCHITECTURE.md](ARCHITECTURE.md), and every call the window makes into
+the app is typed in [renderer/api/](renderer/api/).
 
 <br>
 
@@ -240,7 +240,7 @@ installed here survives its uninstall.
 | [Make mods with AI](https://dota2modmanager.com/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | The skill an assistant builds mods with, and how an item mod is built from the game's files |
 | [Every fact, checkable](https://dota2modmanager.com/facts/) | Version, platforms, counts, and how to verify each one |
 | [docs/catalog-data.md](docs/catalog-data.md) | The whole mod catalog as one JSON file, field by field, for your own bot, site or script |
-| [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Which file owns which decision, and every module's exports |
+| [ARCHITECTURE.md](ARCHITECTURE.md) · [renderer/api/](renderer/api/) | Which file owns which decision, and every call the window makes |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | How to work on it, with or without an assistant, and how to report a hole |
 | [docs/assurance-case.md](docs/assurance-case.md) | What could go wrong, what stops it, and the test that proves each answer |
 | [docs/evidence.md](docs/evidence.md) | Every claim above with the CI job that runs it and the command that runs it on your machine |
@@ -285,7 +285,7 @@ is loading a tracker, and nothing has to be committed for the picture to move.
 
 | | |
 |---|---|
-| [Tests](.github/workflows/test.yml) | eslint first, then the full suite with a coverage floor, on Linux and on Windows. Several of the tests hold the project against itself rather than testing a module: every IPC channel has a handler and every handler runs, every renderer import resolves, every Russian string has an English twin, the version and both changelogs agree, `docs/API.md` still matches the source, and `DECISIONS.md` still matches the repository |
+| [Tests](.github/workflows/test.yml) | eslint first, then the full suite with a coverage floor, on Linux and on Windows. Several of the tests hold the project against itself rather than testing a module: every renderer import resolves, every Russian string has an English twin, the version and both changelogs agree, the window's calls match the bridge, and `DECISIONS.md` still matches the repository |
 | [CodeQL](.github/workflows/codeql.yml) | Security and quality analysis, plus a weekly scheduled run |
 | [Linux](.github/workflows/linux.yml) | Builds the AppImage, starts the app against the sandbox, photographs the first window and reads the log for code that could not run |
 | [Window](.github/workflows/e2e.yml) | On Linux and on Windows: installs a mod, switches it off and on and removes it by clicking in the window, checking the game folder on disk after each launch. Offline, with a fixture catalog |
@@ -294,7 +294,6 @@ is loading a tracker, and nothing has to be committed for the picture to move.
 | [Mirror](.github/workflows/mirror.yml) | Pushes the same history to [GitLab](https://gitlab.com/TheFleece/dota2-mod-manager), so the code outlives this repository |
 | [Search report](.github/workflows/seo.yml) | Weekly, not per push: downloads, update checks, and visits from Google, Bing and Yandex, posted to [one public issue](https://github.com/dota2modmanager/dota2-mod-manager/issues/3) with every earlier week above it |
 | [Radar](.github/workflows/radar.yml) | Daily, not per push: rewrites the pinned "Project status" issue with what waits on a decision, what is red and what is about to expire, and messages the maintainer about anything overdue |
-| [Pull request rules](.github/workflows/pull-request.yml) | On every pull request: a change that fixes something changes a test too, or says in a `No-Test-Because:` line why it cannot |
 | [Labels](.github/workflows/labels.yml) | Keeps the repository's labels equal to `.github/labels.json` |
 | [Dependency updates](.github/workflows/dependency-updates.yml) | On Dependabot's pull requests: a minor or patch update queues itself to merge, and goes in once every required check passes; anything bigger gets a label and waits for the maintainer |
 | [Scorecard](.github/workflows/scorecard.yml) | Weekly and on every change to main: OpenSSF Scorecard grades how the repository is kept (pinned actions, token permissions, branch protection, signed releases) and publishes the score behind the badge above |
@@ -311,15 +310,14 @@ a bot commit per run is how a log stops being readable.
 npm install
 npm start                 # run the app
 npm test                  # the whole suite, no framework, no mocks library
-npm run test:coverage     # the same with the floor CI enforces
-npm run docs              # regenerate docs/API.md from src/
+npm run docs              # regenerate the facts blocks and the incident index
 npm run sandbox:seed      # a throwaway game tree with real mods in it
 npm run start:sandbox     # the app against it, never your own game
 npm run dota:diff         # what changed between two Dota builds (6944 6952, or the last two)
 ```
 
-Node 24, Electron 45. The main process is TypeScript that Node runs without a build, and the
-window is TypeScript and React, built by Vite. Every release
+Tauri 2 and Rust. The app's core is the Rust in `crates/mm-core/`, the window is TypeScript and
+React, built by Vite, and Node 24 runs the tests and the tools. Every release
 is produced by [`release.yml`](.github/workflows/release.yml) from the commit its tag names.
 
 **Open an issue before building anything larger than a fix.** It costs one message and saves the
@@ -364,7 +362,7 @@ the two additional terms this project adds under section 7 of the GPL.
 | [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Every Dota build as text, read by this repository's checks to report what an update changed. Not the app | None stated. Read over the network; nothing from it is copied here |
 
 <!-- facts:deps-en -->
-`package.json` lists 22: `adm-zip`, `electron-updater`, `meshoptimizer` and `undici` ship inside the app, `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` and `three` are built into its window, `@tauri-apps/cli`, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
+`package.json` lists 18, none of them ships inside the app: `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` and `three` are built into its window, `@tauri-apps/cli`, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `adm-zip`, `axe-core`, `eslint`, `fast-check`, `meshoptimizer`, `typescript` and `vite` only build or check it.
 <!-- /facts:deps-en -->
 The tests use no dependencies at all, and `tools/` uses one, `vite`, to build the window. The VPK reader and writer, the KeyValues parser, the zip guards and the
 update logic are written here, because every dependency is a stranger with write access to a
@@ -372,7 +370,7 @@ game folder on tens of thousands of machines.
 
 Valve's own `vpk.exe` is deliberately **not** here and must not be added: it is proprietary, and
 a project that bundles it is not open source in the sense SignPath's terms mean. Reading and
-writing VPK archives is done by this repository's own code, which is why `src/vpk.ts` exists.
+writing VPK archives is done by this repository's own code, which is why `crates/mm-core/src/formats/vpk.rs` exists.
 
 <br>
 

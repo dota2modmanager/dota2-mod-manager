@@ -21,14 +21,13 @@ git clone https://github.com/dota2modmanager/dota2-mod-manager.git
 cd dota2-mod-manager
 npm install
 npm start          # the app, against your real settings
-npm run dev        # the same, with the window served by Vite: an edit shows without a restart
 npm test           # the unit tests
-npm run dist       # the Windows installer, if you need to check packaging
+cargo test -p mm-core -p mm-cli   # the Rust tests
+npm run dist       # the installer for this platform, if you need to check packaging
 ```
 
-The window's page is built by Vite into `out/renderer`. `npm start` rebuilds it when a source file
-is newer than the build, and `npm run dev` serves it with hot reload, so a change to a style, a
-component or an animation shows in the open window.
+You also need a Rust toolchain (`rustup`, stable). `npm start` builds the window's page with Vite
+into `out/renderer-tauri`, then builds and starts the app with Cargo.
 
 ## Do not test against your own game
 
@@ -57,17 +56,17 @@ Windows, and a pull request cannot merge until both pass.
 Nothing in `sandbox/` is committed, and nothing in it touches
 `steamapps/common/dota 2 beta`. Every launch above passes `--write-jail=sandbox`, so the app itself
 refuses to write outside `sandbox/`, the temp folder and `e2e-output/`, whatever path it computes
-(`src/write-jail.ts`). Please keep it that way in your own changes: a test that needs a
+(`crates/mm-core/src/app/write_jail.rs`). Please keep it that way in your own changes: a test that needs a
 real game folder is a test nobody else can run.
 
 ## Driving the window from a script
 
 The app can walk its own window to a state and take a picture of it, which is how a change to a
 screen is shown in a pull request and how CI checks the installer it built. Every switch is an
-environment variable, read in `src/dev-harness.ts` and nowhere near a normal start: none does
+environment variable, read in `src-tauri/src/harness.rs` and nowhere near a normal start: none does
 anything unless it is set. They run in the order of the table, after the page has loaded.
 
-<!-- dev-switches: test/dev-switches.test.js checks this table against src/dev-harness.ts -->
+<!-- dev-switches: test/dev-switches.test.js checks this table against src-tauri/src/harness.rs -->
 | Switch | Takes | What it does |
 |---|---|---|
 | `MM_SHOT` | a path to a `.png` | Takes the picture, about ten seconds after start, once the switches below have run. Anything that goes wrong is written to `<path>.err.txt` |
@@ -80,14 +79,10 @@ anything unless it is set. They run in the order of the table, after the page ha
 | `MM_MENU` | a selector | Presses the right button on it, for the menu it opens |
 | `MM_DRAG` | `x1,y1,x2,y2` | Presses, moves and releases the left button |
 | `MM_WHEEL` | `x,y,deltaY[,ctrl]`, several split by `;` | Turns the wheel at a point |
-| `MM_UPDATE` | `type:version`, e.g. `portable:2.3.0` | Raises the update bar without a real release |
 | `MM_SCROLL` | a number of pixels | Scrolls the first scrollable pane by it |
 | `MM_MODAL` | a mod's name, exactly as its card shows it | Opens that card |
 | `MM_PREVIEW` | `1` | With `MM_MODAL`, plays the mod's preview |
 | `MM_EVAL` | JavaScript, `await` allowed | Runs in the finished page; what it returns is written to `<path>.eval.json` |
-| `MM_SIM` | scenario names from `tools/sim/scenarios`, split by `,` | Runs those scenarios instead of a picture; results go to `MM_SIM_OUT` |
-| `MM_REC` | a folder | Films the scenes of `tools/screencast-scenes.js` into it, one webm each, then quits |
-| `MM_SCENE` | scene names, split by `,` | With `MM_REC`, films only those |
 
 A picture of My mods with a row's menu open, against the sandbox:
 
@@ -114,61 +109,14 @@ Four modules get special attention because they are the ones that write into the
 
 | Module | What its tests hold down |
 |---|---|
-| `src/patcher.ts` | The search-path patch and the signature file, byte for byte, both directions |
-| `src/vpk.ts` | The reader against the writer, round trips, fingerprints |
-| `src/gamelang.ts` | Which folder the game will actually mount |
-| `src/schema.ts` | Merging and validating `items_game.txt` |
+| `crates/mm-core/src/game/patcher.rs` | The search-path patch and the signature file, byte for byte, both directions |
+| `crates/mm-core/src/formats/vpk.rs` | The reader against the writer, round trips, fingerprints |
+| `crates/mm-core/src/game/gamelang.rs` | Which folder the game will actually mount |
+| `crates/mm-core/src/schema/mod.rs` | Merging and validating `items_game.txt` |
 
 If your change touches any of them, start by finding the test that covers the behaviour you are
 about to change, and make new behaviour bring its own test. A red `npm test` is not a formality
 here: every one of those tests exists because something in it broke somebody's game once.
-
-## Coverage
-
-```bash
-npm run test:coverage
-```
-
-The same suite, with two lines held: the aggregate floor on every platform, and the coverage of
-each file against the numbers `.github/coverage-baseline.json` holds for the platform you are on.
-A platform with no measurement of its own is held to the aggregate and says so; the Linux numbers
-come from running the manual `coverage-baseline` job in `.github/workflows/test.yml` and
-committing what it uploads. A file that drops more than half
-a point below its line fails the run, and so does a file that was measured and is no longer
-measured: node reports only files a test loaded, so deleting the last test that touches a module
-would otherwise pass quietly.
-
-Per file, because one number hides the answer: the aggregate read 76.10% on the day this was
-written, while `src/presets-service.ts` sat at 13.8% of its lines. Write tests, then
-`node tools/coverage.mjs --update` to raise the lines. Never lower one to make a run green.
-
-A drop in a file your change did not touch usually means the file's own tests never reached
-those lines. Node merges coverage from every test process, and a line that no test runs can
-still come out covered in one run and uncovered in the next. `src/safe-zip.ts` did this in
-September 2026: 100% on one Linux run, 98.8% on the next, and no test at all for an archive in
-memory that is over the size limit. To see what a file's own tests cover, run them alone:
-
-```bash
-node --test --experimental-test-coverage test/safe-zip.test.ts
-```
-
-## File size
-
-```bash
-npm run size
-```
-
-Five files carried 7,155 lines between them in September 2026, while the median module in `src/`
-was 171. All five have since been split along their subjects: `main.js` into `src/main.ts` and a
-module for each job it held, `src/installer.ts` into `src/installer-*.ts`, `src/vpk.ts` into
-three, and the two biggest screens into `renderer/views/catalog/` and `renderer/views/library/`.
-A file in `src/` or `renderer/` fails the check once it crosses 300 lines. The files that were
-already longer when that mark came down from 800, on 2026-09-27, are in `.github/size-budget.json`
-at their length, and the check fails when one of them grows.
-
-If your change makes one of them longer, split something out of it rather than raising the number.
-`node tools/size-budget.mjs --update` writes measurements back and refuses to raise any of them; a
-budget only goes up by editing that file by hand, in a commit that says why.
 
 ## Types
 
@@ -177,7 +125,7 @@ npm run typecheck
 ```
 
 The main process is TypeScript with no build step: Node strips the types when it loads a file,
-so what you edit is what runs, in development and inside the installer. `src/tsconfig.json` checks
+so what you edit is what runs, in development and inside the installer. `test/tsconfig.json` checks
 it strictly, `test/tsconfig.json` the tests written in TypeScript, and a new error in either fails
 the run. The window is TypeScript and React (DECISIONS.md, "The window is built by Vite"),
 checked as strictly by `renderer/tsconfig.json`. The two preload bridges stay JavaScript,
@@ -203,43 +151,18 @@ npm run fuzz -- --seed 20260916 --iterations 500000
 
 A mod's VPK index is written by whoever made the mod, and the app reads it on every start. The
 walkers used to trust it: a file cut short came back as a `RangeError` from Buffer rather than a
-refusal, in paths that do not catch one. `test/vpk-fuzz.test.ts` runs a few hundred cases on every
+refusal, in paths that do not catch one. `crates/mm-core/src/formats/vpk.rs` runs a few hundred cases on every
 push (truncations, a forged preload length, seeded byte noise, and random sets of entries that have
 to read back byte for byte) and the command above runs the same generator for as long as you like.
 
-Every zip the app opens comes through `src/safe-zip.ts`, and `--target zip` fuzzes that door.
-`test/safe-zip-fuzz.test.js` holds two things on every push: a damaged archive is refused in this
+Every zip the app opens comes through `crates/mm-core/src/formats/safe_zip.rs`, and `--target zip` fuzzes that door.
+`crates/mm-core/src/formats/safe_zip.rs` holds two things on every push: a damaged archive is refused in this
 project's words rather than a library's, and no entry name, however it is built, puts a file
 outside the folder or hands out a name Windows itself would refuse. The name check writes to the
 real filesystem of whichever runner it is on, so Windows and Linux each answer for themselves.
 
 A finding is written to `fuzz-output/` together with the seed that made it. Add it to the test
 before touching the parser, so the fix has proof.
-
-## Checking that the tests would catch anything
-
-```bash
-npm run mutate
-npm run mutate -- deployPack
-```
-
-A green suite says the tests ran, not that they would notice a fault. The test asserting that a
-rebuilt pack keeps its pak slot passed against code that allocated a new slot every time:
-`removePackDeployed` frees the old slot before the allocator runs, so re-allocating handed back the
-same number and the assertion held either way.
-
-Each promise worth keeping has a mutant in `.github/mutants.json`: an edit that breaks it, anchored
-to the function it belongs to, and the test file that has to go red. The command applies them one
-at a time and puts the file back afterwards. A mutant that survives is a test that proves nothing.
-A mutant that no longer applies is worse, because the code moved and the check has been passing
-against nothing, so both fail the run.
-
-Running them costs a suite run each, which is why this is not part of `npm run verify`. What runs
-on every push is `test/mutate.test.js`, holding every mutant against today's source without running
-any of them. The whole set runs on Linux every Wednesday (`.github/workflows/mutation.yml`), and on
-any pull request that changes the mutants, the tool or that workflow; the radar reports the
-workflow if it goes red or quiet. Write the test for something a user would notice losing, then add the mutant that
-would have caught its absence.
 
 ## When something broke for players
 
@@ -257,8 +180,8 @@ a closed one that no write-up names.
 The interface ships in Russian, English and Simplified Chinese. Russian text remains the key:
 
 - `renderer/i18n.js` for anything in the window
-- `src/i18n-en.ts` for native dialogs, menus and tray text
-- `renderer/locales/zh-CN-*.js` and `src/i18n-zh-CN.ts` for the matching Chinese text
+- `crates/mm-core/src/app/i18n.rs` for native dialogs, menus and tray text
+- `renderer/locales/zh-CN-*.js` and `crates/mm-core/src/app/i18n.rs` for the matching Chinese text
 
 A string with no English twin falls back to Russian, which means an English speaker sees Cyrillic
 in the middle of their app and nothing crashes to tell anybody. A checker finds those:
@@ -267,7 +190,7 @@ in the middle of their app and nothing crashes to tell anybody. A checker finds 
 node tools/check-i18n.js
 ```
 
-`npm test` runs it too, and `test/chinese.test.js` checks Chinese coverage and placeholders, so a
+`npm test` runs it too, and `crates/mm-core/src/app/i18n.rs` checks Chinese coverage and placeholders, so a
 missing translation fails the pull request rather than shipping. Catalog mod titles, styles and
 groups use the display-only labels in `zh-CN-mod-names.json` and `zh-CN-catalog-words.json` through
 `renderer/ui/catalog-name.ts`; original keys, file references and saved records stay unchanged.
@@ -277,7 +200,7 @@ changed instructions fall back to the source, and commands, paths and links rema
 Official item/set labels in Chinese resolve their `item_name` tokens from the installed
 game's `dota_schinese.txt` and `items_schinese.txt`. Original names remain icon/favourite/save keys;
 missing or ambiguous translations keep the original label. Guides and release notes use English
-when no Chinese text is available. `test/cosmetic-names.test.ts` covers decoding, token lookup,
+when no Chinese text is available. `crates/mm-core/src/item_builder/cosmetic_names.rs` covers decoding, token lookup,
 fallback, game-update invalidation and bilingual search. The complete Valve localization files
 are not shipped; only catalog display labels are included.
 
@@ -286,8 +209,6 @@ in `renderer/locales/zh-CN-heroes.ts`. `renderer/ui/hero-name.ts` translates dis
 filter values, game identifiers, portrait keys and saved equipment keep their original names.
 `test/chinese-heroes.test.ts` imports these TypeScript modules so Node measures their coverage.
 The global search also matches Chinese hero and catalog names alongside the original English.
-Run `npm run sim -- --scenario localization --only fhd:default` to check English/Chinese/Russian
-switching, cached builder labels and global search in the sandbox.
 Check named abilities against the [official hero data](https://www.dota2.com/datafeed/herodata?language=schinese&hero_id=109),
 not a literal translation of the English or Russian name. Generic numbered ability slots remain
 numbered; they do not identify a particular ability. Use official terms such as 至宝, 身心,
@@ -352,7 +273,7 @@ ship something broken.
 
 ## Style
 
-TypeScript in `src/`, `renderer/` and most of `test/`, React for the window, JavaScript for the
+TypeScript in `crates/mm-core/src/`, `renderer/` and most of `test/`, React for the window, JavaScript for the
 tools. Comments explain why a thing is the way it is, especially when it looks wrong: most of them
 exist because a game update, a VPK edge case or a user's report made the obvious version fail.
 Match the surrounding code and the surrounding comment density.
@@ -380,10 +301,9 @@ No approval is required: the checks are the gate (DECISIONS.md, "Every change re
 through a pull request"). A pull request from outside the project still needs a maintainer to
 merge it, and that is when it is read. The checks: the suite on
 Linux and on Windows, CodeQL, the Linux build and its start-up run,
-installing a mod through the window on Linux and on Windows, and one rule of its own. CodeQL has
-to come back clean as well: a pull request that adds an alert at High or higher does not merge. A pull
-request that fixes something changes a test as well, or carries a line `No-Test-Because: <reason>`
-in a commit message or in its description. `npm run verify` runs the same lint and suite on your
+installing a mod through the window on Linux and on Windows. CodeQL has
+to come back clean as well: a pull request that adds an alert at High or higher does not merge. A fix for a bug that reached
+users brings the test that would have caught it. `npm run verify` runs the same lint and suite on your
 machine before you push.
 
 A version goes out from a tag, as a draft that becomes public only after its installer and its

@@ -30,6 +30,11 @@ jobs:
       # the runner image carries rustup; stable is whatever it names today
       - name: Rust toolchain
         run: rustup toolchain install stable --profile minimal -c clippy -c rustfmt && rustup default stable
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Crate tests
         run: cargo fmt --all -- --check && cargo test -p mm-core -p mm-cli
       - name: Clippy

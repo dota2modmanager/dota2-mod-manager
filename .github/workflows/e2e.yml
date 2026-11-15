@@ -53,6 +53,11 @@ jobs:
       - name: The page for the shell
         run: node tools/ui-build.mjs --tauri
 
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build the shell
         run: cargo build -p dota2-mod-manager
 
@@ -83,6 +88,11 @@ jobs:
       - name: The page for the shell
         run: node tools/ui-build.mjs --tauri
 
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build the shell
         run: cargo build -p dota2-mod-manager
 

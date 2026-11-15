@@ -71,7 +71,7 @@ The file is compact on purpose (about 1500 mods in one request), so rows are arr
 
 ## Opening a mod in the app
 
-A link `d2mm://mod/<category>/<name>[/<style>]`, each part URL-encoded, opens the mod's window in Dota 2 Mod Manager, and a preset link carries several mods at once. `src/deep-links.ts` and `src/preset-link.ts` in this repository are the reference for both formats.
+A link `d2mm://mod/<category>/<name>[/<style>]`, each part URL-encoded, opens the mod's window in Dota 2 Mod Manager, and a preset link carries several mods at once. `crates/mm-core/src/catalog/deep_links.rs` and `crates/mm-core/src/presets/preset_link.rs` in this repository are the reference for both formats.
 
 ## Credit
 

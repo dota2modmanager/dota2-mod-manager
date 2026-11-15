@@ -9,7 +9,7 @@ to move the next piece. Anyone picking the work up starts here.
 Electron's main process both draws the window and runs the app. A long synchronous step (a pak
 written, the item table rebuilt, pak01's 388 000-entry index walked) froze the window, which is
 why `CLAUDE.md`-era rules say "never hold the main process longer than ~100 ms" and why
-`src/steps.ts` exists (issue #286). The item builder, the 3D preview and the Workshop editors all
+`crates/mm-core/src/schema/background_builds.rs` exists (issue #286). The item builder, the 3D preview and the Workshop editors all
 want more speed than that budget allows. Rust gives:
 
 - the CPU work (VPK, KeyValues, items_game, hashing, builds) several times faster, and parallel;
@@ -29,7 +29,7 @@ renderer/           the window's page, unchanged (React + Motion + Vite)
 preload.js          window.api, kept as the one description of the API the page calls
 ```
 
-No Node, no Electron, no `src/*.ts`. Every IPC channel answered in Rust.
+No Node, no Electron, no `crates/mm-core/src/*.ts`. Every IPC channel answered in Rust.
 
 ## How it runs now
 
@@ -48,13 +48,13 @@ Tauri command mm_invoke(channel, args)
   `require('electron')` (`bridge.js`). The page gets the exact `window.api` it gets in Electron.
 - The owner (`crates/mm-core/src/owner/mod.rs`) holds settings.json, the library, the installer and
   the services, and answers every channel the TypeScript main process registered, group by group
-  in `owner_*.rs`, one per `src/ipc-*.ts`. No Node process runs.
+  in `owner_*.rs`, one per `crates/mm-core/src/owner/owner_*.rs`. No Node process runs.
 - Bytes cross the boundary as `{ "$b64": "..." }`. An answer that is only bytes (a 3D preview
   slice, a video) leaves Rust raw (`tauri::ipc::Response`), and the page gets it as a
   `Uint8Array` without a second base64 pass.
 - `src-tauri/host/host.ts`, the TypeScript main process under plain Node with a stand-in for
   Electron, answered the window until step 3. It stays only as the TypeScript side of the owner's
-  parity tests (`test/rust-owner.test.ts`), and goes with `src/`.
+  parity tests (`test/rust-owner.test.ts`), and goes with `crates/mm-core/src/`.
 
 The Electron build stays the one users get until the Tauri build is packaged, updates itself and
 has been through the sandbox and the e2e run. Both build from the same `renderer/`.
@@ -80,11 +80,11 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 | Bridge (preload.js in the webview) | done | yes | `bridge.js` |
 | TypeScript host behind the shell | done | yes | `src-tauri/host/` |
 | `win:*` channels | done | yes | `native.rs` |
-| VPK read/write/fingerprint (`src/vpk-read.ts`, `vpk-write.ts`, `vpk-fingerprint.ts`) | done | no | `crates/mm-core/src/formats/vpk.rs`, parity test `test/rust-parity.test.js` |
-| items_game reader (`src/schema-kv.ts`, `schema-items.ts`) | done | no | `crates/mm-core/src/formats/kv.rs`, `schema.rs`; parity: all ~26 000 items equal, byte ranges included |
+| VPK read/write/fingerprint (`crates/mm-core/src/formats/vpk.rs`, `vpk-write.ts`, `vpk-fingerprint.ts`) | done | no | `crates/mm-core/src/formats/vpk.rs`, parity test `test/rust-parity.test.js` |
+| items_game reader (`crates/mm-core/src/formats/kv.rs`, `schema-items.ts`) | done | no | `crates/mm-core/src/formats/kv.rs`, `schema.rs`; parity: all ~26 000 items equal, byte ranges included |
 | items_game merge and check (`schema-merge.ts`) | done | no | `crates/mm-core/src/schema/schema_merge.rs`; parity: real patches merge to the same bytes, conflicts and `validate` agree |
 | KV3 read, numbers in place, blobs, write anew (`src/kv3*.ts`, `lz4.ts`) | done | no | `crates/mm-core/src/formats/kv3.rs`, `lz4.rs`; parity `test/rust-parity-kv3.test.ts`: built blocks of versions 1, 2, 5 and ~200 of the game's particles, materials, models, sounds and animations give the same tree, the same bytes encoded back and written anew (zstd blocks: the same tree read back, since `ruzstd` compresses differently from Node) |
-| compiled resources: blocks, RERL (`src/resource.ts`) | done | no | `crates/mm-core/src/formats/resource.rs`; same parity test |
+| compiled resources: blocks, RERL (`crates/mm-core/src/formats/resource.rs`) | done | no | `crates/mm-core/src/formats/resource.rs`; same parity test |
 | strings and data tables (`i18n.ts`, `hero-names.ts`, the item builder's effects) | done | no | `i18n.rs`, `hero_names.rs`, `data.rs`; the tables are JSON in `crates/mm-core/data/` and are the source now; `tools/check-i18n.js` reads `i18n-en.json` and the Rust call sites |
 | item builder: styles, donor effects, own and unusual effects, item visuals, localization tokens (`item-builder-styles.ts`, `-donor.ts`, `-effects.ts`, `-unusual.ts`, `unusual-effects.ts`, `item-visuals.ts`, `cosmetic-names.ts` pure part) | done | no | parity through `calls.rs`: `test/rust-calls.test.ts` runs every function on both sides over the sandbox's real items_game (and the game's localization when installed) |
 | models: material set, cloth, attachments, sequence numbering (`model-skin.ts`, `model-cloth.ts`, `model-attachments.ts`, `model-sequences.ts`) | done | no | `model_*.rs`; parity: the same bytes (sha1) on ~200 of the game's item, courier and hero models, the courier numbering against all four donkeys |
@@ -204,9 +204,9 @@ each block again at every level, and from reading the items on every core (rayon
 
 Known gaps of the Tauri build today (all inside the host, so they close as channels move):
 
-- `nativeImage` (`src-tauri/host/images.ts`) reads and writes PNG only, through `src/png-strip.ts`:
+- `nativeImage` (`src-tauri/host/images.ts`) reads and writes PNG only, through `crates/mm-core/src/formats/png_strip.rs`:
   a palette PNG or a JPEG comes back empty, where Electron would decode it.
-- Cosmetic pictures from the Dota wiki (`src/icons.ts`, `src/icon-wiki.ts`) do not arrive. Fandom
+- Cosmetic pictures from the Dota wiki (`crates/mm-core/src/game/game_icons.rs`, `crates/mm-core/src/catalog/wiki_icons.rs`) do not arrive. Fandom
   and its image host (static.wikia.nocookie.net) answer anything but a browser's network stack with
   a Cloudflare challenge (403, "Just a moment"), whatever the User-Agent: checked 2026-11-13 with
   Node's fetch, .NET (SChannel, the stack `ureq` uses here) and both a browser and our own agent.
@@ -215,7 +215,7 @@ Known gaps of the Tauri build today (all inside the host, so they close as chann
   plain fetch. The ways out, best first: fetch the bytes through the webview (WebView2 is Chromium,
   a hidden page or `CoreWebView2` asked from Rust), a client with Chrome's TLS fingerprint (a
   BoringSSL crate, so C in the build), or the game's own textures where the Source 2 toolchain is
-  installed (`src/game-icons.ts`, already the first choice there). Liquipedia, the second wiki,
+  installed (`crates/mm-core/src/game/game_icons.rs`, already the first choice there). Liquipedia, the second wiki,
   answers our own agent and holds the same files (checked with Weather Rain, PNG and all), but its
   terms allow one request every two seconds, too slow to be the main source for a picker of two
   thousand loading screens. Porting `icon-wiki.ts` waits on this choice.
@@ -250,7 +250,7 @@ How it is done, so it can be built in steps without a release in between that ha
    then too, which needs its own signing key and a latest.json beside the release (see
    "Updates and removal under Tauri" below).
 2. The owner in the shell: one state holding settings, the library, the installer and the
-   services, built at start in the order `src/services.ts` builds them, and the channels
+   services, built at start in the order `crates/mm-core/src/owner/mod.rs` builds them, and the channels
    answered over it group by group, each group checked on the sandbox's Tauri build. All of it
    behind `MM_RUST_OWNS=1`, so main keeps working on the host while it grows.
 3. When every channel that touches either file is answered there, the flag becomes the default
@@ -264,7 +264,7 @@ sees it.
 
 The owner is `crates/mm-core/src/owner/mod.rs`: one `Core` behind a lock (settings, the library, the
 installer, the item table's service, the upkeep, the network, the catalog and the services with
-indexes of their own), and the channels in groups, one `owner_*.rs` per `src/ipc-*.ts` module.
+indexes of their own), and the channels in groups, one `owner_*.rs` per `crates/mm-core/src/owner/owner_*.rs` module.
 `mm-cli owner` puts it on the host's own wire (`crates/mm-cli/src/owner_wire.rs`), so
 `test/rust-owner.test.ts` runs the TypeScript main process and the owner over twin copies of one
 sandbox state, hands both the same calls and the same answers from the shell, and compares what
@@ -285,7 +285,7 @@ What the owner still does differently, or not yet:
   watcher (`owner_watch.rs start_patch`, rearmed when the game folder changes), the Discord status
   (`owner_presence.rs`, connected by the shell only), and the fetches of the remote config, its
   mirrors, the fingerprints and the ready presets (`owner_start.rs`). The cached mirrors count
-  from the first moment, as in `src/services.ts`.
+  from the first moment, as in `crates/mm-core/src/owner/mod.rs`.
 - The repair after a patch runs without `updateImpact` and `rebuildGenerated` (both `None`), and
   the arcana gives way to the builder's picks after a refresh, not in the middle of it.
 - `catalog:load` does not warm the previews' store afterwards.
@@ -331,7 +331,7 @@ report failed under Tauri with a TypeError; it answers 1280x800 now, as its othe
 The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How it is wired:
 
 - The owner runs the driver (`owner_update.rs`) over the shell's updater (`src-tauri/src/update.rs`,
-  `tauri-plugin-updater`), as src/main.ts runs src/updater.ts over electron-updater. It looks at
+  `tauri-plugin-updater`), as src/main.ts ran src/updater.ts over electron-updater. It looks at
   start and every four hours, reads the channel on every look, and looks again at once when the
   beta switch changes or the account signs out. Only a packaged build that is not held to a
   sandbox starts it. A version is fetched as soon as it is found; the window's "restart"
@@ -376,7 +376,7 @@ The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How i
   `<shot>.eval.json`, and `tools/e2e.mjs --app <exe>` drives a Tauri build the way it drives an
   Electron one. The pointer switches (hover, menu, drag, wheel) are `tools/tauri-shot.mjs`'s job.
 - The write jail under Tauri holds the game folder (`installer::validate_game_path` refuses a game
-  outside it) but does not yet route the shell's other writes through it, as src/write-jail.ts
+  outside it) but does not yet route the shell's other writes through it, as crates/mm-core/src/app/write_jail.rs
   does by patching `fs`.
 
 - A release is built from the Tauri shell (`release.yml`, `tools/tauri-release.mjs`) under the
@@ -401,7 +401,7 @@ The logic is in Rust (`updater.rs`, `portable_update.rs`, `uninstall.rs`). How i
 5. Update the table above.
 
 A channel that writes into the game folder goes through the same checks as in TypeScript:
-`--write-jail` (`src/write-jail.ts`) has to hold in Rust too before such a channel moves.
+`--write-jail` (`crates/mm-core/src/app/write_jail.rs`) has to hold in Rust too before such a channel moves.
 
 ## Building
 

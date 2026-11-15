@@ -229,3 +229,7 @@ pub fn revert(game: &Path, folder: Option<&str>, backup_dir: &Path) -> Result<Pa
     }
     state(game, folder.filter(|f| !f.is_empty()))
 }
+
+#[cfg(test)]
+#[path = "patcher_tests.rs"]
+mod tests;

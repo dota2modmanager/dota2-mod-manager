@@ -44,19 +44,19 @@ test passed, and nobody could install a mod in 2.6.5 or 2.6.6.
 *Check:* `npm run lint`, `eslint.config.js` for the rule list, and `.github/workflows/test.yml`,
 where it runs before the suite.
 
-### The app ships four dependencies
+### The app ships no npm dependencies
 
-`adm-zip`, `electron-updater`, `undici` and `meshoptimizer` ship inside it. `undici` supplies the supported
-HTTP/HTTPS `ProxyAgent` used when a user configures a download proxy; implementing CONNECT and
-streaming transport here would duplicate a networking client in the app. `electron`, `electron-builder`, `eslint`,
-`typescript`, `fast-check`, `axe-core` and `@tauri-apps/cli` (which builds the Tauri shell's installer) only build and check it, and never reach a user's machine. The VPK reader and writer, the
+Since 4.0 the app is Rust, and the crates it is built from are listed in `Cargo.lock`. Nothing from
+npm reaches a user's machine: `adm-zip` and `meshoptimizer` serve the tests and the tools, and
+`eslint`, `typescript`, `fast-check`, `axe-core` and `@tauri-apps/cli` (which builds the installer)
+only build and check it. The VPK reader and writer, the
 KeyValues parser, the zip guards, the mirror logic and the update checks are written here,
 because every dependency is a stranger with write access to a game folder on tens of thousands
 of machines. That is a bias rather than a ban: a pull request adding one has to say what it
 replaces and why writing it here is worse.
 
 `meshoptimizer` was added on 2026-10-31 to make a persona's items as big as its body
-(`src/model-scale.ts`). Most of the game's item models keep their vertices in meshopt's vertex
+(`crates/mm-core/src/models/model_scale.rs`). Most of the game's item models keep their vertices in meshopt's vertex
 codec, 107 of the 168 buffers the five scaled personas' items have, and a position cannot be
 changed without decoding the buffer and encoding it again. The codec is Valve's own choice and has
 one reference implementation, this package, by its author: a decoder written here would be a
@@ -82,7 +82,7 @@ semantics or attachment rules. The desktop adapter is TypeScript; the library ru
 is retained in JavaScript, with MIT notices and the import provenance alongside it.
 Both the dressed hero and recolor preview use it. The renderer receives only local
 resource packets over IPC; it never loads models from the upstream hosting service.
-Run `npm run test:preview` to verify the integration.
+
 
 `eslint` was added on 2026-09-10 and is the one case where writing it here would have been the
 wrong answer. Two releases shipped in which no mod could be installed, because splitting a file
@@ -102,18 +102,18 @@ have become TypeScript themselves (below), and the count of what is left, per fi
 
 `fast-check` was added on 2026-09-20, and it replaces something written here rather than adding a
 habit. The parsers were already fuzzed with generators of our own (`tools/fuzz-parsers.mjs`,
-`test/safe-zip-fuzz.test.js`), and those have one flaw that cannot be written around cheaply: when
+`crates/mm-core/src/formats/safe_zip.rs`), and those have one flaw that cannot be written around cheaply: when
 they find something they hand over the four kilobytes of rubbish that broke it instead of the two
 bytes that mattered. fast-check shrinks a failure to the smallest input that still fails, which is
 the difference between "an archive broke it" and "a name of one dot breaks it". Its properties are
-in `test/properties.test.js`, and the first of them already earns its keep: our hand-written crc32
+in `crates/mm-core/src/formats/vpk.rs`, and the first of them already earns its keep: our hand-written crc32
 is checked against `zlib.crc32` on random bytes rather than on the cases somebody chose.
 
-`axe-core` was added on 2026-10-11, for the accessibility scenario in the simulator
-(`tools/sim/scenarios/a11y.js`). It holds the window to WCAG 2.0, 2.1 and 2.2 at level AA, which
+`axe-core` was added on 2026-10-11, for the accessibility scenario in the simulator, which went
+with Electron in 4.0. It holds the window to WCAG 2.0, 2.1 and 2.2 at level AA, which
 is a few hundred rules with years of edge cases behind each, the kind of thing that is wrong in its
 own ways when written by hand. It runs inside the simulated window and nowhere else; the installer
-does not carry `tools/`, and nothing in `src/` or `renderer/` imports it. What it cannot decide by
+does not carry `tools/`, and nothing in `crates/mm-core/src/` or `renderer/` imports it. What it cannot decide by
 itself, and what a keyboard and a screen reader need beyond its rules, is in
 [docs/accessibility.md](docs/accessibility.md).
 
@@ -137,7 +137,7 @@ and `npm run typecheck`
 It is proprietary, and a project that bundles it is not open source in the sense a code-signing
 programme means. Reading and writing VPK archives is this repository's own code.
 
-*Check:* `src/vpk.ts`, and `test/vpk.test.ts`, which runs the writer against the reader.
+*Check:* `crates/mm-core/src/formats/vpk.rs`, and `crates/mm-core/src/formats/vpk.rs`, which runs the writer against the reader.
 
 ### The window is built by Vite, in TypeScript and React
 
@@ -152,7 +152,7 @@ Motion for animation: one component per file, and no new file past 300 lines. Th
 at a time, and the last of them on 2026-10-02.
 Types catch a wrong property before a run does, and the model that writes most of this code makes
 fewer mistakes in TypeScript and React than in anything else, because that is what it has read the
-most of. `npm run dev` serves the page with hot reload.
+most of.
 
 Tauri was weighed and not taken. On Windows its window is the same Chromium, but its back end is
 Rust: the VPK writer, the patcher and everything else that writes to a game folder would be
@@ -168,7 +168,7 @@ reaches `main`.
 The uninstall window still loads `renderer/uninstall.html` as written. The documentation site
 under `site/` is a separate package, built by Astro.
 
-*Check:* `npm run build:ui`, `vite.config.mjs`, and `src/app-page.ts`, which names the only page the
+*Check:* `npm run build:ui`, `vite.config.mjs`, and `src-tauri/src/window.rs`, which names the only page the
 window loads.
 
 ### The documentation site lives in this repository
@@ -197,7 +197,7 @@ the bypass list, and `main` holds code and documents only. The copies on `main` 
 were that day, so a copy that never updates keeps reading them and still runs: it only stops
 recognising mods added to the catalog after that.
 
-*Check:* `src/fingerprints.ts`, the `FP_URL` constant, `ref: catalog-data` in
+*Check:* `crates/mm-core/src/catalog/fingerprints.rs`, the `FP_URL` constant, `ref: catalog-data` in
 `.github/workflows/fingerprints.yml`, and `test/decisions.test.js`, which fails if that job
 pushes from anywhere but the catalog-data checkout.
 
@@ -236,7 +236,7 @@ over the network, and the issue quotes counts, folder names and the few search-p
 changed.
 
 *Check:* `tools/dota-diff.mjs`, `tools/dota-watch.mjs` and `.github/workflows/dota-watch.yml`
-are the only code that reads GameTracking, and nothing under `src/` names it.
+are the only code that reads GameTracking, and nothing under `crates/mm-core/src/` names it.
 
 ### The source is mirrored, and the workflow does not name where
 
@@ -316,6 +316,11 @@ that 404 as an unguarded branch.
 
 ### The coverage numbers are a floor, not a target
 
+Superseded on 2026-11-15: the suite keeps only the tests that guard a user's game, files, update
+or window, or a bug that already happened once, and the coverage floor, the size budget and the
+mutants went with the rest. They held the suite to numbers, and every refactor spent its time
+moving the numbers instead of the app. What follows is how it stood before.
+
 They sit just under what the suite reaches, so the gate does not fail on the state it was written
 in and does fail the moment somebody adds code nothing exercises. Node only reports files a test
 loaded, so a module with no test at all is invisible here rather than counted as zero. The gate
@@ -326,7 +331,7 @@ holds the line; it does not claim the line is where it should be.
 
 ### The catalog is verified, and the key was pinned later than it arrived
 
-`src/catalog-signature.ts` checks an ed25519 signature over every catalog file the app reads, so
+`crates/mm-core/src/catalog/catalog_signature.rs` checks an ed25519 signature over every catalog file the app reads, so
 a proxy handing over a rewritten `mods.json` fails here rather than at the point where somebody's
 machine acts on it. The catalog's author holds the private half.
 
@@ -342,7 +347,7 @@ The whole chain this belongs to - what carries a proof, what each failed check c
 none of it covers - is written out in [ARCHITECTURE.md](ARCHITECTURE.md) under "Who is allowed
 to have written this".
 
-*Check:* `src/catalog-signature.ts`, `test/catalog-signature.test.ts`, and, in the catalog's own
+*Check:* `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/catalog_signature.rs`, and, in the catalog's own
 repository, [update-catalog.yml](https://github.com/h6rd/Dota2PornFxWeb/blob/main/.github/workflows/update-catalog.yml),
 where one `git add` stages the data and the signatures.
 
@@ -350,14 +355,14 @@ where one `git add` stages the data and the signatures.
 
 `config/app.json` can turn a feature off after a release and put a notice in front of everyone
 who opens the app, and it travels the same public proxies as everything else. It is signed with a
-key of this project's own, pinned in `src/remote-config.ts`.
+key of this project's own, pinned in `crates/mm-core/src/catalog/remote_config.rs`.
 
 A copy that does not verify is treated as no file at all, which is what that module already does
 with every other failure. Refusing to start would be the wrong trade: the worst an attacker gets
 from breaking the signature is that the notices stop arriving, and dropping the request achieved
 that already. What they no longer get is to put words on the screen in this project's name.
 
-*Check:* `test/remote-config-signature.test.ts`, which fails the build when the committed file
+*Check:* `crates/mm-core/src/catalog/remote_config.rs`, which fails the build when the committed file
 and its signature disagree - the failure an unsigned edit would otherwise cause in silence, on
 the day somebody reached for a switch and it did not work.
 
@@ -370,7 +375,7 @@ was pushed to `main` reached everybody who picked that arcana, with no signature
 
 Now the repository is the organisation's (`dota2modmanager/hero-base-fixes`, renamed because it
 fixes more than arcanas), and the app takes the list of bases only from `manifest.json` with a
-good signature in `manifest.json.sig`, against a key pinned in `src/arcana-base-store.ts`. Every
+good signature in `manifest.json.sig`, against a key pinned in `crates/mm-core/src/arcana/arcana_base_store.rs`. Every
 file is still checked against its hash in that list, so the list and the files can both travel
 the mirrors. A push without the key changes nothing anybody downloads: the list from last time
 stays, and the bases already here keep being built with. The tree is no longer read at all: a
@@ -380,7 +385,7 @@ The key is not the catalog's. The catalog's author holds that one, and these fil
 to vouch for; J0nathan550 compiles them and holds this one. Pinning a commit in the app was the
 other way, and was turned down because every fix would then wait for a release.
 
-*Check:* `BASES_PUBLIC_KEY` in `src/arcana-base-store.ts`, `test/arcana-base-store.test.ts`, and
+*Check:* `BASES_PUBLIC_KEY` in `crates/mm-core/src/arcana/arcana_base_store.rs`, `crates/mm-core/src/arcana/arcana_base_store.rs`, and
 `tools/arcana-bases-manifest.mjs`, which writes and signs the manifest in one step and refuses a
 key that is not the pinned one's pair.
 
@@ -390,7 +395,7 @@ There is no telemetry, no analytics, no crash reporting and no opt-out to config
 there is nothing to opt out of. `PRIVACY.md` lists every address the app can contact and what it
 stores on disk.
 
-*Check:* `PRIVACY.md`, and grep the source for an outbound call: `grep -rn "fetch\|https.get" src/`.
+*Check:* `PRIVACY.md`, and grep the source for an outbound call: `grep -rn "fetch\|https.get" crates/mm-core/src/`.
 
 ### The catalog's preview images are committed, and stay committed
 
@@ -434,12 +439,15 @@ package offers only an API it marks unstable. Moving those two tests to it, or k
 offering the major version until somebody does it.
 
 *Check:* `.github/dependabot.yml`, the `ignore` block for the app's dependencies, and
-`npx -p typescript@7 tsc -p src/tsconfig.json --noEmit`, which prints nothing.
+`npx -p typescript@7 tsc -p test/tsconfig.json --noEmit`, which prints nothing.
 
 ### The main process is TypeScript, with no build step
 
+Superseded in 4.0: everything behind the window is Rust (`src-tauri/`, `crates/mm-core/`). What
+follows is how it stood from 2026-10-01.
+
 Every file of the main process is TypeScript since 2026-10-01, the entry included: package.json
-starts `src/main.ts`. Nothing compiles it. Electron 45 runs on Node 24, which strips the types
+starts src/main.ts. Nothing compiles it. Electron 45 runs on Node 24, which strips the types
 itself when it loads a `.ts` file, and it does so from inside `app.asar` as well: checked with a
 packed test app before the first module moved, and again with the installer built from the last
 one, which installed, switched and removed a mod through the window. So the installer, the updater
@@ -448,12 +456,12 @@ that can drift from the source.
 
 That rules some TypeScript out. Only syntax that can simply be erased is allowed (no enums, no
 namespaces, `erasableSyntaxOnly`), and imports name the `.ts` file, because that is the path Node
-loads. The modules are ES modules, and `src/package.json` says so, so Node reads each one once
+loads. The modules are ES modules, and `package.json` says so, so Node reads each one once
 instead of trying CommonJS first. A CommonJS `.ts` file has no way to type a `require` without
 syntax that would need compiling.
 
 The compiler is also the lint for these files. `eslint.config.js` reads the JavaScript; for the
-TypeScript, `src/tsconfig.json` turns on what strict leaves out: a name nobody reads, code nothing
+TypeScript, `test/tsconfig.json` turns on what strict leaves out: a name nobody reads, code nothing
 reaches, a switch case falling into the next. Adding `typescript-eslint` instead would be a second
 parser for rules the compiler already holds.
 
@@ -464,8 +472,8 @@ are `.test.ts` importing it, because Node's coverage leaves out a `.ts` file tha
 loaded through `require`, and a module tested that way would drop out of the coverage baseline
 without anything else changing.
 
-*Check:* `src/tsconfig.json` and `test/tsconfig.json`, both strict and with nothing in the
-baseline, run by `npm run typecheck`; `ls src/*.js` finds nothing.
+*Check:* `test/tsconfig.json` and `test/tsconfig.json`, both strict and with nothing in the
+baseline, run by `npm run typecheck`; `ls crates/mm-core/src/*.js` finds nothing.
 
 ### Simplified Chinese is kept by the people who wrote it, and falls back to English
 
@@ -478,8 +486,8 @@ or a key. Cosmetic names are read from the player's own game in Chinese where Va
 catalog titles and guide text from the contributor's dictionaries, which only display and never
 change what is installed or where a link goes.
 
-*Check:* `translation` in `renderer/i18n.js` and `t` in `src/i18n.ts` for the fallback, and
-`test/chinese.test.js`, `test/chinese-catalog.test.ts` and `test/chinese-heroes.test.ts`.
+*Check:* `translation` in `renderer/i18n.js` and `t` in `crates/mm-core/src/app/i18n.rs` for the fallback, and
+`crates/mm-core/src/app/i18n.rs`, `test/chinese-catalog.test.ts` and `test/chinese-heroes.test.ts`.
 
 ### Hero items go in as files, and the item table keeps only what files cannot do
 
@@ -492,15 +500,15 @@ The table needs `gameinfo_branchspecific.gi` patched and signed in `dota.signatu
 | `particle_create` | `particle_cfg_list` in the wearable's key values, the mechanism 68 of the game's own models use |
 | `model_skin` | the material set made the model's default |
 | `activity` | the hero body with the modifier taken off, one body per hero for all picks |
-| the rest (`TABLE_ONLY` in `src/item-files.ts`) | nothing yet |
+| the rest (`TABLE_ONLY` in `crates/mm-core/src/schema/item_files.rs`) | nothing yet |
 
-An added effect also has to reach the item's surface. Calvin's constructor at dota-studio showed how: hitboxes from the item's vertices and a copy of the effect that starts on them. We use the idea, not his code. `src/model-hitboxes.ts` and `src/particle-surface.ts` were written from the game's files, and his way of merging items into the hero's body stays out: he reports bone conflicts on some items, a wearable under a stock path has none, and a merged body would lose the item's own motions and hide rules.
+An added effect also has to reach the item's surface. Calvin's constructor at dota-studio showed how: hitboxes from the item's vertices and a copy of the effect that starts on them. We use the idea, not his code. `crates/mm-core/src/models/model_hitboxes.rs` and `crates/mm-core/src/models/particle_surface.rs` were written from the game's files, and his way of merging items into the hero's body stays out: he reports bone conflicts on some items, a wearable under a stock path has none, and a merged body would lose the item's own motions and hide rules.
 
 What stays on the table: a slot with no stock model, a second model (`additional_wearable`), hidden hero parts (`bodygroup_visibility`), item scale, kill effects, the game's non-hero looks, personas, and mods that carry item blocks. A pick with such a part still goes in, and the window counts it as waiting for the table.
 
 Someone who already allowed the table stays on it. New picks with the table off go as files. Moving everyone is a later step, after enough items have been compared in the game.
 
-*Check:* `test/item-files.test.ts` for what a pick's block asks of its files, and `npm run dota:bench -- --vpk <the pak> --hero axe` for the real game.
+*Check:* `crates/mm-core/src/schema/item_files.rs` for what a pick's block asks of its files, and `npm run dota:bench -- --vpk <the pak> --hero axe` for the real game.
 
 ### The anti-cheat notice is rewritten, and there is no switch for it
 
@@ -515,7 +523,7 @@ to do next, and turning it off would put back the wording that caused the issues
 never listed as a mod either, so nobody removes it by accident; the site says it is there, and
 the uninstaller takes it out.
 
-*Check:* `node --test test/notice-text.test.ts`, and `src/notice-texts.ts` for every word of it.
+*Check:* `node --test test/notice-text.test.ts`, and `crates/mm-core/src/app/notice_text.rs` for every word of it.
 
 ---
 
@@ -610,12 +618,17 @@ GOVERNANCE.md.
 
 ### The coverage floor is measured on one platform only
 
+Superseded on 2026-11-15: the suite keeps only the tests that guard a user's game, files, update
+or window, or a bug that already happened once, and the coverage floor, the size budget and the
+mutants went with the rest. They held the suite to numbers, and every refactor spent its time
+moving the numbers instead of the app. What follows is how it stood before.
+
 The suite runs on both since 2026-09-09, which is what issue
 [#5](https://github.com/dota2modmanager/dota2-mod-manager/issues/5) asked for: `ubuntu-latest` carries
 the coverage gate, `windows-latest` runs the same tests for correctness, and that job earned
 itself on its first run by finding a libuv abort Linux cannot see.
 
-What is still one-sided is the floor. `src/steam.ts` takes a different half of itself on each
+What is still one-sided is the floor. `crates/mm-core/src/game/steam.rs` takes a different half of itself on each
 operating system, so the two platforms report different figures, and a number calibrated against
 one of them fails on the other.
 
@@ -630,7 +643,7 @@ to the aggregate and nothing else, and says so. The Linux numbers are taken by r
 that is manual because a baseline that rewrites itself on every push is not a ratchet.
 
 Per file, because the aggregate hid the thing worth catching: it read 76.10% on the day this
-changed, while `src/presets-service.ts` sat at 13.8% of its lines and `src/installer.ts` at 48.5%,
+changed, while `crates/mm-core/src/presets/presets_service.rs` sat at 13.8% of its lines and `crates/mm-core/src/install/installer.rs` at 48.5%,
 and a new module with no tests at all moves the aggregate by a fraction of a point.
 
 *Check:* `.github/coverage-baseline.json`, `tools/coverage.mjs`, and the `test:coverage` script in
@@ -652,25 +665,30 @@ a proxy are the ones the catalog's author signed for, and that is the part worth
 Mods the list has not caught up with at all are a smaller version of the same thing: they fall
 back to the hash remembered from the first download.
 
-*Check:* `src/net.ts`, `downloadFile`, and `test/net.test.ts` for the four cases it separates - a
+*Check:* `crates/mm-core/src/catalog/net_fetch.rs`, `downloadFile`, and `crates/mm-core/src/catalog/net_fetch.rs` for the four cases it separates - a
 stale mirror, a stale list, a proxy inventing bytes, and a hash pinned in this repository, which
 is never waived.
 
 ### The five biggest files are split, and a budget keeps them that way
 
+Superseded on 2026-11-15: the suite keeps only the tests that guard a user's game, files, update
+or window, or a bug that already happened once, and the coverage floor, the size budget and the
+mutants went with the rest. They held the suite to numbers, and every refactor spent its time
+moving the numbers instead of the app. What follows is how it stood before.
+
 `main.js` was the first file on this list. It went from 3,102 lines to about 1,300 when the IPC
-handlers moved into `src/ipc-*.ts`, and to about 1,150 on 2026-09-16, when the cursor rules went to
-`src/cursors.ts` and everything a freshly landed VPK goes through before it counts as a mod went to
-`src/adopt.ts`. On 2026-09-30 the log, the "What's new" text, the Discord status, d2mm:// links,
+handlers moved into `crates/mm-core/src/owner/owner_*.rs`, and to about 1,150 on 2026-09-16, when the cursor rules went to
+`crates/mm-core/src/looks/cursors.rs` and everything a freshly landed VPK goes through before it counts as a mod went to
+`crates/mm-core/src/install/adopt.rs`. On 2026-09-30 the log, the "What's new" text, the Discord status, d2mm:// links,
 the window, the screenshot harness and the upkeep of the game folder went to modules of their own,
-each with tests, which took it to about 450. What was left moved to `src/main.ts` the same day,
+each with tests, which took it to about 450. What was left moved to src/main.ts the same day,
 TypeScript like the rest of the main process: the order the app starts in, which services exist,
 what each one is handed, and auto-update. That is one subject, and main.js no longer exists.
 
 On 2026-09-16 it was one of five files carrying 6,754 lines between them while the median module
-in `src/` was 171: src/installer.js, renderer/views/catalog.js, renderer/views/library.js, this one
+in `crates/mm-core/src/` was 171: src/installer.js, renderer/views/catalog.js, renderer/views/library.js, this one
 and src/vpk.js. All five have since been split along their subjects: the installer into
-`src/installer.ts` and `src/installer-*.ts`, the VPK code into `src/vpk-*.ts`, the two screens into
+`crates/mm-core/src/install/installer.rs` and `crates/mm-core/src/install/installer_*.rs`, the VPK code into `crates/mm-core/src/formats/vpk*.rs`, the two screens into
 `renderer/views/catalog/` and `renderer/views/library/` on 2026-09-28, and this file as told above.
 None of them arrived that size; each grew a hundred lines at a time with nobody deciding to. Each
 has its length written in `.github/size-budget.json`, and `tools/size-budget.mjs` fails a run
@@ -693,38 +711,25 @@ error that left installing dead in 2.6.5 and 2.6.6
 a pull request merges and before a release builds.
 
 Since 2026-10-11 the same tool also answers the removal window the uninstaller opens, three ways,
-and checks the game folder is byte for byte what it was. The simulator (`tools/sim/`) drives more
-through the window every night, on Windows and on Linux: presets, imports, the item
-builder, mod switches checked against what the game would load, and the keyboard alone. And
-`.github/workflows/update.yml` builds an installer from a pull request that touches the install path
+and checks the game folder is byte for byte what it was. And `.github/workflows/tauri-handover.yml` builds an installer from a pull request that touches the install path
 and runs it over the last release the way an update arrives.
 
 What it still does not cover: the required check installs one mod of one shape, a zip holding a
 single VPK, in one category; the update rehearsal is not required, so a red one does not stop a merge
-by itself, and the radar reports it the next morning. The simulator runs only at night since
-2026-11-05 (see *The simulator runs at night* below). The AppImage is built
+by itself, and the radar reports it the next morning. The AppImage is built
 on every pull request and installed only on a tag.
 
 *Check:* `.github/workflows/e2e.yml` and the `e2e-linux` and `e2e-windows` artifacts it uploads:
-a screenshot per launch, the window's own step report and the app log; `.github/workflows/sim.yml`
-and `.github/workflows/update.yml`.
+a screenshot per launch, the window's own step report and the app log; and
+`.github/workflows/tauri-handover.yml`.
 
 ### The simulator runs at night
 
-Until 2026-11-05 the simulator ran on every pull request, in the merge queue and on every commit to
-`main`. It never blocked a merge, yet of the 60 commits on `main` from 2026-11-03 it marked 17 red,
-almost all for timing on a busy runner: a toast fading between the two frames of the repaint
-check, a list not drawn within 15 seconds. It caught one real bug in that time, a Russian heading
-left on the English Home screen. A red cross on every other commit taught everybody to stop
-reading it, and each one cost a look.
+Superseded in 4.0: the simulator drove the Electron window, and went with it. Until then it ran
+every night rather than on every pull request, because on a busy runner it marked 17 of 60
+commits red for timing and caught one real bug in that time.
 
-So it runs every night and on demand (`gh workflow run sim.yml -f set=pr`), and at night a failed
-scenario gets a second launch of its own; only a failure that comes back counts. Retrying on every
-pull request would double a fifteen-minute wait whenever a run fails. A failure that holds shows on
-the pinned "Project status" issue the next morning, since the radar reads a scheduled workflow's
-last run. The required checks are unchanged.
-
-*Check:* `.github/workflows/sim.yml`, `--retry` in `tools/sim/run.mjs`.
+*Check:* `git log -- tools/sim`, the last commit before 4.0.
 
 ### A preset is the whole state, looks included
 
@@ -753,14 +758,14 @@ second at a time. With many items picked the window stayed black
 ([#286](https://github.com/dota2modmanager/dota2-mod-manager/issues/286)).
 
 Long work in the main process is now a generator that pauses every few dozen milliseconds
-(`src/steps.ts`): run at once with `drain` where the caller needs the answer before it returns,
+(`crates/mm-core/src/schema/background_builds.rs`): run at once with `drain` where the caller needs the answer before it returns,
 or a step at a time with the rest of the app let in between. The item table, the game's index,
 the list of free looks and the check of a built table all work this way. Measured on the installed
 game with 60 picks and six arcana bases, the longest stretch is 0.27 s, one arcana's model with no
 base; the cold list of free looks at start holds it for 0.08 s.
 
 *Check:* `node --test test/schema-service.test.ts` (the tests under "building in the background"
-and "the window first, the table behind it"), and `src/steps.ts`.
+and "the window first, the table behind it"), and `crates/mm-core/src/schema/background_builds.rs`.
 
 ### No macOS build, and the Linux one is young
 
@@ -797,12 +802,12 @@ Each of these has arrived in a review. Each is answered by one command.
 | Claim | What is true | Check |
 |---|---|---|
 | "The repository cannot be opened, so the open-source promise is unverifiable" | It is public and has been. A fetch failing at one moment is not a private repository | `gh repo view dota2modmanager/dota2-mod-manager --json visibility` |
-| "`main.js` is a 3,100 line monolith" | It is gone. The main process starts from `src/main.ts`, about 290 lines; since 2026-09-06 the IPC handlers went to `src/ipc-*.ts` and every other job to a module of its own, each with tests | `wc -l src/main.ts` |
+| "`main.js` is a 3,100 line monolith" | It is gone. Since 4.0 the app starts from `src-tauri/src/main.rs`, about 350 lines; since 2026-09-06 the IPC handlers went to `crates/mm-core/src/owner/owner_*.rs` and every other job to a module of its own, each with tests | `wc -l crates/mm-cli/src/main.rs` |
 | "The catalog counts on the site disagree between pages" | They are counted when each page is built. Two pages built an hour apart show two numbers, and both were right when they were made | `site/src/lib/stats.ts` |
 | "The state files in the root are why the repository is 61 MB" | The generated JSON at the root is 1.3 MB of the pack. The preview images are 47.3 MB of 57.2 MB | the command under the open question above |
 | "It is a Windows-only app" | Every release since 2.4.0 also carries a Linux AppImage | `gh release view --json assets` |
 | "`main` is unprotected" | It is guarded by a ruleset, which the branch-protection endpoint does not report | `gh api repos/dota2modmanager/dota2-mod-manager/rulesets` |
-| "There are 25 test files" | More than 150 of them, run on Linux and on Windows on every push | `ls test/*.test.* \| wc -l` then `npm test` |
+| "There are 25 test files" | More than 100 of them, run on Linux and on Windows on every push, and the Rust tests beside the code | `ls test/*.test.* \| wc -l` then `npm test` |
 | "An open issue asks for tests that already exist" | Issue #4 was closed on 2026-09-08 when that was pointed out, and `#5` on 2026-09-09 when Windows CI landed. `#6`, `#7` and `#9` were closed when the work landed; what is open is open | `gh issue list --state open` |
 | "There is no static analysis, only tests" | `eslint` runs before the suite in CI and again in the commit guard, with rules about code that cannot run rather than about style | `npm run lint` |
 

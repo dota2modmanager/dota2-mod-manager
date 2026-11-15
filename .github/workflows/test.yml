@@ -43,6 +43,11 @@ jobs:
 
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build mm-cli
         run: cargo build -p mm-cli
 
@@ -79,40 +84,8 @@ jobs:
       #
       # `no-undef` names both in under a second. It runs before the suite because when it fails
       # there is no point reading anything below it.
-      # Coverage is a floor, not a target, and since 2026-09-16 it is two things rather than one.
-      # tools/coverage.mjs runs the suite and reads its lcov: the aggregate floor in
-      # .github/coverage-baseline.json is held on every platform, and the per-file lines are held
-      # per platform, from a map keyed by the operating system each was measured on. A platform
-      # with no measurement yet is held to the aggregate and says so; take one with the manual
-      # coverage-baseline job below. Raise a line by writing tests and running
-      # `node tools/coverage.mjs --update`; never lower one to make a run green.
-      #
-      # Per file, because an aggregate hides the thing worth catching: it read 76.10% on the day
-      # this changed, while src/presets-service.js sat at 13.8%, and a new module with no tests
-      # moves the aggregate by a fraction of a point.
-      #
-      # The figure differs by platform and the floor has to clear the lower one. src/steam.ts
-      # asks which operating system it is on and takes a different half of itself on each, so
-      # this runner reports 75.2 lines / 77.4 branches / 73.6 functions where a Windows machine
-      # reports 74.8 / 77.7 / 73.0 (measured 2026-09-10, both). A floor calibrated on one of
-      # them fails on the other, which is how this comment came to be written.
-      #
-      # Node only reports files a test loaded, so a module with no test at all is invisible
-      # here rather than counted as zero. Several modules are still in that position - the gate
-      # holds the line, it does not claim the line is where it should be.
-      #
-      # The floor moved down on 2026-09-10, from 76/81/74, and the reason is the opposite of the
-      # usual one. The contract test now registers all nine src/ipc-*.js modules and calls every
-      # handler, so those files are loaded and counted for the first time. They are large and
-      # thinly covered, and the aggregate fell about two points because code that was invisible
-      # became visible. Nothing stopped being tested. Raise this again by testing those handlers,
-      # not by hiding them.
-      #
-      # Both run as `npm run verify`, the command a person runs before pushing and the commit
-      # hook runs before committing: one gate everywhere, so a check cannot live in only one of
-      # them. On 2026-09-15 one did, and a commit that added and committed in one command walked
-      # straight past it.
-      - name: Lint, then the suite with its coverage floor
+      # `npm run verify` is the command a person runs before pushing: lint, the type check, the suite.
+      - name: Lint, types, then the suite
         run: npm run verify
 
   # The same suite on the operating system most of these users are actually on. Issue #5.
@@ -121,10 +94,7 @@ jobs:
   # status check named exactly `test`, and a matrix renames it to `test (ubuntu-latest)`. The
   # gate would then wait forever for a check that no longer exists.
   #
-  # No coverage floor here on purpose. Coverage is a property of the suite, not of the machine
-  # running it, and the two platforms genuinely report different figures because src/steam.ts
-  # takes a different half of itself on each. One floor, enforced once, on the runner it was
-  # calibrated against. This job is here to catch what only breaks on Windows: a path separator,
+  # This job is here to catch what only breaks on Windows: a path separator,
   # a case-insensitive filesystem, a locked file.
   windows:
     runs-on: windows-latest
@@ -140,36 +110,13 @@ jobs:
 
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
+      # the target folder from the last build on main: a pull request rebuilds only what it changed
+      # instead of every crate from scratch. Saved from main alone, read everywhere else.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build mm-cli
         run: cargo build -p mm-cli
 
       - name: Run tests
         run: npm test
-
-  # The per-file lines for this runner, measured when somebody asks for them.
-  #
-  # The ratchet holds each platform against its own numbers, so Linux needs a measurement of its
-  # own before CI can hold anything more than the aggregate floor. This takes one: run the
-  # workflow by hand, download the artifact, put its `linux` block into
-  # .github/coverage-baseline.json and commit it. Manual on purpose - a baseline that rewrote
-  # itself on every push would be a record of what the code does, not a line it has to clear.
-  coverage-baseline:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Measure this runner
-        run: node tools/coverage.mjs --update
-
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: coverage-baseline
-          path: .github/coverage-baseline.json

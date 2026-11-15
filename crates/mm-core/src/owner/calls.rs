@@ -1087,6 +1087,8 @@ pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
             let items = crate::schema::items_of(&b(args, 0)?).map_err(kv_err)?;
             json!(crate::item_builder_ability_fx::fx_target(&items, n(args, 1) as u64).map(|i| i.id.clone()))
         }
+        // (items_game): every numbered item, as the TypeScript's listItems listed them
+        "schema-items.listItems" | "schema.listItems" => json!(*crate::schema::items_of(&b(args, 0)?).map_err(kv_err)?),
         "js.localeCompare" => json!(crate::js::locale_compare(&s(args, 0), &s(args, 1)) as i8),
         "item-builder-slots.itemSlots" => {
             crate::i18n::set_lang(crate::i18n::Lang::parse(&s(args, 0)));

@@ -4,27 +4,17 @@
   "version": "3.8.0",
   "desktopName": "dota2-mod-manager.desktop",
   "description": "Mod manager and modding toolkit for Dota 2: a catalog of 1000+ mods, an item builder with a 3D preview, and a Workshop of editors for effects, the HUD, the map and sounds",
-  "main": "src/main.ts",
   "scripts": {
-    "start": "node tools/ui-build.mjs && electron .",
-    "test:preview": "node --test \"test/loadout-*.test.ts\" \"test/loadout-*.test.js\" test/hero-preview.test.ts test/particle-snapshot.test.ts test/sprite-frames.test.ts test/sprite-texture-selection.test.js \"test/tinker-cosmic-*.test.js\"",
-    "dev": "node tools/dev.mjs",
+    "start": "npm run build:app && cargo run -p dota2-mod-manager",
+    "build:app": "node tools/ui-build.mjs --tauri && cargo build -p dota2-mod-manager",
     "build:ui": "node tools/ui-build.mjs --force",
-    "dist": "electron-builder --win",
-    "dist:linux": "electron-builder --linux",
-    "test": "node --test \"test/**/*.test.js\" \"test/**/*.test.ts\"",
+    "test": "node --import ./test/helpers/tmp-cleanup.mjs --test \"test/**/*.test.js\" \"test/**/*.test.ts\"",
     "lint": "eslint .",
     "typecheck": "node tools/typecheck.mjs",
-    "size": "node tools/size-budget.mjs",
-    "verify": "npm run lint && npm run typecheck && npm run size && npm run test:coverage",
-    "test:coverage": "node tools/coverage.mjs",
+    "verify": "npm run lint && npm run typecheck && npm test",
     "sandbox:seed": "node tools/sandbox.js seed",
     "sandbox:reset": "node tools/sandbox.js reset",
     "sandbox:status": "node tools/sandbox.js status",
-    "guide-shots": "node tools/guide-shots.mjs",
-    "start:sandbox": "node tools/ui-build.mjs && node tools/sandbox.js pin && electron . --user-data-dir=sandbox/userdata --write-jail=sandbox",
-    "e2e": "node tools/e2e.mjs",
-    "sim": "node tools/sim/run.mjs",
     "dota:diff": "node tools/dota-diff.mjs",
     "dota:bench": "node tools/dota-bench.mjs",
     "doctor": "node tools/mod-doctor.mjs",
@@ -33,12 +23,13 @@
     "tower-looks": "node tools/tower-looks.mjs",
     "trees": "node tools/trees.mjs",
     "fuzz": "node tools/fuzz-parsers.mjs",
-    "mutate": "node tools/mutate.mjs",
     "rollback": "node tools/rollback.mjs",
-    "docs": "node tools/gen-api-docs.js && node tools/gen-doc-facts.js && node tools/gen-incidents.js",
-    "docs:check": "node tools/gen-api-docs.js --check",
+    "docs": "node tools/gen-doc-facts.js && node tools/gen-incidents.js",
     "aur": "node tools/gen-aur.js",
-    "modkit": "node tools/modkit.mjs"
+    "modkit": "node tools/modkit.mjs",
+    "dist": "tauri build",
+    "start:sandbox": "node tools/sandbox.js pin && npm run build:app && cargo run -p dota2-mod-manager -- --user-data-dir=sandbox/userdata --write-jail=sandbox",
+    "e2e": "npm run build:app && node tools/e2e.mjs"
   },
   "repository": {
     "type": "git",
@@ -53,12 +44,12 @@
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
     "@vitejs/plugin-react": "^6.2.1",
+    "adm-zip": "^0.6.1",
     "axe-core": "^4.14.0",
     "dota-loadout": "file:vendor/dota-loadout",
-    "electron": "^45.2.3",
-    "electron-builder": "^26.18.0",
     "eslint": "^10.14.0",
     "fast-check": "^4.10.2",
+    "meshoptimizer": "^1.3.0",
     "motion": "^14.10.1",
     "qrcode-generator": "^2.0.4",
     "react": "^19.3.1",
@@ -66,94 +57,6 @@
     "three": "^0.187.0",
     "typescript": "^5.9.3",
     "vite": "^8.3.6"
-  },
-  "dependencies": {
-    "adm-zip": "^0.6.1",
-    "electron-updater": "^6.8.11",
-    "meshoptimizer": "^1.3.0",
-    "undici": "^7.30.2"
-  },
-  "build": {
-    "appId": "com.thefleece.dota2modmanager",
-    "productName": "Dota 2 Mod Manager",
-    "icon": "build/icon.ico",
-    "files": [
-      "preload.js",
-      "preload-uninstall.js",
-      "src/**/*",
-      "!src/tsconfig.json",
-      "renderer/**/*",
-      "out/renderer/**/*",
-      "build/icon.png",
-      "package.json",
-      "CHANGELOG.md",
-      "CHANGELOG.ru.md",
-      "LICENSE",
-      "NOTICE",
-      "vendor/dota-loadout/**/*"
-    ],
-    "beforePack": "./tools/before-pack.cjs",
-    "protocols": [
-      {
-        "name": "Dota 2 Mod Manager preset",
-        "schemes": [
-          "d2mm"
-        ]
-      }
-    ],
-    "fileAssociations": [
-      {
-        "ext": "d2mm",
-        "name": "Dota 2 Mod Manager preset",
-        "role": "Editor",
-        "mimeType": "application/x-d2mm"
-      }
-    ],
-    "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ],
-      "icon": "build/icon.ico",
-      "artifactName": "Dota-2-Mod-Manager-Setup.${ext}"
-    },
-    "portable": {
-      "artifactName": "Dota-2-Mod-Manager-Portable.${ext}",
-      "requestExecutionLevel": "user"
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "icon": "build/icon.png",
-      "syncDesktopName": true,
-      "category": "Game",
-      "artifactName": "Dota-2-Mod-Manager.${ext}",
-      "synopsis": "Mods for Dota 2, without the file juggling"
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Dota 2 Mod Manager",
-      "deleteAppDataOnUninstall": false,
-      "include": "build/installer.nsh"
-    },
-    "publish": {
-      "provider": "github",
-      "owner": "dota2modmanager",
-      "repo": "dota2-mod-manager",
-      "releaseType": "release"
-    },
-    "electronFuses": {
-      "runAsNode": false,
-      "enableNodeOptionsEnvironmentVariable": false,
-      "enableNodeCliInspectArguments": false,
-      "enableEmbeddedAsarIntegrityValidation": true,
-      "onlyLoadAppFromAsar": true,
-      "enableCookieEncryption": true
-    }
   },
   "overrides": {
     "minimatch@>=7.0.0 <11.0.1": "^11.0.5"

@@ -11,7 +11,7 @@
 // That is why imports name the .ts file, type-only imports say so (verbatimModuleSyntax), and
 // nothing here needs compiling to run (erasableSyntaxOnly: no enums, no namespaces).
 //
-// This is also the lint for these files, as src/tsconfig.json is for the main process: ESLint
+// This is also the lint for these files, as test/tsconfig.json is for the tests: ESLint
 // reads only the JavaScript. The rules strict leaves out are switched on below, the same five.
 {
   "compilerOptions": {

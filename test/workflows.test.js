@@ -294,7 +294,7 @@ test('CI runs the same gate as a person and the commit hook', () => {
   const pkg = json('package.json');
   assert.ok(pkg.scripts.verify, 'package.json has no verify script');
   assert.match(pkg.scripts.verify, /lint/, 'npm run verify does not lint');
-  assert.match(pkg.scripts.verify, /test:coverage/, 'npm run verify does not run the suite with its coverage floor');
+  assert.match(pkg.scripts.verify, /npm test/, 'npm run verify does not run the suite');
   assert.match(read('test.yml'), /npm run verify/, 'test.yml runs its own list of steps instead of npm run verify');
 });
 

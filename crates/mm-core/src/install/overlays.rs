@@ -387,3 +387,7 @@ impl Installer {
         Ok(Some("cache"))
     }
 }
+
+#[cfg(test)]
+#[path = "overlays_tests.rs"]
+mod tests;
