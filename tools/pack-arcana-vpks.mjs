@@ -15,7 +15,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { listVpkEntries, readVpkIndexFile } from '../src/vpk.ts';
+import { createRequire } from 'node:module';
+
+// the app's own VPK reader, through mm-cli (tools/mm-cli.js)
+const { mm } = createRequire(import.meta.url)('./mm-cli.js');
 
 const TIMEOUT_MS = 10 * 60 * 1000;
 const isPak = (name) => /^pak\d+_dir\.vpk$/i.test(name);
@@ -62,7 +65,7 @@ async function packOne(srcDir, toolDir, exe) {
   }
 
   const made = path.join(toolDir, paks[0]);
-  const entries = listVpkEntries(readVpkIndexFile(made)).length;
+  const entries = mm('vpk-entries', made).length;
   if (entries !== files) {
     fs.rmSync(made);
     throw new Error(`the VPK has ${entries} files, the folder ${files}`);

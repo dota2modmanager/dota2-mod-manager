@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * The mod doctor from the command line: what is wrong with a mod's VPK, found in its files and
- * the game's, before anybody starts the game to see it (src/mod-doctor.ts).
+ * the game's, before anybody starts the game to see it (crates/mm-core/src/app/mod_doctor.rs).
  *
  *   npm run doctor -- <mod_dir.vpk> [--game "<...>\dota 2 beta\game"]
  *
@@ -10,6 +10,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+
+// the app's own code, through mm-cli (tools/mm-cli.js)
+const { call } = createRequire(import.meta.url)('./mm-cli.js');
 
 const arg = (name) => { const i = process.argv.indexOf(name); return i === -1 ? null : process.argv[i + 1]; };
 
@@ -27,8 +31,7 @@ if (!mod || !game) {
   console.error('usage: npm run doctor -- <mod_dir.vpk> [--game "<...>\\dota 2 beta\\game"]');
   process.exit(2);
 }
-const { examine } = await import('../src/mod-doctor.ts');
-const findings = examine({ mod: path.resolve(mod), pak01: path.join(game, 'dota', 'pak01_dir.vpk') });
+const findings = call('mod-doctor.examine', path.resolve(mod), path.join(game, 'dota', 'pak01_dir.vpk'));
 for (const f of findings) console.log(`${f.level.padEnd(7)} ${f.file}\n        ${f.what}`);
 const errors = findings.filter((f) => f.level === 'error').length;
 console.log(findings.length ? `${findings.length} found, ${errors} of them errors` : 'nothing found');

@@ -189,7 +189,7 @@ how the Tauri host can ask Rust for a function while its caller is still TypeScr
 
 ### Speed so far
 
-`node tools/rust-bench.mjs --game "<...>\dota 2 beta\game"` (release mm-cli, best of 3, the real
+Measured with tools/rust-bench.mjs, since removed with the TypeScript (release mm-cli, best of 3, the real
 game of 2026-11-12, read only):
 
 | Step | TypeScript | Rust | Faster |

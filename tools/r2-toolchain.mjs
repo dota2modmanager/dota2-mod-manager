@@ -21,7 +21,10 @@ import { createRequire } from 'node:module';
 import { createR2 } from './r2-client.js';
 
 const require = createRequire(import.meta.url);
-const { BUILT_IN_PINS, fallbackName } = require('../src/toolchain.ts');
+// the pins and the bucket's names for them, from the app's own code (tools/mm-cli.js)
+const { call } = require('./mm-cli.js');
+const BUILT_IN_PINS = call('toolchain.pins');
+const fallbackName = (name, version, build) => call('toolchain.fallbackName', name, version, build);
 
 const dry = process.argv.includes('--dry');
 const PREFIX = 'tools/';
@@ -40,7 +43,7 @@ console.log(`${PREFIX} holds ${before.size} object(s)`);
 const keep = new Set();
 let failed = 0;
 
-// one archive per build of each tool, under the name src/toolchain.ts asks the bucket for
+// one archive per build of each tool, under the name the app asks the bucket for (crates/mm-core/src/tools/toolchain.rs)
 const pins = Object.entries(BUILT_IN_PINS).flatMap(([name, builds]) => Object.entries(builds).map(([build, pin]) => ({ name, build, pin })));
 
 for (const { name, build, pin } of pins) {

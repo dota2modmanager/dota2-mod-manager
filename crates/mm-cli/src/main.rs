@@ -1,6 +1,7 @@
 //! mm-core on the command line, for the parity tests (test/rust-parity.test.js): each command
 //! prints JSON the test compares with what the TypeScript module answers for the same input.
 
+mod builds;
 mod owner_wire;
 mod sandbox_assets;
 
@@ -136,6 +137,9 @@ fn run(args: &[String]) -> Result<Value, String> {
                 .map_err(|x| x.to_string())?;
             Ok(Value::Null)
         }
+        // a look built out of the game into a VPK (builds.rs)
+        "look-sets" => Ok(builds::sets()),
+        "build" => builds::run(arg(1)?, Path::new(arg(2)?), Path::new(arg(3)?)),
         "vpk-build" => {
             let out = Path::new(arg(1)?);
             let entries = build_entries(Path::new(arg(2)?))?;
