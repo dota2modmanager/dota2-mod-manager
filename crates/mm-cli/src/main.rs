@@ -129,6 +129,7 @@ fn run(args: &[String]) -> Result<Value, String> {
         "kv3-tree" => modkit::tree(Path::new(arg(1)?), Path::new(arg(2)?)),
         "kv3-put" => modkit::put(Path::new(arg(1)?), Path::new(arg(2)?), Path::new(arg(3)?)),
         "recolor-files" => modkit::recolor_files(Path::new(arg(1)?), Path::new(arg(2)?)),
+        "model-fx" => modkit::model_fx(Path::new(arg(1)?), Path::new(arg(2)?)),
         "find-dota" => Ok(json!(mm_core::steam::find_dota_game_path())),
         "content-root" => Ok(json!(mm_core::vpk_pack::find_content_root(Path::new(arg(1)?), 0))),
         "bench-install" => builds::bench_install(Path::new(arg(1)?), arg(2)?, Path::new(arg(3)?)),

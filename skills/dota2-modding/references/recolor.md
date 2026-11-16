@@ -111,18 +111,10 @@ studio does for unusual effects: give the model hitboxes over its own vertices
 says "Hitbox indexing is incorrect for set mm_surface"; it works regardless. Effects placed by an
 offset from an attachment instead drifted off the item and hung in the air.
 
-A short Node script in the work folder does it for every model, after the compile and before the
-pack:
+modkit does it to a model after the compile and before the pack:
 
-```js
-import { readFileSync, writeFileSync } from 'node:fs';
-import { withParticles } from '../../src/model-particles.ts';
-import { withSurfaceHitboxes } from '../../src/model-hitboxes.ts';
-import { MeshoptDecoder } from 'meshoptimizer';
-await MeshoptDecoder.ready;
-const file = '<game addon>/models/heroes/<hero>/<slot>.vmdl_c';
-const model = readFileSync(file);
-writeFileSync(file, withParticles(withSurfaceHitboxes(model) ?? model, ['particles/<yours>.vpcf']));
+```
+npm run modkit -- fx "<game>/dota_addons/<addon>/models/heroes/<hero>/<slot>.vmdl_c" particles/<yours>.vpcf
 ```
 
 ### Another hero's effect, borrowed

@@ -1,5 +1,6 @@
 /**
- * The modkit commands that read the game or write a mod: find, extract, recolor, pack, compile.
+ * The modkit commands that read the game or write a mod: find, extract, recolor, warp, fx, pack,
+ * compile.
  * Each prints what it did in a form an assistant can read back, and writes only where it is told.
  */
 import fs from 'node:fs';
@@ -92,6 +93,20 @@ export async function warp(opts) {
   fs.mkdirSync(path.dirname(path.join(out, effect)), { recursive: true });
   fs.writeFileSync(path.join(out, effect), writeBlocks(raw, { DATA: kv }, [to]));
   console.log(`${effect}: ${[...from].join(', ')} -> ${to}, into ${out}`);
+}
+
+/**
+ * modkit fx <compiled .vmdl_c> <particles/...vpcf>...
+ * A compiled model, in place, with hitboxes over its own vertices (set mm_surface) and these
+ * particle systems of its own, as the effect studio builds an unusual (references/recolor.md).
+ */
+export async function fx(opts) {
+  const [file, ...systems] = opts._;
+  need(file, 'a compiled model (<addon>/models/.../<slot>.vmdl_c)');
+  if (!systems.length) throw new Error('name the particle systems: particles/<yours>.vpcf');
+  const paths = systems.map((s) => s.toLowerCase().replace(/\\/g, '/').replace(/(\.vpcf)?(_c)?$/, '.vpcf'));
+  const { hitboxes } = mm('model-fx', file, jsonFile(paths));
+  console.log(`${file}: ${paths.join(', ')}${hitboxes ? ', hitboxes in mm_surface' : ', no vertices of its own for hitboxes'}`);
 }
 
 /**

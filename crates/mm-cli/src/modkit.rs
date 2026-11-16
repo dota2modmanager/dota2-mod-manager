@@ -6,6 +6,8 @@
 //!                                         references?: [path]} (references added to the file's list)
 //!   recolor-files <pak01> <spec.json>     {files, out, target, first?, from?}: each particle of pak01
 //!                                         recoloured (in two passes when `first` is given) into `out`
+//!   model-fx <model> <paths.json>        the compiled model, in place, with hitboxes over its own
+//!                                         vertices (set mm_surface) and these particle systems
 //!   find-dota                             the game folder Steam has, or null
 //!   content-root <dir>                    where the game's folders start under dir, or null
 
@@ -118,4 +120,18 @@ pub fn recolor_files(pak01: &Path, spec: &Path) -> Result<Value, String> {
         }
     }
     Ok(json!({ "written": n, "colours": colours, "lifted": lifted, "failed": failed }))
+}
+
+/// The model with a hitbox set over its own vertices, for effects spread along the item, and these
+/// particle systems of its own: what the effect studio does to an unusual's model.
+pub fn model_fx(file: &Path, paths: &Path) -> Result<Value, String> {
+    use mm_core::{model_hitboxes, model_particles};
+    let model = std::fs::read(file).map_err(|e| format!("{}: {e}", file.display()))?;
+    let paths: Vec<String> = read_json(paths)?;
+    let paths: Vec<&str> = paths.iter().map(String::as_str).collect();
+    let boxed = model_hitboxes::with_surface_hitboxes(&model, &[model_hitboxes::SURFACE_SET]);
+    let out = model_particles::with_particles(boxed.as_deref().unwrap_or(&model), &paths)
+        .ok_or_else(|| format!("{}: the model's data block cannot take particles", file.display()))?;
+    std::fs::write(file, out).map_err(|e| format!("{}: {e}", file.display()))?;
+    Ok(json!({ "hitboxes": boxed.is_some(), "particles": paths.len() }))
 }
