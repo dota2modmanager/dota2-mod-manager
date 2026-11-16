@@ -188,8 +188,9 @@ pub fn extra_places(stock: &[String], extras: &[String]) -> (Vec<Under>, Vec<Str
     (under, queue.into_iter().collect())
 }
 
-/// A wearable as it goes in: in its material set, carrying its effects. None: the file stays as it was.
-pub fn worn_model(model: &[u8], skin: f64, systems: &[&str]) -> Option<Vec<u8>> {
+/// A wearable as it goes in: in its material set, carrying its effects over the boxes of `set`. None: the
+/// file stays as it was.
+pub fn worn_model(model: &[u8], skin: f64, systems: &[&str], set: &str) -> Option<Vec<u8>> {
     let out = if skin != 0.0 && !skin.is_nan() {
         crate::model_skin::with_skin(model, skin as usize)?
     } else {
@@ -199,8 +200,7 @@ pub fn worn_model(model: &[u8], skin: f64, systems: &[&str]) -> Option<Vec<u8>> 
         return Some(out);
     }
     // no boxes (a model this cannot read) leaves the effect at the model's origin, which is still the effect
-    let boxed =
-        crate::model_hitboxes::with_surface_hitboxes(&out, &[crate::model_hitboxes::SURFACE_SET]).unwrap_or(out);
+    let boxed = crate::model_hitboxes::with_surface_hitboxes(&out, &[set]).unwrap_or(out);
     crate::model_particles::with_particles(&boxed, systems)
 }
 
@@ -320,10 +320,12 @@ pub fn item_files(
                 entries.insert(at, entry_at(own, sewn.empty_item.into()));
             } else if let Some(entry) = entry {
                 let mut roots = Vec::new();
+                // a set of this pick alone, as one sewn into the body has: a moving item keeps its own model
+                let scope = crate::particle_surface::item_scope(&crate::item_in_body::pick_token(&patch.id, &at));
                 for s in &systems {
                     let copy = if added.contains(&s.to_lowercase()) {
                         let mut r = |p: &str| read(p);
-                        crate::particle_surface::surface_system(&mut r, s)?
+                        crate::particle_surface::surface_system_in(&mut r, s, &scope)?
                     } else {
                         None
                     };
@@ -338,7 +340,7 @@ pub fn item_files(
                     }
                 }
                 let refs: Vec<&str> = roots.iter().map(String::as_str).collect();
-                match worn_model(&entry.data, skin, &refs) {
+                match worn_model(&entry.data, skin, &refs, &scope.set) {
                     Some(worn) => {
                         entries.insert(at, entry_at(&entry.path(), worn.into()));
                     }

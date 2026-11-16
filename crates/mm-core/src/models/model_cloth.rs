@@ -16,6 +16,11 @@ fn fe_model(model: &[u8]) -> Result<Option<Block>, String> {
     Ok(is_obj.then_some(kv))
 }
 
+/// Whether a model simulates cloth of its own (a cape, a flag): PHYS with an m_pFeModel.
+pub fn has_cloth(model: &[u8]) -> bool {
+    matches!(fe_model(model), Ok(Some(_)))
+}
+
 /// The model with its cloth simulation taken out; the same bytes when it has none or cannot be read.
 pub fn without_cloth(model: &[u8]) -> Vec<u8> {
     let take = || -> Option<Vec<u8>> {

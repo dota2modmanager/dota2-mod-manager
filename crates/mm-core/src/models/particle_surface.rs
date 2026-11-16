@@ -5,8 +5,8 @@
 //! origin. So each system of the tree is copied under a folder of its own (`Scope`), its emitters
 //! reading the boxes model_hitboxes.rs lays in the scope's set, and the operators that skin or pin
 //! a particle swapped for one that holds it to the box it started in, since the item moves with the
-//! hero's bones. A pick whose effect goes on the hero's body (item_files.rs) has a scope of its
-//! own, so that its effect spreads over that item and not over another one sewn into the same body.
+//! hero's bones. Every pick has a scope of its own (item_files.rs), so that its effect spreads over
+//! that item and not over another one sewn into the same body.
 //! Crownfall's feathers (Ravenblight) are models with a motion of their own and a glow that follows
 //! the particle's normal: pinned to a box they would not fly off, so they keep their operators and
 //! their normal is turned to the control point.
@@ -14,10 +14,8 @@
 use std::collections::HashSet;
 
 use crate::kv3::{self, Node, Value};
-use crate::model_hitboxes::SURFACE_SET;
 use crate::resource;
 
-const SURFACE: &str = "particles/mm_surface/";
 /// The folder of a pick's own copies, and the start of its hitbox set's name (item_scope).
 const PICK_FOLDER: &str = "particles/mm_fx/";
 const PICK_SET: &str = "mm_fx_";
@@ -57,13 +55,6 @@ fn object(members: Vec<(&str, Node)>) -> Node {
 pub struct Scope {
     pub set: String,
     pub folder: String,
-}
-
-impl Scope {
-    /// The one every wearable that keeps its effect on itself shares.
-    pub fn shared() -> Scope {
-        Scope { set: SURFACE_SET.into(), folder: SURFACE.into() }
-    }
 }
 
 /// A pick's own scope, by a token that tells it from the others (letters and digits).
@@ -167,12 +158,8 @@ pub type Surface = (String, Vec<(String, Vec<u8>)>);
 
 /// The copies of `system` and its children that spread over a surface, or None where no system of
 /// the tree starts on the model (it hangs on attachment points, and goes on as it is): the root's
-/// path, and the files to put in the pak as (path, bytes).
-pub fn surface_system(read: &mut dyn FnMut(&str) -> Option<Vec<u8>>, system: &str) -> Result<Option<Surface>, String> {
-    surface_system_in(read, system, &Scope::shared())
-}
-
-/// surface_system, with the copies in `scope`'s folder reading its set.
+/// path, and the files to put in the pak as (path, bytes). The copies go in `scope`'s folder and read
+/// its set.
 pub fn surface_system_in(
     read: &mut dyn FnMut(&str) -> Option<Vec<u8>>,
     system: &str,

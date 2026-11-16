@@ -17,9 +17,17 @@ pub struct Sewn {
     pub files: Vec<(String, Vec<u8>)>,
 }
 
-/// Whether a model plays clips of its own; one this cannot read counts as one that does.
+/// Whether a model moves by itself: a clip of its own other than its bind pose, or cloth. Such a
+/// wearable keeps its own model, its clips and its simulation, as dota-studio keeps an animated one
+/// on its own runtime, and its effect is built on it there; inside the body it would stand still.
+/// A model this cannot read counts as one that moves.
 pub fn moves_by_itself(model: &[u8]) -> bool {
-    crate::mod_doctor::clips_of(model).map_or(true, |c| !c.is_empty())
+    let clips = match crate::mod_doctor::clips_of(model) {
+        Ok(c) => c,
+        Err(_) => return true,
+    };
+    clips.iter().any(|c| !c.name.eq_ignore_ascii_case("bind_pose") || !c.acts.is_empty())
+        || crate::model_cloth::has_cloth(model)
 }
 
 /// The token a pick's scope goes by: its stock item and the path it is worn under, as 8 hex digits.
@@ -30,7 +38,7 @@ pub fn pick_token(id: &str, own: &str) -> String {
 /// `item` (worn in material set `skin`) sewn into `body`, with `systems` its effects, of which the
 /// ones in `added` (lowercased) spread over the item. None where a model cannot be read or joined,
 /// or the item has no vertices of its own: the pick then keeps its effect on itself. So does an item
-/// with clips of its own (a mount that flaps its wings): inside the body it would stand still.
+/// that moves by itself (a mount that flaps its wings, a cape), with its clips on its own model.
 pub fn sewn_into_body(
     body: &[u8],
     item: &[u8],
@@ -113,15 +121,21 @@ mod tests {
             .filter(|i| !i.model.is_empty() && crate::unusual_fit::can_roll_unusual(&text[i.start..i.end]))
             .cloned()
             .collect();
-        let moving = rolled
+        // a model that only has its bind pose is sewn in; one with a motion of its own or cloth is not
+        let moving: Vec<String> = rolled
             .iter()
-            .filter(|i| {
-                read(&format!("{}_c", i.model))
-                    .and_then(|m| crate::mod_doctor::clips_of(&m).ok())
-                    .is_some_and(|c| !c.is_empty())
-            })
-            .count();
-        eprintln!("{} items rolled an unusual, {moving} of them with clips of their own", rolled.len());
+            .filter(|i| read(&format!("{}_c", i.model)).is_some_and(|m| moves_by_itself(&m)))
+            .map(|i| i.model.clone())
+            .collect();
+        eprintln!("{} items rolled an unusual, {} of them move by themselves", rolled.len(), moving.len());
+        assert!(moving.contains(&"models/items/batrider/owl_rider_mount_v1/owl_rider_mount_v1.vmdl".to_string()));
+        let still = "models/items/troll_warlord/the_icewrack_marauder_weapon/the_icewrack_marauder_weapon.vmdl";
+        assert!(!moving.contains(&still.to_string()), "a bind pose alone is no motion");
+        let owl = read("models/items/batrider/owl_rider_mount_v1/owl_rider_mount_v1.vmdl_c").unwrap();
+        let bat = read("models/heroes/batrider/batrider.vmdl_c").unwrap();
+        let fire: HashSet<String> = [flame.to_lowercase()].into();
+        let kept = sewn_into_body(&bat, &owl, 0.0, std::slice::from_ref(&flame), &fire, "ab12", &read).unwrap();
+        assert_eq!(kept, None, "the owl keeps its wings flapping on its own model");
         for item in crate::schema::items_of(&text).unwrap().iter() {
             if item.model.is_empty() || !crate::unusual_fit::can_roll_unusual(&text[item.start..item.end]) {
                 continue;
