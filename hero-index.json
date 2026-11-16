@@ -1,6 +1,6 @@
 {
   "heroes": 153,
-  "mods": 1799,
+  "mods": 1823,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -67,7 +67,8 @@
         {"name":"Anti-Mage Ronin Warrior","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon"]},
         {"name":"Anti-Mage Turstarkuri Pilgrim","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","shoulder"]},
         {"name":"Cj Anti Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head"]},
-        {"name":"Immortal Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","offhand"]}
+        {"name":"Immortal Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","offhand"]},
+        {"name":"Warcraft 3 Anti-Mage","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","misc","head","weapon","legs","offhand","shoulder"]}
       ]
     },
     "arc_warden": {
@@ -478,6 +479,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Disruptor","categoryId":"heroes","styleLabel":null,"slots":["back","arms","head","mount","shoulder","weapon","misc","legs"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -486,7 +488,9 @@
       "name": "Doom",
       "mods": [
         {"name":"Doom Fallen Khorne","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings"]},
-        {"name":"Doom Jeanne Alter","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings","back","misc"]}
+        {"name":"Doom Jeanne Alter","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings","back","misc"]},
+        {"name":"The Final Doom By Armair","categoryId":"heroes","styleLabel":null,"slots":["arms","head","weapon","shoulder","tail","wings","misc"]},
+        {"name":"Warcraft 3 Doom","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","weapon","shoulder","tail","wings","back","misc"]}
       ]
     },
     "doom_bringer": {"name":"Doom","mods":[{"name":"Doom Sematary","categoryId":"heroes","styleLabel":null,"slots":["wings","tail","shoulder","arms","weapon","head","belt"]}]},
@@ -508,6 +512,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Dragon Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon","back","offhand"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -542,6 +547,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Drow Ranger","categoryId":"heroes","styleLabel":null,"slots":["arms","back","weapon","head","legs","misc","shoulder"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -550,7 +556,8 @@
       "name": "Earth Spirit",
       "mods": [
         {"name":"Earth Spirit Slitehering Stone","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon","misc"]},
-        {"name":"Green Earth Spirit","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon","misc"]}
+        {"name":"Green Earth Spirit","categoryId":"heroes","styleLabel":null,"slots":["belt","weapon","misc"]},
+        {"name":"Warcraft 3 Earth Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","head","weapon","misc","shoulder","legs"]}
       ]
     },
     "earthshaker": {
@@ -571,10 +578,17 @@
         {"name":"Earthshaker Herald Gar Beast","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","belt","head"]},
         {"name":"Earthshaker Purple Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc"]},
         {"name":"Earthshaker Red Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","belt"]},
-        {"name":"Earthshaker Tectonic","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]}
+        {"name":"Earthshaker Tectonic","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]},
+        {"name":"Warcraft 3 Earthshaker","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","misc","head","weapon"]}
       ]
     },
-    "elder_titan": {"name":"Elder Titan","mods":[{"name":"Elder Titan Creation Immortal","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","arms","head","shoulder","back"]}]},
+    "elder_titan": {
+      "name": "Elder Titan",
+      "mods": [
+        {"name":"Elder Titan Creation Immortal","categoryId":"heroes","styleLabel":null,"slots":["weapon","misc","arms","head","shoulder","back"]},
+        {"name":"Warcraft 3 Elder Titan","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","weapon","shoulder","back"]}
+      ]
+    },
     "ember_spirit": {
       "name": "Ember Spirit",
       "mods": [
@@ -586,7 +600,8 @@
         {"name":"Ember Spirit Master of Searing Path","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
         {"name":"Ember Spirit Shana","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","head","shoulder","weapon","wings","offhand","misc"]},
         {"name":"Ember Spirit Vanishing Flame","categoryId":"heroes","styleLabel":null,"slots":["back","belt","shoulder","weapon"]},
-        {"name":"Fog Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]}
+        {"name":"Fog Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon"]},
+        {"name":"Warcraft 3 Ember Spirit","categoryId":"heroes","styleLabel":null,"slots":["arms","back","belt","shoulder","weapon","head","offhand","misc"]}
       ]
     },
     "enchantress": {
@@ -607,6 +622,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Enchantress","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","weapon","belt","shoulder","legs"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -629,6 +645,7 @@
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Twisted Maelstrom Enigma","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head"]},
+        {"name":"Warcraft 3 Enigma","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -644,7 +661,8 @@
         {"name":"Faceless Void Battlefury","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Faceless Void Esdeath","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]},
         {"name":"Faceless Void Immortal Arcana","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon"]},
-        {"name":"Faceless Void Rita","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]}
+        {"name":"Faceless Void Rita","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","misc","weapon","mount","legs"]},
+        {"name":"Warcraft 3 Faceless Void","categoryId":"heroes","styleLabel":null,"slots":["belt","arms","head","shoulder","weapon","misc","base","legs"]}
       ]
     },
     "furion": {
@@ -691,6 +709,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Grimstroke","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","weapon","belt"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -700,7 +719,8 @@
       "mods": [
         {"name":"Gyrocopter Airbone Machete","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Gyrocopter Kongou","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","head","back","offhand","weapon"]},
-        {"name":"Krutoi Gyrocopter","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
+        {"name":"Krutoi Gyrocopter","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Warcraft 3 Gyrocopter","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","arms","weapon","offhand"]}
       ]
     },
     "gyrocopter": {
@@ -741,6 +761,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Hoodwink","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","tail","arms","back"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -771,6 +792,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Huskar","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shoulder","offhand","weapon"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -813,6 +835,7 @@
         {"name":"Japan Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","legs"]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Sasuke Invoker","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","shoulder","misc","belt","shield","legs"]},
+        {"name":"Warcraft 3 Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Wyrdwing Exaltation Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder"]},
         {"name":"Young Invoker","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","shoulder","shield","belt","legs"]},
@@ -851,6 +874,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Jakiro","categoryId":"heroes","styleLabel":null,"slots":["wings","head","tail","back"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
@@ -875,7 +899,8 @@
         {"name":"Juggernaut Okita Souji","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","legs"]},
         {"name":"Juggernaut Provocation Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Juggernaut Samurai of Wind","categoryId":"heroes","styleLabel":null,"slots":["misc","head","back","weapon","arms"]},
-        {"name":"Lollipop Juggernaut","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]}
+        {"name":"Lollipop Juggernaut","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Warcraft 3 Juggernaut","categoryId":"heroes","styleLabel":null,"slots":["arms","back","head","weapon","misc","legs"]}
       ]
     },
     "keeper_of_the_light": {
@@ -906,6 +931,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","misc","mount","legs","weapon","arms","belt"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"White Keeper of the Light","categoryId":"heroes","styleLabel":null,"slots":["head","mount","legs","weapon","belt"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
@@ -1014,6 +1040,7 @@
       "name": "Lifestealer",
       "mods": [
         {"name":"Gothic Lifestealer","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Lifestealer Automaton Ai","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Lifestealer Cong Yu","categoryId":"heroes","styleLabel":null,"slots":["misc","head","arms","back","belt","legs","wings"]},
         {"name":"Lifestealer Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Lifestealer Fire","categoryId":"heroes","styleLabel":null,"slots":[]},
@@ -2349,6 +2376,7 @@
         {"name":"Windranger Arcana Prismatic","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
         {"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","back","head","shoulder"]},
         {"name":"Windranger Compass Rising Gale","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
+        {"name":"Windranger Kotobuki Tsumugi","categoryId":"heroes","styleLabel":null,"slots":["back","head","misc","shoulder"]},
         {"name":"Windranger Papizi","categoryId":"heroes","styleLabel":null,"slots":["head","weapon","back","misc","shoulder","offhand"]},
         {"name":"Windranger Papizi V2","categoryId":"heroes","styleLabel":null,"slots":["weapon","back","head","misc","shoulder"]},
         {"name":"Windranger Peregrine Flight","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
@@ -2393,6 +2421,7 @@
         {"name":"TI10 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Warcraft 3 IO","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
