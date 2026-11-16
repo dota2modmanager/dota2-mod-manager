@@ -352,9 +352,9 @@ the two additional terms this project adds under section 7 of the GPL.
 
 | | What for | Licence |
 |---|---|---|
-| [Electron](https://github.com/electron/electron) | The window and the process behind it | MIT |
-| [electron-updater](https://github.com/electron-userland/electron-builder) | Update checks and installing them | MIT |
-| [adm-zip](https://github.com/cthackers/adm-zip) | Reading mod archives, behind our own size and path guards | MIT |
+| [Tauri](https://github.com/tauri-apps/tauri) | The window, the tray, and installing updates | MIT or Apache-2.0 |
+| [zip](https://github.com/zip-rs/zip2) | Reading mod archives, behind our own size and path guards | MIT |
+| The other Rust crates in [Cargo.lock](Cargo.lock) | The network, signatures, pictures and compression inside the app | MIT, Apache-2.0 and similar |
 | [React](https://github.com/facebook/react) | The window's screens, compiled into its page | MIT |
 | [Motion](https://github.com/motiondivision/motion) | How the window's screens move, compiled into its page | MIT |
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Decoding Dota's own textures for item icons. Downloaded on demand, never bundled | MIT |

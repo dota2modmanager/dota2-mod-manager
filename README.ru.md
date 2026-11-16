@@ -350,9 +350,9 @@ GPL — в [NOTICE](NOTICE).
 
 | | Зачем | Лицензия |
 |---|---|---|
-| [Electron](https://github.com/electron/electron) | Окно и процесс за ним | MIT |
-| [electron-updater](https://github.com/electron-userland/electron-builder) | Проверка обновлений и их установка | MIT |
-| [adm-zip](https://github.com/cthackers/adm-zip) | Чтение архивов модов, за нашими проверками размера и путей | MIT |
+| [Tauri](https://github.com/tauri-apps/tauri) | Окно, значок в трее и установка обновлений | MIT или Apache-2.0 |
+| [zip](https://github.com/zip-rs/zip2) | Чтение архивов модов, за нашими проверками размера и путей | MIT |
+| Остальные Rust-крейты из [Cargo.lock](Cargo.lock) | Сеть, подписи, картинки и сжатие внутри приложения | MIT, Apache-2.0 и похожие |
 | [React](https://github.com/facebook/react) | Экраны окна, собранные в его страницу | MIT |
 | [Motion](https://github.com/motiondivision/motion) | Как движутся экраны окна, собрано в его страницу | MIT |
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Расшифровка текстур игры для иконок предметов. Качается по требованию, в сборку не входит | MIT |

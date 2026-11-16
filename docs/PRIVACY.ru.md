@@ -59,7 +59,7 @@ Dota 2 Mod Manager ничего о тебе никуда не отправляе
 | Хост | Зачем | Где в коде |
 |---|---|---|
 | `raw.githubusercontent.com` | Каталог модов (`Dota2PornFxWeb`), карта отпечатков и удалённый конфиг, которым сломанную функцию можно выключить без релиза | `crates/mm-core/src/catalog/mod.rs`, `crates/mm-core/src/catalog/fingerprints.rs`, `crates/mm-core/src/catalog/remote_config.rs` |
-| `github.com` | Проверка обновлений и скачивание новой версии из Releases | `electron-updater`, `crates/mm-core/src/app/updater.rs`, `crates/mm-core/src/app/portable_update.rs` |
+| `github.com` | Проверка обновлений и скачивание новой версии из Releases | `src-tauri/src/update.rs` (обновлятор Tauri), `crates/mm-core/src/app/updater.rs`, `crates/mm-core/src/app/portable_update.rs` |
 | `cdn.dota2modmanager.com` | Копия превью модов из каталога, закреплённый тулчейн, а с 2.6.5 и обновления самого приложения, чтобы всё это работало, когда GitHub недоступен | `crates/mm-core/src/catalog/net_fetch.rs`, `renderer/ui/media.ts`, `crates/mm-core/src/app/portable_update.rs` |
 | `huggingface.co` | Ещё одна копия архивов модов из каталога, её держит автор каталога. К ней приложение идёт после основного хоста каталога. Она указана в подписанном удалённом конфиге, а не в самом приложении, и скачанный с неё файл засчитывается, только если совпал с хэшем, который публикует каталог | `config/app.json`, `crates/mm-core/src/catalog/remote_config.rs`, `crates/mm-core/src/catalog/net_fetch.rs` |
 | `dota2modmanager.com` | Зеркало небольших файлов каталога, по той же причине, и единственная копия, где файл и его подпись всегда из одного момента | `crates/mm-core/src/catalog/net_fetch.rs`, `crates/mm-core/src/catalog/mod.rs` |
