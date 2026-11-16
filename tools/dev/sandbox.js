@@ -405,7 +405,8 @@ async function downloadMods() {
     if (wanted.length >= MAX_MODS) break;
   }
 
-  const prev = fs.existsSync(MANIFEST) ? JSON.parse(fs.readFileSync(MANIFEST, 'utf-8')) : { mods: [] };
+  const listed = readIfThere(MANIFEST);
+  const prev = listed ? JSON.parse(listed.toString('utf-8')) : { mods: [] };
   const known = new Map(prev.mods.map((m) => [`${m.categoryId}/${m.file}`, m]));
   const out = [];
 
