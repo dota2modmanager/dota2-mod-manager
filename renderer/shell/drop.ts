@@ -66,6 +66,8 @@ document.addEventListener('drop', async (e) => {
   e.preventDefault();
   depth = 0;
   document.body.classList.remove('dropping');
+  // a window that takes a dropped file itself (a picture into the own-cursor window) keeps it
+  if (e.target instanceof Element && e.target.closest('[data-own-drop]')) return;
   const dropped = [...(e.dataTransfer?.files || [])];
   if (!dropped.length) return;
   if (dropped.some((f) => /\.d2mm$/i.test(f.name || ''))) { await dropPreset(dropped); return; }

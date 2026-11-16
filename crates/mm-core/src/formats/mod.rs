@@ -1,5 +1,6 @@
 //! File formats the game and the tools speak: KeyValues, VPK, compiled resources, textures, images, archives.
 
+pub mod cursor_files;
 pub mod glb_embed;
 pub mod kv;
 pub mod kv3;

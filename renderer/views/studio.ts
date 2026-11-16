@@ -23,6 +23,7 @@ import { backgroundLead, openBackground } from './catalog/background.ts';
 import { openPortraits, portraitsOn, readPortraits } from './catalog/portraits.ts';
 import { musicOn, openMusic, readMusic } from './catalog/music.ts';
 import { hudLead, openHud } from './catalog/hud.ts';
+import { cursorOn, openCursor } from './catalog/cursor.ts';
 import { openEffects } from './catalog/effects.ts';
 import { rankLead, openRank } from './catalog/rank.ts';
 import { decorLead, openDecor } from './catalog/decor.ts';
@@ -114,6 +115,8 @@ async function groups(): Promise<StudioGroup[]> {
         status: hud?.changed != null ? on(L`Панелей изменено: ${hud.changed}`) : undefined, open: (el) => openHud(el) }),
       tile({ id: 'rank', icon: 'military_tech', title: L`Ранг и уровни героев`, text: L`Своя медаль и уровни героев на твоём экране. Видишь только ты.`,
         status: rankLead('ranks')?.installed ? on(L`Стоит`) : undefined, open: (el) => openRank(el) }),
+      tile({ id: 'cursor', icon: 'arrow_selector_tool', title: L`Свой курсор`, text: L`Одна картинка — и все курсоры игры дорисуются сами: на враге, атака, прицел, магазин. Любой можно заменить.`,
+        status: cursorOn() ? on(L`Стоит`) : undefined, open: (el) => openCursor(el) }),
       tile({ id: 'grids', icon: 'grid_view', title: L`Сетки героев`, text: L`Герои по проценту побед, по атрибутам и по частоте пиков этого патча, прямо в выборе героя.`, open: () => goGrids() }),
     ] },
     { id: 'make', title: L`Своё`, tiles: [

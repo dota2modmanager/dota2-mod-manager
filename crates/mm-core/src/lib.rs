@@ -38,7 +38,7 @@ pub(crate) use catalog::{
     download_stats, feature_gate, fingerprints, icon_match, mod_preview, mod_preview_pick, net_mirrors, wiki_icons,
 };
 pub use catalog::{Catalog, RAW_BASE};
-pub(crate) use formats::{glb_embed, lz4, material, meshopt, panorama_files, png_paint, png_strip};
+pub(crate) use formats::{cursor_files, glb_embed, lz4, material, meshopt, panorama_files, png_paint, png_strip};
 pub use formats::{kv, kv3, pak_stamp, resource, safe_zip, vpk, vpk_analyze, vpk_pack, vpk_shared, vtex};
 pub(crate) use game::{
     game_icons, game_repair, game_upkeep, hero_grid, minify, patch_watch, scream_guard, steam_appstate, terrain_age,
@@ -59,10 +59,10 @@ pub(crate) use item_builder::{
 };
 pub use item_builder::{item_builder_details, item_builder_slots, unusual_effects};
 pub(crate) use looks::{
-    cursors, effect_edit, effect_edit_service, effect_finder, ground_build, ground_facets, hero_paint_service,
-    hero_portrait_service, hud_scale, hud_scale_service, map_base, map_build, map_decor, map_ground, map_light,
-    map_looks_service, map_make, map_mod_trees, map_optimize, map_paint, map_scene, menu_background,
-    menu_background_service, own_music, own_music_service, pumpkin, recolor_layers, recolor_modes,
+    cursor_maker, cursors, effect_edit, effect_edit_service, effect_finder, ground_build, ground_facets,
+    hero_paint_service, hero_portrait_service, hud_scale, hud_scale_service, map_base, map_build, map_decor,
+    map_ground, map_light, map_looks_service, map_make, map_mod_trees, map_optimize, map_paint, map_scene,
+    menu_background, menu_background_service, own_music, own_music_service, pumpkin, recolor_layers, recolor_modes,
 };
 pub use looks::{recolor, tower_looks, tree_sets};
 pub(crate) use models::{

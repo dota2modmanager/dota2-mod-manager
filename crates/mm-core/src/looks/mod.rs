@@ -1,5 +1,6 @@
 //! Looks beyond items: the menu, the map, the HUD, cursors, recolours, effect edits.
 
+pub mod cursor_maker;
 pub mod cursors;
 pub mod effect_edit;
 pub mod effect_edit_service;

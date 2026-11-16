@@ -7,6 +7,7 @@ import type { MapLookCardModel } from '../map/MapLookCard.tsx';
 import type { SoundCardModel } from '../sounds/SoundCard.tsx';
 import type { BackgroundCardModel } from '../background/BackgroundCard.tsx';
 import type { HudCardModel } from '../hud/HudCard.tsx';
+import type { CursorCardModel } from '../cursor/CursorCard.tsx';
 import type { RankCardModel } from '../rank/RankCard.tsx';
 import type { DecorCardModel } from '../decor/DecorCard.tsx';
 import type { MapKind } from '../../api/content.ts';
@@ -79,6 +80,7 @@ export type ScreenModel =
     backgroundLead?: BackgroundCardModel | null;
     /** the in-game HUD smaller or larger, first among the HUDs */
     hudLead?: HudCardModel | null;
+    cursorLead?: CursorCardModel | null;
     rankLead?: RankCardModel | null;
     /** the map without its decor, first in Optimization */
     decorLead?: DecorCardModel | null;
@@ -131,6 +133,7 @@ export interface ScreenActions {
   openSounds: (card: HTMLElement) => void;
   openBackground: (card: HTMLElement) => void;
   openHud: (card: HTMLElement) => void;
+  openCursor: (card: HTMLElement) => void;
   openRank: (card: HTMLElement) => void;
   openDecor: (card: HTMLElement, kind: 'map' | 'optimize') => void;
 }
