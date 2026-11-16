@@ -20,6 +20,29 @@ pub struct PakLook {
     pub plain: IndexMap<String, (Option<String>, [f64; 3])>,
     /// a terrain blend's layers: picture, tint, scale
     pub grounds: IndexMap<String, Vec<(String, [f64; 3], f64)>>,
+    /// the water's colours (a river mod's): its surface, the tint of what is seen through it, and
+    /// the colour it takes with depth, as the game's water shader has them
+    pub water: IndexMap<String, Water>,
+}
+
+/// The colours of a material on the game's water shader (water_dota.vfx).
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize)]
+pub struct Water {
+    pub surface: [f64; 3],
+    pub refraction: [f64; 3],
+    pub fog: [f64; 3],
+}
+
+impl Water {
+    /// Off a material of the water shader; a colour it does not set is black, as the shader takes it.
+    pub fn of(m: &crate::loadout_material::NativeMaterial) -> Water {
+        let rgb = |k: &str| m.vectors.get(k).filter(|v| v.len() >= 3).map_or([0.0; 3], |v| [v[0], v[1], v[2]]);
+        Water {
+            surface: rgb("g_vLowEndSurfaceColor"),
+            refraction: rgb("g_vRefractionTint"),
+            fog: rgb("g_vWaterFogColor"),
+        }
+    }
 }
 
 impl PakLook {
@@ -59,6 +82,8 @@ pub fn pak_look(pak: &Index) -> PakLook {
         let shader = m.shader.to_lowercase();
         if shader.contains("dota_fow") {
             out.hidden.push(name);
+        } else if shader.contains("water") {
+            out.water.insert(name, Water::of(&m));
         } else if shader.contains("multiblend") {
             let layers = crate::map_ground::layers_of(&m);
             if !layers.is_empty() {
@@ -80,6 +105,17 @@ pub fn pak_look(pak: &Index) -> PakLook {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_water_materials_colours_are_read_and_an_unset_one_is_black() {
+        let mut m = crate::loadout_material::NativeMaterial::default();
+        m.vectors.insert("g_vLowEndSurfaceColor".into(), vec![0.4, 0.03, 0.0, 0.0]);
+        m.vectors.insert("g_vWaterFogColor".into(), vec![0.46, 0.0, 0.0, 1.0]);
+        let w = Water::of(&m);
+        assert_eq!(w.surface, [0.4, 0.03, 0.0]);
+        assert_eq!(w.fog, [0.46, 0.0, 0.0]);
+        assert_eq!(w.refraction, [0.0; 3]);
+    }
 
     /// A terrain pak of the catalog (MM_TEST_TERRAIN_PAK): its hidden, plain and ground materials.
     #[test]

@@ -7,9 +7,39 @@
  * shallow: seen from above the riverbed shows through, and only at a slant does it turn to sky.
  * The first version was an opaque blue sheet with sharp glints, which is not how the game looks. */
 import * as THREE from 'three';
+import type { WaterLook } from '../../api/decor.ts';
 
 /** The seconds the waves have run, shared by every water. */
 export const waterTime = { value: 0 };
+
+/** The window's own water colour and how much of the riverbed shows through it. */
+const PLAIN = { color: new THREE.Color(0.03, 0.15, 0.16), opacity: 0.62 };
+
+/** The colour a river mod's water shows from above: its surface's and its depth's, a little of
+ * what it tints the riverbed with; black for a mod that sets none, as the game draws it. */
+export function waterColour(looks: WaterLook[]): { color: THREE.Color; opacity: number } | null {
+  if (!looks.length) return null;
+  const sum = [0, 0, 0];
+  for (const w of looks) for (let i = 0; i < 3; i++) sum[i] += w.surface[i] * 0.5 + w.fog[i] * 0.5 + w.refraction[i] * 0.15;
+  const c = sum.map((v) => Math.min(1, v / looks.length));
+  // a coloured river is not clear water: its colour stands over the bed
+  // the shader's colours are as the material editor shows them (sRGB); three mixes in linear
+  return { color: new THREE.Color().setRGB(c[0], c[1], c[2], THREE.SRGBColorSpace), opacity: 0.86 };
+}
+
+/** Every water material made, to take a river mod's colour. */
+const all = new Set<WeakRef<THREE.MeshStandardMaterial>>();
+
+/** A river mod's water over every water drawn, or with null the window's own. */
+export function setWaterLook(looks: WaterLook[] | null): void {
+  const look = (looks && waterColour(looks)) ?? PLAIN;
+  for (const ref of all) {
+    const m = ref.deref();
+    if (!m) { all.delete(ref); continue; }
+    m.color.copy(look.color);
+    m.opacity = look.opacity;
+  }
+}
 
 const vmatOf = (m: THREE.Material) => (m.userData as { vmat?: { ShaderName?: string } }).vmat;
 
@@ -23,13 +53,14 @@ export function waterOf(original: THREE.Material): THREE.MeshStandardMaterial {
   const had = made.get(original);
   if (had) return had;
   const m = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(0.03, 0.15, 0.16),
+    color: PLAIN.color.clone(),
     roughness: 0.32,
     metalness: 0,
     transparent: true,
-    opacity: 0.62,
+    opacity: PLAIN.opacity,
     depthWrite: false,
   });
+  all.add(new WeakRef(m));
   m.userData = { ...original.userData };
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uTime = waterTime;

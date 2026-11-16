@@ -49,7 +49,7 @@ else, and the window e2e fails on any refusal in the app's log.
 | `install/` | 21 | Putting mods into the game and keeping the record of them: the installer, the library, imports and removal. |
 | `item_builder/` | 25 | The item builder: what a pick writes, its effects, styles, sets, sounds and the look on everybody. |
 | `looks/` | 33 | Looks beyond items: the menu, the map, the HUD, cursors, recolours, effect edits. |
-| `models/` | 27 | Models, particles and the 3D preview. |
+| `models/` | 30 | Models, particles and the 3D preview. |
 | `owner/` | 30 | The state the window talks to: one owner of settings, the library and the services, and its channels. |
 | `presets/` | 8 | Presets: links, .d2mm files, the plan, ready-made sets. |
 | `schema/` | 11 | The item table (items_game): reading, merging, building and deploying it, and undoing a build. |

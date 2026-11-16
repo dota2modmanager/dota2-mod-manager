@@ -137,6 +137,7 @@ contextBridge.exposeInMainWorld('api', {
     model: (file) => ipcRenderer.invoke('preview3d:model', file).then(wholeAnswer),
     modHero: (category, file, hint) => ipcRenderer.invoke('preview3d:modHero', category, file, hint),
     modModels: (category, file, hero, slots) => ipcRenderer.invoke('preview3d:modModels', category, file, hero, slots).then(wholeAnswer),
+    modProps: (category, file, index) => ipcRenderer.invoke('preview3d:modProps', category, file, index).then(wholeAnswer),
   },
   music: { state: () => ipcRenderer.invoke('music:state'), keep: (song) => ipcRenderer.invoke('music:keep', song), install: (songs, menu, game) => ipcRenderer.invoke('music:install', songs, menu, game) },
   sounds: {
@@ -175,7 +176,7 @@ contextBridge.exposeInMainWorld('api', {
     map: (map) => ipcRenderer.invoke('decor:map', map).then(wholeAnswer),
     ground: (word, facets) => ipcRenderer.invoke('decor:ground', word, facets).then(wholeAnswer),
     modTrees: (file) => ipcRenderer.invoke('decor:modTrees', file),
-    paint: (file) => ipcRenderer.invoke('decor:paint', file).then(wholeAnswer),
+    paint: (file, category) => ipcRenderer.invoke('decor:paint', file, category).then(wholeAnswer),
     modModel: (file, model) => ipcRenderer.invoke('decor:modModel', file, model).then(wholeAnswer),
   },
   background: { state: () => ipcRenderer.invoke('background:state'), install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur) },

@@ -1,4 +1,5 @@
-//! A catalog hero or item mod in 3D before it goes in (models/mod_look.rs): the mod window's stage.
+//! A catalog mod in 3D before it goes in: a hero or an item of one (models/mod_look.rs), or a model of
+//! the world, a ward, a creep, a tower and the like (models/mod_props.rs). The mod window's stage.
 //! The mod's archive is downloaded as an install would, unpacked once per version, and the hero
 //! preview of the item builder draws the hero with the mod's files read before the game's.
 
@@ -11,9 +12,9 @@ use crate::mod_look::{Look, LookExporter};
 use crate::owner::{arg, Owner, R};
 use crate::owner_preview3d::{has_tool, pack, shown};
 
-pub const CHANNELS: &[&str] = &["preview3d:modHero", "preview3d:modModels"];
+pub const CHANNELS: &[&str] = &["preview3d:modHero", "preview3d:modModels", "preview3d:modProps"];
 
-/// The catalog's categories whose mods the stage can show: a hero, and an item of a hero.
+/// The catalog's categories whose mods the stage can show a hero for: a hero, and an item of a hero.
 const SHOWN: [&str; 2] = ["heroes", "hero-items"];
 
 /// one unpacking at a time: the window asks for the hero and then the models of the same mod
@@ -25,7 +26,7 @@ pub fn handle(o: &Owner, channel: &str, args: &[Value]) -> Option<R> {
 
 /// The mod unpacked, downloaded the first time and again when the catalog has a new version.
 fn look(o: &Owner, category: &str, file: &str) -> Result<Look, String> {
-    if !SHOWN.contains(&category) {
+    if !SHOWN.contains(&category) && !crate::mod_props::PROPS.contains(&category) {
         return Err(format!("no 3D for {category}"));
     }
     let got = crate::owner_mods::download(o, category, file, file);
@@ -134,6 +135,150 @@ fn mod_models(o: &Owner, args: &[Value]) -> Value {
     }
 }
 
+/// (category, file, index): a catalog mod of the world as the hero stage answers preview3d:models
+/// (models/mod_props.rs): the model at `index` of the mod's models stands as the body, in its idle,
+/// dressed with its pictures (the mod's over the game's), with its attachments and the particles
+/// its model lists (a ward's glow, an ancient's ambience); the others stand beside it. `models`
+/// names them all, for the window's tabs.
+fn mod_props(o: &Owner, args: &[Value]) -> Value {
+    let (category, file) = (crate::js::string(&arg(args, 0)), crate::js::string(&arg(args, 1)));
+    let index = arg(args, 2).as_u64().unwrap_or(0) as usize;
+    if !crate::mod_props::PROPS.contains(&category.as_str()) {
+        return json!({ "ok": false, "reason": "no-mod", "error": format!("no 3D for {category}") });
+    }
+    let started = (o.opts.now)();
+    let (tool, glb) = {
+        let c = o.core();
+        (has_tool(&c), c.glb.clone())
+    };
+    if !tool {
+        return json!({ "ok": false, "reason": "no-tool" });
+    }
+    let look = match look(o, &category, &file) {
+        Ok(l) => l,
+        Err(e) => {
+            o.diag(&format!("mod look: {e}"));
+            return json!({ "ok": false, "reason": "no-mod", "error": e });
+        }
+    };
+    let Some(ix) = pak01(o) else { return json!({ "ok": false, "reason": "no-game" }) };
+    let read = |p: &str| look.read(p).or_else(|| ix.read(p).ok().flatten());
+    let units = ix.read("scripts/npc/npc_units.txt").ok().flatten();
+    let models =
+        crate::mod_props::distinct(crate::mod_props::models_for(&category, look.paths(), units.as_deref()), &read);
+    if models.is_empty() {
+        return json!({ "ok": false, "reason": "no-models" });
+    }
+    let groups = crate::mod_props::groups_of(&category, &models);
+    let index = index.min(groups.len() - 1);
+    let exporter = LookExporter { glb: glb.as_ref(), look: &look };
+    // one model after another: two models of one mod share pictures, and the toolchain exporting
+    // both at once wrote the same files from two processes and failed on them
+    let dressed: Vec<Option<(Option<String>, Vec<u8>)>> = models
+        .iter()
+        .map(|model| {
+            let clip = crate::mod_props::clip_of(read(&format!("{model}_c")).as_deref());
+            let clips = crate::model_glb::Clips::Some(clip.iter().cloned().collect());
+            let file = crate::loadout_resources::Exporter::glbs(&exporter, std::slice::from_ref(model), &clips, false)
+                .get(model)
+                .cloned()
+                .flatten()?;
+            let wanted = crate::loadout_resources::Wanted { file, model: model.clone(), skin: 0 };
+            let got = crate::loadout_resources::loadout_models(&[wanted], &read, &exporter, Some(&mut |_| {})).ok()?;
+            Some((clip, got.into_iter().next().flatten()?))
+        })
+        .collect();
+    let at = |m: &String| models.iter().position(|x| x == m).and_then(|i| dressed[i].clone());
+    let group = &groups[index];
+    let Some((clip, body)) = at(&group[0]) else { return json!({ "ok": false, "reason": "no-models" }) };
+    let body_file = read(&format!("{}_c", group[0]));
+    // the particles the body's model lists, read with the mod's files over the game's
+    let mut budget: i64 = 256;
+    let none = std::collections::HashMap::new();
+    let mut read_fx = |p: &str| read(p);
+    // the ones its model lists, and the category's and the mod's at the game's paths (mod_props.rs)
+    let named = |p: &str| {
+        read(&format!("{p}_c"))
+            .map(|b| {
+                crate::resource::references(&b)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter(|r| r.ends_with(".vpcf"))
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    let has = |p: &str| ix.has(p);
+    let more = crate::mod_props::effects_for(&category, &group[0], look.paths(), &has, &named);
+    let listed = crate::model_particles::model_particle_entries(body_file.as_deref())
+        .into_iter()
+        .chain(more.into_iter().map(|path| crate::model_particles::Listed { path, config: String::new() }));
+    let particles: Vec<crate::hero_preview_fx::PlannedFx> = listed
+        .filter_map(|l| {
+            let def = crate::particle_spec::particle_def(&mut read_fx, &l.path, &mut budget, 0, &none)?;
+            Some(crate::hero_preview_fx::PlannedFx {
+                part: -1,
+                def: crate::particle_spec::bind_item_particle(&def, None, &l.config),
+            })
+        })
+        .collect();
+    let defs: Vec<Value> = particles.iter().map(|x| x.def.clone()).collect();
+    let resources = crate::loadout_resources::loadout_resources(&defs, &read, &exporter);
+    let sprites = crate::hero_preview::sprites_of(&defs, &resources, &exporter);
+    // the rest of its group in its place, the other groups' first models beside it
+    let parts: Vec<crate::hero_preview::ShownPart> = group[1..]
+        .iter()
+        .filter_map(|m| {
+            let (_, glb) = at(m)?;
+            Some(crate::hero_preview::ShownPart {
+                slot: "prop".into(),
+                name: m.clone(),
+                glb,
+                attachments: crate::particle_spec::model_attachments(read(&format!("{m}_c")).as_deref()),
+                hidden: vec![],
+            })
+        })
+        .collect();
+    let companions: Vec<crate::hero_companions::Companion> = groups
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| *i != index)
+        .filter_map(|(_, g)| {
+            let (clip, glb) = at(&g[0])?;
+            Some(crate::hero_companions::Companion { model: g[0].clone(), clip, glb })
+        })
+        .collect();
+    let shown_now = crate::hero_preview::Shown {
+        body,
+        clip: clip.unwrap_or_default(),
+        stage: crate::hero_showcase::hero_stage(None, None, &[]),
+        pedestal: None,
+        model: group[0].clone(),
+        motions: vec![],
+        parts,
+        missing: vec![],
+        hidden: vec![],
+        attachments: crate::particle_spec::model_attachments(body_file.as_deref()),
+        particles,
+        sprites,
+        resources,
+        companions,
+    };
+    o.diag(&format!(
+        "mod look: {file}, group {} of {} ({} models), {} effects, in {} ms",
+        index + 1,
+        groups.len(),
+        group.len(),
+        shown_now.particles.len(),
+        ((o.opts.now)() - started).round()
+    ));
+    let mut answer = shown(&shown_now);
+    // the window's tabs: each group by its first model
+    answer["models"] = json!(groups.iter().map(|g| g[0].clone()).collect::<Vec<_>>());
+    answer["index"] = json!(index);
+    pack(o, answer)
+}
+
 /// Every slot of the hero in its stock item, out of the item table. The item builder's slots leave
 /// out a hero with nothing to pick (one with no paid items yet): there the stage had no weapon,
 /// and a mod of that weapon showed nothing.
@@ -152,6 +297,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
     match channel {
         "preview3d:modHero" => mod_hero(o, args),
         "preview3d:modModels" => mod_models(o, args),
+        "preview3d:modProps" => mod_props(o, args),
         _ => Value::Null,
     }
 }

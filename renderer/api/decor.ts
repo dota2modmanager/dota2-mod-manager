@@ -19,7 +19,12 @@ export interface TerrainPaint {
   hidden: string[];
   plain: Record<string, { png: Uint8Array | null; tint: [number, number, number] }>;
   grounds: Record<string, GroundLayer[]>;
+  /** the water's colours of a river mod (its water_dota.vfx materials), 0-1 */
+  water?: Record<string, WaterLook>;
 }
+
+/** The colours a material on the game's water shader sets (crates/mm-core/src/looks/map_paint.rs Water). */
+export interface WaterLook { surface: [number, number, number]; refraction: [number, number, number]; fog: [number, number, number] }
 
 /** A lighting zone of the default map as the window's light reads it (crates/mm-core/src/looks/map_build.rs weather_lights):
  * colours 0-255 sRGB, the rest the game's numbers. */
@@ -53,7 +58,7 @@ export interface DecorApi {
   /** a catalog Trees mod's tree models (downloaded as an install would), or why not */
   modTrees: (file: string) => Promise<{ models?: string[]; error?: string } | null>;
   /** a catalog terrain for the 3D map: a whole map, or a pak whose materials go on the default map */
-  paint: (file: string) => Promise<TerrainPaint | { kind: 'map' } | { error: string } | null>;
+  paint: (file: string, category?: 'terrains' | 'river') => Promise<TerrainPaint | { kind: 'map' } | { error: string } | null>;
   /** one of them as a GLB */
   modModel: (file: string, model: string) => Promise<Uint8Array | null>;
   /** another map's ground for the 3D view: for each of this map's grounds (its material, no _c) that map's layers */

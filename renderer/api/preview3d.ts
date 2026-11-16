@@ -59,6 +59,8 @@ export interface Preview3dApi {
   modHero: (category: string, file: string, hint: string) => Promise<{ hero?: string | null; error?: string }>;
   /** the hero in these slots' stock items with the catalog mod's files over the game's, as models answers */
   modModels: (category: string, file: string, hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>;
+  /** a catalog mod of the world (wards, creeps, towers...) as models answers: the model at `index` of its models (or the game's it recolours) as the body with its effects, the others beside it; `models` names them all */
+  modProps: (category: string, file: string, index: number) => Promise<ModelsAnswer & { models?: string[]; index?: number }>;
   models: (hero: string, slots: PreviewSlot[]) => Promise<ModelsAnswer>;
 }
 

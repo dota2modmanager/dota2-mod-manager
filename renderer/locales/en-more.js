@@ -358,5 +358,12 @@ const EN = {
   "Игра": "Game",
   "Назад": "Back",
   "Дальше": "Next",
+  "Для 3D нужны инструменты Source 2: их можно скачать в настройках": "3D needs the Source 2 tools: you can download them in Settings",
+  "В этом моде нет моделей, которые можно показать": "This mod has no models that can be shown",
+  "Не удалось показать мод в 3D": "Could not show the mod in 3D",
+  "Скачиваю мод и собираю модели…": "Downloading the mod and building its models…",
+  "Мышью: крутить и приближать": "Mouse: turn and zoom",
+  "Скачиваю мод и готовлю карту…": "Downloading the mod and preparing the map…",
+  "Модели мода": "The mod's models",
 };
 window.EN_MORE = EN;

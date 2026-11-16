@@ -542,6 +542,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
                 ],
             ),
             ("preview3d:modHero", vec![str_(40, 1), str_(200, 1), str_(200, 0)]),
+            ("preview3d:modProps", vec![str_(40, 1), str_(200, 1), optional(num(0.0, 63.0))]),
             (
                 "preview3d:modModels",
                 vec![
@@ -556,7 +557,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("preview3d:effect", vec![str_(200, 1)]),
             ("decor:ground", vec![str_(16, 0), optional(one_of(&[None, Some("small"), Some("large")]))]),
             ("decor:modTrees", vec![str_(200, 1)]),
-            ("decor:paint", vec![str_(200, 1)]),
+            ("decor:paint", vec![str_(200, 1), optional(one_of(&[None, Some("terrains"), Some("river")]))]),
             ("decor:modModel", vec![str_(200, 1), str_(200, 1)]),
             ("decor:scene", vec![optional(str_(220, 0))]),
             ("decor:map", vec![optional(str_(220, 0))]),
