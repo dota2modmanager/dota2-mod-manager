@@ -212,11 +212,11 @@ fn mod_props(o: &Owner, args: &[Value]) -> Value {
     let more = crate::mod_props::effects_for(&category, &group[0], look.paths(), &has, &named);
     let listed = crate::model_particles::model_particle_entries(body_file.as_deref())
         .into_iter()
-        .chain(more.into_iter().map(|path| crate::model_particles::Listed { path, config: String::new() }));
+        .chain(more.into_iter().map(|path| crate::model_particles::Listed { path, config: String::new() }))
+        .filter(|_| !crate::mod_props::no_effects(&category));
     let particles: Vec<crate::hero_preview_fx::PlannedFx> = listed
         .filter_map(|l| {
-            let mut def = crate::particle_spec::particle_def(&mut read_fx, &l.path, &mut budget, 0, &none)?;
-            crate::mod_props::drop_ground(&mut def);
+            let def = crate::particle_spec::particle_def(&mut read_fx, &l.path, &mut budget, 0, &none)?;
             Some(crate::hero_preview_fx::PlannedFx {
                 part: -1,
                 def: crate::particle_spec::bind_item_particle(&def, None, &l.config),

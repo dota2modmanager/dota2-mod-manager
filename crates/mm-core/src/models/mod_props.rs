@@ -31,7 +31,6 @@ fn effects_of(category: &str) -> &'static [&'static str] {
         "ancient" => {
             &["particles/radiant_fx2/good_ancient001_ambient.vpcf", "particles/dire_fx/bad_ancient_ambient.vpcf"]
         }
-        "tormentor" => &["particles/neutral_fx/miniboss_shield.vpcf", "particles/neutral_fx/miniboss_shield_dire.vpcf"],
         _ => &[],
     }
 }
@@ -69,6 +68,12 @@ pub fn groups_of(category: &str, models: &[String]) -> Vec<Vec<String>> {
     out
 }
 
+/// The categories whose units play no effect on the stage: the Tormentor's shield needs the game's
+/// own points and ground round its pit, and drew a blot of light on the stage (the user's call).
+pub fn no_effects(category: &str) -> bool {
+    category == "tormentor"
+}
+
 /// The effects to play on a body: the game's for its category and the roots of those the mod brings
 /// at the game's own paths (`game_has`), each on the body's side or on both; at most [`MAX_EFFECTS`].
 /// `named`: the particles a particle names, to tell a root from a child.
@@ -100,21 +105,6 @@ pub fn effects_for<'a>(
     }
     out.truncate(MAX_EFFECTS);
     out
-}
-
-/// The parts of an effect that lie on the map's ground, which the stage has none of: the
-/// Tormentor's pit, whose sparkles and steam floated in the air as a square of light under it.
-pub fn drop_ground(def: &mut serde_json::Value) {
-    if let Some(children) = def.get_mut("children").and_then(serde_json::Value::as_array_mut) {
-        children.retain(|c| {
-            let path = c.get("path").and_then(serde_json::Value::as_str).unwrap_or_default();
-            let name = path.rsplit('/').next().unwrap_or(path).to_lowercase();
-            !name.contains("_pit_")
-        });
-        for c in children {
-            drop_ground(c);
-        }
-    }
 }
 
 /// An effect the game plays when something happens to the unit (a hit on the Tormentor's shield, a
@@ -369,34 +359,18 @@ mod tests {
     }
 
     #[test]
-    fn the_pit_is_left_out_of_an_effect() {
-        let mut def = serde_json::json!({ "path": "particles/neutral_fx/miniboss_shield.vpcf", "children": [
-            { "path": "particles/neutral_fx/miniboss_pit_sparkle.vpcf" },
-            { "path": "particles/neutral_fx/miniboss_shield_steam.vpcf", "children": [{ "path": "particles/neutral_fx/miniboss_pit_steam.vpcf" }] }
-        ] });
-        drop_ground(&mut def);
-        assert_eq!(def["children"].as_array().unwrap().len(), 1);
-        assert!(def["children"][0]["children"].as_array().unwrap().is_empty());
-    }
-
-    #[test]
-    fn the_tormentor_plays_one_shield_and_no_hits() {
+    fn a_body_of_no_side_plays_one_sides_effects_and_no_hits() {
         let mod_paths = [
-            "particles/neutral_fx/miniboss_shield.vpcf_c",
-            "particles/neutral_fx/miniboss_shield_dire.vpcf_c",
-            "particles/neutral_fx/miniboss_shield_hit.vpcf_c",
-            "particles/neutral_fx/miniboss_dire_shield_hit.vpcf_c",
+            "particles/neutral_fx/roshan_ambient.vpcf_c",
+            "particles/neutral_fx/roshan_ambient_dire.vpcf_c",
+            "particles/neutral_fx/roshan_hit.vpcf_c",
+            "particles/neutral_fx/roshan_death.vpcf_c",
         ];
         let has = |p: &str| p.starts_with("particles/");
         let named = |_: &str| vec![];
-        let got = effects_for(
-            "tormentor",
-            "models/props_gameplay/divine_sentinel/divine_sentinel_cube.vmdl",
-            mod_paths.into_iter(),
-            &has,
-            &named,
-        );
-        assert_eq!(got, ["particles/neutral_fx/miniboss_shield.vpcf"]);
+        let got = effects_for("roshan", "models/creeps/roshan/roshan.vmdl", mod_paths.into_iter(), &has, &named);
+        assert_eq!(got, ["particles/neutral_fx/roshan_ambient.vpcf"]);
+        assert!(no_effects("tormentor") && !no_effects("roshan"));
     }
 
     /// The game's units name a model for every category (MM_TEST_PAK01: the game's pak01_dir.vpk).
