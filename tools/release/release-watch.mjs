@@ -77,7 +77,7 @@ if (!stable) {
 
   // 1. every file on the releases the updater reads
   for (const rel of [stable, beta].filter(watched)) {
-    const gone = missingAssets((rel.assets || []).map((a) => a.name));
+    const gone = missingAssets((rel.assets || []).map((a) => a.name), rel.tag_name);
     if (gone.length) problems.push(`${rel.tag_name} is missing ${gone.join(', ')}; a published release cannot gain a file, so the next version has to carry it`);
     else say(`${rel.tag_name} carries every file`);
   }

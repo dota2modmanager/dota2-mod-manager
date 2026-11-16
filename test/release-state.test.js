@@ -135,3 +135,22 @@ test('what the watch holds a release to: published after it began, announced onc
   assert.equal(state.scanned({ body: 'Notes.' }), false);
   assert.equal(state.scanned({ body: null }), false);
 });
+
+test('the mirror owes the Tauri feeds only for a release that carries them', () => {
+  // 3.8.0, the last Electron release, has no latest.json: the watch was red every run on 2026-11-15
+  const electron = state.mirrorExpectation(state.channelHeads([rel('v3.8.0')])).map((w) => w.name);
+  assert.equal(electron.includes('latest.json'), false);
+  assert.equal(electron.includes('beta.json'), false);
+  assert.ok(electron.includes('latest.yml'), 'the Electron copies still read latest.yml');
+  const withFeed = (tag) => rel(tag, { assets: [...rel(tag).assets, { name: 'latest.json', size: 1 }] });
+  const tauri = state.mirrorExpectation(state.channelHeads([withFeed('v4.0.0')])).map((w) => w.name);
+  assert.ok(tauri.includes('latest.json') && tauri.includes('beta.json'));
+});
+
+test('a release from before Tauri is not held to the Tauri feeds, and a new one is', () => {
+  const electron = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', ...state.BINARIES,
+    'SHA256SUMS', 'SHA256SUMS.intoto.jsonl', 'dota2-mod-manager.cdx.json'];
+  assert.deepEqual(state.missingAssets(electron, 'v3.8.0'), []);
+  assert.deepEqual(state.missingAssets(electron, 'v4.0.0'), ['latest.json', 'beta.json']);
+  assert.deepEqual(state.missingAssets(electron), ['latest.json', 'beta.json'], 'a draft is checked against everything');
+});
