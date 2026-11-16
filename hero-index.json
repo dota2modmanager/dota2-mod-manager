@@ -1,6 +1,6 @@
 {
-  "heroes": 153,
-  "mods": 1823,
+  "heroes": 151,
+  "mods": 1822,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -2162,14 +2162,13 @@
       "name": "Tiny",
       "mods": [
         {"name":"Tiny Banana","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
-        {"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
+        {"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["misc","head","arms"]},
         {"name":"Tiny Frostivus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Majesty of the Colossus","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Stone Giant Stronghold","categoryId":"heroes","styleLabel":null,"slots":["misc"]},
         {"name":"Tiny Stoneback Sovereign","categoryId":"heroes","styleLabel":null,"slots":["misc"]}
       ]
     },
-    "tiny_01": {"name":"Tiny 01","mods":[{"name":"Tiny Cherepashka","categoryId":"heroes","styleLabel":null,"slots":["head","arms"]}]},
     "treant_protector": {
       "name": "Treant Protector",
       "mods": [
@@ -2426,17 +2425,11 @@
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },
-    "witch_doctor": {
-      "name": "Witch Doctor",
-      "mods": [
-        {"name":"Black Witch Doctor","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","belt"]},
-        {"name":"Witch Doctor Awaleb","categoryId":"heroes","styleLabel":null,"slots":["weapon","head","misc"]}
-      ]
-    },
     "witchdoctor": {
       "name": "Witch Doctor",
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Black Witch Doctor","categoryId":"heroes","styleLabel":null,"slots":["misc","weapon","head","belt"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Green Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
@@ -2446,6 +2439,7 @@
         {"name":"TI12 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"TI9 Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"White Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Witch Doctor Awaleb","categoryId":"heroes","styleLabel":null,"slots":["weapon","head","misc"]},
         {"name":"Yellow Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]}
       ]
     },

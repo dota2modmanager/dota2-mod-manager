@@ -16277,7 +16277,7 @@
       ]
     },
     {
-      "id": "witch_doctor",
+      "id": "witchdoctor",
       "name": "Witch Doctor",
       "slug": "witch-doctor",
       "mods": [
@@ -19978,7 +19978,7 @@
           "categoryId": "heroes",
           "styleLabel": null,
           "group": null,
-          "slots": ["misc"],
+          "slots": ["misc","head","arms"],
           "image": {"src":"/mods/tiny-cherepashka.webp","width":854,"height":480},
           "author": "твавт",
           "authorUrl": "https://steamcommunity.com/id/myasu0/",
