@@ -142,6 +142,31 @@ fn mine(lib: &Library) -> Option<Value> {
     lib.list().iter().find(|r| r.get("generated").and_then(|g| g.get("decor")).is_some_and(Value::is_array)).cloned()
 }
 
+/// The VPKs of every other mod in My mods, on or off: Optimization's pak loads early and would win
+/// over a file of theirs, so the particles they bring and name are not silenced (fx_in_use.rs).
+fn other_mods_paks(inst: &Installer, lib: &Library) -> Vec<std::path::PathBuf> {
+    let own = mine(lib).and_then(|r| r.get("id").cloned());
+    let mut out = Vec::new();
+    for rec in lib.list().iter().filter(|r| r.get("id") != own.as_ref()) {
+        for f in crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null)) {
+            if !f.rel_path.to_lowercase().ends_with(".vpk") {
+                continue;
+            }
+            let Ok(root) = inst.root_abs(&f.root) else { continue };
+            let at = root.join(&f.rel_path);
+            let found = [
+                at.clone(),
+                crate::installer::with_suffix(&at, ".off"),
+                crate::installer::with_suffix(&at, crate::installer_files::MASTER_OFF),
+            ]
+            .into_iter()
+            .find(|p| p.is_file());
+            out.extend(found);
+        }
+    }
+    out
+}
+
 fn key_of(map: &Path) -> Option<String> {
     let st = std::fs::metadata(map).ok()?;
     let ms = st.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs_f64() * 1000.0;
@@ -214,6 +239,22 @@ impl MapDecor {
         self.scan_at(inst, None)
     }
 
+    /// The map in force, for [`MapDecor::warm`]: its path is all the scan needs of the installer.
+    pub fn map_in_force(&self, inst: &Installer) -> Option<PathBuf> {
+        self.game.as_ref().map(|g| self.map_file(inst, g))
+    }
+
+    /// The map counted and sampled, unless it is already: what the first opening of either map
+    /// window waited for (a second or more), done ahead and off the owner's lock, which the window
+    /// and every other channel would otherwise queue behind.
+    pub fn warm(&self, map: &Path) -> Result<(), String> {
+        let counted = COUNTED.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map(|c| c.0.clone());
+        if key_of(map).is_some() && counted == key_of(map) {
+            return Ok(());
+        }
+        self.plan_of(map).map(|_| ())
+    }
+
     /// The plan of a map: `base`'s (the one a build makes the map from), else the one in force.
     fn scan_at(
         &self,
@@ -222,14 +263,20 @@ impl MapDecor {
     ) -> Result<(std::sync::Arc<Index>, crate::map_optimize::Plan), String> {
         let game = self.game.as_ref().ok_or_else(|| t("Не указана папка игры", &[]))?;
         let map = base.map(Path::to_path_buf).unwrap_or_else(|| self.map_file(inst, game));
+        self.plan_of(&map)
+    }
+
+    /// The plan of the map at `map`, its counts and samples kept for the window.
+    fn plan_of(&self, map: &Path) -> Result<(std::sync::Arc<Index>, crate::map_optimize::Plan), String> {
+        let game = self.game.as_ref().ok_or_else(|| t("Не указана папка игры", &[]))?;
         if !map.exists() {
             return Err(t("В игре нет файла {0}", &[json!(MAP_REL)]));
         }
         let pak =
             crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
-        let index = Index::open(&map).map_err(|e| e.to_string())?;
+        let index = Index::open(map).map_err(|e| e.to_string())?;
         let plan = crate::map_optimize::plan(&index, &pak)?;
-        if let Some(key) = key_of(&map) {
+        if let Some(key) = key_of(map) {
             let counts = plan.iter().map(|(g, l)| (*g, l.len())).collect();
             // what the window's scene stands for each group; none is no reason to fail the scan
             let samples = crate::map_optimize::samples(&index, &pak, &plan)
@@ -279,7 +326,9 @@ impl MapDecor {
         if groups.is_empty() {
             return Err(t("Выбери, что убрать с карты", &[]));
         }
-        let (pak, plan) = self.scan(inst)?;
+        let (pak, mut plan) = self.scan(inst)?;
+        let mods = crate::fx_in_use::mods_particles(&other_mods_paks(inst, lib));
+        crate::map_optimize::spare(&mut plan, &pak, &mods);
         let vpk = decor_pak(&pak, &plan, &groups, &[], &Look::default())?;
         let g = json!({ "decor": groups });
         // the decor alone keeps the name it always had; anything more is Optimization

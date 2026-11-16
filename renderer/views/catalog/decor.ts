@@ -143,7 +143,7 @@ const sameSides = (a: Sides, b: Sides) => a.radiant === b.radiant && a.dire === 
 const fail = (err: unknown) => ({ error: String((err as Error)?.message || err) });
 const sameGroups = () => m.installed !== null && m.installed.length === m.groups.length && m.groups.every((g) => m.installed?.includes(g));
 
-/** The map's own: its file and pak, then each tree set that changed, each a mod of its own. */
+/** The map's own: its file and pak, then the trees and towers that changed, each a mod of its own. */
 async function installMap(): Promise<string | null> {
   const changed = !sameGroups() || m.groundFacets !== m.installedGroundFacets || m.terrain !== m.installedTerrain || m.weather !== m.installedWeather;
   const names = [...m.groups, ...(m.terrain ? [`base:${m.terrain}`] : []), ...(m.weather ? [`weather:${m.weather}`] : [])];
@@ -164,11 +164,13 @@ async function installMap(): Promise<string | null> {
     if (was && was.fileRef !== m.modTree) await window.api.mods.setEnabled(was.id, false).catch(fail);
     m = { ...m, installedModTree: m.modTree };
   }
-  const l = m.looks;
-  if (l && !sameSides(l.chosen.trees, l.installed.trees)) {
-    const r = await window.api.map.install('trees', l.chosen.trees.radiant, l.chosen.trees.dire).catch(fail);
+  // the game's tree and tower sets: each kind a mod of its own, its sides in one build
+  for (const kind of ['trees', 'towers'] as const) {
+    const l = m.looks;
+    if (!l || sameSides(l.chosen[kind], l.installed[kind])) continue;
+    const r = await window.api.map.install(kind, l.chosen[kind].radiant, l.chosen[kind].dire).catch(fail);
     if (r.error) return r.error;
-    m = { ...m, looks: { ...l, installed: { ...l.installed, trees: l.chosen.trees } } };
+    m = { ...m, looks: { ...l, installed: { ...l.installed, [kind]: l.chosen[kind] } } };
   }
   return null;
 }

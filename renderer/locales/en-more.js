@@ -358,5 +358,11 @@ const EN = {
   "Игра": "Game",
   "Назад": "Back",
   "Дальше": "Next",
+  "Обе стороны": "Both sides",
+  "Тьма": "Dire",
+  "Свет: {0} · Тьма: {1}": "Radiant: {0} · Dire: {1}",
+  "Наборы деревьев из игры, свои на каждой стороне, и моды из каталога. Мод скачивается, как при установке": "The game's tree sets, one for each side, and mods from the catalog. A mod is downloaded as an install would",
+  "Башни любого события игры, свои у Света и у Тьмы": "Towers of any of the game's events, one for Radiant and one for Dire",
+  "Ландшафт, погода, тёмная карта, лоу-поли земля, деревья и башни для каждой стороны, в 3D до установки.": "Terrain, weather, a dark map, low-poly ground, and trees and towers for each side, in 3D before you install.",
 };
 window.EN_MORE = EN;

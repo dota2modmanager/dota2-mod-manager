@@ -345,7 +345,25 @@ pub fn plan(map: &Index, pak: &Index) -> Result<Plan, String> {
         list.sort_by(|a, b| a.0.cmp(&b.0));
         list.dedup_by(|a, b| a.0 == b.0);
     }
+    spare(&mut out, pak, &std::collections::HashSet::new());
     Ok(out)
+}
+
+/// The particles of the plan something that plays uses taken back out of it (fx_in_use.rs): the
+/// game's own effects and swaps, and `more`, the particles the user's installed mods bring and name.
+pub fn spare(plan: &mut Plan, pak: &Index, more: &std::collections::HashSet<String>) {
+    let silenced: std::collections::HashSet<String> =
+        plan.values().flatten().filter(|(_, f)| *f == Fill::Particle).map(|(p, _)| p.to_lowercase()).collect();
+    if silenced.is_empty() {
+        return;
+    }
+    let used = crate::fx_in_use::in_use(&crate::fx_in_use::graph(pak), &silenced, more);
+    if used.is_empty() {
+        return;
+    }
+    for list in plan.values_mut() {
+        list.retain(|(p, f)| *f != Fill::Particle || !used.contains(&p.to_lowercase()));
+    }
 }
 
 /// What the window's 3D scene shows for a group: the map's own models it takes away (or, for the

@@ -127,7 +127,7 @@ export function DecorModal({ m, actions }: { m: DecorModalModel; actions: DecorM
   // the sets picked are mods of their own: a changed one is something to put on as well
   const groundSame = m.terrain === m.installedTerrain && m.weather === m.installedWeather && m.groundFacets === m.installedGroundFacets;
   const setsSame = groundSame && m.modTree === m.installedModTree
-    && (!m.looks || (['trees'] as MapKind[]).every((k) => m.looks!.chosen[k].radiant === m.looks!.installed[k].radiant && m.looks!.chosen[k].dire === m.looks!.installed[k].dire));
+    && (!m.looks || (['trees', 'towers'] as MapKind[]).every((k) => m.looks!.chosen[k].radiant === m.looks!.installed[k].radiant && m.looks!.chosen[k].dire === m.looks!.installed[k].dire));
   const isMap = m.kind === 'map';
   // Optimization's terrain is the one on (decor.ts), the map's window's the one being made
   const map = mapOf(m);
