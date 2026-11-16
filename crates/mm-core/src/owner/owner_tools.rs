@@ -428,7 +428,9 @@ pub fn rebuild_generated(
     owed.extend(rank.due(lib, ids));
     owed.extend(crate::hero_paint_service::HeroPaintService::new(game.clone(), lang()).due(lib, ids));
     owed.extend(AbilityIconsService::due(lib, ids));
+    owed.extend(crate::map_make::MapMake::due(lib, ids));
     owed.extend(crate::map_decor::MapDecor::due(lib, ids));
+    owed.extend(crate::ability_sounds_service::AbilitySoundsService::due(lib, ids).into_iter().map(|(id, _)| id));
     for id in owed {
         if !done.contains(&id) && !later.contains(&id) {
             later.push(id);
@@ -482,9 +484,29 @@ pub fn build_later(c: &mut Core, ids: &[String], log: &mut dyn FnMut(String)) ->
             Err(e) => log(format!("ability icons: could not build again after the update: {e}")),
         }
     }
+    // the map first: Optimization reads whatever map is on
+    if crate::map_make::MapMake::due(&c.library, ids).is_some() {
+        let make = crate::map_make::MapMake::new(game.clone(), &c.user_data);
+        any |= make.rebuild_now(&c.installer, &mut c.library, log).is_some();
+    }
     if crate::map_decor::MapDecor::due(&c.library, ids).is_some() {
         let decor = crate::map_decor::MapDecor::new(game.clone()).with_user_data(&c.user_data);
         any |= decor.rebuild_now(&c.installer, &mut c.library, log).is_some();
+    }
+    let heroes = crate::ability_sounds_service::AbilitySoundsService::due(&c.library, ids);
+    if !heroes.is_empty() {
+        let svc = sounds(c);
+        let (rc, k) = (crate::owner_compiler::compiler(c), crate::owner_compiler::keeper(c));
+        let mut compile = |job: &crate::resource_compiler::CompileJob| {
+            rc.compile(job, k.as_ref(), &mut crate::run_process::run, &mut |_| {})
+        };
+        let Core { installer, library, .. } = c;
+        for (_, hero) in &heroes {
+            match svc.rebuild(installer, library, hero, &mut compile, log) {
+                Ok(_) => any = true,
+                Err(e) => log(format!("sounds: {hero}: could not build again after the update: {e}")),
+            }
+        }
     }
     if any {
         crate::owner_packs::after_deploy_master(c);

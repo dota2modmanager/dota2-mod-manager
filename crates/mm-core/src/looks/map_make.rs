@@ -316,8 +316,13 @@ impl MapMake {
         Ok(lib.update(&made["id"], &json!({ "generated": g }), None).map_err(io)?.unwrap_or(Value::Null))
     }
 
+    /// The record's id when a Dota update reached it (`ids`): its map is built again.
+    pub fn due(lib: &Library, ids: &[String]) -> Option<String> {
+        let id = mine(lib)?.get("id").map(crate::js::string)?;
+        ids.contains(&id).then_some(id)
+    }
+
     /// The record built again from the game there now (after a Dota update), kept off when it was off.
-    #[expect(dead_code, reason = "nothing builds a map of one's own again after a Dota update, nor did 3.8.0")]
     pub fn rebuild_now(&self, inst: &Installer, lib: &mut Library, log: &mut dyn FnMut(String)) -> Option<String> {
         let rec = mine(lib)?;
         let id = rec.get("id").map(crate::js::string)?;
@@ -334,6 +339,30 @@ impl MapMake {
 
 #[cfg(test)]
 mod tests {
+    /// After a Dota update the map of one's own and a hero's own sounds are built again when the
+    /// update reached them, and only then.
+    #[test]
+    fn a_patch_owes_the_own_map_and_the_own_sounds_it_reached() {
+        use crate::ability_sounds_service::AbilitySoundsService;
+        use serde_json::json;
+        let ud = std::env::temp_dir().join(format!("mm-own-due-{}", uuid::Uuid::new_v4().simple()));
+        std::fs::create_dir_all(&ud).unwrap();
+        let mut lib = crate::library::Library::new(&ud);
+        let mut add = |generated: serde_json::Value| {
+            let made = lib.add(&json!({ "name": "x", "files": [] }), None).unwrap();
+            lib.update(&made["id"], &json!({ "generated": generated }), None).unwrap();
+            crate::js::string(&made["id"])
+        };
+        let map = add(json!({ "map": ["dusk"] }));
+        let axe = add(json!({ "sounds": "axe", "edits": [] }));
+        add(json!({ "sounds": "lina", "edits": [] }));
+        assert_eq!(super::MapMake::due(&lib, &[map.clone(), axe.clone()]), Some(map.clone()));
+        assert_eq!(super::MapMake::due(&lib, std::slice::from_ref(&axe)), None);
+        assert_eq!(AbilitySoundsService::due(&lib, &[map, axe.clone()]), vec![(axe, "axe".to_string())]);
+        assert!(AbilitySoundsService::due(&lib, &[]).is_empty());
+        let _ = std::fs::remove_dir_all(ud);
+    }
+
     #[test]
     fn the_map_names_are_told_from_the_groups() {
         for n in ["dusk", "dark", "base:game:winter", "weather:snow", "facets:small", "tint:ff0000"] {
