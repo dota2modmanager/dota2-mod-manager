@@ -152,6 +152,18 @@ fn rank(c: &mut Core) -> &mut RankLookService {
     c.kept.rank.get_or_insert_with(|| RankLookService::new(game))
 }
 
+/// The rank look built again when its pak carries another build's script; whether it was.
+pub fn rank_script_again(c: &mut Core, log: &mut dyn FnMut(String)) -> bool {
+    rank(c);
+    let Core { kept, installer, library, .. } = &mut *c;
+    let rank = kept.rank.as_mut().expect("made above");
+    let built = rank.refresh_script(library, log).is_some() && rank.rebuild_now(installer, library, log);
+    if built {
+        crate::owner_packs::after_deploy_master(c);
+    }
+    built
+}
+
 fn sounds(c: &Core) -> crate::ability_sounds_service::AbilitySoundsService {
     crate::ability_sounds_service::AbilitySoundsService::new(c.game(), &c.user_data)
 }
@@ -391,7 +403,8 @@ impl PaintKit {
 /// After a Dota update, inside the repair: the mods among `ids` the app built out of the game's
 /// files, which get no mark of the patch. The arcana, the map's looks and the menu background are
 /// built again here. The HUD layout, effect edits, rank looks, hero paint and ability icons read
-/// the item table, which the repair holds, so they land in `later` for [`build_later`].
+/// the item table, which the repair holds, and the map without its decor reads the whole map, so
+/// they land in `later` for [`build_later`].
 #[allow(clippy::too_many_arguments)]
 pub fn rebuild_generated(
     kept: &mut Kept,
@@ -415,6 +428,7 @@ pub fn rebuild_generated(
     owed.extend(rank.due(lib, ids));
     owed.extend(crate::hero_paint_service::HeroPaintService::new(game.clone(), lang()).due(lib, ids));
     owed.extend(AbilityIconsService::due(lib, ids));
+    owed.extend(crate::map_decor::MapDecor::due(lib, ids));
     for id in owed {
         if !done.contains(&id) && !later.contains(&id) {
             later.push(id);
@@ -467,6 +481,10 @@ pub fn build_later(c: &mut Core, ids: &[String], log: &mut dyn FnMut(String)) ->
             }
             Err(e) => log(format!("ability icons: could not build again after the update: {e}")),
         }
+    }
+    if crate::map_decor::MapDecor::due(&c.library, ids).is_some() {
+        let decor = crate::map_decor::MapDecor::new(game.clone()).with_user_data(&c.user_data);
+        any |= decor.rebuild_now(&c.installer, &mut c.library, log).is_some();
     }
     if any {
         crate::owner_packs::after_deploy_master(c);
