@@ -131,3 +131,28 @@ test('both changelogs still reach the two places that read them', () => {
   assert.match(read('crates/mm-core/src/app/app_info.rs'), /CHANGELOG\.ru\.md/,
     'nothing reads the Russian changelog any more');
 });
+
+test('the build carries the licences: LICENSE, NOTICE and every Rust crate compiled in', async () => {
+  /* GPL-3.0 and the crates' own MIT/Apache terms ask that the licence texts travel with the
+   * binary. The Electron build packed node_modules with theirs; the Tauri build has to be told. */
+  const conf = JSON.parse(read('src-tauri/tauri.conf.json'));
+  for (const f of ['LICENSE', 'NOTICE']) {
+    assert.equal(conf.bundle.resources[`../${f}`], `app/${f}`, `${f} is not packaged`);
+  }
+  assert.match(conf.build.beforeBuildCommand, /tools\/dev\/rust-licenses\.mjs/, 'nothing writes the Rust licences before a build');
+  assert.match(read('NOTICE'), /THIRD-PARTY-LICENSES-RUST\.md/);
+
+  // only what reaches the binary: a build script's or a test's crate is not in it
+  const { shipped } = await import('../tools/dev/rust-licenses.mjs');
+  const pkg = (name) => ({ id: name, name, version: '1.0.0' });
+  const dep = (id, kind) => ({ pkg: id, dep_kinds: [{ kind }] });
+  const meta = {
+    packages: ['dota2-mod-manager', 'mm-core', 'serde', 'cc', 'tempfile'].map(pkg),
+    workspace_members: ['dota2-mod-manager', 'mm-core'],
+    resolve: { nodes: [
+      { id: 'dota2-mod-manager', deps: [dep('mm-core', null), dep('cc', 'build')] },
+      { id: 'mm-core', deps: [dep('serde', null), dep('tempfile', 'dev')] },
+    ] },
+  };
+  assert.deepEqual(shipped(meta).map((p) => p.name), ['serde']);
+});

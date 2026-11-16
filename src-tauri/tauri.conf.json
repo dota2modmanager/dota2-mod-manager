@@ -6,7 +6,7 @@
   "identifier": "com.dota2modmanager.app",
   "build": {
     "frontendDist": "../out/renderer-tauri",
-    "beforeBuildCommand": "node tools/dev/ui-build.mjs --force --tauri"
+    "beforeBuildCommand": "node tools/dev/ui-build.mjs --force --tauri && node tools/dev/rust-licenses.mjs"
   },
   "app": {
     "withGlobalTauri": false,
@@ -27,6 +27,8 @@
       "../build/stats": "app/build/stats",
       "../CHANGELOG.md": "app/CHANGELOG.md",
       "../CHANGELOG.ru.md": "app/CHANGELOG.ru.md",
+      "../LICENSE": "app/LICENSE",
+      "../NOTICE": "app/NOTICE",
       "../package.json": "app/package.json",
       "../build/icon.png": "app/build/icon.png"
     },
