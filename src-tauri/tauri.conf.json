@@ -6,7 +6,7 @@
   "identifier": "com.dota2modmanager.app",
   "build": {
     "frontendDist": "../out/renderer-tauri",
-    "beforeBuildCommand": "node tools/dev/ui-build.mjs --force --tauri && node tools/dev/rust-licenses.mjs"
+    "beforeBuildCommand": "node tools/dev/ui-build.mjs && node tools/dev/rust-licenses.mjs"
   },
   "app": {
     "withGlobalTauri": false,

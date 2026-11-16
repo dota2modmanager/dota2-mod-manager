@@ -40,7 +40,7 @@ the folder free of anything a user should not download.
 ## What this is
 
 A desktop mod manager and modding toolkit for Dota 2, on Tauri 2 and Rust. The window is **TypeScript and React,
-with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer`). New screens
+with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer-tauri`). New screens
 and components are written that way: one component per file, logic that decides things in plain
 modules with tests. Everything behind the
 window is Rust: `crates/mm-core/` does the work, `src-tauri/` is the app around it, and

@@ -27,7 +27,7 @@ const list = (items, and) => (items.length < 2 ? items.join('') : `${items.slice
 
 /**
  * The packages the window's own code imports. They are devDependencies, because Vite bundles
- * them into out/renderer and the installer has no use for the packages themselves, but their
+ * them into out/renderer-tauri and the installer has no use for the packages themselves, but their
  * code runs in the app all the same, and a sentence calling them build tools would be false.
  */
 function bundledPackages(dir = path.join(ROOT, 'renderer')) {

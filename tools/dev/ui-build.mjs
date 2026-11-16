@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 /**
- * Builds the window's page into out/renderer when it is missing or older than its sources.
+ * Builds the window's page into out/renderer-tauri, which the Tauri shell embeds, and copies the
+ * uninstaller's page beside it.
  *
- * Everything that starts the app from a checkout goes through here first: `npm start`, the
- * sandbox and the end-to-end run. The shell embeds the built page and nothing else, so a run on a
- * stale build would test yesterday's interface and pass. `tauri build` rebuilds it with --force
- * (tauri.conf.json beforeBuildCommand), so an installer never carries an old one either.
+ * Everything that starts the app from a checkout runs this first (`npm start`, the sandbox, the
+ * end-to-end run), and `tauri build` does too (tauri.conf.json beforeBuildCommand). It builds
+ * every time: the shell embeds the page and nothing else, so a run on a stale build would test
+ * yesterday's interface and pass.
  *
- *   node tools/dev/ui-build.mjs           build if stale
- *   node tools/dev/ui-build.mjs --force   build anyway
- *   node tools/dev/ui-build.mjs --tauri   the Tauri shell's copy, out/renderer-tauri (vite.config.mjs)
+ *   node tools/dev/ui-build.mjs
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,30 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { requireDeps } from './deps-check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-export const OUT_PAGE = path.join(root, 'out', 'renderer', 'index.html');
-
-/** The newest modification time among the files the page is built from. */
-function newestSource(projectRoot) {
-  let newest = 0;
-  const walk = (dir) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      const p = path.join(dir, e.name);
-      if (e.isDirectory()) walk(p);
-      else newest = Math.max(newest, fs.statSync(p).mtimeMs);
-    }
-  };
-  walk(path.join(projectRoot, 'renderer'));
-  if (fs.existsSync(path.join(projectRoot, 'vendor'))) walk(path.join(projectRoot, 'vendor'));
-  for (const f of ['vite.config.mjs', 'package-lock.json']) newest = Math.max(newest, fs.statSync(path.join(projectRoot, f)).mtimeMs);
-  return newest;
-}
-
-/** Whether out/renderer is missing or older than a source file. */
-export function isStale(projectRoot = root) {
-  const page = path.join(projectRoot, 'out', 'renderer', 'index.html');
-  if (!fs.existsSync(page)) return true;
-  return newestSource(projectRoot) > fs.statSync(page).mtimeMs;
-}
+export const OUT_DIR = path.join(root, 'out', 'renderer-tauri');
 
 /* The uninstaller's window (renderer/uninstall.html) is not a Vite page: classic scripts and all.
  * The Tauri shell can only load what is in its own folder, so the page and what it links are
@@ -63,28 +39,14 @@ export function copyUninstallPage(outDir, projectRoot = root) {
   fs.writeFileSync(page, html.replace("connect-src 'none'", 'connect-src ipc: http://ipc.localhost'));
 }
 
-/** Builds the page. Quiet unless it fails: the tools that call this print their own progress. */
+/** Builds the page and the uninstaller's copy beside it. */
 export async function buildUi({ quiet = true } = {}) {
   const { build } = await import('vite');
   await build({ configFile: path.join(root, 'vite.config.mjs'), logLevel: quiet ? 'warn' : 'info' });
-}
-
-/** Builds the page when it is stale; returns whether it built. */
-export async function ensureUi(opts) {
-  if (!isStale()) return false;
-  await buildUi(opts);
-  return true;
+  copyUninstallPage(OUT_DIR);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   requireDeps();
-  if (process.argv.includes('--tauri')) {
-    process.env.MM_TARGET = 'tauri';
-    await buildUi({ quiet: false });
-    copyUninstallPage(path.join(root, 'out', 'renderer-tauri'));
-    process.exit(0);
-  }
-  const force = process.argv.includes('--force');
-  const built = force ? (await buildUi({ quiet: false }), true) : await ensureUi({ quiet: false });
-  if (!built) console.log('out/renderer is up to date');
+  await buildUi({ quiet: false });
 }
