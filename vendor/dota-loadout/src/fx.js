@@ -1574,7 +1574,7 @@ function material(texInfo, r) {
   const feather = /ON_/.test(r.m_nFeatheringMode || '') ? number(r.m_flFeatheringMaxDist, FEATHER)(null, null) * 0.0254 : 0;
   const m = new THREE.ShaderMaterial({
     vertexShader, fragmentShader, transparent: true, depthWrite: false, side: THREE.DoubleSide,
-    uniforms: { studioRefract: { value: r.studioRefract === true }, refractShade: { value: 0.6 * Math.min(1, Math.abs(r.m_flRefractAmount ?? 0.1)) }, studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
+    uniforms: { studioRefract: { value: r.studioRefract === true }, refractShade: { value: 0.6 * Math.min(1, Math.abs(r.m_flRefractAmount ?? 0.1)) }, studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true || !!texInfo.tiled }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false }, ...SOFT, uFeather: { value: feather },
       channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') } },
   });
@@ -1834,7 +1834,7 @@ export class Library {
     const result = this.cache.get(key);
     const mask = spec.maskPath && spec.maskPath !== path && this.textures[spec.maskPath]
       ? this.texture({ m_hTexture: spec.maskPath }) : null;
-    return { ...result, channel: spec.channel, alphaFromLuma: spec.alphaFromLuma, alphaChannelFromLuma: spec.alphaChannelFromLuma, maskTexture: mask?.texture || null };
+    return { ...result, channel: spec.channel, tiled: spec.tiled, alphaFromLuma: spec.alphaFromLuma, alphaChannelFromLuma: spec.alphaChannelFromLuma, maskTexture: mask?.texture || null };
   }
   renderer(original, sim) {
     const r = calibrateCosmicFxRenderer(original, sim?.def?._path);

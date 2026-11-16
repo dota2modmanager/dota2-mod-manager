@@ -79,8 +79,10 @@ pub fn effects_for<'a>(
     game_has: &dyn Fn(&str) -> bool,
     named: &dyn Fn(&str) -> Vec<String>,
 ) -> Vec<String> {
-    let side = side_of(body);
-    let fits = |p: &str| side_of(p).is_none_or(|s| side.is_none_or(|b| b == s));
+    // a body of neither side (the Tormentor) stands on Radiant's: the game plays one side's shield
+    // on it, and both at once drew one white blot
+    let side = side_of(body).unwrap_or("radiant");
+    let fits = |p: &str| side_of(p).is_none_or(|s| s == side) && !reaction(p);
     let mut out: Vec<String> = effects_of(category).iter().filter(|p| fits(p)).map(|p| p.to_string()).collect();
     let brought: Vec<String> = mod_paths
         .map(plain)
@@ -98,6 +100,30 @@ pub fn effects_for<'a>(
     }
     out.truncate(MAX_EFFECTS);
     out
+}
+
+/// The parts of an effect that lie on the map's ground, which the stage has none of: the
+/// Tormentor's pit, whose sparkles and steam floated in the air as a square of light under it.
+pub fn drop_ground(def: &mut serde_json::Value) {
+    if let Some(children) = def.get_mut("children").and_then(serde_json::Value::as_array_mut) {
+        children.retain(|c| {
+            let path = c.get("path").and_then(serde_json::Value::as_str).unwrap_or_default();
+            let name = path.rsplit('/').next().unwrap_or(path).to_lowercase();
+            !name.contains("_pit_")
+        });
+        for c in children {
+            drop_ground(c);
+        }
+    }
+}
+
+/// An effect the game plays when something happens to the unit (a hit on the Tormentor's shield, a
+/// death), not while it stands.
+fn reaction(path: &str) -> bool {
+    let name = path.rsplit('/').next().unwrap_or(path).to_lowercase();
+    ["_hit", "_impact", "_death", "_destroy", "_destruction", "_spawn", "_attack", "_explode", "_explosion", "_break"]
+        .iter()
+        .any(|w| name.contains(w))
 }
 
 /// The catalog's categories this stage shows.
@@ -340,6 +366,37 @@ mod tests {
         // a ward has no effect of the game's: only what its mod brings at the game's paths
         assert!(effects_for("wards", "models/props_gameplay/default_ward.vmdl", std::iter::empty(), &has, &named)
             .is_empty());
+    }
+
+    #[test]
+    fn the_pit_is_left_out_of_an_effect() {
+        let mut def = serde_json::json!({ "path": "particles/neutral_fx/miniboss_shield.vpcf", "children": [
+            { "path": "particles/neutral_fx/miniboss_pit_sparkle.vpcf" },
+            { "path": "particles/neutral_fx/miniboss_shield_steam.vpcf", "children": [{ "path": "particles/neutral_fx/miniboss_pit_steam.vpcf" }] }
+        ] });
+        drop_ground(&mut def);
+        assert_eq!(def["children"].as_array().unwrap().len(), 1);
+        assert!(def["children"][0]["children"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn the_tormentor_plays_one_shield_and_no_hits() {
+        let mod_paths = [
+            "particles/neutral_fx/miniboss_shield.vpcf_c",
+            "particles/neutral_fx/miniboss_shield_dire.vpcf_c",
+            "particles/neutral_fx/miniboss_shield_hit.vpcf_c",
+            "particles/neutral_fx/miniboss_dire_shield_hit.vpcf_c",
+        ];
+        let has = |p: &str| p.starts_with("particles/");
+        let named = |_: &str| vec![];
+        let got = effects_for(
+            "tormentor",
+            "models/props_gameplay/divine_sentinel/divine_sentinel_cube.vmdl",
+            mod_paths.into_iter(),
+            &has,
+            &named,
+        );
+        assert_eq!(got, ["particles/neutral_fx/miniboss_shield.vpcf"]);
     }
 
     /// The game's units name a model for every category (MM_TEST_PAK01: the game's pak01_dir.vpk).

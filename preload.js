@@ -176,7 +176,7 @@ contextBridge.exposeInMainWorld('api', {
     map: (map) => ipcRenderer.invoke('decor:map', map).then(wholeAnswer),
     ground: (word, facets) => ipcRenderer.invoke('decor:ground', word, facets).then(wholeAnswer),
     modTrees: (file) => ipcRenderer.invoke('decor:modTrees', file),
-    paint: (file, category) => ipcRenderer.invoke('decor:paint', file, category).then(wholeAnswer),
+    paint: (file) => ipcRenderer.invoke('decor:paint', file).then(wholeAnswer),
     modModel: (file, model) => ipcRenderer.invoke('decor:modModel', file, model).then(wholeAnswer),
   },
   background: { state: () => ipcRenderer.invoke('background:state'), install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur) },

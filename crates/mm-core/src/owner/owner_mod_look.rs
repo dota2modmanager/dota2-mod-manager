@@ -215,7 +215,8 @@ fn mod_props(o: &Owner, args: &[Value]) -> Value {
         .chain(more.into_iter().map(|path| crate::model_particles::Listed { path, config: String::new() }));
     let particles: Vec<crate::hero_preview_fx::PlannedFx> = listed
         .filter_map(|l| {
-            let def = crate::particle_spec::particle_def(&mut read_fx, &l.path, &mut budget, 0, &none)?;
+            let mut def = crate::particle_spec::particle_def(&mut read_fx, &l.path, &mut budget, 0, &none)?;
+            crate::mod_props::drop_ground(&mut def);
             Some(crate::hero_preview_fx::PlannedFx {
                 part: -1,
                 def: crate::particle_spec::bind_item_particle(&def, None, &l.config),

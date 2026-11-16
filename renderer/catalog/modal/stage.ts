@@ -1,6 +1,5 @@
 /* Which catalog mods the mod window shows in 3D, and on what: a hero's or a hero item's, on the
- * hero in the game's own items; a mod of the world's (a ward, a creep, a tower...), its models alone;
- * a river mod, the map's own 3D view over the river.
+ * hero in the game's own items; a mod of the world's (a ward, a creep, a tower...), its models alone.
  * The main process downloads the mod as an install would and reads its files before the game's
  * (crates/mm-core/src/models/mod_look.rs, mod_props.rs). */
 import type { PreviewSlot } from '../../api/preview3d.ts';
@@ -14,16 +13,13 @@ export const PROPS_STAGED: readonly string[] = ['wards', 'creeps', 'towers', 'ro
 
 /** What the stage asks for: the mod's archive, and the name that says the hero when its files do not;
  * `props` for a mod of the world. */
-export interface ModStage { category: string; file: string; hint: string; props?: boolean; river?: boolean }
+export interface ModStage { category: string; file: string; hint: string; props?: boolean }
 
 /** A mod's stage, or null for one that is no hero's, or that installs from a link. */
 export function modStage(categoryId: string, mod: Mod, file: string | null | undefined): ModStage | null {
   const props = PROPS_STAGED.includes(categoryId);
-  const river = categoryId === 'river';
-  if ((!STAGED.includes(categoryId) && !props && !river) || !file || !/\.(zip|vpk)$/i.test(file) || mod.type === 'pack') return null;
+  if ((!STAGED.includes(categoryId) && !props) || !file || !/\.(zip|vpk)$/i.test(file) || mod.type === 'pack') return null;
   if (props) return { category: categoryId, file, hint: mod.name, props: true };
-  // a river mod is the map's water: the map itself, close over the river
-  if (river) return { category: categoryId, file, hint: mod.name, river: true };
   // a hero item sits in its hero's group ("Alchemist"), which names the hero better than the item does
   return { category: categoryId, file, hint: mod._group || mod.name };
 }

@@ -18,7 +18,7 @@ import { forgetGrounds, groundLight, isGround, paintGround, setGround } from './
 import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
-import { isWater, setWaterLook, waterOf, waterTime } from './map-water.ts';
+import { isWater, waterOf, waterTime } from './map-water.ts';
 
 /** The game's own tree sets picked per side, and a catalog Trees mod. */
 /** `mod`: a catalog Trees mod's models by the game tree each stands in for (map-trees.ts) */
@@ -34,8 +34,6 @@ export interface MapView {
   paint(p: TerrainPaint | null): void;
   /** the weather picked over the map (map-weather.ts), by its key, or none; the game's light for each (map-light.ts) */
   weather(key: string | null, lights?: Record<string, ZoneLight> | null): void;
-  /** the camera close over the river where the middle lane crosses it (a river mod's window, modal/RiverStage.tsx) */
-  focusRiver(): void;
   dispose(): void;
 }
 
@@ -69,11 +67,9 @@ function prepare(mat: THREE.Material): void {
   }
 }
 
-/** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one.
- * `area`: the whole map, or only the middle of it where the middle lane crosses the river (a river
- * mod's window): what lies further is dropped before anything is merged or drawn. */
+/** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
 export async function mountMapView(host: HTMLElement, samples: Partial<Record<DecorGroup, DecorSample>>, map: string | null,
-  onProgress: (text: string | null) => void, area: 'all' | 'mid' = 'all'): Promise<MapView> {
+  onProgress: (text: string | null) => void): Promise<MapView> {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // a map of five million triangles at twice the pixels is a slideshow: one and a half is enough
@@ -90,9 +86,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const repaint = () => {
     if (!loaded) return;
     const want = paintWanted;
-    // a river mod's water colours: the water keeps its own material, only its colour changes
-    setWaterLook(want?.water ? Object.values(want.water) : null);
-    changed();
     void paints.paint(want).then((g) => {
       if (paintWanted !== want) return;
       paintGrounds = g;
@@ -129,21 +122,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const clock = new THREE.Clock();
   // the water's waves run while there is water to see: then every frame is drawn (the shadows stay as they are)
   let water = false;
-  // where the water is, and whether the camera is to be over it once the map is in
-  const waterBox = new THREE.Box3();
-  let riverWanted = false;
-  const overRiver = () => {
-    if (!box || waterBox.isEmpty()) return;
-    const reach = Math.max(...box.getSize(new THREE.Vector3()).toArray());
-    const at = waterBox.getCenter(new THREE.Vector3());
-    at.y = waterBox.max.y;
-    controls.target.copy(at);
-    // the whole map's reach, or the middle's alone: the camera stands back by as much of it
-    const k = area === 'mid' ? [0.2, 0.28, 0.4] : [0.03, 0.045, 0.06];
-    camera.position.set(at.x + reach * k[0], at.y + reach * k[1], at.z + reach * k[2]);
-    controls.update();
-    changed();
-  };
   // the weather, made once the map's size is known; the ground's heights, the map's width
   let weather: MapWeather | null = null, weatherWanted: string | null = null, heights: Heights | null = null, mapReach = 1;
   renderer.setAnimationLoop(() => {
@@ -214,12 +192,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     const gone: THREE.Mesh[] = [];
     scene.add(world);
     world.updateMatrixWorld(true);
-    // the middle alone: a ball about the map's centre, what it does not touch goes
-    const whole = new THREE.Box3().setFromObject(world);
-    const keep = area === 'mid'
-      ? new THREE.Sphere(whole.getCenter(new THREE.Vector3()), Math.max(...whole.getSize(new THREE.Vector3()).toArray()) * 0.09)
-      : null;
-    const meshBox = new THREE.Box3();
     // one each, so what takes them still merges into a few draws
     const plain = {
       tree: new THREE.MeshStandardMaterial({ color: 0x2c4a1e, roughness: 1, metalness: 0 }),
@@ -228,7 +200,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     world.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
-      if (keep && !keep.intersectsBox(meshBox.setFromObject(mesh))) { gone.push(mesh); return; }
       // a tree's stump and close-up copy come along with it, and the game shows neither standing
       if (hiddenPart(mesh.name) || hiddenPart(mesh.parent?.name ?? '')) { gone.push(mesh); return; }
       // what wears the fog of war's shader draws nothing in the game: it is how a terrain of the
@@ -239,8 +210,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
         mesh.material = waterOf(mesh.material);
         mesh.castShadow = false;
         water = true;
-        mesh.updateWorldMatrix(true, false);
-        waterBox.expandByObject(mesh);
       }
       // a part whose material the toolchain could not read comes with none, and three draws it white
       // (a low-poly terrain's trees): a tree's green or a neutral grey in its place
@@ -279,7 +248,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     camera.updateProjectionMatrix();
     controls.maxDistance = reach * 2;
     controls.minDistance = reach / 20000;
-    if (riverWanted) overRiver();
     const kind = new Map((samples.treesSimple?.swaps ?? []).map(([from, to]) => [stemOf(from), to]));
     // the rest and the trees merged side by side, in workers, the window free meanwhile
     onProgress(L`Собираю карту`);
@@ -310,7 +278,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     weather(key, lights) {
       light.weather(key ? lights?.[key] ?? null : null, lights?.plain ?? null);
       if (key !== weatherWanted) { weatherWanted = key; weather?.set(key); } changed(); },
-    focusRiver() { riverWanted = true; overRiver(); },
     dispose() {
       disposed = true;
       weather?.dispose();

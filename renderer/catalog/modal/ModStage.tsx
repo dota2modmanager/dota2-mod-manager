@@ -5,7 +5,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Preview3d } from '../preview3d/Preview3d.tsx';
 import { PropStage } from './PropStage.tsx';
-import { RiverStage } from './RiverStage.tsx';
 import type { PreviewSlot } from '../../api/preview3d.ts';
 import { stockSlots, type ModStage as Stage } from './stage.ts';
 
@@ -16,7 +15,6 @@ let slotList: Promise<Awaited<ReturnType<typeof window.api.cosmetics.slots>>> | 
 const allSlots = () => (slotList ??= window.api.cosmetics.slots().catch((e: unknown) => { slotList = null; throw e; }));
 
 export function ModStage({ stage, picture }: { stage: Stage; picture: ReactNode }) {
-  if (stage.river) return <RiverStage stage={stage} picture={picture} />;
   return stage.props ? <PropStage stage={stage} picture={picture} /> : <HeroStage stage={stage} picture={picture} />;
 }
 

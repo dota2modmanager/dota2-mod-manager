@@ -287,12 +287,6 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         // picture and tint, the ground's layers (map_paint.rs). Its pictures come out side by side.
         "decor:paint" => {
             let file = crate::js::string(&a0);
-            // a catalog terrain that is a pak of materials, or a river mod, which is one too (the mod
-            // window's river, modal/RiverStage.tsx)
-            let category = match args.get(1).and_then(Value::as_str) {
-                Some("river") => "river",
-                _ => "terrains",
-            };
             let (ud, game, glb) = {
                 let c = o.core();
                 (c.user_data.clone(), c.game(), c.glb.clone())
@@ -300,7 +294,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             let Some(game) = game else { return Value::Null };
             if !crate::map_base::catalog_kept(&ud, &file) {
                 let to = crate::map_base::catalog_map(&ud, &file);
-                if let Err(e) = crate::owner_mods::download(o, category, &file, &file)
+                if let Err(e) = crate::owner_mods::download(o, "terrains", &file, &file)
                     .and_then(|zip| crate::map_base::take_catalog_map(&zip, &to))
                 {
                     return json!({ "error": e });
@@ -333,10 +327,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                     (list.len() == layers.len()).then(|| (n.clone(), Value::Array(list)))
                 })
                 .collect();
-            pack(
-                o,
-                json!({ "kind": "pak", "hidden": look.hidden, "plain": plain, "grounds": grounds, "water": look.water }),
-            )
+            pack(o, json!({ "kind": "pak", "hidden": look.hidden, "plain": plain, "grounds": grounds }))
         }
         // a catalog Trees mod for the map's 3D view: its archive downloaded as an install would,
         // its models unpacked (map_mod_trees.rs), and the tree models it brings

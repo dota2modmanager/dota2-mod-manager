@@ -143,6 +143,29 @@ fn mime_of(p: &Path) -> Option<&'static str> {
 /// The GLB at `file` with every picture it links to put inside it. A link that leaves the GLB's
 /// folder, or names a file that is not there, gets the blank pixel: the model shows without it.
 pub fn embed_glb(file: &Path) -> Result<Vec<u8>, String> {
+    embed_glb_max(file, None)
+}
+
+/// A PNG beside the GLB no larger than `max` on a side: the one made before, or made now and kept
+/// beside it ("name.1024.png"); the picture itself when it is small or cannot be read.
+fn picture_at_most(at: &Path, max: u32) -> Result<Vec<u8>, String> {
+    let small = at.with_extension(format!("{max}.png"));
+    if let Ok(b) = std::fs::read(&small) {
+        return Ok(b);
+    }
+    let data = std::fs::read(at).map_err(|e| e.to_string())?;
+    match crate::png_paint::shrink(&data, max) {
+        Some(s) => {
+            let _ = std::fs::write(&small, &s);
+            Ok(s)
+        }
+        None => Ok(data),
+    }
+}
+
+/// The same with no picture larger than `max` on a side: a stage a few hundred pixels wide has
+/// no use for a model's 4096-pixel pictures, which made its GLB tens of megabytes.
+pub fn embed_glb_max(file: &Path, max: Option<u32>) -> Result<Vec<u8>, String> {
     let (mut json, bin) = read_glb(&std::fs::read(file).map_err(|e| e.to_string())?)?;
     let parent = file.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."));
     let dir = resolve(&std::path::absolute(parent).map_err(|e| e.to_string())?, "");
@@ -165,7 +188,11 @@ pub fn embed_glb(file: &Path) -> Result<Vec<u8>, String> {
             o.shift_remove("uri");
         }
         let ok = mime.is_some() && inside(&dir, &at) && at.exists();
-        let data = if ok { std::fs::read(&at).map_err(|e| e.to_string())? } else { blank_png() };
+        let data = match (ok, max) {
+            (false, _) => blank_png(),
+            (true, Some(m)) if mime == Some("image/png") => picture_at_most(&at, m)?,
+            (true, _) => std::fs::read(&at).map_err(|e| e.to_string())?,
+        };
         let views = json["bufferViews"].as_array_mut().ok_or("json.bufferViews.push is not a function")?;
         views.push(json!({ "buffer": 0, "byteOffset": all.len(), "byteLength": data.len() }));
         let view = views.len() - 1;
