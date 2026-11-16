@@ -175,7 +175,7 @@ and its KV3, text KeyValues, a texture), and it follows which branches each inpu
 an artifact. On Linux or macOS, with a nightly toolchain:
 
 ```bash
-cargo install cargo-fuzz --version 0.12.0 --locked
+cargo +stable install cargo-fuzz --version 0.13.2 --locked
 cd fuzz && cargo +nightly fuzz run vpk -- -max_total_time=60
 ```
 
