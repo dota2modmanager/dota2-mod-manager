@@ -60,6 +60,8 @@ removes the old Electron files.
 
 - Pick trees and towers in the Your own map window. Apply one set to both sides or give Radiant
   and Dire different looks. The line under each picker shows what each side is using.
+  For example, keep the game's trees on Radiant and pick another set for Dire. Catalog tree mods
+  that replace trees across the map apply to both sides.
 
 ### Your own music and cursors
 
@@ -68,6 +70,8 @@ removes the old Electron files.
   for fights and Roshan.
 - Apply a whole Dota cursor set, then customise individual pointers. For example, keep the
   default arrow and use your own image for the attack cursor, with a click point you choose.
+- Your music collection installs as one mod and appears in My mods.
+- Before installing a cursor, compare it with Dota's default for the same action.
 
 ### Faster startup, My mods and map windows
 
@@ -77,6 +81,9 @@ removes the old Electron files.
   open faster, and the 3D view loads from cache once it's ready.
 - Map Optimization keeps effects you still need in a match. Teleports and the Mjollnir shield
   stay visible with Optimization on, and abilities from installed mods keep their particles.
+- On a test profile with 13 archives totalling 175 MB, cursors and fonts, the first read of
+  the mod list went from 890 ms to 35–45 ms. From the second launch, loading cosmetic slots
+  took 117 ms instead of 1.7 s.
 
 ### Fixes
 
