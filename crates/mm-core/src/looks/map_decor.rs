@@ -142,6 +142,31 @@ fn mine(lib: &Library) -> Option<Value> {
     lib.list().iter().find(|r| r.get("generated").and_then(|g| g.get("decor")).is_some_and(Value::is_array)).cloned()
 }
 
+/// The VPKs of every other mod in My mods, on or off: Optimization's pak loads early and would win
+/// over a file of theirs, so the particles they bring and name are not silenced (fx_in_use.rs).
+fn other_mods_paks(inst: &Installer, lib: &Library) -> Vec<std::path::PathBuf> {
+    let own = mine(lib).and_then(|r| r.get("id").cloned());
+    let mut out = Vec::new();
+    for rec in lib.list().iter().filter(|r| r.get("id") != own.as_ref()) {
+        for f in crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null)) {
+            if !f.rel_path.to_lowercase().ends_with(".vpk") {
+                continue;
+            }
+            let Ok(root) = inst.root_abs(&f.root) else { continue };
+            let at = root.join(&f.rel_path);
+            let found = [
+                at.clone(),
+                crate::installer::with_suffix(&at, ".off"),
+                crate::installer::with_suffix(&at, crate::installer_files::MASTER_OFF),
+            ]
+            .into_iter()
+            .find(|p| p.is_file());
+            out.extend(found);
+        }
+    }
+    out
+}
+
 fn key_of(map: &Path) -> Option<String> {
     let st = std::fs::metadata(map).ok()?;
     let ms = st.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_secs_f64() * 1000.0;
@@ -301,7 +326,9 @@ impl MapDecor {
         if groups.is_empty() {
             return Err(t("Выбери, что убрать с карты", &[]));
         }
-        let (pak, plan) = self.scan(inst)?;
+        let (pak, mut plan) = self.scan(inst)?;
+        let mods = crate::fx_in_use::mods_particles(&other_mods_paks(inst, lib));
+        crate::map_optimize::spare(&mut plan, &pak, &mods);
         let vpk = decor_pak(&pak, &plan, &groups, &[], &Look::default())?;
         let g = json!({ "decor": groups });
         // the decor alone keeps the name it always had; anything more is Optimization

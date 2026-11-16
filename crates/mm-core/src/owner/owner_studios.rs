@@ -334,6 +334,18 @@ pub fn warm_map(o: &Owner) -> Value {
     lights
 }
 
+/// Once after start (owner_start.rs): what [`warm_map`] reads, and the 3D view of the map the two
+/// map windows draw, exported by the toolchain the first time (a minute or more) and kept, so the
+/// windows do not wait on it either. Off the owner's lock throughout; nothing without the toolchain.
+pub fn warm_at_start(o: &Owner) {
+    warm_map(o);
+    let glb = o.core().glb.clone();
+    let started = std::time::Instant::now();
+    if glb.map_world(None).is_some() {
+        o.diag(&format!("map 3D view ready ahead in {} ms", started.elapsed().as_millis()));
+    }
+}
+
 fn weather_lights(game: &std::path::Path) -> Value {
     let map = game.join("dota").join("maps").join("dota.vpk");
     let key = std::fs::metadata(&map)

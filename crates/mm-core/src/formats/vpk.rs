@@ -344,6 +344,10 @@ impl Index {
     pub fn paths(&self) -> impl Iterator<Item = &str> {
         self.order.iter().map(|s| s.as_str())
     }
+    /// The _dir.vpk this index was read from.
+    pub fn dir_path(&self) -> &Path {
+        &self.dir_path
+    }
     pub fn crc(&self, p: &str) -> Option<u32> {
         let at = *self.entries.get(&p.to_lowercase())?;
         read_record(&self.buf, at).ok().map(|r| r.crc)

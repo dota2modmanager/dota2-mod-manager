@@ -2,7 +2,7 @@
 //! catalog's second copies it names; the ready-made presets; the map from a file's fingerprint to
 //! its catalog mod. Each is fetched off the owner's lock, so the window is answered meanwhile, and
 //! being offline leaves the last good copy in place. Once the item table has settled, a rank look
-//! built with an older script is built again, and the map the map windows show is read ahead. A while later, the installed tools are brought up to
+//! built with an older script is built again, and the map the map windows show is read and exported ahead. A while later, the installed tools are brought up to
 //! their pins.
 
 use std::sync::Arc;
@@ -19,8 +19,8 @@ pub fn refresh(o: &Arc<Owner>) {
     std::thread::spawn(move || {
         me.settled();
         rank_script(&me);
-        // the map windows' reading of the map, so their first opening is not a wait
-        crate::owner_studios::warm_map(&me);
+        // the map windows' reading of the map and their 3D view, so their first opening is not a wait
+        crate::owner_studios::warm_at_start(&me);
     });
     // the tools wait until the start's own downloads are done
     let me = Arc::downgrade(o);
