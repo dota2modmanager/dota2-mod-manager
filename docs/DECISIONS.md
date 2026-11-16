@@ -118,7 +118,7 @@ Seven more came on 2026-09-27 with the decision below, `axe-core` on 2026-10-11 
 devDependencies in all. `vite` and
 `@vitejs/plugin-react` build the window's page. `react`, `react-dom` and `motion` are written into
 that page once a screen imports them, which makes them part of the app in every sense but the
-installer's: Vite copies their code into `out/renderer`, and the packages themselves stay behind.
+installer's: Vite copies their code into `out/renderer-tauri`, and the packages themselves stay behind.
 `@types/react` and `@types/react-dom` only check it. The facts block in the README names which of
 them the window imports (`tools/dev/gen-doc-facts.js` reads `renderer/` for that).
 
@@ -140,7 +140,7 @@ renderer/app.js read the program itself. That cost more every month. The catalog
 animation meant timing code written by hand. The size budget stopped the growth; it could not
 undo it.
 
-The page is now built by Vite into `out/renderer`, and every screen is TypeScript and React, with
+The page is now built by Vite into `out/renderer-tauri`, and every screen is TypeScript and React, with
 Motion for animation: one component per file, and no new file past 300 lines. The screens moved one
 at a time, and the last of them on 2026-10-02.
 Types catch a wrong property before a run does, and the model that writes most of this code makes
@@ -161,7 +161,7 @@ reaches `main`.
 The uninstall window still loads `renderer/uninstall.html` as written. The documentation site
 under `site/` is a separate package, built by Astro.
 
-*Check:* `npm run build:ui`, `vite.config.mjs`, and `src-tauri/src/window.rs`, which names the only page the
+*Check:* `node tools/dev/ui-build.mjs`, `vite.config.mjs`, and `src-tauri/src/window.rs`, which names the only page the
 window loads.
 
 ### The documentation site lives in this repository

@@ -1,6 +1,5 @@
-//! The window the uninstaller opens on its way out (src/uninstall-window.ts), under Tauri: the
-//! same page Electron shows (renderer/uninstall.html, copied beside the app's page by
-//! tools/dev/ui-build.mjs --tauri), with only the removal's four calls. The owner answers them and
+//! The window the uninstaller opens on its way out: renderer/uninstall.html, copied beside the
+//! app's page by tools/dev/ui-build.mjs, with only the removal's four calls. The owner answers them and
 //! ends the run with the exit code the uninstaller reads; a close without an answer is the safe
 //! one, cancelling.
 
