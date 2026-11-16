@@ -297,6 +297,7 @@ is loading a tracker, and nothing has to be committed for the picture to move.
 | [Labels](.github/workflows/labels.yml) | Keeps the repository's labels equal to `.github/labels.json` |
 | [Dependency updates](.github/workflows/dependency-updates.yml) | On Dependabot's pull requests: a minor or patch update queues itself to merge, and goes in once every required check passes; anything bigger gets a label and waits for the maintainer |
 | [Mutants](.github/workflows/mutants.yml) | Weekly, not per push: breaks the code that writes into the game folder on purpose and lists the changes no test noticed |
+| [Fuzz](.github/workflows/fuzz.yml) | Weekly, not per push: five minutes of libFuzzer on each parser of other people's files (`fuzz/`), crashes kept as artifacts |
 | [Scorecard](.github/workflows/scorecard.yml) | Weekly and on every change to main: OpenSSF Scorecard grades how the repository is kept (pinned actions, token permissions, branch protection, signed releases) and publishes the score behind the badge above |
 
 Nothing here commits back to `main`. Workflows that need to remember something between runs
