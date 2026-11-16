@@ -24,6 +24,7 @@ before trying a fix.
 | A borrowed arcana effect is faint, or gone while the hero stands | It emits by a control point the game sets for its own hero (the hero's speed into CP6) | Remap from 0 with an output minimum, set the point in the root's pre-emission operators |
 | You asked for twice the particles and got the same | `m_nMaxParticles` capped the new rate | Raise the budget with the rate |
 | An effect on an item hangs in the air beside it | Placed by an offset from an attachment | Surface hitboxes on the item, `C_INIT_CreateOnModel` on `mm_surface`, `C_OP_LockToBone` ([recolor.md](recolor.md)) |
+| Feathers or petals of an effect on an item never fly off | Locked to their box by `C_OP_LockToBone` | A particle drawn as a moving model keeps its operators and takes `C_INIT_NormalAlignToCP` ([recolor.md](recolor.md)) |
 | A model in an effect is tiny or huge | The particle's radius is the model's scale | Set the radius, not the model's size |
 
 ## Models and materials
