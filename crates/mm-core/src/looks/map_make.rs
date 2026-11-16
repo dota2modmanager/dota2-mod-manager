@@ -317,6 +317,7 @@ impl MapMake {
     }
 
     /// The record built again from the game there now (after a Dota update), kept off when it was off.
+    #[expect(dead_code, reason = "nothing builds a map of one's own again after a Dota update, nor did 3.8.0")]
     pub fn rebuild_now(&self, inst: &Installer, lib: &mut Library, log: &mut dyn FnMut(String)) -> Option<String> {
         let rec = mine(lib)?;
         let id = rec.get("id").map(crate::js::string)?;

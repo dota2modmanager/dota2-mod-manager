@@ -220,6 +220,7 @@ impl AbilitySoundsService {
     }
 
     /// The hero built again from the game's current events file, after a Dota update.
+    #[expect(dead_code, reason = "nothing builds a hero's own sounds again after a Dota update, nor did 3.8.0")]
     pub fn rebuild(
         &self,
         inst: &Installer,
