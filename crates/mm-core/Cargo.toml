@@ -32,7 +32,7 @@ fs4 = "1.1"
 # local time for a zip's dates, and the ISO time in the ownership note
 # preset links: raw deflate and base64url, as node:zlib and Buffer make them
 flate2 = "1"
-base64 = "0.22"
+base64 = "0.23"
 # the network: the catalog, mod archives and the signed config, through the mirror chain and the
 # user's proxy. native-tls is SChannel on Windows, so nothing is compiled from C there
 ureq = { version = "3", default-features = false, features = ["native-tls", "gzip"] }
