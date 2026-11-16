@@ -126,7 +126,7 @@ module.exports = [
     rules,
   },
   {
-    /* The Tauri shell's bridge (docs/rust-migration.md): a classic script injected into the page
+    /* The Tauri shell's bridge (src-tauri/src/bridge.js): a classic script injected into the page
        before anything else runs, so browser globals and no module syntax. */
     files: ['src-tauri/src/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'script', globals: BROWSER },

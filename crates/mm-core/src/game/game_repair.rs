@@ -2,7 +2,7 @@
 //! overwrites the patched gameinfo and moves the item table; Steam's file check puts back files a
 //! font or cursor mod replaced. Repaired once at start for a game that changed while the app was
 //! closed, and again the moment the patch watcher sees a patch land. Never while Dota is running:
-//! it holds those files open, so a write would half-succeed. The TypeScript owns a timer to look
+//! it holds those files open, so a write would half-succeed. The TypeScript owned a timer to look
 //! again; here the answer says so (`retry`), and the shell picks the moment.
 
 use std::path::PathBuf;

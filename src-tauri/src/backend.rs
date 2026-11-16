@@ -1,6 +1,5 @@
 //! Who answers the window: the Rust owner of the state (mm_core::owner), which answers every
-//! channel the TypeScript main process registered, so no Node process is started at all
-//! (docs/rust-migration.md, step 3).
+//! channel the TypeScript main process registered, so no Node process is started at all.
 
 use std::path::PathBuf;
 use std::sync::{Arc, OnceLock};
@@ -142,8 +141,9 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
         };
         let owner = Owner::start(opts, Arc::new(TauriShell(app)));
         // a jailed run says so first, as src/write-jail.ts jailLogTo does: e2e.mjs looks for it.
-        // Under Tauri the jail holds the game folder (installer::validate_game_path); the other
-        // writes are not yet routed through it (docs/rust-migration.md)
+        // Under Tauri the jail holds the game folder (installer::validate_game_path) and the user
+        // data folder, checked at start (write_jail::refuse_outside); other writes are not routed
+        // through it
         let roots = mm_core::write_jail::roots();
         if !roots.is_empty() {
             owner.diag(&format!("write jail: writes held to {} (game folder)", roots.join(" | ")));

@@ -2,10 +2,9 @@
 //! content fingerprint that recognises a mod whatever it is packed as.
 //!
 //! Rewritten from src/vpk-read.ts, src/vpk-write.ts and src/vpk-fingerprint.ts. Every rule those
-//! files spell out holds here byte for byte (test/vpk.test.js is the reference, and the parity
-//! test in tests/ compares this crate against it): a single space means "empty" for a folder and
-//! for an extension, paths are lower case, a truncated tree is a refusal and never a panic, and
-//! one buffer under many paths is written once.
+//! files spell out holds here byte for byte, and the tests below hold it: a single space means
+//! "empty" for a folder and for an extension, paths are lower case, a truncated tree is a refusal
+//! and never a panic, and one buffer under many paths is written once.
 
 use std::collections::HashMap;
 use std::fs::File;

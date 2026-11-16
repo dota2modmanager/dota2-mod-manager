@@ -1,7 +1,6 @@
 name: Tauri handover
 
-# The way over from the Electron build to the Tauri one, rehearsed before a release relies on it
-# (docs/rust-migration.md, "Updates and removal under Tauri").
+# The way over from the Electron build to the Tauri one, rehearsed before a release relies on it.
 #
 # The last published Electron release is installed from its own page, given a mark in its userData,
 # then the Tauri installer built from this commit is run over it the way electron-updater runs an
