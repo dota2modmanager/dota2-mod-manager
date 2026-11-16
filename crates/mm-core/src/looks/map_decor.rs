@@ -214,6 +214,22 @@ impl MapDecor {
         self.scan_at(inst, None)
     }
 
+    /// The map in force, for [`MapDecor::warm`]: its path is all the scan needs of the installer.
+    pub fn map_in_force(&self, inst: &Installer) -> Option<PathBuf> {
+        self.game.as_ref().map(|g| self.map_file(inst, g))
+    }
+
+    /// The map counted and sampled, unless it is already: what the first opening of either map
+    /// window waited for (a second or more), done ahead and off the owner's lock, which the window
+    /// and every other channel would otherwise queue behind.
+    pub fn warm(&self, map: &Path) -> Result<(), String> {
+        let counted = COUNTED.lock().unwrap_or_else(|e| e.into_inner()).as_ref().map(|c| c.0.clone());
+        if key_of(map).is_some() && counted == key_of(map) {
+            return Ok(());
+        }
+        self.plan_of(map).map(|_| ())
+    }
+
     /// The plan of a map: `base`'s (the one a build makes the map from), else the one in force.
     fn scan_at(
         &self,
@@ -222,14 +238,20 @@ impl MapDecor {
     ) -> Result<(std::sync::Arc<Index>, crate::map_optimize::Plan), String> {
         let game = self.game.as_ref().ok_or_else(|| t("Не указана папка игры", &[]))?;
         let map = base.map(Path::to_path_buf).unwrap_or_else(|| self.map_file(inst, game));
+        self.plan_of(&map)
+    }
+
+    /// The plan of the map at `map`, its counts and samples kept for the window.
+    fn plan_of(&self, map: &Path) -> Result<(std::sync::Arc<Index>, crate::map_optimize::Plan), String> {
+        let game = self.game.as_ref().ok_or_else(|| t("Не указана папка игры", &[]))?;
         if !map.exists() {
             return Err(t("В игре нет файла {0}", &[json!(MAP_REL)]));
         }
         let pak =
             crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
-        let index = Index::open(&map).map_err(|e| e.to_string())?;
+        let index = Index::open(map).map_err(|e| e.to_string())?;
         let plan = crate::map_optimize::plan(&index, &pak)?;
-        if let Some(key) = key_of(&map) {
+        if let Some(key) = key_of(map) {
             let counts = plan.iter().map(|(g, l)| (*g, l.len())).collect();
             // what the window's scene stands for each group; none is no reason to fail the scan
             let samples = crate::map_optimize::samples(&index, &pak, &plan)
