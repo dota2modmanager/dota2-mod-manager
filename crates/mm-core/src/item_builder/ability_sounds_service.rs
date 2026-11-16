@@ -219,8 +219,17 @@ impl AbilitySoundsService {
         self.apply(inst, lib, hero, edits, compile, log)
     }
 
+    /// The records among `ids` that hold a hero's own sounds, with the hero: what a Dota update
+    /// that reached them leaves to build again.
+    pub fn due(lib: &Library, ids: &[String]) -> Vec<(String, String)> {
+        lib.list()
+            .iter()
+            .filter_map(|r| Some((crate::js::string(r.get("id")?), r["generated"]["sounds"].as_str()?.to_string())))
+            .filter(|(id, _)| ids.contains(id))
+            .collect()
+    }
+
     /// The hero built again from the game's current events file, after a Dota update.
-    #[expect(dead_code, reason = "nothing builds a hero's own sounds again after a Dota update, nor did 3.8.0")]
     pub fn rebuild(
         &self,
         inst: &Installer,
