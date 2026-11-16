@@ -19,13 +19,18 @@ const BINARIES = ['Dota-2-Mod-Manager-Setup.exe', 'Dota-2-Mod-Manager-Portable.e
 /** What somebody checking a download reads: checksums, their signed bundle, the SBOM. */
 const PROOF = ['SHA256SUMS', 'SHA256SUMS.intoto.jsonl', 'dota2-mod-manager.cdx.json'];
 /** Every file a published release carries, a beta included: a beta carries latest.yml too,
- *  because electron-builder names its feed that whatever the version says. */
+ *  because the Electron copies read the feed by that name whatever the version says. */
 const REQUIRED_ASSETS = [...FEEDS, ...BINARIES, ...PROOF];
+/** The first version built by Tauri, so the first to carry its feeds. */
+const TAURI_FROM = '4.0.0';
+const TAURI_FEEDS = ['latest.json', 'beta.json'];
 
-/** Which required files are not among `names`. */
-function missingAssets(names) {
+/** Which required files are not among `names`. Given the release's version, a release from
+ *  before TAURI_FROM is not held to the Tauri feeds it was built without. */
+function missingAssets(names, version = null) {
   const have = new Set(names);
-  return REQUIRED_ASSETS.filter((n) => !have.has(n));
+  const old = version && parseVersion(version) && compareVersions(version, TAURI_FROM) < 0;
+  return REQUIRED_ASSETS.filter((n) => !have.has(n) && !(old && TAURI_FEEDS.includes(n)));
 }
 
 /** 2.8.0-beta.1 -> { core: [2, 8, 0], pre: ['beta', 1] }, or null for anything else. */
@@ -85,17 +90,20 @@ function feedVersion(text) {
 /**
  * What the mirror has to hold for these two heads: each feed with the version it must announce,
  * each binary with the size it must have. A beta's binaries carry -beta, and its feeds are the
- * beta channel's; with no beta out, the beta channel reads the release.
+ * beta channel's; with no beta out, the beta channel reads the release. The Tauri feeds
+ * (latest.json, beta.json) are owed only for a release that carries latest.json: the Electron
+ * releases up to 3.8.0 went out without one, and the mirror cannot hold what was never made.
  * @returns {Array<{name: string, version?: string, size?: number}>}
  */
 function mirrorExpectation({ stable, beta }) {
   if (!stable) return [];
   const sizeIn = (rel, name) => ((rel.assets || []).find((a) => a.name === name) || {}).size;
+  const tauri = (rel) => (rel.assets || []).some((a) => a.name === 'latest.json');
   const want = [];
-  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', 'latest.json']) want.push({ name, version: stable.version });
+  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', ...(tauri(stable) ? ['latest.json'] : [])]) want.push({ name, version: stable.version });
   for (const name of BINARIES) want.push({ name, size: sizeIn(stable, name) });
   const tester = beta || stable;
-  for (const name of ['beta.yml', 'beta-linux.yml', 'beta.json']) want.push({ name, version: tester.version });
+  for (const name of ['beta.yml', 'beta-linux.yml', ...(tauri(tester) ? ['beta.json'] : [])]) want.push({ name, version: tester.version });
   if (beta) for (const name of BINARIES) want.push({ name: betaName(name), size: sizeIn(beta, name) });
   return want;
 }
