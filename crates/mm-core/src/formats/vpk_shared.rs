@@ -4,7 +4,7 @@
 //! asked for; a changed file (size or time) is opened anew.
 
 use std::path::Path;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, Once, OnceLock};
 use std::time::{Duration, Instant};
 
 use crate::vpk::Index;
@@ -42,13 +42,46 @@ pub fn shared_index(dir_path: &Path) -> crate::vpk::Result<Arc<Index>> {
     }
     let index = Arc::new(Index::open(dir_path)?);
     *slot().lock().unwrap_or_else(|e| e.into_inner()) = Some(Held { key, index: index.clone(), asked: Instant::now() });
+    watch_idle();
     Ok(index)
 }
 
-/// Let the held index go once it has idled (a caller with a timer: the shell).
-pub fn release_idle() {
-    let mut held = slot().lock().unwrap_or_else(|e| e.into_inner());
-    if held.as_ref().is_some_and(|h| h.asked.elapsed() >= IDLE) {
+/// A thread, started with the first index, that lets the held one go once it has idled. Without
+/// it the index (~90 MB for the game's pak01) stayed until the app closed: the TypeScript let it go
+/// on a timer of its own, and the Rust start had nothing in that timer's place.
+fn watch_idle() {
+    static STARTED: Once = Once::new();
+    STARTED.call_once(|| {
+        std::thread::spawn(|| loop {
+            std::thread::sleep(IDLE / 2);
+            release(&mut slot().lock().unwrap_or_else(|e| e.into_inner()), IDLE);
+        });
+    });
+}
+
+/// The held index let go when nothing has asked for it for `idle`.
+fn release(held: &mut Option<Held>, idle: Duration) {
+    if held.as_ref().is_some_and(|h| h.asked.elapsed() >= idle) {
         *held = None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn an_index_asked_for_lately_stays_and_an_idle_one_goes() {
+        let dir = std::env::temp_dir().join(format!("mm-vpk-shared-{}", uuid::Uuid::new_v4().simple()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("pak01_dir.vpk");
+        std::fs::write(&file, crate::vpk::build(&[crate::vpk::entry_at("a/b.txt", b"x".to_vec().into())])).unwrap();
+        let index = Arc::new(Index::open(&file).unwrap());
+        let _ = std::fs::remove_dir_all(&dir);
+        let mut h = Some(Held { key: "k".into(), index, asked: Instant::now() });
+        release(&mut h, IDLE);
+        assert!(h.is_some(), "asked for a moment ago");
+        release(&mut h, Duration::ZERO);
+        assert!(h.is_none(), "idle for longer than the limit");
     }
 }
