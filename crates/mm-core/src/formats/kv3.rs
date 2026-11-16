@@ -229,13 +229,18 @@ fn read_blobs(block: &[u8], at: usize, t: &BlobTable, tb: &[u8], total: i64) -> 
     if sum != total || sum < 0 {
         return err("the blob lengths do not add up");
     }
-    let mut data = vec![0u8; sum as usize];
     let mut p = at;
-    if !t.lz4 {
-        let src = block.get(p..p + data.len()).ok_or_else(|| Kv3Error("the blobs ran out".into()))?;
-        data.copy_from_slice(src);
-        p += data.len();
+    let data = if !t.lz4 {
+        // the bytes are there before a buffer is made for them: the lengths are the file's word
+        let src = block.get(p..p + sum as usize).ok_or_else(|| Kv3Error("the blobs ran out".into()))?;
+        p += src.len();
+        src.to_vec()
     } else {
+        // every frame is at most 255 times its bytes (lz4.rs), and the frames are in the block
+        if sum as usize > block.len().saturating_sub(p).saturating_mul(255) {
+            return err("the blobs ran out");
+        }
+        let mut data = vec![0u8; sum as usize];
         let (mut f, mut o) = (0usize, 0usize);
         for &n in &lengths {
             let mut left = n.max(0) as usize;
@@ -258,7 +263,8 @@ fn read_blobs(block: &[u8], at: usize, t: &BlobTable, tb: &[u8], total: i64) -> 
         if f != t.frames {
             return err("blob frames left over");
         }
-    }
+        data
+    };
     if u32_at(block, p).ok() != Some(TRAILER) {
         return err("no trailer after the blobs");
     }
@@ -603,7 +609,8 @@ pub fn read(block: &[u8]) -> Result<Block, Kv3Error> {
     l4.at += 4;
     lanes.extend([l1, l2, l4, l8]);
     let aux = [0, 1, 2, 3];
-    let mut strings = Vec::with_capacity(n_strings.max(0) as usize);
+    // the count is the file's word: room for no more strings than the buffer has ends for
+    let mut strings = Vec::with_capacity((n_strings.max(0) as usize).min(b0.len()));
     let mut text_at = if version >= 5 { lanes[0].at } else { off };
     for _ in 0..n_strings.max(0) {
         let z = memchr::memchr(0, b0.get(text_at..).unwrap_or(&[]))
@@ -1340,6 +1347,18 @@ pub fn write(kv: &Block) -> Result<Vec<u8>, Kv3Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // libFuzzer, 2026-11-16: 59 bytes claiming 0x48000000 strings. The reader reserved room for
+    // all of them before reading one, 29 GB, and a failed allocation ends the process: a mod
+    // carrying this would have closed the app.
+    #[test]
+    fn a_string_count_the_block_cannot_hold_is_refused_before_anything_is_reserved() {
+        let block = [
+            1u8, 51, 86, 75, 1, 0, 0, 48, 0, 0, 0, 28, 1, 0, 0, 0, 0, 59, 8, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+            0, 0, 59, 8, 1, 0, 0, 0, 0, 0, 72, 72, 45, 250, 250, 0, 0, 0, 0, 0, 0, 0, 0, 0, 215,
+        ];
+        assert!(read(&block).is_err());
+    }
 
     #[test]
     fn a_tree_handed_back_unchanged_writes_the_same_block_and_a_changed_number_lands() {
