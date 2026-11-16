@@ -48,20 +48,35 @@ removes the old Electron files.
 - In Weather and the other cosmetics sections, search, sort and filters fit on one line.
 - The mods folder button and the mods switch in the bottom bar form one button, the size of Play.
 
-### New in the Catalog and Workshop
+### Preview catalog mods in 3D
 
-- Preview catalog mods for heroes, hero items, wards, creeps, towers, Roshan, ancients, the
-  Tormentor, couriers, pedestals and trees in 3D before installing them.
-- In Your own map, choose tree and tower sets separately for Radiant and Dire, or apply one set
-  to both sides.
-- In the Workshop, set your own music for the menu, matches, fights and Roshan. You can also
-  customise each cursor with a Dota cursor or an image of your own.
+- Open a mod's card to see it in 3D before installing it. Alongside heroes and their items,
+  previews now cover wards, creeps, towers, Roshan, ancients, the Tormentor, couriers, pedestals
+  and trees. You can see the model move and watch its effects.
+- For ancient mods, switch between Radiant and Dire. For mods with several models, such as a
+  tower set, you can look at each model in turn.
 
-### Performance
+### Your own map
 
-- The app starts faster and My mods opens faster, especially if you have a lot of mods, fonts
-  or cursors installed. The map windows also load faster.
-- Map Optimization keeps particle effects used by abilities, items and installed mods.
+- Pick trees and towers in the Your own map window. Apply one set to both sides or give Radiant
+  and Dire different looks. The line under each picker shows what each side is using.
+
+### Your own music and cursors
+
+- Replace Dota's music with your own tracks in the Workshop. Listen before installing, choose
+  whether tracks play in the menu, during quiet parts of a match or both, and mark separate tracks
+  for fights and Roshan.
+- Apply a whole Dota cursor set, then customise individual pointers. For example, keep the
+  default arrow and use your own image for the attack cursor, with a click point you choose.
+
+### Faster startup, My mods and map windows
+
+- At startup and when opening My mods, the app only rereads mod archives, fonts and cursors
+  if their files have changed. This makes the biggest difference when you have a lot installed.
+- The app prepares the 3D map in the background after startup. Your own map and Optimization
+  open faster, and the 3D view loads from cache once it's ready.
+- Map Optimization keeps effects you still need in a match. Teleports and the Mjollnir shield
+  stay visible with Optimization on, and abilities from installed mods keep their particles.
 
 ### Fixes
 
