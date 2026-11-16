@@ -21,6 +21,7 @@ import { soundLead, openSounds } from './catalog/sounds.ts';
 import { iconsPicked, openAbilityIcons } from './catalog/ability-icons.ts';
 import { backgroundLead, openBackground } from './catalog/background.ts';
 import { openPortraits, portraitsOn, readPortraits } from './catalog/portraits.ts';
+import { musicOn, openMusic, readMusic } from './catalog/music.ts';
 import { hudLead, openHud } from './catalog/hud.ts';
 import { openEffects } from './catalog/effects.ts';
 import { rankLead, openRank } from './catalog/rank.ts';
@@ -72,6 +73,8 @@ async function groups(): Promise<StudioGroup[]> {
   await readPortraits();
   const portraits = portraitsOn();
   const hud = hudLead('huds');
+  await readMusic();
+  const music = musicOn();
   const tile = (t: Omit<StudioTile, 'fresh'>): StudioTile => ({ ...t, fresh: isNew(t.id) });
 
   return [
@@ -105,6 +108,8 @@ async function groups(): Promise<StudioGroup[]> {
     { id: 'ui', title: L`Интерфейс`, tiles: [
       tile({ id: 'background', icon: 'wallpaper', title: L`Свой фон главного меню`, text: L`Картинка, GIF или видео вместо фона меню.`,
         status: backgroundLead('backgrounds')?.installed ? on(L`Стоит`) : undefined, open: (el) => openBackground(el) }),
+      tile({ id: 'music', icon: 'library_music', title: L`Своя музыка`, text: L`Твои песни вместо музыки игры: в меню, в матче и отдельные для драк.`,
+        status: music ? on(L`Песен: ${music}`) : undefined, open: (el) => openMusic(el) }),
       tile({ id: 'hud', icon: 'dashboard_customize', title: L`Редактор интерфейса`, text: L`Двигай панели HUD, меняй их размер и оттенок, убирай лишнее.`,
         status: hud?.changed != null ? on(L`Панелей изменено: ${hud.changed}`) : undefined, open: (el) => openHud(el) }),
       tile({ id: 'rank', icon: 'military_tech', title: L`Ранг и уровни героев`, text: L`Своя медаль и уровни героев на твоём экране. Видишь только ты.`,

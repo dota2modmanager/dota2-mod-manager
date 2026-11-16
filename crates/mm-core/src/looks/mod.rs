@@ -23,6 +23,8 @@ pub mod map_paint;
 pub mod map_scene;
 pub mod menu_background;
 pub mod menu_background_service;
+pub mod own_music;
+pub mod own_music_service;
 pub mod pumpkin;
 pub mod recolor;
 pub mod recolor_layers;

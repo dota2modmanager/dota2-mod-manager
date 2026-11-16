@@ -402,6 +402,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "rank:pictures",
             "decor:state",
             "background:state",
+            "music:state",
             "icons:heroes",
             "portraits:state",
             "map:state",
@@ -611,6 +612,23 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             (
                 "background:install",
                 vec![optional(bytes(48.0 * MB)), optional(str_(200, 0)), num(0.0, 0.9), num(0.0, 20.0)],
+            ),
+            ("music:keep", vec![bytes(112.0 * MB)]),
+            (
+                "music:install",
+                vec![
+                    list(
+                        shape(vec![
+                            ("id", str_(40, 40)),
+                            ("name", str_(200, 0)),
+                            ("seconds", optional(num(0.0, 36000.0))),
+                            ("role", optional(one_of(&[Some("calm"), Some("fight"), Some("roshan")]))),
+                        ]),
+                        60,
+                    ),
+                    bool_(),
+                    bool_(),
+                ],
             ),
             ("icons:hero", vec![str_(40, 2)]),
             ("portraits:hero", vec![str_(40, 2)]),

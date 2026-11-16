@@ -64,3 +64,32 @@
 .icon-cards { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
 .icon-card-pic { aspect-ratio: 1 / 1; }
 .icon-card:disabled { cursor: progress; }
+
+/* background music of the user's own (renderer/catalog/music): the songs as a list, each heard
+   before it goes in, then where in the game they play */
+.music-list { display: flex; flex-direction: column; gap: var(--space-1); max-height: 42vh; overflow-y: auto; margin: 0; padding: 0; list-style: none; counter-reset: song; }
+.music-song {
+  display: flex; align-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface);
+}
+.music-song.playing { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); }
+.music-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-time { font-size: var(--text-xs); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.music-play, .music-remove {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: var(--radius-full);
+  background: transparent; color: var(--text-muted); cursor: pointer;
+}
+.music-play:hover:not(:disabled), .music-remove:hover { color: var(--text); background: var(--surface); }
+.music-play:disabled { opacity: 0.35; cursor: default; }
+.music-song.playing .music-play { color: var(--primary); }
+.music-empty { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-4); color: var(--text-faint); justify-content: center; }
+.music-places { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.music-place { display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+.music-fight {
+  display: inline-flex; align-items: center; gap: var(--space-1); padding: 2px var(--space-2); border: 1px solid var(--border);
+  border-radius: var(--radius-full); background: transparent; color: var(--text-faint); font: inherit; font-size: var(--text-xs); cursor: pointer;
+}
+.music-fight .ms { font-size: var(--text-sm); }
+.music-fight:hover { color: var(--text); border-color: var(--border-strong); }
+.music-fight.on { color: #ffb4a2; border-color: color-mix(in srgb, #e5533d 60%, var(--border)); background: color-mix(in srgb, #e5533d 14%, transparent); }
+.music-fight.roshan.on { color: #c9b8ff; border-color: color-mix(in srgb, #8a63ff 60%, var(--border)); background: color-mix(in srgb, #8a63ff 16%, transparent); }

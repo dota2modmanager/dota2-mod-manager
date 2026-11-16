@@ -17,6 +17,30 @@ pub fn run(
     env: &[(String, String)],
     timeout_ms: u64,
 ) -> Result<(i32, String), String> {
+    run_at(program, args, cwd, env, timeout_ms, false)
+}
+
+/// [`run`] below normal priority on Windows: a long build that takes every core (Valve's
+/// compiler over a list of songs) then leaves the pointer and the other windows smooth. Elsewhere
+/// it is [`run`]. Fits [`crate::wine::RunProcess`].
+pub fn run_low(
+    program: &str,
+    args: &[String],
+    cwd: Option<&Path>,
+    env: &[(String, String)],
+    timeout_ms: u64,
+) -> Result<(i32, String), String> {
+    run_at(program, args, cwd, env, timeout_ms, true)
+}
+
+fn run_at(
+    program: &str,
+    args: &[String],
+    cwd: Option<&Path>,
+    env: &[(String, String)],
+    timeout_ms: u64,
+    low: bool,
+) -> Result<(i32, String), String> {
     let mut cmd = Command::new(program);
     cmd.args(args).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
     if let Some(dir) = cwd {
@@ -29,8 +53,11 @@ pub fn run(
     {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
+        const BELOW_NORMAL_PRIORITY_CLASS: u32 = 0x0000_4000;
+        cmd.creation_flags(CREATE_NO_WINDOW | if low { BELOW_NORMAL_PRIORITY_CLASS } else { 0 });
     }
+    #[cfg(not(windows))]
+    let _ = low;
     let mut child = cmd.spawn().map_err(|e| format!("{program}: {e}"))?;
     let out = Arc::new(Mutex::new(Vec::<u8>::new()));
     let pump = |src: Option<Box<dyn Read + Send>>| {
@@ -80,6 +107,8 @@ mod tests {
         let (code, text) = run(prog, &args, None, &[], 10_000).unwrap();
         assert_eq!(code, 3);
         assert!(text.contains("hi"));
+        let (low, said) = run_low(prog, &args, None, &[], 10_000).unwrap();
+        assert_eq!((low, said.contains("hi")), (3, true));
     }
 
     #[test]
