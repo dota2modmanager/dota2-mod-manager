@@ -48,12 +48,29 @@ removes the old Electron files.
 - In Weather and the other cosmetics sections, search, sort and filters fit on one line.
 - The mods folder button and the mods switch in the bottom bar form one button, the size of Play.
 
+### New in the Catalog and Workshop
+
+- Preview catalog mods for heroes, hero items, wards, creeps, towers, Roshan, ancients, the
+  Tormentor, couriers, pedestals and trees in 3D before installing them.
+- In Your own map, choose tree and tower sets separately for Radiant and Dire, or apply one set
+  to both sides.
+- In the Workshop, set your own music for the menu, matches, fights and Roshan. You can also
+  customise each cursor with a Dota cursor or an image of your own.
+
+### Performance
+
+- The app starts faster and My mods opens faster, especially if you have a lot of mods, fonts
+  or cursors installed. The map windows also load faster.
+- Map Optimization keeps particle effects used by abilities, items and installed mods.
+
 ### Fixes
 
 - A mod that takes longer than ten seconds to download no longer fails halfway. A slow but steady
   mirror finishes; one that sends nothing for 30 seconds still gets dropped.
 - The uninstaller asks what to remove in a window drawn like the app, shows how much space each
   choice frees and greys out what you don't have.
+- Unusual effects added in the item builder now stay visible after Hex wears off.
+- After a Dota update, the app rebuilds your custom map and hero sounds when needed.
 - The rest of the screens now have Simplified Chinese.
 
 ### Other platforms
