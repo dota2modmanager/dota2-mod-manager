@@ -88,6 +88,10 @@ jobs:
 
       - run: npm ci
 
+      # the same stable rust-cache.yml warmed the cache with: rustc's version is part of its key
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
       - name: The page for the shell
         run: node tools/dev/ui-build.mjs --tauri
 

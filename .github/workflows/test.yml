@@ -106,6 +106,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # the same stable rust-cache.yml warmed the cache with: rustc's version is part of the
+      # cache key, and the image's own older Rust never found it (every crate built from scratch)
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component clippy && rustup default stable
+
       # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI
       # when it is missing instead of skipping (test/helpers/mm-cli.ts)
       # the target folder rust-cache.yml built on main: a pull request rebuilds only what it
