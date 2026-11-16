@@ -88,12 +88,11 @@ jobs:
 
       # Make the release before anything is uploaded into it.
       #
-      # electron-builder creates one per artifact when it finds none, and on 2.2.0 two of them
-      # were created in the same second: the installer and latest.yml landed on one, the
-      # blockmap on the other. GitHub then answered /releases/latest with the release holding
-      # only the blockmap, so every installed copy looked for latest.yml, did not find it, and
-      # stopped updating. A release that already exists is one electron-builder uploads into
-      # rather than races to create. It also puts the notes on the page at creation, which the
+      # On 2.2.0 the Electron build's uploader created one per artifact when it found none, two
+      # of them in the same second: the installer and latest.yml landed on one, the blockmap on
+      # the other. GitHub then answered /releases/latest with the release holding only the
+      # blockmap, so every installed copy looked for latest.yml, did not find it, and stopped
+      # updating. Every upload since goes into a release that already exists. It also puts the notes on the page at creation, which the
       # edit afterwards could not do while two releases shared a tag.
       #
       # It opens as a draft. A draft is invisible to /releases/latest, so no installed copy can
@@ -290,7 +289,7 @@ jobs:
           done < assets.txt
           ls -l release
 
-      # A tester's copy reads beta.yml, and electron-builder names the feed latest.yml whatever the
+      # A tester's Electron copy reads beta.yml, and the feed is written as latest.yml whatever the
       # version says. So the same feed goes on the draft again under the beta names: for a beta it is
       # the build its testers are offered, for a release it moves a tester off the beta it replaces.
       # It used to be added after publishing, and on 2.7.1 that step never ran. A published release
@@ -375,12 +374,9 @@ jobs:
           node-version: 24
           cache: npm
 
-      # The fixture is built with this repository's VPK writer and adm-zip. The Electron that npm
-      # would download is not the app under test, so it is skipped.
+      # The fixture is built with this repository's VPK writer and adm-zip.
       - name: Install dependencies
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Download the installer from the draft
         shell: bash
@@ -449,8 +445,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Install xvfb
         # A mirror that stops answering held this step for two hours on 2026-10-01. apt drops a
@@ -527,12 +521,9 @@ jobs:
           node-version: 24
           cache: npm
 
-      # The fixture is built with this repository's VPK writer and adm-zip. The Electron that npm
-      # would download is not the app under test, so it is skipped.
+      # The fixture is built with this repository's VPK writer and adm-zip.
       - name: Install dependencies
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Download the installer from the draft
         shell: bash

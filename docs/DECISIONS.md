@@ -523,37 +523,6 @@ the uninstaller takes it out.
 Real ones. Listed here so a review does not have to find them and so the answer is the same
 whoever asks.
 
-### One advisory in the build tools has no fix, and is accepted until a date
-
-`sprintf-js` (GHSA-hp3w-g68c-fv3c, moderate) has no fixed version: 1.1.3 is the newest and is
-affected. It reaches this repository only through the build: `electron-builder` asks for
-`@electron/get` 3, which brings `global-agent` 3 and `roarr`, which formats its own log lines with
-it. The flaw needs a format string an attacker writes, nothing here passes one in, and none of the
-chain ships inside the app. `@electron/get` 5 drops the chain, and `electron-builder` takes it from
-version 27, in alpha on 2026-10-08. Forcing it into the release build ahead of that is a bigger
-risk than a log formatter that never sees outside input.
-
-The acceptance is written in `osv-scanner.toml` with a date it runs out on, 2027-01-08. OpenSSF
-Scorecard reads that file, and so does the radar: until the date the advisory is settled, after
-it the radar asks again.
-
-*Check:* `osv-scanner.toml`, `npm ls sprintf-js`, and `acceptedAdvisories` in `tools/ops/radar.mjs`.
-
-### A second advisory in the build tools, fixed only in a major they do not take
-
-`minimatch` (GHSA-g3hv-75wg-m249, moderate) is fixed in 11.0.1 and in no older line. Every tool
-here that uses it asks for one: `electron-builder` 26 and 27-alpha bring 3.x, 5.x, 9.x and 10.x
-through `app-builder-lib`, `@electron/asar`, `@electron/universal` and `ejs`, and `eslint` 10.14
-asks for ^10. An override to 11 is not a fix: the 3.x callers call the module itself, and 11
-exports a name. The flaw is a slow match on a glob pattern an attacker writes, and the patterns
-here come from the build and lint configs in this repository. `npm ls minimatch --omit=dev` is
-empty, so none of it ships inside the app.
-
-It is accepted in `osv-scanner.toml` until 2027-01-08, the same date as `sprintf-js`, so both
-come back as questions together, around when `electron-builder` 27 is out of alpha.
-
-*Check:* `osv-scanner.toml`, `npm ls minimatch` and `npm ls minimatch --omit=dev`.
-
 ### glib on Linux, through Tauri's tray icon
 
 The Linux build carries `glib` 0.18 (RUSTSEC-2024-0429, an unsound iterator over a GVariant's
