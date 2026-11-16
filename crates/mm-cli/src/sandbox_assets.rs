@@ -15,7 +15,7 @@
 use std::collections::BTreeSet;
 use std::path::Path;
 
-use mm_core::{data, gamelang, item_builder, item_builder_details, item_builder_slots, unusual_effects, vpk};
+use mm_core::{data, gamelang, item_builder_details, item_builder_slots, item_effect_patch, unusual_effects, vpk};
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -43,7 +43,7 @@ fn compiled(p: &str) -> String {
 /// What the built block points at and what the build copies, for one item with one effect.
 fn patch_files(schema: &[u8], id: &str, effect: Option<&str>, want: &mut BTreeSet<String>) {
     let ids: Vec<String> = effect.map(|e| vec![e.to_string()]).unwrap_or_default();
-    let Ok(built) = item_builder::item_effect_patch(schema, id, &ids, None, None, None) else { return };
+    let Ok(built) = item_effect_patch(schema, id, &ids, None, None, None) else { return };
     let block = mm_core::kv::latin1(&built.block);
     let re = regex::Regex::new(r#"(?i)"((?:models|particles|materials)/[^"]+\.(?:vmdl|vpcf|vmat|vtex))""#).unwrap();
     for m in re.captures_iter(&block) {

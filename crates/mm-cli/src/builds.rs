@@ -9,9 +9,9 @@
 
 use std::path::Path;
 
-use mm_core::arcana::build_arcana;
-use mm_core::looks::{recolor, tower_looks, tree_sets};
+use mm_core::build_arcana;
 use mm_core::vpk;
+use mm_core::{recolor, tower_looks, tree_sets};
 use serde::Deserialize;
 use serde_json::{json, Value};
 

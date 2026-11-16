@@ -11,7 +11,7 @@
 
 use std::path::Path;
 
-use mm_core::looks::recolor;
+use mm_core::recolor;
 use mm_core::{kv3, resource, vpk};
 use serde::Deserialize;
 use serde_json::{json, Value};

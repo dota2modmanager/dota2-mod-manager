@@ -66,7 +66,7 @@ fn run(args: &[String]) -> Result<Value, String> {
             Ok(json!({ "fp": fp, "kind": a.kind, "subjects": subjects, "paths": paths }))
         }
         // where the catalog's files are served from
-        "catalog-base" => Ok(json!(mm_core::catalog::RAW_BASE)),
+        "catalog-base" => Ok(json!(mm_core::RAW_BASE)),
         // a loose-file mod's fingerprint, from a list.json of [path in the mod, file] pairs
         // relative to the list
         "files-fingerprint" => {
@@ -112,10 +112,9 @@ fn run(args: &[String]) -> Result<Value, String> {
         // the catalog fetched fresh into <user data>/catalog-cache, as the app fetches it, and where
         // its files are served from
         "catalog-load" => {
-            let catalog =
-                mm_core::catalog::Catalog::new(Path::new(arg(1)?), None, None, Box::new(mm_core::net_fetch::now_ms));
+            let catalog = mm_core::Catalog::new(Path::new(arg(1)?), None, None, Box::new(mm_core::net_fetch::now_ms));
             let data = catalog.load(&mm_core::net_fetch::Net::default(), true)?;
-            Ok(json!({ "rawBase": mm_core::catalog::RAW_BASE, "data": data }))
+            Ok(json!({ "rawBase": mm_core::RAW_BASE, "data": data }))
         }
         // a gameinfo_branchspecific.gi with this app's search path taken out, in place
         "strip-patch" => {
