@@ -9,6 +9,7 @@
  *   npm run modkit -- recolor necrolyte 190,6,6 --out work/mod     a hero's effects in a colour
  *   npm run modkit -- warp particles/status_fx/<effect>.vpcf_c materials/<...>/colorwarp_rupture.vtex --out work/mod
  *                                                                   a status effect on another colour warp
+ *   npm run modkit -- fx <compiled.vmdl_c> particles/<yours>.vpcf    effects of its own on a model
  *   npm run modkit -- compile my_mod                       Valve's compiler on an addon's sources
  *   npm run modkit -- pack work/mod --out my_mod.vpk        a folder of compiled files as a VPK
  *   npm run modkit -- model necrolyte --out work/model.json  bones, sequences, activities
@@ -22,12 +23,12 @@
  */
 import { check } from './modkit/check.mjs';
 import { clips, model } from './modkit/clips.mjs';
-import { compile, extract, find, pack, recolor, warp } from './modkit/commands.mjs';
+import { compile, extract, find, fx, pack, recolor, warp } from './modkit/commands.mjs';
 import { parseArgs } from './modkit/lib.mjs';
 import { pictures } from './modkit/pictures.mjs';
 import { sounds } from './modkit/sounds.mjs';
 
-const COMMANDS = { check, find, extract, recolor, warp, pack, compile, model, clips, sounds, pictures };
+const COMMANDS = { check, find, extract, recolor, warp, fx, pack, compile, model, clips, sounds, pictures };
 const BARE = ['json', 'one-pass', 'keep-unchanged', 'dry-run', 'vo'];
 
 async function main(argv) {
