@@ -10,7 +10,8 @@
  * <folder> is the throwaway one tools/site/site-shots.mjs made: run that first, the builder there leaves
  * a set on the hero and the models in its cache. Writes site/public/video/dota-2-mod-manager-tour-
  * <lang>.webm and its poster. Needs the ffmpeg playwright-core installs (npx playwright-core install
- * ffmpeg) and, from site/node_modules, playwright-core and sharp.
+ * ffmpeg), a debug build of the shell (cargo build -p dota2-mod-manager) and, from site/node_modules,
+ * playwright-core and sharp.
  */
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
@@ -18,10 +19,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openWindow } from '../dev/tauri-window.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const fromSite = createRequire(path.join(root, 'site', 'package.json'));
-const { _electron } = fromSite('playwright-core');
 const sharp = fromSite('sharp');
 
 if (!process.argv[2]) { console.error('usage: node tools/site/site-tour.mjs <folder>'); process.exit(1); }
@@ -207,19 +208,9 @@ for (const lang of ['en', 'ru']) {
   try { was = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* the first run has no settings yet */ }
   fs.writeFileSync(file, JSON.stringify({ ...was, dotaGamePath: GAME, uiLang: lang, langPromptSeen: true }));
 
-  const app = await _electron.launch({
-    executablePath: path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe'),
-    args: [root, `--user-data-dir=${USER}`, `--write-jail=${JAIL}`],
-    timeout: 60000,
-  });
-  const win = await app.firstWindow();
+  const app = await openWindow({ args: [`--user-data-dir=${USER}`, `--write-jail=${JAIL}`], size: { width: 1360, height: 860 } });
+  const win = app.page;
   win.on('pageerror', (e) => console.log('pageerror', e.message));
-  await app.evaluate(({ BrowserWindow }) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.unmaximize();
-    w.setContentSize(1360, 860);
-    w.center();
-  });
   await win.waitForTimeout(9000);
   for (let i = 0; i < 6; i++) {
     const quiet = win.locator('button').filter({ hasText: /^(Напомнить позже|Не показывать|Не сейчас|Понятно|Remind me later|Do not show|Not now|Got it)$/ });

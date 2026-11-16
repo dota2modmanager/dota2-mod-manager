@@ -5,15 +5,15 @@
  * then list the new ids in EFFECT_PICTURES (renderer/catalog/builder/logic.ts).
  *
  * Usage: node tools/mods/effect-pictures.mjs <throwaway folder> [hero]
- * The game is read through junctions, the app runs in a write jail on that folder.
+ * The game is read through junctions, the app runs in a write jail on that folder. Needs a debug
+ * build of the shell (cargo build -p dota2-mod-manager).
  */
-import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openWindow } from '../dev/tauri-window.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const { _electron } = createRequire(path.join(root, 'site', 'package.json'))('playwright-core');
 if (!process.argv[2]) { console.error('usage: node tools/mods/effect-pictures.mjs <throwaway folder> [hero]'); process.exit(2); }
 const JAIL = path.resolve(process.argv[2]);
 const hero = process.argv[3] ?? 'Juggernaut';
@@ -30,13 +30,9 @@ fs.mkdirSync(USER, { recursive: true });
 const HAVE = path.join(process.env.APPDATA, 'Dota 2 Mod Manager', 'toolchain');
 if (!fs.existsSync(path.join(USER, 'toolchain')) && fs.existsSync(HAVE)) fs.symlinkSync(HAVE, path.join(USER, 'toolchain'), 'junction');
 fs.writeFileSync(path.join(USER, 'settings.json'), JSON.stringify({ dotaGamePath: GAME, uiLang: 'en', langPromptSeen: true }));
-const app = await _electron.launch({
-  executablePath: path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe'),
-  args: [root, `--user-data-dir=${USER}`, `--write-jail=${JAIL}`],
-  timeout: 60000,
-});
+const app = await openWindow({ args: [`--user-data-dir=${USER}`, `--write-jail=${JAIL}`] });
 try {
-  const win = await app.firstWindow();
+  const win = app.page;
   await win.waitForTimeout(9000);
   for (let i = 0; i < 6; i++) {
     const quiet = win.locator('button').filter({ hasText: /^(Remind me later|Do not show|Not now|Got it)$/ });
