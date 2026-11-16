@@ -449,9 +449,9 @@ jobs:
       - name: Install AppImage runtime dependencies
         timeout-minutes: 10
         run: |
-          # The unpacked AppImage still uses the host's EGL libraries.
+          # The unpacked AppImage uses the host's EGL and GLES libraries.
           sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
-          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y xvfb libegl1 libegl-mesa0
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y xvfb libegl1 libegl-mesa0 libgles2
       # A runner has no FUSE to mount an AppImage with, so it is unpacked. AppRun is the program
       # the AppImage would have started.
       - name: Download and unpack the AppImage from the draft
