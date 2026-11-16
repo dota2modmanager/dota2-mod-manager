@@ -12,6 +12,7 @@ import type { PortraitsApi } from './portraits.ts';
 import type { MusicApi } from './music.ts';
 import type { Preview3dApi } from './preview3d.ts';
 import type { CreatorApi } from './creator.ts';
+import type { CursorApi } from './cursor.ts';
 import type { ModsApi, PacksApi } from './mods.ts';
 
 export interface Api extends AppApi {
@@ -49,6 +50,8 @@ export interface Api extends AppApi {
   /** the item builder's 3D preview */
   preview3d: Preview3dApi;
   preview: PreviewApi;
+  /** a cursor set of the user's own */
+  cursor: CursorApi;
   packs: PacksApi;
   presets: PresetsApi;
 }

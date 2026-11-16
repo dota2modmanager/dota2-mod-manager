@@ -14,6 +14,7 @@ import { MapLookCard } from '../map/MapLookCard.tsx';
 import { SoundCard } from '../sounds/SoundCard.tsx';
 import { BackgroundCard } from '../background/BackgroundCard.tsx';
 import { HudCard } from '../hud/HudCard.tsx';
+import { CursorCard } from '../cursor/CursorCard.tsx';
 import { RankCard } from '../rank/RankCard.tsx';
 import { DecorCard } from '../decor/DecorCard.tsx';
 
@@ -70,9 +71,10 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
             {m.soundLead && <SoundCard m={m.soundLead} onOpen={actions.openSounds} />}
             {m.backgroundLead && <BackgroundCard m={m.backgroundLead} onOpen={actions.openBackground} />}
             {m.hudLead && <HudCard m={m.hudLead} onOpen={actions.openHud} />}
+            {m.cursorLead && <CursorCard m={m.cursorLead} onOpen={actions.openCursor} />}
             {m.rankLead && <RankCard m={m.rankLead} onOpen={actions.openRank} />}
             {m.decorLead && <DecorCard m={m.decorLead} onOpen={actions.openDecor} />}
-            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead || m.hudLead || m.rankLead || m.decorLead ? undefined : m.mods.emptyText}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead || m.hudLead || m.cursorLead || m.rankLead || m.decorLead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

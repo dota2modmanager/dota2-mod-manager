@@ -181,6 +181,8 @@ contextBridge.exposeInMainWorld('api', {
   background: { state: () => ipcRenderer.invoke('background:state'), install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur) },
   // a hero's portrait and movie in the hero picker of the user's own
   portraits: { state: () => ipcRenderer.invoke('portraits:state'), hero: (h) => ipcRenderer.invoke('portraits:hero', h), set: (h, stills, movie, drop, source) => ipcRenderer.invoke('portraits:set', h, stills, movie, drop, source) },
+  // a cursor set of the user's own, every cursor drawn by the window
+  cursor: { state: () => ipcRenderer.invoke('cursor:state'), install: (design, drawn, pictures) => ipcRenderer.invoke('cursor:install', design, drawn, pictures) },
   // a hero's ability icons picked from his own cosmetics'
   icons: {
     heroes: () => ipcRenderer.invoke('icons:heroes'),

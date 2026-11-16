@@ -40,13 +40,13 @@ else, and the window e2e fails on any refusal in the app's log.
 | `app/` | 22 | The app itself: settings, language, its window and tray, updates, logs, support and Discord. |
 | `arcana/` | 11 | Arcanas, personas and their bases, gems and the rank look. |
 | `catalog/` | 15 | The mod catalog and everything fetched over the network: mirrors, the remote config, pictures, counters, links. |
-| `formats/` | 18 | File formats the game and the tools speak: KeyValues, VPK, compiled resources, textures, images, archives. |
+| `formats/` | 19 | File formats the game and the tools speak: KeyValues, VPK, compiled resources, textures, images, archives. |
 | `game/` | 18 | Dota on this machine: finding it, its language folders, gameinfo and signatures, watching it run and patch. |
 | `install/` | 21 | Putting mods into the game and keeping the record of them: the installer, the library, imports and removal. |
 | `item_builder/` | 25 | The item builder: what a pick writes, its effects, styles, sets, sounds and the look on everybody. |
-| `looks/` | 18 | Looks beyond items: the menu, the map, the HUD, cursors, recolours, effect edits. |
+| `looks/` | 33 | Looks beyond items: the menu, the map, the HUD, cursors, recolours, effect edits. |
 | `models/` | 27 | Models, particles and the 3D preview. |
-| `owner/` | 26 | The state the window talks to: one owner of settings, the library and the services, and its channels. |
+| `owner/` | 30 | The state the window talks to: one owner of settings, the library and the services, and its channels. |
 | `presets/` | 8 | Presets: links, .d2mm files, the plan, ready-made sets. |
 | `schema/` | 11 | The item table (items_game): reading, merging, building and deploying it, and undoing a build. |
 | `tools/` | 7 | Valve's tools and the programs the app runs: the resource compiler, Wine, Workshop Tools, the creator. |
