@@ -158,6 +158,11 @@ fn import_file(o: &Owner, file: &str) -> Value {
 }
 
 fn list(o: &Owner) -> Value {
+    // no presets, nothing to show: the catalog, read and indexed for them, cost a quarter of a
+    // second on every visit to the library
+    if o.core().library.list_presets().is_empty() {
+        return json!([]);
+    }
     let cat = catalog_index(o);
     let c = o.core();
     let out: Vec<Value> = c

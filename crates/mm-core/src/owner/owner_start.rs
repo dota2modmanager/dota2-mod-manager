@@ -14,6 +14,13 @@ use crate::owner::Owner;
 pub fn refresh(o: &Arc<Owner>) {
     let me = o.clone();
     std::thread::spawn(move || refresh_now(&me));
+    // what the window's first screens ask for, read while the window is still coming up
+    let me = o.clone();
+    std::thread::spawn(move || warm(&me));
+    let me = o.clone();
+    std::thread::spawn(move || {
+        let _ = crate::owner_game::slots(&me);
+    });
     // after the table, not on top of it: both are long writes to the game's language folder
     let me = o.clone();
     std::thread::spawn(move || {
@@ -30,6 +37,14 @@ pub fn refresh(o: &Arc<Owner>) {
             crate::owner_game::catch_up_tools(&o);
         }
     });
+}
+
+/// The slow first reads, done before the window asks (beside the cosmetic slots out of the game's
+/// item table, which the catalog draws with): the library's listing, whose hand-placed paks, cursor
+/// set and fonts are each kept by their files' version (installer_folder.rs), and the anti-cheat
+/// notice's first check.
+pub fn warm(o: &Owner) {
+    let _ = crate::owner_mods::handle(o, "mods:list", &[]);
 }
 
 /// How long after start the installed tools are brought up to their pins.

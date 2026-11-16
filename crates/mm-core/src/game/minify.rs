@@ -39,9 +39,33 @@ pub fn is_minify_file(base_lower: &str) -> bool {
 
 /// Was this VPK built by Minify? Reads the archive index only, never the content.
 pub fn is_minify_pak(file: &Path) -> bool {
-    let Ok(index) = crate::vpk::read_index_file(file) else { return false };
-    let Ok(names) = crate::vpk::list_paths(&index) else { return false };
-    names.iter().any(|n| MINIFY_MARKERS.contains(&n.to_lowercase().as_str()))
+    // asked of every pak in the folder each time the library is listed: answered once for each
+    // version of the file (its size and time of change)
+    type Seen = std::sync::Mutex<std::collections::HashMap<std::path::PathBuf, (u64, std::time::SystemTime, bool)>>;
+    static SEEN: std::sync::OnceLock<Seen> = std::sync::OnceLock::new();
+    let version = std::fs::metadata(file).ok().and_then(|m| Some((m.len(), m.modified().ok()?)));
+    let seen = SEEN.get_or_init(Default::default);
+    if let Some((len, at)) = version {
+        if let Some(&(l, t, yes)) = seen.lock().unwrap_or_else(|e| e.into_inner()).get(file) {
+            if l == len && t == at {
+                return yes;
+            }
+        }
+    }
+    let yes = (|| {
+        let index = crate::vpk::read_index_file(file).ok()?;
+        let names = crate::vpk::list_paths(&index).ok()?;
+        Some(names.iter().any(|n| MINIFY_MARKERS.contains(&n.to_lowercase().as_str())))
+    })()
+    .unwrap_or(false);
+    if let Some((len, at)) = version {
+        let mut s = seen.lock().unwrap_or_else(|e| e.into_inner());
+        if s.len() > 512 {
+            s.clear();
+        }
+        s.insert(file.to_path_buf(), (len, at, yes));
+    }
+    yes
 }
 
 /// What Minify's own config says about where it writes.

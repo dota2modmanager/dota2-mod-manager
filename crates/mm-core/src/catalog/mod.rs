@@ -98,6 +98,9 @@ fn write(file: &Path, text: impl AsRef<[u8]>) -> Result<(), String> {
 }
 
 /// The catalog on disk and on the wire.
+/// The cache files' sizes and times of change, one for each (None for one missing).
+type CacheVersion = Vec<Option<(u64, std::time::SystemTime)>>;
+
 pub struct Catalog {
     pub cache_dir: PathBuf,
     /// where a data-and-signature pair from one moment is asked for when GitHub's copies disagree
@@ -109,6 +112,9 @@ pub struct Catalog {
     /// one load at a time: a load runs without the owner's lock (its fetch can take seconds), and
     /// two refreshes writing the same files at once would leave either's half
     turn: Mutex<()>,
+    /// the cache as last read and put in order, with the versions of the files it was read from:
+    /// the library, the presets and the mod window each load it, and each read a megabyte again
+    parsed: Mutex<Option<(CacheVersion, Value)>>,
 }
 
 impl Catalog {
@@ -122,6 +128,7 @@ impl Catalog {
             hashes: Mutex::new(None),
             now,
             turn: Mutex::new(()),
+            parsed: Mutex::new(None),
         }
     }
 
@@ -201,15 +208,33 @@ impl Catalog {
                 stale = Some(e);
             }
         }
-        let read = |name: &str| -> Result<Value, String> {
-            let t = std::fs::read_to_string(self.cache_path(name)).map_err(|e| e.to_string())?;
-            serde_json::from_str(&t).map_err(|e| e.to_string())
+        let version: CacheVersion = ["mods.json", "constants.json", "guides.json", "meta.json"]
+            .iter()
+            .map(|n| std::fs::metadata(self.cache_path(n)).ok().and_then(|m| Some((m.len(), m.modified().ok()?))))
+            .collect();
+        let kept = self
+            .parsed
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .as_ref()
+            .filter(|(v, _)| *v == version)
+            .map(|(_, out)| out.clone());
+        let mut out = match kept {
+            Some(out) => out,
+            None => {
+                let read = |name: &str| -> Result<Value, String> {
+                    let t = std::fs::read_to_string(self.cache_path(name)).map_err(|e| e.to_string())?;
+                    serde_json::from_str(&t).map_err(|e| e.to_string())
+                };
+                let mut out = json!({ "fetchedAt": self.cache_info().get("fetchedAt").cloned().unwrap_or(Value::Null), "mods": read("mods.json")?, "constants": read("constants.json")?, "guides": read("guides.json")? });
+                normalize_catalog(&mut out["mods"]);
+                *self.parsed.lock().unwrap_or_else(|e| e.into_inner()) = Some((version, out.clone()));
+                out
+            }
         };
-        let mut out = json!({ "fetchedAt": self.cache_info().get("fetchedAt").cloned().unwrap_or(Value::Null), "mods": read("mods.json")?, "constants": read("constants.json")?, "guides": read("guides.json")? });
         if let Some(s) = stale {
             out["stale"] = json!(s);
         }
-        normalize_catalog(&mut out["mods"]);
         Ok(out)
     }
 

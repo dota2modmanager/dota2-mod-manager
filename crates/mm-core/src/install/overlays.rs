@@ -307,6 +307,16 @@ impl Installer {
         if !dir.exists() {
             return None;
         }
+        // hashed once for each version of the folder: the library is listed on every visit, and
+        // the fonts are tens of megabytes
+        type Seen = std::sync::Mutex<Option<(PathBuf, Vec<(String, u64, u128)>, BTreeMap<String, String>)>>;
+        static SEEN: Seen = std::sync::Mutex::new(None);
+        let version = crate::installer_folder::folder_version(&dir);
+        if let Some((d, v, hashes)) = SEEN.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
+            if *d == dir && *v == version {
+                return Some(hashes.clone());
+            }
+        }
         let mut out = BTreeMap::new();
         fn walk(d: &Path, out: &mut BTreeMap<String, String>) {
             let Ok(entries) = crate::js::read_dir(d) else { return };
@@ -323,6 +333,7 @@ impl Installer {
             }
         }
         walk(&dir, &mut out);
+        *SEEN.lock().unwrap_or_else(|e| e.into_inner()) = Some((dir, version, out.clone()));
         Some(out)
     }
 
