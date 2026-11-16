@@ -36,4 +36,4 @@ dirs = "7"
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_Console"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-zbus = "5.9"
+zbus = "6.2"

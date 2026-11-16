@@ -110,8 +110,8 @@ mod lock {
 
 #[cfg(target_os = "linux")]
 mod lock {
-    use zbus::blocking::Connection;
     use zbus::fdo::{RequestNameFlags, RequestNameReply};
+    use zbus::Connection;
 
     /// The plugin's D-Bus name, held while the connection lives.
     pub struct Lock(#[allow(dead_code)] Option<Connection>);
@@ -119,13 +119,15 @@ mod lock {
     /// The lock, or None when the app already holds it. With no session bus there is no lock to
     /// take, and the plugin starts a window normally then too.
     pub fn take(identifier: &str) -> Option<Lock> {
-        let Ok(conn) = Connection::session() else { return Some(Lock(None)) };
-        // tauri-plugin-single-instance's own name for it (src/platform_impl/linux.rs)
-        let name = format!("{identifier}.SingleInstance");
-        match conn.request_name_with_flags(name.as_str(), RequestNameFlags::DoNotQueue.into()) {
-            Ok(RequestNameReply::Exists) | Ok(RequestNameReply::InQueue) => None,
-            _ => Some(Lock(Some(conn))),
-        }
+        zbus::block_on(async {
+            let Ok(conn) = Connection::session().await else { return Some(Lock(None)) };
+            // tauri-plugin-single-instance's own name for it (src/platform_impl/linux.rs)
+            let name = format!("{identifier}.SingleInstance");
+            match conn.request_name_with_flags(name.as_str(), RequestNameFlags::DO_NOT_QUEUE).await {
+                Err(zbus::Error::NameTaken) | Ok(RequestNameReply::InQueue) => None,
+                _ => Some(Lock(Some(conn))),
+            }
+        })
     }
 }
 
