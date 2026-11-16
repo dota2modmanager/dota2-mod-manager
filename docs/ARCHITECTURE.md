@@ -17,6 +17,10 @@ renderer/          the window: TypeScript and React, built by Vite into out/rend
 crates/mm-cli/     the same Rust functions from the command line, for the tests and the tools
 ```
 
+Many Rust files name the TypeScript they were ported from, as `(src/gamelang.ts)` or
+`src/services.ts electronRepaint`. That code left the tree in 4.0. It is at the tag `v3.8.0`:
+`git show v3.8.0:src/gamelang.ts`.
+
 The renderer can do nothing on its own. It has no file access and no network beyond what
 `window.api` exposes, and the window may show only its own page. That is not ceremony: the app
 renders guide text and mod names that come from a repository we do not control, so the renderer is

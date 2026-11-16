@@ -1,9 +1,10 @@
 //! The removal: the uninstaller runs the app once with `--uninstall`, the app asks what to take
-//! along and answers with its exit code (src/uninstall-args.ts, src/uninstall-window.ts).
+//! along and answers with its exit code (the window is src-tauri/src/uninstall.rs).
 //!
 //! An update runs the old uninstaller too, so the same flag arrives on a run where nothing may be
-//! removed; [`is_update_run`] is the app's half of the pair of locks against that, the other half
-//! is build/installer.nsh. The window itself is drawn by the shell; this is what it shows and
+//! removed; [`is_update_run`] is the app's half of the pair of locks against that. The other half
+//! is the installer's: src-tauri/windows/hooks.nsh for the Tauri build, build/installer.nsh in the
+//! Electron copies still installed. The window itself is drawn by the shell; this is what it shows and
 //! what its answer does.
 
 use crate::installer::Installer;
