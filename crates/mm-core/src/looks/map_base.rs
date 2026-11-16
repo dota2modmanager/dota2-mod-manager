@@ -44,7 +44,7 @@ impl Base {
 
 /// Where a catalog terrain's map is kept: one folder per archive name.
 pub fn catalog_map(user_data: &Path, file: &str) -> PathBuf {
-    let hash = format!("{:x}", Sha1::digest(file.as_bytes()));
+    let hash = hex::encode(Sha1::digest(file.as_bytes()));
     user_data.join("map-bases").join(&hash[..12]).join("dota.vpk")
 }
 

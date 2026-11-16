@@ -127,7 +127,7 @@ impl MenuBackground {
             if let Some(why) = webm_problem(bytes, MAX) {
                 return Err(why);
             }
-            let s = format!("{:x}", Sha1::digest(bytes));
+            let s = hex::encode(Sha1::digest(bytes));
             std::fs::create_dir_all(&self.store).map_err(io)?;
             std::fs::write(self.movie(&s), bytes).map_err(io)?;
             sha = Some(s);

@@ -188,7 +188,7 @@ impl PreviewStore {
 
     pub fn file_of(&self, rel: &str) -> PathBuf {
         use sha1::Digest;
-        self.dir.join(format!("{:x}", sha1::Sha1::digest(rel.as_bytes())))
+        self.dir.join(hex::encode(sha1::Sha1::digest(rel.as_bytes())))
     }
 
     fn attempt(&self, url: &str, headers: &[(&str, &str)]) -> Tried {

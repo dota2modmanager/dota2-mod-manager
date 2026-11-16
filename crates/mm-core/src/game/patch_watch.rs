@@ -36,7 +36,7 @@ fn signatures_digest(game: &Path) -> Option<String> {
     use sha1::Digest;
     let raw = latin1(&std::fs::read(patcher::paths(game).signatures).ok()?);
     let stripped = crate::patcher_signatures::strip_signatures(&raw);
-    Some(format!("{:x}", sha1::Sha1::digest(to_latin1(&stripped)))[..16].to_string())
+    Some(hex::encode(sha1::Sha1::digest(to_latin1(&stripped)))[..16].to_string())
 }
 
 /// The build on disk as one comparable string, or None when there is no game to read.

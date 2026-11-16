@@ -302,7 +302,7 @@ impl ModelGlb {
     /// This build's folder, made empty the first time a build is seen.
     fn build_root(&self, game: &Path) -> PathBuf {
         let stamp = crate::pak_stamp::game_schema_stamp(game).unwrap_or_else(|_| "unknown".into());
-        let hash = format!("{:x}", Sha1::digest(stamp.as_bytes()));
+        let hash = hex::encode(Sha1::digest(stamp.as_bytes()));
         let dir = self.base.join(&hash[..12]);
         if !dir.exists() {
             let _ = std::fs::remove_dir_all(&self.base);
@@ -439,7 +439,7 @@ impl ModelGlb {
     /// models, map_mod_trees.rs), by a key of the caller's; None without the game.
     pub fn loose_root(&self, key: &str) -> Option<PathBuf> {
         let game = (self.game)()?;
-        let hash = format!("{:x}", Sha1::digest(key.as_bytes()));
+        let hash = hex::encode(Sha1::digest(key.as_bytes()));
         Some(self.build_root(&game).join("mods").join(&hash[..12]))
     }
 
@@ -521,7 +521,7 @@ impl ModelGlb {
         let file = model_file(model)?;
         let bytes = bytes?;
         let key = crate::js::stringify(&serde_json::json!([skin, clips]), "");
-        let hash = format!("{:x}", Sha1::digest(key.as_bytes()));
+        let hash = hex::encode(Sha1::digest(key.as_bytes()));
         let root = self.build_root(&game).join("skins").join(&hash[..12]);
         if let Some(found) = found_glb(&root, &file) {
             return Some(found);
