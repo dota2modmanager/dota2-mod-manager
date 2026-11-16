@@ -171,7 +171,7 @@ impl ModPreviews {
         let inner = pick_candidate(crcs.keys().map(String::as_str), kind)?;
         let mut h = Sha1::new();
         h.update(format!("{inner}:{}", crcs[&inner]));
-        let stamp: String = format!("{:x}", h.finalize()).chars().take(16).collect();
+        let stamp: String = hex::encode(h.finalize()).chars().take(16).collect();
         Some(Job {
             file,
             cache: self.root.join(format!("{stamp}.png")),

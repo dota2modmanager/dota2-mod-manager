@@ -64,7 +64,7 @@ impl OwnMusic {
             return Err(t("Песня больше {0} МБ", &[json!(MAX_SONG / 1024 / 1024)]));
         }
         let kind = song_kind(bytes).ok_or_else(|| t("Нужен MP3 или WAV", &[]))?;
-        let id = format!("{:x}", Sha1::digest(bytes));
+        let id = hex::encode(Sha1::digest(bytes));
         std::fs::create_dir_all(&self.store).map_err(io)?;
         let to = self.store.join(format!("{id}.{kind}"));
         if !to.exists() {

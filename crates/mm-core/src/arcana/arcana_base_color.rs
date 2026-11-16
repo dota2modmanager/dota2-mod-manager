@@ -175,7 +175,7 @@ impl ColoredBases {
                     h.update(e.path().as_bytes());
                     h.update(&e.data);
                 }
-                let key = format!("{:x}|{}", h.finalize(), color.map(crate::js::number).join(","));
+                let key = format!("{}|{}", hex::encode(h.finalize()), color.map(crate::js::number).join(","));
                 let mut kept = self.kept.lock().unwrap_or_else(|e| e.into_inner());
                 if kept.as_ref().is_none_or(|(k, _)| *k != key) {
                     let (entries, _, failed) = base_in_color(&r.entries, color, window_gem());

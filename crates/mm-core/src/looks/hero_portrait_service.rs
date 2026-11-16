@@ -169,7 +169,7 @@ impl HeroPortraits {
     }
 
     fn keep(&self, bytes: &[u8], ext: &str) -> Result<String, String> {
-        let sha = format!("{:x}", Sha1::digest(bytes));
+        let sha = hex::encode(Sha1::digest(bytes));
         std::fs::create_dir_all(&self.store).map_err(io)?;
         let to = self.store.join(format!("{sha}.{ext}"));
         if !to.exists() {

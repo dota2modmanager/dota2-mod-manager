@@ -143,7 +143,7 @@ fn base_signature(r: &ReadyBase) -> String {
     let mut paths: Vec<&String> = r.paths.iter().collect();
     paths.sort();
     let joined: Vec<&str> = paths.iter().map(|p| p.as_str()).collect();
-    let hex = format!("{:x}", Sha1::digest(joined.join("\n").as_bytes()));
+    let hex = hex::encode(Sha1::digest(joined.join("\n").as_bytes()));
     hex[..10].to_string()
 }
 

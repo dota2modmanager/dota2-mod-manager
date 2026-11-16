@@ -2492,6 +2492,7 @@ dependencies = [
  "ed25519-dalek",
  "flate2",
  "fs4",
+ "hex",
  "icu_collator",
  "indexmap 2.14.2",
  "libm",

@@ -336,7 +336,7 @@ mod tests {
 
     #[test]
     fn cache_names_are_the_first_16_of_the_sha1() {
-        assert_eq!(safe_name("econ/x"), format!("{}.png", &format!("{:x}", Sha1::digest(b"econ/x"))[..16]));
+        assert_eq!(safe_name("econ/x"), format!("{}.png", &hex::encode(Sha1::digest(b"econ/x"))[..16]));
     }
 
     #[test]
