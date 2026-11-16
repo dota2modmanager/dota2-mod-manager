@@ -589,3 +589,29 @@ test('the cache warm-up on main is never cancelled by the next merge', () => {
   const text = read('rust-cache.yml');
   assert.match(text, /concurrency:\r?\n\s+group: [^\n]+\n\s+cancel-in-progress: false/, 'a merge cancels the warm-up before it');
 });
+
+test('every job that reads the Rust cache sets up the same stable first', () => {
+  /* rustc's version is part of the cache key. A Windows job that used the runner image's own,
+   * older Rust looked for a key rust-cache.yml never saved, and built every crate from scratch:
+   * ten minutes a run in the merge queue, until 2026-11-16. */
+  for (const f of workflows) {
+    const text = read(f);
+    for (const [name, body] of Object.entries(jobsOf(text))) {
+      const at = body.indexOf('Swatinem/rust-cache@');
+      if (at === -1) continue;
+      assert.match(body.slice(0, at), /rustup toolchain install stable[^\n]*&& rustup default stable/,
+        `${f} ${name}: reads the Rust cache without installing stable first`);
+    }
+  }
+});
+
+/** A workflow's jobs by name: each job's text, from its key to the next job's. */
+function jobsOf(text) {
+  const body = text.split(/\njobs:\n/)[1] || '';
+  const out = {};
+  for (const part of body.split(/\n(?= {2}[a-z][\w-]*:\n)/)) {
+    const m = /^\s*([a-z][\w-]*):/.exec(part);
+    if (m) out[m[1]] = part;
+  }
+  return out;
+}
