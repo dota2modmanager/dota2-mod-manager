@@ -3,10 +3,9 @@
  * Builds the window's page into out/renderer when it is missing or older than its sources.
  *
  * Everything that starts the app from a checkout goes through here first: `npm start`, the
- * sandbox, the simulation and the end-to-end run. The main process loads the built page and
- * nothing else, so a run on a stale build would test yesterday's interface and pass.
- * electron-builder rebuilds it unconditionally before packing (tools/before-pack.cjs), so an
- * installer never carries an old one either.
+ * sandbox and the end-to-end run. The shell embeds the built page and nothing else, so a run on a
+ * stale build would test yesterday's interface and pass. `tauri build` rebuilds it with --force
+ * (tauri.conf.json beforeBuildCommand), so an installer never carries an old one either.
  *
  *   node tools/dev/ui-build.mjs           build if stale
  *   node tools/dev/ui-build.mjs --force   build anyway
@@ -43,9 +42,9 @@ export function isStale(projectRoot = root) {
   return newestSource(projectRoot) > fs.statSync(page).mtimeMs;
 }
 
-/* The uninstaller's window (renderer/uninstall.html) is not a Vite page: Electron loads it
- * straight from renderer/, classic scripts and all. The Tauri shell can only load what is in its
- * own folder, so the page and what it links are copied there as they are. Its IPC is a fetch to
+/* The uninstaller's window (renderer/uninstall.html) is not a Vite page: classic scripts and all.
+ * The Tauri shell can only load what is in its own folder, so the page and what it links are
+ * copied there as they are. Its IPC is a fetch to
  * ipc.localhost, which the page's connect-src has to name, as vite.config.mjs does for the main page. */
 export const UNINSTALL_PAGE = [
   'uninstall.html', 'uninstall.js', 'i18n.js',

@@ -51,7 +51,7 @@ export default defineConfig({
   build: {
     outDir: path.join(here, 'out', 'renderer') + (TAURI ? '-tauri' : ''),
     emptyOutDir: true,
-    // the page only ever runs in Electron's own Chromium
+    // the page only ever runs in WebView2 or WebKitGTK, both current
     target: 'esnext',
     modulePreload: { polyfill: false },
     // the licences of every package compiled into the page, written beside it and shipped with it

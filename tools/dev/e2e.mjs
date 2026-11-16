@@ -349,7 +349,7 @@ function stop(child) {
 async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   const shot = path.join(OUT, `${label}.png`);
   for (const f of [shot, `${shot}.eval.json`, `${shot}.err.txt`]) fs.rmSync(f, { force: true });
-  const log = fs.openSync(path.join(OUT, `${label}.electron.log`), 'w');
+  const log = fs.openSync(path.join(OUT, `${label}.app.log`), 'w');
   // held to the sandbox: a write anywhere else is refused and fails the run (crates/mm-core/src/app/write_jail.rs)
   const args = [`--user-data-dir=${USERDATA}`, `--write-jail=${SANDBOX}`, ...extraArgs];
   if (process.platform === 'linux') args.push('--no-sandbox');
@@ -509,7 +509,7 @@ if (invokedDirectly) {
      Last, because it must not disturb the run above it, and because by now the language folder
      is back to what it was: if merely opening this window touches the game, that shows. */
   if (passed) {
-    // the command line electron-builder uses when it replaces a version, flags and all
+    // the command line an Electron copy's updater runs when it replaces a version, flags and all
     const update = await launch('3-update', { MM_EVAL: EVAL_NOT_THE_REMOVAL_WINDOW }, 180000,
       ['--uninstall', '/S', '/KEEP_APP_DATA', '--updated']);
     passed = windowSteps(update, 'an update') && passed;

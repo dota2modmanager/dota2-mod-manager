@@ -64,10 +64,8 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install deps (skip the electron binary — not needed here)
+      - name: Install deps
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
       # The per-mod checkpoint that makes this job incremental. It belongs to the job and to
       # nothing else, so it is cached rather than committed - see .gitignore. The key moves

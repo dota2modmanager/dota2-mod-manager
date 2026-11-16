@@ -14,7 +14,7 @@
 //   checkJs with strict off - the point is to catch what is wrong, not to fail on every value that
 //     could be null in files that only pass messages through.
 //   module preserve - each file is read the way it is written.
-//   skipLibCheck - Electron's own .d.ts is not this project's to fix.
+//   skipLibCheck - the dependencies' own .d.ts files are not this project's to fix.
 //
 // The rest of renderer/ is TypeScript with a tsconfig of its own. Not covered: tools/, a mix of both
 // module systems that needs its own settings.
