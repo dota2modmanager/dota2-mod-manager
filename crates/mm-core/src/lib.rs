@@ -1,5 +1,7 @@
-//! The parts of Dota 2 Mod Manager that read and write the game's files, rewritten from src/*.ts.
-//! Every module names the TypeScript file it replaces; docs/rust-migration.md keeps the list.
+//! The parts of Dota 2 Mod Manager that read and write the game's files, rewritten from the
+//! TypeScript core the repository held until tag v3.8.0. A comment naming src/*.ts or test/*.ts,
+//! or "the TypeScript", means that core as the tag has it, where the reasons are written out at
+//! length: `git show v3.8.0:src/patcher.ts`.
 
 pub mod app;
 pub mod arcana;

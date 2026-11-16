@@ -1,7 +1,7 @@
 //! The user's Discord status while the app is open (src/presence-status.ts createPresenceStatus):
 //! the screen the window names and how many mods are on, said again when either changes, and torn
 //! down when the setting turns it off. The connection is started by the shell, so an owner without
-//! one (the parity's) says nothing.
+//! one (a test's) says nothing.
 
 use std::sync::Arc;
 

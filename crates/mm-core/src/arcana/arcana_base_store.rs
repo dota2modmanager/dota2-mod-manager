@@ -9,7 +9,7 @@
 //! On disk: blobs/<hash>, one per file whatever base it is in, and ready.json, each base that is
 //! all here. A base is only in ready.json once every file of it is.
 //!
-//! The TypeScript brings a base down in the background; here `want` is synchronous and the shell
+//! The TypeScript brought a base down in the background; here `want` is synchronous and the shell
 //! runs it off the main thread. What it does with the network goes through `Fetch`, so a test (or
 //! the app's mirror chain) supplies it.
 

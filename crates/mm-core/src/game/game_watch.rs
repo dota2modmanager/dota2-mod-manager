@@ -4,7 +4,7 @@
 //! after Play, with the mods that are new since it last ran normally.
 //!
 //! While the game runs it holds its paks and gameinfo open, so the channels that write the game
-//! folder answer "close Dota first" from the answer kept here. The TypeScript owns the timers;
+//! folder answer "close Dota first" from the answer kept here. The TypeScript owned the timers;
 //! here the watch says how long to wait before asking again (`wait_ms`), and the shell asks.
 
 use std::process::Command;

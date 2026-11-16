@@ -216,8 +216,9 @@ pub fn with_script(layout: &[u8]) -> Result<Vec<u8>, String> {
 const SCRIPT_BODY: &str = include_str!("rank_look_script.js");
 
 /// The script and the layouts it goes into, as a short mark: a record whose mark differs is built
-/// again at start. The TypeScript's (a hash of its function's source); the parity test holds the
-/// two together, and a change to the script changes it.
+/// again at start. The value is the TypeScript's (a hash of its function's source), kept so a
+/// record it built is not built again; `the_mark_moves_with_the_script` fails when the script or
+/// the layouts change and the mark does not.
 pub const SCRIPT_MARK: &str = "6ce930a463bd";
 
 /// The script the layouts include, with the player's levels and medal in it. `ids` names the
@@ -247,4 +248,37 @@ pub fn levels_script(look: &RankLook, ids: &std::collections::BTreeMap<u32, Stri
         crate::js::stringify(&serde_json::json!(TIER_FROM), ""),
         SCRIPT_BODY.replace("\r\n", "\n"),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sha1::{Digest, Sha1};
+
+    /// What a record's mark stands for: the script, the layouts and styles it goes into, and the
+    /// medal's rule. Line ends do not count, so a checkout on Windows hashes the same.
+    fn content_hash() -> String {
+        let mut h = Sha1::new();
+        h.update(SCRIPT_BODY.replace("\r\n", "\n"));
+        for l in LAYOUTS {
+            h.update(l);
+        }
+        for (a, b) in STYLES {
+            h.update(a);
+            h.update(b);
+        }
+        h.update(MARK);
+        h.finalize().iter().take(6).map(|b| format!("{b:02x}")).collect()
+    }
+
+    /// A record built with another script is built again at start only if SCRIPT_MARK moves, and
+    /// nothing moves it for you: change the script or the layouts, and this fails until you do.
+    #[test]
+    fn the_mark_moves_with_the_script() {
+        assert_eq!(
+            (SCRIPT_MARK, content_hash().as_str()),
+            ("6ce930a463bd", "568893e17747"),
+            "rank_look_script.js, LAYOUTS, STYLES or MARK changed: give SCRIPT_MARK a new value, then pin both here"
+        );
+    }
 }

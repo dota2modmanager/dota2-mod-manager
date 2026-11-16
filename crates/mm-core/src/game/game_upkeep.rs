@@ -4,7 +4,7 @@
 //! before the window opens, and nothing written while Dota runs: it holds gameinfo and its paks
 //! open, and rewrites boot.vcfg when it exits.
 //!
-//! The TypeScript asks the system whether Dota runs and looks for the game itself; here both are
+//! The TypeScript asked the system whether Dota runs and looked for the game itself; here both are
 //! handed in. A start is three calls: `check_game_path`, which can change the game folder, and
 //! `lang_folder_step`, which can change the folder mods live in (the caller makes its Installer
 //! after both, over `lang_folder()`), then `start_steps`.

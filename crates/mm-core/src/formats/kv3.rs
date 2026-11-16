@@ -5,7 +5,7 @@
 //!
 //! Every lane is read in order and must end exactly where the data does, which is how a file this
 //! misreads is refused instead of patched. The layout follows ValveResourceFormat's BinaryKV3.cs
-//! (MIT), versions 1 to 5. test/rust-parity.test.ts compares it with the TypeScript on real files.
+//! (MIT), versions 1 to 5.
 
 use indexmap::IndexMap;
 use serde_json::{json, Value as Json};
@@ -905,7 +905,7 @@ impl Block {
         Ok(res)
     }
 
-    /// The tree as JSON, the shape test/rust-parity.test.ts gives the TypeScript tree.
+    /// The tree as JSON, for comparing two reads of a file.
     pub fn dump(&self) -> Json {
         json!({
             "version": self.version,

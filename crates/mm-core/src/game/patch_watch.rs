@@ -7,9 +7,9 @@
 //! see them: did Steam's file check take the search path out, and was it built from a gameinfo.gi
 //! the game has since replaced.
 //!
-//! The TypeScript listens with fs.watch on the two folders. Here the files a patch rewrites are
+//! The TypeScript listened with fs.watch on the two folders. Here the files a patch rewrites are
 //! looked at every couple of seconds instead (a few stats), which also never goes deaf when Steam
-//! replaces a folder, the case the TypeScript re-arms its watches for.
+//! replaces a folder, the case the TypeScript re-armed its watches for.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};

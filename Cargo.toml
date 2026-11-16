@@ -1,5 +1,5 @@
 # The Rust half of the app: the Tauri shell and the crates it is built from.
-# docs/rust-migration.md says what has moved here from src/ and what has not yet.
+# docs/ARCHITECTURE.md says what each crate holds.
 [workspace]
 resolver = "2"
 members = ["src-tauri", "crates/*"]

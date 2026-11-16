@@ -3,9 +3,8 @@
 //! channels answered over it (the src/ipc-*.ts modules, one `owner_*` module each).
 //!
 //! The owner is the only writer of settings.json and the library's manifest.json, which is why
-//! it takes their channels all together (docs/rust-migration.md, "The switch"). What only the
-//! shell can do (a dialog, a link opened, the window told something) goes through [`Shell`], so
-//! the Tauri shell and `mm-cli owner` (the parity harness, test/rust-owner.test.ts) drive the same
+//! it takes their channels all together. What only the shell can do (a dialog, a link opened, the
+//! window told something) goes through [`Shell`], so the Tauri shell and the tests drive the same
 //! code.
 //!
 //! The state sits behind one lock. The TypeScript main process is one thread, so a channel there
