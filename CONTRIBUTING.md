@@ -168,6 +168,19 @@ refusal, in paths that do not catch one. `crates/mm-core/src/formats/vpk.rs` run
 push (truncations, a forged preload length, seeded byte noise, and random sets of entries that have
 to read back byte for byte) and the command above runs the same generator for as long as you like.
 
+The generators know the formats; libFuzzer knows the code. `fuzz/` is a cargo-fuzz crate with one
+target per parser of other people's files (a VPK's directory, a mod archive, a compiled resource
+and its KV3, text KeyValues, a texture), and it follows which branches each input reaches.
+`.github/workflows/fuzz.yml` runs every target for five minutes once a week and keeps any crash as
+an artifact. On Linux or macOS, with a nightly toolchain:
+
+```bash
+cargo install cargo-fuzz --version 0.12.0 --locked
+cd fuzz && cargo +nightly fuzz run vpk -- -max_total_time=60
+```
+
+libFuzzer does not build for Windows' GNU targets, so on Windows run it under WSL.
+
 Every zip the app opens comes through `crates/mm-core/src/formats/safe_zip.rs`, and `--target zip` fuzzes that door.
 `crates/mm-core/src/formats/safe_zip.rs` holds two things on every push: a damaged archive is refused in this
 project's words rather than a library's, and no entry name, however it is built, puts a file
