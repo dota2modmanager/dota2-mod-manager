@@ -6,8 +6,7 @@ it in is copying rather than remembering. The criteria ids match the anchors in 
 
 The same answers live in `.bestpractices.json` at the root of this repository, which the badge site
 reads by itself: opening the questionnaire and pressing "Save (and continue)" with the robot icon
-fills the form from it. This file is that list in prose, and test/openssf.test.js fails when the
-two stop naming the same criteria.
+fills the form from it. This file is that list in prose: change an answer in both.
 
 **The file fills blanks, it does not correct the form.** The site applies a proposed answer only
 where the form still says `?`; a criterion that already has a saved answer keeps it, whatever the
@@ -143,7 +142,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | `crypto_keylength` | Met: SHA-256 and Ed25519 | repo crates/mm-core/src/catalog/remote_config.rs |
 | `crypto_working` | Met | repo crates/mm-core/src/catalog/remote_config.rs |
 | `crypto_weaknesses` | Met | repo crates/mm-core/src/catalog/mod.rs |
-| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo crates/mm-core/src/catalog/net_fetch.rs |
+| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by the operating system's TLS (native-tls) | repo crates/mm-core/src/catalog/net_fetch.rs |
 | `crypto_password_storage` | N/A: the app stores no passwords | repo crates/mm-core/src/app/discord_auth.rs |
 | `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo crates/mm-core/src/app/discord_auth.rs |
 | `delivery_mitm` | Met: downloads and updates are HTTPS from GitHub releases or the project's own CDN | repo SECURITY.md |
@@ -180,8 +179,8 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 **Justification for `delivery_unsigned`**:
 
 > Every release carries SHA256SUMS, a Sigstore attestation of that list produced by the release
-> workflow, and an SBOM. Updates are fetched over HTTPS and verified by electron-updater against
-> the hashes in the signed update feed. Mod archives are checked against `mod-hashes.json`, which
+> workflow, and an SBOM. Updates are fetched over HTTPS and installed by the Tauri updater only
+> when their minisign Ed25519 signature checks out against the public key built into the app. Mod archives are checked against `mod-hashes.json`, which
 > the catalog publishes and signs with a key pinned in the app.
 
 **Justification for `vulnerabilities_fixed_60_days`**:
