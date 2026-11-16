@@ -1,9 +1,8 @@
 //! Dota 2 Mod Manager under Tauri.
 //!
-//! The window is the same React page Electron loads (renderer/, built to out/renderer-tauri),
-//! with the same window.api: preload.js itself runs in the page against src/bridge.js. The title
-//! bar's buttons are the shell's (src/native.rs); every other call is the Rust owner's
-//! (src/backend.rs, mm_core::owner). docs/rust-migration.md has how it got here.
+//! The window is the React page in renderer/, built to out/renderer-tauri, with window.api:
+//! preload.js runs in the page against src/bridge.js. The title bar's buttons are the shell's
+//! (src/native.rs); every other call is the Rust owner's (src/backend.rs, mm_core::owner).
 
 // no console window behind the app in a release build
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
