@@ -54,47 +54,60 @@ anything you set up there by hand is gone afterwards. CI runs the same script on
 Windows, and a pull request cannot merge until both pass.
 
 Nothing in `sandbox/` is committed, and nothing in it touches
-`steamapps/common/dota 2 beta`. Every launch above passes `--write-jail=sandbox`, so the app itself
-refuses to write outside `sandbox/`, the temp folder and `e2e-output/`, whatever path it computes
+`steamapps/common/dota 2 beta`. Every launch above passes `--write-jail=sandbox`, so the app refuses
+a game folder outside `sandbox/` and will not start with its user data outside it
 (`crates/mm-core/src/app/write_jail.rs`). Please keep it that way in your own changes: a test that needs a
 real game folder is a test nobody else can run.
 
 ## Driving the window from a script
 
-The app can walk its own window to a state and take a picture of it, which is how a change to a
-screen is shown in a pull request and how CI checks the installer it built. Every switch is an
-environment variable, read in `src-tauri/src/harness.rs` and nowhere near a normal start: none does
-anything unless it is set. They run in the order of the table, after the page has loaded.
+There are two ways, both on the sandbox and both with `--write-jail=sandbox`.
 
-<!-- dev-switches: test/dev-switches.test.js checks this table against src-tauri/src/harness.rs -->
+**A picture.** `node tools/dev/tauri-shot.mjs` starts the debug build (`cargo build -p
+dota2-mod-manager`), attaches to its window over DevTools, and saves a screenshot with the page's
+console errors. It is how a change to a screen is shown in a pull request.
+
+| Option | Takes | What it does |
+|---|---|---|
+| `--out` | a path to a `.png` | Where the picture goes; `e2e-output/tauri.png` when left out |
+| `--click` | selectors split by `\|\|`, or `key:Escape` | Clicks each, or presses the key, in order, before the picture |
+| `--wait` | milliseconds | How long the page settles before the clicks; 8000 when left out |
+| `--eval` | a JavaScript expression | Printed after the picture |
+| `--link` | a `d2mm://` link | Starts the app as a click on that link in a browser does |
+| `--uninstall` | | The uninstaller's window, and the exit code it ends with |
+
+A picture of My mods:
+
+```bash
+node tools/dev/tauri-shot.mjs --out shot.png --click '[data-view="library"]'
+```
+
+Hover states, right-click menus and drags go through the same page: `tools/dev/tauri-window.mjs`
+hands a script the playwright-core page to drive.
+
+**A state, without a picture.** Environment variables read in `src-tauri/src/harness.rs` walk the
+window to a state and write what a script returns beside a path. A webview cannot photograph
+itself, so this mode takes no picture. `tools/dev/e2e.mjs` drives every launch this way, and
+`release.yml` runs it against the installed build before it is published. Nothing happens unless
+the run is held to a folder with `--write-jail`. The switches run in the order of the table, after
+the page has loaded.
+
 | Switch | Takes | What it does |
 |---|---|---|
-| `MM_SHOT` | a path to a `.png` | Takes the picture, about ten seconds after start, once the switches below have run. Anything that goes wrong is written to `<path>.err.txt` |
-| `MM_QUIET` | `1` | Keeps the window hidden for a run after numbers rather than a picture. A hidden window does not animate |
+| `MM_SHOT` | a path | Where the answers go: `<path>.eval.json`, or `<path>.err.txt` when something went wrong |
+| `MM_QUIET` | `1` | Keeps the window hidden |
 | `MM_VIEW` | `catalog`, `library`, `presets` or `settings` | Opens that tab |
 | `MM_CAT` | a catalog category id | Picks it in the catalog's rail (`.rail-item[data-cat]`) |
 | `MM_SEARCH` | text | Types it into the title-bar search |
 | `MM_CLICK` | CSS selectors split by `\|\|` | Clicks each, in order |
-| `MM_HOVER` | a selector, or `x,y` | Parks the pointer there, for a hover state |
-| `MM_MENU` | a selector | Presses the right button on it, for the menu it opens |
-| `MM_DRAG` | `x1,y1,x2,y2` | Presses, moves and releases the left button |
-| `MM_WHEEL` | `x,y,deltaY[,ctrl]`, several split by `;` | Turns the wheel at a point |
 | `MM_SCROLL` | a number of pixels | Scrolls the first scrollable pane by it |
 | `MM_MODAL` | a mod's name, exactly as its card shows it | Opens that card |
 | `MM_PREVIEW` | `1` | With `MM_MODAL`, plays the mod's preview |
 | `MM_EVAL` | JavaScript, `await` allowed | Runs in the finished page; what it returns is written to `<path>.eval.json` |
 
-A picture of My mods with a row's menu open, against the sandbox:
-
-```bash
-MM_SHOT=shot.png MM_VIEW=library MM_MENU='.lib-row[data-row] .lib-pak' npm run start:sandbox
-```
-
 A picture proves a layout. `MM_EVAL` proves the text, the language and the state, and it is the one
 that catches real bugs: `MM_EVAL='return document.querySelectorAll(".lib-row").length'` writes the
-number of rows beside the picture. The app stays open after the picture; close it, or run it under
-`timeout`. Started from a terminal inside VS Code, unset `ELECTRON_RUN_AS_NODE` first, or Electron
-runs as plain Node and no window opens.
+number of rows to the answers file.
 
 ## Tests
 
@@ -241,18 +254,21 @@ it: what the project is, what it refuses, and how work gets signed.
 
 ## Dependencies
 
-The app ships two of them, `adm-zip` and `electron-updater`. Everything else, including the VPK
-parser and writer, the KeyValues reader and the update logic, is written here, because every
-dependency is a stranger with write access to a game folder on 27,000 machines.
+The app is one Rust binary, built from what `crates/mm-core/Cargo.toml` and `src-tauri/Cargo.toml`
+list: Tauri and its plugins for the window, and crates for the parts that are easy to get wrong,
+such as `zip` and `flate2` for archives, `ureq` for the network, `ed25519-dalek` and `sha2` for
+signatures. The VPK reader and writer, the KeyValues readers, the search-path patch and the update
+logic are written here, because every dependency is a stranger with write access to a game folder
+on 27,000 machines.
 
 That is a bias, not a ban. A pull request that adds one needs to say what it replaces and why
-writing it ourselves is worse. The tests use no dependencies at all, and `tools/` uses one, `vite`,
-to build the window. `react`, `react-dom` and `motion` are devDependencies because Vite copies
-their code into the page, so the installer carries that code without the packages.
+writing it ourselves is worse. `react`, `react-dom` and `motion` are devDependencies because Vite
+copies their code into the page, so the installer carries that code without the packages. The
+tests and the Node tools under `tools/` use a few more, and none of them ship.
 
 Dependabot proposes updates every Monday. A minor or patch update queues itself to merge and goes
 in once every required check has passed. A major one gets the
-`major-update` label and waits for the maintainer's decision, because a new major version of Electron or of the site generator can pass every check and still
+`major-update` label and waits for the maintainer's decision, because a new major version of Tauri or of the site generator can pass every check and still
 ship something broken.
 
 ## What will not be merged
