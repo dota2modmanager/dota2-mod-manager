@@ -110,8 +110,8 @@ mod lock {
 
 #[cfg(target_os = "linux")]
 mod lock {
-    use zbus::Connection;
     use zbus::fdo::{RequestNameFlags, RequestNameReply};
+    use zbus::Connection;
 
     /// The plugin's D-Bus name, held while the connection lives.
     pub struct Lock(#[allow(dead_code)] Option<Connection>);
