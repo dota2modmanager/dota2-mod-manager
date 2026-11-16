@@ -371,7 +371,7 @@ mod tests {
         for h in ["axe", "kez", "largo"] {
             let tg = targets(&ix, h);
             assert_eq!(tg.len(), 2, "{h}");
-            assert_eq!((tg[0].width, tg[0].height).0 > 0, true);
+            assert!(tg[0].width > 0 && tg[0].height > 0, "{h}");
         }
     }
 }
