@@ -419,22 +419,25 @@ async function downloadMods() {
     const dest = path.join(MODS, `${item.categoryId}__${path.basename(item.file)}`);
 
     const label = `${item.categoryId}/${item.file}`;
-    if (fs.existsSync(dest)) {
-      const sha = sha256(dest);
+    // one read of what is there, hashed as read: nothing can change between the check and the hash
+    const cached = readIfThere(dest);
+    if (cached) {
+      const sha = sha256(cached);
       const expected = known.get(label)?.sha256;
       if (expected && expected !== sha) log(`  ! ${label}: sha256 changed upstream`);
       else log(`  = ${label} (cached)`);
-      out.push({ ...item, url, sha256: sha, bytes: fs.statSync(dest).size });
+      out.push({ ...item, url, sha256: sha, bytes: cached.length });
       continue;
     }
 
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      fs.writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
-      const bytes = fs.statSync(dest).size;
+      const data = Buffer.from(await res.arrayBuffer());
+      fs.writeFileSync(dest, data);
+      const bytes = data.length;
       log(`  + ${label} (${(bytes / 1024 / 1024).toFixed(1)} MB)`);
-      out.push({ ...item, url, sha256: sha256(dest), bytes });
+      out.push({ ...item, url, sha256: sha256(data), bytes });
     } catch (e) {
       log(`  x ${label}: ${e.message}`);
     }
@@ -446,7 +449,10 @@ async function downloadMods() {
   log(`manifest -> ${path.relative(ROOT, MANIFEST)} (${out.length} mods)`);
 }
 
-const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const sha256 = (data) => crypto.createHash('sha256').update(data).digest('hex');
+const readIfThere = (file) => {
+  try { return fs.readFileSync(file); } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+};
 
 /* The Steam account the sandbox library belongs to.
  *

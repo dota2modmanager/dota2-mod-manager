@@ -31,7 +31,7 @@ const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g
     for (const u of [...new Set(urls)]) {
       // one file per family+range; the name only has to be stable and readable
       const family = (sheet.slice(0, sheet.indexOf(u)).match(/font-family: '([^']+)'/g) || []).pop() || name;
-      const file = `${slug(family.replace("font-family: '", '').replace("'", ''))}-${String(++i).padStart(2, '0')}.woff2`;
+      const file = `${slug(family.replace("font-family: '", '').replaceAll("'", ''))}-${String(++i).padStart(2, '0')}.woff2`;
       const buf = Buffer.from(await fetch(u, { headers: { 'User-Agent': UA } }).then((r) => r.arrayBuffer()));
       fs.writeFileSync(path.join(OUT, file), buf);
       // the sheet lives in renderer/styles/, so the fonts are one level up from it
