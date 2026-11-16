@@ -1,8 +1,9 @@
 //! What the start sets going and does not wait for (src/services.ts): the remote config, then the
 //! catalog's second copies it names; the ready-made presets; the map from a file's fingerprint to
 //! its catalog mod. Each is fetched off the owner's lock, so the window is answered meanwhile, and
-//! being offline leaves the last good copy in place. A while later, the installed tools are brought
-//! up to their pins.
+//! being offline leaves the last good copy in place. Once the item table has settled, a rank look
+//! built with an older script is built again. A while later, the installed tools are brought up to
+//! their pins.
 
 use std::sync::Arc;
 
@@ -13,6 +14,12 @@ use crate::owner::Owner;
 pub fn refresh(o: &Arc<Owner>) {
     let me = o.clone();
     std::thread::spawn(move || refresh_now(&me));
+    // after the table, not on top of it: both are long writes to the game's language folder
+    let me = o.clone();
+    std::thread::spawn(move || {
+        me.settled();
+        rank_script(&me);
+    });
     // the tools wait until the start's own downloads are done
     let me = Arc::downgrade(o);
     std::thread::spawn(move || {
@@ -40,6 +47,16 @@ pub fn refresh_now(o: &Owner) {
         if let Err(e) = o.core().fingerprints.store(&text) {
             o.diag(&format!("fingerprints: kept the cached map: {e}"));
         }
+    }
+}
+
+/// A rank look whose pak carries another build's script (`SCRIPT_MARK`) built again with this
+/// one's, so a fix to the script reaches the players who already had the look on.
+pub fn rank_script(o: &Owner) {
+    let mut lines: Vec<String> = Vec::new();
+    crate::owner_tools::rank_script_again(&mut o.core(), &mut |m| lines.push(m));
+    for l in lines {
+        o.diag(&l);
     }
 }
 
@@ -83,5 +100,44 @@ mod tests {
         assert_eq!(o.core().remote.mirrors()[0]["host"], json!("copy.example"));
         drop(o);
         let _ = std::fs::remove_dir_all(ud);
+    }
+
+    /// The mark a rank look was built with, against this build's: an older one is built again, the
+    /// same one is left alone. Nothing called this at start after the TypeScript went, so a change
+    /// to the script never reached a look already on.
+    #[test]
+    fn a_rank_look_built_with_another_script_is_built_again_and_the_same_one_is_not() {
+        for (script, again) in [("0123456789ab", true), (crate::rank_look::SCRIPT_MARK, false)] {
+            let ud = std::env::temp_dir().join(format!("mm-owner-rank-{}", uuid::Uuid::new_v4().simple()));
+            std::fs::create_dir_all(&ud).unwrap();
+            std::fs::write(ud.join("settings.json"), "{}").unwrap();
+            let o = Owner::start(
+                Options {
+                    user_data: ud.clone(),
+                    app_version: "9.9.9".into(),
+                    app_root: ud.clone(),
+                    downloads: ud.clone(),
+                    uninstall: false,
+                    system_languages: None,
+                    find_game: Box::new(|| None),
+                    dota_running: Box::new(|| false),
+                    now: crate::net_fetch::now_ms,
+                },
+                Arc::new(Quiet),
+            );
+            {
+                let mut c = o.core();
+                let rec = json!({ "name": "Rank look", "categoryId": "hud", "files": [] });
+                let made = c.library.add(&rec, None).unwrap();
+                let generated = json!({ "generated": { "rank": { "levels": {} }, "script": script } });
+                c.library.update(&made["id"], &generated, None).unwrap();
+            }
+            rank_script(&o);
+            let log = o.take_log();
+            let changed = log.iter().any(|l| l.contains("rank look: the script changed"));
+            assert_eq!(changed, again, "{script}: {log:?}");
+            drop(o);
+            let _ = std::fs::remove_dir_all(ud);
+        }
     }
 }
