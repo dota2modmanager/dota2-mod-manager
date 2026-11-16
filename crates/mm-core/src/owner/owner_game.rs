@@ -3,7 +3,6 @@
 //! Source 2 toolchain, and the arcanas and map looks built out of the game's own files.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use serde_json::{json, Map, Value};
 
@@ -593,37 +592,65 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
 /// The item builder's slots, the last answer kept for its inputs. The answer is read off the
 /// whole item table and took two seconds; under the state's lock that held every other call of
 /// the window, the catalog's at start among them. Only what it reads is taken under the lock.
-fn slots(o: &Owner) -> Value {
-    let (game, text, lib) = {
-        let mut core = o.core();
-        let c = &mut *core;
-        let game = c.game();
-        let text = match game.as_deref().map(|g| c.schema.vanilla(g)) {
-            None => return json!({ "slots": [], "sets": [] }),
-            Some(Err(e)) => return json!({ "slots": [], "sets": [], "error": e }),
-            Some(Ok(b)) => b,
-        };
-        (game, text, crate::library::Library { file: c.library.file.clone(), data: c.library.data.clone() })
+pub fn slots(o: &Owner) -> Value {
+    // one reading of the table at a time: the window asking while the start's warm-up reads it
+    // waits for that one (most of two seconds) instead of reading it a second time beside it
+    let _one = READING.lock().unwrap_or_else(|e| e.into_inner());
+    let (game, lib, user_data) = {
+        let c = o.core();
+        (
+            c.game(),
+            crate::library::Library { file: c.library.file.clone(), data: c.library.data.clone() },
+            c.user_data.clone(),
+        )
     };
+    let Some(game) = game else { return json!({ "slots": [], "sets": [] }) };
     let lang = crate::i18n::lang().code();
-    let key = game.as_deref().and_then(|g| slots_key(g, &lib, lang));
-    let mut kept = SLOTS.lock().unwrap_or_else(|e| e.into_inner());
-    if let (Some(k), Some((have, held, answer))) = (&key, kept.as_ref()) {
-        // the same table by the same buffer: the cache holds it, so its address is never another's
-        if k == have && Arc::ptr_eq(held, &text) {
-            return answer.clone();
+    let key = slots_key(&game, &lib, lang);
+    // the answer for this table, these picks and this language, kept in memory and on disk: the
+    // table took most of two seconds to read on every start of the app
+    if let Some(k) = &key {
+        if let Some((have, answer)) = SLOTS.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
+            if k == have {
+                return answer.clone();
+            }
+        }
+        if let Some(answer) = slots_on_disk(&user_data, k) {
+            *SLOTS.lock().unwrap_or_else(|e| e.into_inner()) = Some((k.clone(), answer.clone()));
+            return answer;
         }
     }
-    drop(kept);
-    let answer = crate::schema_cosmetics::cosmetic_slots(&lib, game.as_deref(), &text.0, lang);
-    kept = SLOTS.lock().unwrap_or_else(|e| e.into_inner());
+    let text = {
+        let mut core = o.core();
+        match core.schema.vanilla(&game) {
+            Err(e) => return json!({ "slots": [], "sets": [], "error": e }),
+            Ok(b) => b,
+        }
+    };
+    let answer = crate::schema_cosmetics::cosmetic_slots(&lib, Some(&game), &text.0, lang);
     // a failure may be the disk's for a moment: asked again, it reads again
-    *kept = key.filter(|_| answer.get("error").is_none()).map(|k| (k, text, answer.clone()));
+    let keep = key.filter(|_| answer.get("error").is_none());
+    if let Some(k) = &keep {
+        let file = user_data.join(SLOTS_FILE);
+        let _ = std::fs::write(&file, serde_json::to_vec(&json!({ "key": k, "answer": answer })).unwrap_or_default());
+    }
+    *SLOTS.lock().unwrap_or_else(|e| e.into_inner()) = keep.map(|k| (k, answer.clone()));
     answer
 }
 
-type Kept = Option<(String, Arc<(Vec<u8>, String)>, Value)>;
+/// Where the cosmetic slots' last answer is kept, with the key it was made for.
+const SLOTS_FILE: &str = "cosmetic-slots.json";
+
+/// The kept answer when it was made for `key`.
+fn slots_on_disk(user_data: &Path, key: &str) -> Option<Value> {
+    let text = std::fs::read(user_data.join(SLOTS_FILE)).ok()?;
+    let mut kept: Value = serde_json::from_slice(&text).ok()?;
+    (kept.get("key")?.as_str()? == key).then(|| kept.get_mut("answer").map(Value::take)).flatten()
+}
+
+type Kept = Option<(String, Value)>;
 static SLOTS: std::sync::Mutex<Kept> = std::sync::Mutex::new(None);
+static READING: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// What the slots' answer is made of besides the item table: the game folder and its build (the
 /// game's own words and pak01 are read by it), the language, and the picks that are on.

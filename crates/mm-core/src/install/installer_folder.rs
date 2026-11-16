@@ -48,6 +48,66 @@ pub struct ForeignItem {
     pub fp: Option<String>,
 }
 
+/// What a foreign VPK's index says of it (Installer::vpk_item), kept for each version of the file.
+#[derive(Debug, Clone)]
+struct VpkRead {
+    info: String,
+    heroes: usize,
+    subjects: usize,
+    items: Option<Vec<String>>,
+    hero_names: Vec<String>,
+    kind_tag: String,
+    fp: Option<String>,
+    name: Option<String>,
+}
+
+type ReadKey = (PathBuf, u64, u128, &'static str, bool);
+
+/// A version of a file: its path, size and time of change, with what its reading depends on (the
+/// language its words are in, and whether the item table could name its items).
+fn read_key(abs: &Path, identified: bool) -> Option<ReadKey> {
+    let meta = fs::metadata(abs).ok()?;
+    let at = meta.modified().ok()?.duration_since(std::time::UNIX_EPOCH).ok()?.as_nanos();
+    Some((abs.to_path_buf(), meta.len(), at, crate::i18n::lang().code(), identified))
+}
+
+fn read_cache() -> &'static std::sync::Mutex<std::collections::HashMap<ReadKey, Option<VpkRead>>> {
+    static CACHE: OnceLock<std::sync::Mutex<std::collections::HashMap<ReadKey, Option<VpkRead>>>> = OnceLock::new();
+    CACHE.get_or_init(Default::default)
+}
+
+/// A folder's version without reading its files: every file under it with its size and time of
+/// change. What is worked out of the files themselves is kept by it (the cursor set and the fonts,
+/// 40 MB read and hashed on every listing of the library).
+pub fn folder_version(dir: &Path) -> Vec<(String, u64, u128)> {
+    fn walk(d: &Path, pre: &str, out: &mut Vec<(String, u64, u128)>) {
+        let Ok(read) = crate::js::read_dir(d) else { return };
+        for e in read {
+            let name = e.file_name().to_string_lossy().into_owned();
+            let rel = if pre.is_empty() { name } else { format!("{pre}/{name}") };
+            let Ok(kind) = e.file_type() else { continue };
+            if kind.is_dir() {
+                walk(&e.path(), &rel, out);
+            } else if let Ok(m) = e.metadata() {
+                let at = m
+                    .modified()
+                    .ok()
+                    .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+                    .map_or(0, |d| d.as_nanos());
+                out.push((rel, m.len(), at));
+            }
+        }
+    }
+    let mut out = Vec::new();
+    walk(dir, "", &mut out);
+    out.sort();
+    out
+}
+
+/// The cursor set as a foreign item last found, by the folder's version.
+type CursorSeen = std::sync::Mutex<Option<(PathBuf, Vec<(String, u64, u128)>, Option<ForeignItem>)>>;
+static CURSOR_SEEN: CursorSeen = std::sync::Mutex::new(None);
+
 /// What the game's own item table says a path list is (src/mod-id.ts).
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Guess {
@@ -296,22 +356,56 @@ impl Installer {
             kind_tag: None,
             fp: None,
         };
-        let read = crate::vpk::read_index_file(abs).and_then(|buf| crate::vpk::list_paths(&buf).map(|p| (buf, p)));
-        if let Ok((buf, paths)) = read {
-            let a = analyze_vpk_paths(&paths);
-            let (info, hero_names, items) = describe_paths(self, &paths, &a);
-            item.info = Some(info);
-            item.heroes = Some(a.heroes.len());
-            item.subjects = Some(subject_heroes(&a).iter().filter(|h| h.models > 0).count());
-            item.items = items;
-            item.hero_names = Some(hero_names);
-            item.kind_tag = Some(a.kind.clone());
-            item.fp = crate::vpk::fingerprint_vpk(&buf).ok();
-            if let Some(n) = name_from_analysis(&a).filter(|n| !n.is_empty()) {
+        // what the file says of itself is read once for each version of it: the library is listed
+        // on every visit, and a folder of hand-placed paks (170 MB of them) was read whole each time
+        let key = read_key(abs, self.identify.is_some());
+        let known = key.as_ref().and_then(|k| read_cache().lock().unwrap_or_else(|e| e.into_inner()).get(k).cloned());
+        let read = match known {
+            Some(r) => r,
+            None => {
+                let r = self.read_vpk(abs);
+                if let Some(k) = key {
+                    let mut cache = read_cache().lock().unwrap_or_else(|e| e.into_inner());
+                    // a folder holds a few dozen: past a few hundred, the old versions go
+                    if cache.len() > 512 {
+                        cache.clear();
+                    }
+                    cache.insert(k, r.clone());
+                }
+                r
+            }
+        };
+        if let Some(r) = read {
+            item.info = Some(r.info);
+            item.heroes = Some(r.heroes);
+            item.subjects = Some(r.subjects);
+            item.items = r.items;
+            item.hero_names = Some(r.hero_names);
+            item.kind_tag = Some(r.kind_tag);
+            item.fp = r.fp;
+            if let Some(n) = r.name {
                 item.name = n;
             }
         }
         Ok(item)
+    }
+
+    /// What a VPK's index says of it; None when it cannot be read.
+    fn read_vpk(&self, abs: &Path) -> Option<VpkRead> {
+        let buf = crate::vpk::read_index_file(abs).ok()?;
+        let paths = crate::vpk::list_paths(&buf).ok()?;
+        let a = analyze_vpk_paths(&paths);
+        let (info, hero_names, items) = describe_paths(self, &paths, &a);
+        Some(VpkRead {
+            info,
+            heroes: a.heroes.len(),
+            subjects: subject_heroes(&a).iter().filter(|h| h.models > 0).count(),
+            items,
+            hero_names,
+            kind_tag: a.kind.clone(),
+            fp: crate::vpk::fingerprint_vpk(&buf).ok(),
+            name: name_from_analysis(&a).filter(|n| !n.is_empty()),
+        })
     }
 
     /// Foreign content across every place a mod can live: the language folder, its maps/, and a
@@ -377,7 +471,17 @@ impl Installer {
         }
         if scan_extras && !known_cursor {
             let cursor = CURSOR_SUBDIR.iter().fold(game.clone(), |p, s| p.join(s));
-            if cursor.exists() {
+            let version = if cursor.exists() { folder_version(&cursor) } else { Vec::new() };
+            let seen = CURSOR_SEEN
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .as_ref()
+                .filter(|(dir, v, _)| *dir == cursor && *v == version)
+                .map(|(_, _, item)| item.clone());
+            if let Some(item) = seen {
+                out.extend(item);
+            } else if cursor.exists() {
+                let before = out.len();
                 let mut files: Vec<(String, Vec<u8>)> = Vec::new();
                 let mut rels: Vec<String> = Vec::new();
                 fn walk(d: &Path, pre: &str, files: &mut Vec<(String, Vec<u8>)>, rels: &mut Vec<String>) {
@@ -418,6 +522,8 @@ impl Installer {
                         fp: Some(crate::vpk::fingerprint_files(&refs)),
                     });
                 }
+                *CURSOR_SEEN.lock().unwrap_or_else(|e| e.into_inner()) =
+                    Some((cursor.clone(), version, out.get(before).cloned()));
             }
         }
         Ok(out)
