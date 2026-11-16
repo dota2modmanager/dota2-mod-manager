@@ -48,14 +48,6 @@ jobs:
         with:
           node-version: 24
 
-      # The sync itself needs nothing but Node. The toolchain step below reaches into
-      # src/toolchain.ts, which unpacks a zip through src/safe-zip.ts, which needs adm-zip -
-      # so without this the run copied everything and then went red on its last step. It
-      # had been failing that way since the step was added, and a job that always fails is a
-      # job nobody reads: that is how the bucket went a night without anybody noticing.
-      - name: Install what the toolchain step needs
-        run: npm ci --omit=dev --ignore-scripts
-
       - name: Copy what is missing
         env:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -84,7 +76,8 @@ jobs:
 
       # The pinned toolchain, so the one feature that needs a 50 MB download from somebody
       # else's GitHub release keeps working when GitHub is the thing that is down. Cheap: it
-      # only moves bytes when a pin changes.
+      # only moves bytes when a pin changes. The pins are mm-cli's, which tools/dev/mm-cli.js
+      # builds with the runner's cargo the first time it is asked.
       - name: Copy the pinned toolchain
         env:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}

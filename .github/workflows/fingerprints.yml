@@ -13,7 +13,7 @@ name: Fingerprints
 # the site then needs the catalog's preview for those same mods. Doing it anywhere else means
 # fetching the catalog twice and having two answers to when it last changed.
 #
-# Node 24 rather than 20: tools/catalog.mjs imports the site's TypeScript directly, which older
+# Node 24 rather than 20: site/tools/catalog.mjs imports the site's TypeScript directly, which older
 # Node cannot read.
 
 on:
