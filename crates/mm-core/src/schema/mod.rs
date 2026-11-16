@@ -6,6 +6,7 @@
 pub mod build_undo;
 pub mod item_files;
 pub mod item_files_service;
+pub mod item_in_body;
 pub mod item_replacement;
 pub mod schema_build;
 pub mod schema_cosmetics;

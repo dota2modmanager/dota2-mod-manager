@@ -5,7 +5,7 @@
 //! the default of the model that has them, and a second model it wears goes inside its first. What
 //! is left needs the table, and a pick with such a part says what it lost (`left`).
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
 
 use indexmap::{IndexMap, IndexSet};
@@ -188,8 +188,9 @@ pub fn extra_places(stock: &[String], extras: &[String]) -> (Vec<Under>, Vec<Str
     (under, queue.into_iter().collect())
 }
 
-/// A wearable as it goes in: in its material set, carrying its effects. None: the file stays as it was.
-pub fn worn_model(model: &[u8], skin: f64, systems: &[&str]) -> Option<Vec<u8>> {
+/// A wearable as it goes in: in its material set, carrying its effects over the boxes of `set`. None: the
+/// file stays as it was.
+pub fn worn_model(model: &[u8], skin: f64, systems: &[&str], set: &str) -> Option<Vec<u8>> {
     let out = if skin != 0.0 && !skin.is_nan() {
         crate::model_skin::with_skin(model, skin as usize)?
     } else {
@@ -199,8 +200,7 @@ pub fn worn_model(model: &[u8], skin: f64, systems: &[&str]) -> Option<Vec<u8>> 
         return Some(out);
     }
     // no boxes (a model this cannot read) leaves the effect at the model's origin, which is still the effect
-    let boxed =
-        crate::model_hitboxes::with_surface_hitboxes(&out, &[crate::model_hitboxes::SURFACE_SET]).unwrap_or(out);
+    let boxed = crate::model_hitboxes::with_surface_hitboxes(&out, &[set]).unwrap_or(out);
     crate::model_particles::with_particles(&boxed, systems)
 }
 
@@ -216,6 +216,45 @@ pub struct LeftBehind {
 pub struct ItemFiles {
     pub entries: Vec<Entry>,
     pub left: Vec<LeftBehind>,
+}
+
+/// The compiled path of a hero's body, lowercased.
+fn body_path(read: &dyn Fn(&str) -> Option<Vec<u8>>, hero: &str) -> Result<String, String> {
+    let at = format!("{}_c", hero_model_path(read, hero)?).to_lowercase();
+    Ok(match at.strip_suffix("_c_c") {
+        Some(s) => format!("{s}_c"),
+        None => at,
+    })
+}
+
+/// A pick with an effect the person added, sewn into its hero's body (item_in_body.rs): the body's
+/// path and what sewing made, or None where the pick is not one hero's or its models do not join
+/// (it keeps the effect on itself then). The body is the one the picks before made, if any.
+#[allow(clippy::too_many_arguments)]
+fn sew_in(
+    block: &[u8],
+    id: &str,
+    at: &str,
+    item: &Entry,
+    skin: f64,
+    systems: &[String],
+    added: &HashSet<String>,
+    entries: &IndexMap<String, Entry>,
+    under: &HashMap<String, Vec<u8>>,
+    read: &dyn Fn(&str) -> Option<Vec<u8>>,
+) -> Result<Option<(String, crate::item_in_body::Sewn)>, String> {
+    let heroes = crate::item_builder_slots::item_heroes(block, 0).map_err(|e| e.to_string())?;
+    let [hero] = heroes.as_slice() else { return Ok(None) };
+    let Ok(body_at) = body_path(read, hero) else { return Ok(None) };
+    let body = entries
+        .get(&body_at)
+        .map(|en| en.data.to_vec())
+        .or_else(|| under.get(&body_at).cloned())
+        .or_else(|| read(&body_at));
+    let Some(body) = body else { return Ok(None) };
+    let token = crate::item_in_body::pick_token(id, at);
+    let sewn = crate::item_in_body::sewn_into_body(&body, &item.data, skin, systems, added, &token, read)?;
+    Ok(sewn.map(|s| (body_at, s)))
 }
 
 fn compiled(p: &str) -> String {
@@ -241,6 +280,9 @@ pub fn item_files(
     for en in shared.map(|s| s.entries.as_slice()).unwrap_or(&[]) {
         entries.insert(en.path().to_lowercase(), en.clone());
     }
+    // a body or a model the picks did not bring is the arcana base's where it has one, then the game's
+    let under: HashMap<String, Vec<u8>> =
+        beneath.iter().map(|en| (en.path().to_lowercase(), en.data.to_vec())).collect();
     for patch in list {
         let source = if patch.source.is_empty() { patch.id.clone() } else { patch.source.clone() };
         // a persona, worn through the table; what is not a pick at all, a mod's block, the caller counts itself
@@ -263,12 +305,27 @@ pub fn item_files(
             let at = own.to_lowercase();
             // an effect the person added spreads over the item; the item's own was made for it
             let added: HashSet<String> = patch.added.iter().flatten().map(|s| s.to_lowercase()).collect();
-            if let Some(entry) = entries.get(&at).cloned() {
+            let entry = entries.get(&at).cloned();
+            let sewn = match &entry {
+                Some(en) if systems.iter().any(|s| added.contains(&s.to_lowercase())) => {
+                    sew_in(&patch.block, &patch.id, &at, en, skin, &systems, &added, &entries, &under, read)?
+                }
+                _ => None,
+            };
+            if let Some((body_at, sewn)) = sewn {
+                for (p, d) in sewn.files {
+                    entries.insert(p.to_lowercase(), entry_at(&p, d.into()));
+                }
+                entries.insert(body_at.clone(), entry_at(&body_at, sewn.body.into()));
+                entries.insert(at, entry_at(own, sewn.empty_item.into()));
+            } else if let Some(entry) = entry {
                 let mut roots = Vec::new();
+                // a set of this pick alone, as one sewn into the body has: a moving item keeps its own model
+                let scope = crate::particle_surface::item_scope(&crate::item_in_body::pick_token(&patch.id, &at));
                 for s in &systems {
                     let copy = if added.contains(&s.to_lowercase()) {
                         let mut r = |p: &str| read(p);
-                        crate::particle_surface::surface_system(&mut r, s)?
+                        crate::particle_surface::surface_system_in(&mut r, s, &scope)?
                     } else {
                         None
                     };
@@ -283,7 +340,7 @@ pub fn item_files(
                     }
                 }
                 let refs: Vec<&str> = roots.iter().map(String::as_str).collect();
-                match worn_model(&entry.data, skin, &refs) {
+                match worn_model(&entry.data, skin, &refs, &scope.set) {
                     Some(worn) => {
                         entries.insert(at, entry_at(&entry.path(), worn.into()));
                     }
@@ -369,19 +426,11 @@ pub fn item_files(
             left.push(LeftBehind { source, what });
         }
     }
-    // a body or a model the picks did not bring is the arcana base's where it has one, then the game's
-    let under: std::collections::HashMap<String, Vec<u8>> =
-        beneath.iter().map(|en| (en.path().to_lowercase(), en.data.to_vec())).collect();
     let current = |entries: &IndexMap<String, Entry>, at: &str| {
         entries.get(at).map(|en| en.data.to_vec()).or_else(|| under.get(at).cloned()).or_else(|| read(at))
     };
     for (hero, motions) in &bodies {
-        let model = hero_model_path(read, hero)?;
-        let at = format!("{model}_c").to_lowercase();
-        let at = match at.strip_suffix("_c_c") {
-            Some(s) => format!("{s}_c"),
-            None => at,
-        };
+        let at = body_path(read, hero)?;
         let Some(body) = current(&entries, &at) else { continue };
         let mut made = Ok(body);
         for m in motions {

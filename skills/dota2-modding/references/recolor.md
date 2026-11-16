@@ -103,13 +103,23 @@ table. Write it into the compiled `.vmdl_c` after the compile with the app's own
 `with_particles` in `crates/mm-core/src/models/model_particles.rs`. Inside such a system the control point driver with
 `m_entityName = "self"` is the item and `"parent"` is the hero.
 
-To spread an effect over the item itself (sparkles along a weapon), do what the app's effect
-studio does for unusual effects: give the model hitboxes over its own vertices
+To spread an effect over the item itself (sparkles along a weapon), do what the app's item
+builder does for unusual effects: give the model hitboxes over its own vertices
 (`with_surface_hitboxes` in `crates/mm-core/src/models/model_hitboxes.rs`, a set named
-`mm_surface`), then
+`mm_surface` here), then
 `C_INIT_CreateOnModel` with `m_HitboxSetName = "mm_surface"` and `C_OP_LockToBone`. The console
 says "Hitbox indexing is incorrect for set mm_surface"; it works regardless. Effects placed by an
-offset from an attachment instead drifted off the item and hung in the air.
+offset from an attachment instead drifted off the item and hung in the air. Take out what pins a
+particle elsewhere (`C_OP_SnapshotSkinToBones`, `C_OP_SnapshotRigidSkinToBones`,
+`C_OP_MovementRigidAttachToCP`, an older `C_OP_LockToBone`), except where the particle is a model
+with a motion of its own: Crownfall's feathers keep their operators and take
+`C_INIT_NormalAlignToCP` instead, or they never fly off. `particle_surface.rs` does all of it.
+
+The item builder goes one step further (`crates/mm-core/src/schema/item_in_body.rs`): it sews an
+item with an unusual into the hero's body model, the boxes as a set of that item alone
+(`mm_fx_<token>`), and lists the effect on the body. Two items in one body each keep their own
+set. An item that moves by itself (a clip other than its bind pose, or cloth) stays its own model
+with its animations and carries the effect there.
 
 modkit does it to a model after the compile and before the pack:
 

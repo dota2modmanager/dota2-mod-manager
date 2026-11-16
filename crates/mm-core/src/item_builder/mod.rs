@@ -37,6 +37,7 @@ pub mod item_skin;
 pub mod item_sounds;
 pub mod item_visuals;
 pub mod unusual_effects;
+pub mod unusual_fit;
 
 use regex::bytes::Regex;
 use serde::Serialize;

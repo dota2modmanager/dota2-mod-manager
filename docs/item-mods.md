@@ -73,7 +73,7 @@ while it is worn:
 | `activity` | switches an activity modifier on (`abysm`) | take the modifier off the swapped model's animations (below) |
 | `model` | one wearable model becomes another | put the new one under the old path |
 | `particle` | one particle becomes another | put the new one under the old path; its children keep their paths |
-| `particle_create` | the item creates a particle | nothing creates it: hang it as a child of a particle the hero always has |
+| `particle_create` | the item creates a particle | list it in the model's `particle_cfg_list`; an unusual added in the item builder is sewn into the hero's body with the item, or built on an item that moves by itself (`crates/mm-core/src/schema/item_in_body.rs`) |
 | `ability_icon`, `icon_replacement_hero*` | pictures | put them under the plain names in `panorama/images` |
 | `sound` | another sound event plays | not tried yet |
 | `custom_kill_effect`, `chatwheel`, `response_criteria`, `arcana_level` | game logic | a mod cannot give it |

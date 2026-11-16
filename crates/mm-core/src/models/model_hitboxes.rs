@@ -387,37 +387,44 @@ fn flagged(model: &[u8], boxes: &[SurfaceBox]) -> Result<Vec<u8>, String> {
 /// `model` with its surface boxes as a hitbox set under each of `names` on each of its meshes, or
 /// None for a model this cannot read or that has no vertices of its own. A set it already has stays.
 pub fn with_surface_hitboxes(model: &[u8], names: &[&str]) -> Option<Vec<u8>> {
-    let run = || -> Result<Option<Vec<u8>>, String> {
-        let boxes = surface_boxes(model)?;
-        if boxes.is_empty() {
-            return Ok(None);
+    let boxes = surface_boxes(model).ok()?;
+    with_boxes(model, names, &boxes).ok().flatten()
+}
+
+/// `model` with these boxes, made from another model, as the hitbox set `name` on each of its
+/// meshes and their bones flagged, or None for a model this cannot read. A hero's body takes the
+/// boxes of an item sewn into it this way: the item's bones are the body's by then.
+pub fn with_hitbox_set(model: &[u8], name: &str, boxes: &[SurfaceBox]) -> Option<Vec<u8>> {
+    with_boxes(model, &[name], boxes).ok().flatten()
+}
+
+fn with_boxes(model: &[u8], names: &[&str], boxes: &[SurfaceBox]) -> Result<Option<Vec<u8>>, String> {
+    if boxes.is_empty() {
+        return Ok(None);
+    }
+    let ctrl = kv3::read(resource::data(model, "CTRL", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    let blocks = resource::blocks(model).map_err(|e| e.to_string())?;
+    let mut out = model.to_vec();
+    for mesh in items(ctrl.root.get("embedded_meshes")) {
+        let index = num(&ctrl, mesh.get("m_nDataBlock").or_else(|| mesh.get("data_block")));
+        if index < 0.0 {
+            continue;
         }
-        let ctrl =
-            kv3::read(resource::data(model, "CTRL", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
-        let blocks = resource::blocks(model).map_err(|e| e.to_string())?;
-        let mut out = model.to_vec();
-        for mesh in items(ctrl.root.get("embedded_meshes")) {
-            let index = num(&ctrl, mesh.get("m_nDataBlock").or_else(|| mesh.get("data_block")));
-            if index < 0.0 {
-                continue;
-            }
-            let at = index as usize;
-            if at >= blocks.len() {
-                return Err("hitboxes: no such block".into());
-            }
-            let (name, nth) = (&blocks[at].name, blocks[..at].iter().filter(|b| b.name == blocks[at].name).count());
-            let mut kv =
-                kv3::read(resource::data(&out, name, nth).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
-            let Value::Object(members) = &mut kv.root.value else { return Ok(None) };
-            let old = members.get("m_hitboxsets").map(|s| s.items().to_vec()).unwrap_or_default();
-            let have: HashSet<String> = old.iter().map(|s| text(s.get("key")).to_lowercase()).collect();
-            let mut sets = old;
-            sets.extend(names.iter().filter(|n| !have.contains(&n.to_lowercase())).map(|n| hitbox_set(n, &boxes)));
-            members.insert("m_hitboxsets".into(), typed(sets, 9));
-            out = resource::replace(&out, name, nth, &kv3::write(&kv).map_err(|e| e.to_string())?)
-                .map_err(|e| e.to_string())?;
+        let at = index as usize;
+        if at >= blocks.len() {
+            return Err("hitboxes: no such block".into());
         }
-        flagged(&out, &boxes).map(Some)
-    };
-    run().ok().flatten()
+        let (name, nth) = (&blocks[at].name, blocks[..at].iter().filter(|b| b.name == blocks[at].name).count());
+        let mut kv =
+            kv3::read(resource::data(&out, name, nth).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+        let Value::Object(members) = &mut kv.root.value else { return Ok(None) };
+        let old = members.get("m_hitboxsets").map(|s| s.items().to_vec()).unwrap_or_default();
+        let have: HashSet<String> = old.iter().map(|s| text(s.get("key")).to_lowercase()).collect();
+        let mut sets = old;
+        sets.extend(names.iter().filter(|n| !have.contains(&n.to_lowercase())).map(|n| hitbox_set(n, boxes)));
+        members.insert("m_hitboxsets".into(), typed(sets, 9));
+        out = resource::replace(&out, name, nth, &kv3::write(&kv).map_err(|e| e.to_string())?)
+            .map_err(|e| e.to_string())?;
+    }
+    flagged(&out, boxes).map(Some)
 }
