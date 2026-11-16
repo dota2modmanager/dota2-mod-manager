@@ -15,7 +15,7 @@ function seen(): Set<string> {
 }
 
 /** The ids every tile carries, so the tab knows how many are left without drawing the screen. */
-const ALL = ['music', 'portraits', 'paint', 'sounds', 'towers', 'trees', 'decor', 'background', 'hud', 'cursor', 'rank', 'grids', 'creator', 'ai'];
+const ALL = ['music', 'portraits', 'paint', 'sounds', 'decor', 'background', 'hud', 'cursor', 'rank', 'grids', 'creator', 'ai'];
 
 export const isNew = (id: string): boolean => !OLD.has(id) && !id.startsWith('arcana:') && !seen().has(id);
 

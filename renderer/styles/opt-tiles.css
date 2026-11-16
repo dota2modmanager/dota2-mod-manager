@@ -15,3 +15,7 @@
 .opt-side-tiles { display: flex; flex-direction: column; gap: var(--space-1); }
 .opt-tiles-label { font-size: var(--text-xs); color: var(--text-muted); }
 .opt-levels-3 { grid-template-columns: repeat(3, 1fr); }
+
+/* trees and towers in "Своя карта": which side a pick goes on, and what each side has now */
+.opt-sides { margin-bottom: var(--space-2); }
+.opt-sides-line { display: block; margin-top: var(--space-1); font-size: var(--text-xs); color: var(--text-muted); }

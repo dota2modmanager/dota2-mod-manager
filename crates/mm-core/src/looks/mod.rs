@@ -5,6 +5,7 @@ pub mod cursors;
 pub mod effect_edit;
 pub mod effect_edit_service;
 pub mod effect_finder;
+pub mod fx_in_use;
 pub mod ground_build;
 pub mod ground_facets;
 pub mod hero_paint_service;

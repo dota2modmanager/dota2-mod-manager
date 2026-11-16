@@ -56,10 +56,11 @@ pub(crate) use item_builder::{
     item_builder_ability_fx, item_builder_assets, item_builder_donor, item_builder_effects, item_builder_everyone,
     item_builder_everyone_budget, item_builder_fx_patch, item_builder_kinetic, item_builder_personas,
     item_builder_refits, item_builder_sets, item_builder_styles, item_portraits, item_skin, item_sounds, item_visuals,
+    unusual_fit,
 };
 pub use item_builder::{item_builder_details, item_builder_slots, unusual_effects};
 pub(crate) use looks::{
-    cursor_maker, cursors, effect_edit, effect_edit_service, effect_finder, ground_build, ground_facets,
+    cursor_maker, cursors, effect_edit, effect_edit_service, effect_finder, fx_in_use, ground_build, ground_facets,
     hero_paint_service, hero_portrait_service, hud_scale, hud_scale_service, map_base, map_build, map_decor,
     map_ground, map_light, map_looks_service, map_make, map_mod_trees, map_optimize, map_paint, map_scene,
     menu_background, menu_background_service, own_music, own_music_service, pumpkin, recolor_layers, recolor_modes,
@@ -85,7 +86,8 @@ pub(crate) use presets::{
     preset_install, preset_link, preset_plan, preset_share, presets_service, ready_presets, ready_presets_format,
 };
 pub(crate) use schema::{
-    build_undo, item_files, item_files_service, item_replacement, schema_build, schema_cosmetics, schema_harvest,
+    build_undo, item_files, item_files_service, item_in_body, item_replacement, schema_build, schema_cosmetics,
+    schema_harvest,
 };
 pub use schema::{schema_deploy, schema_merge, schema_service};
 pub(crate) use tools::{creator, resource_compiler, run_process, toolchain, wine, workshop_tools};

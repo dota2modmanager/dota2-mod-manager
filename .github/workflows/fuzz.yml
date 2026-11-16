@@ -24,9 +24,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # libFuzzer's instrumentation is nightly-only
       - name: Rust toolchain
-        run: rustup toolchain install nightly --profile minimal && rustup default nightly
+        run: rustup toolchain install stable nightly --profile minimal && rustup default nightly
+      # the tool itself on stable: its pinned dependencies need not build on today's nightly
+      # (cargo-fuzz 0.12.0's rustix did not, 2026-11-16)
       - name: cargo-fuzz
-        run: cargo install cargo-fuzz --version 0.12.0 --locked
+        run: cargo +stable install cargo-fuzz --version 0.13.2 --locked
       - name: Five minutes on each parser
         working-directory: fuzz
         run: |

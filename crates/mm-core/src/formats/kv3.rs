@@ -226,7 +226,7 @@ fn blob_table(
 fn read_blobs(block: &[u8], at: usize, t: &BlobTable, tb: &[u8], total: i64) -> Result<(Vec<u8>, usize), Kv3Error> {
     let lengths = (0..t.count).map(|k| i32_at(tb, t.lengths_at + k * 4)).collect::<Result<Vec<_>, _>>()?;
     let sum: i64 = lengths.iter().map(|&n| n as i64).sum();
-    if sum != total || sum < 0 {
+    if sum != total || sum < 0 || sum as usize > block.len().saturating_sub(at).saturating_mul(255) {
         return err("the blob lengths do not add up");
     }
     let mut data = vec![0u8; sum as usize];
@@ -603,7 +603,7 @@ pub fn read(block: &[u8]) -> Result<Block, Kv3Error> {
     l4.at += 4;
     lanes.extend([l1, l2, l4, l8]);
     let aux = [0, 1, 2, 3];
-    let mut strings = Vec::with_capacity(n_strings.max(0) as usize);
+    let mut strings = Vec::with_capacity((n_strings.max(0) as usize).min(b0.len()));
     let mut text_at = if version >= 5 { lanes[0].at } else { off };
     for _ in 0..n_strings.max(0) {
         let z = memchr::memchr(0, b0.get(text_at..).unwrap_or(&[]))

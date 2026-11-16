@@ -24,7 +24,7 @@ not offer.
    | `entity_model` (the hero becomes another model) | that model under the hero's model path |
    | `model` (a slot model becomes another) | the new model under the stock slot path |
    | `particle` (one effect becomes another) | the new particle under the old one's path |
-   | `particle_create` (the item creates an effect) | nothing creates it: hang it as a child of a particle the hero always has |
+   | `particle_create` (the item creates an effect) | list it in the model's `particle_cfg_list` ([recolor.md](recolor.md)), or hang it as a child of a particle the hero always has |
    | `activity` (an activity modifier, e.g. `abysm`) | keep Valve's activities on every sequence the server can pick and make the plain one play the item's clips ([below](#an-immortal-or-set-without-the-item)); take the modifier off only where no plain twin exists |
    | `ability_icon`, `icon_replacement_hero*` | the pictures under the plain names in `panorama/images` |
 

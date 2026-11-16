@@ -6,6 +6,11 @@ use crate::kv3::Kv3Error;
 
 /// One LZ4 block of exactly `size` bytes.
 pub fn decode(src: &[u8], size: usize) -> Result<Vec<u8>, Kv3Error> {
+    // a byte of LZ4 gives at most 255 out (a length byte of a match); a size past that is the
+    // file's word only, and the buffer is not reserved for it
+    if size > src.len().saturating_mul(255) {
+        return Err(Kv3Error(format!("LZ4 cannot give {size} bytes out of {}", src.len())));
+    }
     let mut out = vec![0u8; size];
     let n = decode_into(src, &mut out, 0, size)?;
     if n != size {

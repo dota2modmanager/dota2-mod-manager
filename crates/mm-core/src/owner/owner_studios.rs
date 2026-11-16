@@ -81,6 +81,9 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             svc.install(installer, library, &a0, log)
         }),
         "decor:state" => {
+            // the slow half first and off the owner's lock: the map's lights and its scan, which a
+            // first opening spent seconds on while every other channel queued behind it
+            let lights = warm_map(o);
             let mut c = o.core();
             // the game's terrain and weather items, read out of the item table once per table: a
             // reading is the whole fifty megabytes, every opening of the window paid it
@@ -90,7 +93,6 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 None => (vec![], vec![], Value::Null),
             };
             let map = crate::map_make::MapMake::state(&c.library);
-            let lights = c.game().map(|g| weather_lights(&g)).unwrap_or(Value::Null);
             ok_with(crate::map_decor::MapDecor::new(c.game()).state(&c.installer, &c.library).map(|mut v| {
                 v["map"] = map;
                 v["weatherLight"] = lights;
@@ -310,6 +312,39 @@ fn decor_install(o: &Owner, args: &[Value]) -> Value {
 /// The light of each weather in the default map's zones (map_build.rs weather_lights), read once
 /// per map file: the window lights its 3D map from them.
 static WEATHER_LIGHTS: std::sync::Mutex<Option<(String, Value)>> = std::sync::Mutex::new(None);
+
+/// What the map windows read of the map in force, read now if it was not: the weather zones' light
+/// and the scan of the map's decor. Only the paths are taken under the owner's lock; the reading is
+/// off it. Called by the window's state, and once after start so the first opening finds it ready
+/// (owner_start.rs). The light, or null with no game.
+pub fn warm_map(o: &Owner) -> Value {
+    let (game, map) = {
+        let c = o.core();
+        let game = c.game();
+        let map = crate::map_decor::MapDecor::new(game.clone()).map_in_force(&c.installer);
+        (game, map)
+    };
+    let Some(game) = game else { return Value::Null };
+    let lights = weather_lights(&game);
+    if let Some(map) = map {
+        if let Err(e) = crate::map_decor::MapDecor::new(Some(game)).warm(&map) {
+            o.diag(&format!("map decor: could not read the map ahead: {e}"));
+        }
+    }
+    lights
+}
+
+/// Once after start (owner_start.rs): what [`warm_map`] reads, and the 3D view of the map the two
+/// map windows draw, exported by the toolchain the first time (a minute or more) and kept, so the
+/// windows do not wait on it either. Off the owner's lock throughout; nothing without the toolchain.
+pub fn warm_at_start(o: &Owner) {
+    warm_map(o);
+    let glb = o.core().glb.clone();
+    let started = std::time::Instant::now();
+    if glb.map_world(None).is_some() {
+        o.diag(&format!("map 3D view ready ahead in {} ms", started.elapsed().as_millis()));
+    }
+}
 
 fn weather_lights(game: &std::path::Path) -> Value {
     let map = game.join("dota").join("maps").join("dota.vpk");

@@ -16,7 +16,6 @@ import { openItemHeroModal } from './item-hero.ts';
 import { firstHubHero } from './item-hub.ts';
 import { openBuilderGems } from './item-hero.ts';
 import { arcanaLeads, openArcanaWindow } from './catalog/arcana.ts';
-import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
 import { iconsPicked, openAbilityIcons } from './catalog/ability-icons.ts';
 import { backgroundLead, openBackground } from './catalog/background.ts';
@@ -66,9 +65,9 @@ async function importVpk(): Promise<void> {
 const on = (text: string) => ({ text, on: true });
 
 async function groups(): Promise<StudioGroup[]> {
-  const [arcanas, towers, trees] = await Promise.all([
-    arcanaLeads().catch(() => []), mapLookLead('towers').catch(() => null), mapLookLead('trees').catch(() => null),
-  ]);
+  // the game's towers and trees are picked in "Своя карта" now, a side each: no tiles, and no
+  // reading of the game's looks each time the Workshop is drawn
+  const arcanas = await arcanaLeads().catch(() => []);
   const sounds = soundLead('hero-sounds');
   const icons = iconsPicked();
   await readPortraits();
@@ -97,11 +96,7 @@ async function groups(): Promise<StudioGroup[]> {
       tile({ id: 'effects', icon: 'auto_awesome', title: L`Редактор эффектов`, text: L`Размер, количество, скорость и цвет любого эффекта игры.`, open: (el) => openEffects(el) }),
     ] },
     { id: 'map', title: L`Карта`, tiles: [
-      ...(towers ? [tile({ id: 'towers', icon: 'fort', title: L`Башни из игры`, text: L`Башни любого события, свои у Света и у Тьмы.`,
-        status: towers.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('towers', el) })] : []),
-      ...(trees ? [tile({ id: 'trees', icon: 'park', title: L`Деревья из игры`, text: L`Деревья любого сезона, свои на каждой стороне.`,
-        status: trees.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('trees', el) })] : []),
-      tile({ id: 'map-make', icon: 'landscape', title: L`Своя карта`, text: L`Ландшафт, погода, тёмная карта, лоу-поли земля и деревья, в 3D до установки.`,
+      tile({ id: 'map-make', icon: 'landscape', title: L`Своя карта`, text: L`Ландшафт, погода, тёмная карта, лоу-поли земля, деревья и башни для каждой стороны, в 3D до установки.`,
         status: decorLead('terrains')?.installed ? on(L`Стоит`) : undefined, open: (el) => openDecor(el, 'map') }),
       tile({ id: 'decor', icon: 'speed', title: L`Оптимизация`, text: L`Декор, вода, эффекты и свет: убери лишнее с карты, которая стоит, и посмотри в 3D, что пропадёт.`,
         status: decorLead('optimization')?.installed ? on(L`Стоит`) : undefined, open: (el) => openDecor(el, 'optimize') }),
