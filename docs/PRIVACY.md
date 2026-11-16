@@ -56,7 +56,7 @@ the host it is sent to.
 | Host | What for | Where in the code |
 |---|---|---|
 | `raw.githubusercontent.com` | The mod catalog (`Dota2PornFxWeb`), the fingerprint map, and the remote config that lets a broken feature be switched off without a release | `crates/mm-core/src/catalog/mod.rs`, `crates/mm-core/src/catalog/fingerprints.rs`, `crates/mm-core/src/catalog/remote_config.rs` |
-| `github.com` | Update checks and downloading a new version from Releases | `electron-updater`, `crates/mm-core/src/app/updater.rs`, `crates/mm-core/src/app/portable_update.rs` |
+| `github.com` | Update checks and downloading a new version from Releases | `src-tauri/src/update.rs` (Tauri's updater), `crates/mm-core/src/app/updater.rs`, `crates/mm-core/src/app/portable_update.rs` |
 | `cdn.dota2modmanager.com` | A copy of the catalog's preview pictures, the pinned toolchain, and since 2.6.5 the app's own updates, so all of that still works when GitHub is unreachable | `crates/mm-core/src/catalog/net_fetch.rs`, `renderer/ui/media.ts`, `crates/mm-core/src/app/portable_update.rs` |
 | `huggingface.co` | Another copy of the catalog's mod archives, kept by the catalog's author, tried after the catalog's own host. It is named in the signed remote config rather than in the app, and a download from it counts only if it matches the hash the catalog publishes | `config/app.json`, `crates/mm-core/src/catalog/remote_config.rs`, `crates/mm-core/src/catalog/net_fetch.rs` |
 | `dota2modmanager.com` | A mirror of the small catalog files, same reason, and the one copy where a file and its signature are always from the same moment | `crates/mm-core/src/catalog/net_fetch.rs`, `crates/mm-core/src/catalog/mod.rs` |
