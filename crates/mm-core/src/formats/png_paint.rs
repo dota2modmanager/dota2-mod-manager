@@ -8,7 +8,8 @@ pub fn decode_rgba(png: &[u8]) -> Result<(Vec<u8>, u32, u32), String> {
     let mut dec = png::Decoder::new(std::io::Cursor::new(png));
     dec.set_transformations(png::Transformations::EXPAND | png::Transformations::STRIP_16);
     let mut reader = dec.read_info().map_err(|e| e.to_string())?;
-    let mut buf = vec![0; reader.output_buffer_size()];
+    let size = reader.output_buffer_size().ok_or("a picture too large to hold")?;
+    let mut buf = vec![0; size];
     let info = reader.next_frame(&mut buf).map_err(|e| e.to_string())?;
     buf.truncate(info.buffer_size());
     let rgba = match info.color_type {
