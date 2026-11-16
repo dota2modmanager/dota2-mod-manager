@@ -10,7 +10,7 @@ use base64::Engine;
 use indexmap::IndexMap;
 use serde_json::{json, Map, Value};
 
-use crate::glb_embed::{embed_glb, read_glb, write_glb};
+use crate::glb_embed::{embed_glb_max, read_glb, write_glb};
 use crate::loadout_material::{loadout_descriptor, read_loadout_material, NativeMaterial, LOADOUT_MASKS};
 use crate::model_glb::{Clips, ModelGlb};
 
@@ -24,6 +24,11 @@ pub trait Exporter {
     /// so a recolour's own colour has to be handed in beside it.
     fn own(&self, _texture: &str) -> bool {
         false
+    }
+    /// The largest side a picture of these models keeps (mod_look.rs: a catalog mod's small stage);
+    /// None for whole.
+    fn picture_max(&self) -> Option<u32> {
+        None
     }
 }
 
@@ -297,8 +302,8 @@ struct Prepared {
     missing_color: HashSet<String>,
 }
 
-fn prepare(w: &Wanted, read: Read) -> Result<Prepared, String> {
-    let (json, bin) = read_glb(&embed_glb(&w.file)?)?;
+fn prepare(w: &Wanted, read: Read, max: Option<u32>) -> Result<Prepared, String> {
+    let (json, bin) = read_glb(&embed_glb_max(&w.file, max)?)?;
     let mut materials = model_materials(&w.model, read);
     let mut missing_color = HashSet::new();
     let swaps = if w.skin != 0 {
@@ -369,7 +374,7 @@ pub fn loadout_models(
 ) -> Result<Vec<Option<Vec<u8>>>, String> {
     let mut prepared = Vec::with_capacity(models.len());
     for w in models {
-        match prepare(w, read) {
+        match prepare(w, read, glb.picture_max()) {
             Ok(p) => prepared.push(Some(p)),
             Err(e) => match on_missing.as_mut() {
                 Some(f) => {

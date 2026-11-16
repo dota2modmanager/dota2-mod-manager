@@ -310,12 +310,27 @@ pub fn loadout_descriptor(m: &NativeMaterial) -> Value {
         "cloak".into(),
         if on(m.ints.get("F_ENABLE_CLOAK")) { f("g_flMaterialCloakFactor", 0.0) } else { json!(0) },
     );
+    // A tint mask (the event creeps' crystal shader): g_vColorTint colours only where the mask
+    // says, which the export put on the whole body as its base colour (a mega creep all red); and a
+    // tint cycle, the crystal's hue running along the lookup's colours in time.
+    let has = |k: &str| m.textures.get(k).is_some_and(|t| !t.is_empty());
+    if on(m.ints.get("F_TINT_MASK")) && has("g_tTintMask") {
+        out.insert("baseColor".into(), json!([1, 1, 1, 1]));
+        out.insert("tint".into(), v("g_vColorTint", &[1.0, 1.0, 1.0]));
+    }
+    if on(m.ints.get("F_TINT_CYCLE")) && on(m.ints.get("F_TINT_CYCLE_LOOKUP_TEXTURE")) && has("g_tTintCycleLookup") {
+        out.insert("baseColor".into(), json!([1, 1, 1, 1]));
+        out.insert(
+            "tintCycle".into(),
+            json!([f("g_flTintCycleSpeed", 0.05), f("g_flTintCycleFresnel", 0.0), f("g_flTintCycleMask", 0.0)]),
+        );
+    }
     Value::Object(out)
 }
 
 /// Texture roles the loadout shader reads from the GLB's extras instead of glTF's PBR channels.
 /// cube: the six faces as one strip (src/png-strip.ts); a metal without it came out black.
-pub const LOADOUT_MASKS: [(&str, &str); 8] = [
+pub const LOADOUT_MASKS: [(&str, &str); 10] = [
     ("opacity", "g_tOpacity"),
     ("masks", "g_tMasks1"),
     ("specular", "g_tMasks2"),
@@ -324,4 +339,6 @@ pub const LOADOUT_MASKS: [(&str, &str); 8] = [
     ("fresnel", "g_tFresnelWarp"),
     ("diffuseWarp", "g_tDiffuseWarp"),
     ("cube", "g_tCubeMap"),
+    ("tintMask", "g_tTintMask"),
+    ("tintLookup", "g_tTintCycleLookup"),
 ];

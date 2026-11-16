@@ -542,6 +542,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
                 ],
             ),
             ("preview3d:modHero", vec![str_(40, 1), str_(200, 1), str_(200, 0)]),
+            ("preview3d:modProps", vec![str_(40, 1), str_(200, 1), optional(num(0.0, 63.0))]),
             (
                 "preview3d:modModels",
                 vec![

@@ -16,14 +16,15 @@ use std::time::Instant;
 use indexmap::{IndexMap, IndexSet};
 use sha1::{Digest, Sha1};
 
-/// A model path as the game names it, compiled or not, or None for one that is not a model.
+/// A model path as the game names it, compiled or not, or None for one that is not a model. Any
+/// first folder: a mod's effect draws its model where its author put it
+/// ("kisilev_ind/models/ancient/dragon.vmdl").
 pub fn model_file(model: &str) -> Option<String> {
     let m = model.replace('\\', "/");
     let m = m.trim();
     let low = m.to_lowercase();
     let stem = low.strip_suffix(".vmdl_c").or_else(|| low.strip_suffix(".vmdl"))?;
-    let ok = stem.starts_with("models/")
-        && stem.len() > "models/".len()
+    let ok = stem.split_once('/').is_some_and(|(first, rest)| !first.is_empty() && !rest.is_empty())
         && stem.bytes().all(|c| c.is_ascii_alphanumeric() || b"_/.-".contains(&c));
     // the lazy ([\w/.-]+?) before .vmdl(_c)$ takes the shortest stem, which is this one
     (ok && !stem.contains("..")).then(|| format!("{stem}.vmdl_c"))
@@ -451,14 +452,27 @@ impl ModelGlb {
     /// The same under these clips (a catalog hero mod's body keeps its loadout and idle, mod_look.rs);
     /// each list of clips is a file of its own.
     pub fn loose_with(&self, root: &Path, model: &str, clips: &[String]) -> Option<PathBuf> {
+        self.loose_clips(root, model, Some(clips))
+    }
+
+    /// The same with every clip the model has and its materials: a model an effect draws plays its
+    /// own (a mod's dragon flying round its ancient).
+    pub fn loose_all(&self, root: &Path, model: &str) -> Option<PathBuf> {
+        self.loose_clips(root, model, None)
+    }
+
+    /// `clips`: None for all of them.
+    fn loose_clips(&self, root: &Path, model: &str, clips: Option<&[String]>) -> Option<PathBuf> {
         let exe = (self.vrf)()?;
         let file = model_file(model)?;
-        let out = if clips.is_empty() {
-            root.join("glb")
-        } else {
+        let out = if clips.is_none() {
+            root.join("glb-all")
+        } else if let Some(clips) = clips.filter(|c| !c.is_empty()) {
             let joined: String =
                 clips.join("-").chars().filter(|ch| ch.is_ascii_alphanumeric() || *ch == '_' || *ch == '-').collect();
             root.join(format!("glb-{joined}"))
+        } else {
+            root.join("glb")
         };
         if let Some(found) = found_glb(&out, &file) {
             return Some(found);
@@ -469,18 +483,27 @@ impl ModelGlb {
         }
         self.export_once(&out, std::slice::from_ref(&file), |_| {
             let to = glb_at(&out, &file);
-            let r = std::fs::create_dir_all(to.parent().unwrap_or(&out)).map_err(|e| e.to_string()).and_then(|()| {
-                (self.run)(
-                    &exe,
-                    &export_args(
-                        &at.to_string_lossy(),
-                        &to.to_string_lossy(),
-                        &[],
-                        &Clips::Some(clips.to_vec()),
-                        false,
-                    ),
-                )
-            });
+            let (from, into) = (at.to_string_lossy().to_string(), to.to_string_lossy().to_string());
+            let args = match clips {
+                Some(c) => export_args(&from, &into, &[], &Clips::Some(c.to_vec()), false),
+                // one file in, so no list of files to pick from it
+                None => [
+                    "-i",
+                    &from,
+                    "-o",
+                    &into,
+                    "-d",
+                    "--gltf_export_format",
+                    "glb",
+                    "--gltf_export_animations",
+                    "--gltf_export_materials",
+                ]
+                .map(String::from)
+                .to_vec(),
+            };
+            let r = std::fs::create_dir_all(to.parent().unwrap_or(&out))
+                .map_err(|e| e.to_string())
+                .and_then(|()| (self.run)(&exe, &args));
             if let Err(e) = r {
                 self.error("models 3d: mod export", &e);
             }
@@ -720,5 +743,22 @@ impl ModelGlb {
     /// Everything exported so far, gone.
     pub fn clear(&self) {
         let _ = std::fs::remove_dir_all(&self.base);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::model_file;
+
+    #[test]
+    fn a_model_may_lie_in_any_folder_but_never_above() {
+        assert_eq!(model_file("models/creeps/a.vmdl").as_deref(), Some("models/creeps/a.vmdl_c"));
+        assert_eq!(
+            model_file("Kisilev_Ind/models/ancient/dragon.vmdl_c").as_deref(),
+            Some("kisilev_ind/models/ancient/dragon.vmdl_c")
+        );
+        assert_eq!(model_file("dragon.vmdl"), None);
+        assert_eq!(model_file("models/../x.vmdl"), None);
+        assert_eq!(model_file("models/a b.vmdl"), None);
     }
 }

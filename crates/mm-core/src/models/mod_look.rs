@@ -235,6 +235,32 @@ pub fn hero_of<'a>(
 
 /// The preview's exporter with a mod over the game: what the mod brings is exported or decoded out
 /// of its folder, the rest is the game's, from the same cache as the item builder's.
+/// The largest side of a picture on a catalog mod's stage.
+pub const PICTURE_MAX: u32 = 1024;
+
+/// The pictures made small, by their bytes' hash; None for one small already.
+type Shrunk = std::collections::HashMap<[u8; 20], Option<Vec<u8>>>;
+
+/// A picture made small for the stage, kept for the next time by its bytes' hash; None when it is
+/// small already.
+fn small_picture(png: &[u8]) -> Option<Vec<u8>> {
+    use sha1::{Digest, Sha1};
+    static MADE: std::sync::OnceLock<std::sync::Mutex<Shrunk>> = std::sync::OnceLock::new();
+    let key: [u8; 20] = Sha1::digest(png).into();
+    let made = MADE.get_or_init(Default::default);
+    if let Some(s) = made.lock().unwrap_or_else(|e| e.into_inner()).get(&key) {
+        return s.clone();
+    }
+    let s = crate::png_paint::shrink(png, PICTURE_MAX);
+    let mut m = made.lock().unwrap_or_else(|e| e.into_inner());
+    // a few hundred pictures at most: past that it starts again
+    if m.len() > 512 {
+        m.clear();
+    }
+    m.insert(key, s.clone());
+    s
+}
+
 pub struct LookExporter<'a> {
     pub glb: &'a ModelGlb,
     pub look: &'a Look,
@@ -248,9 +274,12 @@ impl LookExporter<'_> {
 
 impl Exporter for LookExporter<'_> {
     fn glbs(&self, models: &[String], clips: &Clips, materials: bool) -> IndexMap<String, Option<PathBuf>> {
-        // every clip of a body is the motions list, which the game's body answers
+        // every clip of a body is the motions list, which the game's body answers; but a model an
+        // effect draws (all its clips, dressed) is the mod's own when the mod brings it: the game's
+        // exporter reads the game's archive alone, and lost a mod's dragon round its ancient
         let mine: Vec<String> = match clips {
             Clips::Some(_) => models.iter().filter(|m| self.ours(m)).cloned().collect(),
+            Clips::All if materials => models.iter().filter(|m| self.ours(m)).cloned().collect(),
             Clips::All => vec![],
         };
         let theirs: Vec<String> = models.iter().filter(|m| !mine.contains(m)).cloned().collect();
@@ -264,7 +293,13 @@ impl Exporter for LookExporter<'_> {
                 .iter()
                 .map(|m| {
                     let list = &list;
-                    sc.spawn(move || (m.clone(), self.glb.loose_with(&self.look.root, m, list)))
+                    sc.spawn(move || {
+                        let f = match clips {
+                            Clips::All => self.glb.loose_all(&self.look.root, m),
+                            Clips::Some(_) => self.glb.loose_with(&self.look.root, m, list),
+                        };
+                        (m.clone(), f)
+                    })
                 })
                 .collect();
             let made: Vec<(String, Option<PathBuf>)> = made.into_iter().filter_map(|h| h.join().ok()).collect();
@@ -287,7 +322,17 @@ impl Exporter for LookExporter<'_> {
         });
         let mut out = game;
         out.extend(made);
+        // the stage is a few hundred pixels: a model's 4096-pixel pictures were most of the answer
+        for v in out.values_mut().flatten() {
+            if let Some(s) = small_picture(v) {
+                *v = s;
+            }
+        }
         Some(out)
+    }
+
+    fn picture_max(&self) -> Option<u32> {
+        Some(PICTURE_MAX)
     }
 
     fn own(&self, texture: &str) -> bool {

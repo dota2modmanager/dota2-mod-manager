@@ -1,0 +1,14 @@
+/* ============ The 3D stage of a catalog mod of the world (catalog/modal/PropStage.tsx) ============
+   A ward, a creep, a tower... on the hero stage, with a tab per model. */
+
+/* a mod of the world's stage (modal/PropStage.tsx): the hero stage, a tab per model when there are more, at
+   its top (the stage's own hints of the mouse and keys are along its bottom) */
+.prop-stage-wrap { position: relative; height: 100%; display: flex; flex-direction: column; }
+.prop-stage-wrap > .preview3d { flex: 1; min-height: 0; }
+.prop-stage-tabs { position: absolute; left: 48px; right: 48px; top: var(--space-2); z-index: 2; display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; pointer-events: none; }
+.prop-stage-tabs button {
+  pointer-events: auto; max-width: 180px; padding: 3px 10px; border: 1px solid var(--border); border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--bg-deep) 85%, transparent); color: var(--text-muted); font: inherit; font-size: var(--text-xs);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+}
+.prop-stage-tabs button.on { border-color: var(--primary); color: var(--text); }

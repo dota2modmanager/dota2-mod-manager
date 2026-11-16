@@ -11,6 +11,7 @@ pub mod loadout_material;
 pub mod loadout_resources;
 pub mod loadout_sheet;
 pub mod mod_look;
+pub mod mod_props;
 pub mod model_attachments;
 pub mod model_bodygroups;
 pub mod model_cloth;
