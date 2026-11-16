@@ -28,7 +28,7 @@ png = "0.18"
 # foreign archives: mods, fonts, cursors and tools off the catalog, presets off Discord
 zip = { version = "9", default-features = false, features = ["deflate"] }
 # free space on the drive a mod is about to be written to
-fs4 = "0.13"
+fs4 = "1.1"
 # local time for a zip's dates, and the ISO time in the ownership note
 # preset links: raw deflate and base64url, as node:zlib and Buffer make them
 flate2 = "1"
