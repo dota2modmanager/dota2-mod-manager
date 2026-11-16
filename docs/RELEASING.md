@@ -68,8 +68,8 @@ installed is not worth handing to a tester either. After that it parts company w
 - it stays a **prerelease** and never becomes `/releases/latest`, which is the endpoint every copy
   on the stable channel follows;
 - it carries `beta.yml` and `beta-linux.yml`, and that is what the app reads for somebody on the
-  beta channel. It carries the `latest` pair too, because electron-builder writes it for every
-  version, and nobody on the stable channel reads a prerelease;
+  beta channel. It carries the `latest` pair too, because the build writes it for every
+  version (`tools/release/tauri-release.mjs`), and nobody on the stable channel reads a prerelease;
 - it goes to the update mirror beside the release, with `-beta` in the name of every binary and
   its two manifests rewritten to ask for those, so it can never stand where the installer
   `latest.yml` describes. A tester whose GitHub is down reads `beta.yml` there;

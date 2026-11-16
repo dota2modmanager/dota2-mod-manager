@@ -7,9 +7,9 @@
  * attention, and a stale PKGBUILD fails at the checksum, which reads to the user as "this
  * project is abandoned" rather than "nobody regenerated a file".
  *
- * So both are generated. The checksum does not need the 130 MB download: electron-builder
- * publishes latest-linux.yml beside the AppImage with the sha512 in it, which is the same digest
- * the updater checks, so the package and the in-app update trust exactly the same number.
+ * So both are generated. The checksum does not need the download: the release carries
+ * latest-linux.yml beside the AppImage with its sha512 (tools/release/tauri-release.mjs), so the
+ * package and the release's own feed name exactly the same digest.
  *
  *   node tools/release/gen-aur.js              the newest published release
  *   node tools/release/gen-aur.js 2.6.4        a particular one
@@ -114,17 +114,12 @@ package() {
   chmod -R go-w "\${pkgdir}/opt/\${_appname}"
   chmod 755 "\${pkgdir}/opt/\${_appname}/AppRun"
 
-  # No setuid chrome-sandbox. Arch allows unprivileged user namespaces, which is the sandbox
-  # Electron reaches for first, and a setuid root binary is not a thing to add to somebody's
-  # system so a mod manager can start half a second earlier.
-  rm -f "\${pkgdir}/opt/\${_appname}/chrome-sandbox"
-
   install -dm755 "\${pkgdir}/usr/bin"
   ln -s "/opt/\${_appname}/AppRun" "\${pkgdir}/usr/bin/\${_appname}"
 
   install -Dm644 squashfs-root/*.desktop -t "\${pkgdir}/usr/share/applications/"
 
-  # electron-builder writes the sized icons under usr/share/icons and one at the root. Take the
+  # An AppImage carries the sized icons under usr/share/icons and one at the root. Take the
   # set where there is one, fall back to the single file rather than shipping no icon at all.
   if [ -d squashfs-root/usr/share/icons ]; then
     install -dm755 "\${pkgdir}/usr/share/icons"
