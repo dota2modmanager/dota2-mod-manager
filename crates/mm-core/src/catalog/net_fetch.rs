@@ -500,8 +500,15 @@ fn sibling(dest: &Path, suffix: &str) -> PathBuf {
 pub fn sha256_file(p: &Path) -> std::io::Result<String> {
     let mut f = std::fs::File::open(p)?;
     let mut h = Sha256::new();
-    std::io::copy(&mut f, &mut h)?;
-    Ok(format!("{:x}", h.finalize()))
+    let mut buf = vec![0; 1 << 16];
+    loop {
+        let n = std::io::Read::read(&mut f, &mut buf)?;
+        if n == 0 {
+            break;
+        }
+        h.update(&buf[..n]);
+    }
+    Ok(h.finalize().iter().map(|b| format!("{b:02x}")).collect())
 }
 
 /// How a download is watched and checked.
@@ -586,6 +593,17 @@ pub fn test_download_proxy(value: &serde_json::Value) -> serde_json::Value {
 
 #[cfg(test)]
 mod tests {
+
+    /// A download is checked against this; a file longer than one read is hashed whole.
+    #[test]
+    fn a_files_sha256_is_the_known_one_across_reads() {
+        let p = std::env::temp_dir().join(format!("mm-sha-{}", uuid::Uuid::new_v4().simple()));
+        std::fs::write(&p, b"abc").unwrap();
+        assert_eq!(super::sha256_file(&p).unwrap(), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        std::fs::write(&p, vec![b'a'; 1_000_000]).unwrap();
+        assert_eq!(super::sha256_file(&p).unwrap(), "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
+        let _ = std::fs::remove_file(p);
+    }
     #[test]
     fn requests_trust_the_systems_roots_not_a_bundled_list() {
         // a bundled list failed every request to the download counter on workers.dev
