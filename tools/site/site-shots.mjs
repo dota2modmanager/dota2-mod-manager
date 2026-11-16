@@ -12,16 +12,17 @@
  *
  * Writes site/public/screenshots/dota-2-mod-manager-<name>-<lang>.webp at 1360x860, and a copy 1200
  * wide into site/public/guides for the ones a guide shows (site/src/i18n/doc-shots.ts). Needs Windows,
- * the game and playwright-core and sharp from site/node_modules. Move the window's look, run it again.
+ * the game, a debug build of the shell (cargo build -p dota2-mod-manager), and playwright-core and
+ * sharp from site/node_modules. Move the window's look, run it again.
  */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { openWindow } from '../dev/tauri-window.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const fromSite = createRequire(path.join(root, 'site', 'package.json'));
-const { _electron } = fromSite('playwright-core');
 const sharp = fromSite('sharp');
 
 const JAIL = path.resolve(process.argv[2] || '');
@@ -149,19 +150,9 @@ for (const lang of ['en', 'ru']) {
   try { was = JSON.parse(fs.readFileSync(file, 'utf8')); } catch { /* the first run has no settings yet */ }
   fs.writeFileSync(file, JSON.stringify({ ...was, dotaGamePath: GAME, uiLang: lang, langPromptSeen: true }));
 
-  const app = await _electron.launch({
-    executablePath: path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe'),
-    args: [root, `--user-data-dir=${USER}`, `--write-jail=${JAIL}`],
-    timeout: 60000,
-  });
-  const win = await app.firstWindow();
+  const app = await openWindow({ args: [`--user-data-dir=${USER}`, `--write-jail=${JAIL}`], size: { width: 1360, height: 860 } });
+  const win = app.page;
   win.on('pageerror', (e) => console.log('pageerror', e.message));
-  await app.evaluate(({ BrowserWindow }) => {
-    const w = BrowserWindow.getAllWindows()[0];
-    w.unmaximize();
-    w.setContentSize(1360, 860);
-    w.center();
-  });
   await settle(win, 9000);
   await clearDialogs(win);
   await win.evaluate((mods) => Promise.all(mods.map((m) => window.api.mods.install(m).catch(() => null))), MODS);
