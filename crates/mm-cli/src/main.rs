@@ -201,7 +201,8 @@ fn result(r: Result<String, String>) -> Value {
 
 /// `mm-cli app --user-data-dir=<dir> --write-jail=<dir> --list`: the app's command line
 /// (mm_core::cli) over a userData, without the shell's single-instance lock, so the sandbox can be
-/// driven while a real copy of the app is open. Never point it at a real game: pass --write-jail.
+/// driven while a real copy of the app is open. It needs --write-jail, and its user data inside the
+/// jail, so it cannot write a real game or the installed app's settings.
 fn app(args: &[String]) -> ExitCode {
     let mut argv = vec!["mm-cli".to_string()];
     argv.extend(args.iter().cloned());
@@ -214,8 +215,17 @@ fn app(args: &[String]) -> ExitCode {
         eprintln!("mm-cli app: --user-data-dir=<dir> is required");
         return ExitCode::from(mm_core::cli::USAGE as u8);
     };
-    mm_core::write_jail::install(&mm_core::write_jail::from_argv(&argv));
+    let jail = mm_core::write_jail::from_argv(&argv);
+    if jail.is_empty() {
+        eprintln!("mm-cli app: --write-jail=<dir> is required");
+        return ExitCode::from(mm_core::cli::USAGE as u8);
+    }
+    mm_core::write_jail::install(&jail);
     let ud = std::path::absolute(&ud).unwrap_or_else(|_| ud.into());
+    if let Err(e) = mm_core::write_jail::refuse_outside("user data", &ud) {
+        eprintln!("mm-cli app: {e}");
+        return ExitCode::from(mm_core::cli::USAGE as u8);
+    }
     let opts = mm_core::owner::Options {
         downloads: ud.clone(),
         app_root: std::env::current_dir().unwrap_or_default(),
