@@ -290,14 +290,24 @@ async function main() {
       spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '-condebug', '-console', '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
       await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load');
       await sleep(30000);
-      await press(LOBBY.dismiss, 2500);
-      await press(LOBBY.play, 2500);
-      await press(LOBBY.create, 4000);
-      // the lobby's settings in the picture: the server, the cheats and the password it kept
-      shot('01-lobby');
-      const inLobby = Date.now();
-      await press(LOBBY.play, 3000);
-      await until(() => /HERO_SELECTION/.test(logSince(log, inLobby).slice(-200000)), 120000, 'the picks');
+      // A second try when the picks do not come: the match of the run before can still be alive on
+      // Valve's side, and the first lobby then ends in "the server could not find the game".
+      let inLobby = Date.now();
+      for (let attempt = 1; ; attempt++) {
+        await press(LOBBY.dismiss, 2500);
+        await press(LOBBY.play, 2500);
+        await press(LOBBY.create, 4000);
+        // the lobby's settings in the picture: the server, the cheats and the password it kept
+        shot(attempt === 1 ? '01-lobby' : `01-lobby-${attempt}`);
+        inLobby = Date.now();
+        await press(LOBBY.play, 3000);
+        const picked = await until(() => /HERO_SELECTION/.test(logSince(log, inLobby).slice(-200000)), 90000, 'the picks')
+          .then(() => true, (err) => { if (attempt >= 2) throw err; return false; });
+        if (picked) break;
+        note('no picks: the last match was still up; once more');
+        shot(`01-no-picks-${attempt}`);
+        await sleep(5000);
+      }
       // the last host the client went to: the menu's own idle host comes first in the log
       const hosts = [...logSince(log, inLobby).matchAll(/Host activate: (.+)/g)].map((m) => m[1].trim());
       const server = hosts.filter((h) => !/^Idle/.test(h)).pop() ?? hosts.pop() ?? '';
@@ -427,6 +437,9 @@ async function main() {
         fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, hero, server, notes }, null, 2));
       }
       shot('08-end');
+      // out of the match before Dota closes: one left running met the next run's lobby
+      await command('disconnect');
+      await sleep(5000);
       return;
     }
     // --fps: a match of a private lobby rather than the demo, whose small map is not the one played

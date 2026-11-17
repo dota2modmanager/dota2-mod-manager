@@ -65,6 +65,10 @@ const en: Record<Slug, Doc> = {
         t: 'The effect spreads over the item itself, not around it. The item is sewn into the hero\'s body with its effect, and its own effects stay on the points of the item they were made for. Some items stay a separate model and carry the effect there: one that moves by itself (a mount that flaps its wings, a cape), an arcana, an item that changes the hero\'s animations, model or ability effects, and an item with facial morphs.',
       },
       {
+        k: 'p',
+        t: 'A courier\'s effect, such as Ethereal Flame, Trail of Burning Doom or Touch of Frost, goes on the hero\'s whole body and its mount, the way a courier wears it, and the item it was picked with stays as it is.',
+      },
+      {
         k: 'faq',
         items: [
           ['Do the other players see my items?', 'No. The look is drawn on your screen alone. Your account owns nothing new.'],
@@ -211,6 +215,10 @@ const ru: Record<Slug, Doc> = {
       {
         k: 'p',
         t: 'Эффект растекается по самому предмету, а не висит рядом. Предмет вшивается в тело героя вместе с эффектом, а его собственные эффекты остаются на тех точках предмета, для которых сделаны. Некоторые предметы остаются отдельной моделью, и эффект строится на них: тот, что двигается сам (маунт с крыльями, плащ), аркана, предмет, который меняет анимации, модель или эффекты способностей героя, и предмет с лицевыми морфами.',
+      },
+      {
+        k: 'p',
+        t: 'Эффект курьера, например Ethereal Flame, Trail of Burning Doom или Touch of Frost, ложится на всё тело героя и его маунта, как его носит курьер, а предмет, с которым его выбрали, остаётся как есть.',
       },
       {
         k: 'faq',

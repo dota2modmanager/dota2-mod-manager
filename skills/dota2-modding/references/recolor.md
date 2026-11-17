@@ -123,7 +123,9 @@ name them so (`m_attachmentName`, `m_entityName` `self`): under the old names th
 body's point of the same name, and an arm's effect lands in the head. An item that moves by itself
 (a clip other than its bind pose, or cloth), has morphs, is an arcana, or changes the hero's
 motions, model or ability effects stays its own model and carries the effect there. Cloth moves only
-in a match or the hero demo, never in the loadout: judge it there.
+in a match or the hero demo, never in the loadout: judge it there. A courier's effect (its system
+under `particles/econ/courier/`) is not the item's at all: it goes as it is on the hero's body
+and its mount, the way a courier wears it on its whole body.
 
 modkit does it to a model after the compile and before the pack:
 
