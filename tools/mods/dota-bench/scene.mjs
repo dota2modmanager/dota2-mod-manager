@@ -85,7 +85,7 @@ export function unknownCommands(log, cmds) {
 }
 
 /** The scan code of a key as dotakeys names it, for the ones the bench presses. */
-export const SCAN = { '`': 0x29, '\\': 0x2B, I: 0x17, F11: 0x57, F12: 0x58, INSERT: 0x52 };
+export const SCAN = { '`': 0x29, '\\': 0x2B, I: 0x17, F11: 0x57, F12: 0x58, INSERT: 0x52, END: 0xE04F, HOME: 0xE047, DELETE: 0xE053 };
 
 /**
  * What each hero casts when --skills is not given: its abilities, Aghanim's Scepter's and Shard's

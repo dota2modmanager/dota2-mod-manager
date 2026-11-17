@@ -101,7 +101,20 @@ fn has_files(dir: &Path) -> bool {
     rd.flatten().any(|e| if e.path().is_dir() { has_files(&e.path()) } else { true })
 }
 
-/// Drop the built table, and the folder with it once nothing of ours is left there.
+/// A tree of folders with no file in it taken away, folder by folder: remove_dir_all refused an
+/// empty folder of a game on C: with "the file is in use" (os error 32), where remove_dir took it.
+fn remove_empty_tree(dir: &Path) -> std::io::Result<()> {
+    for e in std::fs::read_dir(dir)?.flatten() {
+        if e.path().is_dir() {
+            remove_empty_tree(&e.path())?;
+        }
+    }
+    std::fs::remove_dir(dir)
+}
+
+/// Drop the built table, and the folder with it once nothing of ours is left there. An empty
+/// folder that will not go stays: the game reads nothing from it, and a build that switched to
+/// the language folder's pak failed on it.
 pub fn undeploy(game: &Path, folder: &str) -> std::io::Result<()> {
     let dir = game.join(folder);
     let dest = dir.join(SCHEMA_VPK);
@@ -109,7 +122,7 @@ pub fn undeploy(game: &Path, folder: &str) -> std::io::Result<()> {
         std::fs::remove_file(&dest)?;
     }
     if dir.exists() && !has_files(&dir) {
-        std::fs::remove_dir_all(&dir)?;
+        let _ = remove_empty_tree(&dir);
     }
     Ok(())
 }

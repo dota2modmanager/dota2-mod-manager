@@ -13,6 +13,15 @@
  *                          whether the game plays that sound when the abilities are cast: what the
  *                          computer plays is recorded (record.ps1) and the sound looked for in it
  *                          (hear.mjs), into verdict.json as "sound"
+ *   npm run dota:bench -- --lobby --vpk <pak.vpk> --hero nevermore [--enemy axe] [--skills "q,w,r@enemy"]
+ *                          the mod in a match on Valve's servers, where some looks break that the
+ *                          demo shows whole (an item sewn into the body lost the head only there): a
+ *                          private lobby with the last lobby's settings (set the server, a password
+ *                          and cheats once by hand; the first picture shows them), the hero picked
+ *                          through the console, then the chat's cheats typed into the chat (chat.ps1): -lvlup 29,
+ *                          Aghanim's Scepter and Shard by -item, -wtf, and -createhero for an enemy.
+ *                          Pictures of the hero close and turned in the inspect, the attack on the
+ *                          enemy and every ability; the console log tells which server it was.
  *   npm run dota:bench -- --fps [--vpk pak.vpk] [--against <verdict.json>]
  *                          how fast the real map runs, in a match of a private lobby: FPS at each
  *                          spot, and how busy the graphics card is at 60 FPS (dota-bench/fps.mjs).
@@ -266,6 +275,155 @@ async function main() {
         shot(`02-click-${k + 1}`);
       }
       fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, menu: true, notes }, null, 2));
+      return;
+    }
+    // --lobby: the hero in a match on Valve's servers, where the demo's local server hides what breaks
+    if (process.argv.includes('--lobby')) {
+      const press = async (at, wait) => {
+        input('hover', at[0] - 6, at[1]);
+        await sleep(300);
+        input('hover', ...at);
+        await sleep(300);
+        click(at);
+        await sleep(wait);
+      };
+      spawn(STEAM, ['-applaunch', '570', '-windowed', '-noborder', '-w', String(W), '-h', String(H), '-condebug', '-console', '+dota_camera_distance', camera], { detached: true, stdio: 'ignore' }).unref();
+      await until(() => /CResponseSystem/.test(logSince(log, started)), 240000, 'the game to load');
+      await sleep(30000);
+      await press(LOBBY.dismiss, 2500);
+      await press(LOBBY.play, 2500);
+      await press(LOBBY.create, 4000);
+      // the lobby's settings in the picture: the server, the cheats and the password it kept
+      shot('01-lobby');
+      const inLobby = Date.now();
+      await press(LOBBY.play, 3000);
+      await until(() => /HERO_SELECTION/.test(logSince(log, inLobby).slice(-200000)), 120000, 'the picks');
+      // the last host the client went to: the menu's own idle host comes first in the log
+      const hosts = [...logSince(log, inLobby).matchAll(/Host activate: (.+)/g)].map((m) => m[1].trim());
+      const server = hosts.filter((h) => !/^Idle/.test(h)).pop() ?? hosts.pop() ?? '';
+      note(`server: ${server || 'not in the log'}`);
+      if (/loopback|local/i.test(server)) note('the lobby runs on this computer, not on Valve\'s servers: set a server in the lobby settings');
+      await sleep(4000);
+      await command(`dota_select_hero npc_dota_hero_${hero}`);
+      await sleep(3000);
+      await command('dota_dev forcegamestart');
+      await until(() => /STATE_PRE_GAME/.test(logSince(log, inLobby).slice(-200000)), 180000, 'the match, which takes a lobby with cheats on');
+      await sleep(8000);
+      // the chat's cheats, typed into the chat: the console's `say` reached the server as text only
+      const chat = (...lines) => ps('chat.ps1', ...lines);
+      chat('-lvlup 29', '-item item_ultimate_scepter', '-item item_aghanims_shard', '-wtf');
+      await sleep(2000);
+      // the camera held on the hero: a double F1 centred nothing with the player's own keys, and
+      // every step below is a point on the screen around the hero
+      await command('dota_camera_lock 1');
+      // -lvlup gives the levels but leaves the points unspent ("ability not learned"): the "+"
+      // over each ability is clicked, along the row in steps narrower than one, a few times over
+      for (let round = 0; round < 5; round++) {
+        for (let x = 690; x <= 1110; x += 29) {
+          click([x, 918]);
+          await sleep(60);
+        }
+      }
+      await sleep(1000);
+      // F1 twice: the hero selected and the camera on it
+      input('key', 'f1');
+      await sleep(150);
+      input('key', 'f1');
+      await sleep(1500);
+      const centre = { x: W / 2, y: H / 2 - 40 };
+      let bars = shot('02-hero', [centre.x, centre.y + 80]);
+      let heroBar = me(bars, centre);
+      if (!heroBar) throw new Error('bench: the hero\'s health bar is not on screen');
+      // a walk out of the fountain onto the open grass below it, filmed on the way: what goes wrong
+      // only in motion. The hero comes up by the shop's wall, where a step right ran into the
+      // cliff and the inspect's camera into the shop; Esc first closes a shop that may be open
+      input('key', 'esc');
+      await sleep(500);
+      const away = [heroBar.x - Math.round(260 * 700 / cam), heroBar.y + Math.round(260 * 700 / cam)];
+      input('rclick', ...away);
+      burst('04-walk', [W / 2 - 500, H / 2 - 300, 1000, 700], 10, 250, 0.5);
+      input('key', 'f1');
+      await sleep(150);
+      input('key', 'f1');
+      await sleep(1500);
+      bars = shot('04-after-walk');
+      heroBar = me(bars, centre) ?? heroBar;
+      // the hero close, from in front and round it: the in-world inspect, turned by dragging. F1
+      // selected it: a click on the body by the fountain hit the shopkeeper and opened the shop
+      input('key', inspectKey);
+      await sleep(2000);
+      shot('03-inspect-0');
+      burst('03-inspect-idle', close, 8, 250, 0.5);
+      for (const k of [1, 2, 3]) {
+        input('drag', turn, 'left');
+        await sleep(900);
+        shot(`03-inspect-${k}`);
+      }
+      input('key', inspectKey);
+      await sleep(2000);
+      // out of the base first: an enemy made by the fountain was killed by it at once. A right
+      // click on the minimap moved nothing, so steps on the ground along the stone path up and
+      // right of the fountain, the camera on the hero again before each
+      input('key', 'esc');
+      await sleep(300);
+      for (let step = 0; step < Number(arg('--walk-steps', '14')); step++) {
+        input('key', 'f1');
+        await sleep(150);
+        input('key', 'f1');
+        await sleep(600);
+        input('rclick', W / 2 + Math.round(330 * 700 / cam), H / 2 - Math.round(300 * 700 / cam));
+        await sleep(2800);
+      }
+      input('key', 'f1');
+      await sleep(150);
+      input('key', 'f1');
+      await sleep(1500);
+      bars = shot('05-out');
+      heroBar = me(bars, centre) ?? heroBar;
+      // an enemy hero, made where ours stands, for the attack and the aimed abilities
+      const enemyName = arg('--enemy', 'axe');
+      // it comes up where the pointer is: once by the fountain, which killed it
+      input('hover', heroBar.x + Math.round(260 * 700 / cam), heroBar.y + Math.round(120 * 700 / cam));
+      await sleep(300);
+      chat(`-createhero ${enemyName} enemy`);
+      await sleep(3000);
+      const withEnemy = shot('05-enemy');
+      let enemy = spawned(bars, withEnemy) ?? withEnemy.find((b) => b.kind === 'red') ?? null;
+      if (!enemy) note('the enemy hero\'s bar did not show up; the attack and aimed abilities are left out');
+      if (enemy) {
+        input('rclick', ...bodyOf(enemy, cam));
+        await sleep(2000);
+        bars = shot('06-attack', bodyOf(heroBar, cam));
+        heroBar = me(bars, heroBar) ?? heroBar;
+        const [hx, hy] = bodyOf(heroBar, cam);
+        const diffs = burst('06-swing', frame([[hx, hy - 40]], { pad: 0, min: AT.fight.slice(2) }), 16, 80, 0.6);
+        const verdict = attackVerdict(diffs);
+        fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, hero, server, ...verdict, diffs, notes }, null, 2));
+        // the hero stops: a stop key the player may have rebound, so a step beside it instead
+        input('rclick', heroBar.x - Math.round(120 * 700 / cam), heroBar.y + Math.round(160 * 700 / cam));
+        await sleep(1500);
+        for (const { key, enemy: aimed } of skills) {
+          const look = path.join(out, `07-before-${key}.png`);
+          ps('shot.ps1', '-Out', look);
+          bars = readBars(ps('bars.ps1', '-In', look));
+          fs.rmSync(look, { force: true });
+          heroBar = me(bars, heroBar) ?? heroBar;
+          const target = aimed ? follow(bars, enemy, 'red') : null;
+          if (target) enemy = target;
+          if (target) input('hover', ...bodyOf(target, cam));
+          await sleep(200);
+          input('key', key);
+          await sleep(150);
+          if (target) click(bodyOf(target, cam));
+          const points = [bodyOf(heroBar, cam), ...(target ? [bodyOf(target, cam)] : [])];
+          burst(`07-skill-${key}`, frame(points, { pad: 260, min: [900, 640] }), 12, 220, 0.45);
+          click(bodyOf(heroBar, cam));
+          await sleep(1500);
+        }
+      } else {
+        fs.writeFileSync(path.join(out, 'verdict.json'), JSON.stringify({ vpk: vpk ?? null, hero, server, notes }, null, 2));
+      }
+      shot('08-end');
       return;
     }
     // --fps: a match of a private lobby rather than the demo, whose small map is not the one played
