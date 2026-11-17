@@ -191,8 +191,10 @@ pub fn extra_places(stock: &[String], extras: &[String]) -> (Vec<Under>, Vec<Str
 /// A wearable as it goes in: in its material set, carrying its effects over the boxes of `set`. None: the
 /// file stays as it was.
 pub fn worn_model(model: &[u8], skin: f64, systems: &[&str], set: &str) -> Option<Vec<u8>> {
+    // a set the model has not got (a coronet of no material sets asked for set 2) leaves it as the
+    // game shows it, in its own; it took the effect down with it once
     let out = if skin != 0.0 && !skin.is_nan() {
-        crate::model_skin::with_skin(model, skin as usize)?
+        crate::model_skin::with_skin(model, skin as usize).unwrap_or_else(|| model.to_vec())
     } else {
         model.to_vec()
     };

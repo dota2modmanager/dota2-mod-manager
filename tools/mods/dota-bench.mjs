@@ -348,6 +348,9 @@ async function main() {
       await sleep(1500);
       bars = shot('04-after-walk');
       heroBar = me(bars, centre) ?? heroBar;
+      // a step by the fountain can land on the shopkeeper: the shop it opens would cover the inspect
+      input('key', 'esc');
+      await sleep(500);
       // the hero close, from in front and round it: the in-world inspect, turned by dragging. F1
       // selected it: a click on the body by the fountain hit the shopkeeper and opened the shop
       input('key', inspectKey);
@@ -366,7 +369,7 @@ async function main() {
       // right of the fountain, the camera on the hero again before each
       input('key', 'esc');
       await sleep(300);
-      for (let step = 0; step < Number(arg('--walk-steps', '14')); step++) {
+      for (let step = 0; step < Number(arg('--walk-steps', '9')); step++) {
         input('key', 'f1');
         await sleep(150);
         input('key', 'f1');

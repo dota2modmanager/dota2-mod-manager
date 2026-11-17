@@ -81,11 +81,9 @@ pub fn sewn_into_body(
     if moves_by_itself(item) || has_morphs(item) {
         return Ok(None);
     }
+    // a set the model has not got leaves it in its own, as the game shows it
     let worn = if skin != 0.0 && !skin.is_nan() {
-        match crate::model_skin::with_skin(item, skin as usize) {
-            Some(w) => w,
-            None => return Ok(None),
-        }
+        crate::model_skin::with_skin(item, skin as usize).unwrap_or_else(|| item.to_vec())
     } else {
         item.to_vec()
     };
@@ -315,6 +313,20 @@ mod tests {
         }
         assert!(stays_apart(b"\"1\"\n{\n\t\"item_rarity\"\t\t\"arcana\"\n}"));
         assert!(!stays_apart(b"\"1\"\n{\n\t\"item_rarity\"\t\t\"immortal\"\n}"));
+    }
+
+    /// On the game's own files (MM_TEST_PAK01): the Dead Heat Coronet asks for material set 2 of a
+    /// model with no sets at all. It keeps the effect, in the model's own look; the set it could
+    /// not take dropped the effect once, and the item went to a match bare.
+    #[test]
+    fn a_set_the_model_has_not_got_keeps_the_effect() {
+        let Ok(pak) = std::env::var("MM_TEST_PAK01") else { return };
+        let ix = crate::vpk::Index::open(std::path::Path::new(&pak)).unwrap();
+        let model = ix.read("models/items/lina/lina_calavera/lina_calavera_head.vmdl_c").unwrap().unwrap();
+        assert!(crate::model_skin::with_skin(&model, 2).is_none(), "the model has no set 2");
+        let worn = crate::item_files::worn_model(&model, 2.0, &["particles/mm_fx/ab12/x.vpcf"], "mm_fx_ab12").unwrap();
+        let listed = crate::model_particles::model_particle_entries(Some(&worn));
+        assert!(listed.iter().any(|l| l.path == "particles/mm_fx/ab12/x.vpcf"), "{listed:?}");
     }
 
     /// On the game's own files (MM_TEST_PAK01): the Arms of Desolation, whose effect sat
