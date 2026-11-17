@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1822,
+  "mods": 1825,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1171,7 +1171,8 @@
         {"name":"Lycan Frostbloom Claws","categoryId":"hero-items","styleLabel":null,"slots":["weapon"]},
         {"name":"Lycan Furrytrop","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
         {"name":"Lycan Red Wolf Clan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
-        {"name":"Lycan Vakir Min Silvath","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]}
+        {"name":"Lycan Vakir Min Silvath","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]},
+        {"name":"Prime Lycan","categoryId":"heroes","styleLabel":null,"slots":["arms","belt","weapon","misc","head"]}
       ]
     },
     "magnataur": {
@@ -1213,7 +1214,8 @@
         {"name":"Mars Crimson Set","categoryId":"heroes","styleLabel":null,"slots":["misc","shield","weapon"]},
         {"name":"Mars Diretide Shimmer","categoryId":"heroes","styleLabel":null,"slots":["misc","shield"]},
         {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":"Crimson","slots":["misc"]},
-        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":null,"slots":["misc"]}
+        {"name":"Mars Progenitors Bane","categoryId":"hero-items","styleLabel":null,"slots":["misc"]},
+        {"name":"The Final Mars","categoryId":"heroes","styleLabel":null,"slots":["misc","shield","weapon"]}
       ]
     },
     "medusa": {
@@ -1713,7 +1715,8 @@
       "name": "Sand King",
       "mods": [
         {"name":"Sand King Black Sands","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","shoulder","misc","tail"]},
-        {"name":"Steel Sand King","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","shoulder","tail"]}
+        {"name":"Steel Sand King","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","shoulder","tail"]},
+        {"name":"The True Sand King","categoryId":"heroes","styleLabel":null,"slots":["arms","head","legs","shoulder","tail","misc"]}
       ]
     },
     "shadow_demon": {

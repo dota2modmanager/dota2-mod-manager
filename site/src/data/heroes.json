@@ -18464,6 +18464,112 @@
       ]
     },
     {
+      "id": "lycan",
+      "name": "Lycan",
+      "slug": "lycan",
+      "mods": [
+        {
+          "name": "Better Lycan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc","head"],
+          "image": {"src":"/mods/better-lycan.webp","width":854,"height":480},
+          "author": "Миша Талант",
+          "authorUrl": "https://t.me/madberserker",
+          "date": 1790267695
+        },
+        {
+          "name": "Lycan Collector 2021",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc","head"],
+          "image": {"src":"/mods/lycan-collector-2021.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790931352
+        },
+        {
+          "name": "Lycan Furrytrop",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc","head"],
+          "image": {"src":"/mods/lycan-furrytrop.webp","width":854,"height":480},
+          "author": "Mopsyara",
+          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
+          "date": 1787564102
+        },
+        {
+          "name": "Lycan Red Wolf Clan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc","head"],
+          "image": {"src":"/mods/lycan-red-wolf-clan.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1763704289
+        },
+        {
+          "name": "Lycan Vakir Min Silvath",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc","head"],
+          "image": {"src":"/mods/lycan-vakir-min-silvath.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1791374590
+        },
+        {
+          "name": "Prime Lycan",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc","head"],
+          "image": {"src":"/mods/prime-lycan.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1794861785
+        },
+        {
+          "name": "Lycan Blood Moon",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","belt","weapon","misc"],
+          "image": {"src":"/mods/lycan-blood-moon.webp","width":854,"height":480},
+          "author": "Dota2VPK",
+          "authorUrl": "https://t.me/dota2freevpk",
+          "date": 1781974496
+        },
+        {
+          "name": "Lycan Blood Beast",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["belt","weapon"],
+          "image": {"src":"/mods/lycan-blood-beast.webp","width":854,"height":480},
+          "author": "frayserclick",
+          "authorUrl": "https://t.me/frayserclick",
+          "date": 1787470721
+        },
+        {
+          "name": "Lycan Frostbloom Claws",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "lycan",
+          "slots": ["weapon"],
+          "image": {"src":"/mods/lycan-frostbloom-claws.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790170612
+        }
+      ]
+    },
+    {
       "id": "primal_beast",
       "name": "Primal Beast",
       "slug": "primal-beast",
@@ -18767,101 +18873,6 @@
           "author": "Ромчик",
           "authorUrl": "https://watchmy.bio/shidehara",
           "date": 1784702480
-        }
-      ]
-    },
-    {
-      "id": "lycan",
-      "name": "Lycan",
-      "slug": "lycan",
-      "mods": [
-        {
-          "name": "Better Lycan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","weapon","misc","head"],
-          "image": {"src":"/mods/better-lycan.webp","width":854,"height":480},
-          "author": "Миша Талант",
-          "authorUrl": "https://t.me/madberserker",
-          "date": 1790267695
-        },
-        {
-          "name": "Lycan Collector 2021",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","weapon","misc","head"],
-          "image": {"src":"/mods/lycan-collector-2021.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790931352
-        },
-        {
-          "name": "Lycan Furrytrop",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","weapon","misc","head"],
-          "image": {"src":"/mods/lycan-furrytrop.webp","width":854,"height":480},
-          "author": "Mopsyara",
-          "authorUrl": "https://t.me/+AM_aLD0x2TcwY2My",
-          "date": 1787564102
-        },
-        {
-          "name": "Lycan Red Wolf Clan",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","weapon","misc","head"],
-          "image": {"src":"/mods/lycan-red-wolf-clan.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1763704289
-        },
-        {
-          "name": "Lycan Vakir Min Silvath",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","weapon","misc","head"],
-          "image": {"src":"/mods/lycan-vakir-min-silvath.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1791374590
-        },
-        {
-          "name": "Lycan Blood Moon",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","belt","weapon","misc"],
-          "image": {"src":"/mods/lycan-blood-moon.webp","width":854,"height":480},
-          "author": "Dota2VPK",
-          "authorUrl": "https://t.me/dota2freevpk",
-          "date": 1781974496
-        },
-        {
-          "name": "Lycan Blood Beast",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["belt","weapon"],
-          "image": {"src":"/mods/lycan-blood-beast.webp","width":854,"height":480},
-          "author": "frayserclick",
-          "authorUrl": "https://t.me/frayserclick",
-          "date": 1787470721
-        },
-        {
-          "name": "Lycan Frostbloom Claws",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "lycan",
-          "slots": ["weapon"],
-          "image": {"src":"/mods/lycan-frostbloom-claws.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790170612
         }
       ]
     },
@@ -20166,6 +20177,68 @@
       ]
     },
     {
+      "id": "mars",
+      "name": "Mars",
+      "slug": "mars",
+      "mods": [
+        {
+          "name": "Mars Crimson Set",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","shield","weapon"],
+          "image": {"src":"/mods/mars-crimson-set.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790214210
+        },
+        {
+          "name": "The Final Mars",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","shield","weapon"],
+          "image": {"src":"/mods/the-final-mars.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1794861785
+        },
+        {
+          "name": "Mars Diretide Shimmer",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","shield"],
+          "image": {"src":"/mods/mars-diretide-shimmer.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1758685938
+        },
+        {
+          "name": "Mars Progenitors Bane",
+          "categoryId": "hero-items",
+          "styleLabel": "Crimson",
+          "group": "mars",
+          "slots": ["misc"],
+          "image": {"src":"/mods/mars-progenitors-bane-crimson.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781012938
+        },
+        {
+          "name": "Mars Progenitors Bane",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "mars",
+          "slots": ["misc"],
+          "image": {"src":"/mods/mars-progenitors-bane.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781012938
+        }
+      ]
+    },
+    {
       "id": "tuskarr",
       "name": "Tusk",
       "slug": "tusk",
@@ -20337,57 +20410,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1766145785
-        }
-      ]
-    },
-    {
-      "id": "mars",
-      "name": "Mars",
-      "slug": "mars",
-      "mods": [
-        {
-          "name": "Mars Crimson Set",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","shield","weapon"],
-          "image": {"src":"/mods/mars-crimson-set.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790214210
-        },
-        {
-          "name": "Mars Diretide Shimmer",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","shield"],
-          "image": {"src":"/mods/mars-diretide-shimmer.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1758685938
-        },
-        {
-          "name": "Mars Progenitors Bane",
-          "categoryId": "hero-items",
-          "styleLabel": "Crimson",
-          "group": "mars",
-          "slots": ["misc"],
-          "image": {"src":"/mods/mars-progenitors-bane-crimson.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781012938
-        },
-        {
-          "name": "Mars Progenitors Bane",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "mars",
-          "slots": ["misc"],
-          "image": {"src":"/mods/mars-progenitors-bane.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781012938
         }
       ]
     },
@@ -20654,6 +20676,46 @@
       ]
     },
     {
+      "id": "sand_king",
+      "name": "Sand King",
+      "slug": "sand-king",
+      "mods": [
+        {
+          "name": "Sand King Black Sands",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","legs","shoulder","misc","tail"],
+          "image": {"src":"/mods/sand-king-black-sands.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1780160766
+        },
+        {
+          "name": "The True Sand King",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","legs","shoulder","tail","misc"],
+          "image": {"src":"/mods/the-true-sand-king.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1794861785
+        },
+        {
+          "name": "Steel Sand King",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","head","legs","shoulder","tail"],
+          "image": {"src":"/mods/steel-sand-king.webp","width":854,"height":480},
+          "author": null,
+          "authorUrl": null,
+          "date": 1756539017
+        }
+      ]
+    },
+    {
       "id": "elder_titan",
       "name": "Elder Titan",
       "slug": "elder-titan",
@@ -20737,35 +20799,6 @@
           "author": "hrdq",
           "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
           "date": 1767451400
-        }
-      ]
-    },
-    {
-      "id": "sand_king",
-      "name": "Sand King",
-      "slug": "sand-king",
-      "mods": [
-        {
-          "name": "Sand King Black Sands",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","legs","shoulder","misc","tail"],
-          "image": {"src":"/mods/sand-king-black-sands.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1780160766
-        },
-        {
-          "name": "Steel Sand King",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","head","legs","shoulder","tail"],
-          "image": {"src":"/mods/steel-sand-king.webp","width":854,"height":480},
-          "author": null,
-          "authorUrl": null,
-          "date": 1756539017
         }
       ]
     },

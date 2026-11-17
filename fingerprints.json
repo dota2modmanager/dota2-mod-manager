@@ -1,5 +1,5 @@
 {
-  "count": 1983,
+  "count": 1986,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -222,6 +222,7 @@
     "1d828948887b5f38e569701eaf79adc7614bed51": [{"name":"Desert Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
     "1d86166d31a4638f81c5f3930ac07f29a69b18e7": [{"name":"Kez Nanami Yachiyo Kai","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1d925776e0f407c16a4656ab6db3b7cf019a6726": [{"name":"Immortal Ranks Ii","categoryId":"ranks","styleLabel":null,"type":"vpk"}],
+    "1dbc3e9b58d144d341b0898d4b1d6233089c871b": [{"name":"The True Sand King","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "1e11b1b262fd77105199af462ca044b00a026703": [{"name":"TI 2018 Battle Pass","categoryId":"ti-bp-effects","styleLabel":null,"type":"vpk"}],
     "1e1286e123cdd266bc9f2b4a8dc0cbad465cf1fe": [{"name":"Meteor White","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
     "1e2c38b86466f54cf780bf3febae6fbefb48d89f": [{"name":"Invoker Blood","categoryId":"heroes","styleLabel":"Style I","type":"vpk"}],
@@ -886,6 +887,7 @@
     "731257dc55e056803cb44287e0bb81002bc4c05b": [{"name":"Drow Ranger Immortal","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7338f0b7114e121a75ba133aa7b7ab32880e6d58": [{"name":"Nedotrax Mega-Kill","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],
     "7354d7c891c48cc5876e3a60ec6233c61bc7205d": [{"name":"Winter 2016 Force Staff","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "7373d7b32df23d0f685aef2892c876662ded3609": [{"name":"Prime Lycan","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7380be861b33b82408bbc0b48ace251f18dea0d5": [{"name":"Catbuns Trees","categoryId":"trees","styleLabel":null,"type":"vpk"}],
     "73b82a19fd80d92d9a43f5d4c5f9d6e68141a309": [{"name":"Slark As If It Were Real","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "7447a75fdf47e3df2116b170d03f353017748f8b": [{"name":"Reef Roshan","categoryId":"roshan","styleLabel":null,"type":"vpk"}],
@@ -1981,6 +1983,7 @@
     "ff070d073c9e58a87ad45d790ac4bf15e568d5c2": [{"name":"Curious Snaptrap","categoryId":"wards","styleLabel":null,"type":"vpk"}],
     "ff752c85e3504906fc95e6194a7b76653a1a8aab": [{"name":"Queen of Pain Deny","categoryId":"creep-deny","styleLabel":null,"type":"vpk"}],
     "ffa30d8f05dd5ea034162b28c6183476744272b9": [{"name":"Void Hud","categoryId":"huds","styleLabel":null,"type":"vpk"}],
+    "ffcef98fab2345ea2ce4d4a133d296b3ac07202b": [{"name":"The Final Mars","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "ffd33ba9b45b0dae57e863cdf9dc43a881a5528c": [{"name":"Blossom Rem","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "fff4b08164276d99f04ca0b72c7d0d41aecf1e40": [{"name":"Legion Commander Automaton","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "fff6e68408f4be0450fe72039805a763656ee79f": [{"name":"Tiny Frostivus","categoryId":"heroes","styleLabel":null,"type":"vpk"}]
