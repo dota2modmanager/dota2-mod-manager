@@ -1,5 +1,5 @@
 {
-  "count": 1986,
+  "count": 1987,
   "mods": {
     "0000ecb27ee7db1063087b627a7cdb94651a4655": [{"name":"Windranger Autumn Arcana","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "002fe0eee5ace922f363486ddc1f979d8f2c232e": [{"name":"Gold River","categoryId":"river","styleLabel":null,"type":"vpk"}],
@@ -51,6 +51,7 @@
     "06bacd44bc8e47d767683396cc6437319aded3be": [{"name":"White Items","categoryId":"item-icons","styleLabel":null,"type":"vpk"}],
     "06c3915cd795a3cf9b6a32230d144adc27e3ecdb": [{"name":"Razor Silver Rrevenant","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "06de4e676f46208229bf0549c3ededb9794bca61": [{"name":"Black Dagon","categoryId":"item-effects","styleLabel":null,"type":"vpk"}],
+    "06fbe087e105127de1df12f49139f75699fc9790": [{"name":"Malrine Type Primal Beast","categoryId":"heroes","styleLabel":null,"type":"vpk"}],
     "073126a6445f977b6a6d52a998ac93d25670e2c3": [{"name":"Taghmel Ix-Xita","categoryId":"backgrounds","styleLabel":null,"type":"vpk"}],
     "0739169dc88f23a287f0b9a2e4c89b3b56dc86c9": [{"name":"Lina Wyrmwrought Flame","categoryId":"hero-items","styleLabel":null,"type":"vpk"}],
     "073924aa91d6625a7719da2957ef995841d78a80": [{"name":"Crystal Maiden","categoryId":"mega-kill","styleLabel":null,"type":"vpk"}],

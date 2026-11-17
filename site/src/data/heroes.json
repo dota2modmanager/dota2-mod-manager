@@ -18124,6 +18124,123 @@
       ]
     },
     {
+      "id": "primal_beast",
+      "name": "Primal Beast",
+      "slug": "primal-beast",
+      "mods": [
+        {
+          "name": "Immortal Primal Beast",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["misc","arms","back","legs"],
+          "image": {"src":"/mods/immortal-primal-beast.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1781030461
+        },
+        {
+          "name": "Malrine Type Primal Beast",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","back","legs","misc"],
+          "image": {"src":"/mods/malrine-type-primal-beast.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1794914486
+        },
+        {
+          "name": "Primal Beast Dark Behemoth",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","back","legs","head"],
+          "image": {"src":"/mods/primal-beast-dark-behemoth.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766265248
+        },
+        {
+          "name": "Primal Beast Prehistoric Predator",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","back","legs","head"],
+          "image": {"src":"/mods/primal-beast-prehistoric-predator.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1766813527
+        },
+        {
+          "name": "Primal Beast Snowbeast",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","legs","back","head"],
+          "image": {"src":"/mods/primal-beast-snowbeast.webp","width":854,"height":480},
+          "author": "Kisilev",
+          "authorUrl": "https://vk.com/id363951132",
+          "date": 1763616855
+        },
+        {
+          "name": "Primal Beast Strongbox",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","back","legs","head"],
+          "image": {"src":"/mods/primal-beast-strongbox.webp","width":854,"height":480},
+          "author": "твавт",
+          "authorUrl": "https://steamcommunity.com/id/myasu0/",
+          "date": 1791372524
+        },
+        {
+          "name": "Primal Beast Strongbox Reborn",
+          "categoryId": "heroes",
+          "styleLabel": null,
+          "group": null,
+          "slots": ["arms","back","legs","head"],
+          "image": {"src":"/mods/primal-beast-strongbox-reborn.webp","width":854,"height":480},
+          "author": "J0nathan550",
+          "authorUrl": "https://t.me/j0nvpk",
+          "date": 1791469531
+        },
+        {
+          "name": "Primal Beast Frostbloom",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "primal-beast",
+          "slots": ["legs"],
+          "image": {"src":"/mods/primal-beast-frostbloom.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790170612
+        },
+        {
+          "name": "Primal Beast Temple Guardian",
+          "categoryId": "hero-items",
+          "styleLabel": null,
+          "group": "primal-beast",
+          "slots": ["arms"],
+          "image": {"src":"/mods/primal-beast-temple-guardian.webp","width":854,"height":480},
+          "author": "Harlord",
+          "authorUrl": "https://t.me/harlord_mods",
+          "date": 1790170612
+        },
+        {
+          "name": "White Spell Radius",
+          "categoryId": "other",
+          "styleLabel": null,
+          "group": null,
+          "slots": [],
+          "image": {"src":"/mods/white-spell-radius.webp","width":854,"height":480},
+          "author": "YZT",
+          "authorUrl": "https://t.me/YZTdota",
+          "date": 1792518355
+        }
+      ]
+    },
+    {
       "id": "slark",
       "name": "Slark",
       "slug": "slark",
@@ -18566,112 +18683,6 @@
           "author": "Harlord",
           "authorUrl": "https://t.me/harlord_mods",
           "date": 1790170612
-        }
-      ]
-    },
-    {
-      "id": "primal_beast",
-      "name": "Primal Beast",
-      "slug": "primal-beast",
-      "mods": [
-        {
-          "name": "Immortal Primal Beast",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["misc","arms","back","legs"],
-          "image": {"src":"/mods/immortal-primal-beast.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1781030461
-        },
-        {
-          "name": "Primal Beast Dark Behemoth",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","back","legs","head"],
-          "image": {"src":"/mods/primal-beast-dark-behemoth.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766265248
-        },
-        {
-          "name": "Primal Beast Prehistoric Predator",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","back","legs","head"],
-          "image": {"src":"/mods/primal-beast-prehistoric-predator.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1766813527
-        },
-        {
-          "name": "Primal Beast Snowbeast",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","legs","back","head"],
-          "image": {"src":"/mods/primal-beast-snowbeast.webp","width":854,"height":480},
-          "author": "Kisilev",
-          "authorUrl": "https://vk.com/id363951132",
-          "date": 1763616855
-        },
-        {
-          "name": "Primal Beast Strongbox",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","back","legs","head"],
-          "image": {"src":"/mods/primal-beast-strongbox.webp","width":854,"height":480},
-          "author": "твавт",
-          "authorUrl": "https://steamcommunity.com/id/myasu0/",
-          "date": 1791372524
-        },
-        {
-          "name": "Primal Beast Strongbox Reborn",
-          "categoryId": "heroes",
-          "styleLabel": null,
-          "group": null,
-          "slots": ["arms","back","legs","head"],
-          "image": {"src":"/mods/primal-beast-strongbox-reborn.webp","width":854,"height":480},
-          "author": "J0nathan550",
-          "authorUrl": "https://t.me/j0nvpk",
-          "date": 1791469531
-        },
-        {
-          "name": "Primal Beast Frostbloom",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "primal-beast",
-          "slots": ["legs"],
-          "image": {"src":"/mods/primal-beast-frostbloom.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790170612
-        },
-        {
-          "name": "Primal Beast Temple Guardian",
-          "categoryId": "hero-items",
-          "styleLabel": null,
-          "group": "primal-beast",
-          "slots": ["arms"],
-          "image": {"src":"/mods/primal-beast-temple-guardian.webp","width":854,"height":480},
-          "author": "Harlord",
-          "authorUrl": "https://t.me/harlord_mods",
-          "date": 1790170612
-        },
-        {
-          "name": "White Spell Radius",
-          "categoryId": "other",
-          "styleLabel": null,
-          "group": null,
-          "slots": [],
-          "image": {"src":"/mods/white-spell-radius.webp","width":854,"height":480},
-          "author": "YZT",
-          "authorUrl": "https://t.me/YZTdota",
-          "date": 1792518355
         }
       ]
     },

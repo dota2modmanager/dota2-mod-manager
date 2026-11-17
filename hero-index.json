@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1825,
+  "mods": 1826,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -1540,6 +1540,7 @@
       "name": "Primal Beast",
       "mods": [
         {"name":"Immortal Primal Beast","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","legs"]},
+        {"name":"Malrine Type Primal Beast","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","misc"]},
         {"name":"Primal Beast Dark Behemoth","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
         {"name":"Primal Beast Frostbloom","categoryId":"hero-items","styleLabel":null,"slots":["legs"]},
         {"name":"Primal Beast Prehistoric Predator","categoryId":"heroes","styleLabel":null,"slots":["arms","back","legs","head"]},
