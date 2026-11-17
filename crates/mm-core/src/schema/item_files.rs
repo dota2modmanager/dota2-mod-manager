@@ -229,7 +229,8 @@ fn body_path(read: &dyn Fn(&str) -> Option<Vec<u8>>, hero: &str) -> Result<Strin
 
 /// A pick with an effect the person added, sewn into its hero's body (item_in_body.rs): the body's
 /// path and what sewing made, or None where the pick is not one hero's or its models do not join
-/// (it keeps the effect on itself then). The body is the one the picks before made, if any.
+/// (it keeps the effect on itself then). The caller asks first whether the item has to stay a
+/// wearable of its own (`stays_apart`). The body is the one the picks before made, if any.
 #[allow(clippy::too_many_arguments)]
 fn sew_in(
     block: &[u8],
@@ -308,7 +309,24 @@ pub fn item_files(
             let entry = entries.get(&at).cloned();
             let sewn = match &entry {
                 Some(en) if systems.iter().any(|s| added.contains(&s.to_lowercase())) => {
-                    sew_in(&patch.block, &patch.id, &at, en, skin, &systems, &added, &entries, &under, read)?
+                    // what the item does is in its own entry: the pick's block went without the file swaps
+                    if table.is_none() {
+                        table = read(crate::schema::SCHEMA_REL);
+                    }
+                    let apart = match (&table, &patch.item_id) {
+                        (Some(t), Some(id)) => {
+                            match crate::schema_merge::items_by_id(t).map_err(e)?.find(t, id).map_err(e)? {
+                                Some((s, end)) => crate::item_in_body::stays_apart(&t[s..end]),
+                                None => true,
+                            }
+                        }
+                        _ => crate::item_in_body::stays_apart(&patch.block),
+                    };
+                    if apart {
+                        None
+                    } else {
+                        sew_in(&patch.block, &patch.id, &at, en, skin, &systems, &added, &entries, &under, read)?
+                    }
                 }
                 _ => None,
             };

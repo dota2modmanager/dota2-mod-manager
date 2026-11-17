@@ -4,7 +4,7 @@
 //! stand-in (attach_hitloc, or the first) under the plain name where it has none, and the model's
 //! others after them.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::kv3::{self, Node, Value};
 use crate::resource;
@@ -76,4 +76,33 @@ pub fn attached_as(model: &[u8], plain: &[u8]) -> Vec<u8> {
         Some(out)
     };
     run().unwrap_or_else(|| model.to_vec())
+}
+
+/// `model` with every attachment of every mesh named `prefix` + its name, and the names they had,
+/// lowercased: an item sewn into a hero's body keeps its own points apart from the body's, where a
+/// point of the same name would otherwise win and its effects would sit on the body's point
+/// (dota-studio's attachment namespaces). None for a model this cannot read.
+pub fn namespaced(model: &[u8], prefix: &str) -> Option<(Vec<u8>, HashSet<String>)> {
+    let mut out = model.to_vec();
+    let mut had = HashSet::new();
+    let blocks = resource::blocks(model).ok()?.iter().filter(|b| b.name == "MDAT").count();
+    for nth in 0..blocks {
+        let mut kv = kv3::read(resource::data(&out, "MDAT", nth).ok()?).ok()?;
+        let Some(Node { value: Value::Array { items, .. }, .. }) = kv.root.get_mut("m_attachments") else {
+            continue;
+        };
+        if items.is_empty() {
+            continue;
+        }
+        for a in items.iter_mut() {
+            let name = name_of(a);
+            if name.is_empty() || name.starts_with(prefix) {
+                continue;
+            }
+            had.insert(name.to_lowercase());
+            *a = renamed(a, &format!("{prefix}{name}"));
+        }
+        out = resource::replace(&out, "MDAT", nth, &kv3::write(&kv).ok()?).ok()?;
+    }
+    Some((out, had))
 }

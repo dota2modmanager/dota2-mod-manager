@@ -19,7 +19,7 @@
 import { gemSetOf } from '../catalog/builder/gems.ts';
 import { state } from '../core/store.ts';
 import { pickedIn } from '../core/installed.ts';
-import { byName, effectGroup, effectKey, offeredOn, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, replacementOptions, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
+import { byName, effectGroup, effectKey, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, replacementOptions, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
@@ -127,8 +127,8 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
   if (!data) return null;
   const live = pickedIn(st.slot);
   const hasItem = !!st.selectedId;
+  const effects = (data.effects || []).filter((fx) => fx.id);
   const chosen = hasItem ? data.options.find((o) => o.id === st.selectedId) : null;
-  const effects = offeredOn(data.effects, chosen);
   const gem = gemSetOf(chosen?.name);
   const styles = chosen?.styles && chosen.styles.length > 1 ? chosen.styles : null;
   // a tab with nothing to show for the item chosen falls back to the items
@@ -193,9 +193,6 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
         st.selectedId = id;
         if (!id || id === st.targetItemId) st.targetItemId = '';
         if (!id) st.effectIds = []; // the stock item takes no effects
-        // what the next item cannot be given comes off it
-        const allowed = new Set(offeredOn(data.effects, data.options.find((o) => o.id === id)).map((fx) => fx.id));
-        st.effectIds = st.effectIds.filter((fx) => allowed.has(fx));
         if (!id || id === st.donor) st.donor = '';
         // another item starts in its first style, or the one it is on in
         st.style = live?.itemId === id ? liveStyle(live) : 0;

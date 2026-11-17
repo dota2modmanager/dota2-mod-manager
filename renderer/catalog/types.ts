@@ -49,8 +49,6 @@ export interface CosmeticOption {
   note?: { status: 'issues' | 'broken' | 'untested'; text: string };
   /** it creates a particle of its own, which another item of the slot can wear (src/item-builder-donor.ts) */
   fx?: boolean;
-  /** an added effect may go on it: the game let it roll an unusual, or its model has no effect of its own (crates/mm-core/src/item_builder/unusual_fit.rs) */
-  unusual?: boolean;
   /** an item builder wearable's rarity key ("mythical") and release day ("2021-09-01"), src/item-builder-details.ts itemFacts */
   rarity?: string;
   date?: string;

@@ -180,13 +180,3 @@ export const effectGroup = (id: string): EffectGroup => (id.startsWith('kinetic-
 
 /** A rarity key as the game prints it in every language: "mythical" is "Mythical". */
 export const rarityName = (key: string | undefined): string => (key ? key.charAt(0).toUpperCase() + key.slice(1) : '');
-
-/**
- * The effects an item can be given: an added effect only on one the game let roll an unusual or whose
- * model has no effect of its own (`unusual`, crates/mm-core/src/item_builder/unusual_fit.rs); a kinetic
- * gem on any. No item chosen: all of them, to look at.
- */
-export function offeredOn<T extends { id: string }>(effects: T[] | undefined, item: { unusual?: boolean } | null | undefined): T[] {
-  const all = (effects || []).filter((fx) => fx.id);
-  return !item || item.unusual ? all : all.filter((fx) => effectGroup(fx.id) === 'kinetic');
-}
