@@ -37,6 +37,14 @@ pub fn moves_by_itself(model: &[u8]) -> bool {
         || crate::model_cloth::has_cloth(model)
 }
 
+/// Whether an added effect is a courier's (Ethereal Flame, Trail of Burning Doom, Touch of Frost:
+/// its system is under particles/econ/courier/). A courier wears it on its whole body, and so does
+/// the hero: it goes on the body's own particle list (and its mount's), as dota-studio puts every
+/// such effect on the hero, and not on the item it was picked with.
+pub fn on_hero(system: &str) -> bool {
+    system.replace('\\', "/").to_lowercase().starts_with("particles/econ/courier/")
+}
+
 /// Whether an item's block (its table entry) says it has to stay a wearable of its own: an arcana,
 /// or an item that changes the hero's motions (`activity`), its model or a summon's
 /// (`entity_model`, `hero_model_change`), a persona, or swaps the particles of the attack and the
@@ -339,6 +347,15 @@ mod tests {
         let items = crate::schema::items_of(&text).unwrap();
         let arms = items.iter().find(|i| crate::schema::to_utf8(&i.name) == "Arms of Desolation").unwrap();
         assert!(stays_apart(&text[arms.start..arms.end]));
+    }
+
+    #[test]
+    fn a_couriers_effect_goes_on_the_hero_and_a_seasonal_one_on_the_item() {
+        assert!(on_hero("particles/econ/courier/courier_trail_lava/courier_trail_lava.vpcf"));
+        assert!(on_hero("particles\\econ\\courier\\courier_roshan_frost\\courier_roshan_frost_ambient.vpcf"));
+        assert!(on_hero("PARTICLES/econ/courier/courier_trail_01/courier_trail_01.vpcf"));
+        assert!(!on_hero("particles/econ/seasonal/seasonal_ambient_silver.vpcf"));
+        assert!(!on_hero("particles/econ/items/lina/lina_revenants_cinder/lina_revenants_cinder_head_ambient.vpcf"));
     }
 
     #[test]
