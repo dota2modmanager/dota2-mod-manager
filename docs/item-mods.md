@@ -41,6 +41,13 @@ assistant follows.
    lies on the ground (`01-death.png`, `01-death-after.png`). A party
    invite that covers the screen at the start is declined.
 
+   **In a match on Valve's servers.** `npm run dota:bench -- --lobby --vpk <pak.vpk> --hero <hero>`
+   plays the mod in a private lobby on Valve's servers instead of the demo's server on this
+   computer: an item sewn into a hero's body once lost the head only there. The lobby keeps its
+   last settings (server, password, cheats: set them once by hand); the chat's cheats are typed
+   into the chat, since the console's `say` reaches the server as text only. A pick from the item
+   builder is benched as the pak the app wrote into the test game's language folder.
+
    **A build that changes the item table** (an unusual effect, another item's effect on the pick,
    anything the item builder writes into `items_game`) does nothing from the language folder: the
    game reads the table only through `dota_mods`, the folder the search-path patch registers. Build

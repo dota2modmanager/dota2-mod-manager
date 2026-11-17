@@ -13,7 +13,7 @@
  *                          whether the game plays that sound when the abilities are cast: what the
  *                          computer plays is recorded (record.ps1) and the sound looked for in it
  *                          (hear.mjs), into verdict.json as "sound"
- *   npm run dota:bench -- --lobby --vpk <pak.vpk> --hero nevermore [--enemy axe] [--skills "q,w,r@enemy"]
+ *   npm run dota:bench -- --lobby --vpk <pak.vpk> --hero <hero> [--enemy <hero>] [--skills "q,w,r@enemy"]
  *                          the mod in a match on Valve's servers, where some looks break that the
  *                          demo shows whole (an item sewn into the body lost the head only there): a
  *                          private lobby with the last lobby's settings (set the server, a password

@@ -56,6 +56,21 @@ it closes Dota, copies the console log and removes the mod.
 | `--map small` | the demo's own small map instead of the whole one: effects are not lost against the lanes (`full` for the whole map; without it the demo opens on what the player picked last) |
 | `--now` | start although someone used the mouse in the last two minutes (only with the owner's yes) |
 | no `--vpk` | the game as it is, to compare |
+| `--lobby` | a match on Valve's servers instead of the demo (below) |
+
+**In a match on Valve's servers** (`--lobby`): some looks break only there while the demo, which
+runs a server on the player's own computer, shows them whole (an item sewn into a hero's body lost
+the head only in a match). The bench creates a private lobby with the last lobby's settings: set
+the server, a password and cheats once by hand, and the first picture (`01-lobby.png`) shows what
+it kept; `verdict.json` names the server it ran on. The hero is picked and the match started
+through the console, and the chat's cheats are typed into the chat (`-lvlup 29`, Scepter and
+Shard by `-item`, `-wtf`): sent as `say` from the console they reach the server as text and do
+nothing. The ability points are spent, the camera is held on the hero, and the hero walks out of
+the base before `-createhero <enemy> enemy` (`--enemy axe`) makes an enemy where the pointer is
+(one made by the fountain died at once). Then the inspect, the attack and every ability. The
+enemy does not always come up in the picture; the look of the hero is there either way. Ability
+points, the pointer and the walk use the screen of a 1920x1080 window. Turn off other mods in the
+language folder first, or they show in the pictures too.
 
 **Ask first, every time.** The bench moves the mouse, presses keys and fills the screen for about
 three minutes. It refuses to start while Dota runs or while someone used the computer in the last
