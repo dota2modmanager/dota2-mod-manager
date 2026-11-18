@@ -53,8 +53,50 @@ pub fn extras(assets: &[&[Entry]]) -> Vec<Entry> {
 /// temporary files of the pak, one name each: a write in the background and one in place can overlap
 static WRITES: AtomicUsize = AtomicUsize::new(0);
 
-/// Merge, check, pack and write. `base`: the game's table and its stamp; `assets`: each patch's
-/// files and then the bases'. None when `stop` said a newer build took over before the write.
+/// The table merged, checked and packed, not yet written: the slow part, which needs nothing of
+/// the app's state and so runs without holding it.
+pub struct Prepared {
+    pub buf: Vec<u8>,
+    pub deployed: Deployed,
+}
+
+/// Merge, check and pack. `base`: the game's table and its stamp; `assets`: each patch's files and
+/// then the bases'.
+pub fn prepare(patches: &[Patch], assets: &[&[Entry]], base: (&[u8], &str)) -> Result<Prepared, String> {
+    let merged = schema_merge::merge(base.0, patches).map_err(|e| e.to_string())?;
+    let (items, bytes) = schema_merge::validate(&merged.text, Some(base.0)).map_err(|e| e.to_string())?;
+    let buf = build_schema_vpk(&merged.text, &extras(assets));
+    let deployed = Deployed {
+        applied: merged.applied,
+        missing: merged.missing,
+        conflicts: merged.conflicts,
+        stamp: base.1.to_string(),
+        bytes,
+        items,
+    };
+    Ok(Prepared { buf, deployed })
+}
+
+/// A prepared table swapped into the mods folder in one rename.
+pub fn write(game: &Path, folder: &str, buf: &[u8]) -> Result<(), String> {
+    let dir = game.join(folder);
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let dest = dir.join(SCHEMA_VPK);
+    let n = WRITES.fetch_add(1, Ordering::Relaxed) + 1;
+    let tmp = dir.join(format!("{SCHEMA_VPK}.{}-{n}.mmtmp", std::process::id()));
+    let res = (|| {
+        std::fs::write(&tmp, buf)?;
+        if dest.exists() {
+            std::fs::remove_file(&dest)?;
+        }
+        std::fs::rename(&tmp, &dest)
+    })();
+    // gone after the rename; left by a failed write
+    let _ = std::fs::remove_file(&tmp);
+    res.map_err(|e| e.to_string())
+}
+
+/// Merge, check, pack and write. None when `stop` said a newer build took over before the write.
 pub fn deploy(
     game: &Path,
     folder: &str,
@@ -63,35 +105,12 @@ pub fn deploy(
     base: (&[u8], &str),
     stop: &dyn Fn() -> bool,
 ) -> Result<Option<Deployed>, String> {
-    let merged = schema_merge::merge(base.0, patches).map_err(|e| e.to_string())?;
-    let (items, bytes) = schema_merge::validate(&merged.text, Some(base.0)).map_err(|e| e.to_string())?;
-    let buf = build_schema_vpk(&merged.text, &extras(assets));
+    let ready = prepare(patches, assets, base)?;
     if stop() {
         return Ok(None);
     }
-    let dir = game.join(folder);
-    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let dest = dir.join(SCHEMA_VPK);
-    let n = WRITES.fetch_add(1, Ordering::Relaxed) + 1;
-    let tmp = dir.join(format!("{SCHEMA_VPK}.{}-{n}.mmtmp", std::process::id()));
-    let res = (|| {
-        std::fs::write(&tmp, &buf)?;
-        if dest.exists() {
-            std::fs::remove_file(&dest)?;
-        }
-        std::fs::rename(&tmp, &dest)
-    })();
-    // gone after the rename; left by a failed write
-    let _ = std::fs::remove_file(&tmp);
-    res.map_err(|e| e.to_string())?;
-    Ok(Some(Deployed {
-        applied: merged.applied,
-        missing: merged.missing,
-        conflicts: merged.conflicts,
-        stamp: base.1.to_string(),
-        bytes,
-        items,
-    }))
+    write(game, folder, &ready.buf)?;
+    Ok(Some(ready.deployed))
 }
 
 // Any real file left in a tree: the engine drops empty rpt/ and save/ folders into every mounted

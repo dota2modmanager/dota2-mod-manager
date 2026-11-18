@@ -566,40 +566,71 @@ impl Owner {
     }
 
     /// One build of the item table, the bar at the bottom counting the picks built anew
-    /// (src/build-bar.ts: shown after 400 ms, and only when there are picks to build).
+    /// (src/build-bar.ts: shown after 400 ms, and only when there are picks to build). The state
+    /// is held to take what the build needs and to write what it made, not while it is made: a
+    /// build takes seconds, and the window's every call waited that long behind it.
     fn refresh_schema(&self, stop: &dyn Fn() -> bool) -> Value {
+        use crate::schema_service::{Begun, Ctx, SchemaService};
         let label = crate::i18n::t("Сборка предметов", &[]);
         let started = (self.opts.now)();
         let mut shown = false;
         let mut lines: Vec<String> = Vec::new();
-        let out = {
+        let mut filled = None;
+        // what the build needs, taken
+        let (job, bases) = {
             let mut core = self.core();
             let c = &mut *core;
-            let mut filled = None;
-            let out = {
-                let mut log = |m: String| lines.push(m);
-                let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
-                let mut ctx = crate::schema_service::Ctx {
-                    inst: &c.installer,
-                    lib: &mut c.library,
-                    settings: &mut c.settings,
-                    bases: Some(&*c.bases),
-                    log: &mut log,
-                    on_deployed: &mut deployed,
-                };
-                let mut progress = |done: usize, total: usize| {
-                    if total == 0 || (!shown && (self.opts.now)() - started < 400.0) {
-                        return;
-                    }
-                    shown = true;
-                    self.progress(
-                        json!({ "type": "count", "label": label, "done": done, "total": total, "cancel": "schema" }),
-                    );
-                };
-                c.schema.refresh(&mut ctx, stop, &mut progress)
+            let mut log = |m: String| lines.push(m);
+            let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
+            let mut ctx = Ctx {
+                inst: &c.installer,
+                lib: &mut c.library,
+                settings: &mut c.settings,
+                bases: Some(&*c.bases),
+                log: &mut log,
+                on_deployed: &mut deployed,
             };
-            after_deploys(c, filled, &mut lines);
-            out
+            (c.schema.begin(&mut ctx), c.bases.clone())
+        };
+        let out = match job {
+            Begun::Done(out) => {
+                after_deploys(&mut self.core(), filled.take(), &mut lines);
+                out
+            }
+            Begun::Job(job) => {
+                // made with nothing held
+                let made = {
+                    let mut log = |m: String| lines.push(m);
+                    let mut progress = |done: usize, total: usize| {
+                        if total == 0 || (!shown && (self.opts.now)() - started < 400.0) {
+                            return;
+                        }
+                        shown = true;
+                        self.progress(
+                            json!({ "type": "count", "label": label, "done": done, "total": total, "cancel": "schema" }),
+                        );
+                    };
+                    SchemaService::make(job, Some(&*bases), stop, &mut progress, &mut log)
+                };
+                // and written
+                let mut core = self.core();
+                let c = &mut *core;
+                let out = {
+                    let mut log = |m: String| lines.push(m);
+                    let mut deployed = |f: std::collections::HashSet<String>| filled = Some(f);
+                    let mut ctx = Ctx {
+                        inst: &c.installer,
+                        lib: &mut c.library,
+                        settings: &mut c.settings,
+                        bases: Some(&*c.bases),
+                        log: &mut log,
+                        on_deployed: &mut deployed,
+                    };
+                    c.schema.finish(&mut ctx, made, stop)
+                };
+                after_deploys(c, filled.take(), &mut lines);
+                out
+            }
         };
         if shown {
             self.progress(json!({ "type": "done" }));
