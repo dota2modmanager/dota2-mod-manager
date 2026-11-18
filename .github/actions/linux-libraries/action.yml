@@ -1,12 +1,16 @@
-# Ubuntu packages for a job, with the downloaded .deb files kept in the Actions cache.
+# Ubuntu packages for a job: fetched in parallel, and kept in the Actions cache between runs.
 #
-# On 2026-11-18 the runners' Ubuntu mirror sent each file in seconds rather than milliseconds, and
-# four AppImage builds in a row ran out of their ten minutes in the middle of downloading WebKitGTK.
-# A mirror that trickles never trips apt's timeout, so retrying does not help; not asking it does.
-# The cache key changes once a month, so packages Ubuntu updated since are the only ones fetched.
-# The calling step sets timeout-minutes (a composite action's own steps cannot).
+# On 2026-11-18 four AppImage builds in a row ran out of their ten minutes while apt was still
+# downloading WebKitGTK. The mirror was not slow to send, it was slow to answer: a 10 MB file came
+# in under a second, and the next 30 kB one after 16 s. apt asks for one file at a time, so every
+# pause adds up, and none of them is long enough to trip its timeout. Here curl asks for eight at
+# once, then apt installs from what is already on disk.
+#
+# Whatever came down is cached even when the download did not finish, so a run that gives up
+# still leaves the next one less to fetch. The calling step sets timeout-minutes (a composite
+# action's own steps cannot); the download stops itself well inside it.
 name: Linux libraries
-description: apt-get install, with the downloaded packages cached between runs
+description: apt-get install, with the packages fetched in parallel and cached between runs
 inputs:
   packages:
     description: Space-separated Ubuntu package names
@@ -17,23 +21,57 @@ runs:
     - id: month
       shell: bash
       run: echo "month=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
-    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+    - id: restore
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: ~/apt-archives
-        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}
+        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}-
         restore-keys: |
+          apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}-
           apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
-          apt-${{ runner.os }}-${{ runner.arch }}-
+    - id: fetch
+      shell: bash
+      env:
+        PACKAGES: ${{ inputs.packages }}
+      run: |
+        set -euo pipefail
+        dir="$HOME/apt-archives"
+        mkdir -p "$dir/partial"
+        echo "had=$(find "$dir" -maxdepth 1 -name '*.deb' | wc -l)" >> "$GITHUB_OUTPUT"
+        sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+        # the packages not on disk yet, as "url file" lines: eight at a time, five minutes each, and
+        # a dropped one goes on from where it stopped
+        # shellcheck disable=SC2086
+        sudo apt-get -o Acquire::http::Timeout=30 -o Dir::Cache::Archives="$dir" \
+          install -y --print-uris -qq $PACKAGES | sed -n "s/^'\([^']*\)' \([^ ]*\) .*/\1 \2/p" > "$RUNNER_TEMP/apt-uris"
+        # the runner's sources name a list of mirrors (mirror+file:/etc/apt/apt-mirrors.txt/pool/...),
+        # which curl cannot read: each package goes to the next mirror on that list in turn
+        awk 'match($1, /^mirror\+file:[^ ]*\.txt\//) {
+               list = substr($1, 13, RLENGTH - 13)
+               if (!(list in n)) while ((getline m < list) > 0) if (m ~ /^https?:/) { sub(/[ \t].*$/, "", m); sub(/\/$/, "", m); mirror[list, n[list]++] = m }
+               if (n[list]) { $1 = mirror[list, i++ % n[list]] "/" substr($1, RLENGTH + 1) }
+             } { print }' "$RUNNER_TEMP/apt-uris" > "$RUNNER_TEMP/apt-urls"
+        mv "$RUNNER_TEMP/apt-urls" "$RUNNER_TEMP/apt-uris"
+        head -2 "$RUNNER_TEMP/apt-uris"
+        echo "fetching $(wc -l < "$RUNNER_TEMP/apt-uris") packages"
+        timeout 420 xargs -P 8 -n 2 sh -c 'curl -fsS --retry 5 --retry-all-errors --connect-timeout 20 --max-time 300 -C - -o "$0/$2.part" "$1" && mv "$0/$2.part" "$0/$2"' "$dir" < "$RUNNER_TEMP/apt-uris" || echo "some packages were not fetched; apt asks the mirror for them"
+        rm -f "$dir"/*.part
+        sudo rm -f "$dir/lock"  # apt's, root's own, and the cache could not read it
+        echo "has=$(find "$dir" -maxdepth 1 -name '*.deb' | wc -l)" >> "$GITHUB_OUTPUT"
+    - if: always() && steps.fetch.outputs.has != steps.fetch.outputs.had
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+      with:
+        path: ~/apt-archives
+        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}-${{ steps.fetch.outputs.has }}
     - shell: bash
       env:
         PACKAGES: ${{ inputs.packages }}
       run: |
         set -euo pipefail
-        mkdir -p ~/apt-archives/partial
-        sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+        # apt checks every file against its hash, and fetches again any one that is missing or bad
         # shellcheck disable=SC2086
         sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 \
           -o Dir::Cache::Archives="$HOME/apt-archives" install -y $PACKAGES
-        # apt leaves its download folder to root and _apt, which the cache could not read back
+        # apt leaves its download folder to root and _apt
         sudo rm -rf ~/apt-archives/partial ~/apt-archives/lock
         sudo chown -R "$(id -u):$(id -g)" ~/apt-archives
