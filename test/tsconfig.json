@@ -1,16 +1,35 @@
-// Type checking for the tests written in TypeScript, with the same strict settings as the code they
-// test (../src/tsconfig.json). A test is code that runs on every push: a mistyped argument in one is
-// a test that checks something other than what its name says.
+// Type checking for the tests written in TypeScript, through tools/dev/typecheck.mjs. A test is code
+// that runs on every push: a mistyped argument in one is a test that checks something other than
+// what its name says.
 //
-// allowJs without checkJs: some tests import JavaScript (a tool under tools/, a fixture, a module
-// of the window) and get the types TypeScript infers from it. The main process imports none.
+// Strict, and nothing is compiled: the test runner strips the types itself, which is why imports
+// name the .ts file, type-only imports say so (verbatimModuleSyntax), and only syntax that can be
+// erased is allowed (no enums, no namespaces). allowJs without checkJs: some tests import
+// JavaScript (a tool under tools/, a fixture, a module of the window) and get the types
+// TypeScript infers from it.
 {
-  "extends": "../src/tsconfig.json",
   "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUnusedLocals": true,
+    "allowUnreachableCode": false,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "skipLibCheck": true,
+    "types": ["node"],
     "allowJs": true,
     "jsx": "react-jsx",
     "resolveJsonModule": true,
     "checkJs": false
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "../renderer/globals.d.ts"]
 }

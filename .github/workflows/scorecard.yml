@@ -4,7 +4,7 @@
 # branch protection, whether CI runs on pull requests, whether releases are signed. The result
 # goes to three places: the badge in the README, the public viewer at scorecard.dev, and the
 # repository's Security tab. The radar counts its findings on one line rather than treating each
-# as a decision waiting on the maintainer (tools/radar.mjs says why).
+# as a decision waiting on the maintainer (tools/ops/radar.mjs says why).
 #
 # publish_results only works from a narrow workflow: read-only at the top, no env or defaults at
 # the top, and only these actions in the job. That is why this file is plainer than the others.

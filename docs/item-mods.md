@@ -4,7 +4,7 @@ A player who does not own an item can still see it: the item's models, particles
 already in their game's `pak01`, and a mod can put them under the names the plain hero uses. This
 page is how to build one, what the game does with each part, and where it went wrong the first
 time. The worked example is Terrorblade's arcana, Fractal Horns of Inner Abysm
-([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), `src/arcana.ts`). It took
+([#118](https://github.com/dota2modmanager/dota2-mod-manager/issues/118), `crates/mm-core/src/arcana/mod.rs`). It took
 two days, most of them on two traps that the tools below now catch in seconds.
 
 Making a mod with an AI assistant? [`skills/dota2-modding`](../skills/dota2-modding/SKILL.md)
@@ -15,12 +15,12 @@ assistant follows.
 
 1. **Plan.** `npm run item-plan -- "<item name>"` (or its id) reads the item's `visuals` from
    `items_game` and lists every change it makes, how a build gives it, and whether the code
-   already does (`src/item-visuals.ts`). Sounds, the kill effect and voice lines come with the item
+   already does (`crates/mm-core/src/item_builder/item_visuals.rs`). Sounds, the kill effect and voice lines come with the item
    at play time; the plan says so instead of leaving you to find out.
-2. **Build.** An item is a set in `src/arcana.ts` (`ARCANA_SETS`: models, pictures, the particle
-   that hosts what the item creates) and `src/recolor.ts` (`RECOLOR_SETS`: the folders whose colour
+2. **Build.** An item is a set in `crates/mm-core/src/arcana/mod.rs` (`ARCANA_SETS`: models, pictures, the particle
+   that hosts what the item creates) and `crates/mm-core/src/looks/recolor.rs` (`RECOLOR_SETS`: the folders whose colour
    follows the gem). `npm run recolor -- <colour> --arcana` writes the VPK.
-3. **Check without the game.** `npm run doctor -- <mod_dir.vpk>` (`src/mod-doctor.ts`) reads the
+3. **Check without the game.** `npm run doctor -- <mod_dir.vpk>` (`crates/mm-core/src/app/mod_doctor.rs`) reads the
    mod against `pak01`: animations that need a modifier only the item switches on, in the clips
    and in the sequences; a particle child that is missing or drawn on another attachment than it
    is made for. It takes seconds.
@@ -28,7 +28,7 @@ assistant follows.
    running, Dota closed) puts the mod in a free slot, starts hero demo, gives the hero level 30,
    Aghanim's Scepter and Shard, shows it close in the inspect, sets it on a dummy and takes 16
    pictures 80 ms apart through the attack. `verdict.json` says whether the attack swings
-   (`tools/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
+   (`tools/mods/dota-bench/verdict.mjs`); look at the pictures for the rest. About three minutes a
    build. Without `--short` it also casts every ability (`--skills`, aimed ones on an enemy hero),
    with `-wtf` typed into the console so nothing waits on a cooldown. `--idle-seconds 13` first
    steps the hero so its idle starts over, then films it standing in the inspect, from in front
@@ -44,17 +44,17 @@ assistant follows.
    **A build that changes the item table** (an unusual effect, another item's effect on the pick,
    anything the item builder writes into `items_game`) does nothing from the language folder: the
    game reads the table only through `dota_mods`, the folder the search-path patch registers. Build
-   it in the sandbox, after `node tools/sandbox.js item "<item name>"` has put that item's files
+   it in the sandbox, after `node tools/dev/sandbox.js item "<item name>"` has put that item's files
    into the sandbox's pak01, and pass what the app wrote there:
    `npm run dota:bench -- --schema "sandbox/steamapps/common/dota 2 beta/game/dota_mods/pak01_dir.vpk"`.
    The bench puts it in the game's `dota_mods` for the run and the owner's own table back after
-   (`tools/dota-bench/schema.mjs`). It needs safe mode off in the app; a patch a Dota update left
+   (`tools/mods/dota-bench/schema.mjs`). It needs safe mode off in the app; a patch a Dota update left
    unsigned is applied again, as the app's next start would.
 
    **A sound** (`--sound <the wav>`, without `--short`, `--skills` naming the ability's key) is
    judged by ear of a kind: what the computer plays during the casts is recorded
-   (`tools/dota-bench/record.ps1`, WASAPI loopback), and the sound looked for in it by normalised
-   cross-correlation (`tools/dota-bench/hear.mjs`). `verdict.json` gets `sound: { heard, score, at }`;
+   (`tools/mods/dota-bench/record.ps1`, WASAPI loopback), and the sound looked for in it by normalised
+   cross-correlation (`tools/mods/dota-bench/hear.mjs`). `verdict.json` gets `sound: { heard, score, at }`;
    the recording stays as `heard.wav`. Leave the game's sound on.
 5. **Compare.** Run the bench on the plain hero (`--hero terrorblade`, no `--vpk`) and on a mod of
    the same item from the catalog that works. When yours does not, swap resource blocks between
@@ -73,7 +73,7 @@ while it is worn:
 | `activity` | switches an activity modifier on (`abysm`) | take the modifier off the swapped model's animations (below) |
 | `model` | one wearable model becomes another | put the new one under the old path |
 | `particle` | one particle becomes another | put the new one under the old path; its children keep their paths |
-| `particle_create` | the item creates a particle | nothing creates it: hang it as a child of a particle the hero always has |
+| `particle_create` | the item creates a particle | list it in the model's `particle_cfg_list`; an unusual added in the item builder is sewn into the hero's body with the item, or built on an item that moves by itself (`crates/mm-core/src/schema/item_in_body.rs`) |
 | `ability_icon`, `icon_replacement_hero*` | pictures | put them under the plain names in `panorama/images` |
 | `sound` | another sound event plays | not tried yet |
 | `custom_kill_effect`, `chatwheel`, `response_criteria`, `arcana_level` | game logic | a mod cannot give it |
@@ -86,7 +86,7 @@ match loads what the server's own item table names: the stock paths. Joining a m
 loads the paid models with the hero, so a table naming them looks right; after a reconnect it does
 not, and the console says `Attempting to set nonresident model ... for item Def 459` while the hero
 wears an ERROR model. So a built item names the stock path its VPK fills, and drops the
-`entity_model` and `model` swaps the files already make (`src/item-builder.ts`, `withoutFileSwaps`).
+`entity_model` and `model` swaps the files already make (`crates/mm-core/src/item_builder/mod.rs`, `withoutFileSwaps`).
 A slot whose stock item has no model at all, such as Earthshaker's head, has no path to fill, and
 its pick still shows only until a reconnect.
 
@@ -95,10 +95,10 @@ the catalog's hero mods at 30 and up: an arcana mod from the catalog does not co
 
 **Resources.** A compiled file (`*_c`) is a header and a table of blocks: `DATA`, `RERL` (the
 resources it names), and for a model `ANIM`, `ASEQ`, `AGRP`, `MRPH`, `CTRL` and the mesh blocks.
-`src/resource.ts` replaces a block and moves the later ones, each start aligned to 16 bytes. A RERL
+`crates/mm-core/src/formats/resource.rs` replaces a block and moves the later ones, each start aligned to 16 bytes. A RERL
 entry's id is MurmurHash64B of the path, seed `0xEDABCDEF`.
 
-**KV3** (`src/kv3.ts`, `src/kv3-write.ts`). The blocks are binary KV3, versions 1 to 5,
+**KV3** (`crates/mm-core/src/formats/kv3.rs`, `crates/mm-core/src/formats/kv3.rs`). The blocks are binary KV3, versions 1 to 5,
 compressed with LZ4 or (version 5, a model's `ANIM`) zstd. Version 5 keeps the strings in the
 first buffer and the values in the second; elements of a type-25 array sit in the first. Rules the
 writer keeps: a typed array stays typed and its element type is kept; arrays with a one-byte
@@ -123,7 +123,7 @@ control point 15 (strength in control point 16) and to materials as `$GemColor`.
   2026-11-04 with the item picked in the item builder (`--schema`): the effects take the colour,
   the blades' teal is the model's own material and stays.
 - A material reads it in a VfxEval expression, `exists($GemColor) ? $GemColor : float3(...)`. The
-  build replaces the read with a constant (`src/material.ts`): the attribute's token is MurmurHash2
+  build replaces the read with a constant (`crates/mm-core/src/formats/material.rs`): the attribute's token is MurmurHash2
   of the lowercased name, seed `0x31415926`; opcodes 0x19 ATTRIBUTE, 0x1F EXISTS, 0x04 BRANCH,
   0x02 JUMP, 0x07 FLOAT, 0x06 FUNC, 0x00 RETURN, and every jump after a change moves with it.
 
@@ -152,7 +152,7 @@ the same way has not been checked in a lobby.
 
 **Portraits and icons.** The HUD draws the hero's model with the camera and lights that
 `scripts/npc/portraits.txt` gives its path, so an arcana model under the plain path brings its own
-settings under that path (`src/item-portraits.ts`). The hero's portrait, minimap icon and ability
+settings under that path (`crates/mm-core/src/item_builder/item_portraits.rs`). The hero's portrait, minimap icon and ability
 icons are pictures in `panorama/images` copied over the plain ones; the minimap also cuts its icon
 out of a sprite sheet named in `scripts/mod_textures.txt`. Shop item pictures are left alone: one
 picture is every hero's.
@@ -162,7 +162,7 @@ picture is every hero's.
 | trap | what it looked like | caught by |
 |---|---|---|
 | a child particle on its parent's first control point | a glowing ball in front of the face | doctor |
-| only the first of a particle's gem tints baked | blades brown in red, blue in pink | test in `test/arcana.test.ts` |
+| only the first of a particle's gem tints baked | blades brown in red, blue in pink | fixed in the arcana recipes |
 | the item's modifier left on the animation clips | the hero stood still while its hits landed | doctor (clips), bench verdict |
 | the modifier's entry pointed at the activity instead of taken out | the same | doctor |
 | an empty typed array written typed | the hero and its items one flat colour | writer test |
@@ -176,4 +176,4 @@ has to number its sequences as the hero's does. The numbers are the model's sequ
 which also counts clips a sequence plays under a name of their own (`@@cast_ghost_shroud`); the
 "Scream" Necrophos model lost one of those in a recompile and numbered every sequence from 30 on
 one lower than the game. The doctor compares that list now (`sequenceNumbersOf` in
-`src/mod-doctor.ts`), and `npm run modkit -- clips` puts Valve's names and numbers back.
+`crates/mm-core/src/app/mod_doctor.rs`), and `npm run modkit -- clips` puts Valve's names and numbers back.

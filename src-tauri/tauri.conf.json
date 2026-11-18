@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Dota 2 Mod Manager",
+  "mainBinaryName": "Dota 2 Mod Manager",
   "version": "../package.json",
   "identifier": "com.dota2modmanager.app",
   "build": {
     "frontendDist": "../out/renderer-tauri",
-    "beforeBuildCommand": "node tools/ui-build.mjs --force --tauri"
+    "beforeBuildCommand": "node tools/dev/ui-build.mjs && node tools/dev/rust-licenses.mjs"
   },
   "app": {
     "withGlobalTauri": false,
@@ -19,16 +20,32 @@
     "active": true,
     "targets": ["nsis"],
     "icon": ["../build/icon.png", "../build/icon.ico"],
+    "fileAssociations": [
+      { "ext": ["d2mm"], "name": "Dota 2 Mod Manager preset", "mimeType": "application/x-d2mm", "role": "Editor" }
+    ],
     "resources": {
-      "../src": "app/src",
-      "../src-tauri/host": "app/src-tauri/host",
-      "../renderer/uninstall.html": "app/renderer/uninstall.html",
+      "../build/stats": "app/build/stats",
       "../CHANGELOG.md": "app/CHANGELOG.md",
       "../CHANGELOG.ru.md": "app/CHANGELOG.ru.md",
-      "../package.json": "app/package.json"
+      "../LICENSE": "app/LICENSE",
+      "../NOTICE": "app/NOTICE",
+      "../package.json": "app/package.json",
+      "../build/icon.png": "app/build/icon.png"
     },
     "windows": {
-      "nsis": { "installMode": "currentUser" }
+      "nsis": {
+        "installMode": "currentUser",
+        "installerHooks": "windows/hooks.nsh",
+        "template": "windows/installer.nsi"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVGMEE2MUM0M0JBRjI1NEUKUldST0phODd4R0VLN3lRVWZGdWs2QlE5WUlGNVl3N015dnZDYzVXTlc4UVdTL2pkbnlPcCsrckUK",
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

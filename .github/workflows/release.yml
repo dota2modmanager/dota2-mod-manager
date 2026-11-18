@@ -49,12 +49,12 @@ jobs:
       - name: Wait until the commit has passed every required check
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node tools/release-gate.mjs "$GITHUB_SHA"
+        run: node tools/release/release-gate.mjs "$GITHUB_SHA"
 
       # Everything after publish needs something kept elsewhere: the webhook, the bucket keys, the
       # antivirus workflow, a changelog section in both languages. On 2.7.1 the first sign that one of
       # them failed came after the release was public. Checked here, before anything is built, so a
-      # wrong one stops the release while it is still a tag. tools/release-preflight.mjs changes nothing.
+      # wrong one stops the release while it is still a tag. tools/release/release-preflight.mjs changes nothing.
       - name: Check that everything after publishing will work
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -65,32 +65,34 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: node tools/release-preflight.mjs
+        run: node tools/release/release-preflight.mjs
 
   build:
     needs: gate
     runs-on: windows-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
       # Make the release before anything is uploaded into it.
       #
-      # electron-builder creates one per artifact when it finds none, and on 2.2.0 two of them
-      # were created in the same second: the installer and latest.yml landed on one, the
-      # blockmap on the other. GitHub then answered /releases/latest with the release holding
-      # only the blockmap, so every installed copy looked for latest.yml, did not find it, and
-      # stopped updating. A release that already exists is one electron-builder uploads into
-      # rather than races to create. It also puts the notes on the page at creation, which the
+      # On 2.2.0 the Electron build's uploader created one per artifact when it found none, two
+      # of them in the same second: the installer and latest.yml landed on one, the blockmap on
+      # the other. GitHub then answered /releases/latest with the release holding only the
+      # blockmap, so every installed copy looked for latest.yml, did not find it, and stopped
+      # updating. Every upload since goes into a release that already exists. It also puts the notes on the page at creation, which the
       # edit afterwards could not do while two releases shared a tag.
       #
       # It opens as a draft. A draft is invisible to /releases/latest, so no installed copy can
@@ -115,7 +117,7 @@ jobs:
             printf '' > notes.md
           fi
           # SignPath asks for the term on every page people download from; the Discord post drops
-          # it again (SIGNING_POLICY in tools/release-state.js)
+          # it again (SIGNING_POLICY in tools/release/release-state.js)
           { echo; echo '[Code signing policy](https://dota2modmanager.com/code-signing/)'; } >> notes.md
           if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
             echo "release already exists, leaving it alone"
@@ -123,33 +125,36 @@ jobs:
             gh release create "$TAG" --repo "$REPO" --title "${TAG#v}" --notes-file notes.md --draft $EXTRA
           fi
 
-      # EP_DRAFT keeps electron-builder uploading into the draft above. Without it, a release it
-      # had to create for itself would come out public.
       # the catalog download counter's token, from a secret into the build and never into git
       - name: Give the build the download counter's token
-        run: node tools/stats-token.mjs
+        run: node tools/release/stats-token.mjs
         env:
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
 
-      - name: Build and upload the installer to the draft
-        run: npx electron-builder --win --publish always
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EP_DRAFT: 'true'
-
-      # The portable build cannot install over itself, so the app downloads the new one and
-      # leaves it beside the old one. That download is only worth anything if there is
-      # something to check it against, and this is it: name, size and SHA-256 of the exe this
-      # run built. The app fetches it from GitHub with no mirror in the way.
-      - name: Publish the portable manifest
+      # The Tauri build (src-tauri/), under the names a release has always carried
+      # (tools/release/tauri-release.mjs). The installer is signed for tauri-plugin-updater with the
+      # project's minisign key; latest.yml names it for the Electron copies people have now, whose
+      # electron-updater runs it and whose install it takes over (src-tauri/windows/hooks.nsh).
+      # The portable build is the same exe without the installer around it, and portable.yml is
+      # what it checks a new one against: it cannot install over itself, so it fetches the new one
+      # beside itself (crates/mm-core/src/app/portable_update.rs).
+      - name: Build the installer and the portable exe, and upload them to the draft
+        if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: |
-          node tools/portable-manifest.js dist "${TAG#v}"
-          gh release upload "$TAG" dist/portable.yml --repo "$REPO" --clobber
+          set -euo pipefail
+          npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          node tools/release/tauri-release.mjs windows dist "${TAG#v}"
+          cat dist/latest.yml dist/portable.yml
+          gh release upload "$TAG" --repo "$REPO" --clobber \
+            dist/Dota-2-Mod-Manager-Setup.exe dist/Dota-2-Mod-Manager-Setup.exe.sig \
+            dist/Dota-2-Mod-Manager-Portable.exe dist/latest.yml dist/portable.yml
 
       # A second release on the same tag is what broke 2.2.0, and nothing showed it until somebody
       # read the API by hand. Checked here on the draft; whether it became the latest is checked
@@ -171,43 +176,60 @@ jobs:
             echo "::error::the release for $TAG is already public, before any job has tried the build"
             exit 1
           fi
-          for want in latest.yml portable.yml Dota-2-Mod-Manager-Setup.exe Dota-2-Mod-Manager-Portable.exe; do
+          for want in latest.yml portable.yml Dota-2-Mod-Manager-Setup.exe Dota-2-Mod-Manager-Setup.exe.sig Dota-2-Mod-Manager-Portable.exe; do
             echo "$release" | jq -r '.[0].assets[].name' | grep -qx "$want" \
               || { echo "::error::$want is missing from the draft"; exit 1; }
           done
           echo "one release, still a draft, carrying the installer and the manifests"
 
-  # Linux ships from the same tag, and after the Windows job rather than beside it.
-  # electron-builder creates a release when it finds none, and two builds creating one for the
-  # same tag is exactly what left 2.2.0 with its update file on a second page. By the time this
-  # runs the release exists and there is only something to upload into.
+  # Linux ships from the same tag, and after the Windows job rather than beside it: the draft
+  # exists by then, and there is only something to upload into.
   linux:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # what Tauri builds against on Linux: WebKitGTK, the tray, icons
+      - name: System libraries
+        timeout-minutes: 10
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
       - name: Give the build the download counter's token
-        run: node tools/stats-token.mjs
+        run: node tools/release/stats-token.mjs
         env:
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
 
       - name: Build and upload the AppImage to the draft
-        run: npx electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ github.token }}
-          EP_DRAFT: 'true'
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          set -euo pipefail
+          npx tauri build --bundles appimage --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          node tools/release/tauri-release.mjs linux dist "${TAG#v}"
+          cat dist/latest-linux.yml
+          gh release upload "$TAG" --repo "$REPO" --clobber \
+            dist/Dota-2-Mod-Manager.AppImage dist/Dota-2-Mod-Manager.AppImage.sig dist/latest-linux.yml
 
       # The same look the Windows job takes at itself. latest-linux.yml is what an installed
       # AppImage reads to find out there is a newer one. The tag endpoint does not return a
@@ -219,7 +241,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           names=$(gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[].name")
-          for want in Dota-2-Mod-Manager.AppImage latest-linux.yml; do
+          for want in Dota-2-Mod-Manager.AppImage Dota-2-Mod-Manager.AppImage.sig latest-linux.yml; do
             echo "$names" | grep -qx "$want" \
               || { echo "::error::$want is missing from the draft"; exit 1; }
           done
@@ -262,12 +284,12 @@ jobs:
           gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[] | \"\(.id) \(.name)\"" > assets.txt
           while read -r id name; do
             # a rerun finds this job's own files already there; they are written fresh below
-            case "$name" in SHA256SUMS|SHA256SUMS.intoto.jsonl|dota2-mod-manager.cdx.json|beta.yml|beta-linux.yml) continue ;; esac
+            case "$name" in SHA256SUMS|SHA256SUMS.intoto.jsonl|dota2-mod-manager.cdx.json|beta.yml|beta-linux.yml|latest.json|beta.json) continue ;; esac
             gh api -H "Accept: application/octet-stream" "repos/$REPO/releases/assets/$id" > "release/$name"
           done < assets.txt
           ls -l release
 
-      # A tester's copy reads beta.yml, and electron-builder names the feed latest.yml whatever the
+      # A tester's Electron copy reads beta.yml, and the feed is written as latest.yml whatever the
       # version says. So the same feed goes on the draft again under the beta names: for a beta it is
       # the build its testers are offered, for a release it moves a tester off the beta it replaces.
       # It used to be added after publishing, and on 2.7.1 that step never ran. A published release
@@ -277,6 +299,21 @@ jobs:
           set -euo pipefail
           cp release/latest.yml release/beta.yml
           cp release/latest-linux.yml release/beta-linux.yml
+
+      # What the Tauri builds' updater reads: both platforms' signatures, from the .sig files the
+      # two builds left on the draft, in one feed per channel (tools/release/tauri-release.mjs). The notes
+      # are this version's section of the changelog, as on the release page.
+      - name: Write the Tauri feeds
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          awk -v v="${TAG#v}" '
+            $0 ~ "^## " v "([^-0-9A-Za-z.]|$)" { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md > notes.md
+          node tools/release/tauri-release.mjs feeds release "${TAG#v}" notes.md
 
       # From the lockfile alone: what the app ships, without the tools that build it.
       - name: Write the SBOM
@@ -302,7 +339,7 @@ jobs:
 
       # OpenSSF Scorecard's Signed-Releases check looks for a signature among a release's files, and
       # checking a download without asking GitHub needs the bundle anyway.
-      - name: Put SHA256SUMS, the SBOM, the provenance bundle and the beta feed on the draft
+      - name: Put SHA256SUMS, the SBOM, the provenance bundle and the feeds on the draft
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -312,13 +349,13 @@ jobs:
           set -euo pipefail
           cp "$BUNDLE" SHA256SUMS.intoto.jsonl
           gh release upload "$TAG" SHA256SUMS SHA256SUMS.intoto.jsonl release/dota2-mod-manager.cdx.json \
-            release/beta.yml release/beta-linux.yml --repo "$REPO" --clobber
+            release/beta.yml release/beta-linux.yml release/latest.json release/beta.json --repo "$REPO" --clobber
 
   # Install the build that is about to go out, and use it.
   #
   # The Window workflow proves the source tree works. These two prove the bytes on the draft do:
   # the file a person downloads, installed or unpacked the way they would, then the same clicks
-  # tools/e2e.mjs makes on every pull request (install a mod, switch it off and on, remove it) in
+  # tools/dev/e2e.mjs makes on every pull request (install a mod, switch it off and on, remove it) in
   # the sandbox game tree. 2.6.5 and 2.6.6 would have stopped here, and so would a file left out
   # of the package, which a run from source can never notice.
   try-windows:
@@ -337,12 +374,9 @@ jobs:
           node-version: 24
           cache: npm
 
-      # The fixture is built with this repository's VPK writer and adm-zip. The Electron that npm
-      # would download is not the app under test, so it is skipped.
+      # The fixture is built with this repository's VPK writer and adm-zip.
       - name: Install dependencies
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Download the installer from the draft
         shell: bash
@@ -374,14 +408,17 @@ jobs:
         run: |
           $p = Start-Process -FilePath .\setup.exe -ArgumentList '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "the installer exited with $($p.ExitCode)" }
-          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'Dota 2 Mod Manager.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'the installer finished and put no Dota 2 Mod Manager.exe under LOCALAPPDATA\Programs' }
+          # a fresh Tauri install goes to %LOCALAPPDATA%\Dota 2 Mod Manager; one over an Electron
+          # install stays in that install's folder under Programs (src-tauri/windows/hooks.nsh)
+          $exe = @("$env:LOCALAPPDATA\Dota 2 Mod Manager", "$env:LOCALAPPDATA\Programs") | Where-Object { Test-Path $_ } |
+            ForEach-Object { Get-ChildItem $_ -Recurse -Filter 'Dota 2 Mod Manager.exe' } | Select-Object -First 1
+          if (-not $exe) { throw 'the installer finished and put no Dota 2 Mod Manager.exe under LOCALAPPDATA' }
           "APP=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "installed: $($exe.FullName)"
 
       - name: Install, switch off, switch on and remove a mod by clicking
         shell: pwsh
-        run: node tools/e2e.mjs --app "$env:APP"
+        run: node tools/dev/e2e.mjs --app "$env:APP"
 
       - name: What the window showed
         if: always()
@@ -408,22 +445,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
-      - name: Install xvfb
-        # A mirror that stops answering held this step for two hours on 2026-10-01. apt drops a
-        # silent connection after 30 s and tries another, and the step gives up at ten minutes.
+      - name: Install AppImage runtime dependencies
         timeout-minutes: 10
-        # The Ubuntu image ships xvfb (actions/runner-images, Ubuntu 24.04), so apt runs only when it is
-        # missing. On 2026-10-07 two runs spent their ten minutes waiting on azure.archive.ubuntu.com
-        # for a package that was already installed.
         run: |
-          if command -v Xvfb >/dev/null && command -v xvfb-run >/dev/null; then
-            echo "xvfb is already on the runner"
-          else
-            sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 install -y xvfb
-          fi
+          # The AppImage bundles WebKitGTK but takes OpenGL from the system, as on any desktop: EGL,
+          # GLES and Mesa's drivers. The bare runner has none of them (the PR checks get them with
+          # libwebkit2gtk-4.1-dev); v4.0.0 stopped first at libEGL.so.1, then at libGLESv2.so.2.
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 install -y xvfb libegl1 libegl-mesa0 libgles2 libgl1-mesa-dri
       # A runner has no FUSE to mount an AppImage with, so it is unpacked. AppRun is the program
       # the AppImage would have started.
       - name: Download and unpack the AppImage from the draft
@@ -452,7 +482,7 @@ jobs:
           ls -l squashfs-root/AppRun
 
       - name: Install, switch off, switch on and remove a mod by clicking
-        run: xvfb-run -a node tools/e2e.mjs --app squashfs-root/AppRun
+        run: xvfb-run -a node tools/dev/e2e.mjs --app squashfs-root/AppRun
 
       - name: What the window showed
         if: always()
@@ -467,7 +497,7 @@ jobs:
   # try-windows installs on a clean machine, and nobody updates from one: they have the last
   # release, a library, settings and favourites. This installs that release from its own page,
   # gives it a mod (switched off) and a favourite through its window, runs the draft's installer
-  # over it with /S as the updater does, and has tools/e2e.mjs find the new version holding all of
+  # over it with /S as the updater does, and has tools/dev/e2e.mjs find the new version holding all of
   # it, then answer the removal window three ways (cancel, keep, everything) and check the game
   # folder back as it was. Last, the uninstaller the new version installed removes it.
   try-update:
@@ -486,12 +516,9 @@ jobs:
           node-version: 24
           cache: npm
 
-      # The fixture is built with this repository's VPK writer and adm-zip. The Electron that npm
-      # would download is not the app under test, so it is skipped.
+      # The fixture is built with this repository's VPK writer and adm-zip.
       - name: Install dependencies
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
 
       - name: Download the installer from the draft
         shell: bash
@@ -550,7 +577,7 @@ jobs:
 
       - name: Give it a mod and a favourite, update it, and find them in the new version
         shell: pwsh
-        run: node tools/e2e.mjs --app "$env:APP" --upgrade setup.exe
+        run: node tools/dev/e2e.mjs --app "$env:APP" --upgrade setup.exe
 
       - name: Remove it with the uninstaller the new version installed
         shell: pwsh
@@ -593,7 +620,7 @@ jobs:
 
       # Every file, before anybody can see the release. Releases are immutable: nothing can be added
       # to one once it is out, so a file missing here would be missing for good. The list is
-      # tools/release-state.js, the same one the check after publishing and the watch read.
+      # tools/release/release-state.js, the same one the check after publishing and the watch read.
       - name: Check the draft carries every file
         env:
           GH_TOKEN: ${{ github.token }}
@@ -602,7 +629,7 @@ jobs:
         run: |
           set -euo pipefail
           gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\" and .draft) | .assets[].name" > names.txt
-          if ! missing=$(node tools/release-state.js missing < names.txt); then
+          if ! missing=$(node tools/release/release-state.js missing < names.txt); then
             echo "::error::the draft of $TAG is missing: $(echo $missing). Nothing was published"
             exit 1
           fi
@@ -654,7 +681,7 @@ jobs:
               echo "::error::/releases/latest says $TAG, which is a beta - installed copies follow that endpoint"
               exit 1
             fi
-            if ! missing=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.assets[].name' | node tools/release-state.js missing); then
+            if ! missing=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.assets[].name' | node tools/release/release-state.js missing); then
               echo "::error::the beta the testers read is missing: $(echo $missing)"
               exit 1
             fi
@@ -666,7 +693,7 @@ jobs:
             echo "::error::/releases/latest says $latest, not $TAG - installed copies follow that endpoint"
             exit 1
           fi
-          if ! missing=$(gh api "repos/$REPO/releases/latest" --jq '.assets[].name' | node tools/release-state.js missing); then
+          if ! missing=$(gh api "repos/$REPO/releases/latest" --jq '.assets[].name' | node tools/release/release-state.js missing); then
             echo "::error::the release the updater reads is missing: $(echo $missing)"
             exit 1
           fi
@@ -744,7 +771,7 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: node tools/r2-release.mjs --current
+        run: node tools/release/r2-release.mjs --current
 
   # Notify Discord after the release is published. This lives in the same workflow as the
   # build because a release published by the default GITHUB_TOKEN does NOT trigger a separate
@@ -793,7 +820,7 @@ jobs:
             echo "::warning::CHANGELOG.md has no section for $TAG - the release page stays empty"
             exit 0
           fi
-          # the same last line as the draft got (SIGNING_POLICY in tools/release-state.js)
+          # the same last line as the draft got (SIGNING_POLICY in tools/release/release-state.js)
           { echo; echo '[Code signing policy](https://dota2modmanager.com/code-signing/)'; } >> notes.md
           id=$(gh api "repos/$REPO/releases/tags/$TAG" --jq '.id')
           have=$(gh api "repos/$REPO/releases/$id" --jq '.body | length')
@@ -804,7 +831,7 @@ jobs:
             echo "release already carries its notes"
           fi
 
-      # The post is built by tools/release-state.js, which cuts the notes by characters: `head -c`
+      # The post is built by tools/release/release-state.js, which cuts the notes by characters: `head -c`
       # counted bytes and could stop in the middle of a letter. curl fails on an answer Discord
       # refuses, which it did not before: a deleted webhook would have answered 404 and the job
       # would have gone green.
@@ -821,7 +848,7 @@ jobs:
           URL=$(gh release view "$TAG" --repo "$REPO" --json url -q '.url' 2>/dev/null || true)
           [ -z "$NAME" ] && NAME="$TAG"
           [ -z "$URL" ] && URL="https://github.com/$REPO/releases/tag/$TAG"
-          node tools/release-state.js discord notes.md "$NAME" "$URL" > payload.json
+          node tools/release/release-state.js discord notes.md "$NAME" "$URL" > payload.json
           curl --fail-with-body --silent --show-error --retry 4 --retry-all-errors --retry-delay 15 \
             -H "Content-Type: application/json" -d @payload.json "$WEBHOOK_URL?wait=true" > /dev/null
           echo "posted $TAG to Discord"

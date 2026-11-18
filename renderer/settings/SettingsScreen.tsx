@@ -1,7 +1,13 @@
 /* Settings: everything the app itself remembers, drawn from what views/settings.ts reads. The
  * page is mostly other modules' knobs (the scale is ui/chrome.ts's, the language ui/language.ts's),
- * because a setting is a thing the whole window obeys, not a thing this screen owns. */
-import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
+ * because a setting is a thing the whole window obeys, not a thing this screen owns.
+ *
+ * Somebody comes here to change one thing and leave, so the page is laid out for finding it:
+ * seven sections, listed down the left and lit as they scroll past, and one row per setting with
+ * its switch or button in the same right-hand column (parts.tsx). Until 2026-11-14 it was fourteen
+ * blocks in one column 3484 px tall, with switches wherever their label ended and twenty-two
+ * paragraphs of explanation open at once; the explanations are all still here, folded. */
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import { MotionConfig } from 'motion/react';
@@ -12,12 +18,13 @@ import { Dropdown } from '../ui/Dropdown.tsx';
 import { ProxyControl } from './ProxyControl.ts';
 import type { RepairRun } from './RepairSteps.tsx';
 import { Diagnostics } from './Diagnostics.tsx';
-import { CompilerBlock, type CompilerActions } from './CompilerBlock.tsx';
-import { PreviewCacheBlock } from './PreviewCacheBlock.tsx';
-import { GridBlock } from './GridBlock.tsx';
-import { GameFilesBlock } from './GameFilesBlock.tsx';
-import { BackgroundBlock } from './BackgroundBlock.tsx';
+import { CompilerRows, type CompilerActions } from './CompilerBlock.tsx';
+import { PreviewCacheRow } from './PreviewCacheBlock.tsx';
+import { GridRows } from './GridBlock.tsx';
+import { GameFilesRows, type EveryoneModel } from './GameFilesBlock.tsx';
+import { BackgroundRow } from './BackgroundBlock.tsx';
 import { Toggle } from './Toggle.tsx';
+import { Row, Section, SectionNav, type SectionDef } from './parts.tsx';
 import type { CompilerState } from '../api/content.ts';
 
 export interface SettingsModel {
@@ -28,7 +35,7 @@ export interface SettingsModel {
   /** installs of catalog mods are counted by the catalog's download counter */
   countDownloads: boolean;
   /** the item builder's look on everybody playing the hero */
-  everyone: boolean;
+  everyone: EveryoneModel;
   beta: { eligible: boolean; on: boolean };
   dotaPath: string;
   dotaValid: boolean;
@@ -55,6 +62,8 @@ export interface SettingsActions extends CompilerActions {
   presence: () => void;
   countDownloads: () => void;
   everyone: () => void;
+  /** a hero excluded from the look on everybody, or let back in */
+  everyoneHero: (id: string) => void;
   beta: () => void;
   detect: () => void;
   browse: () => void;
@@ -74,13 +83,6 @@ export interface SettingsActions extends CompilerActions {
   support: () => void;
   open: (url: string) => void;
 }
-
-const Block = ({ i, title, children }: { i?: number; title: ReactNode; children: ReactNode }) => (
-  <div className="settings-block" style={i === undefined ? undefined : ({ '--i': i } as CSSProperties)}>
-    <h3>{title}</h3>
-    {children}
-  </div>
-);
 
 /* The number moves while the slider is dragged and the window resizes on release: scaling on every
  * input event fights the drag, since the slider moves under the pointer. ui/chrome.ts paints the
@@ -113,179 +115,177 @@ function Scale({ pct, actions }: { pct: number; actions: SettingsActions }) {
   );
 }
 
+const SECTIONS = (): SectionDef[] => [
+  { id: 'general', icon: 'tune', title: L`Основное` },
+  { id: 'game', icon: 'sports_esports', title: L`Игра` },
+  { id: 'catalog', icon: 'grid_view', title: L`Каталог` },
+  { id: 'downloads', icon: 'download', title: L`Загрузки` },
+  { id: 'tools', icon: 'construction', title: L`Инструменты` },
+  { id: 'diagnostics', icon: 'troubleshoot', title: L`Диагностика` },
+  { id: 'about', icon: 'info', title: L`О программе` },
+];
+
 function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsActions }) {
   const busy = useRef(false);
+  const sections = useMemo(SECTIONS, []);
+  const [general, game, catalog, downloads, tools, diagnostics, about] = sections;
+  const presenceLabel = L`Показывать в Discord, что ты в Mod Manager`;
   return (
     <>
       <div className="view-header"><h1 className="view-title">{L`Настройки`}</h1></div>
+      <div className="set-layout">
+        <SectionNav sections={sections} />
+        <div className="set-body">
 
-      <Block title={L`Интерфейс`}>
-        <div className="settings-row">
-          <span className="settings-label">{L`Язык`}</span>
-          <Dropdown
-            id="uiLangSelect"
-            icon="translate"
-            label={L`Язык`}
-            value={m.uiLang}
-            options={[
-              { value: 'en', label: 'English' },
-              { value: 'ru', label: 'Русский' },
-              { value: 'zh-CN', label: '简体中文' },
-            ]}
-            onPick={(lang) => actions.language(lang)}
-          />
-        </div>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Масштаб`}</span>
-          <Scale pct={m.scalePct} actions={actions} />
-        </div>
-      </Block>
+          <Section def={general} i={0}>
+            <Row label={L`Язык`}>
+              <Dropdown
+                id="uiLangSelect"
+                icon="translate"
+                label={L`Язык`}
+                value={m.uiLang}
+                options={[
+                  { value: 'en', label: 'English' },
+                  { value: 'ru', label: 'Русский' },
+                  { value: 'zh-CN', label: '简体中文' },
+                ]}
+                onPick={(lang) => actions.language(lang)}
+              />
+            </Row>
+            <Row label={L`Масштаб`}><Scale pct={m.scalePct} actions={actions} /></Row>
+            <BackgroundRow />
+            <Row label={presenceLabel} hint={L`В самом Discord для этого включено «Отображать текущую активность как статус».`}>
+              <Toggle id="presenceToggle" on={m.presence} label={presenceLabel} onClick={actions.presence} />
+            </Row>
+            {/* offered only to an account the signed list names: a switch you cannot use is noise */}
+            <Reveal show={m.beta.eligible}>
+              <Row label={L`Бета-версии`}
+                more={L`Твой аккаунт в списке тестеров: приложение будет обновляться до сборок, которых ещё нет у остальных. Выйдешь из Discord, и оно вернётся на обычные.`}>
+                <Toggle id="betaToggle" on={m.beta.on} label={L`Бета-версии`} onClick={actions.beta} />
+              </Row>
+            </Reveal>
+          </Section>
 
-      <Block i={1} title="Discord">
-        <div className="settings-row">
-          <span className="settings-label">{L`Показывать в Discord, что ты в Mod Manager`}</span>
-          <Toggle id="presenceToggle" on={m.presence} label={L`Показывать в Discord, что ты в Mod Manager`} onClick={actions.presence} />
-        </div>
-        <div className="settings-hint">{L`В самом Discord для этого включено «Отображать текущую активность как статус».`}</div>
-        {/* offered only to an account the signed list names: a switch you cannot use is noise */}
-        <Reveal show={m.beta.eligible}>
-          <div className="settings-row spaced">
-            <span className="settings-label">{L`Бета-версии`}</span>
-            <Toggle id="betaToggle" on={m.beta.on} label={L`Бета-версии`} onClick={actions.beta} />
-          </div>
-          <div className="settings-hint">{L`Твой аккаунт в списке тестеров: приложение будет обновляться до сборок, которых ещё нет у остальных. Выйдешь из Discord, и оно вернётся на обычные.`}</div>
-        </Reveal>
-      </Block>
-
-      <BackgroundBlock i={1} />
-
-      <Block i={2} title={L`Путь к Dota 2`}>
-        <div className="settings-row">
-          <Swap className="mono grow" value={m.dotaPath || L`не найден`} />
-          <span className={`dot ${m.dotaValid ? 'ok' : 'bad'}`} />
-        </div>
-        <div className="settings-row">
-          <button className="btn btn-sm" id="detectBtn" onClick={actions.detect}>{L`Найти автоматически`}</button>
-          <button className="btn btn-sm" id="browseBtn" onClick={actions.browse}>{L`Указать вручную`}</button>
-        </div>
-      </Block>
-      <GameFilesBlock i={2} everyone={m.everyone} onEveryone={actions.everyone} />
-
-      <Block i={3} title={L`Кэш загрузок`}>
-        <div className="settings-row">
-          <span className="settings-label">{L`Размер`}</span>
-          <Swap className="num" value={m.cache} />
-          <button className="btn btn-sm" id="openCacheBtn" onClick={actions.openCache}>{L`Показать в папке`}</button>
-          <button className="btn btn-sm" id="clearCacheBtn" onClick={actions.clearCache}>{L`Очистить`}</button>
-        </div>
-        <div className="settings-hint">{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</div>
-        {m.cacheFiles.length > 0 && (
-          <details className="settings-adv cache-files" id="cacheFiles">
-            <summary>{L`Архивы по одному`} ({m.cacheFiles.length})</summary>
-            {m.cacheFiles.map((f) => (
-              <div className="settings-row cache-file" key={f.key}>
-                <span className="grow cache-file-name" title={f.key}>{f.name}<span className="cache-file-cat">{f.category}</span></span>
-                <span className="num">{f.size}</span>
-                <button className="btn btn-sm" aria-label={L`Удалить ${f.name}`} onClick={() => actions.removeCached(f.key)}>{L`Удалить`}</button>
+          <Section def={game} i={1}>
+            <Row wide label={L`Путь к Dota 2`}>
+              <div className="settings-row">
+                <Swap className="mono grow" value={m.dotaPath || L`не найден`} />
+                <span className={`dot ${m.dotaValid ? 'ok' : 'bad'}`} />
               </div>
-            ))}
-          </details>
-        )}
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Прокси загрузок`}</span>
-          <ProxyControl value={m.proxy} onSave={actions.proxySave} onTest={actions.proxyTest} onClear={actions.proxyClear} />
-        </div>
-      </Block>
+              <div className="settings-row">
+                <button className="btn btn-sm" id="detectBtn" onClick={actions.detect}>{L`Найти автоматически`}</button>
+                <button className="btn btn-sm" id="browseBtn" onClick={actions.browse}>{L`Указать вручную`}</button>
+              </div>
+            </Row>
+            <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} onHero={actions.everyoneHero} />
+            <GridRows />
+          </Section>
 
-      {m.vrf && (
-        <Block i={4} title={L`Картинки из игры и модов`}>
-          <div className="settings-row">
-            <Swap className="settings-label" value={m.vrf.ready}>{m.vrf.ready ? L`Инструмент установлен` : L`Инструмент не скачан`}</Swap>
-            <Swap className="num" value={m.vrf.size} />
-            {m.vrf.ready
-              ? <button className="btn btn-sm" id="toolRemoveBtn" onClick={() => actions.tool(false)}>{L`Удалить`}</button>
-              // 48 MB is a real download, so it says so and waits for the press
-              : <button className="btn btn-sm btn-primary" id="toolInstallBtn" onClick={(e) => {
-                if (busy.current) return;
-                busy.current = true;
-                e.currentTarget.disabled = true;
-                actions.tool(true).finally(() => { busy.current = false; });
-              }}><span className="ms">download</span>{L`Скачать`}</button>}
-          </div>
-          <div className="settings-hint">{L`Картинки предметов приложение берёт из самой игры: точные, без интернета и без ожидания. А моду, который приехал без превью, находит картинку в его же файлах. Без инструмента предметы грузятся из вики (медленнее и есть не для всего), а моды остаются с заглушкой. Удалить можно в любой момент.`}</div>
-        </Block>
-      )}
+          <Section def={catalog} i={2}>
+            <Row label={L`Обновлён`} hint={<Swap value={m.catalogUpdated} />}>
+              <button className="btn btn-sm" id="refreshCatBtn2" onClick={actions.refreshCatalog}>{L`Обновить сейчас`}</button>
+            </Row>
+            <Row label={L`Источник`}>
+              <a className="settings-link" id="srcLink" onClick={() => actions.open('https://github.com/h6rd/Dota2PornFxWeb')}>github.com/h6rd/Dota2PornFxWeb</a>
+            </Row>
+            <Row label={L`Моды 18+`} hint={m.adultHint}>
+              <Toggle id="adultToggle" on={m.adult} label={L`Моды 18+`} onClick={actions.adult} />
+            </Row>
+            <Row label={L`Считать мои скачивания`}
+              hint={L`Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.`}>
+              <Toggle id="countDownloadsToggle" on={m.countDownloads} label={L`Считать мои скачивания`} onClick={actions.countDownloads} />
+            </Row>
+          </Section>
 
-      <PreviewCacheBlock ready={!!m.vrf?.ready} game={m.dotaValid} />
-      {m.compiler && <CompilerBlock i={4} c={m.compiler} actions={actions} />}
-      <GridBlock i={4} />
+          <Section def={downloads} i={3}>
+            <Row label={L`Кэш загрузок`}
+              hint={<><Swap className="num" value={m.cache} />{' · '}{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</>}>
+              <button className="btn btn-sm" id="openCacheBtn" onClick={actions.openCache}>{L`Показать в папке`}</button>
+              <button className="btn btn-sm" id="clearCacheBtn" onClick={actions.clearCache}>{L`Очистить`}</button>
+            </Row>
+            {m.cacheFiles.length > 0 && (
+              <details className="settings-adv cache-files" id="cacheFiles">
+                <summary>{L`Архивы по одному`} ({m.cacheFiles.length})</summary>
+                {m.cacheFiles.map((f) => (
+                  <div className="settings-row cache-file" key={f.key}>
+                    <span className="grow cache-file-name" title={f.key}>{f.name}<span className="cache-file-cat">{f.category}</span></span>
+                    <span className="num">{f.size}</span>
+                    <button className="btn btn-sm" aria-label={L`Удалить ${f.name}`} onClick={() => actions.removeCached(f.key)}>{L`Удалить`}</button>
+                  </div>
+                ))}
+              </details>
+            )}
+            <Row wide label={L`Прокси загрузок`}>
+              <ProxyControl value={m.proxy} onSave={actions.proxySave} onTest={actions.proxyTest} onClear={actions.proxyClear} />
+            </Row>
+          </Section>
 
-      <Block i={4} title={L`Каталог`}>
-        <div className="settings-row">
-          <span className="settings-label">{L`Обновлён`}</span>
-          <Swap value={m.catalogUpdated} />
-          <button className="btn btn-sm" id="refreshCatBtn2" onClick={actions.refreshCatalog}>{L`Обновить сейчас`}</button>
-        </div>
-        <div className="settings-row">
-          <span className="settings-label">{L`Источник`}</span>
-          <a className="settings-link" id="srcLink" onClick={() => actions.open('https://github.com/h6rd/Dota2PornFxWeb')}>github.com/h6rd/Dota2PornFxWeb</a>
-        </div>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Моды 18+`}</span>
-          <Toggle id="adultToggle" on={m.adult} label={L`Моды 18+`} onClick={actions.adult} />
-        </div>
-        <div className="settings-hint">{m.adultHint}</div>
-        <div className="settings-row spaced">
-          <span className="settings-label">{L`Считать мои скачивания`}</span>
-          <Toggle id="countDownloadsToggle" on={m.countDownloads} label={L`Считать мои скачивания`} onClick={actions.countDownloads} />
-        </div>
-        <div className="settings-hint">{L`Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.`}</div>
-      </Block>
+          <Section def={tools} i={4}>
+            {m.vrf && (
+              <Row label={L`Картинки из игры и модов`}
+                hint={<><Swap value={m.vrf.ready}>{m.vrf.ready ? L`Инструмент установлен` : L`Инструмент не скачан`}</Swap>{' · '}<Swap className="num" value={m.vrf.size} /></>}
+                more={L`Картинки предметов приложение берёт из самой игры: точные, без интернета и без ожидания. А моду, который приехал без превью, находит картинку в его же файлах. Без инструмента предметы грузятся из вики (медленнее и есть не для всего), а моды остаются с заглушкой. Удалить можно в любой момент.`}>
+                {m.vrf.ready
+                  ? <button className="btn btn-sm" id="toolRemoveBtn" onClick={() => actions.tool(false)}>{L`Удалить`}</button>
+                  // 48 MB is a real download, so it says so and waits for the press
+                  : <button className="btn btn-sm btn-primary" id="toolInstallBtn" onClick={(e) => {
+                    if (busy.current) return;
+                    busy.current = true;
+                    e.currentTarget.disabled = true;
+                    actions.tool(true).finally(() => { busy.current = false; });
+                  }}><span className="ms">download</span>{L`Скачать`}</button>}
+              </Row>
+            )}
+            <PreviewCacheRow ready={!!m.vrf?.ready} game={m.dotaValid} />
+            {m.compiler && <CompilerRows c={m.compiler} actions={actions} />}
+          </Section>
 
-      <Block i={5} title={L`Диагностика`}>
-        <Diagnostics repair={m.repair} actions={actions} />
-      </Block>
+          <Section def={diagnostics} i={5}>
+            <Diagnostics repair={m.repair} actions={actions} />
+          </Section>
 
-      {/* Four kinds of thing, in the order somebody looks for them: what they can do for the
-          project, which build this is, who made it, and the licence. The support strip is the one
-          tinted thing on the page, because it is the only row here that asks something. */}
-      <Block i={6} title={L`О программе`}>
-        <div className="about-support">
-          <span className="ms">favorite</span>
-          <div className="about-support-text">
-            <div className="about-support-title">{L`Поддержи проект`}</div>
-            <div className="settings-hint">{L`Звезда на GitHub и пара слов о нас в интернете. Бесплатно и занимает минуту.`}</div>
-          </div>
-          <button className="btn btn-primary" id="supportBtn" onClick={actions.support}>{L`Как поддержать проект`}</button>
+          {/* Four kinds of thing, in the order somebody looks for them: what they can do for the
+              project, which build this is, who made it, and the licence. The support strip is the one
+              tinted thing on the page, because it is the only row here that asks something. */}
+          <Section def={about} i={6}>
+            <div className="about-support">
+              <span className="ms">favorite</span>
+              <div className="about-support-text">
+                <div className="about-support-title">{L`Поддержи проект`}</div>
+                <div className="settings-hint">{L`Звезда на GitHub и пара слов о нас в интернете. Бесплатно и занимает минуту.`}</div>
+              </div>
+              <button className="btn btn-primary" id="supportBtn" onClick={actions.support}>{L`Как поддержать проект`}</button>
+            </div>
+            <div className="about-app">
+              <span className="about-name">{L`Менеджер модов`}</span>
+              <span className="about-ver num">{`v${m.version}`}</span>
+              <span className="about-gap" />
+              <button className="btn btn-sm" id="whatsNewBtn" onClick={actions.whatsNew}><span className="ms">auto_awesome</span>{L`Что нового`}</button>
+              <button className="btn btn-sm" id="repoLink" onClick={() => actions.open('https://github.com/dota2modmanager/dota2-mod-manager')}><span className="ms">code</span>{L`Исходный код`}</button>
+            </div>
+            {/* The people the app owes something to. Credit NOTICE requires for the item builder
+                (section 7(b)): both names, here. The catalog is credited in its own section above. */}
+            <div className="about-sub">{L`Авторы и благодарности`}</div>
+            <div className="about-credits">
+              <span className="about-role">{L`Конструктор предметов`}</span>
+              <span>h6rd, TheFleece</span>
+              <a className="settings-link" id="builderLink" onClick={() => actions.open('https://github.com/h6rd')}>github.com/h6rd</a>
+              <span className="about-role">{L`Арканы в конструкторе`}</span>
+              <span>J0nathan550</span>
+              <a className="settings-link" id="arcanaCreditLink" onClick={() => actions.open('https://github.com/J0nathan550')}>github.com/J0nathan550</a>
+              <span className="about-role">{L`Идеи 3D-просмотра и сборки файлами`}</span>
+              <span>Harlord</span>
+              <a className="settings-link" id="harlordLink" onClick={() => actions.open('https://dota-studio.lol/')}>dota-studio.lol</a>
+              <span className="about-role">{L`Видео о менеджере`}</span>
+              <span>hanta</span>
+              <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>
+            </div>
+            <div className="about-legal">
+              {`© 2026 TheFleece · ${L`конструктор предметов`} © 2026 h6rd, TheFleece · GPL-3.0 · ${L`свободная программа без каких-либо гарантий`}`}
+            </div>
+          </Section>
         </div>
-        <div className="about-app">
-          <span className="about-name">{L`Менеджер модов`}</span>
-          <span className="about-ver num">{`v${m.version}`}</span>
-          <span className="about-gap" />
-          <button className="btn btn-sm" id="whatsNewBtn" onClick={actions.whatsNew}><span className="ms">auto_awesome</span>{L`Что нового`}</button>
-          <button className="btn btn-sm" id="repoLink" onClick={() => actions.open('https://github.com/dota2modmanager/dota2-mod-manager')}><span className="ms">code</span>{L`Исходный код`}</button>
-        </div>
-        {/* The people the app owes something to. Credit NOTICE requires for the item builder
-            (section 7(b)): both names, here. The catalog is credited in its own block above. */}
-        <div className="about-sub">{L`Авторы и благодарности`}</div>
-        <div className="about-credits">
-          <span className="about-role">{L`Конструктор предметов`}</span>
-          <span>h6rd, TheFleece</span>
-          <a className="settings-link" id="builderLink" onClick={() => actions.open('https://github.com/h6rd')}>github.com/h6rd</a>
-          <span className="about-role">{L`Арканы в конструкторе`}</span>
-          <span>J0nathan550</span>
-          <a className="settings-link" id="arcanaCreditLink" onClick={() => actions.open('https://github.com/J0nathan550')}>github.com/J0nathan550</a>
-          <span className="about-role">{L`Идеи 3D-просмотра и сборки файлами`}</span>
-          <span>Harlord</span>
-          <a className="settings-link" id="harlordLink" onClick={() => actions.open('https://dota-studio.lol/')}>dota-studio.lol</a>
-          <span className="about-role">{L`Видео о менеджере`}</span>
-          <span>hanta</span>
-          <a className="settings-link" id="thanksLink" onClick={() => actions.open('https://www.youtube.com/@hqnta')}>youtube.com/@hqnta</a>
-        </div>
-        <div className="about-legal">
-          {`© 2026 TheFleece · ${L`конструктор предметов`} © 2026 h6rd, TheFleece · GPL-3.0 · ${L`свободная программа без каких-либо гарантий`}`}
-        </div>
-      </Block>
+      </div>
     </>
   );
 }

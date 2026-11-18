@@ -6,10 +6,9 @@
 
 *                     @TheFleece @Nersaa @J0nathan550 @h6rd @HarlordLeg
 
-src/patcher*.ts       @TheFleece @Nersaa
-src/vpk*.ts           @TheFleece @Nersaa
-src/gamelang*.ts      @TheFleece @Nersaa
-src/schema*.ts        @TheFleece @Nersaa
-src/file-tx.ts        @TheFleece @Nersaa
-src/overlays.ts       @TheFleece @Nersaa
+crates/mm-core/src/game/patcher*.rs   @TheFleece @Nersaa
+crates/mm-core/src/game/gamelang.rs   @TheFleece @Nersaa
+crates/mm-core/src/formats/vpk*.rs    @TheFleece @Nersaa
+crates/mm-core/src/schema/            @TheFleece @Nersaa
+crates/mm-core/src/install/file_tx.rs @TheFleece @Nersaa
 .github/workflows/    @TheFleece @Nersaa

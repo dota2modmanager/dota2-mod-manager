@@ -6,6 +6,7 @@ import { mapLookLead } from './map-looks.ts';
 import { soundLead } from './sounds.ts';
 import { backgroundLead } from './background.ts';
 import { hudLead } from './hud.ts';
+import { cursorLead } from './cursor.ts';
 import { rankLead } from './rank.ts';
 import { decorLead } from './decor.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
@@ -164,7 +165,8 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   const installable = all.some(canBeInstalled);
   const toolbar = toolbarModel(mods.length, { tags, slots, groups, heroes, categoryId, installable, all });
   if (byHero && heroGridWanted(f)) {
-    const tiles = await heroTiles(mods, (cat: string, m: object) => isInstalled(cat, m as Mod));
+    // every hero: the grid is for finding one, the list's filters narrow the list
+    const tiles = await heroTiles(all, (cat: string, m: object) => isInstalled(cat, m as Mod));
     await paint(() => showScreen({ kind: 'heroes', key: `cat:${categoryId}:heroes`, title: catName(categoryId), toolbar, tiles }, actions));
     return;
   }
@@ -182,6 +184,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
   const soundCard = !f.favOnly ? soundLead(categoryId) : null;
   const backgroundCard = !f.favOnly ? backgroundLead(categoryId) : null;
   const hudCard = !f.favOnly ? hudLead(categoryId) : null;
+  const cursorCard = !f.favOnly ? cursorLead(categoryId) : null;
   const rankCard = !f.favOnly ? rankLead(categoryId) : null;
   const decorCard = !f.favOnly ? decorLead(categoryId) : null;
   await paint(() => showScreen({
@@ -196,6 +199,7 @@ export async function renderCategory(categoryId: string, actions: ScreenActions)
     soundLead: soundCard && (!f.installedOnly || soundCard.installed) ? soundCard : null,
     backgroundLead: backgroundCard && (!f.installedOnly || backgroundCard.installed) ? backgroundCard : null,
     hudLead: hudCard && (!f.installedOnly || hudCard.changed !== null) ? hudCard : null,
+    cursorLead: cursorCard && (!f.installedOnly || cursorCard.installed) ? cursorCard : null,
     rankLead: rankCard && (!f.installedOnly || rankCard.installed) ? rankCard : null,
     decorLead: decorCard && (!f.installedOnly || decorCard.installed) ? decorCard : null,
     mods: { heading: false, mods, grouped, emptyText: NOTHING() },

@@ -1,24 +1,18 @@
 {
-  "_why": "One list for both gates. A pull request needs the branch checks green to merge (the main ruleset), and release.yml refuses to build a tagged commit until the release checks passed on it (tools/release-gate.mjs). Names are check-run names as GitHub shows them, which for a job with a name: is that name, not the job key. pullRequestOnly lists checks that exist only on a pull request, so a tagged commit on main is not expected to have them.",
+  "_why": "One list for both gates. A pull request needs the branch checks green to merge (the main ruleset), and release.yml refuses to build a tagged commit until the release checks passed on it (tools/release/release-gate.mjs). Names are check-run names as GitHub shows them, which for a job with a name: is that name, not the job key. pullRequestOnly lists checks that exist only on a pull request, so a tagged commit on main is not expected to have them. The AppImage is built on main only, so it is a release check and not a branch one.",
   "branch": [
     "test",
     "windows",
     "Analyse JavaScript and TypeScript",
-    "Build the AppImage",
-    "Start it against the sandbox",
-    "A fix brings its test",
     "Install a mod through the window",
     "Install a mod through the window on Windows"
   ],
-  "pullRequestOnly": [
-    "A fix brings its test"
-  ],
+  "pullRequestOnly": [],
   "release": [
     "test",
     "windows",
     "Analyse JavaScript and TypeScript",
     "Build the AppImage",
-    "Start it against the sandbox",
     "Install a mod through the window",
     "Install a mod through the window on Windows"
   ]

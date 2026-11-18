@@ -15,7 +15,7 @@ const en: Record<Slug, Doc> = {
       'Dress a Dota 2 hero in sets, arcanas and items from the game on your own screen, see it in a live 3D preview first, and save the look.',
     lead: 'Open a hero, pick an item for each slot and watch it on the hero in 3D before anything reaches the game. Everything you can pick comes from your own game files, so nothing is downloaded and a new item appears when Valve adds it.',
     card: 'Sets, arcanas and single items on any hero, a live 3D preview, and which picks need the item table.',
-    updated: '2026-11-07',
+    updated: '2026-11-16',
     blocks: [
       { k: 'h2', t: 'What it does', id: 'what' },
       {
@@ -53,6 +53,16 @@ const en: Record<Slug, Doc> = {
       {
         k: 'p',
         t: 'A few picks need more than files: item size, kill effects and a few others. The window names them before you apply. They use the item table, which asks once and can be reverted byte for byte. <a href="~/docs/safe/">What the app writes into the game</a>.',
+      },
+
+      { k: 'h2', t: 'An unusual effect on an item', id: 'unusual' },
+      {
+        k: 'p',
+        t: 'The slot\'s Effects tab adds an unusual effect to the item you picked. It is offered on items the game ever let roll an unusual, and on items with no effect of their own; an item that has its own effect keeps it alone. Kinetic gems go on any item.',
+      },
+      {
+        k: 'p',
+        t: 'The effect spreads over the item itself, not around it. The item is sewn into the hero\'s body with its effect; one that moves by itself, a mount that flaps its wings or a cape, stays a separate model with its own animations, and the effect is built on it there.',
       },
       {
         k: 'faq',
@@ -153,7 +163,7 @@ const ru: Record<Slug, Doc> = {
       'Одень героя Доты 2 в сеты, арканы и предметы из игры на своём экране, посмотри результат в живом 3D и сохрани образ.',
     lead: 'Открой героя, выбери предмет на каждый слот и посмотри его на герое в 3D ещё до того, как что-то попадёт в игру. Всё, что можно выбрать, берётся из файлов твоей игры: ничего не скачивается, а новый предмет появляется сам, когда его добавит Valve.',
     card: 'Сеты, арканы и отдельные предметы на любого героя, живой 3D-просмотр и какому выбору нужна таблица предметов.',
-    updated: '2026-11-07',
+    updated: '2026-11-16',
     blocks: [
       { k: 'h2', t: 'Что он делает', id: 'what' },
       {
@@ -191,6 +201,16 @@ const ru: Record<Slug, Doc> = {
       {
         k: 'p',
         t: 'Некоторым выборам файлов мало: размеру предмета, эффектам убийства и ещё нескольким. Окно называет их до применения. Они работают через таблицу предметов: она один раз спрашивает разрешение и откатывается байт в байт. <a href="~/docs/safe/">Что приложение пишет в игру</a>.',
+      },
+
+      { k: 'h2', t: 'Необычный эффект на предмете', id: 'unusual' },
+      {
+        k: 'p',
+        t: 'Во вкладке «Эффекты» слота на выбранный предмет вешается необычный эффект (unusual). Он доступен на предметах, которые в игре хоть раз выходили необычными, и на предметах без своего эффекта; предмет со своим эффектом остаётся с ним одним. Кинетические камни ставятся на любой предмет.',
+      },
+      {
+        k: 'p',
+        t: 'Эффект растекается по самому предмету, а не висит рядом. Предмет вшивается в тело героя вместе с эффектом; тот, что двигается сам, например маунт с крыльями или плащ, остаётся отдельной моделью со своими анимациями, и эффект строится на нём.',
       },
       {
         k: 'faq',

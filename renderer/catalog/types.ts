@@ -49,6 +49,8 @@ export interface CosmeticOption {
   note?: { status: 'issues' | 'broken' | 'untested'; text: string };
   /** it creates a particle of its own, which another item of the slot can wear (src/item-builder-donor.ts) */
   fx?: boolean;
+  /** an added effect may go on it: the game let it roll an unusual, or its model has no effect of its own (crates/mm-core/src/item_builder/unusual_fit.rs) */
+  unusual?: boolean;
   /** an item builder wearable's rarity key ("mythical") and release day ("2021-09-01"), src/item-builder-details.ts itemFacts */
   rarity?: string;
   date?: string;
@@ -109,7 +111,7 @@ export interface CosmeticSet {
 export type HeroAttribute = 'str' | 'agi' | 'int' | 'all';
 
 /** One pick of a saved look: what goes on a slot, as a pick record has it. */
-export interface LookPick { slot: string; itemId: string; name: string; effectId?: string }
+export interface LookPick { slot: string; itemId: string; name: string; effectId?: string; targetItemId?: string }
 
 /** A hero's saved look (issue #527), kept in the settings under itemLooks, apart from presets. */
 export interface ItemLook { id: string; hero: string; name: string; picks: LookPick[]; at: number }

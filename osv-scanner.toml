@@ -1,27 +1,40 @@
 # Advisories this project lives with, and until when.
 #
 # OSV-Scanner reads this file, and OpenSSF Scorecard's Vulnerabilities check runs OSV-Scanner, so
-# an entry here is not counted against the project. The radar (tools/radar.mjs) reads it too and
+# an entry here is not counted against the project. The radar (tools/ops/radar.mjs) reads it too and
 # stops asking for a decision until the date runs out, when the advisory comes back as a question.
 # DECISIONS.md, under Known gaps, says why each one is here.
 
-# sprintf-js has no fixed version: 1.1.3 is the newest and is affected. It reaches this repository
-# only through the build: electron-builder -> app-builder-lib -> @electron/get 3 -> global-agent 3
-# -> roarr, which formats its own log messages with it. The flaw needs a format string an attacker
-# controls; none comes from outside here, and nothing of this chain ships inside the app.
-# @electron/get 5 drops the chain, and app-builder-lib asks for ^3 until electron-builder 27.
+# glib 0.18 and the proc-macro-error it builds with reach the app only on Linux: Tauri's tray icon
+# (tray-icon -> libappindicator -> gtk 0.18 -> atk -> glib). The glib flaw is in
+# VariantStrIter, which nothing here calls; proc-macro-error is a build-time macro helper that is
+# unmaintained, not a flaw. Tauri moves to gtk-rs 0.20 with its GTK 4 port; until then no version
+# of Tauri 2 drops them.
 [[IgnoredVulns]]
-id = "GHSA-hp3w-g68c-fv3c"
+id = "RUSTSEC-2024-0429"
 ignoreUntil = 2027-01-08
-reason = "Build-time only (electron-builder -> @electron/get 3 -> global-agent -> roarr); no fixed sprintf-js exists, and no format string comes from outside. Gone with electron-builder 27."
+reason = "Linux only, through Tauri's tray icon (gtk 0.18 -> glib 0.18); the unsound VariantStrIter is never called here. No Tauri 2 release takes glib 0.20."
 
-# minimatch is fixed only in 11.0.1, and every tool here that uses it asks for an older major:
-# electron-builder 26 and 27-alpha (app-builder-lib ^10, @electron/asar with 3.x, ejs -> jake ->
-# filelist with 5.x, @electron/universal with 3.x and 9.x) and eslint 10.14 (^10). An override to
-# 11 breaks the 3.x callers, which call the module itself where 11 exports a name. The flaw needs
-# a glob pattern an attacker writes; the patterns here come from the build and lint configs in
-# this repository, and `npm ls minimatch --omit=dev` is empty: none of it ships inside the app.
 [[IgnoredVulns]]
-id = "GHSA-g3hv-75wg-m249"
+id = "RUSTSEC-2024-0370"
 ignoreUntil = 2027-01-08
-reason = "Build and lint tools only (electron-builder, eslint); every one asks for minimatch below 11, the only fixed major, and the patterns come from this repository's configs. Nothing of it ships inside the app."
+reason = "Unmaintained, not vulnerable: a build-time macro helper of glib-macros 0.18, Linux only, through Tauri's tray icon."
+
+# zvariant, zvariant_derive and zbus_names were folded into zbus 6 and are marked unmaintained:
+# no flaw, only no more releases. They come with zbus 5, which three Tauri plugins ask for on
+# Linux alone (notification, opener, single-instance: D-Bus). Their newest releases still ask for
+# zbus ^5, so nothing newer can be taken yet; Windows builds contain none of it.
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0370"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable (zvariant, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins, whose newest releases still ask for zbus ^5."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0371"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable (zbus_names, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins."
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0372"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable (zvariant_derive, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins."

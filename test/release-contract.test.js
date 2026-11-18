@@ -98,8 +98,9 @@ test('the lookups that read a section find a beta by its own heading', () => {
     const end = rest.findIndex((l) => /^## /.test(l));
     return rest.slice(0, end === -1 ? undefined : end).join('\n').trim();
   };
-  const popup = (v) => require('../src/release-notes.ts').changelogSection(text, v); // the app's "What's new"
-  const { changelogSection } = require('../tools/release-state.js');
+  const { rust } = require('./helpers/rust.ts');
+  const popup = (v) => rust('release-notes.changelogSection', text, v); // the app's "What's new" (app_info.rs)
+  const { changelogSection } = require('../tools/release/release-state.js');
   const preflight = (v) => changelogSection(text, v); // what the gate checks before building
   for (text of texts) {
     for (const find of [awk, popup, preflight]) {
@@ -116,17 +117,42 @@ test('both changelogs still reach the two places that read them', () => {
   /* They travel by different roads, and only one of them is the workflow.
    *
    * CI lifts the tagged section out of CHANGELOG.md for the release page and the Discord post.
-   * The Russian one never goes near CI: it is packaged into the build by package.json, and
-   * src/release-notes.ts reads it off disk to fill the "what's new" popup for a Russian
-   * UI. Drop it from the packaged files and Russian users get an empty popup while every check
+   * The Russian one never goes near CI: tauri.conf.json packs both files into the build, and
+   * crates/mm-core/src/app/app_info.rs reads them off disk to fill the "what's new" popup for a
+   * Russian UI. Drop one from the bundle and Russian users get an empty popup while every check
    * above still passes - which is the shape of the incident this file is named after. */
   assert.match(read('.github/workflows/release.yml'), /CHANGELOG\.md/,
     'release.yml no longer reads CHANGELOG.md for the release page');
 
-  const packaged = JSON.parse(read('package.json')).build.files;
+  const packaged = JSON.parse(read('src-tauri/tauri.conf.json')).bundle.resources;
   for (const f of ['CHANGELOG.md', 'CHANGELOG.ru.md']) {
-    assert.ok(packaged.includes(f), `${f} is not packaged, so the app cannot show its notes`);
+    assert.ok(`../${f}` in packaged, `${f} is not packaged, so the app cannot show its notes`);
   }
-  assert.match(read('src/release-notes.ts'), /CHANGELOG\.ru\.md/,
+  assert.match(read('crates/mm-core/src/app/app_info.rs'), /CHANGELOG\.ru\.md/,
     'nothing reads the Russian changelog any more');
+});
+
+test('the build carries the licences: LICENSE, NOTICE and every Rust crate compiled in', async () => {
+  /* GPL-3.0 and the crates' own MIT/Apache terms ask that the licence texts travel with the
+   * binary. The Electron build packed node_modules with theirs; the Tauri build has to be told. */
+  const conf = JSON.parse(read('src-tauri/tauri.conf.json'));
+  for (const f of ['LICENSE', 'NOTICE']) {
+    assert.equal(conf.bundle.resources[`../${f}`], `app/${f}`, `${f} is not packaged`);
+  }
+  assert.match(conf.build.beforeBuildCommand, /tools\/dev\/rust-licenses\.mjs/, 'nothing writes the Rust licences before a build');
+  assert.match(read('NOTICE'), /THIRD-PARTY-LICENSES-RUST\.md/);
+
+  // only what reaches the binary: a build script's or a test's crate is not in it
+  const { shipped } = await import('../tools/dev/rust-licenses.mjs');
+  const pkg = (name) => ({ id: name, name, version: '1.0.0' });
+  const dep = (id, kind) => ({ pkg: id, dep_kinds: [{ kind }] });
+  const meta = {
+    packages: ['dota2-mod-manager', 'mm-core', 'serde', 'cc', 'tempfile'].map(pkg),
+    workspace_members: ['dota2-mod-manager', 'mm-core'],
+    resolve: { nodes: [
+      { id: 'dota2-mod-manager', deps: [dep('mm-core', null), dep('cc', 'build')] },
+      { id: 'mm-core', deps: [dep('serde', null), dep('tempfile', 'dev')] },
+    ] },
+  };
+  assert.deepEqual(shipped(meta).map((p) => p.name), ['serde']);
 });

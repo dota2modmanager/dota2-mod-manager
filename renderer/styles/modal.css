@@ -59,6 +59,14 @@
 .modal-content.grows { animation: none; transform-origin: 0 0; }
 .modal-overlay.grows { animation: none; }
 .grows .modal-media img, .grows .modal-media video { animation: none; }
+/* Closing back into the card plays the same path backwards (modal-motion.ts shrinkAway), so the
+   fade of the whole overlay and the window's own fall step aside for it too. */
+.modal-overlay.returns.closing { animation: none; }
+.returns .modal-content { animation: none; transform-origin: 0 0; }
+/* The picture's own entrance (pictureIn) is held off by .grows; once that class goes on close the
+   animation would start over, and the picture blinked out and grew from a dot in the closing window. */
+.returns .modal-media img, .returns .modal-media video,
+.closing .modal-media img, .closing .modal-media video { animation: none; }
 
 .modal-media {
   aspect-ratio: 16 / 9;
@@ -683,29 +691,56 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
 @media (prefers-reduced-motion: reduce) { .support-wait:disabled::after { animation: none; transform: scaleX(1); } }
 
 /* ============ The window the uninstaller opens ============
-   Its own small page (renderer/uninstall.html), not a screen of the app: no titlebar, no
-   rail, no status bar, and it lives for a few seconds. It borrows the tokens and the buttons
-   so that the last thing somebody sees of this app still looks like it. */
+   Its own small page (renderer/uninstall.html), not a screen of the app: no rail, no status
+   bar, and it lives for a few seconds. It borrows the title bar's mark, the background, the
+   checkbox and the buttons, so the last thing somebody sees of this app still looks like it.
+   The questions are one list, not three cards: they are three answers to one question. */
 .uninstall-body {
-  background: var(--bg-base);
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(155deg, var(--bg-base) 0%, var(--bg-deep) 100%);
   color: var(--text);
   font-family: var(--font-body);
   font-weight: var(--weight-body);
-  height: 100vh;
+}
+.uninstall-bar {
+  height: var(--tb-h);
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  -webkit-app-region: drag; /* frameless, so the whole page moves the window */
+  justify-content: space-between;
+  padding-left: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag; --drag: 1; /* frameless: the bar moves the window */
 }
+.uninstall-brand { display: flex; align-items: center; gap: var(--space-2); color: var(--primary-soft); }
+.uninstall-brand-name { font-family: var(--font-head); font-weight: var(--weight-bold); font-size: var(--text-sm); color: var(--text); }
+.uninstall-close {
+  -webkit-app-region: no-drag; --drag: 0;
+  width: 44px;
+  height: 100%;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+}
+/* closing is cancelling, so it is not painted the red of a delete */
+.uninstall-close:hover { background: var(--surface-hover); color: var(--text); }
+.uninstall-close:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.uninstall-close:disabled { opacity: 0.4; cursor: default; }
 .uninstall-shell {
-  -webkit-app-region: no-drag;
-  width: 100%;
-  padding: var(--space-6);
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: var(--space-5) var(--space-6) var(--space-5);
 }
-.uninstall-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5); }
-.uninstall-head .ms { font-size: var(--icon-xl); color: var(--danger); }
 .uninstall-title {
   margin: 0;
   font-family: var(--font-head);
@@ -713,33 +748,90 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
 }
-.uninstall-sub { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--text-muted); }
-.uninstall-opts { display: grid; gap: var(--space-3); }
+.uninstall-sub { margin: var(--space-2) 0 0; font-size: var(--text-sm); line-height: var(--leading-normal); color: var(--text-muted); }
+.uninstall-opts {
+  margin-top: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
 .uninstall-opt {
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--surface);
   cursor: pointer;
-  transition: border-color var(--dur-fast) var(--ease-standard);
+  transition: background var(--dur-fast) var(--ease-standard);
 }
-.uninstall-opt:hover { border-color: var(--border-strong); }
-.uninstall-opt input { margin-top: var(--space-px); accent-color: var(--primary); flex-shrink: 0; }
-.uninstall-opt-body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.uninstall-opt + .uninstall-opt { border-top: 1px solid var(--border); }
+.uninstall-opt:hover { background: var(--surface-hover); }
+.uninstall-opt .lib-check { margin-top: var(--space-px); }
+.uninstall-opt-body { flex: 1; display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
 .uninstall-opt-body b { font-size: var(--text-base); font-weight: var(--weight-semibold); }
-.uninstall-opt-body small {
+.uninstall-opt-body small { font-size: var(--text-sm); line-height: var(--leading-normal); color: var(--text-muted); }
+.uninstall-opt-size {
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.uninstall-opt:has(:checked) .uninstall-opt-size { color: var(--text); }
+/* nothing of that kind to take: the row stays so the list reads the same, but quieter */
+.uninstall-opt.is-off { cursor: default; }
+.uninstall-opt.is-off:hover { background: none; }
+.uninstall-opt.is-off .uninstall-opt-body b { color: var(--text-muted); }
+.uninstall-opt.is-off .uninstall-opt-body small { color: var(--text-faint); }
+.uninstall-opt.is-off .lib-check { opacity: 0.4; cursor: default; }
+.uninstall-opt .lib-check:disabled:hover { border-color: var(--border-strong); }
+.uninstall-foot {
+  margin-top: auto;
+  padding-top: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.uninstall-total {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
-.uninstall-note {
-  margin: var(--space-4) 0 0;
-  font-size: var(--text-sm);
-  line-height: var(--leading-relaxed);
-  color: var(--text-faint);
-  min-height: 1em;
+.uninstall-total.is-error { color: var(--danger); }
+.uninstall-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
+
+/* A hero's mod (catalog/modal/ModStage.tsx): the hero in 3D on the left, the window's text on the
+   right; the mod's picture stands on the stage until the hero comes, dimmed under the note. */
+.modal-content:has(> .modal-layer > .modal-split) { width: min(1180px, calc(94vw / var(--content-zoom))); overflow: hidden; }
+.modal-split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr); height: min(640px, calc(84vh / var(--content-zoom))); }
+.modal-stage { position: relative; min-height: 0; border-radius: var(--radius-lg) 0 0 var(--radius-lg); overflow: hidden; }
+.modal-stage .preview3d { position: absolute; inset: 0; height: auto; margin: 0; border: 0; border-radius: 0; }
+.modal-stage-picture { position: absolute; inset: 0; }
+.modal-stage-picture img, .modal-stage-picture video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.modal-stage .preview3d:not([data-status='shown']):not([data-status='failed']) .modal-stage-picture { opacity: 0.35; filter: blur(2px); }
+.modal-stage .preview3d-missing { left: var(--space-3); right: var(--space-3); bottom: var(--space-3); z-index: 2; padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); background: rgba(10, 14, 20, 0.7); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-stage .preview3d-note { z-index: 2; color: #e6edf5; }
+.modal-side { position: relative; min-width: 0; overflow-y: auto; border-left: 1px solid var(--border); }
+.modal-side .modal-body { padding-top: var(--space-5); }
+.modal-side .preview-toggle { position: static; margin: 0 22px 22px; }
+@media (max-width: 760px) {
+  .modal-split { grid-template-columns: 1fr; grid-template-rows: 320px auto; height: auto; }
+  .modal-content:has(> .modal-layer > .modal-split) { overflow-y: auto; }
+  .modal-stage { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .modal-side { border-left: 0; overflow: visible; }
 }
-.uninstall-shell .confirm-actions { margin-top: var(--space-5); }
+
+/* who made the mod (catalog/modal/Creator.tsx) */
+.mod-creator { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+.mod-creator-badge { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; color: var(--md-on-primary, #fff); background: color-mix(in srgb, var(--md-primary) 70%, var(--bg-deep)); }
+.mod-creator-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mod-creator-label { font-size: var(--text-xs); color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.04em; }
+.mod-creator-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mod-creator-count { font-size: var(--text-xs); color: var(--text-muted); }
+.mod-creator .btn { flex-shrink: 0; }
+.modal-side .modal-title-row { padding-right: var(--space-7); }

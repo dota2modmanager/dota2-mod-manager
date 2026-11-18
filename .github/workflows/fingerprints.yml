@@ -13,7 +13,7 @@ name: Fingerprints
 # the site then needs the catalog's preview for those same mods. Doing it anywhere else means
 # fetching the catalog twice and having two answers to when it last changed.
 #
-# Node 24 rather than 20: tools/catalog.mjs imports the site's TypeScript directly, which older
+# Node 24 rather than 20: site/tools/catalog.mjs imports the site's TypeScript directly, which older
 # Node cannot read.
 
 on:
@@ -64,10 +64,8 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install deps (skip the electron binary — not needed here)
+      - name: Install deps
         run: npm ci
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
       # The per-mod checkpoint that makes this job incremental. It belongs to the job and to
       # nothing else, so it is cached rather than committed - see .gitignore. The key moves
@@ -81,7 +79,7 @@ jobs:
           restore-keys: fingerprint-state-
 
       - name: Regenerate fingerprints (incremental)
-        run: node tools/gen-fingerprints.js --conc 8
+        run: node tools/catalog/gen-fingerprints.js --conc 8
 
       - name: Save the fingerprint checkpoint
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -111,7 +109,7 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -A
             git show HEAD:fingerprints.json > /tmp/fp-data-before.json 2>/dev/null || true
-            subject="$(node ../tools/index-delta.js /tmp/fp-data-before.json fingerprints.json)"
+            subject="$(node ../tools/catalog/index-delta.js /tmp/fp-data-before.json fingerprints.json)"
             git commit -m "$subject [skip ci]"
             git push
           fi

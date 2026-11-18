@@ -3,7 +3,7 @@
  * groups and kinds, the orders, the next screen of cards, the closer look at one mod, and the set
  * that goes to the app.
  *
- * The set's link is read back with the app's own decoder (src/preset-link.ts), so a link built on
+ * The set's link is read back with the app's own decoder (test/helpers/app-links.mjs, held to the app by test/app-links.test.ts), so a link built on
  * the site is held to what the app will actually open.
  *
  * Run from site/ after npm run build: node --test test/
@@ -11,7 +11,7 @@
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { serveDist, launch, openPage, findOverflow, isOffline, snap } from './harness.mjs';
-import { decodePresetLink } from '../../src/preset-link.ts';
+import { decodePresetLink } from './helpers/app-links.mjs';
 
 let server, browser;
 before(async () => {

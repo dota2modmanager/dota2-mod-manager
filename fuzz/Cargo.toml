@@ -1,0 +1,56 @@
+# Coverage-guided fuzzing of the parsers that read other people's files (cargo-fuzz, libFuzzer).
+# Its own workspace, so the app's build and lockfile never see libfuzzer-sys. Runs on nightly:
+#   cargo +nightly fuzz run vpk -- -max_total_time=60
+# .github/workflows/fuzz.yml runs every target once a week. tools/dev/fuzz-parsers.mjs is the
+# other half: generators that know the formats, through mm-cli parse-each.
+[package]
+name = "mm-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+license = "GPL-3.0-or-later"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+mm-core = { path = "../crates/mm-core" }
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "vpk"
+path = "fuzz_targets/vpk.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "zip"
+path = "fuzz_targets/zip.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "resource"
+path = "fuzz_targets/resource.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "kv"
+path = "fuzz_targets/kv.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "vtex"
+path = "fuzz_targets/vtex.rs"
+test = false
+doc = false
+bench = false

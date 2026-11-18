@@ -2,7 +2,7 @@
 #
 # The catalog and the fingerprint map already have a second home on the site. The pictures and
 # the tools go to R2, where nobody charges for reading them back out. The mod archives are not
-# copied here any more: tools/r2-sync.mjs says why.
+# copied here any more: tools/catalog/r2-sync.mjs says why.
 #
 # Nightly, because the catalog grows on its own schedule and a day-old mirror is a mirror.
 # Manual, because the first run and every "did that work" after it happens by hand.
@@ -48,14 +48,6 @@ jobs:
         with:
           node-version: 24
 
-      # The sync itself needs nothing but Node. The toolchain step below reaches into
-      # src/toolchain.ts, which unpacks a zip through src/safe-zip.ts, which needs adm-zip -
-      # so without this the run copied everything and then went red on its last step. It
-      # had been failing that way since the step was added, and a job that always fails is a
-      # job nobody reads: that is how the bucket went a night without anybody noticing.
-      - name: Install what the toolchain step needs
-        run: npm ci --omit=dev --ignore-scripts
-
       - name: Copy what is missing
         env:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -80,17 +72,18 @@ jobs:
           [ -n "${LIMIT:-}" ] && argv="--limit $LIMIT"
           [ "${DRY:-false}" = "true" ] && argv="$argv --dry"
           [ "${DROP_ARCHIVES:-false}" = "true" ] && argv="$argv --drop-archives"
-          node tools/r2-sync.mjs $argv
+          node tools/catalog/r2-sync.mjs $argv
 
       # The pinned toolchain, so the one feature that needs a 50 MB download from somebody
       # else's GitHub release keeps working when GitHub is the thing that is down. Cheap: it
-      # only moves bytes when a pin changes.
+      # only moves bytes when a pin changes. The pins are mm-cli's, which tools/dev/mm-cli.js
+      # builds with the runner's cargo the first time it is asked.
       - name: Copy the pinned toolchain
         env:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: node tools/r2-toolchain.mjs
+        run: node tools/catalog/r2-toolchain.mjs
 
       # Normally the release workflow does this as part of publishing. Here by hand for the
       # first fill, and for the day a release went out while the bucket was unreachable.
@@ -100,4 +93,4 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-        run: node tools/r2-release.mjs '${{ inputs.release }}'
+        run: node tools/release/r2-release.mjs '${{ inputs.release }}'

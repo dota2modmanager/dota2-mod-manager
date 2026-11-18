@@ -1,11 +1,8 @@
-/* The window's page, built by Vite into out/renderer.
+/* The window's page, built by Vite into out/renderer-tauri, which the Tauri shell embeds
+ * (src-tauri/tauri.conf.json frontendDist). Build it with tools/dev/ui-build.mjs.
  *
- * main.js loads out/renderer/index.html; nothing loads renderer/index.html directly any more
- * except this build. `npm run dev` serves the same page from Vite instead, so a change to a
- * style, a component or an animation shows in the open window without a restart.
- *
- * renderer/uninstall.html is not built here: the uninstall window loads it straight from
- * renderer/, classic scripts and all (src/uninstall-window.js).
+ * renderer/uninstall.html is not built here: tools/dev/ui-build.mjs copies it beside the page,
+ * classic scripts and all.
  *
  * renderer/public/ is copied as it is. It holds what code names by a path built at run time
  * (./assets/effects/<id>.webp), which the bundler cannot follow and so would not copy.
@@ -18,7 +15,7 @@ const here = import.meta.dirname;
 const root = path.join(here, 'renderer');
 
 /* The page's CSP allows no inline script. React's refresh preamble is one, and it only exists
- * while `npm run dev` serves the page, so the development server relaxes that one directive
+ * while Vite serves the page (npx vite), so the development server relaxes that one directive
  * and the built page keeps the policy exactly as index.html spells it. */
 function devOnlyInlineScript() {
   return {
@@ -30,13 +27,10 @@ function devOnlyInlineScript() {
   };
 }
 
-/* The Tauri shell (src-tauri/) loads the same page from out/renderer-tauri. Its IPC is a fetch to
- * ipc.localhost, which the page's connect-src has to name; nothing else about the page differs. */
-const TAURI = process.env.MM_TARGET === 'tauri';
+/* The shell's IPC is a fetch to ipc.localhost, which the page's connect-src has to name. */
 function tauriPolicy() {
   return {
     name: 'mm-tauri-policy',
-    apply: () => TAURI,
     transformIndexHtml(html) {
       return html.replace("connect-src 'self'", "connect-src 'self' ipc: http://ipc.localhost");
     },
@@ -49,9 +43,9 @@ export default defineConfig({
   publicDir: path.join(root, 'public'),
   plugins: [react(), devOnlyInlineScript(), tauriPolicy()],
   build: {
-    outDir: path.join(here, 'out', 'renderer') + (TAURI ? '-tauri' : ''),
+    outDir: path.join(here, 'out', 'renderer-tauri'),
     emptyOutDir: true,
-    // the page only ever runs in Electron's own Chromium
+    // the page only ever runs in WebView2 or WebKitGTK, both current
     target: 'esnext',
     modulePreload: { polyfill: false },
     // the licences of every package compiled into the page, written beside it and shipped with it

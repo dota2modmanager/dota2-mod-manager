@@ -12,7 +12,7 @@ Work in `work/` at the repo root: git ignores it. This rewrites the colours writ
 and `particles/status_fx/status_effect_<hero>*`). Add an item's folder with
 `--include particles/econ/items/<hero>/<item>/`.
 
-It works in two passes (`src/recolor.ts` `shade`). The first gives every colour the target's hue
+It works in two passes (`shade` in `crates/mm-core/src/looks/recolor.rs`). The first gives every colour the target's hue
 and keeps its own saturation and brightness; the second scales saturation and brightness toward
 the target. A single pass that rotates hues by one angle fails on heroes whose effects span
 several hues: Necrophos' greens run from yellow-green to teal and came out purple and orange.
@@ -89,6 +89,71 @@ starts only effects it knows.
   decompile it, build your mesh on its armature, and write the vmdl with `scripts/make_vmdl.py` in
   slot mode from that decompile. It keeps the skeleton and the AnimationList; copy the clips' DMX
   files to the paths the list names in your addon.
+- **The radius is a model particle's scale.** In `C_OP_RenderModels` the particle's radius scales
+  the model: a constant radius of 2.5 draws it 2.5 times its size. Size models in an effect there,
+  not in the model.
+- **Sprites when in doubt.** `C_OP_RenderTrails` and a flat ring renderer written by hand drew
+  nothing in the game with no error; the same particles as `C_OP_RenderSprites` showed.
+
+### Effects on an item, with no item behind them
+
+A model can start effects of its own: the compiled model's key values hold a `particle_cfg_list`,
+and the game runs every system listed there while the model is worn, with no entry in the item
+table. Write it into the compiled `.vmdl_c` after the compile with the app's own writer,
+`with_particles` in `crates/mm-core/src/models/model_particles.rs`. Inside such a system the control point driver with
+`m_entityName = "self"` is the item and `"parent"` is the hero.
+
+To spread an effect over the item itself (sparkles along a weapon), do what the app's item
+builder does for unusual effects: give the model hitboxes over its own vertices
+(`with_surface_hitboxes` in `crates/mm-core/src/models/model_hitboxes.rs`, a set named
+`mm_surface` here), then
+`C_INIT_CreateOnModel` with `m_HitboxSetName = "mm_surface"` and `C_OP_LockToBone`. The console
+says "Hitbox indexing is incorrect for set mm_surface"; it works regardless. Effects placed by an
+offset from an attachment instead drifted off the item and hung in the air. Take out what pins a
+particle elsewhere (`C_OP_SnapshotSkinToBones`, `C_OP_SnapshotRigidSkinToBones`,
+`C_OP_MovementRigidAttachToCP`, an older `C_OP_LockToBone`), except where the particle is a model
+with a motion of its own: Crownfall's feathers keep their operators and take
+`C_INIT_NormalAlignToCP` instead, or they never fly off. `particle_surface.rs` does all of it.
+
+The item builder goes one step further (`crates/mm-core/src/schema/item_in_body.rs`): it sews an
+item with an unusual into the hero's body model, the boxes as a set of that item alone
+(`mm_fx_<token>`), and lists the effect on the body. Two items in one body each keep their own
+set. An item that moves by itself (a clip other than its bind pose, or cloth) stays its own model
+with its animations and carries the effect there.
+
+modkit does it to a model after the compile and before the pack:
+
+```
+npm run modkit -- fx "<game>/dota_addons/<addon>/models/heroes/<hero>/<slot>.vmdl_c" particles/<yours>.vpcf
+```
+
+### Another hero's effect, borrowed
+
+An arcana's ground effect or aura copied under your own names (rewrite every path inside the
+files, children included) keeps its look, but read what drives it before you call it weak:
+
+- **Emission from a control point the game sets only for that hero.** One arcana's ground frost
+  emits by the hero's speed remapped into CP6 (`C_OP_RemapSpeedtoCP`, 250-500), so on a slower hero
+  it barely showed, and standing it showed nothing. Remap from 0 with an output minimum, and set a
+  control point the game will not set for your hero yourself, with
+  `C_OP_SetSingleControlPointPosition` in the root's `m_PreEmissionOperators`.
+- **More of it is two numbers.** Scale the emit rate and `m_nMaxParticles` together, or the budget
+  caps the rate.
+- **A part you do not want, without its motion lost.** Empty one system's `m_Renderers`: its
+  particles still drive their children (an arc that carries flakes round the feet), and the arc
+  itself is gone.
+- **Widen it at the spawn.** The first `C_INIT_CreateWithinSphere...` radius sets how far it spreads;
+  an aura sized for a slim hero lay hidden under a big one.
+
+### Effects along a rope
+
+A chain or a tether is a `C_OP_RenderRopes` system strung from one control point to another;
+`C_INIT_CreateSequentialPath` and `C_OP_MaintainSequentialPath` keep its particles on the path,
+and its `m_PreEmissionOperators` place the path's ends. To string lights along it, write a sprite
+system with those same three parts copied from the rope's file, the same number of particles, and
+add it to the rope's children. Recolour the rope and thin it with `m_flRadiusScale`. A projectile
+drawn as a model (`C_OP_RenderModels`) spins with `C_OP_Spin`; its `m_nSpinRateDegrees` is the
+turn per second.
 
 ## Materials: body, weapon, hiding a part
 

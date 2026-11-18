@@ -72,9 +72,9 @@ function drawCosmeticModal(): void {
  * @param remove  true = back to what the game gives
  * @param effectId  the effects on a hero's item, comma separated (src/item-builder.ts effectKey)
  */
-export async function pickCosmetic(slot: string, o: CosmeticOption, remove: boolean, effectId = ''): Promise<void> {
+export async function pickCosmetic(slot: string, o: CosmeticOption, remove: boolean, effectId = '', targetItemId = ''): Promise<void> {
   const effect = isItemCosmeticSlot(slot) ? String(effectId || '') : '';
-  const k = COSMETIC_PREFIX + slot + '|' + o.id + '|' + effect;
+  const k = COSMETIC_PREFIX + slot + '|' + o.id + '|' + effect + '|' + targetItemId;
   if (installing.has(k)) return;
   // an item goes in by files; the game's other looks are lines in its table
   if (!remove && !isItemCosmeticSlot(slot) && !await allowItemTable()) return;
@@ -85,7 +85,7 @@ export async function pickCosmetic(slot: string, o: CosmeticOption, remove: bool
   try {
     r = remove
       ? (live ? await window.api.mods.remove(live.id) : { ok: true })
-      : await window.api.cosmetics.pick(slot, o.id, o.name, effect);
+      : await window.api.cosmetics.pick(slot, o.id, o.name, effect, targetItemId || undefined);
   } catch (err) {
     r = { error: String((err as Error)?.message || err) };
   }

@@ -20,6 +20,7 @@ import { soundsFromLibrary } from '../catalog/sounds.ts';
 import { abilityIconsFromLibrary } from '../catalog/ability-icons.ts';
 import { backgroundFromLibrary } from '../catalog/background.ts';
 import { hudFromLibrary } from '../catalog/hud.ts';
+import { cursorFromLibrary } from '../catalog/cursor.ts';
 import { rankFromLibrary } from '../catalog/rank.ts';
 import { labelFor, recLabelKey } from '../../library/labels.ts';
 import { askLabel, clearLabel } from './label.ts';
@@ -170,7 +171,7 @@ export function menuFor(id: string): MenuItem[] | null {
   const rec = recById(id);
   if (!rec) return null;
   const ordered = lib.order.has(rec.id);
-  const gen = rec.generated as { set?: string; map?: string; sounds?: string; abilityIcons?: string; background?: string; hud?: number; rank?: object } | undefined;
+  const gen = rec.generated as { set?: string; map?: string; sounds?: string; abilityIcons?: string; background?: string; hud?: number; rank?: object; cursor?: object } | undefined;
   const remove: MenuItem = { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => deleteRecord(rec.id) };
   const key = recLabelKey(rec.id);
   const naming: (MenuItem | false)[] = [
@@ -196,6 +197,7 @@ export function menuFor(id: string): MenuItem[] | null {
     Boolean(gen?.abilityIcons) && { label: L`Изменить иконки`, icon: 'imagesmode', onPick: () => void abilityIconsFromLibrary(String(gen?.abilityIcons)) },
     Boolean(gen?.background) && { label: L`Изменить фон`, icon: 'wallpaper', onPick: () => void backgroundFromLibrary() },
     typeof gen?.hud === 'number' && { label: L`Изменить размер`, icon: 'aspect_ratio', onPick: () => void hudFromLibrary() },
+    Boolean(gen?.cursor) && { label: L`Изменить курсор`, icon: 'arrow_selector_tool', onPick: () => void cursorFromLibrary() },
     Boolean(gen?.rank) && { label: L`Изменить ранг и уровни`, icon: 'military_tech', onPick: () => void rankFromLibrary() },
     Boolean(gen?.map) && { label: L`Изменить вид`, icon: 'tune', onPick: () => void mapLooksFromLibrary(gen?.map === 'trees' ? 'trees' : 'towers') },
     Boolean(rec.generated) && { separator: true },

@@ -76,10 +76,14 @@ img, video { -webkit-user-drag: none; user-select: none; }
 }
 .blob {
   position: absolute;
-  width: 640px;
-  height: 640px;
+  /* a 640px circle under blur(110px), drawn as the gradient that blur would have left: a filter
+     on a layer pinned to the window's corners was blurred again at every step of dragging its
+     edge, and the drag stuttered under it. A gradient is painted once for its size. */
+  width: 1080px;
+  height: 1080px;
   border-radius: 50%;
-  filter: blur(110px);
+  background: radial-gradient(circle closest-side, var(--blob) 0%, var(--blob) 18%,
+    color-mix(in srgb, var(--blob) 50%, transparent) 59%, transparent 100%);
   opacity: 0.16;
 }
 /* They used to drift, forever, on a 26 and a 32 second loop. Two 640px circles under a 110px
@@ -87,14 +91,14 @@ img, video { -webkit-user-drag: none; user-select: none; }
    while scrolling a category of 463 mods, that alone was the difference between 10 long
    frames and 74. They keep the colour of the room and stopped moving. */
 .blob-a {
-  background: var(--md-accent);
-  top: -180px;
-  right: -120px;
+  --blob: var(--md-accent);
+  top: -400px;
+  right: -340px;
 }
 .blob-b {
-  background: var(--md-primary-container);
-  bottom: -220px;
-  left: -160px;
+  --blob: var(--md-primary-container);
+  bottom: -440px;
+  left: -380px;
 }
 
 /* ============ Body ============ */
@@ -104,15 +108,20 @@ img, video { -webkit-user-drag: none; user-select: none; }
   min-height: 0;
 }
 
+/* The scale is on what scrolls, not on the box that scrolls it. With zoom on #main itself the
+   wheel now and then stopped moving it although there was room below, and a click let it go
+   (issue #330, the report of 2026-11-04): Chromium hit-tests and latches a wheel scroll on a
+   zoomed scroller in its zoomed coordinates, and at a fractional zoom - which fitFor hands out on
+   most windows - that missed. On #view-root the same picture comes out, and #main is a plain
+   box at 1:1. */
 #main {
-  zoom: var(--content-zoom);
   flex: 1;
   overflow-y: auto;
   min-width: 0;
 }
 #view-root {
+  zoom: var(--content-zoom);
   padding: 22px 26px 90px;
-  max-width: 1500px;
   animation: viewIn 0.35s var(--ease);
 }
 @keyframes viewIn {

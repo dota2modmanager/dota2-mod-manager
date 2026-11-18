@@ -1,9 +1,10 @@
 # Dependency updates, proposed as pull requests rather than found later.
 #
-# Three ecosystems, because the repository holds three sets of dependencies: the app, the site
-# that documents it, and the actions the workflows call. The last one matters most for a
-# project whose whole trust argument is "the installer is built by a public job": an action
-# pinned to a moving tag is code running in that job, and it should be updated deliberately.
+# Four ecosystems, because the repository holds four sets of dependencies: the Rust crates the
+# app is built from, the window's page and the tools, the site that documents it, and the actions
+# the workflows call. The last one matters most for a project whose whole trust argument is
+# "the installer is built by a public job": an action pinned to a moving tag is code running in
+# that job, and it should be updated deliberately.
 #
 # Weekly, grouped, and capped. A dependency bot that opens fifteen pull requests a week is a
 # bot whose pull requests nobody reads.
@@ -24,18 +25,27 @@ updates:
       # TypeScript 7 is the Go rewrite, and it reads `@param {object}` far more strictly than 5.x:
       # the same tree goes from 66 known errors to 303, nearly all of them "Property does not exist
       # on type 'object'". Measured on 2026-09-22, with the resolution change ruled out separately
-      # (5.9.3 on the same settings gives 64). The ratchet in tools/typecheck.mjs is only worth
+      # (5.9.3 on the same settings gives 64). The ratchet in tools/dev/typecheck.mjs is only worth
       # anything while its number is a real count, so taking 7 means writing out the shapes behind
       # those annotations first. That is a piece of work, not a dependency bump.
       - dependency-name: typescript
         update-types: [version-update:semver-major]
-      # src/download-proxy.ts hands an undici ProxyAgent to the global fetch, and that fetch is the
-      # undici inside Electron's Node (7.29 in Electron 44 and 45). A dispatcher from another major is a
-      # different handler contract under the same call. Take 8 with the Electron whose Node ships 8.
-      - dependency-name: undici
-        update-types: [version-update:semver-major]
     commit-message:
       prefix: 'deps'
+
+  # The workspace: crates/mm-core, crates/mm-cli and src-tauri share one Cargo.lock.
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      rust-dependencies:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: 'deps(rust)'
 
   - package-ecosystem: npm
     directory: /site

@@ -22,6 +22,9 @@ export function resolveSpriteTextures(renderer = {}) {
     // Standalone alpha-cloud textures use RGB as coverage (their PNG alpha
     // channel is 255 across the entire image).
     alphaFromLuma: !!path && /\/alpha\//i.test(path),
+    // A seamless tile as the colour (tile_starfield: the Tormentor's shield dander) is a pattern the
+    // game's card shader fades out at the edge; drawn whole it was a square of light.
+    tiled: !!path && !mask && /(?:^|\/)tile(?:\/|_)[^/]*$|\/tile\//i.test(path),
     // Source's lens-flare sprites are often exported as opaque PNGs with the
     // actual flare coverage packed into RGB. The Source A channel mix would
     // otherwise turn that opaque alpha into a solid white rectangular card.

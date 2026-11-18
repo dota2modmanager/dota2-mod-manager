@@ -3,12 +3,12 @@
 # An unsigned installer gets flagged, and twice a user asked whether the app was safe before
 # anybody here knew there was anything to answer. This looks each published file up on VirusTotal
 # by the SHA-256 the release already carries, uploads it when VirusTotal has never seen it, and
-# writes the verdict into the notes with a link per file. tools/virustotal.mjs says the rest.
+# writes the verdict into the notes with a link per file. tools/release/virustotal.mjs says the rest.
 #
 # Without VIRUSTOTAL_API_KEY the job says so and stops. A release is not held up by a check
 # nobody has set up yet, and the daily credential run reports the key as not set.
 name: VirusTotal
-# The tag in the run's title is how tools/release-watch.mjs tells which release a run was for.
+# The tag in the run's title is how tools/release/release-watch.mjs tells which release a run was for.
 run-name: VirusTotal ${{ inputs.tag || github.event.release.tag_name }}
 
 on:
@@ -62,4 +62,4 @@ jobs:
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: node tools/virustotal.mjs "${{ github.event.release.tag_name || inputs.tag }}"
+        run: node tools/release/virustotal.mjs "${{ github.event.release.tag_name || inputs.tag }}"

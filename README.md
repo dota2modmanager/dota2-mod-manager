@@ -206,8 +206,8 @@ Nothing is injected into Dota's process, and no file of the game is opened while
   if something in the game looks wrong after a patch, that is where to look first
 
 Downloads live in `%APPDATA%/dota2-mod-manager/downloads`, the install manifest beside them.
-The full picture is in [ARCHITECTURE.md](ARCHITECTURE.md), and every module is listed in
-[docs/API.md](docs/API.md), which is generated from the source rather than written.
+The full picture is in [ARCHITECTURE.md](docs/ARCHITECTURE.md), and every call the window makes into
+the app is typed in [renderer/api/](renderer/api/).
 
 <br>
 
@@ -240,17 +240,17 @@ installed here survives its uninstall.
 | [Make mods with AI](https://dota2modmanager.com/docs/ai-mods/) · [skills/dota2-modding](skills/dota2-modding) · [docs/item-mods.md](docs/item-mods.md) | The skill an assistant builds mods with, and how an item mod is built from the game's files |
 | [Every fact, checkable](https://dota2modmanager.com/facts/) | Version, platforms, counts, and how to verify each one |
 | [docs/catalog-data.md](docs/catalog-data.md) | The whole mod catalog as one JSON file, field by field, for your own bot, site or script |
-| [ARCHITECTURE.md](ARCHITECTURE.md) · [docs/API.md](docs/API.md) | Which file owns which decision, and every module's exports |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) · [renderer/api/](renderer/api/) | Which file owns which decision, and every call the window makes |
 | [CONTRIBUTING.md](CONTRIBUTING.md) · [AGENTS.md](AGENTS.md) · [SECURITY.md](SECURITY.md) | How to work on it, with or without an assistant, and how to report a hole |
 | [docs/assurance-case.md](docs/assurance-case.md) | What could go wrong, what stops it, and the test that proves each answer |
 | [docs/evidence.md](docs/evidence.md) | Every claim above with the CI job that runs it and the command that runs it on your machine |
-| [TRADEMARK.md](TRADEMARK.md) · [Code signing policy](docs/code-signing-policy.md) | What the licence gives you and what it does not, and what is signed today |
+| [TRADEMARK.md](docs/TRADEMARK.md) · [Code signing policy](docs/code-signing-policy.md) | What the licence gives you and what it does not, and what is signed today |
 | [Status](https://dota2modmanager.betteruptime.com) | Whether the update feed, the mirror, the catalog and the site are answering right now |
-| [PRIVACY.md](PRIVACY.md) | What is collected (nothing), and every address the app can contact |
-| [DECISIONS.md](DECISIONS.md) | What was decided on purpose, what is genuinely missing, and the command that checks each one |
-| [GOVERNANCE.md](GOVERNANCE.md) | Who decides what, how a change is accepted, and what happens to the project without its maintainer |
+| [PRIVACY.md](docs/PRIVACY.md) | What is collected (nothing), and every address the app can contact |
+| [DECISIONS.md](docs/DECISIONS.md) | What was decided on purpose, what is genuinely missing, and the command that checks each one |
+| [GOVERNANCE.md](docs/GOVERNANCE.md) | Who decides what, how a change is accepted, and what happens to the project without its maintainer |
 | [docs/second-maintainer.md](docs/second-maintainer.md) | The second pair of hands: what the role is, and what to do on the day it matters |
-| [ROADMAP.md](ROADMAP.md) | What is coming next, what comes later, and what this project will not do |
+| [ROADMAP.md](docs/ROADMAP.md) | What is coming next, what comes later, and what this project will not do |
 | [CHANGELOG.md](CHANGELOG.md) · [CHANGELOG.ru.md](CHANGELOG.ru.md) | What changed in each release |
 
 <br>
@@ -281,22 +281,23 @@ Drawn from this repository's own `git log` when [the site](https://dota2modmanag
 which it does daily and after every release. No third-party widget, so nobody reading this page
 is loading a tracker, and nothing has to be committed for the picture to move.
 
-**What runs on every push:**
+**What runs, and when.** A pull request gets the quick checks. The merge queue runs the full set once, on top of the newest main, and main then becomes that exact commit, so nothing runs a third time on the push:
 
 | | |
 |---|---|
-| [Tests](.github/workflows/test.yml) | eslint first, then the full suite with a coverage floor, on Linux and on Windows. Several of the tests hold the project against itself rather than testing a module: every IPC channel has a handler and every handler runs, every renderer import resolves, every Russian string has an English twin, the version and both changelogs agree, `docs/API.md` still matches the source, and `DECISIONS.md` still matches the repository |
+| [Tests](.github/workflows/test.yml) | eslint, types and the suite, on Linux and on Windows, plus the Rust crates' own tests and clippy. Several of the tests hold the project against itself rather than testing a module: every renderer import resolves, every Russian string has an English twin, the version and both changelogs agree, the window's calls match the bridge, and `DECISIONS.md` still matches the repository |
 | [CodeQL](.github/workflows/codeql.yml) | Security and quality analysis, plus a weekly scheduled run |
-| [Linux](.github/workflows/linux.yml) | Builds the AppImage, starts the app against the sandbox, photographs the first window and reads the log for code that could not run |
-| [Window](.github/workflows/e2e.yml) | On Linux and on Windows: installs a mod, switches it off and on and removes it by clicking in the window, checking the game folder on disk after each launch. Offline, with a fixture catalog |
+| [Linux](.github/workflows/linux.yml) | On main and on tags: builds the AppImage a release ships |
+| [Window](.github/workflows/e2e.yml) | In the merge queue, on Linux and on Windows: installs a mod, switches it off and on and removes it by clicking in the window, checking the game folder on disk after each launch. Offline, with a fixture catalog |
 | [Release](.github/workflows/release.yml) | On a tag only: builds the Windows installer, the portable build and the Linux AppImage from that commit into a draft release, installs the installer and the AppImage from the draft and clicks a mod through each, and publishes the release with its changelog section only when both pass |
 | [Site](.github/workflows/site.yml) | Rebuilds the documentation site so its counts, its version and this card stay true. On a pull request it only builds the site and checks the output |
 | [Mirror](.github/workflows/mirror.yml) | Pushes the same history to [GitLab](https://gitlab.com/TheFleece/dota2-mod-manager), so the code outlives this repository |
 | [Search report](.github/workflows/seo.yml) | Weekly, not per push: downloads, update checks, and visits from Google, Bing and Yandex, posted to [one public issue](https://github.com/dota2modmanager/dota2-mod-manager/issues/3) with every earlier week above it |
 | [Radar](.github/workflows/radar.yml) | Daily, not per push: rewrites the pinned "Project status" issue with what waits on a decision, what is red and what is about to expire, and messages the maintainer about anything overdue |
-| [Pull request rules](.github/workflows/pull-request.yml) | On every pull request: a change that fixes something changes a test too, or says in a `No-Test-Because:` line why it cannot |
 | [Labels](.github/workflows/labels.yml) | Keeps the repository's labels equal to `.github/labels.json` |
 | [Dependency updates](.github/workflows/dependency-updates.yml) | On Dependabot's pull requests: a minor or patch update queues itself to merge, and goes in once every required check passes; anything bigger gets a label and waits for the maintainer |
+| [Mutants](.github/workflows/mutants.yml) | Weekly, not per push: breaks the code that writes into the game folder on purpose and lists the changes no test noticed |
+| [Fuzz](.github/workflows/fuzz.yml) | Weekly, not per push: five minutes of libFuzzer on each parser of other people's files (`fuzz/`), crashes kept as artifacts |
 | [Scorecard](.github/workflows/scorecard.yml) | Weekly and on every change to main: OpenSSF Scorecard grades how the repository is kept (pinned actions, token permissions, branch protection, signed releases) and publishes the score behind the badge above |
 
 Nothing here commits back to `main`. Workflows that need to remember something between runs
@@ -311,15 +312,14 @@ a bot commit per run is how a log stops being readable.
 npm install
 npm start                 # run the app
 npm test                  # the whole suite, no framework, no mocks library
-npm run test:coverage     # the same with the floor CI enforces
-npm run docs              # regenerate docs/API.md from src/
+npm run docs              # regenerate the facts blocks and the incident index
 npm run sandbox:seed      # a throwaway game tree with real mods in it
 npm run start:sandbox     # the app against it, never your own game
 npm run dota:diff         # what changed between two Dota builds (6944 6952, or the last two)
 ```
 
-Node 24, Electron 45. The main process is TypeScript that Node runs without a build, and the
-window is TypeScript and React, built by Vite. Every release
+Tauri 2 and Rust. The app's core is the Rust in `crates/mm-core/`, the window is TypeScript and
+React, built by Vite, and Node 24 runs the tests and the tools. Every release
 is produced by [`release.yml`](.github/workflows/release.yml) from the commit its tag names.
 
 **Open an issue before building anything larger than a fix.** It costs one message and saves the
@@ -335,9 +335,9 @@ This project has been written with [Claude Code](https://claude.com/claude-code)
 commit on 20 July 2026, and still is. Commits carry a `Co-Authored-By` trailer saying so.
 
 It says so here because guessing is worse. Everything that would tell you whether the code is any
-good is already in the open: every commit, more than forty test files, a linter and a coverage
-floor that CI enforces on two operating systems, and
-[DECISIONS.md](DECISIONS.md), which answers the questions reviewers keep asking with a command
+good is already in the open: every commit, the tests and the linter that CI runs on two operating
+systems before anything merges, and
+[DECISIONS.md](docs/DECISIONS.md), which answers the questions reviewers keep asking with a command
 you can run yourself.
 
 Send a change written with an assistant and keep the trailer on it. [AGENTS.md](AGENTS.md) is
@@ -353,9 +353,9 @@ the two additional terms this project adds under section 7 of the GPL.
 
 | | What for | Licence |
 |---|---|---|
-| [Electron](https://github.com/electron/electron) | The window and the process behind it | MIT |
-| [electron-updater](https://github.com/electron-userland/electron-builder) | Update checks and installing them | MIT |
-| [adm-zip](https://github.com/cthackers/adm-zip) | Reading mod archives, behind our own size and path guards | MIT |
+| [Tauri](https://github.com/tauri-apps/tauri) | The window, the tray, and installing updates | MIT or Apache-2.0 |
+| [zip](https://github.com/zip-rs/zip2) | Reading mod archives, behind our own size and path guards | MIT |
+| The other Rust crates in [Cargo.lock](Cargo.lock) | The network, signatures, pictures and compression inside the app | MIT, Apache-2.0 and similar |
 | [React](https://github.com/facebook/react) | The window's screens, compiled into its page | MIT |
 | [Motion](https://github.com/motiondivision/motion) | How the window's screens move, compiled into its page | MIT |
 | [Source 2 Viewer](https://github.com/ValveResourceFormat/ValveResourceFormat) | Decoding Dota's own textures for item icons. Downloaded on demand, never bundled | MIT |
@@ -364,7 +364,7 @@ the two additional terms this project adds under section 7 of the GPL.
 | [GameTracking-Dota2](https://github.com/SteamTracking/GameTracking-Dota2) | Every Dota build as text, read by this repository's checks to report what an update changed. Not the app | None stated. Read over the network; nothing from it is copied here |
 
 <!-- facts:deps-en -->
-`package.json` lists 21: `adm-zip`, `electron-updater`, `meshoptimizer` and `undici` ship inside the app, `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` and `three` are built into its window, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `axe-core`, `electron`, `electron-builder`, `eslint`, `fast-check`, `typescript` and `vite` only build or check it.
+`package.json` lists 17, none of them ships inside the app: `dota-loadout`, `motion`, `qrcode-generator`, `react`, `react-dom` and `three` are built into its window, `@tauri-apps/cli`, `@types/react`, `@types/react-dom`, `@types/three`, `@vitejs/plugin-react`, `adm-zip`, `eslint`, `fast-check`, `meshoptimizer`, `typescript` and `vite` only build or check it.
 <!-- /facts:deps-en -->
 The tests use no dependencies at all, and `tools/` uses one, `vite`, to build the window. The VPK reader and writer, the KeyValues parser, the zip guards and the
 update logic are written here, because every dependency is a stranger with write access to a
@@ -372,7 +372,7 @@ game folder on tens of thousands of machines.
 
 Valve's own `vpk.exe` is deliberately **not** here and must not be added: it is proprietary, and
 a project that bundles it is not open source in the sense SignPath's terms mean. Reading and
-writing VPK archives is done by this repository's own code, which is why `src/vpk.ts` exists.
+writing VPK archives is done by this repository's own code, which is why `crates/mm-core/src/formats/vpk.rs` exists.
 
 <br>
 
@@ -403,7 +403,7 @@ writing VPK archives is done by this repository's own code, which is why `src/vp
   questions than this page does for anyone who would rather watch than read.
 
 Every other page that links here, from the catalog's README to the projects built from this
-code, is listed with dates in [MENTIONS.md](MENTIONS.md). The few the maintainer wrote are in a
+code, is listed with dates in [MENTIONS.md](docs/MENTIONS.md). The few the maintainer wrote are in a
 list of their own.
 
 <br>

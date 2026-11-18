@@ -18,7 +18,7 @@ export function Thumb({ thumb, cls }: { thumb: ThumbModel; cls: string }) {
 /** The arcana the app built, in its colour (catalog/arcana/). */
 function ArcanaThumb({ color, set, cls }: { color: [number, number, number]; set: string; cls: string }) {
   const src = useTinted(useArcanaPicture(set), color, gemOf(set));
-  return src ? <img className={cls} src={src} alt="" data-owned="react" /> : <div className={cls}><span className="ms thumb-glyph">palette</span></div>;
+  return src ? <img decoding="async" className={cls} src={src} alt="" data-owned="react" /> : <div className={cls}><span className="ms thumb-glyph">palette</span></div>;
 }
 
 /* Asked for once it scrolls near. A lookup that came back with nothing leaves the tile as it was
@@ -27,7 +27,7 @@ function Fetched({ name, icon, cls }: { name: string; icon: string | null; cls: 
   const ref = useRef<HTMLDivElement>(null);
   const src = useCosmeticIcon(name);
   useEffect(() => (src === undefined && ref.current ? watchIconFor(ref.current, name) : undefined), [name, src]);
-  if (src) return <img className={cls} src={src} loading="lazy" alt="" data-owned="react" />;
+  if (src) return <img decoding="async" className={cls} src={src} loading="lazy" alt="" data-owned="react" />;
   return (
     <div className={cls} ref={ref} data-name={src === undefined ? name : undefined} data-owned="react">
       {icon && <span className="ms thumb-glyph">{icon}</span>}
@@ -42,7 +42,7 @@ export function CosmeticThumb({ name, icon }: { name: string; icon: string }) {
   useEffect(() => (ref.current ? watchIconFor(ref.current, name) : undefined), [name]);
   return (
     <div className="lib-thumb" data-name={name} data-owned="react" ref={ref}>
-      {src ? <img src={src} alt="" loading="lazy" data-owned="react" /> : <span className="ms thumb-glyph">{icon}</span>}
+      {src ? <img decoding="async" src={src} alt="" loading="lazy" data-owned="react" /> : <span className="ms thumb-glyph">{icon}</span>}
     </div>
   );
 }

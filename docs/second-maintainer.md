@@ -8,7 +8,7 @@ the update feed people's copies read, the issues somebody has to close. Those ne
 rights, and rights have to be given before they are needed rather than after.
 
 So the project keeps a second maintainer. Who that is at any time is named in
-[GOVERNANCE.md](../GOVERNANCE.md); this file is what the role means.
+[GOVERNANCE.md](GOVERNANCE.md); this file is what the role means.
 
 ## What you get
 
@@ -51,14 +51,14 @@ description and the diff, and ask:
 - does the pull request do what its title says, and nothing its title leaves out?
 - could you follow this code in half a year, with the author gone?
 - where the code looks wrong on purpose, does a comment say why?
-- does a fix bring a test that fails without it, or a `No-Test-Because:` line you believe?
+- does a fix for a bug users met bring a test that fails without it?
 
 Read hardest where a mistake costs a user something:
 
-- anything that writes into the game folder (`src/patcher.ts`, `src/vpk.ts`, `src/gamelang.ts`,
-  `src/schema.ts`, `src/file-tx.ts`, `src/overlays.ts`),
-- anything that decides what gets downloaded or whether it is trusted (`src/net.ts`,
-  `src/catalog-signature.ts`, `src/remote-config.ts`),
+- anything that writes into the game folder (`crates/mm-core/src/game/patcher.rs`, `crates/mm-core/src/formats/vpk.rs`, `crates/mm-core/src/game/gamelang.rs`,
+  `crates/mm-core/src/schema/mod.rs`, `crates/mm-core/src/install/file_tx.rs`, `crates/mm-core/src/install/overlays.rs`),
+- anything that decides what gets downloaded or whether it is trusted (`crates/mm-core/src/catalog/net_fetch.rs`,
+  `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/remote_config.rs`),
 - the workflows, the release workflow above all,
 - and any text a user reads, where a second reader catches what the first stopped seeing.
 
@@ -68,7 +68,7 @@ leave alone a style you would not have picked.
 
 When the pull request is yours, the maintainer reviews it the same way.
 [CONTRIBUTING.md](../CONTRIBUTING.md) says what a change has to carry, and
-[ARCHITECTURE.md](../ARCHITECTURE.md) says how the thing is put together.
+[ARCHITECTURE.md](ARCHITECTURE.md) says how the thing is put together.
 
 ## If the maintainer disappears
 
@@ -79,7 +79,7 @@ The point of the role. In order:
 3. **Keep the project moving.** Approve and merge what contributors send once it is ready, close
    what is finished. Every pull request runs the same checks; a green one is as safe in your hands
    as in his.
-4. **Release when there is something to release.** [RELEASING.md](../RELEASING.md) is the whole
+4. **Release when there is something to release.** [RELEASING.md](RELEASING.md) is the whole
    procedure: a changelog section in both languages, a version bump, a tag on main. CI builds the
    installer, signs the provenance, publishes the release and updates the mirror. No key of the
    maintainer's is needed for any of it.
@@ -103,12 +103,12 @@ For the maintainer, when somebody accepts:
 1. **The organization's People page, Invite member**, then change their role to **Owner**.
 2. Add their handle in [`.github/CODEOWNERS`](../.github/CODEOWNERS), so GitHub asks them for a
    review on its own instead of somebody remembering to.
-3. Add their name to the maintainers list in [GOVERNANCE.md](../GOVERNANCE.md). A test fails if
+3. Add their name to the maintainers list in [GOVERNANCE.md](GOVERNANCE.md). A test fails if
    the two disagree, so neither can quietly go stale.
 4. Answer `access_continuity` on the
    [OpenSSF entry](https://www.bestpractices.dev/en/projects/14721) with what is now true, and
    update `.bestpractices.json` to match.
-5. Point them at this file and at [RELEASING.md](../RELEASING.md). Nothing else has to be handed
+5. Point them at this file and at [RELEASING.md](RELEASING.md). Nothing else has to be handed
    over.
 
 Taking it back is the same list in reverse. It is not an accusation: an account that has gone quiet for a year is a key nobody is

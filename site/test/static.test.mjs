@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { DIST, builtPages } from './harness.mjs';
-import { decodePresetLink } from '../../src/preset-link.ts';
-import { parseModLink } from '../../src/deep-links.ts';
+import { decodePresetLink } from './helpers/app-links.mjs';
+import { parseModLink } from './helpers/app-links.mjs';
 
 const SITE = 'https://dota2modmanager.com';
 const pages = builtPages();
@@ -27,7 +27,7 @@ const inCatalog = new Set([
 
 /** Why a link to the app (d2mm://) would not open what the page says, or null when it would. */
 function appLinkProblem(href) {
-  // a mod's own link (src/deep-links.ts), read the way the app reads it
+  // a mod's own link, read the way the app reads it (test/helpers/app-links.mjs)
   if (href.startsWith('d2mm://mod/')) {
     const m = parseModLink(href);
     if (!m) return 'names no mod';

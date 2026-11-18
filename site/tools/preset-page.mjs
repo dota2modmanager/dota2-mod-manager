@@ -22,7 +22,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const siteRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(siteRoot, '..');
 
-const SOURCE = path.join(repoRoot, 'docs', 'p', 'index.html');
+const SOURCE = path.join(repoRoot, 'pages', 'p', 'index.html');
 const OUT_DIR = path.join(siteRoot, 'dist', 'p');
 const SITE = 'https://dota2modmanager.com';
 

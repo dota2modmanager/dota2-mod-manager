@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { DIST, serveDist, launch, openPage, isOffline } from './harness.mjs';
-import { decodePresetLink } from '../../src/preset-link.ts';
+import { decodePresetLink } from './helpers/app-links.mjs';
 
 const data = JSON.parse(fs.readFileSync(path.join(DIST, 'catalog', 'data.json'), 'utf-8'));
 const read = (p) => fs.readFileSync(path.join(DIST, p, 'index.html'), 'utf-8');

@@ -7,6 +7,7 @@ import { state } from '../core/store.ts';
 import { toast } from '../ui/toast.ts';
 import { Dropdown } from '../ui/Dropdown.tsx';
 import { keepModsIn } from './mod-folder.ts';
+import { Row } from './parts.tsx';
 
 const AUTO = 'auto';
 
@@ -23,9 +24,9 @@ export function ModFolderRow({ redraw }: { redraw: () => void }) {
     } catch (error) { toast(String(error), 'error'); }
     finally { setBusy(false); redraw(); }
   };
-  return <>
-    <div className="settings-row spaced">
-      <span className="settings-label">{L`Папка модов`}</span>
+  return (
+    <Row label={L`Папка модов`}
+      more={L`По умолчанию моды идут в папку языка, которую читает игра, и «-language» в параметрах запуска Steam переносит их туда при запуске приложения. Выбери папку, чтобы моды оставались в ней: пока в параметрах стоит другой язык, игра их не увидит, а когда уберёшь его, они на месте.`}>
       <Dropdown id="modFolderSelect" icon="folder" label={L`Папка модов`} value={lock ?? AUTO} disabled={busy}
         options={[
           { value: AUTO, label: L`Как у игры (сейчас dota_${now})` },
@@ -34,7 +35,6 @@ export function ModFolderRow({ redraw }: { redraw: () => void }) {
           { value: 'koreana', label: 'dota_koreana' },
         ]}
         onPick={(v) => { void pick(v); }} />
-    </div>
-    <div className="settings-hint">{L`По умолчанию моды идут в папку языка, которую читает игра, и «-language» в параметрах запуска Steam переносит их туда при запуске приложения. Выбери папку, чтобы моды оставались в ней: пока в параметрах стоит другой язык, игра их не увидит, а когда уберёшь его, они на месте.`}</div>
-  </>;
+    </Row>
+  );
 }

@@ -33,6 +33,25 @@ test('the button puts on only what differs from what the game shows', async () =
   assert.equal(stagedItemAction(effects, live, staged('42', ['fire'])).label, 'Сохранить эффекты');
 });
 
+test('changing the target item is a staged replacement, including returning to the default', async () => {
+  const { stagedItemAction } = await load();
+  const live = { itemId: '42', effectId: 'fire', targetItemId: '100' };
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), targetItemId: '200' }).label, 'Сохранить замену');
+  assert.equal(stagedItemAction(effects, live, staged('42', ['fire'])).label, 'Сохранить замену');
+  assert.equal(stagedItemAction(effects, live, { ...staged('42', ['fire']), targetItemId: '100' }).off, true);
+});
+
+test('replacement targets are searchable and exclude the picked item', async () => {
+  const { replacementOptions } = await load();
+  const options = [
+    { id: '', name: 'Default item' },
+    { id: 'crimson', name: 'Crimson Shoulders' },
+    { id: 'purple', name: 'Purple Shoulders' },
+  ];
+  assert.deepEqual(replacementOptions(options, 'crimson', 'purple').map((o) => o.id), ['purple']);
+  assert.deepEqual(replacementOptions(options, 'crimson', '').map((o) => o.id), ['', 'purple']);
+});
+
 test('effects are written in the order the slot offers them, and read back as a list', async () => {
   const { effectKey, liveEffects } = await load();
   assert.equal(effectKey(effects, ['ghost', 'fire', 'nope']), 'fire,ghost');
@@ -129,4 +148,13 @@ test("an effect sits on its shelf: the courier unusuals, the game's seasonal one
   assert.equal(effectGroup('sand-storm'), 'courier');
   assert.equal(rarityName('mythical'), 'Mythical', 'as the game prints it in every language');
   assert.equal(rarityName(undefined), '');
+});
+
+test('an added effect goes only on an item that rolled an unusual or has no effect of its own', async () => {
+  const { offeredOn } = await load();
+  const all = [{ id: '' }, { id: 'fire' }, { id: 'unusual-15' }, { id: 'unusual-836' }, { id: 'kinetic-3' }];
+  const ids = (list) => list.map((fx) => fx.id);
+  assert.deepEqual(ids(offeredOn(all, { unusual: true })), ['fire', 'unusual-15', 'unusual-836', 'kinetic-3']);
+  assert.deepEqual(ids(offeredOn(all, {})), ['kinetic-3'], 'an item with effects of its own keeps its kinetic gems alone');
+  assert.deepEqual(ids(offeredOn(all, null)), ['fire', 'unusual-15', 'unusual-836', 'kinetic-3'], 'nothing chosen: all to look at');
 });

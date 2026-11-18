@@ -40,7 +40,7 @@ const PLUGIN_ADD = '/plugin marketplace add dota2modmanager/dota2-mod-manager';
 const PLUGIN_INSTALL = '/plugin install dota2-modding@dota2modmanager';
 
 /* The item-mods page (November 2026) is docs/item-mods.md for mod authors: the commands of
- * tools/modkit and the item plan, with output copied from a run against the game of 2026-11-03. */
+ * tools/mods/modkit and the item plan, with output copied from a run against the game of 2026-11-03. */
 const SETUP = "git clone https://github.com/dota2modmanager/dota2-mod-manager\ncd dota2-mod-manager\nnpm ci\nnpm run modkit -- check";
 const RECOLOR = "$ npm run modkit -- recolor terrorblade 40,120,255 --out work/mod\nterrorblade: 97 of 155 particle(s) recoloured (166 colours) into work/mod\n$ npm run modkit -- pack work/mod --out tb_blue.vpk\n97 file(s) from work/mod into tb_blue.vpk (0.4 MB); 0 left out as the game's own\n$ npm run doctor -- tb_blue.vpk\nnothing found";
 const PLAN = "$ npm run item-plan -- 5957\n5957 Fractal Horns of Inner Abysm: slot hero_base, for npc_dota_hero_terrorblade\n  built    the hero's own model\n  built    activity modifier \"abysm\"\n  built    a picture (ability_icon)\n  by hand  a sound\n  by hand  a particle the item creates\n  by hand  a model swap\n  cannot   custom_kill_effect\n  cannot   chatwheel x9";

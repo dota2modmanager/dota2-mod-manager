@@ -38,15 +38,10 @@ mod's file and Valve's are the same bytes, and when the kept original is the mod
 
 ## What catches it now
 
-- `src/overlays.ts`: every font and cursor write is recorded by hash in `backups/written.json`.
-  A file holding what the app wrote is the app's file, whatever else it matches, and the repair
-  no longer keeps such a file as the game's original. An install from before the fix is reported
-  once more, and putting it back writes the record.
-- `test/installer.test.ts` "a font that ships some of Valve's files unchanged is not taken for one
-  a verify undid"
-- `test/installer.test.ts` "a font Steam's verify replaced is noticed, and put back from the
-  download cache": includes the removal afterwards leaving no file of the mod behind.
-- `test/installer.test.ts` "a cursor set installed before the app recorded its writes stops being
-  reported once it is put back"
-- `.github/mutants.json` "a font or cursor file the app wrote itself is taken for one a verify put
-  back": the weekly mutation run puts the old check back and expects these tests to fail.
+- `crates/mm-core/src/install/overlays.rs`: every font and cursor write is recorded by hash in
+  `backups/written.json`. A file holding what the app wrote is the app's file, whatever else it
+  matches, and the repair no longer keeps such a file as the game's original.
+- `crates/mm-core/src/install/overlays_tests.rs` "a_file_the_app_wrote_itself_is_not_taken_for_one_a_verify_put_back"
+- `crates/mm-core/src/install/overlays_tests.rs` "a_file_holding_valves_bytes_again_is_taken_back_by_a_verify"
+- `crates/mm-core/src/install/overlays_tests.rs` "only_enabled_records_whose_files_went_back_are_reported"
+- `.github/workflows/rust.yml`: runs the Rust tests on every push.

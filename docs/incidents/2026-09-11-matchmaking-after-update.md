@@ -30,12 +30,9 @@ list the game has on disk, minus our one line, is by construction the list this 
 
 ## What catches it now
 
-- `test/patcher-tree.test.ts` "the patch is signed into the list the installed build shipped, not
-  an older one": patches build A, moves the game to build B, patches again, and expects B's list.
-  It fails on the code before 2.6.10.
-- `test/patcher-tree.test.ts` "a backup from an older build is replaced, or reverting would put the
-  old build back"
-- `test/patcher.test.ts` "a signature line is the path, SHA1 and little-endian CRC the game
-  expects": the expected line comes from a public check value, not from our own hash function.
-- `.github/mutants.json` "the patch is signed into a stale copy of the list": the weekly mutation
-  run puts this bug back and expects the tests to fail.
+- `crates/mm-core/src/game/patcher_tests.rs` "the_patch_is_signed_into_the_list_the_installed_build_shipped_not_an_older_one":
+  patches build A, moves the game to build B, patches again, and expects B's list.
+- `crates/mm-core/src/game/patcher_tests.rs` "a_backup_from_an_older_build_is_replaced_or_reverting_would_put_the_old_build_back"
+- `crates/mm-core/src/game/patcher_tests.rs` "a_signature_line_is_the_path_sha1_and_little_endian_crc_the_game_expects": the expected
+  line comes from a public check value, not from our own hash function.
+- `.github/workflows/rust.yml`: runs the Rust tests on every push.

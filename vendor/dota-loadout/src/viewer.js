@@ -106,7 +106,7 @@ void main() {
     manager.onStart = () => { pendingTextures = true; };
     manager.onProgress = (_, loaded, total) => this.options.onProgress?.(loaded, total);
     manager.onLoad = () => { pendingTextures = false; finishTextures?.(); };
-    const hero = await buildHero(manifest, url, manager, this.time, this.light, this.textureScale);
+    const hero = await buildHero(manifest, url, manager, this.time, this.light, this.textureScale, (objects) => this.warm(objects));
     try {
       if (ticket === this.loading) await prepare?.(hero);
     } catch (error) {
@@ -115,8 +115,10 @@ void main() {
     }
     // Textures load in the background; the hero shows once they are all in.
     if (pendingTextures && ticket === this.loading) await new Promise(done => { finishTextures = done; });
+    if (ticket === this.loading) await this.warm([hero.lib.group, hero.turntable]);
     if (ticket !== this.loading) { hero.dispose(); return null; }
-    this.unload(); this.hero = hero; this.scene.add(hero.lib.group, hero.turntable);
+    this.unload(); this.parked?.dispose(); this.parked = null;
+    this.hero = hero; this.scene.add(hero.lib.group, hero.turntable);
     this.applyLighting(manifest.lighting || DEFAULT_LIGHTING, hero);
     this.turn.angle = this.turn.target = this.turn.velocity = 0; this.view.zoom = this.view.zoomTarget = 1; this.view.pitch = 0;
     this.fit();
@@ -143,6 +145,53 @@ void main() {
   // A kinetic gem in what a slot wears: its activities ([[activity, modifier]], from the manifest's
   // kinetic list), or null; the hero's animations take its modifiers.
   kinetic(slot, activities) { this.hero?.kinetic(slot, activities); }
+  // Desktop preview extension. What is about to be shown, made ready before it is: its textures
+  // sent to the GPU a few per frame and its shaders compiled in parallel. Left to the first frame
+  // that drew it, that frame took 150-700 ms (a hero, measured 2026-11-15) and anything scrolling
+  // beside the preview stopped dead for it. The programs are compiled for the HDR target the
+  // frame draws into, so they are the ones the frame asks for.
+  async warm(objects) {
+    const r = this.renderer; if (!r) return;
+    const textures = new Set();
+    for (const o of objects) o.traverse((m) => {
+      for (const mat of m.material ? [].concat(m.material) : []) {
+        for (const v of Object.values(mat)) if (v?.isTexture) textures.add(v);
+        for (const u of Object.values(mat.uniforms || {})) if (u?.value?.isTexture) textures.add(u.value);
+      }
+    });
+    // an effect's sprite sheet may still be on its way: a moment for it, then on without it
+    const giveUp = performance.now() + 1500;
+    while ([...textures].some((t) => !t.image) && performance.now() < giveUp) await new Promise(requestAnimationFrame);
+    let since = performance.now();
+    for (const t of textures) {
+      if (!t.image) continue;
+      try { r.initTexture(t); } catch { /* drawn the old way, on first use */ }
+      if (performance.now() - since > 6) { await new Promise(requestAnimationFrame); since = performance.now(); }
+    }
+    if (!r.compileAsync) return;
+    // compile() walks only what is visible, and an effect's meshes stay hidden until it has
+    // particles: shown for the walk, which is synchronous, and hidden again straight after
+    const holder = new THREE.Group(); for (const o of objects) if (!o.parent) holder.add(o);
+    const hidden = []; for (const o of objects) o.traverse((m) => { if (!m.visible) { hidden.push(m); m.visible = true; } });
+    const before = r.getRenderTarget(); r.setRenderTarget(this.hdr);
+    let compiling;
+    try { compiling = r.compileAsync(holder.children.length ? holder : objects[0], this.camera, this.scene); } finally {
+      r.setRenderTarget(before); for (const m of hidden) m.visible = false;
+    }
+    try { await compiling; } catch { /* drawn the old way, on first use */ }
+    for (const o of [...holder.children]) holder.remove(o);
+    // what is left of the cost (shadow and effect shaders) comes with the first frame that draws
+    // it: the page may ask for that frame to wait for a better moment (options.beforeShow)
+    await this.options.beforeShow?.();
+  }
+  // Desktop preview extension. The hero off the stage but not let go, for a viewer kept for the
+  // next window: his materials hold their shader programs, and the next hero's warm-up finds
+  // most of them made instead of linking them again. He goes once the next one is on.
+  park() {
+    this.loading++; if (!this.hero) return;
+    this.parked?.dispose(); this.parked = this.hero; this.hero = null;
+    this.scene.remove(this.parked.lib.group, this.parked.turntable);
+  }
   unload() { if (!this.hero) return; this.scene.remove(this.hero.lib.group, this.hero.turntable); this.hero.dispose(); this.hero = null; }
 
   get animations() { return this.hero?.animations || []; }
@@ -251,7 +300,7 @@ void main() {
   }
 
   dispose() {
-    this.loading++; this.renderer.setAnimationLoop(null); this.resize.disconnect(); this.intersection.disconnect(); this.unload();
+    this.loading++; this.renderer.setAnimationLoop(null); this.resize.disconnect(); this.intersection.disconnect(); this.unload(); this.parked?.dispose(); this.parked = null;
     const c = this.canvas; c.removeEventListener('pointerdown', this.onDown); c.removeEventListener('pointermove', this.onMove); c.removeEventListener('pointerup', this.onUp); c.removeEventListener('pointercancel', this.onUp); c.removeEventListener('wheel', this.onWheel);
     this.hdr.dispose(); this.bloom?.dispose(); if (this.soft) { this.soft.target.dispose(); this.soft.material.dispose(); SOFT.uSoft.value = false; } this.output.geometry.dispose(); this.output.material.dispose(); this.renderer.dispose();
   }
@@ -271,7 +320,7 @@ const shrink = (scale) => (scale >= 1 ? undefined : (t) => {
   const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * scale)); c.height = Math.max(1, Math.round(img.height * scale));
   c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); t.image = c; t.needsUpdate = true;
 });
-export async function buildHero(manifest, url, manager, time, light, textureScale = 1) {
+export async function buildHero(manifest, url, manager, time, light, textureScale = 1, warm = null) {
   // Each texture once (particle models make materials of their own, many a second).
   const made = [], textureCache = new Map(), textureOf = (loader, address, scope = '') => (file, srgb = false) => {
     const href = address(`textures/${file}`), key = `${scope}${href}#${srgb}`; if (textureCache.has(key)) return textureCache.get(key);
@@ -381,7 +430,9 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       refitted.push({ w, r });
     }
   };
-  const items = names.filter((k) => k !== 'hero' && k !== 'pedestal' && k !== 'animation-source'), defaults = new Map(), worn = new Map(), wearing = new Map();
+  // companion-N: a form or summon of the hero's, stood beside him on its own bones (below)
+  const isCompanionKey = (k) => k.startsWith('companion-');
+  const items = names.filter((k) => k !== 'hero' && k !== 'pedestal' && k !== 'animation-source' && !isCompanionKey(k)), defaults = new Map(), worn = new Map(), wearing = new Map();
   const heroMeshes = []; root.traverse((o) => { if (o.isMesh) heroMeshes.push(o); });
   for (const name of items) {
     const asset = loaded[name];
@@ -401,6 +452,17 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     putOn(current);
   }
   const turntable = new THREE.Group(); turntable.add(root); if (loaded.pedestal) turntable.add(loaded.pedestal.scene);
+  // The hero's other forms and summons (Lone Druid's bear, Dragon Knight's dragon): whole models of
+  // their own, each on its own clip held in place, put beside him once his pose is known (below).
+  const companions = (manifest.companions || []).map((c) => {
+    const m = loaded[c.owner]; if (!m) return null;
+    const usable = m.animations.filter((x) => x.name && !x.name.startsWith('@') && x.name !== 'bindPose');
+    const clip = usable.find((x) => x.name === c.clip) || usable[0], mixer = new THREE.AnimationMixer(m.scene);
+    if (clip) { holdRootMotion(clip, rootBones(m.scene)); mixer.clipAction(clip).play(); }
+    turntable.add(m.scene);
+    return { ...c, scene: m.scene, mixer };
+  }).filter(Boolean);
+  const isCompanion = (o) => { for (let p = o; p; p = p.parent) if (companions.some((c) => c.scene === p)) return true; return false; };
   const materials = new Map();
   // An item's materials come with it, their textures from its folder: keyed by both.
   // skin: the materials a skin (material group) puts in place of the default ones, by name.
@@ -427,7 +489,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // Animations: the entry once, then the idle loop; the others on request.
   const mixer = new THREE.AnimationMixer(root), clips = new Map(heroModel.animations.map((a) => [a.name, a]));
   for (const [owner, model] of Object.entries(loaded)) {
-    if (owner === 'hero' || owner === 'pedestal') continue;
+    if (owner === 'hero' || owner === 'pedestal' || isCompanionKey(owner)) continue;
     const fitted = worn.get(owner);
     const privateBones = fitted?.privateBones ?? new Map();
     const ownBones = new Map((fitted?.localBones ?? []).flatMap(({ bone, keys }) => keys.map(key => [key, bone])));
@@ -476,10 +538,29 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   // Bounds in the idle pose (for framing, shadows and the drag area); then the entry, if any.
   if (idle) start(idleName, 0);
   mixer.update(0); turntable.updateMatrixWorld(true);
+  // Beside the hero, in turn right and left of him, a gap of a quarter of his width apart; the
+  // pedestal is his alone, and the framing below takes them all in.
+  if (companions.length) {
+    for (const c of companions) c.mixer.update(0);
+    turntable.updateMatrixWorld(true);
+    const measure = (o) => new THREE.Box3().setFromObject(o, true);
+    const own = measure(root), width = own.isEmpty() ? 1 : own.max.x - own.min.x, gap = Math.max(width * 0.25, 0.15);
+    let right = own.isEmpty() ? 0.5 : own.max.x, left = own.isEmpty() ? -0.5 : own.min.x;
+    companions.forEach((c, i) => {
+      const b = measure(c.scene), w = b.isEmpty() ? width : b.max.x - b.min.x, mid = b.isEmpty() ? 0 : (b.min.x + b.max.x) / 2;
+      if (i % 2 === 0) { c.scene.position.x = right + gap + w / 2 - mid; right += gap + w; }
+      else { c.scene.position.x = left - gap - w / 2 - mid; left -= gap + w; }
+    });
+    turntable.updateMatrixWorld(true);
+  }
   const samples = [], point = new THREE.Vector3(), heroBox = new THREE.Box3(), box = new THREE.Box3();
   turntable.traverse((o) => { if (!o.isMesh) return; const count = o.geometry.attributes.position.count, step = Math.max(1, Math.ceil(count / 600)); for (let i = 0; i < count; i += step) samples.push([o, i]); });
   const isPedestal = (o) => { for (let p = o; p; p = p.parent) if (p === loaded.pedestal?.scene) return true; return false; };
-  for (const [mesh, i] of samples) { mesh.getVertexPosition(i, point).applyMatrix4(mesh.matrixWorld); box.expandByPoint(point); if (!isPedestal(mesh)) heroBox.expandByPoint(point); }
+  const othersBox = new THREE.Box3();
+  for (const [mesh, i] of samples) {
+    mesh.getVertexPosition(i, point).applyMatrix4(mesh.matrixWorld); box.expandByPoint(point);
+    if (isCompanion(mesh)) othersBox.expandByPoint(point); else if (!isPedestal(mesh)) heroBox.expandByPoint(point);
+  }
   if (heroBox.isEmpty()) heroBox.copy(box);
   if (loaded.pedestal && manifest.studioPedestal) {
     // The asset's top is y=0, matching the hero's native ground plane. Floating
@@ -488,6 +569,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     pedestal.scale.set(radius,radius,radius);turntable.updateMatrixWorld(true);
     box.copy(heroBox).union(new THREE.Box3().setFromObject(pedestal));
   }
+  // the pedestal is sized to the hero alone; the framing takes in those beside him
+  if (!othersBox.isEmpty()) { heroBox.union(othersBox); box.union(othersBox); }
   // Props (Pudge's clown car, Largo's frogs): one copy per event, at the hero, shown while their
   // animation plays from the event's frame on, their own clip kept in step with the hero's time.
   // Added after the bounds, which are the hero's alone. (No prop of the game uses an attachment.)
@@ -856,7 +939,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
       }
       // a material made after the paint came (an item put on since) takes it too
       if (studioMaterialPaints) for (const [name, material] of materials) { const p = studioMaterialPaints[name]; material.userData.paint?.(p ? p.slice(0, 3) : null, p ? p[3] : 0); }
-      mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt);
+      mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt); for (const c of companions) c.mixer.update(dt);
       // A later event with the same model in the same animation takes over (Ringmaster's box: built, then broken).
       for (const p of props) p.at = currentName === p.sequence && current ? current.time - p.frame / 30 : -1;
       for (const p of props) { const later = props.some((q) => q !== p && q.file === p.file && q.sequence === p.sequence && q.frame > p.frame && q.at >= 0); p.scene.visible = p.at >= 0 && !later; if (p.scene.visible) p.mixer.setTime(p.at); }
@@ -921,6 +1004,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
           lib.add({ systems: m.systems, snapshots: m.snapshots, textures: Object.fromEntries(Object.entries(m.textures || {}).map(([k, v]) => [k, { ...v, file: source.url(`fx/${v.file}`) }])) });
           scenes.forEach((sc, i) => dress(sc.scene, m.materials, tex, source.url(''), itemCube, m.skins?.[s.models[i]]?.[(s.skin || 0) - 1]));
           await new Promise((done) => { if (!itemManager.itemsTotal || itemManager.itemsLoaded >= itemManager.itemsTotal) done(); else { itemManager.onLoad = done; itemManager.onError = () => {}; } });
+          // desktop preview extension: ready on the GPU before it is put on (Viewer.warm)
+          if (warm) await warm(scenes.map((sc) => sc.scene));
           let companion = null;
           if (s.companion) {
             const c = s.companion, gltf = await loader.loadAsync(source.url(m.models[c.model])), group = new THREE.Group(), mixer = new THREE.AnimationMixer(gltf.scene);
@@ -950,7 +1035,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     },
     dispose() {
       studioDisposed = true; for (const release of studioParts.values()) release(); studioParts.clear(); loaded['animation-source']?.scene.traverse(o=>{o.geometry?.dispose();for(const material of Array.isArray(o.material)?o.material:[o.material])material?.dispose();}); for (const file of studioPropFiles) disposeProp(propModels[file]); studioPropFiles.clear();
-      mixer.stopAllAction(); for (const p of props) p.mixer.stopAllAction(); turntable.traverse((o) => { o.geometry?.dispose(); });
+      mixer.stopAllAction(); for (const p of props) p.mixer.stopAllAction(); for (const c of companions) c.mixer.stopAllAction(); turntable.traverse((o) => { o.geometry?.dispose(); });
       for (const r of wearing.values()) for (const mesh of r.meshes || []) mesh.geometry?.dispose();
       for (const w of defaults.values()) for (const mesh of w.meshes) mesh.geometry?.dispose();
       for (const m of materials.values()) m.dispose(); for (const t of made) t.dispose(); lib.dispose();

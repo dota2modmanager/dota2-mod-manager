@@ -19,7 +19,7 @@
 import { gemSetOf } from '../catalog/builder/gems.ts';
 import { state } from '../core/store.ts';
 import { pickedIn } from '../core/installed.ts';
-import { byName, effectGroup, effectKey, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
+import { byName, effectGroup, effectKey, offeredOn, effectPicture, liveDonor, liveEffects, liveStyle, rarityName, replacementOptions, stagedItemAction, type EffectGroup } from '../catalog/builder/logic.ts';
 import { cosmeticName } from '../ui/cosmetic-name.ts';
 import { loadCosmeticIcons } from '../ui/cosmetic-icons.ts';
 import { cosmeticSlotList, slotData } from './catalog/lists.ts';
@@ -31,7 +31,7 @@ import type { ScreenActions } from '../catalog/screen/model.ts';
 /** What the catalog hands over, once, before anything here runs (views/catalog.ts). */
 interface BuilderCtx {
   /** the pick itself (views/catalog/cosmetics.ts) */
-  pickCosmetic: (slot: string, o: CosmeticOption, remove: boolean, effectId?: string) => Promise<void>;
+  pickCosmetic: (slot: string, o: CosmeticOption, remove: boolean, effectId?: string, targetItemId?: string) => Promise<void>;
   afterPick: () => Promise<void>;
   /** what the catalog's screen can ask for: the hub keeps all of it but its own filter */
   actions: ScreenActions;
@@ -83,7 +83,7 @@ export const catalogActions = (): ScreenActions => (cat as BuilderCtx).actions;
 // ---------- a slot: its wearables, the effects on top, and the button that puts them on ----------
 
 /** `donor`: the item of the slot whose effect the chosen one wears, '' for none (src/item-builder-donor.ts) */
-export interface SlotState { slot: string; selectedId: string; effectIds: string[]; donor: string; style: number; query: string; view: SlotView; busy: boolean }
+export interface SlotState { slot: string; selectedId: string; effectIds: string[]; donor: string; style: number; targetItemId: string; query: string; view: SlotView; busy: boolean }
 
 /**
  * What a slot's pane starts with: the item on, with its effects and style, unless `select` names another.
@@ -96,7 +96,11 @@ export function slotState(slot: string, { query = '', select = '', view = 'items
   const same = live?.itemId === selectedId;
   const data = slotData(slot);
   if (data) loadCosmeticIcons(data.options.slice(0, 36).map((o) => o.name).filter(Boolean), () => {}).catch(() => {});
-  return { slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '', style: same ? liveStyle(live) : 0, query, view, busy: false };
+  return {
+    slot, selectedId, effectIds: same ? liveEffects(live) : [], donor: same ? liveDonor(live) : '',
+    style: same ? liveStyle(live) : 0, targetItemId: same ? String(live?.targetItemId || '') : '',
+    query, view, busy: false,
+  };
 }
 
 /** The staged choice sent to the read-only preview, using the same style and effect encoding as Equip. */
@@ -106,8 +110,9 @@ export function tryOnPick(st: SlotState | null) {
   if (!data || (st.selectedId && !data.options.some(option => option.id === st.selectedId))) return undefined;
   const live = pickedIn(st.slot);
   const effectId = st.selectedId ? effectKey(data.effects, st.effectIds, st.style, st.donor) : '';
-  if ((live?.itemId ?? '') === st.selectedId && (live?.effectId ?? '') === effectId) return undefined;
-  return { itemId: st.selectedId, effectId };
+  if ((live?.itemId ?? '') === st.selectedId && (live?.effectId ?? '') === effectId
+    && String(live?.targetItemId || '') === st.targetItemId) return undefined;
+  return { itemId: st.selectedId, effectId, ...(st.targetItemId ? { targetItemId: st.targetItemId } : {}) };
 }
 
 /** An effect of the game's own (Ethereal Flame and the like), src/item-builder-unusual.ts. */
@@ -122,8 +127,8 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
   if (!data) return null;
   const live = pickedIn(st.slot);
   const hasItem = !!st.selectedId;
-  const effects = (data.effects || []).filter((fx) => fx.id);
   const chosen = hasItem ? data.options.find((o) => o.id === st.selectedId) : null;
+  const effects = offeredOn(data.effects, chosen);
   const gem = gemSetOf(chosen?.name);
   const styles = chosen?.styles && chosen.styles.length > 1 ? chosen.styles : null;
   // a tab with nothing to show for the item chosen falls back to the items
@@ -142,8 +147,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
     view: st.view,
     gem: gem ? { set: gem, equipped: live?.itemId === st.selectedId } : undefined,
     // the hero's own item first: choosing it is how a pick comes off
-    options: byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.view === 'items' ? st.query : '').map((o) => ({
-      id: o.id, name: o.name, picked: o.id === st.selectedId, on: o.id ? live?.itemId === o.id : !live, ...facts(o),
+    options: (st.view === 'replacement'
+      ? replacementOptions([{ id: '', name: L`Стандартный предмет`, tags: [] }, ...data.options], st.selectedId, st.query)
+      : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
+      id: o.id, name: o.name, picked: st.view === 'replacement' ? o.id === st.targetItemId : o.id === st.selectedId,
+      on: st.view !== 'replacement' && (o.id ? live?.itemId === o.id : !live), ...facts(o),
       ...('note' in o && o.note ? { note: o.note } : {}),
     })),
     optionsCount: data.options.length,
@@ -167,6 +175,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
       enabled: hasItem,
       count: donors.length,
     } : null,
+    replacement: !data.persona && !data.abilityFx && hasItem ? {
+      sourceName: chosen?.name || st.selectedId,
+      targetName: data.options.find((o) => o.id === st.targetItemId)?.name || L`Стандартный предмет`,
+      disabled: st.busy,
+    } : undefined,
     summary: { name: chosen ? chosen.name : L`Стандартный`, effects: chosen && names.length ? names.join(', ') : '' },
     action: stagedItemAction(data.effects, live, st),
   };
@@ -178,7 +191,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
       choose: (id) => {
         if (st.busy) return;
         st.selectedId = id;
+        if (!id || id === st.targetItemId) st.targetItemId = '';
         if (!id) st.effectIds = []; // the stock item takes no effects
+        // what the next item cannot be given comes off it
+        const allowed = new Set(offeredOn(data.effects, data.options.find((o) => o.id === id)).map((fx) => fx.id));
+        st.effectIds = st.effectIds.filter((fx) => allowed.has(fx));
         if (!id || id === st.donor) st.donor = '';
         // another item starts in its first style, or the one it is on in
         st.style = live?.itemId === id ? liveStyle(live) : 0;
@@ -199,6 +216,11 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
         st.donor = id === st.donor ? '' : id;
         redraw();
       },
+      replacement: (id) => {
+        if (st.busy || !st.selectedId) return;
+        st.targetItemId = id;
+        redraw();
+      },
       apply: () => void applySlot(st, chosen, redraw),
     },
   };
@@ -214,7 +236,7 @@ async function applySlot(st: SlotState, chosen: CosmeticOption | null | undefine
   st.busy = true;
   redraw();
   try {
-    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds, st.style, st.donor));
+    await cat.pickCosmetic(st.slot, look, !!act.remove, effectKey(data.effects, st.effectIds, st.style, st.donor), st.targetItemId);
   } finally {
     st.busy = false;
     redraw();

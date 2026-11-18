@@ -1,6 +1,6 @@
 [package]
 name = "dota2-mod-manager"
-version = "3.8.0"
+version = "4.0.0"
 description = "Dota 2 Mod Manager"
 authors = ["TheFleece"]
 edition.workspace = true
@@ -15,11 +15,25 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-dialog = "2"
+# the system's languages in order, for the first start's UI language (Electron's getPreferredSystemLanguages)
+sys-locale = "0.3"
 tauri-plugin-opener = "2"
 tauri-plugin-single-instance = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-autostart = "2"
+tauri-plugin-updater = "2"
 serde.workspace = true
 serde_json.workspace = true
 base64.workspace = true
 mm-core.workspace = true
+# the system's data and Downloads folders for the command line, which runs before any Tauri app exists
+dirs = "7"
+
+# the command line (src/command_line.rs): the single-instance plugin's lock, and the console it was started from
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security", "Win32_System_Threading", "Win32_System_Console"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+zbus = "6.2"

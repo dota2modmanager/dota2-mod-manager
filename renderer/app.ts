@@ -10,7 +10,9 @@
 import './locales/zh-CN-catalog.js';
 import './locales/zh-CN-library.js';
 import './locales/zh-CN-app.js';
+import './locales/zh-CN-more.js';
 import './locales/en-more.js';
+import './locales/en-decor.js';
 import './i18n.js';
 import './shell/errors.ts';
 import './ui/scroll-watch.ts';
@@ -39,7 +41,6 @@ import { initTheme } from './ui/theme.ts';
 import { initPumpkin } from './ui/pumpkin.ts';
 import { initBrood } from './ui/brood.ts';
 import { initQueue } from './ui/queue.ts';
-import { initA11y } from './ui/a11y.ts';
 import { loadCatalog } from './views/catalog.ts';
 
 /* Fetching it is a download of somebody else's program, so it happens on a yes and never
@@ -61,8 +62,6 @@ async function offerToolchain(): Promise<void> {
 }
 
 (async function boot() {
-  // focus into and out of every window over the app, dialogs named, icons silent (ui/a11y.ts)
-  initA11y();
   /* Pictures come from the network and the network is the part that fails. Started before
      anything is drawn so the first grid is covered too: a preview that cannot be fetched is asked
      for again from the mirror, and if that fails the tile says so instead of leaving a grey

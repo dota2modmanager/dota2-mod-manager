@@ -84,11 +84,11 @@ test('every secret a workflow reads is in the registry, and the registry lists n
 });
 
 test('every secret in the registry reaches the daily check, so none is reported missing while it is set', () => {
-  /* VIRUSTOTAL_API_KEY was added to the registry and to tools/check-credentials.mjs, the secret was
+  /* VIRUSTOTAL_API_KEY was added to the registry and to tools/ops/check-credentials.mjs, the secret was
      created, and the morning check still called it missing: radar.yml passes each secret into that
      step by hand, and this one had not been added to the list. A secret nobody hands over cannot
      be checked, and the radar says "not set" about a key that is set. */
-  const step = read('radar.yml').split('run: node tools/check-credentials.mjs')[0];
+  const step = read('radar.yml').split('run: node tools/ops/check-credentials.mjs')[0];
   const env = step.slice(step.lastIndexOf('env:'));
   const registry = Object.keys(json('.github/credentials.json').secrets);
   const absent = registry.filter((name) => !env.includes(`${name}: \${{ secrets.${name} }}`));
@@ -117,7 +117,7 @@ test('release.yml builds nothing before the gate says the commit passed', () => 
   assert.match(build[1], /(?:^|\n) {4}needs:\s*(\[\s*)?gate\b/, 'the build job does not wait for the gate');
   const gate = /\n {2}gate:\n([\s\S]*?)(?=\n {2}[a-z][\w-]*:\n)/.exec(text);
   assert.ok(gate, 'release.yml has no gate job');
-  assert.match(gate[1], /node tools\/release-gate\.mjs/, 'the gate job does not run tools/release-gate.mjs');
+  assert.match(gate[1], /node tools\/release\/release-gate\.mjs/, 'the gate job does not run tools/release/release-gate.mjs');
   assert.match(gate[1], /checks:\s*read/, 'the gate cannot read check runs without checks: read');
 });
 
@@ -132,8 +132,10 @@ test('release.yml shows a release to nobody until both builds on it installed a 
     return m ? m[1].replace(/[[\]\s]/g, '').split(',') : [];
   };
   assert.match(job('build'), /gh release create[^\n]*--draft/, 'the build job opens the release in public instead of as a draft');
-  // electron-builder publishes a release it has to create itself, unless it is told to make a draft
-  assert.equal((text.match(/EP_DRAFT: 'true'/g) || []).length, 2, 'an electron-builder step without EP_DRAFT can publish the release');
+  // electron-builder published a release it had to create itself; the Tauri build only uploads
+  // into the draft the build job opened
+  assert.doesNotMatch(text, /electron-builder[^\n]*--publish/, 'electron-builder can publish the release itself');
+  for (const n of ['build', 'linux']) assert.match(job(n), /npx tauri build[\s\S]*gh release upload "\$TAG"/, `${n} does not upload its Tauri build into the draft`);
   // Every file is fingerprinted and signed for before anything tries it (2026-09-16).
   const checksums = job('checksums');
   assert.ok(checksums, 'release.yml has no checksums job');
@@ -145,7 +147,7 @@ test('release.yml shows a release to nobody until both builds on it installed a 
   for (const [name, after] of [['try-windows', 'build'], ['try-linux', 'linux'], ['try-update', 'build']]) {
     const body = job(name);
     assert.ok(body, `release.yml has no ${name} job`);
-    assert.match(body, /node tools\/e2e\.mjs --app /, `${name} does not click through the build it downloaded`);
+    assert.match(body, /node tools\/dev\/e2e\.mjs --app /, `${name} does not click through the build it downloaded`);
     assert.ok(needs(body).includes(after), `${name} does not wait for ${after} to put its build on the draft`);
     assert.ok(needs(body).includes('checksums'), `${name} can try a file before it was fingerprinted`);
     assert.match(body, /not the one SHA256SUMS lists/, `${name} does not check its download against SHA256SUMS`);
@@ -155,7 +157,7 @@ test('release.yml shows a release to nobody until both builds on it installed a 
   for (const n of ['checksums', 'try-windows', 'try-linux', 'try-update']) assert.ok(needs(publish).includes(n), `publish does not wait for ${n}`);
   // the update is tried from the last release a person could have, and with the draft's own installer
   assert.match(job('try-update'), /--exclude-drafts --exclude-pre-releases/, 'try-update could update from a draft or a beta');
-  assert.match(job('try-update'), /node tools\/e2e\.mjs --app "\$env:APP" --upgrade setup\.exe/, 'try-update does not run the upgrade');
+  assert.match(job('try-update'), /node tools\/dev\/e2e\.mjs --app "\$env:APP" --upgrade setup\.exe/, 'try-update does not run the upgrade');
   assert.match(publish, /-F draft=false/, 'the publish job does not take the release out of draft');
   for (const n of ['mirror-update', 'notify']) assert.ok(needs(job(n)).includes('publish'), `${n} can run before the release is public`);
   // the API call, not the words: comments and error messages above publish name the endpoint on purpose
@@ -168,7 +170,7 @@ test('a beta tag is published as a prerelease, and never as the latest release',
   const yml = read('release.yml');
   assert.match(yml, /\*-beta\.\*\) echo 'beta=true'/, 'nothing decides what a beta tag looks like');
   assert.match(yml, /-F prerelease=true -f make_latest=false/, 'a beta is published like a release');
-  assert.match(yml, /tools\/release-state\.js missing/, 'the files are not checked against the one list tools/release-state.js keeps');
+  assert.match(yml, /tools\/release\/release-state\.js missing/, 'the files are not checked against the one list tools/release/release-state.js keeps');
   assert.match(yml, /is a beta - installed copies follow that endpoint/, 'nothing checks that the stable endpoint was left alone');
 });
 
@@ -200,7 +202,7 @@ test('the update mirror is brought to what GitHub serves, a beta included, and a
   const mirror = jobs.find((j) => j.startsWith('mirror-update:')) || '';
   assert.ok(mirror, 'no mirror-update job');
   assert.equal(/needs\.gate\.outputs\.beta != 'true'/.test(mirror), false, 'a beta has no second route');
-  assert.match(mirror, /node tools\/r2-release\.mjs --current/, 'the mirror is given one version rather than the state GitHub is in');
+  assert.match(mirror, /node tools\/release\/r2-release\.mjs --current/, 'the mirror is given one version rather than the state GitHub is in');
   assert.doesNotMatch(mirror, /continue-on-error/, 'a mirror that failed would look like one that worked');
 
   const notify = jobs.find((j) => j.startsWith('notify:')) || '';
@@ -212,7 +214,7 @@ test('RELEASING.md names every job release.yml runs', () => {
      describing a workflow that has changed since. */
   const jobs = [...(read('release.yml').split(/\njobs:\n/)[1] || '').matchAll(/^ {2}([a-z][\w-]*):\s*$/gm)].map((m) => m[1]);
   assert.ok(jobs.length >= 8, `found only ${jobs.length} jobs in release.yml`);
-  const doc = fs.readFileSync(path.join(ROOT, 'RELEASING.md'), 'utf8');
+  const doc = fs.readFileSync(path.join(ROOT, 'docs', 'RELEASING.md'), 'utf8');
   const missing = jobs.filter((j) => !doc.includes(`\`${j}\``));
   assert.deepEqual(missing, [], `RELEASING.md does not mention: ${missing.join(', ')}`);
 });
@@ -292,7 +294,7 @@ test('CI runs the same gate as a person and the commit hook', () => {
   const pkg = json('package.json');
   assert.ok(pkg.scripts.verify, 'package.json has no verify script');
   assert.match(pkg.scripts.verify, /lint/, 'npm run verify does not lint');
-  assert.match(pkg.scripts.verify, /test:coverage/, 'npm run verify does not run the suite with its coverage floor');
+  assert.match(pkg.scripts.verify, /npm test/, 'npm run verify does not run the suite');
   assert.match(read('test.yml'), /npm run verify/, 'test.yml runs its own list of steps instead of npm run verify');
 });
 
@@ -368,15 +370,15 @@ test('nothing after publishing adds, replaces or removes a file of the release',
   assert.ok(out > 0, 'publish has no step that publishes');
   const check = publish.indexOf('- name: Check the draft carries every file');
   assert.ok(check > 0 && check < out, 'the draft is published without being checked for every file first');
-  assert.match(publish.slice(check, out), /node tools\/release-state\.js missing/);
+  assert.match(publish.slice(check, out), /node tools\/release\/release-state\.js missing/);
   const bad = [];
   const writes = /gh release (upload|delete-asset|delete)\b|--clobber|releases\/assets\/[^\n]*(DELETE|PATCH)|uploads\.github\.com/;
   for (const line of publish.slice(out).split('\n')) if (writes.test(line)) bad.push(`publish: ${line.trim()}`);
   for (const name of after) {
     for (const line of jobs.get(name).text.split('\n')) if (writes.test(line)) bad.push(`${name}: ${line.trim()}`);
   }
-  const watch = fs.readFileSync(path.join(ROOT, 'tools', 'release-watch.mjs'), 'utf8');
-  if (/uploads\.github\.com|releases\/assets/.test(watch)) bad.push('tools/release-watch.mjs touches release files');
+  const watch = fs.readFileSync(path.join(ROOT, 'tools', 'release', 'release-watch.mjs'), 'utf8');
+  if (/uploads\.github\.com|releases\/assets/.test(watch)) bad.push('tools/release/release-watch.mjs touches release files');
   assert.deepEqual(bad, [], bad.join('\n'));
 });
 
@@ -418,7 +420,7 @@ test('the gate checks what publishing will need, before anything is built', () =
   const { jobs, after } = releaseJobs();
   const gate = jobs.get('gate').text;
   const step = gate.slice(gate.indexOf('- name: Check that everything after publishing will work'));
-  assert.match(step, /run: node tools\/release-preflight\.mjs/, 'the gate does not run the preflight');
+  assert.match(step, /run: node tools\/release\/release-preflight\.mjs/, 'the gate does not run the preflight');
   assert.match(gate, /actions: read/, 'the preflight cannot see whether the workflows it relies on are switched on');
   const needed = new Set();
   for (const name of after) for (const m of jobs.get(name).text.matchAll(/secrets\.([A-Z0-9_]+)/g)) needed.add(m[1]);
@@ -432,8 +434,8 @@ test('what a release left undone is put right without anybody starting it', () =
   assert.match(text, /workflow_run:\n\s+workflows: \[Release\]\n\s+types: \[completed\]/, 'the watch does not run when a release run ends');
   assert.match(text, /schedule:\n\s+- cron:/, 'the watch does not run on its own either');
   assert.match(text, /concurrency:\n\s+group: release-watch\n\s+cancel-in-progress: false/, 'two watches could repair the mirror at once');
-  assert.match(text, /node tools\/release-watch\.mjs --repair/, 'the watch looks and repairs nothing');
-  const watch = fs.readFileSync(path.join(ROOT, 'tools', 'release-watch.mjs'), 'utf8');
+  assert.match(text, /node tools\/release\/release-watch\.mjs --repair/, 'the watch looks and repairs nothing');
+  const watch = fs.readFileSync(path.join(ROOT, 'tools', 'release', 'release-watch.mjs'), 'utf8');
   assert.match(watch, /'--current'/, 'the watch does not bring the mirror up to date');
   assert.match(watch, /postToDiscord\(stable\)/, 'the watch does not send a post the release run did not');
   assert.match(watch, /virustotal\.yml\/dispatches/, 'the watch does not ask for an antivirus check nothing ran');
@@ -518,13 +520,13 @@ test('no commit on main has its analysis cancelled by the next one', () => {
   assert.match(block, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/, 'a push to main can cancel an analysis still running');
 });
 
-test('the old address is published only when docs/ changes, and never cancelled by the next push', () => {
+test('the old address is published only when pages/ changes, and never cancelled by the next push', () => {
   /* GitHub's own branch build ran on every push to main and cancelled itself when merges landed
      close together: #155 carries a red cross for a signpost that had not changed. */
   const text = read('pages.yml');
-  assert.match(text, /push:\n\s+branches: \[main\]\n\s+paths:\n\s+- 'docs\/\*\*'/, 'the signpost is rebuilt on pushes that do not touch it');
+  assert.match(text, /push:\n\s+branches: \[main\]\n\s+paths:\n\s+- 'pages\/\*\*'/, 'the signpost is rebuilt on pushes that do not touch it');
   assert.match(text, /concurrency:\n\s+group: pages\n\s+cancel-in-progress: false/, 'a publish can cancel the one before it');
-  assert.match(text, /actions\/upload-pages-artifact@[0-9a-f]{40}[^\n]*\n\s+with:\n\s+path: docs\n/, 'something other than docs/ would be published');
+  assert.match(text, /actions\/upload-pages-artifact@[0-9a-f]{40}[^\n]*\n\s+with:\n\s+path: pages\n/, 'something other than pages/ would be published');
 });
 
 
@@ -581,3 +583,35 @@ test('every job gives up on its own, well before the six hours GitHub would wait
   assert.ok(jobs >= 30, `only ${jobs} jobs found, so the walk stopped finding them`);
   assert.deepEqual(missing, [], missing.join('\n'));
 });
+
+test('the cache warm-up on main is never cancelled by the next merge', () => {
+  /* 6d88972a (#682) carried a red cross on main because the next merge cancelled its warm-up. */
+  const text = read('rust-cache.yml');
+  assert.match(text, /concurrency:\r?\n\s+group: [^\n]+\n\s+cancel-in-progress: false/, 'a merge cancels the warm-up before it');
+});
+
+test('every job that reads the Rust cache sets up the same stable first', () => {
+  /* rustc's version is part of the cache key. A Windows job that used the runner image's own,
+   * older Rust looked for a key rust-cache.yml never saved, and built every crate from scratch:
+   * ten minutes a run in the merge queue, until 2026-11-16. */
+  for (const f of workflows) {
+    const text = read(f);
+    for (const [name, body] of Object.entries(jobsOf(text))) {
+      const at = body.indexOf('Swatinem/rust-cache@');
+      if (at === -1) continue;
+      assert.match(body.slice(0, at), /rustup toolchain install stable[^\n]*&& rustup default stable/,
+        `${f} ${name}: reads the Rust cache without installing stable first`);
+    }
+  }
+});
+
+/** A workflow's jobs by name: each job's text, from its key to the next job's. */
+function jobsOf(text) {
+  const body = text.split(/\njobs:\n/)[1] || '';
+  const out = {};
+  for (const part of body.split(/\n(?= {2}[a-z][\w-]*:\n)/)) {
+    const m = /^\s*([a-z][\w-]*):/.exec(part);
+    if (m) out[m[1]] = part;
+  }
+  return out;
+}

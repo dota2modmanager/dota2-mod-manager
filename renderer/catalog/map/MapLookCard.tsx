@@ -18,7 +18,7 @@ export function MapLookCard({ m, onOpen }: { m: MapLookCardModel; onOpen: (kind:
   return (
     <CardShell moves={false} installed={m.installed} dataKey={`builtin|map|${m.kind}`} index={0} onClick={(e) => onOpen(m.kind, e.currentTarget)}>
       <div className="card-media">
-        {src ? <img src={src} alt="" /> : <div className="noimg"><span className="ms">{m.kind === 'towers' ? 'fort' : 'forest'}</span></div>}
+        {src ? <img decoding="async" src={src} alt="" /> : <div className="noimg"><span className="ms">{m.kind === 'towers' ? 'fort' : 'forest'}</span></div>}
       </div>
       <div className="card-body">
         <CardName>{m.kind === 'towers' ? L`Башни из игры` : L`Деревья из игры`}</CardName>

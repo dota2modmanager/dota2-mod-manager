@@ -13,6 +13,8 @@ import { $ } from '../core/dom.ts';
 import { state } from '../core/store.ts';
 import { PANEL_DEFAULTS, PANEL_LIMITS, PANEL_ZOOM_LIMITS, type Panels, type PanelSize } from '../core/constants.ts';
 import { catalogOnShow } from '../core/router.ts';
+import { fitFor } from './fit.ts';
+import { bindNavScroll } from './tab-strip.ts';
 
 type PanelZoom = 'topZoom' | 'bottomZoom' | 'railZoom';
 type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
@@ -47,11 +49,36 @@ function paintPanelScales(): void {
   paintScaleRow('zoomBottom', Math.round(state.panels.bottomZoom * 100));
 }
 
+let fit = 1;
+
+export const fitZoom = (): number => fit;
+
+function paintZoom(): void {
+  const factor = Number(state.settings?.uiScale) || 1;
+  document.documentElement.style.setProperty('--content-zoom', String(factor * fit));
+}
+
 export function applyContentZoom(factor: number): void {
   if (state.settings) state.settings.uiScale = factor;
-  document.documentElement.style.setProperty('--content-zoom', String(factor));
+  paintZoom();
   paintScale(Math.round(factor * 100));
 }
+
+// The window's share is applied once the edge stops moving: changing the zoom mid-drag reflows
+// every screen at each step, and the drag stutters under it.
+let refit = 0;
+function refitToWindow(): void {
+  const next = fitFor(window.innerWidth, window.innerHeight);
+  if (next === fit) return;
+  fit = next;
+  paintZoom();
+  paintPanels();
+}
+window.addEventListener('resize', () => {
+  clearTimeout(refit);
+  refit = window.setTimeout(refitToWindow, 180);
+});
+fit = fitFor(window.innerWidth, window.innerHeight); // painted by the start-up applyContentZoom and bindPanels
 
 // paints first, saves after: the wheel can outrun the IPC and must not wait for it
 export function applyScalePct(pct: number): void {
@@ -118,9 +145,9 @@ export function paintPanels(): void {
   root.setProperty('--tb-h', `${p.topH}px`);
   root.setProperty('--status-h', `${p.bottomH}px`);
   root.setProperty('--rail-w', `${p.railW}px`);
-  root.setProperty('--top-zoom', String(p.topZoom));
-  root.setProperty('--bottom-zoom', String(p.bottomZoom));
-  root.setProperty('--rail-zoom', String(p.railZoom));
+  root.setProperty('--top-zoom', String(p.topZoom * fit));
+  root.setProperty('--bottom-zoom', String(p.bottomZoom * fit));
+  root.setProperty('--rail-zoom', String(p.railZoom * fit));
   document.body.classList.toggle('top-folded', p.topFolded);
   document.body.classList.toggle('bottom-folded', p.bottomFolded);
   document.body.classList.toggle('rail-folded', p.railFolded);
@@ -159,7 +186,7 @@ function bindGrip(sel: string, { size: sizeKey, zoom: zoomKey, fold: foldKey, de
     const start = state.panels[sizeKey];
     // the pointer moves in viewport pixels, the panel is sized in its own, which its zoom
     // multiplies — so a 1px drag is 1/zoom of the panel's own
-    const perPixel = 1 / state.panels[zoomKey];
+    const perPixel = 1 / (state.panels[zoomKey] * fit);
     const origin = { x: e.clientX, y: e.clientY };
     el.classList.add('dragging');
     document.body.classList.add('grip-dragging');
@@ -187,87 +214,6 @@ function bindGrip(sel: string, { size: sizeKey, zoom: zoomKey, fold: foldKey, de
     paintPanels();
     savePanels();
   });
-}
-
-// The tab strip runs out of room on a small window or a high UI scale, and then it scrolls:
-// sideways with the wheel, or by grabbing and swiping it like a strip on a phone.
-export function syncNavOverflow(): void {
-  const nav = document.querySelector<HTMLElement>('#tbNav');
-  if (nav) nav.classList.toggle('scrollable', nav.scrollWidth > nav.clientWidth + 1);
-}
-
-function bindNavScroll(): void {
-  const nav = document.querySelector<HTMLElement>('#tbNav');
-  if (!nav) return;
-  new ResizeObserver(syncNavOverflow).observe(nav);
-  syncNavOverflow();
-
-  // the bar drops the wordmark when it gets cramped — measured on the bar itself, since its
-  // own zoom decides how much room it really has
-  const tb = document.querySelector<HTMLElement>('#titlebar');
-  if (tb) {
-    // Measured, not guessed from the width: the tabs come first, then the name, so the bar gives
-    // up the "Dota 2" pill, then the search's width, and the name only when nothing else is
-    // left. The name stays on screen otherwise, so a screenshot says which program it is.
-    const nav = document.querySelector<HTMLElement>('#tbNav');
-    const crowded = () => !!nav && nav.scrollWidth > nav.clientWidth + 1;
-    const syncWidth = () => {
-      tb.classList.remove('narrow', 'tight', 'tiny');
-      for (const step of ['narrow', 'tight', 'tiny']) {
-        if (!crowded()) break;
-        tb.classList.add(step);
-      }
-      syncNavOverflow();
-    };
-    // a frame later: the classes change the sizes being watched, and a change inside the
-    // callback is a loop the browser stops and reports
-    let queued = 0;
-    const watch = new ResizeObserver(() => { cancelAnimationFrame(queued); queued = requestAnimationFrame(syncWidth); });
-    watch.observe(tb);
-    // a tab's word changes with the language and the bar's width does not
-    document.querySelectorAll('#tbNav .tb-tab').forEach((t) => watch.observe(t));
-    syncWidth();
-  }
-
-  nav.addEventListener('wheel', (e) => {
-    if (e.ctrlKey) return; // that gesture belongs to the panel size
-    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-    if (!delta || nav.scrollWidth <= nav.clientWidth) return;
-    e.preventDefault();
-    nav.scrollLeft += delta;
-  }, { passive: false });
-
-  let drag: { id: number; x: number; left: number; moved: boolean } | null = null;
-  let swallowClick = false;
-  nav.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0 || nav.scrollWidth <= nav.clientWidth) return;
-    drag = { id: e.pointerId, x: e.clientX, left: nav.scrollLeft, moved: false };
-  });
-  // on the window: a swipe often runs past the strip, and it must keep scrolling anyway
-  window.addEventListener('pointermove', (e) => {
-    if (!drag || e.pointerId !== drag.id) return;
-    const dx = e.clientX - drag.x;
-    if (!drag.moved) {
-      if (Math.abs(dx) < 4) return; // still a click, not a swipe
-      drag.moved = true;
-      nav.classList.add('dragging');
-    }
-    nav.scrollLeft = drag.left - dx;
-  });
-  const endDrag = () => {
-    if (!drag) return;
-    if (drag.moved) swallowClick = true; // a swipe must not also switch the view
-    nav.classList.remove('dragging');
-    drag = null;
-  };
-  window.addEventListener('pointerup', endDrag);
-  window.addEventListener('pointercancel', endDrag);
-  nav.addEventListener('click', (e) => {
-    if (!swallowClick) return;
-    swallowClick = false;
-    e.preventDefault();
-    e.stopPropagation();
-  }, true);
 }
 
 export function bindPanels(): void {

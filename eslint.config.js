@@ -11,8 +11,8 @@
  * globals each corner of the codebase really has, so a real mistake is not buried in noise
  * about `document` in the main process.
  *
- * The TypeScript files are outside this file. The type check (tools/typecheck.mjs, over
- * src/tsconfig.json) is their lint: it refuses a name that is not there, which is the same rule
+ * The TypeScript files are outside this file. The type check (tools/dev/typecheck.mjs, over
+ * renderer/ and test/ tsconfig.json) is their lint: it refuses a name that is not there, which is the same rule
  * with the types behind it, and the flags there cover the rest of this list that it can.
  *
  * Style is not linted here on purpose. This is a check for code that cannot run, not a
@@ -80,7 +80,7 @@ const rules = {
   'no-setter-return': 'error',
   'no-this-before-super': 'error',
   'getter-return': 'error',
-  // used deliberately in tools/check-i18n.js, which disables it by name there
+  // used deliberately in tools/dev/check-i18n.js, which disables it by name there
   'no-new-func': 'error',
 };
 
@@ -92,20 +92,15 @@ module.exports = [
     ],
   },
   {
-    // the main process, the preload bridge and everything they require
-    files: ['preload.js', 'src/**/*.js', 'test/**/*.js', 'tools/**/*.js'],
+    // the preload bridge, the tests and the tools
+    files: ['preload.js', 'test/**/*.js', 'tools/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'commonjs', globals: NODE },
     rules,
   },
   {
-    // The bundled renderer exports ES modules.
-    files: ['test/loadout-*.test.js', 'test/sprite-texture-selection.test.js', 'test/tinker-cosmic-*.test.js'],
-    languageOptions: { sourceType: 'module' },
-  },
-  {
     /* The mail worker runs in Cloudflare's runtime rather than in Node: a module, with fetch and
        friends, and none of Node's own globals. */
-    files: ['tools/email-worker/**/*.js'],
+    files: ['tools/ops/email-worker/**/*.js'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
@@ -121,12 +116,12 @@ module.exports = [
   },
   {
     // the preset bot runs in Cloudflare's runtime, which has the web's streams as globals
-    files: ['tools/preset-bot/**/*.mjs'],
+    files: ['tools/catalog/preset-bot/**/*.mjs'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { ...NODE, DecompressionStream: 'readonly' } },
     rules,
   },
   {
-    /* The Tauri shell's bridge (docs/rust-migration.md): a classic script injected into the page
+    /* The Tauri shell's bridge (src-tauri/src/bridge.js): a classic script injected into the page
        before anything else runs, so browser globals and no module syntax. */
     files: ['src-tauri/src/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'script', globals: BROWSER },

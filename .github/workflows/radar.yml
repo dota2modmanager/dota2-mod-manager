@@ -7,7 +7,7 @@ name: Radar
 # have gone quiet, secrets about to expire, a weekly report that did not arrive. The issue body is
 # rewritten each run rather than commented on, so it always reads as today and never piles up.
 # When something has waited longer than CONTRIBUTING.md and SECURITY.md promise, the maintainer
-# gets one Discord message in a private channel. tools/radar.mjs says why this exists.
+# gets one Discord message in a private channel. tools/ops/radar.mjs says why this exists.
 
 on:
   schedule:
@@ -47,7 +47,7 @@ jobs:
 
       # Every secret the workflows use, tried against the service it belongs to: does it still
       # work, and when does it stop. The results go to credentials-status.json for the next step,
-      # without a single value in them. tools/check-credentials.mjs says why this exists.
+      # without a single value in them. tools/ops/check-credentials.mjs says why this exists.
       - name: Check that every secret still works
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -64,7 +64,8 @@ jobs:
           FINGERPRINTS_DEPLOY_KEY: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
-        run: node tools/check-credentials.mjs
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: node tools/ops/check-credentials.mjs
 
       # The webhook address is a credential. The script never prints it, including in an error.
       - name: Look at everything that waits on a person
@@ -74,7 +75,7 @@ jobs:
           DRY: ${{ inputs.dry }}
         run: |
           if [ "$DRY" = "true" ]; then
-            node tools/radar.mjs --dry
+            node tools/ops/radar.mjs --dry
           else
-            node tools/radar.mjs
+            node tools/ops/radar.mjs
           fi

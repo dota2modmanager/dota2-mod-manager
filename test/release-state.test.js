@@ -1,12 +1,12 @@
-/* What a published release has to carry and what the update mirror has to hold (tools/release-state.js),
- * the lists release.yml checks the draft against and tools/release-watch.mjs repairs the mirror by. */
+/* What a published release has to carry and what the update mirror has to hold (tools/release/release-state.js),
+ * the lists release.yml checks the draft against and tools/release/release-watch.mjs repairs the mirror by. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const state = require('../tools/release-state.js');
-const { currentPlan } = require('../tools/mirror-plan.js');
+const state = require('../tools/release/release-state.js');
+const { currentPlan } = require('../tools/catalog/mirror-plan.js');
 
 const rel = (tag, extra = {}) => ({
   tag_name: tag, draft: false, prerelease: /-/.test(tag), published_at: '2026-09-27T10:00:00Z', body: '',
@@ -14,14 +14,16 @@ const rel = (tag, extra = {}) => ({
 });
 
 test('every release carries the beta feed and the proof, a beta included', () => {
-  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', 'SHA256SUMS', 'SHA256SUMS.intoto.jsonl']) {
+  for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json', 'SHA256SUMS', 'SHA256SUMS.intoto.jsonl']) {
     assert.ok(state.REQUIRED_ASSETS.includes(name), name);
   }
   // 2.7.1 as it went out: the beta feed was to be added after publishing, and never was
   const shipped = ['Dota-2-Mod-Manager-Portable.exe', 'Dota-2-Mod-Manager-Setup.exe', 'Dota-2-Mod-Manager-Setup.exe.blockmap',
     'Dota-2-Mod-Manager.AppImage', 'dota2-mod-manager.cdx.json', 'latest-linux.yml', 'latest.yml', 'portable.yml', 'SHA256SUMS', 'SHA256SUMS.intoto.jsonl'];
-  assert.deepEqual(state.missingAssets(shipped), ['beta.yml', 'beta-linux.yml']);
-  assert.deepEqual(state.missingAssets([...shipped, 'beta.yml', 'beta-linux.yml']), []);
+  assert.deepEqual(state.missingAssets(shipped), ['beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json']);
+  assert.deepEqual(state.missingAssets([...shipped, 'beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json']), []);
+  // the Tauri feed announces its version in JSON
+  assert.equal(state.feedVersion(JSON.stringify({ version: '3.9.0', notes: '' }, null, 2)), '3.9.0');
 });
 
 test('versions sort the way semantic versioning says, a beta before its release', () => {
@@ -126,10 +128,29 @@ test('what the watch holds a release to: published after it began, announced onc
   assert.equal(state.watched(rel('v2.7.1', { published_at: '2026-09-24T12:58:26Z' })), false, '2.7.1 went out unannounced on purpose');
   assert.equal(state.announced({ body: `x\n\n${state.ANNOUNCED}\n` }), true);
   assert.equal(state.announced({ body: 'x' }), false);
-  // the notes as tools/virustotal.mjs writes them, so the two cannot drift apart unnoticed
-  const { withReport, reportSection } = await import('../tools/virustotal.mjs');
+  // the notes as tools/release/virustotal.mjs writes them, so the two cannot drift apart unnoticed
+  const { withReport, reportSection } = await import('../tools/release/virustotal.mjs');
   const body = withReport('Notes.', reportSection([{ name: 'a.exe', url: 'u', flagged: 0, engines: 72 }]));
   assert.equal(state.scanned({ body }), true);
   assert.equal(state.scanned({ body: 'Notes.' }), false);
   assert.equal(state.scanned({ body: null }), false);
+});
+
+test('the mirror owes the Tauri feeds only for a release that carries them', () => {
+  // 3.8.0, the last Electron release, has no latest.json: the watch was red every run on 2026-11-15
+  const electron = state.mirrorExpectation(state.channelHeads([rel('v3.8.0')])).map((w) => w.name);
+  assert.equal(electron.includes('latest.json'), false);
+  assert.equal(electron.includes('beta.json'), false);
+  assert.ok(electron.includes('latest.yml'), 'the Electron copies still read latest.yml');
+  const withFeed = (tag) => rel(tag, { assets: [...rel(tag).assets, { name: 'latest.json', size: 1 }] });
+  const tauri = state.mirrorExpectation(state.channelHeads([withFeed('v4.0.0')])).map((w) => w.name);
+  assert.ok(tauri.includes('latest.json') && tauri.includes('beta.json'));
+});
+
+test('a release from before Tauri is not held to the Tauri feeds, and a new one is', () => {
+  const electron = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', ...state.BINARIES,
+    'SHA256SUMS', 'SHA256SUMS.intoto.jsonl', 'dota2-mod-manager.cdx.json'];
+  assert.deepEqual(state.missingAssets(electron, 'v3.8.0'), []);
+  assert.deepEqual(state.missingAssets(electron, 'v4.0.0'), ['latest.json', 'beta.json']);
+  assert.deepEqual(state.missingAssets(electron), ['latest.json', 'beta.json'], 'a draft is checked against everything');
 });

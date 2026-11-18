@@ -48,7 +48,7 @@
   --text: var(--md-on-surface);
   --text-muted: var(--md-on-surface-variant);
   /* 70%, not the 62% it was: over the lighter right half of the page's gradient a card's caption
-     measured 4.0:1 against WCAG's 4.5, and 70% clears 4.7 on every card (docs/accessibility.md) */
+     measured 4.0:1 against WCAG's 4.5, and 70% clears 4.7 on every card */
   --text-faint: color-mix(in srgb, var(--md-on-surface-variant) 70%, transparent);
 
   --success: #4ade80;

@@ -6,8 +6,7 @@ it in is copying rather than remembering. The criteria ids match the anchors in 
 
 The same answers live in `.bestpractices.json` at the root of this repository, which the badge site
 reads by itself: opening the questionnaire and pressing "Save (and continue)" with the robot icon
-fills the form from it. This file is that list in prose, and test/openssf.test.js fails when the
-two stop naming the same criteria.
+fills the form from it. This file is that list in prose: change an answer in both.
 
 **The file fills blanks, it does not correct the form.** The site applies a proposed answer only
 where the form still says `?`; a criterion that already has a saved answer keeps it, whatever the
@@ -36,7 +35,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | `floss_license_osi` | Met: GPL-3.0 is OSI approved | repo LICENSE |
 | `license_location` | Met: LICENSE in the repository root | repo LICENSE |
 | `documentation_basics` | Met | site, and repo README.md |
-| `documentation_interface` | Met | repo docs/API.md, generated from the source by `npm run docs` and checked in CI |
+| `documentation_interface` | Met | repo renderer/api/, the typed window calls, held against preload.js in CI |
 | `sites_https` | Met: github.com, dota2modmanager.com and cdn.dota2modmanager.com are TLS only | site |
 | `discussion` | Met: GitHub Issues and Discussions, plus the project's Discord | repo issues |
 | `english` | Met: every document in the repository is English; README.ru.md and CHANGELOG.ru.md are twins for Russian users | repo README.md |
@@ -46,8 +45,8 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 > The app is a desktop program, and its external interfaces are documented in three places: the
 > window itself is described with screenshots on the site, the `d2mm://` link format and the
-> settings file are described in ARCHITECTURE.md, and every exported function of every module is
-> in docs/API.md, which is generated from the source and fails CI when it drifts.
+> settings file are described in ARCHITECTURE.md, and every call the window makes into the app is
+> in renderer/api/, typed and held against the bridge in preload.js, which fails CI when they drift.
 
 ## Change control
 
@@ -86,7 +85,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 **Justification for `report_responses`**:
 
 > Every issue opened so far has an answer from the maintainer. CONTRIBUTING.md promises a first
-> reply within 72 hours, and a daily job (`tools/radar.mjs`) measures the project against that
+> reply within 72 hours, and a daily job (`tools/ops/radar.mjs`) measures the project against that
 > promise and messages the maintainer when something is overdue.
 
 **Justification for `vulnerability_report_response`**:
@@ -98,12 +97,12 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 | Criterion | Answer | URL to give |
 | --- | --- | --- |
-| `build` | Met: `npm ci` then `npm run dist` (electron-builder); CI builds the installer, the portable build and the AppImage for every release | repo .github/workflows/release.yml |
-| `build_common_tools` | Met: npm, electron-builder, GitHub Actions | repo package.json |
-| `build_floss_tools` | Met: Node.js, npm and electron-builder are FLOSS | repo package.json |
-| `test` | Met: `npm test`, more than 80 test files on node:test, released under the project's own licence | repo test/ |
-| `test_invocation` | Met: `npm test` | repo package.json |
-| `test_most` | Met | repo .github/coverage-baseline.json |
+| `build` | Met: `npm ci` then `npm run dist` (`tauri build`, over cargo); CI builds the installer, the portable build and the AppImage for every release | repo .github/workflows/release.yml |
+| `build_common_tools` | Met: cargo, npm, the Tauri CLI, GitHub Actions | repo package.json |
+| `build_floss_tools` | Met: Rust, cargo, Node.js, npm and Tauri are FLOSS | repo package.json |
+| `test` | Met: `npm test` (node:test, the window and the release tools) and `cargo test` (the Rust core), released under the project's own licence | repo test/ |
+| `test_invocation` | Met: `npm test` and `cargo test` | repo package.json |
+| `test_most` | Unmet (SUGGESTED) | none needed |
 | `test_continuous_integration` | Met: the suite runs on Linux and Windows for every push and every pull request | repo .github/workflows/test.yml |
 | `test_policy` | Met | repo CONTRIBUTING.md |
 | `tests_are_added` | Met | repo pull requests |
@@ -114,18 +113,16 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 **Justification for `test_most`**: 
 
-> Coverage is measured on every run and held two ways: an aggregate floor of 90% of lines in the
-> gate, and each file's own number per platform in .github/coverage-baseline.json, which a run
-> below them fails. Measured today it is about 93% of lines and 87% of branches, with the modules
-> that write into the player's game folder above 85%.
+> Coverage is not measured. Since 2026-11-15 the suite keeps the tests that guard a player's game
+> folder, files, update and window, and a bug that already happened once, rather than chasing a
+> coverage number.
 
 **Justification for `test_policy` and `tests_are_added`**:
 
-> CONTRIBUTING.md states that a fix arrives with a test, or with a `No-Test-Because:` line saying
-> why none is possible. A required check on every pull request ("A fix brings its test") enforces
-> it against the diff. Beyond that, `.github/mutants.json` holds deliberate breakages of the
-> promises the tests are supposed to guard, and a weekly run breaks each one to check the suite
-> notices; a mutant that survives is a test that proves nothing.
+> CONTRIBUTING.md states that a fix for a bug that reached users brings the test that would have
+> caught it. Pull requests that add behaviour add its tests: the code that writes into the game
+> folder (the gameinfo patch, the VPK writer, file transactions) carries Rust tests beside it, and
+> new window logic its node:test file.
 
 **Justification for `warnings_strict`**:
 
@@ -139,15 +136,15 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | --- | --- | --- |
 | `know_secure_design` | Met | repo ARCHITECTURE.md, "Who is allowed to have written this" |
 | `know_common_errors` | Met | repo docs/incidents/ |
-| `crypto_published` | Met: SHA-256 and Ed25519 from Node's own crypto, TLS from the platform | repo src/catalog.ts |
-| `crypto_call` | Met: node:crypto only, no cryptography of the project's own | repo src/catalog.ts |
+| `crypto_published` | Met: SHA-256 and Ed25519 from Node's own crypto, TLS from the platform | repo crates/mm-core/src/catalog/mod.rs |
+| `crypto_call` | Met: node:crypto only, no cryptography of the project's own | repo crates/mm-core/src/catalog/mod.rs |
 | `crypto_floss` | Met | repo package.json |
-| `crypto_keylength` | Met: SHA-256 and Ed25519 | repo src/remote-config.ts |
-| `crypto_working` | Met | repo src/remote-config.ts |
-| `crypto_weaknesses` | Met | repo src/catalog.ts |
-| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by Node and Chromium | repo src/net.ts |
-| `crypto_password_storage` | N/A: the app stores no passwords | repo src/discord-auth.ts |
-| `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo src/discord-auth.ts |
+| `crypto_keylength` | Met: SHA-256 and Ed25519 | repo crates/mm-core/src/catalog/remote_config.rs |
+| `crypto_working` | Met | repo crates/mm-core/src/catalog/remote_config.rs |
+| `crypto_weaknesses` | Met | repo crates/mm-core/src/catalog/mod.rs |
+| `crypto_pfs` | Met: every connection is TLS 1.3 or 1.2 with ECDHE, provided by the operating system's TLS (native-tls) | repo crates/mm-core/src/catalog/net_fetch.rs |
+| `crypto_password_storage` | N/A: the app stores no passwords | repo crates/mm-core/src/app/discord_auth.rs |
+| `crypto_random` | Met: `crypto.randomBytes` for the OAuth state | repo crates/mm-core/src/app/discord_auth.rs |
 | `delivery_mitm` | Met: downloads and updates are HTTPS from GitHub releases or the project's own CDN | repo SECURITY.md |
 | `delivery_unsigned` | Met | repo SECURITY.md |
 | `vulnerabilities_fixed_60_days` | Met | repo security advisories |
@@ -182,8 +179,8 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 **Justification for `delivery_unsigned`**:
 
 > Every release carries SHA256SUMS, a Sigstore attestation of that list produced by the release
-> workflow, and an SBOM. Updates are fetched over HTTPS and verified by electron-updater against
-> the hashes in the signed update feed. Mod archives are checked against `mod-hashes.json`, which
+> workflow, and an SBOM. Updates are fetched over HTTPS and installed by the Tauri updater only
+> when their minisign Ed25519 signature checks out against the public key built into the app. Mod archives are checked against `mod-hashes.json`, which
 > the catalog publishes and signs with a key pinned in the app.
 
 **Justification for `vulnerabilities_fixed_60_days`**:
@@ -213,11 +210,10 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 
 **Justification for `dynamic_analysis`**:
 
-> Three kinds. The built installer and AppImage are installed and clicked through on Linux and on
+> Two kinds. The built installer and AppImage are installed and clicked through on Linux and on
 > Windows before a release becomes public: install a mod, switch it off, restart, switch it on,
 > remove it, with the game folder checked on disk after every step. The VPK and zip parsers are
-> fuzzed with seeded random input, and every input that broke one is kept as a test. And a weekly
-> mutation run breaks the promises the tests guard, to check the suite notices.
+> fuzzed with seeded random input (`tools/dev/fuzz-parsers.mjs`).
 
 **Justification for `dynamic_analysis_enable_assertions`**:
 
@@ -255,10 +251,10 @@ by hand.
 | `documentation_architecture` | Met | repo ARCHITECTURE.md |
 | `documentation_security` | Met | repo SECURITY.md |
 | `documentation_quick_start` | Met | repo README.md |
-| `documentation_current` | Met | repo docs/API.md |
+| `documentation_current` | Met | docs/DECISIONS.md, read against the repository with a date at its top; test/repo-shape.test.js fails on a dead link |
 | `documentation_achievements` | Met | repo README.md |
 | `accessibility_best_practices` | Met (SHOULD) | repo renderer |
-| `internationalization` | Met (SHOULD) | repo tools/check-i18n.js |
+| `internationalization` | Met (SHOULD) | repo tools/dev/check-i18n.js |
 | `sites_password_security` | N/A | none needed |
 | `maintenance_or_update` | Met | repo RELEASING.md |
 | `report_tracker` | Met | https://github.com/dota2modmanager/dota2-mod-manager/issues |
@@ -278,9 +274,9 @@ by hand.
 | `updateable_reused_components` | Met | none needed |
 | `interfaces_current` | Met (SHOULD) | none needed |
 | `automated_integration_testing` | Met | repo .github/workflows/test.yml |
-| `regression_tests_added50` | Met | repo tools/pr-test-rule.mjs |
-| `test_statement_coverage80` | Met | repo .github/coverage-baseline.json |
-| `test_policy_mandated` | Met | repo CONTRIBUTING.md |
+| `regression_tests_added50` | Met: for the last six months a required check held every fix to a test or a stated reason; retired on 2026-11-15, the rule stays in CONTRIBUTING.md | repo CONTRIBUTING.md |
+| `test_statement_coverage80` | Unmet: coverage is no longer measured | none needed |
+| `test_policy_mandated` | Unmet: the written policy covers fixes for bugs users met, not every new piece of functionality | none needed |
 | `tests_documented_added` | Met | repo CONTRIBUTING.md |
 | `warnings_strict` | Met | none needed |
 | `implement_secure_design` | Met | repo docs/assurance-case.md |
@@ -304,9 +300,9 @@ by hand.
 All three are done.
 
 - The badge is in both READMEs, beside Scorecard.
-- `tools/radar.mjs` reads the entry every morning and compares it with `.bestpractices.json`. An
+- `tools/ops/radar.mjs` reads the entry every morning and compares it with `.bestpractices.json`. An
   answer written here that the entry never took is a line in the status issue, because the robot
   on the form fills blanks and leaves saved answers alone, so the two drift apart in silence.
 - Silver is written out above, and was awarded on 2026-09-23. It stood at 98% until
   `access_continuity` turned Met with the move to an organization that day;
-  [GOVERNANCE.md](../GOVERNANCE.md), section Continuity, says why.
+  [GOVERNANCE.md](GOVERNANCE.md), section Continuity, says why.

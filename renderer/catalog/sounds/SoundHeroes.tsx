@@ -15,7 +15,7 @@ export interface SoundHeroesModel {
 }
 
 function Portrait({ src }: { src: string | undefined }) {
-  return src ? <img className="sound-hero-pic" src={src} alt="" draggable={false} /> : <span className="sound-hero-pic"><span className="ms">person</span></span>;
+  return src ? <img decoding="async" className="sound-hero-pic" src={src} alt="" draggable={false} /> : <span className="sound-hero-pic"><span className="ms">person</span></span>;
 }
 
 /** Every hero, searchable. */

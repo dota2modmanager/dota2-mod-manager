@@ -1,31 +1,34 @@
 # Install a mod, switch it off and on, and remove it, by clicking in the window.
 #
 # 2.6.5 and 2.6.6 went out with Install dead while every check here was green, because nothing
-# ever pressed the button (issue #19). tools/e2e.mjs presses it, in the sandbox game tree, with a
+# ever pressed the button (issue #19). tools/dev/e2e.mjs presses it, in the sandbox game tree, with a
 # fixture catalog and a fixture archive written into the app's own caches. It needs no network,
 # and it does not go red because the live catalog changed overnight.
 #
 # Both systems the app ships for, because the code that breaks is rarely the same on the two:
-# processes, file locks and Steam's layout all take a different branch on Windows.
+# processes, file locks and Steam's layout all take a different branch on Windows. The window is
+# the Tauri shell this commit builds (src-tauri/), driven through its harness (harness.rs answers
+# MM_EVAL beside MM_SHOT); release.yml clicks the installed build the same way.
 name: Window
 
 on:
-  push:
-    branches: [main]
+  # Installing through the window takes ten minutes, so it runs once: in the merge queue, on top of
+  # the newest main. On a pull request the jobs are skipped, which GitHub counts as passed, and
+  # nothing reaches main without them green. main is the queue's commit, so no push run either.
   pull_request:
-  # The merge queue installs a mod through the window again on top of the newest main.
   merge_group:
   workflow_dispatch:
 
-# The token reads the repository and nothing more.
+
 permissions:
   contents: read
 
 jobs:
   linux:
     name: Install a mod through the window
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -35,22 +38,33 @@ jobs:
 
       - run: npm ci
 
-      # Electron needs an X server that a runner does not have.
-      - name: Install xvfb
-        # A mirror that stops answering held this step for two hours on 2026-10-01. apt drops a
-        # silent connection after 30 s and tries another, and the step gives up at ten minutes.
+      # the runner image carries rustup; stable is whatever it names today
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # What Tauri needs on Linux (WebKitGTK, the tray, icons), and xvfb for a window. A mirror
+      # that stops answering held a step for two hours on 2026-10-01: apt drops a silent
+      # connection after 30 s and tries another, and the step gives up at ten minutes.
+      - name: System libraries
         timeout-minutes: 10
-        # The Ubuntu image ships xvfb (actions/runner-images, Ubuntu 24.04), so apt runs only when it is
-        # missing. On 2026-10-07 two runs spent their ten minutes waiting on azure.archive.ubuntu.com
-        # for a package that was already installed.
         run: |
-          if command -v Xvfb >/dev/null && command -v xvfb-run >/dev/null; then
-            echo "xvfb is already on the runner"
-          else
-            sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update && sudo apt-get -o Acquire::Retries=3 install -y xvfb
-          fi
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev xvfb
+
+      - name: The page for the shell
+        run: node tools/dev/ui-build.mjs
+
+      # the target folder rust-cache.yml built on main: a pull request rebuilds only what it
+      # changed instead of every crate from scratch.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: debug
+          save-if: false
+      - name: Build the shell
+        run: cargo build -p dota2-mod-manager
+
       - name: Click through installing a mod, removing it, and the removal window
-        run: xvfb-run -a node tools/e2e.mjs
+        run: xvfb-run -a node tools/dev/e2e.mjs --app target/debug/dota2-mod-manager
 
       - name: What the window showed
         if: always()
@@ -62,8 +76,9 @@ jobs:
 
   windows:
     name: Install a mod through the window on Windows
+    if: github.event_name != 'pull_request'
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -73,8 +88,25 @@ jobs:
 
       - run: npm ci
 
+      # the same stable rust-cache.yml warmed the cache with: rustc's version is part of its key
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      - name: The page for the shell
+        run: node tools/dev/ui-build.mjs
+
+      # the target folder rust-cache.yml built on main: a pull request rebuilds only what it
+      # changed instead of every crate from scratch.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: debug
+          save-if: false
+      - name: Build the shell
+        run: cargo build -p dota2-mod-manager
+
       - name: Click through installing a mod, removing it, and the removal window
-        run: node tools/e2e.mjs
+        shell: bash
+        run: node tools/dev/e2e.mjs --app target/debug/dota2-mod-manager.exe
 
       - name: What the window showed
         if: always()

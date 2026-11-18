@@ -32,29 +32,29 @@ has no checkout yet, [`skills/dota2-modding/SETUP.md`](skills/dota2-modding/SETU
 https://dota2modmanager.com/ai/setup.md) sets everything up. The rest of this file is about
 changing the app, and none of it is needed to make a mod.
 
-If you change the skill: `npm run modkit` lives in `tools/modkit.mjs` and `tools/modkit/`,
-tested by `test/modkit.test.js`; the skill folder is also a Claude Code plugin
+If you change the skill: `npm run modkit` lives in `tools/mods/modkit.mjs` and `tools/mods/modkit/`;
+the skill folder is also a Claude Code plugin
 (`skills/.claude-plugin/plugin.json`, listed by `.claude-plugin/marketplace.json`), so keep
 the folder free of anything a user should not download.
 
 ## What this is
 
-A desktop mod manager and modding toolkit for Dota 2. Electron 45 on Node 24. The window is **TypeScript and React,
-with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer`). New screens
+A desktop mod manager and modding toolkit for Dota 2, on Tauri 2 and Rust. The window is **TypeScript and React,
+with Motion for animation**, built by Vite (`vite.config.mjs`, into `out/renderer-tauri`). New screens
 and components are written that way: one component per file, logic that decides things in plain
-modules with tests, and no file past 300 lines (`npm run size` fails one). The main process in
-`src/` is TypeScript too, run without a build: Node strips the types when it loads a file.
+modules with tests. Everything behind the
+window is Rust: `crates/mm-core/` does the work, `src-tauri/` is the app around it, and
+`crates/mm-cli/` runs the same functions from the command line for the tests and the tools.
 `preload.js` stays CommonJS JavaScript checked through its JSDoc. DECISIONS.md, "The window is
 built by Vite", says why.
 
 ```
-src/main.ts        the order the app starts in, and auto-update. Nothing else belongs here
-src/services.ts    every long-lived service, built once in the order they depend on each other
-src/ipc.ts         every IPC module, registered in one place
+src-tauri/src/main.rs           the order the app starts in: the window, the tray, updates. Nothing else belongs here
+crates/mm-core/src/owner/mod.rs every long-lived service, built once, and every channel it answers
 preload.js         the only bridge the renderer gets. Every channel is listed once
 renderer/api/      its types: every name on window.api, and what each handler answers
-src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
-src/ipc-*.ts       one file per group of channels, each naming what it needs
+crates/mm-core/src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
+crates/mm-core/src/owner/owner_*.rs       one file per group of channels, each naming what it needs
 renderer/          the UI. views/ draw screens, ui/ are shared pieces, core/ is state
 renderer/shell/    what is not a screen: title bar, status bar, search, drops, updates
 renderer/catalog/  the catalog's React components, and the rules they draw in .ts with tests
@@ -75,18 +75,18 @@ back after they stopped being true. Every entry carries a command that settles i
 here to review rather than to change something, that file is the whole brief.
 
 **Do not read whole source files to orient yourself.** Find the symbol, then read its slice.
-`src/schema.ts`, `src/item-builder.ts` and `src/icons.ts` are over 500 lines, and reading one end
+`crates/mm-core/src/schema/mod.rs`, `crates/mm-core/src/item_builder/mod.rs` and `crates/mm-core/src/game/game_icons.rs` are over 500 lines, and reading one end
 to end wastes more than it tells you.
 
 **The domain is unusual and the obvious assumption is usually wrong.** Three examples that have
 each cost real time:
 
 - Dota mounts **one** language folder, named after the **voice** language, and a `-language` in
-  Steam's launch options outranks the game's own setting. `src/gamelang.ts` opens with the full
+  Steam's launch options outranks the game's own setting. `crates/mm-core/src/game/gamelang.rs` opens with the full
   rule. It is the rule, not a summary of one; change it only by measuring.
-- `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `src/schema.ts` works on latin1 strings
+- `items_game.txt` is ~50 MB with non-UTF8 bytes in it. `crates/mm-core/src/schema/mod.rs` works on latin1 strings
   on purpose. A round trip through a "cleaner" encoding mangles it.
-- A pak slot decides which of two mods the game loads. Lower wins. `src/installer.ts` allocates
+- A pak slot decides which of two mods the game loads. Lower wins. `crates/mm-core/src/install/installer.rs` allocates
   them, and 65 to 67 are never handed out because another program writes them.
 
 ## How to know your change works
@@ -94,8 +94,7 @@ each cost real time:
 ```bash
 npm run lint              # eslint: names that do not exist, not style
 npm test                  # node:test, no dependencies
-npm run test:coverage     # the same with the floor CI enforces
-node tools/check-i18n.js  # every Russian string has an English twin
+node tools/dev/check-i18n.js  # every Russian string has an English twin
 npm run sandbox:seed      # a throwaway game tree with real mods in it
 npm run start:sandbox     # the app against that tree, never against a real game
 ```
@@ -106,7 +105,7 @@ mistake is expensive: `sandbox/` is a disposable copy of the game's folder shape
 
 For a UI change, `MM_SHOT=<path>` takes a screenshot after load; `MM_EVAL=<js>` writes the
 answer to a question about the finished DOM beside it. Both are dev-only and documented in
-`src/dev-harness.ts`. A screenshot proves a layout; `MM_EVAL` proves the text, the language and the
+`src-tauri/src/harness.rs`. A screenshot proves a layout; `MM_EVAL` proves the text, the language and the
 state, and it is the one that catches real bugs.
 
 The website has tests of its own, in `site/test/`, run against the built pages in the Chrome or
@@ -118,9 +117,8 @@ npm --prefix site test        # links, markup, every kind of page at 320-1440 px
                               # the catalog and its preset links, a mod's own page, and the
                               # same pages in WebKit
 npm --prefix site run look    # pictures of every kind of page, desktop and phone
-npm run guide-shots           # the app's own pictures in the guides, taken in the sandbox
-node tools/site-shots.mjs <dir>  # the site's and the README's big pictures, on the real game through a write jail
-node tools/site-tour.mjs <dir>   # the tour on the site, filmed off the app in both languages, after site-shots
+node tools/site/site-shots.mjs <dir>  # the site's and the README's big pictures, on the real game through a write jail
+node tools/site/site-tour.mjs <dir>   # the tour on the site, filmed off the app in both languages, after site-shots
 ```
 
 The tests are what CI runs before the site deploys. The WebKit ones (every browser on an iPhone
@@ -134,11 +132,8 @@ it.
 
 Four of them check the project against itself rather than checking code:
 
-- `test/ipc-contract.test.js` — every channel the renderer can call has a handler, every
-  handler is reachable, none registered twice, every `src/ipc-*.ts` wired into main.
 - `test/release-contract.test.js` — the version, both changelogs and what CI reads all agree.
-- `test/coverage.test.ts` — which mod supplies a file when two carry the same path.
-- `tools/check-i18n.js` — no Russian string without an English one.
+- `tools/dev/check-i18n.js` — no Russian string without an English one.
 
 If one of these fails, the fix is almost never the test.
 
@@ -151,7 +146,7 @@ If one of these fails, the fix is almost never the test.
 - **Errors are for people.** "Свободных слотов pakNN не осталось" beats "ENOENT".
 - **Anything that needs the network fails quietly.** The app has to work offline with what it
   cached. A feature that throws because GitHub is unreachable is a bug.
-- **Writing into the game folder is a transaction.** `src/file-tx.ts`. If a step fails,
+- **Writing into the game folder is a transaction.** `crates/mm-core/src/install/file_tx.rs`. If a step fails,
   everything goes back, including files displaced to make room.
 - No emoji in code, comments, commits, UI or documentation.
 

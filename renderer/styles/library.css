@@ -19,10 +19,13 @@
      (library/drag.ts), and an entrance holding transform would pin it where it stood */
   animation: cardIn 0.35s var(--ease) backwards;
   animation-delay: calc(var(--i) * 18ms);
-  /* the frosted buttons on a row (.btn, backdrop-filter) blur the row itself, not the page under
-     it: while the entrance held opacity, that is what it did, and the buttons are drawn for it */
-  will-change: opacity;
 }
+/* A row's buttons are not frosted. A .btn blurs what is under it, and under a row's button is the
+   row: there is nothing to see through, only a blur drawn again on every frame of a scroll, a
+   few per row and hundreds in a long list. It also cost every row a layer of its own: the blur
+   saw through the row while its entrance held opacity, so the rows carried will-change: opacity
+   for good, and a list of six hundred was six hundred layers to move on each frame. */
+.lib-row .btn, .card .btn { backdrop-filter: none; }
 .lib-row:hover { border-color: var(--border-strong); background: var(--surface-hover); }
 /* a row moved in the order from its menu, on its way: over its neighbour, lifted the way a dragged
    one is, and solid, so the two names never print over each other (library/row-motion.ts) */
@@ -247,25 +250,6 @@ body.is-dragging-row .lib-row:not(.lib-dragging):hover { border-color: var(--bor
 .btn-icon { padding: 5px 7px; }
 .btn-icon .ms { margin: 0; font-size: 16px; }
 
-/* checkbox — themed to the lavender accent */
-.lib-check {
-  appearance: none; -webkit-appearance: none;
-  width: 18px; height: 18px; flex-shrink: 0; cursor: pointer;
-  border: 1.5px solid var(--border-strong); border-radius: 6px;
-  background: var(--surface); position: relative; transition: all 0.15s;
-}
-.lib-check:hover { border-color: var(--primary); }
-.lib-check:checked { background: var(--primary); border-color: var(--primary); }
-.lib-check:checked::after {
-  content: ''; position: absolute; left: 5px; top: 1.5px;
-  width: 5px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
-}
-.lib-check:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.lib-check:indeterminate { background: var(--primary); border-color: var(--primary); }
-.lib-check:indeterminate::after {
-  content: ''; position: absolute; left: 3px; top: 7px; width: 9px; height: 2px;
-  background: #fff; border: none; transform: none; border-radius: 1px;
-}
 .lib-row.selected { border-color: var(--primary); background: var(--primary-dim); }
 .member-row.selected { border-color: var(--primary); background: var(--primary-dim); }
 

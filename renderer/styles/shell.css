@@ -28,9 +28,9 @@
   background: color-mix(in srgb, var(--md-surface) 78%, transparent);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--border);
-  -webkit-app-region: drag;
+  -webkit-app-region: drag; --drag: 1;
 }
-#titlebar button, #titlebar input, #titlebar .tb-search { -webkit-app-region: no-drag; }
+#titlebar button, #titlebar input, #titlebar .tb-search { -webkit-app-region: no-drag; --drag: 0; }
 
 .tb-brand {
   display: flex;
@@ -112,7 +112,7 @@
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
-  -webkit-app-region: no-drag;  /* the strip is swiped, so it cannot also drag the window */
+  -webkit-app-region: no-drag; --drag: 0;  /* the strip is swiped, so it cannot also drag the window */
   overscroll-behavior-x: contain;
 }
 #tbNav::-webkit-scrollbar { display: none; }
@@ -163,7 +163,7 @@
 
 /* Help, standing where the Guides tab used to. Not a tab: it leaves the app instead of
    changing what is showing, so it reads as a mark rather than a place. */
-.tb-help { position: relative; flex-shrink: 0; -webkit-app-region: no-drag; }
+.tb-help { position: relative; flex-shrink: 0; -webkit-app-region: no-drag; --drag: 0; }
 .tb-help-btn {
   display: inline-flex;
   align-items: center;
@@ -302,7 +302,7 @@
 .tb-queue-count:empty { display: none; }
 
 /* Discord account, between the search and the window buttons */
-.tb-account { display: flex; align-items: center; margin-left: 10px; -webkit-app-region: no-drag; }
+.tb-account { display: flex; align-items: center; margin-left: 10px; -webkit-app-region: no-drag; --drag: 0; }
 .tb-account:empty { display: none; }
 .tb-login, .tb-user {
   display: inline-flex; align-items: center; gap: 7px;
@@ -421,8 +421,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 16px 0 18px;
-  font-size: 11.5px;
+  padding: 0 var(--space-3) 0 var(--space-4);
+  font-size: var(--text-sm);
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--md-surface) 68%, transparent);
@@ -433,19 +433,34 @@
 .dot.ok { background: var(--success); box-shadow: 0 0 8px rgba(52, 211, 153, 0.5); }
 .dot.bad { background: var(--danger); }
 .dot.warn { background: var(--warning); }
-/* launch + master-mods controls (status bar, right cluster) */
-.sb-right { margin-left: auto; display: flex; align-items: center; gap: 14px; flex-shrink: 0; padding-left: 8px; }
+/* launch + master-mods controls (status bar, right cluster). One height and one shape for the
+   three, so the bar reads as a row: the folder and the switch are the quiet pair, Play is the one
+   filled thing. They used to be 28, 34 and 34 px tall with three different paddings. */
+.sb-right { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; padding-left: var(--space-2); }
+.sb-right .btn-play { margin-left: var(--space-1); }
 
-.mods-switch {
-  display: inline-flex; align-items: center; justify-content: center; gap: 9px;
-  height: 34px; padding: 0 16px; box-sizing: border-box;
+.mods-switch, .sb-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  height: 34px; padding: 0 var(--space-4); box-sizing: border-box;
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 999px; color: var(--text-muted);
-  font-size: 12.5px; cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s;
-  -webkit-app-region: no-drag;
+  border-radius: var(--radius-full); color: var(--text-muted);
+  font: inherit; font-size: var(--text-sm); font-weight: 600; cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+  -webkit-app-region: no-drag; --drag: 0;
 }
-.mods-switch:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-hover); }
-.mods-switch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.sb-btn .ms { font-size: 17px; }
+/* the folder and the switch are one tool, about the mods on disk: one pill, split down the middle */
+.sb-group {
+  display: inline-flex; align-items: stretch; height: 34px; box-sizing: border-box;
+  border: 1px solid var(--border); border-radius: var(--radius-full);
+  background: var(--surface); overflow: hidden;
+}
+.sb-group > .sb-btn, .sb-group > .mods-switch { height: 100%; border: none; border-radius: 0; background: none; }
+.sb-group > * + * { border-left: 1px solid var(--border) !important; }
+.sb-group > .sb-btn:hover, .sb-group > .mods-switch:hover { background: var(--surface-hover); }
+.sb-group > .sb-btn:focus-visible, .sb-group > .mods-switch:focus-visible { outline-offset: -2px; }
+.mods-switch:hover, .sb-btn:hover { border-color: var(--border-strong); color: var(--text); background: var(--surface-hover); }
+.mods-switch:focus-visible, .sb-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 .mods-switch b { color: var(--danger); font-weight: 700; letter-spacing: 0.3px; }
 .mods-switch.on b { color: var(--success); }
 .mods-switch-track {
@@ -474,9 +489,9 @@
 }
 
 .btn-play {
-  -webkit-app-region: no-drag; height: 34px; padding: 0 22px; box-sizing: border-box;
+  -webkit-app-region: no-drag; --drag: 0; height: 34px; padding: 0 var(--space-5); box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 600; letter-spacing: 0.2px;
+  border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 700; letter-spacing: 0.2px;
 }
 .btn-play .ms { font-size: 18px; margin-right: -2px; }
 

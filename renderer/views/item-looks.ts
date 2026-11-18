@@ -18,11 +18,16 @@ export const looksOf = (key: string): ItemLook[] => (state.settings?.itemLooks |
 export function wornPicks(slots: CosmeticSlot[]): LookPick[] {
   return slots.flatMap((s) => {
     const p = pickedIn(s.slot);
-    return p?.itemId ? [{ slot: s.slot, itemId: p.itemId, name: p.name || p.itemId, ...(p.effectId ? { effectId: p.effectId } : {}) }] : [];
+    return p?.itemId ? [{
+      slot: s.slot, itemId: p.itemId, name: p.name || p.itemId,
+      ...(p.effectId ? { effectId: p.effectId } : {}),
+      ...(typeof p.targetItemId === 'string' && p.targetItemId ? { targetItemId: p.targetItemId } : {}),
+    }] : [];
   });
 }
 
-const samePick = (a: LookPick, b: LookPick): boolean => a.slot === b.slot && a.itemId === b.itemId && (a.effectId || '') === (b.effectId || '');
+const samePick = (a: LookPick, b: LookPick): boolean => a.slot === b.slot && a.itemId === b.itemId
+  && (a.effectId || '') === (b.effectId || '') && (a.targetItemId || '') === (b.targetItemId || '');
 
 /** The hero wears exactly this look: its picks, and nothing else of the builder's. */
 export function lookIsOn(look: ItemLook, slots: CosmeticSlot[]): boolean {

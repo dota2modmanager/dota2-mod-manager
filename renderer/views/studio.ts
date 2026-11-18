@@ -16,11 +16,13 @@ import { openItemHeroModal } from './item-hero.ts';
 import { firstHubHero } from './item-hub.ts';
 import { openBuilderGems } from './item-hero.ts';
 import { arcanaLeads, openArcanaWindow } from './catalog/arcana.ts';
-import { mapLookLead, openMapLooks } from './catalog/map-looks.ts';
 import { soundLead, openSounds } from './catalog/sounds.ts';
 import { iconsPicked, openAbilityIcons } from './catalog/ability-icons.ts';
 import { backgroundLead, openBackground } from './catalog/background.ts';
+import { openPortraits, portraitsOn, readPortraits } from './catalog/portraits.ts';
+import { musicOn, openMusic, readMusic } from './catalog/music.ts';
 import { hudLead, openHud } from './catalog/hud.ts';
+import { cursorOn, openCursor } from './catalog/cursor.ts';
 import { openEffects } from './catalog/effects.ts';
 import { rankLead, openRank } from './catalog/rank.ts';
 import { decorLead, openDecor } from './catalog/decor.ts';
@@ -63,12 +65,16 @@ async function importVpk(): Promise<void> {
 const on = (text: string) => ({ text, on: true });
 
 async function groups(): Promise<StudioGroup[]> {
-  const [arcanas, towers, trees] = await Promise.all([
-    arcanaLeads().catch(() => []), mapLookLead('towers').catch(() => null), mapLookLead('trees').catch(() => null),
-  ]);
+  // the game's towers and trees are picked in "Своя карта" now, a side each: no tiles, and no
+  // reading of the game's looks each time the Workshop is drawn
+  const arcanas = await arcanaLeads().catch(() => []);
   const sounds = soundLead('hero-sounds');
   const icons = iconsPicked();
+  await readPortraits();
+  const portraits = portraitsOn();
   const hud = hudLead('huds');
+  await readMusic();
+  const music = musicOn();
   const tile = (t: Omit<StudioTile, 'fresh'>): StudioTile => ({ ...t, fresh: isNew(t.id) });
 
   return [
@@ -79,6 +85,8 @@ async function groups(): Promise<StudioGroup[]> {
         status: sounds?.installed ? on(L`Героев со своими звуками: ${sounds.installed}`) : undefined, open: (el) => openSounds(el) }),
       tile({ id: 'ability-icons', icon: 'imagesmode', title: L`Иконки способностей`, text: L`Любая иконка способности из предметов героя: аркана, стили, наборы.`,
         status: icons ? on(L`Героев со своими иконками: ${icons}`) : undefined, open: (el) => openAbilityIcons(el) }),
+      tile({ id: 'portraits', icon: 'portrait', title: L`Портреты героев`, text: L`Своя картинка и свой ролик героя в выборе героя: было и стало рядом, ролик играет при наведении.`,
+        status: portraits ? on(L`Героев со своими портретами: ${portraits}`) : undefined, open: (el) => openPortraits(el) }),
     ] },
     // arcanas and the immortals whose colour is baked into their effects, one tile each
     { id: 'colors', title: L`Свой цвет предмета`, tiles: arcanas.map((a) => tile({ id: `arcana:${a.set}`, icon: 'palette', picture: a.picture, title: a.name,
@@ -88,20 +96,22 @@ async function groups(): Promise<StudioGroup[]> {
       tile({ id: 'effects', icon: 'auto_awesome', title: L`Редактор эффектов`, text: L`Размер, количество, скорость и цвет любого эффекта игры.`, open: (el) => openEffects(el) }),
     ] },
     { id: 'map', title: L`Карта`, tiles: [
-      ...(towers ? [tile({ id: 'towers', icon: 'fort', title: L`Башни из игры`, text: L`Башни любого события, свои у Света и у Тьмы.`,
-        status: towers.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('towers', el) })] : []),
-      ...(trees ? [tile({ id: 'trees', icon: 'park', title: L`Деревья из игры`, text: L`Деревья любого сезона, свои на каждой стороне.`,
-        status: trees.installed ? on(L`Стоят`) : undefined, open: (el) => openMapLooks('trees', el) })] : []),
-      tile({ id: 'decor', icon: 'grass', title: L`Карта без декора`, text: L`Трава, цветы, камни и мусор убраны с карты: чище видно, легче видеокарте.`,
-        status: decorLead('optimization')?.installed ? on(L`Убран`) : undefined, open: (el) => openDecor(el) }),
+      tile({ id: 'map-make', icon: 'landscape', title: L`Своя карта`, text: L`Ландшафт, погода, тёмная карта, лоу-поли земля, деревья и башни для каждой стороны, в 3D до установки.`,
+        status: decorLead('terrains')?.installed ? on(L`Стоит`) : undefined, open: (el) => openDecor(el, 'map') }),
+      tile({ id: 'decor', icon: 'speed', title: L`Оптимизация`, text: L`Декор, вода, эффекты и свет: убери лишнее с карты, которая стоит, и посмотри в 3D, что пропадёт.`,
+        status: decorLead('optimization')?.installed ? on(L`Стоит`) : undefined, open: (el) => openDecor(el, 'optimize') }),
     ] },
     { id: 'ui', title: L`Интерфейс`, tiles: [
       tile({ id: 'background', icon: 'wallpaper', title: L`Свой фон главного меню`, text: L`Картинка, GIF или видео вместо фона меню.`,
         status: backgroundLead('backgrounds')?.installed ? on(L`Стоит`) : undefined, open: (el) => openBackground(el) }),
+      tile({ id: 'music', icon: 'library_music', title: L`Своя музыка`, text: L`Твои песни вместо музыки игры: в меню, в матче и отдельные для драк.`,
+        status: music ? on(L`Песен: ${music}`) : undefined, open: (el) => openMusic(el) }),
       tile({ id: 'hud', icon: 'dashboard_customize', title: L`Редактор интерфейса`, text: L`Двигай панели HUD, меняй их размер и оттенок, убирай лишнее.`,
         status: hud?.changed != null ? on(L`Панелей изменено: ${hud.changed}`) : undefined, open: (el) => openHud(el) }),
       tile({ id: 'rank', icon: 'military_tech', title: L`Ранг и уровни героев`, text: L`Своя медаль и уровни героев на твоём экране. Видишь только ты.`,
         status: rankLead('ranks')?.installed ? on(L`Стоит`) : undefined, open: (el) => openRank(el) }),
+      tile({ id: 'cursor', icon: 'arrow_selector_tool', title: L`Свой курсор`, text: L`Одна картинка — и все курсоры игры дорисуются сами: на враге, атака, прицел, магазин. Любой можно заменить.`,
+        status: cursorOn() ? on(L`Стоит`) : undefined, open: (el) => openCursor(el) }),
       tile({ id: 'grids', icon: 'grid_view', title: L`Сетки героев`, text: L`Герои по проценту побед, по атрибутам и по частоте пиков этого патча, прямо в выборе героя.`, open: () => goGrids() }),
     ] },
     { id: 'make', title: L`Своё`, tiles: [

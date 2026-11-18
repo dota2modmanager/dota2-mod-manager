@@ -1,0 +1,66 @@
+# Keeps the Rust build cache warm for pull requests and the merge queue.
+#
+# GitHub scopes a cache to the branch that saved it, and only main's caches are visible to every
+# other branch. The checks run on pull requests and in the queue, never on main itself (main is
+# the queue's commit, already checked), so without this job nothing would ever save a cache that
+# they can read, and every run would build all the crates from scratch.
+name: Rust cache
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Cargo.lock'
+      - 'Cargo.toml'
+      - 'crates/**'
+      - 'src-tauri/**'
+      - '.github/workflows/rust-cache.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# one warm-up at a time; the next merge waits instead of cancelling this one, since a cancelled
+# run marks that commit on main with a red cross that means nothing
+concurrency:
+  group: rust-cache-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  warm:
+    name: Warm the cache on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal --component clippy && rustup default stable
+      - name: System libraries
+        if: runner.os == 'Linux'
+        timeout-minutes: 10
+        run: |
+          sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
+          sudo apt-get -o Acquire::Retries=3 install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: The page for the shell
+        run: node tools/dev/ui-build.mjs
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: debug
+      # the same builds the checks make, so each of them finds its crates already compiled
+      - name: Build what the checks build
+        run: cargo build -p mm-cli -p dota2-mod-manager && cargo test -p mm-core -p mm-cli --no-run
+      - name: Clippy
+        if: runner.os == 'Linux'
+        run: cargo clippy -p mm-core -p mm-cli --all-targets -- -D warnings
+      - name: Clippy on the shell
+        if: runner.os == 'Windows'
+        run: cargo clippy -p dota2-mod-manager --all-targets -- -D warnings

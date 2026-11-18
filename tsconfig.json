@@ -2,13 +2,11 @@
 //
 // Nothing is compiled and nothing is emitted: this reads preload.js, preload-uninstall.js and
 // renderer/uninstall.js with the JSDoc they carry and says where the code and its own
-// documentation disagree. It used to read main.js and every module in src/ the same way, which is
-// how it found a require that had never resolved and two handlers that answered every call with
-// "Cannot find module". Since 2026-09-30 the main process is TypeScript and src/tsconfig.json
-// checks it, strict.
+// documentation disagree.
 //
-// The preloads stay JavaScript on purpose: Electron runs them in the sandbox, as CommonJS, before
-// the page, and a preload that failed to load would leave the window with no window.api at all.
+// The preloads stay JavaScript on purpose: the Tauri window puts each one, as it is, in front of
+// src-tauri/src/bridge.js in the page's initialization script, and a preload that failed to load
+// would leave the window with no window.api at all.
 // The removal window is a classic script loaded without a build (vite.config.mjs says why), and
 // renderer/uninstall-bridge.d.ts describes what its preload gives it.
 //
@@ -16,7 +14,7 @@
 //   checkJs with strict off - the point is to catch what is wrong, not to fail on every value that
 //     could be null in files that only pass messages through.
 //   module preserve - each file is read the way it is written.
-//   skipLibCheck - Electron's own .d.ts is not this project's to fix.
+//   skipLibCheck - the dependencies' own .d.ts files are not this project's to fix.
 //
 // The rest of renderer/ is TypeScript with a tsconfig of its own. Not covered: tools/, a mix of both
 // module systems that needs its own settings.

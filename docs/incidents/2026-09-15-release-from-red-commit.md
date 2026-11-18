@@ -28,7 +28,7 @@ well as on `fail 0`.
 
 ## What catches it now
 
-- `tools/release-gate.mjs`: the first job of `release.yml` reads the check runs GitHub recorded for
+- `tools/release/release-gate.mjs`: the first job of `release.yml` reads the check runs GitHub recorded for
   the tagged commit, waits for the required ones and fails on any failure.
 - `test/release-gate.test.js` "the 2.6.11 case: Tests failed on the tagged commit, so nothing is
   built"

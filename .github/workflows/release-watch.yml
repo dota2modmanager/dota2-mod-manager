@@ -1,5 +1,5 @@
 # After every release, and every three hours: is everything a release should leave behind in place,
-# and if not, put it there. tools/release-watch.mjs says what it checks and what it can repair.
+# and if not, put it there. tools/release/release-watch.mjs says what it checks and what it can repair.
 #
 # Until 2026-09-26 a release that went wrong after publishing stayed wrong until somebody read a
 # red run and started the right job by hand. 2.7.1 left the update mirror on 2.7.0 for days that
@@ -47,4 +47,4 @@ jobs:
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: node tools/release-watch.mjs --repair
+        run: node tools/release/release-watch.mjs --repair

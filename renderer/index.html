@@ -7,7 +7,7 @@
        moving every relative URL on the page to another host. Navigation itself is refused
        in src/main-window.ts, which is the part CSP has no say over. -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' mm-preview: https://raw.githubusercontent.com https://cdn.dota2modmanager.com data: blob:; media-src https://raw.githubusercontent.com https://cdn.dota2modmanager.com blob:; connect-src 'self' blob: data:; object-src 'none'; frame-src 'none'; child-src 'none'; form-action 'none'; base-uri 'none'">
+        content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' mm-preview: http://mm-preview.localhost mm-icon: http://mm-icon.localhost https://raw.githubusercontent.com https://cdn.dota2modmanager.com data: blob:; media-src https://raw.githubusercontent.com https://cdn.dota2modmanager.com blob:; connect-src 'self' blob: data:; worker-src 'self'; object-src 'none'; frame-src 'none'; child-src 'none'; form-action 'none'; base-uri 'none'">
   <title>Dota 2 Mod Manager</title>
   <!-- Order matters: tokens define the scales, base and shell set the ground
        rules, component files follow. Adding a file means adding it here. -->
@@ -18,6 +18,8 @@
   <link rel="stylesheet" href="styles/shell.css">
   <link rel="stylesheet" href="styles/controls.css">
   <link rel="stylesheet" href="styles/catalog.css">
+  <link rel="stylesheet" href="styles/mod-stage.css">
+  <link rel="stylesheet" href="styles/opt-tiles.css">
   <link rel="stylesheet" href="styles/modal.css">
   <link rel="stylesheet" href="styles/builder.css">
   <link rel="stylesheet" href="styles/paint.css">
@@ -27,6 +29,8 @@
   <link rel="stylesheet" href="styles/settings.css">
   <link rel="stylesheet" href="styles/studio.css">
   <link rel="stylesheet" href="styles/workshop-windows.css">
+  <link rel="stylesheet" href="styles/portraits.css">
+  <link rel="stylesheet" href="styles/cursor-maker.css">
   <link rel="stylesheet" href="styles/home.css">
   <link rel="stylesheet" href="styles/feedback.css">
   <link rel="stylesheet" href="styles/transitions.css">
@@ -132,11 +136,13 @@
       <span class="dot" id="dotaStatusDot"></span>
       <span id="dotaStatusText">Looking for Dota 2…</span>
       <div class="sb-right">
-        <button class="btn btn-sm" id="openModsFolderBtn" title="Open the folder the mods are installed into" data-i18n-title="Открыть папку, куда ставятся моды"><span class="ms">folder_open</span><span data-i18n="Папка модов">Mods folder</span></button>
-        <button class="mods-switch on" id="modsMasterBtn" role="switch" aria-checked="true" title="Turn all mods on/off at once (to launch the vanilla game)" data-i18n-title="Включить/выключить все моды сразу (для запуска ванильной игры)">
-          <span class="mods-switch-txt"><span data-i18n="Моды:">Mods:</span> <b id="modsMasterState">on</b></span>
-          <span class="mods-switch-track"><span class="mods-switch-thumb"></span></span>
-        </button>
+        <div class="sb-group">
+          <button class="sb-btn" id="openModsFolderBtn" title="Open the folder the mods are installed into" data-i18n-title="Открыть папку, куда ставятся моды"><span class="ms">folder_open</span><span data-i18n="Папка модов">Mods folder</span></button>
+          <button class="mods-switch on" id="modsMasterBtn" role="switch" aria-checked="true" title="Turn all mods on/off at once (to launch the vanilla game)" data-i18n-title="Включить/выключить все моды сразу (для запуска ванильной игры)">
+            <span class="mods-switch-txt"><span data-i18n="Моды:">Mods:</span> <b id="modsMasterState">on</b></span>
+            <span class="mods-switch-track"><span class="mods-switch-thumb"></span></span>
+          </button>
+        </div>
         <button class="btn btn-primary btn-play" id="launchBtn" title="Launch Dota 2 through Steam with your launch options" data-i18n-title="Запустить Dota 2 через Steam с твоими параметрами запуска">
           <span class="ms">play_arrow</span><span data-i18n="Играть">Play</span>
         </button>
@@ -155,8 +161,6 @@
 
     <!-- Toasts -->
     <div id="toasts"></div>
-    <!-- What a screen reader is told when no window is open (renderer/ui/a11y.ts, announce) -->
-    <div id="announcer" class="sr-announce" role="status"></div>
 
     <!-- Modal -->
     <div id="modalOverlay" class="modal-overlay hidden">

@@ -49,12 +49,12 @@ export function Toolbar({ model: t, actions }: Props) {
         {t.layout && (
           <div className="layout-toggle" role="group" aria-label={L`Вид`}>
             <button className={`seg-btn ${t.layout === 'grid' ? 'active' : ''}`} data-layout="grid"
-              title={L`Сеткой героев`} aria-label={L`Сеткой героев`} onClick={() => actions.layout('grid')}>
-              <span className="ms">grid_view</span>
+              onClick={() => actions.layout('grid')}>
+              <span className="ms">grid_view</span>{L`Сеткой героев`}
             </button>
             <button className={`seg-btn ${t.layout === 'list' ? 'active' : ''}`} data-layout="list"
-              title={L`Все моды списком`} aria-label={L`Все моды списком`} onClick={() => actions.layout('list')}>
-              <span className="ms">view_agenda</span>
+              onClick={() => actions.layout('list')}>
+              <span className="ms">view_agenda</span>{L`Все моды списком`}
             </button>
           </div>
         )}

@@ -252,7 +252,7 @@ ${guides('ru')}
 - Releases: https://github.com/dota2modmanager/dota2-mod-manager/releases
 - Build logs: https://github.com/dota2modmanager/dota2-mod-manager/actions
 - Catalog: https://github.com/h6rd/Dota2PornFxWeb
-- Who else links to it, with the pages the maintainer wrote kept apart: https://github.com/dota2modmanager/dota2-mod-manager/blob/main/MENTIONS.md
+- Who else links to it, with the pages the maintainer wrote kept apart: https://github.com/dota2modmanager/dota2-mod-manager/blob/main/docs/MENTIONS.md
 
 ## Not
 

@@ -56,8 +56,8 @@ The item builder
 The item builder turns a hero's stock items into any of that hero's
 wearables, with particle effects on top. h6rd (https://github.com/h6rd)
 wrote it, and develops it further together with TheFleece. It is the code in
-src/item-builder.js and renderer/views/item-builder.js, and the parts of other
-files that say they belong to it.
+crates/mm-core/src/item_builder/ and the renderer/views/item-*.ts screens, and
+the parts of other files that say they belong to it.
 
 Copyright (C) 2026 h6rd (https://github.com/h6rd)
 Copyright (C) 2026 TheFleece (https://github.com/TheFleece)
@@ -89,8 +89,10 @@ meshoptimizer, Copyright (c) 2016-2026 Arseny Kapoulkine, MIT licensed, ships in
 to read and write the vertex buffers of the game's models:
 https://github.com/zeux/meshoptimizer
 
-The npm packages the build depends on carry their own licenses, listed in their
-own folders under node_modules and inside the installer.
+The Rust crates compiled into the app's binary are listed with their full license
+texts in THIRD-PARTY-LICENSES-RUST.md, which tools/dev/rust-licenses.mjs writes
+beside the window's page when the app is built, so the binary carries it. The
+installer also carries LICENSE and this file.
 
 React and React DOM, Copyright (c) Meta Platforms, Inc. and affiliates, MIT
 licensed, are compiled into the window's page rather than shipped as packages:
@@ -98,8 +100,8 @@ https://github.com/facebook/react
 Motion, Copyright (c) 2024 Motion B.V., MIT licensed, is compiled in the same way:
 https://github.com/motiondivision/motion
 Every package compiled into the page is listed with its full license text in
-THIRD-PARTY-LICENSES.md beside it (out/renderer), which the build writes and the
-installer carries.
+THIRD-PARTY-LICENSES.md beside it (out/renderer-tauri), which the build writes and
+the binary embeds with the page.
 
 
 Fonts
@@ -118,7 +120,7 @@ unmodified from Google Fonts and remain under their own licenses:
   Material Symbols Rounded, by Google - Apache License 2.0
   https://fonts.google.com/icons
 
-Refresh them with tools/fonts.js, which reads the same stylesheets Google
+Refresh them with tools/dev/fonts.js, which reads the same stylesheets Google
 serves so the weights and character ranges stay the ones the app was built
 against.
 
@@ -129,8 +131,8 @@ Upstream: https://github.com/justkiddingxd/dota-loadout
 The local npm package includes the port author's modifications.
 Original MIT text: vendor/dota-loadout/LICENSE; provenance and local modifications:
 vendor/dota-loadout/NOTICE.md and vendor/dota-loadout/PROVENANCE.md.
-The renderer is bundled in out/renderer; its license is also included in
-out/renderer/THIRD-PARTY-LICENSES.md.
+The renderer is bundled into the page; its license is also included in
+THIRD-PARTY-LICENSES.md.
 
 VTEX sheet metadata uses the documented layout in ValveResourceFormat's
 Texture.GetSpriteSheetData (MIT); Source2Viewer attribution above applies.

@@ -4,8 +4,8 @@ dist/
 # Astro's generated types and content cache: rebuilt on every build.
 .astro/
 
-# Throwaway Dota tree and downloaded mods built by tools/sandbox.js. The list of what a
-# sandbox should hold travels with the repo in tools/sandbox-mods.json; the files do not.
+# Throwaway Dota tree and downloaded mods built by tools/dev/sandbox.js. The list of what a
+# sandbox should hold travels with the repo in tools/dev/sandbox-mods.json; the files do not.
 sandbox/
 
 # The weekly search report is a build product: it is posted as an issue comment, not kept.
@@ -24,22 +24,22 @@ mod-paths.json
 indexnow.state.json
 seo-state.json
 
-# The catalog download counter's token, written into a release build by tools/stats-token.mjs
+# The catalog download counter's token, written into a release build by tools/release/stats-token.mjs
 # from a repository secret. A copy in git would hand it to every scraper.
-src/download-stats.token
+build/stats/download-stats.token
 
-# Signing keys. The public halves are pinned in src/; the private halves live outside this
+# Signing keys. The public halves are pinned in crates/mm-core/src/; the private halves live outside this
 # tree and a stray one committed here would look like protection while being the opposite.
 *.pem
 catalog-key.pem
-# written by tools/check-credentials.mjs in radar.yml
+# written by tools/ops/check-credentials.mjs in radar.yml
 credentials-status.json
-# screenshots, window results and the app log of tools/e2e.mjs
+# screenshots, window results and the app log of tools/dev/e2e.mjs
 e2e-output/
-# inputs tools/fuzz-parsers.mjs kept because a parser mishandled them; the seed reproduces them
+# inputs tools/dev/fuzz-parsers.mjs kept because a parser mishandled them; the seed reproduces them
 fuzz-output/
 
-# The window page Vite builds (npm run build:ui); main.js loads it from here.
+# The window page Vite builds (tools/dev/ui-build.mjs); the Tauri shell embeds it from here.
 out/
 # pictures and failure shots of the site tests (site/test, site/tools/look.mjs)
 test-output/

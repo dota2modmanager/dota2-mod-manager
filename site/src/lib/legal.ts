@@ -33,14 +33,14 @@ export interface LegalDoc {
 const REPO = 'https://github.com/dota2modmanager/dota2-mod-manager/blob/main/';
 /** Repository files that are pages on the site as well, so a link between them stays on the site. */
 const SITE_PAGES: Record<string, string> = {
-  'PRIVACY.md': '/privacy/',
-  'PRIVACY.ru.md': '/ru/privacy/',
+  'docs/PRIVACY.md': '/privacy/',
+  'docs/PRIVACY.ru.md': '/ru/privacy/',
   'docs/code-signing-policy.md': '/code-signing/',
   'docs/code-signing-policy.ru.md': '/ru/code-signing/',
 };
 
 /**
- * A repository Markdown file (PRIVACY.md, docs/code-signing-policy.md and their Russian twins),
+ * A repository Markdown file (docs/PRIVACY.md, docs/code-signing-policy.md and their Russian twins),
  * rendered by Astro, made into a page. `source` is its path from the repository root.
  */
 export function fromMarkdown(html: string, source: string): LegalDoc {
@@ -72,7 +72,7 @@ export function fromMarkdown(html: string, source: string): LegalDoc {
 
 /** The terms, from docs/terms/index.html, in one language. */
 export function terms(lang: Lang): LegalDoc {
-  const html = fs.readFileSync(path.join(REPO_ROOT, 'docs', 'terms', 'index.html'), 'utf8').replace(/\r\n/g, '\n');
+  const html = fs.readFileSync(path.join(REPO_ROOT, 'pages', 'terms', 'index.html'), 'utf8').replace(/\r\n/g, '\n');
   const article = new RegExp(`<article data-lang="${lang}">([\\s\\S]*?)</article>`).exec(html);
   if (!article) throw new Error(`docs/terms/index.html has no article for "${lang}"`);
   const title = (/<h1>([^<]+)<\/h1>/.exec(article[1]) || [])[1];

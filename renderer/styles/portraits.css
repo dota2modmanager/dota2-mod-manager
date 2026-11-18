@@ -1,0 +1,79 @@
+/* ============ Hero picker portraits of the user's own (renderer/catalog/portraits) ============
+   A picker of the window's own, drawn like the game's grid: tall cards that lift and play the
+   hero's movie while pointed at. A hero clicked comes up close on a stage, the grid steps back,
+   and the panel stands on the right. */
+
+.modal-content:has(.portrait-studio) { width: min(1180px, calc(94vw / var(--content-zoom))); }
+.portrait-studio { display: flex; flex-direction: column; gap: var(--space-3); }
+.portrait-stage-wrap { position: relative; min-height: min(620px, 68vh); }
+
+.portrait-grid-wrap { display: flex; flex-direction: column; gap: var(--space-3); transform-origin: 50% 30%; }
+.portrait-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: var(--space-3) var(--space-2);
+  max-height: min(560px, 60vh); overflow-y: auto; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-1);
+}
+.portrait-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.portrait-cell-card { width: 100%; }
+.portrait-cell-name { max-width: 100%; font-size: var(--text-xs); color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.portrait-cell-mark {
+  position: absolute; top: var(--space-1); right: var(--space-1); z-index: 3; font-size: var(--text-sm);
+  border-radius: var(--radius-full); background: var(--bg-deep); color: var(--primary); pointer-events: none;
+}
+
+/* one card of the picker: the portrait, the movie over it */
+.picker-card {
+  position: relative; width: 100%; aspect-ratio: 142 / 188; overflow: hidden; cursor: pointer;
+  border-radius: var(--radius-sm); background: #000; box-shadow: 0 0 0 1px rgb(255 255 255 / 8%);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), filter var(--dur-base) var(--ease-out);
+  filter: saturate(0.9) brightness(0.92);
+}
+.picker-card.on {
+  transform: scale(1.08); z-index: 2; filter: none;
+  box-shadow: 0 0 0 1px rgb(255 214 140 / 70%), 0 8px 24px rgb(0 0 0 / 55%), 0 0 18px rgb(255 190 90 / 25%);
+}
+.picker-card.placeholder { cursor: default; background: var(--bg-deep); box-shadow: inset 0 0 0 1px var(--border); filter: none; }
+.picker-card-pic { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: grid; place-items: center; color: var(--text-faint); }
+.picker-card-movie {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out); pointer-events: none;
+}
+.picker-card-movie.shown { opacity: 1; }
+.picker-card-name {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: var(--space-4) var(--space-2) var(--space-2);
+  background: linear-gradient(transparent, rgb(0 0 0 / 80%)); color: #fff; text-align: center;
+  font-family: var(--font-head); font-size: var(--text-md); font-weight: var(--weight-semibold); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.picker-card.small { width: 96px; }
+.picker-card.small.on { transform: scale(1.04); }
+
+/* the hero up close */
+.portrait-focus { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr minmax(320px, 380px); gap: var(--space-4); }
+.portrait-close-area { position: absolute; inset: 0; }
+.portrait-stage { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-4); pointer-events: none; }
+.portrait-stage > * { pointer-events: auto; }
+.portrait-big { width: min(300px, 32vw); }
+.portrait-big .picker-card.on { transform: scale(1.03); }
+.portrait-views { display: flex; gap: var(--space-2); }
+.portrait-views .style-btn::before { display: none; }
+
+.portrait-panel {
+  position: relative; display: flex; flex-direction: column; gap: var(--space-4); padding: var(--space-4);
+  border: 1px solid var(--border); border-radius: var(--radius-md); overflow-y: auto;
+  background: linear-gradient(var(--surface), var(--surface)), var(--md-surface); box-shadow: 0 12px 40px rgb(0 0 0 / 45%);
+}
+.portrait-panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.portrait-panel-name { font-family: var(--font-head); font-size: var(--text-lg); font-weight: var(--weight-semibold); }
+.portrait-part { display: flex; flex-direction: column; gap: var(--space-2); }
+.portrait-part-title { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--text); }
+.portrait-compare { display: flex; align-items: center; gap: var(--space-3); }
+.portrait-was { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); }
+.portrait-was img { width: 96px; aspect-ratio: 142 / 188; object-fit: cover; border-radius: var(--radius-sm); box-shadow: 0 0 0 1px var(--border); }
+.portrait-was-label { font-size: var(--text-xs); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.portrait-same {
+  display: grid; place-items: center; width: 96px; aspect-ratio: 142 / 188; border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-strong); color: var(--text-faint); font-size: var(--text-xs); text-align: center;
+}
+.portrait-arrow { color: var(--primary); }
+.portrait-hint { font-size: var(--text-xs); color: var(--text-faint); }
+.portrait-part-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.portrait-panel .modal-actions { margin-top: auto; }

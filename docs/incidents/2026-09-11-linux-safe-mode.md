@@ -28,12 +28,9 @@ test or sandbox had ever built the way Valve ships it.
 
 ## What catches it now
 
-- `test/patcher-tree.test.ts` "an install that ships no signature list is still patched"
-- `test/patcher-tree.test.ts` "an install with no list reports that, rather than reporting an
-  unsigned patch": the status bar and the self-heal stop treating a missing list as a failure.
-- `test/patcher-tree.test.ts` "reverting puts both files back exactly as they were": with a list
-  and without one.
-- `tools/sandbox.js` "Linux install in the world that had one": the sandbox writes the list only
+- `crates/mm-core/src/game/patcher_tests.rs` "an_install_with_no_signature_list_is_still_patched_and_says_it_cannot_be_signed": the
+  status bar and the self-heal stop treating a missing list as a failure.
+- `crates/mm-core/src/game/patcher_tests.rs` "reverting_puts_both_files_back_exactly_as_they_were": with a list and without one.
+- `tools/dev/sandbox.js` "Linux install in the world that had one": the sandbox writes the list only
   where the platform it runs on keeps one.
-- `.github/mutants.json` "an install with no signature list is refused": the weekly mutation run
-  puts the old refusal back and expects these tests to fail.
+- `.github/workflows/rust.yml`: runs the Rust tests on every push.

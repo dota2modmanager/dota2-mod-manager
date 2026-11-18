@@ -123,13 +123,11 @@ contextBridge.exposeInMainWorld('api', {
     icons: (names) => ipcRenderer.invoke('cosmetics:icons', names),
     heroPortraits: (ids, tall) => ipcRenderer.invoke('cosmetics:heroPortraits', ids, tall),
     heroPortraitsByName: (names) => ipcRenderer.invoke('cosmetics:heroPortraitsByName', names),
-    pick: (slot, itemId, itemName, effectId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId),
+    pick: (slot, itemId, itemName, effectId, targetItemId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId, targetItemId),
     pickSet: (setId, style) => ipcRenderer.invoke('cosmetics:pickSet', setId, style),
     wearLook: (hero, picks) => ipcRenderer.invoke('cosmetics:wearLook', hero, picks),
   },
-  // the arcana built out of the game's own files, in a colour of the user's
-  // towers and trees from the game's own looks, per side
-  // the item builder's 3D preview: the hero's models out of the game
+  // the 3D preview: the hero's models out of the game, or a catalog mod's files over them
   preview3d: {
     warm: (hero, slots) => ipcRenderer.invoke('preview3d:warm', hero, slots),
     prefetch: (hero, slots, slot, items) => ipcRenderer.invoke('preview3d:prefetch', hero, slots, slot, items),
@@ -137,7 +135,11 @@ contextBridge.exposeInMainWorld('api', {
     motions: (body) => ipcRenderer.invoke('preview3d:motions', body).then(wholeAnswer),
     effect: (id) => ipcRenderer.invoke('preview3d:effect', id).then(wholeAnswer),
     model: (file) => ipcRenderer.invoke('preview3d:model', file).then(wholeAnswer),
+    modHero: (category, file, hint) => ipcRenderer.invoke('preview3d:modHero', category, file, hint),
+    modModels: (category, file, hero, slots) => ipcRenderer.invoke('preview3d:modModels', category, file, hero, slots).then(wholeAnswer),
+    modProps: (category, file, index) => ipcRenderer.invoke('preview3d:modProps', category, file, index).then(wholeAnswer),
   },
+  music: { state: () => ipcRenderer.invoke('music:state'), keep: (song) => ipcRenderer.invoke('music:keep', song), install: (songs, menu, game) => ipcRenderer.invoke('music:install', songs, menu, game) },
   sounds: {
     heroes: () => ipcRenderer.invoke('sounds:heroes'),
     hero: (hero) => ipcRenderer.invoke('sounds:hero', hero),
@@ -169,13 +171,19 @@ contextBridge.exposeInMainWorld('api', {
     install: (look) => ipcRenderer.invoke('rank:install', look),
   },
   decor: {
-    state: () => ipcRenderer.invoke('decor:state'),
-    install: (groups) => ipcRenderer.invoke('decor:install', groups),
+    state: () => ipcRenderer.invoke('decor:state'), scene: (map) => ipcRenderer.invoke('decor:scene', map),
+    install: (groups, tint, facets, kind) => ipcRenderer.invoke('decor:install', groups, tint, facets, kind),
+    map: (map) => ipcRenderer.invoke('decor:map', map).then(wholeAnswer),
+    ground: (word, facets) => ipcRenderer.invoke('decor:ground', word, facets).then(wholeAnswer),
+    modTrees: (file) => ipcRenderer.invoke('decor:modTrees', file),
+    paint: (file) => ipcRenderer.invoke('decor:paint', file).then(wholeAnswer),
+    modModel: (file, model) => ipcRenderer.invoke('decor:modModel', file, model).then(wholeAnswer),
   },
-  background: {
-    state: () => ipcRenderer.invoke('background:state'),
-    install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur),
-  },
+  background: { state: () => ipcRenderer.invoke('background:state'), install: (webm, source, dim, blur) => ipcRenderer.invoke('background:install', webm, source, dim, blur) },
+  // a hero's portrait and movie in the hero picker of the user's own
+  portraits: { state: () => ipcRenderer.invoke('portraits:state'), hero: (h) => ipcRenderer.invoke('portraits:hero', h), set: (h, stills, movie, drop, source) => ipcRenderer.invoke('portraits:set', h, stills, movie, drop, source) },
+  // a cursor set of the user's own, every cursor drawn by the window
+  cursor: { state: () => ipcRenderer.invoke('cursor:state'), install: (design, drawn, pictures) => ipcRenderer.invoke('cursor:install', design, drawn, pictures) },
   // a hero's ability icons picked from his own cosmetics'
   icons: {
     heroes: () => ipcRenderer.invoke('icons:heroes'),

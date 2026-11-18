@@ -13,6 +13,22 @@
   if (window.__mmBridge) return;
   window.__mmBridge = true;
 
+  // Electron points the window's catalog pictures at mm-preview://, which answers from disk and
+  // from the mirror before GitHub (src/preview-cache.ts servePreviews). A webview has no request
+  // redirect, so an image's address is changed as the page sets it; Rust answers the scheme
+  // (Previews in src-tauri/src/ported.rs). WebView2 serves a custom scheme as http://<name>.localhost.
+  const RAW = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/';
+  const PICTURES = /Windows/.test(navigator.userAgent) ? 'http://mm-preview.localhost/' : 'mm-preview://catalog/';
+  const local = (v) => (typeof v === 'string' && v.startsWith(`${RAW}assets/previews/`) ? PICTURES + v.slice(RAW.length) : v);
+  const img = window.HTMLImageElement && Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src');
+  if (img && img.set) {
+    Object.defineProperty(HTMLImageElement.prototype, 'src', { ...img, set(v) { img.set.call(this, local(v)); } });
+    const setAttribute = Element.prototype.setAttribute;
+    Element.prototype.setAttribute = function (name, value) {
+      return setAttribute.call(this, name, this instanceof HTMLImageElement && String(name).toLowerCase() === 'src' ? local(value) : value);
+    };
+  }
+
   const toB64 = (bytes) => {
     let s = '';
     for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
@@ -73,14 +89,37 @@
     return invoke('plugin:event|listen', { event, target: { kind: 'Any' }, handler: cb });
   };
   const start = () => {
-    listen('mm', (p) => deliver(p.channel, p.args));
+    const events = listen('mm', (p) => deliver(p.channel, p.args));
     listen('tauri://drag-drop', (p) => {
       dropped.clear();
       for (const full of (p && p.paths) || []) dropped.set(full.split(/[\\/]/).pop(), full);
     });
-    invoke('mm_loaded', {}).catch(() => {});
+    /* "loaded" as Electron's did-finish-load means it: the page's scripts have run and subscribed,
+       so what the shell says next (a d2mm:// link the app was started by, whether Dota is open)
+       has someone to hear it. Told any earlier, it went nowhere. */
+    const loaded = () => events.catch(() => {}).then(() => invoke('mm_loaded', {})).catch(() => {});
+    if (document.readyState === 'complete') loaded(); else window.addEventListener('load', loaded, { once: true });
   };
   if (tauri()) start(); else document.addEventListener('DOMContentLoaded', start, { once: true });
+
+  // The title bar moves the window. Electron reads that from -webkit-app-region: drag; WebView2
+  // honours it too, but recomputes the regions synchronously at every step of a resize, about
+  // 900 ms each (measured 2026-11-14), so dragging an edge stalled and leaving a maximized window
+  // froze for seconds. Here the regions are switched off, and a press where the CSS marks the bar
+  // draggable (--drag: 1 beside each app-region rule) asks Rust to move the window, a second
+  // press in a row to maximize it, as a native caption does.
+  const noRegions = () => {
+    const off = document.createElement('style');
+    off.textContent = '*, *::before, *::after { -webkit-app-region: no-drag !important; }';
+    document.head.append(off);
+  };
+  if (document.head) noRegions(); else document.addEventListener('DOMContentLoaded', noRegions, { once: true });
+  document.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || !(e.target instanceof Element)) return;
+    if (getComputedStyle(e.target).getPropertyValue('--drag').trim() !== '1') return;
+    e.preventDefault();
+    invoke('mm_drag', { toggle: e.detail === 2 }).catch(() => {});
+  }, true);
 
   // Ctrl +/-/0 scale the content, as Electron's before-input-event did (src/main-window.ts)
   window.addEventListener('keydown', (e) => {

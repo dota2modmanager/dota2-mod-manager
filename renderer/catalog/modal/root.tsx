@@ -16,12 +16,17 @@ import { SoundModal, type SoundModalActions, type SoundModalModel } from '../sou
 import { IconModal, type IconModalActions, type IconModalModel } from '../icons/IconModal.tsx';
 import { BackgroundModal, type BackgroundModalActions, type BackgroundModalModel } from '../background/BackgroundModal.tsx';
 import { HudModal, type HudModalActions, type HudModalModel } from '../hud/HudModal.tsx';
+import { CursorModal } from '../cursor/CursorModal.tsx';
+import type { CursorModalActions, CursorModalModel } from '../cursor/model.ts';
 import { EffectModal, type EffectModalActions, type EffectModalModel } from '../fx/EffectModal.tsx';
 import { RankModal, type RankModalActions, type RankModalModel } from '../rank/RankModal.tsx';
 import { DecorModal, type DecorModalActions, type DecorModalModel } from '../decor/DecorModal.tsx';
 import { PaintModal, type PaintModalActions, type PaintModalModel } from '../paint/PaintModal.tsx';
 import { CreatorModal, type CreatorActions, type CreatorModel } from '../../creator/CreatorModal.tsx';
 import { HeroModal } from '../builder/HeroModal.tsx';
+import { PortraitStudio } from '../portraits/PortraitStudio.tsx';
+import type { PortraitStudioActions, PortraitStudioModel } from '../portraits/model.ts';
+import { MusicModal, type MusicModalActions, type MusicModalModel } from '../music/MusicModal.tsx';
 import type * as B from '../builder/model.ts';
 
 const panel = document.getElementById('modalContent') as HTMLElement;
@@ -48,10 +53,13 @@ export const showIconModal = (model: IconModalModel, actions: IconModalActions):
 export const showPaintModal = (key: number, model: PaintModalModel, actions: PaintModalActions): void => show(<PaintModal key={key} m={model} actions={actions} />);
 export const showBackgroundModal = (model: BackgroundModalModel, actions: BackgroundModalActions): void => show(<BackgroundModal m={model} actions={actions} />);
 export const showHudModal = (model: HudModalModel, actions: HudModalActions): void => show(<HudModal m={model} actions={actions} />);
+export const showCursorModal = (model: CursorModalModel, actions: CursorModalActions): void => show(<CursorModal m={model} actions={actions} />);
 export const showEffectModal = (model: EffectModalModel, actions: EffectModalActions): void => show(<EffectModal m={model} actions={actions} />);
 export const showCreatorModal = (model: CreatorModel, actions: CreatorActions): void => show(<CreatorModal m={model} actions={actions} />);
 export const showRankModal = (model: RankModalModel, actions: RankModalActions): void => show(<RankModal m={model} actions={actions} />);
 export const showDecorModal = (model: DecorModalModel, actions: DecorModalActions): void => show(<DecorModal m={model} actions={actions} />);
+export const showPortraitStudio = (model: PortraitStudioModel, actions: PortraitStudioActions): void => show(<PortraitStudio m={model} actions={actions} />);
+export const showMusicModal = (model: MusicModalModel, actions: MusicModalActions): void => show(<MusicModal m={model} actions={actions} />);
 export const showArcanaModal = (model: ArcanaModalModel, actions: ArcanaModalActions): void =>
   show(<ArcanaModal m={model} actions={actions} />);
 

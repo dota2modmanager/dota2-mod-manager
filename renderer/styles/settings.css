@@ -172,3 +172,113 @@
 .settings-switch-row { display: contents; cursor: pointer; }
 .settings-switches .settings-label { min-width: 0; }
 .settings-switches + .settings-hint { margin-top: var(--space-4); }
+
+/* ============ Settings: sections and rows (settings/parts.tsx) ============
+   The sections down the left, sticky, the one being read lit; the page to their right. One row
+   per setting: its name and a line about it on the left, its control in one right-hand column, so
+   every switch on the page lines up. A wide row puts its control under the text. */
+/* Settings is a column to read, not a page to fill: on a window wider than it, the whole screen
+   (title, sections, rows) sits in the middle instead of hugging the left edge. */
+.view-pane:has(> .set-layout) { max-width: calc(188px + var(--space-5) + 820px); margin-inline: auto; }
+.set-layout {
+  display: grid;
+  grid-template-columns: 188px minmax(0, 820px);
+  gap: var(--space-5);
+  align-items: start;
+}
+.set-nav {
+  position: sticky;
+  top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-px);
+}
+.set-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.set-nav-item .ms { font-size: var(--icon-sm); color: var(--text-faint); transition: color var(--dur-fast); }
+.set-nav-item:hover { background: var(--surface-hover); color: var(--text); }
+.set-nav-item.active { background: var(--primary-dim); color: var(--text); }
+.set-nav-item.active .ms { color: var(--primary-soft); }
+.set-nav-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+.set-body { min-width: 0; }
+.set-section.settings-block { max-width: none; padding: var(--space-4) var(--space-5) var(--space-2); scroll-margin-top: var(--space-4); }
+.set-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-head);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+}
+.set-title .ms { font-size: var(--icon-sm); color: var(--primary-soft); }
+
+.set-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--space-5);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border);
+}
+.set-title + .set-row, .set-title + * > .set-row:first-child { border-top: none; }
+.set-row.wide { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-2); }
+.set-row.sub { padding-left: var(--space-4); border-top-style: dashed; }
+.set-text { min-width: 0; }
+.set-label { font-size: var(--text-sm); font-weight: var(--weight-semibold); color: var(--text); }
+.set-text .settings-hint { margin-top: var(--space-1); font-size: 12.5px; }
+.set-ctl { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-2); flex-wrap: wrap; }
+.set-row.wide .set-ctl { display: block; }
+.set-row.wide .set-ctl .settings-row { margin-bottom: var(--space-2); }
+.set-row.wide .set-ctl .settings-row:last-child { margin-bottom: 0; }
+.set-more { margin-top: var(--space-1); }
+.set-more > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12.5px;
+  font-weight: var(--weight-semibold);
+  color: var(--primary-soft);
+  cursor: pointer;
+}
+.set-more > summary::-webkit-details-marker { display: none; }
+.set-more > summary::after {
+  font-family: 'Material Symbols Rounded';
+  content: 'expand_more';
+  font-size: 16px;
+  transition: transform var(--dur-base) var(--ease);
+}
+.set-more[open] > summary::after { transform: rotate(180deg); }
+.set-more .settings-hint p + p { margin-top: var(--space-2); }
+.set-warn { margin: 0 0 var(--space-3); }
+/* the heroes the look on everybody leaves alone (settings/GameFilesBlock.tsx) */
+.hero-picker { position: relative; width: 240px; }
+.hero-picker .input { width: 100%; }
+.settings-heroes { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-2) 0 var(--space-3) var(--space-4); }
+.set-section .about-support { margin: var(--space-3) 0 0; }
+.set-section .about-legal { margin-bottom: var(--space-3); }
+.set-section .settings-adv.cache-files { margin-top: 0; margin-bottom: var(--space-2); }
+
+@media (max-width: 860px) {
+  .set-layout { grid-template-columns: minmax(0, 1fr); }
+  .set-nav { position: static; flex-direction: row; flex-wrap: wrap; }
+}
+/* a choice in Settings has the row's room: the mods folder's "Like the game (now dota_russian)" was cut at 220px */
+.set-ctl .custom-select-trigger { max-width: 320px; }
+.set-row.wide > .set-more { margin-top: 0; }

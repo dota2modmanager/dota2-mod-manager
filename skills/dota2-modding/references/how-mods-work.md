@@ -75,6 +75,6 @@ local to the player's client.
 A `_c` file is a header and a table of blocks: `DATA` (the main KV3 data), `RERL` (resources it
 references), and for models `ANIM` (clips), `ASEQ` (sequences), `AGRP` (animation group and decode
 key), `MRPH`, `CTRL` and mesh blocks. KV3 is Valve's binary key-value format, versions 1 to 5,
-compressed with LZ4 or zstd. The repo reads and writes all of it: `src/resource.ts`
-(`resourceBlock(file, 'ANIM').replace(...)`), `src/kv3.ts`, `src/kv3-write.ts`. A RERL id is
+compressed with LZ4 or zstd. The repo reads and writes all of it: `crates/mm-core/src/formats/resource.rs`
+(`resource::replace(file, "ANIM", 0, &block)`) and `crates/mm-core/src/formats/kv3.rs`. A RERL id is
 MurmurHash64B of the path with seed `0xEDABCDEF`. Details: `docs/item-mods.md` in the repo.

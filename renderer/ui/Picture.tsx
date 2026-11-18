@@ -32,5 +32,5 @@ export function Picture({ url, cls, fallback = 'image_not_supported', lazy = tru
   };
   return isVideo(state.src)
     ? <video className={cls} src={state.src} muted playsInline preload="metadata" data-owned="react" onError={failed} />
-    : <img className={cls} src={state.src} loading={lazy ? 'lazy' : undefined} alt="" data-owned="react" onError={failed} />;
+    : <img decoding="async" className={cls} src={state.src} loading={lazy ? 'lazy' : undefined} alt="" data-owned="react" onError={failed} />;
 }

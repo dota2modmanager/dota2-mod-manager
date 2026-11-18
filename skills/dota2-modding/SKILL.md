@@ -99,7 +99,8 @@ motion, then sound and pictures, each one shown and approved before the next.
 - [items-from-game.md](references/items-from-game.md): arcanas, immortals and sets the player does
   not own, built from the game's files.
 - [custom-models.md](references/custom-models.md): Blender to the game, slots, materials, hiding
-  parts of the hero, cloth over the body, no holes and no clipping.
+  parts of the hero, cloth over the body, cloth that hangs and sways, faces and expressions,
+  no holes and no clipping.
 - [animations.md](references/animations.md): clips out of the game, edited, compiled and put back.
 - [sounds.md](references/sounds.md): new sounds and sound events, in a match and in the hero picker.
 - [ui-pictures.md](references/ui-pictures.md): ability icons, portraits, minimap, hover video.

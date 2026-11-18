@@ -1,12 +1,14 @@
 [package]
 name = "mm-cli"
 version = "0.1.0"
-description = "mm-core on the command line: what the parity tests (test/rust-parity.test.js) run"
+description = "mm-core on the command line, for the Node tools under tools/ and the tests"
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
 [dependencies]
 mm-core.workspace = true
+serde.workspace = true
 serde_json.workspace = true
-sha1 = "0.10"
+regex = "1"
+sha1 = "0.11"

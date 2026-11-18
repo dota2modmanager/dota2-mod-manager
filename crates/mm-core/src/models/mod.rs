@@ -1,0 +1,31 @@
+//! Models, particles and the 3D preview.
+
+pub mod courier_models;
+pub mod hero_companions;
+pub mod hero_particle_styles;
+pub mod hero_preview;
+pub mod hero_preview_fx;
+pub mod hero_preview_picks;
+pub mod hero_showcase;
+pub mod loadout_material;
+pub mod loadout_resources;
+pub mod loadout_sheet;
+pub mod mod_look;
+pub mod mod_props;
+pub mod model_attachments;
+pub mod model_bodygroups;
+pub mod model_cloth;
+pub mod model_glb;
+pub mod model_hitboxes;
+pub mod model_loadout;
+pub mod model_merge;
+pub mod model_particles;
+pub mod model_scale;
+pub mod model_sequences;
+pub mod model_skin;
+pub mod model_snapshot_fallback;
+pub mod model_style_meshes;
+pub mod particle_snapshot;
+pub mod particle_spec;
+pub mod particle_surface;
+pub mod razor_crest_preview;

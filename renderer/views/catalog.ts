@@ -36,6 +36,7 @@ import { openMapLooks } from './catalog/map-looks.ts';
 import { openSounds } from './catalog/sounds.ts';
 import { openBackground } from './catalog/background.ts';
 import { openHud } from './catalog/hud.ts';
+import { openCursor } from './catalog/cursor.ts';
 import { openRank } from './catalog/rank.ts';
 import { openDecor } from './catalog/decor.ts';
 import { remember, screen, startFilters, view } from './catalog/state.ts';
@@ -156,8 +157,9 @@ const actions: ScreenActions = {
   openSounds: (card) => void openSounds(card),
   openBackground: (card) => void openBackground(card),
   openHud: (card) => void openHud(card),
+  openCursor: (card) => void openCursor(card),
   openRank: (card) => void openRank(card),
-  openDecor: (card) => void openDecor(card),
+  openDecor: (card, kind) => void openDecor(card, kind),
 };
 
 async function renderCatalog(): Promise<void> {

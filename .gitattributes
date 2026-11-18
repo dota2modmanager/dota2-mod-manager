@@ -22,8 +22,8 @@ config/app.json.sig text eol=lf
 config/presets.json text eol=lf
 config/presets.json.sig text eol=lf
 
-# Written by tools/rust-data.mjs and compared with what it writes, byte for byte
-# (test/rust-data.test.ts): a CRLF checkout would read as out of date.
+# The Rust core's tables, embedded with include_str!: one line ending on every system, so a
+# build is the same bytes wherever it is made.
 crates/mm-core/data/*.json text eol=lf
 
 # Anything below is bytes, not lines. Git guesses this correctly most of the time; the guess is
@@ -42,3 +42,6 @@ crates/mm-core/data/*.json text eol=lf
 *.zip binary
 *.exe binary
 *.AppImage binary
+
+# What each rust-calls case answered (test/helpers/golden.ts): one line ending everywhere
+test/golden/*.json text eol=lf

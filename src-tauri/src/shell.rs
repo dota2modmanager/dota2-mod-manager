@@ -1,6 +1,6 @@
-//! What only the shell can do, asked for by the TypeScript host in place of Electron's dialog,
-//! shell and BrowserWindow (src-tauri/host/host.ts): a file dialog, a link in the browser, the
-//! window minimised. Each answer has the shape the Electron call it stands for returns.
+//! What only the shell can do, asked for by the owner in place of Electron's dialog, shell and
+//! BrowserWindow (mm_core::owner::Shell): a file dialog, a link in the browser, the window
+//! minimised. Each answer has the shape the Electron call it stands for returns.
 
 use std::path::PathBuf;
 
@@ -161,6 +161,9 @@ pub fn request(app: &AppHandle, method: &str, args: &[Value]) -> Result<Value, S
         "win.devtools" => Ok(Value::Null),
         "win.progress" => Ok(Value::Null),
         "app.quit" | "app.exit" => {
+            if let Some(s) = app.try_state::<std::sync::Arc<crate::window::Shell>>() {
+                s.quitting();
+            }
             app.exit(args.first().and_then(|v| v.as_i64()).unwrap_or(0) as i32);
             Ok(Value::Null)
         }

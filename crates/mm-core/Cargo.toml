@@ -12,7 +12,8 @@ serde_json.workspace = true
 thiserror.workspace = true
 crc32fast.workspace = true
 indexmap = { version = "2", features = ["serde"] }
-sha1 = "0.10"
+sha1 = "0.11"
+hex.workspace = true
 memchr = "2"
 rustc-hash = "2"
 rayon = "1"
@@ -22,3 +23,27 @@ ruzstd = "0.9.1"
 libm = "0.2"
 # String.prototype.localeCompare: the root collation of ICU, which V8 sorts names by
 icu_collator = "2"
+uuid = { version = "1", features = ["v4"] }
+# a picture moved to a colour (png_paint.rs), as Electron's image codec did it
+png = "0.18"
+# foreign archives: mods, fonts, cursors and tools off the catalog, presets off Discord
+zip = { version = "9", default-features = false, features = ["deflate"] }
+# free space on the drive a mod is about to be written to
+fs4 = "1.1"
+# local time for a zip's dates, and the ISO time in the ownership note
+# preset links: raw deflate and base64url, as node:zlib and Buffer make them
+flate2 = "1"
+base64 = "0.23"
+# the network: the catalog, mod archives and the signed config, through the mirror chain and the
+# user's proxy. native-tls is SChannel on Windows, so nothing is compiled from C there
+ureq = { version = "3", default-features = false, features = ["native-tls", "gzip"] }
+url = "2"
+sha2 = "0.11"
+# the catalog's signatures
+ed25519-dalek = "3"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+
+# how much Discord sent on its pipe, so one thread can read and write it (discord_presence.rs),
+# and the process table read in place, where starting tasklist.exe cost a quarter second (game_watch.rs)
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_Pipes", "Win32_Foundation", "Win32_System_Diagnostics_ToolHelp"] }

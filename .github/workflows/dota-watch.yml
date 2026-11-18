@@ -2,7 +2,7 @@ name: Dota updates
 
 # Every thirty minutes: is there a Dota build the "Dota updates" issue has not seen? If so, a
 # comment there says what changed, starting with what the app's patch is built from, and which
-# catalog mods replace files the update touched. tools/dota-watch.mjs says why this exists (build
+# catalog mods replace files the update touched. tools/ops/dota-watch.mjs says why this exists (build
 # 6946 renamed a search-path key and mods stopped loading; the rename was public the same hour).
 #
 # A no-op most of the time: one call for the newest build, one for the issue.
@@ -38,7 +38,7 @@ jobs:
         with:
           persist-credentials: false
 
-      # The catalog's file lists, written by the fingerprint job (tools/gen-fingerprints.js). Read
+      # The catalog's file lists, written by the fingerprint job (tools/catalog/gen-fingerprints.js). Read
       # only: the branch is checked out beside the code and nothing goes back to it from here.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -60,7 +60,7 @@ jobs:
           DRY: ${{ inputs.dry }}
         run: |
           if [ "$DRY" = "true" ]; then
-            node tools/dota-watch.mjs --dry --catalog data/mod-paths.json
+            node tools/ops/dota-watch.mjs --dry --catalog data/mod-paths.json
           else
-            node tools/dota-watch.mjs --catalog data/mod-paths.json
+            node tools/ops/dota-watch.mjs --catalog data/mod-paths.json
           fi

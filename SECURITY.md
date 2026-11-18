@@ -32,7 +32,7 @@ It runs on your machine, keeps no server of its own and holds no account. What i
   against a SHA-256 from that signed list; and the file that can switch a feature off after a
   release is signed by this project's own key and ignored when it does not verify. The whole
   chain, including what each failure costs and what it does not cover, is written out in
-  [ARCHITECTURE.md](ARCHITECTURE.md) under "Who is allowed to have written this".
+  [ARCHITECTURE.md](docs/ARCHITECTURE.md) under "Who is allowed to have written this".
 - **Files you hand it.** Mod archives, preset files that travel between strangers, and folders
   you drop on the window.
 
@@ -60,7 +60,7 @@ it can fetch is a published tool, pinned by version and hash, and only when you 
 
 **You can expect it to keep no secret of yours.** There is no password anywhere, no token is
 stored, and signing in with Discord keeps a name, an id and an avatar. Every address the app can
-reach is listed in [PRIVACY.md](PRIVACY.md).
+reach is listed in [PRIVACY.md](docs/PRIVACY.md).
 
 **You can expect a release to be traceable to its source.** `SHA256SUMS` and a Sigstore
 attestation tie every published file to the commit it was built from, which you can check

@@ -1,5 +1,5 @@
 /**
- * The key the chase gives, asked of the pumpkin's worker (tools/pumpkin-worker in the repository).
+ * The key the chase gives, asked of the pumpkin's worker (tools/ops/pumpkin-worker in the repository).
  *
  * The first Halloween gave everybody the same key, so it was in Discord a minute later. Now each
  * caught runner gets a key of its own, made on the worker, and each key opens one pumpkin: the

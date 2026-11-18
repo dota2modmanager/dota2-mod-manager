@@ -8,6 +8,7 @@ run it in its first lines. Blender scripts run with `blender -b <file.blend> --p
 |---|---|---|---|
 | `export_fbx.py` | Blender | one skinned part and its armature to FBX in Source units, bone axes Y then X | [custom-models.md](../references/custom-models.md) |
 | `make_vmdl.py` | Python | a vmdl for your FBX from the slot's decompiled vmdl, or with the hero's whole skeleton (`--skeleton-from`) | [custom-models.md](../references/custom-models.md) |
+| `cloth.py` | Python | cloth chains on an item's own bones (a hat's tip, a braid), written into its vmdl the way Valve's are | [custom-models.md](../references/custom-models.md) |
 | `uv_cut.py` | Blender, then Python | hide part of the body: its UV triangles out of the model, then cut from the translucency map | [recolor.md](../references/recolor.md) |
 | `dmx.py` | Python | Valve's binary DMX read and written byte for byte | [animations.md](../references/animations.md) |
 | `clip.py` | Python | a clip's bone tracks out of and into a DMX; Valve's bind pose | [animations.md](../references/animations.md) |
