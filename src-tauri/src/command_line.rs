@@ -21,9 +21,25 @@ pub fn user_data_dir(argv: &[String], portable: Option<&std::path::Path>, identi
         // a read-only folder (the exe dropped into Program Files) keeps the ordinary place
         .or_else(|| portable.and_then(mm_core::portable_update::data_beside))
         .or_else(|| std::env::var_os("APPDATA").map(|d| PathBuf::from(d).join("Dota 2 Mod Manager")))
-        .or_else(|| dirs::data_dir().map(|d| d.join(identifier)))
+        .or_else(|| dirs::data_dir().map(|d| kept_from_electron(d.join(identifier), &electron_dirs())))
         .unwrap_or_default();
     std::path::absolute(&ud).unwrap_or(ud)
+}
+
+/// Where the Electron app (3.x) kept its data away from Windows: Electron's userData is the
+/// product name under the config folder on Linux and under Application Support on macOS.
+fn electron_dirs() -> Vec<PathBuf> {
+    [dirs::config_dir(), dirs::data_dir()].into_iter().flatten().map(|d| d.join("Dota 2 Mod Manager")).collect()
+}
+
+/// The Tauri folder, unless it has no settings yet and an Electron one has: 4.0.0 started Linux
+/// players from an empty folder, with no settings, library or presets, though 3.8 had them all in
+/// ~/.config/Dota 2 Mod Manager (reported 2026-11-16). Windows shares %APPDATA% and never moved.
+fn kept_from_electron(tauri: PathBuf, electron: &[PathBuf]) -> PathBuf {
+    if tauri.join("settings.json").exists() {
+        return tauri;
+    }
+    electron.iter().find(|d| d.join("settings.json").exists()).cloned().unwrap_or(tauri)
 }
 
 /// The command on this command line run to its exit code, or None for an ordinary start (and for
@@ -144,5 +160,36 @@ mod lock {
             Ok(_) => None,
             Err(_) => Some(Lock),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_electron_folder_is_kept_until_the_tauri_one_has_settings() {
+        let root = std::env::temp_dir().join(format!("mm-ud-{}", std::process::id()));
+        let (tauri, electron) = (root.join("com.dota2modmanager.app"), root.join("Dota 2 Mod Manager"));
+        std::fs::create_dir_all(&electron).unwrap();
+        assert_eq!(
+            kept_from_electron(tauri.clone(), std::slice::from_ref(&electron)),
+            tauri,
+            "nothing anywhere: Tauri's"
+        );
+        std::fs::write(electron.join("settings.json"), "{}").unwrap();
+        assert_eq!(
+            kept_from_electron(tauri.clone(), std::slice::from_ref(&electron)),
+            electron,
+            "3.8's settings: kept"
+        );
+        std::fs::create_dir_all(&tauri).unwrap();
+        std::fs::write(tauri.join("settings.json"), "{}").unwrap();
+        assert_eq!(
+            kept_from_electron(tauri.clone(), std::slice::from_ref(&electron)),
+            tauri,
+            "4.0's own once it has them"
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 }
