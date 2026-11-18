@@ -153,6 +153,50 @@ fn to_surface(number: &dyn Fn(&Node) -> Option<f64>, root: &mut Node, set: &str)
     any
 }
 
+/// A system launched by the hero's body for an item sewn into it, as dota-studio's tester build
+/// does it: a point of the item's (`renamed`, the names it had) goes by its new name `prefix` +
+/// name, the item (`self`) and the hero (`parent`) are both the body now, and nothing hands the
+/// parent's points down to it. Whether anything changed.
+fn on_body(root: &mut Node, renamed: &HashSet<String>, prefix: &str) -> bool {
+    let mut any = false;
+    if let Some(Node { value: Value::Array { items: configs, .. }, .. }) = root.get_mut("m_controlPointConfigurations")
+    {
+        for config in configs.iter_mut() {
+            let Some(Node { value: Value::Array { items: drivers, .. }, .. }) = config.get_mut("m_drivers") else {
+                continue;
+            };
+            for driver in drivers.iter_mut() {
+                let Value::Object(m) = &mut driver.value else { continue };
+                let point = m.get("m_attachmentName").and_then(Node::as_str).unwrap_or("").to_string();
+                let entity = m.get("m_entityName").and_then(Node::as_str).unwrap_or("").to_string();
+                if renamed.contains(&point.to_lowercase()) && entity != "parent" {
+                    m.insert("m_attachmentName".into(), word(&format!("{prefix}{point}")));
+                    m.insert("m_entityName".into(), word("self"));
+                    any = true;
+                } else if entity == "parent" {
+                    m.insert("m_entityName".into(), word("self"));
+                    any = true;
+                }
+            }
+        }
+    }
+    if let Some(Node { value: Value::Array { items, .. }, .. }) = root.get_mut("m_PreEmissionOperators") {
+        let before = items.len();
+        items.retain(|op| class_of(op) != "C_OP_SetParentControlPointsToChildCP");
+        any |= items.len() != before;
+    }
+    any
+}
+
+/// What a copy of a system tree does to each system.
+#[derive(Debug, Clone, Default)]
+pub struct Rework {
+    /// spread its emitters over the scope's boxes (an effect the person added)
+    pub spread: bool,
+    /// launched by the hero's body (on_body): the item's points by the names they had, lowercased
+    pub body: Option<(HashSet<String>, String)>,
+}
+
 /// A surface copy's root path, and its files as (path, bytes).
 pub type Surface = (String, Vec<(String, Vec<u8>)>);
 
@@ -165,7 +209,19 @@ pub fn surface_system_in(
     system: &str,
     scope: &Scope,
 ) -> Result<Option<Surface>, String> {
+    scoped_system(read, system, scope, &Rework { spread: true, body: None })
+}
+
+/// The copies of `system` and its children reworked as `rework` says, in `scope`'s folder, or None
+/// where no system of the tree changed (it goes on as it is).
+pub fn scoped_system(
+    read: &mut dyn FnMut(&str) -> Option<Vec<u8>>,
+    system: &str,
+    scope: &Scope,
+    rework: &Rework,
+) -> Result<Option<Surface>, String> {
     struct Walk<'a> {
+        rework: &'a Rework,
         scope: &'a Scope,
         read: &'a mut dyn FnMut(&str) -> Option<Vec<u8>>,
         seen: HashSet<String>,
@@ -183,8 +239,11 @@ pub fn surface_system_in(
         let mut kv =
             kv3::read(resource::data(&bytes, "DATA", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
         let mut root = std::mem::replace(&mut kv.root, Node::new(Value::Other { ty: 1, value: None }));
-        if to_surface(&|n| kv.number_of(n), &mut root, &w.scope.set) {
+        if w.rework.spread && to_surface(&|n| kv.number_of(n), &mut root, &w.scope.set) {
             w.any = true;
+        }
+        if let Some((renamed, prefix)) = &w.rework.body {
+            w.any |= on_body(&mut root, renamed, prefix);
         }
         let mut children: Vec<String> = Vec::new();
         if let Some(Node { value: Value::Array { items, .. }, .. }) = root.get_mut("m_Children") {
@@ -214,7 +273,7 @@ pub fn surface_system_in(
         w.entries.push((format!("{}_c", copy_of(&from, &w.scope.folder)), out));
         Ok(())
     }
-    let mut w = Walk { scope, read, seen: HashSet::new(), entries: Vec::new(), any: false };
+    let mut w = Walk { rework, scope, read, seen: HashSet::new(), entries: Vec::new(), any: false };
     copy(&mut w, system)?;
     Ok(w.any.then(|| (copy_of(system, &scope.folder), w.entries)))
 }
@@ -277,6 +336,44 @@ mod tests {
             ])]),
         )]);
         assert!(!to_surface(&|_| None, &mut root, "mm_fx_ab12"));
+    }
+
+    #[test]
+    fn a_system_the_body_launches_looks_for_the_items_points_by_their_new_names() {
+        let driver =
+            |point: &str, entity: &str| object(vec![("m_attachmentName", word(point)), ("m_entityName", word(entity))]);
+        let mut root = object(vec![
+            (
+                "m_controlPointConfigurations",
+                list(vec![object(vec![(
+                    "m_drivers",
+                    list(vec![
+                        driver("attach_attack1", "self"),
+                        driver("attach_hitloc", "parent"),
+                        driver("attach_attack1", "parent"),
+                    ]),
+                )])]),
+            ),
+            ("m_PreEmissionOperators", list(vec![op("C_OP_SetParentControlPointsToChildCP"), op("C_OP_Decay")])),
+        ]);
+        let renamed: HashSet<String> = ["attach_attack1".to_string()].into();
+        assert!(on_body(&mut root, &renamed, "mm_ab12_"));
+        let drivers = root.get("m_controlPointConfigurations").unwrap().items()[0].get("m_drivers").unwrap().items();
+        let seen: Vec<(&str, &str)> = drivers
+            .iter()
+            .map(|d| {
+                (
+                    d.get("m_attachmentName").and_then(Node::as_str).unwrap(),
+                    d.get("m_entityName").and_then(Node::as_str).unwrap(),
+                )
+            })
+            .collect();
+        // the item's point by its new name; the hero's points stay the hero's, and the hero is the body
+        assert_eq!(seen, [("mm_ab12_attach_attack1", "self"), ("attach_hitloc", "self"), ("attach_attack1", "self")]);
+        assert_eq!(classes(&root, "m_PreEmissionOperators"), ["C_OP_Decay"]);
+        // nothing of the item's and no parent: nothing to change
+        let mut plain = object(vec![("m_controlPointConfigurations", list(vec![]))]);
+        assert!(!on_body(&mut plain, &renamed, "mm_ab12_"));
     }
 
     #[test]

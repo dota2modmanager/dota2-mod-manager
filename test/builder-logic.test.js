@@ -149,12 +149,3 @@ test("an effect sits on its shelf: the courier unusuals, the game's seasonal one
   assert.equal(rarityName('mythical'), 'Mythical', 'as the game prints it in every language');
   assert.equal(rarityName(undefined), '');
 });
-
-test('an added effect goes only on an item that rolled an unusual or has no effect of its own', async () => {
-  const { offeredOn } = await load();
-  const all = [{ id: '' }, { id: 'fire' }, { id: 'unusual-15' }, { id: 'unusual-836' }, { id: 'kinetic-3' }];
-  const ids = (list) => list.map((fx) => fx.id);
-  assert.deepEqual(ids(offeredOn(all, { unusual: true })), ['fire', 'unusual-15', 'unusual-836', 'kinetic-3']);
-  assert.deepEqual(ids(offeredOn(all, {})), ['kinetic-3'], 'an item with effects of its own keeps its kinetic gems alone');
-  assert.deepEqual(ids(offeredOn(all, null)), ['fire', 'unusual-15', 'unusual-836', 'kinetic-3'], 'nothing chosen: all to look at');
-});

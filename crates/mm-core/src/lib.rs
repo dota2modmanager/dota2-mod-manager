@@ -56,7 +56,6 @@ pub(crate) use item_builder::{
     item_builder_ability_fx, item_builder_assets, item_builder_donor, item_builder_effects, item_builder_everyone,
     item_builder_everyone_budget, item_builder_fx_patch, item_builder_kinetic, item_builder_personas,
     item_builder_refits, item_builder_sets, item_builder_styles, item_portraits, item_skin, item_sounds, item_visuals,
-    unusual_fit,
 };
 pub use item_builder::{item_builder_details, item_builder_slots, unusual_effects};
 pub(crate) use looks::{

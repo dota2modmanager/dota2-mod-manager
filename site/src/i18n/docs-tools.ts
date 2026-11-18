@@ -58,11 +58,15 @@ const en: Record<Slug, Doc> = {
       { k: 'h2', t: 'An unusual effect on an item', id: 'unusual' },
       {
         k: 'p',
-        t: 'The slot\'s Effects tab adds an unusual effect to the item you picked. It is offered on items the game ever let roll an unusual, and on items with no effect of their own; an item that has its own effect keeps it alone. Kinetic gems go on any item.',
+        t: 'The slot\'s Effects tab adds an unusual effect to any item you picked, next to the effects it has of its own. Kinetic gems go on any item too.',
       },
       {
         k: 'p',
-        t: 'The effect spreads over the item itself, not around it. The item is sewn into the hero\'s body with its effect; one that moves by itself, a mount that flaps its wings or a cape, stays a separate model with its own animations, and the effect is built on it there.',
+        t: 'The effect spreads over the item itself, not around it. The item is sewn into the hero\'s body with its effect, and its own effects stay on the points of the item they were made for. Some items stay a separate model and carry the effect there: one that moves by itself (a mount that flaps its wings, a cape), an arcana, an item that changes the hero\'s animations, model or ability effects, and an item with facial morphs.',
+      },
+      {
+        k: 'p',
+        t: 'A courier\'s effect, such as Ethereal Flame, Trail of Burning Doom or Touch of Frost, goes on the hero\'s whole body and its mount, the way a courier wears it, and the item it was picked with stays as it is.',
       },
       {
         k: 'faq',
@@ -206,11 +210,15 @@ const ru: Record<Slug, Doc> = {
       { k: 'h2', t: 'Необычный эффект на предмете', id: 'unusual' },
       {
         k: 'p',
-        t: 'Во вкладке «Эффекты» слота на выбранный предмет вешается необычный эффект (unusual). Он доступен на предметах, которые в игре хоть раз выходили необычными, и на предметах без своего эффекта; предмет со своим эффектом остаётся с ним одним. Кинетические камни ставятся на любой предмет.',
+        t: 'Во вкладке «Эффекты» слота на любой выбранный предмет вешается необычный эффект (unusual), рядом с его собственными эффектами. Кинетические камни тоже ставятся на любой предмет.',
       },
       {
         k: 'p',
-        t: 'Эффект растекается по самому предмету, а не висит рядом. Предмет вшивается в тело героя вместе с эффектом; тот, что двигается сам, например маунт с крыльями или плащ, остаётся отдельной моделью со своими анимациями, и эффект строится на нём.',
+        t: 'Эффект растекается по самому предмету, а не висит рядом. Предмет вшивается в тело героя вместе с эффектом, а его собственные эффекты остаются на тех точках предмета, для которых сделаны. Некоторые предметы остаются отдельной моделью, и эффект строится на них: тот, что двигается сам (маунт с крыльями, плащ), аркана, предмет, который меняет анимации, модель или эффекты способностей героя, и предмет с лицевыми морфами.',
+      },
+      {
+        k: 'p',
+        t: 'Эффект курьера, например Ethereal Flame, Trail of Burning Doom или Touch of Frost, ложится на всё тело героя и его маунта, как его носит курьер, а предмет, с которым его выбрали, остаётся как есть.',
       },
       {
         k: 'faq',

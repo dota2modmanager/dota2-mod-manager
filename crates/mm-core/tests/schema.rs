@@ -748,6 +748,26 @@ fn the_built_table_is_written_into_the_mod_folder_read_back_the_same_and_taken_a
     schema_deploy::undeploy(game, "dota_mods").unwrap(); // nothing there: nothing to do
 }
 
+/// An empty folder that will not go (held open here; on a game on C: remove_dir_all refused one
+/// as in use) stays, and taking the table away does not fail on it: a build that switched to the
+/// language folder's pak stopped there with "the file is in use".
+#[cfg(windows)]
+#[test]
+fn an_empty_folder_that_will_not_go_does_not_stop_the_table_coming_off() {
+    use std::os::windows::fs::OpenOptionsExt;
+    let g = game_with("held", &large(1200));
+    deploy(&g.0, &[], &[]).unwrap();
+    let dir = g.0.join("dota_mods");
+    std::fs::remove_file(dir.join(SCHEMA_VPK)).unwrap();
+    // FILE_FLAG_BACKUP_SEMANTICS opens a folder; share mode 0 keeps anyone from deleting it
+    let held = std::fs::OpenOptions::new().read(true).share_mode(0).custom_flags(0x0200_0000).open(&dir).unwrap();
+    schema_deploy::undeploy(&g.0, "dota_mods").unwrap();
+    assert!(dir.exists(), "the folder held open stays");
+    drop(held);
+    schema_deploy::undeploy(&g.0, "dota_mods").unwrap();
+    assert!(!dir.exists(), "and goes once it is let go");
+}
+
 #[test]
 fn taking_the_table_away_leaves_a_folder_that_holds_somebody_elses_file() {
     let g = game_with("foreign", &large(1200));

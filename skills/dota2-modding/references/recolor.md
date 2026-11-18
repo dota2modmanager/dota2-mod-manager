@@ -118,8 +118,14 @@ with a motion of its own: Crownfall's feathers keep their operators and take
 The item builder goes one step further (`crates/mm-core/src/schema/item_in_body.rs`): it sews an
 item with an unusual into the hero's body model, the boxes as a set of that item alone
 (`mm_fx_<token>`), and lists the effect on the body. Two items in one body each keep their own
-set. An item that moves by itself (a clip other than its bind pose, or cloth) stays its own model
-with its animations and carries the effect there.
+set. The item's attachments go in renamed (`mm_<token>_<name>`) and its own particles are copied to
+name them so (`m_attachmentName`, `m_entityName` `self`): under the old names they find the
+body's point of the same name, and an arm's effect lands in the head. An item that moves by itself
+(a clip other than its bind pose, or cloth), has morphs, is an arcana, or changes the hero's
+motions, model or ability effects stays its own model and carries the effect there. Cloth moves only
+in a match or the hero demo, never in the loadout: judge it there. A courier's effect (its system
+under `particles/econ/courier/`) is not the item's at all: it goes as it is on the hero's body
+and its mount, the way a courier wears it on its whole body.
 
 modkit does it to a model after the compile and before the pack:
 

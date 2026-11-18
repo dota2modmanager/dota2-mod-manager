@@ -191,8 +191,10 @@ pub fn extra_places(stock: &[String], extras: &[String]) -> (Vec<Under>, Vec<Str
 /// A wearable as it goes in: in its material set, carrying its effects over the boxes of `set`. None: the
 /// file stays as it was.
 pub fn worn_model(model: &[u8], skin: f64, systems: &[&str], set: &str) -> Option<Vec<u8>> {
+    // a set the model has not got (a coronet of no material sets asked for set 2) leaves it as the
+    // game shows it, in its own; it took the effect down with it once
     let out = if skin != 0.0 && !skin.is_nan() {
-        crate::model_skin::with_skin(model, skin as usize)?
+        crate::model_skin::with_skin(model, skin as usize).unwrap_or_else(|| model.to_vec())
     } else {
         model.to_vec()
     };
@@ -218,6 +220,33 @@ pub struct ItemFiles {
     pub left: Vec<LeftBehind>,
 }
 
+/// Whether a pick wears its effects on the hero's body alone: it has no model of its own and so
+/// no stock path (a body arcana in the base slot, Bladeform Legacy, Demon Eater), and it is not a
+/// model the slot has no place for.
+fn on_body_alone(block: &[u8], own: Option<&str>, unplaced: bool) -> Result<bool, KvError> {
+    if own.is_some() || unplaced {
+        return Ok(false);
+    }
+    let fields = crate::schema::item_fields(block, 0)?;
+    Ok(fields.iter().find(|(k, _)| k == "model_player").is_none_or(|(_, v)| v.trim().is_empty()))
+}
+
+/// The compiled paths of the free mount models the hero wears (a rider's beast), lowercased: a
+/// courier's effect goes on them as on the body.
+fn stock_mounts(table: &[u8], hero: &str) -> Result<Vec<String>, KvError> {
+    let mut out = Vec::new();
+    for item in crate::schema::items_of(table)?.iter() {
+        let stock = item.baseitem || item.prefab.eq_ignore_ascii_case("default_item");
+        if !stock || item.model.is_empty() || !item.slot.eq_ignore_ascii_case("mount") {
+            continue;
+        }
+        if crate::item_builder_slots::item_heroes(table, item.start)?.iter().any(|h| h == hero) {
+            out.push(compiled(&item.model.replace('\\', "/")).to_lowercase());
+        }
+    }
+    Ok(out)
+}
+
 /// The compiled path of a hero's body, lowercased.
 fn body_path(read: &dyn Fn(&str) -> Option<Vec<u8>>, hero: &str) -> Result<String, String> {
     let at = format!("{}_c", hero_model_path(read, hero)?).to_lowercase();
@@ -229,7 +258,8 @@ fn body_path(read: &dyn Fn(&str) -> Option<Vec<u8>>, hero: &str) -> Result<Strin
 
 /// A pick with an effect the person added, sewn into its hero's body (item_in_body.rs): the body's
 /// path and what sewing made, or None where the pick is not one hero's or its models do not join
-/// (it keeps the effect on itself then). The body is the one the picks before made, if any.
+/// (it keeps the effect on itself then). The caller asks first whether the item has to stay a
+/// wearable of its own (`stays_apart`). The body is the one the picks before made, if any.
 #[allow(clippy::too_many_arguments)]
 fn sew_in(
     block: &[u8],
@@ -274,6 +304,13 @@ pub fn item_files(
     let mut left: Vec<LeftBehind> = Vec::new();
     let mut bodies: IndexMap<String, Vec<String>> = IndexMap::new();
     let mut hidden: IndexMap<String, IndexMap<String, f64>> = IndexMap::new();
+    // couriers' effects the person added, by hero: they go on the body (and its mount), as a
+    // courier wears them, where dota-studio puts them too
+    let mut hero_fx: IndexMap<String, Vec<String>> = IndexMap::new();
+    // the effects of a pick with no stock path (a body arcana), by hero: they go on the body alone
+    let mut body_fx: IndexMap<String, Vec<String>> = IndexMap::new();
+    // the stock paths an item sewn into its body left with nothing to draw
+    let mut emptied: HashSet<String> = HashSet::new();
     let mut table: Option<Vec<u8>> = None;
     // the sprite sheet, portraits and soundevents of the item picks alone, in place of the table's copy
     let own: HashSet<String> = shared.map(|s| s.paths.iter().cloned().collect()).unwrap_or_default();
@@ -293,12 +330,45 @@ pub fn item_files(
             continue;
         }
         let pick_own = patch.own.as_deref().filter(|o| !o.is_empty());
-        let Parts { systems, skin, motions, groups, extras, left: mut what } =
+        let Parts { mut systems, skin, motions, groups, extras, left: mut what } =
             pick_parts(&patch.block, pick_own, patch.unplaced == Some(true)).map_err(e)?;
         for en in patch.assets.as_deref().unwrap_or(&[]) {
             let p = en.path().to_lowercase();
             if !own.contains(&p) && !entries.contains_key(&p) {
                 entries.insert(p, en.clone());
+            }
+        }
+        // a courier's effect the person added goes on the hero's whole body, not on the item
+        let added_all: HashSet<String> = patch.added.iter().flatten().map(|s| s.to_lowercase()).collect();
+        // and a pick with no stock path of its own (a body arcana in the hero's base slot) wears all
+        // of its effects there: by the table the game hangs them on the hero, and without a path
+        // they were left out ("without the table has not got its effect"), the arcana's aura lost
+        if !systems.is_empty() && on_body_alone(&patch.block, pick_own, patch.unplaced == Some(true)).map_err(e)? {
+            what.retain(|w| w != "its effect");
+            for hero in crate::item_builder_slots::item_heroes(&patch.block, 0).map_err(e)? {
+                let list = body_fx.entry(hero).or_default();
+                for s in &systems {
+                    if !list.contains(s) {
+                        list.push(s.clone());
+                    }
+                }
+            }
+            systems.clear();
+        }
+        let courier: Vec<String> = systems
+            .iter()
+            .filter(|s| added_all.contains(&s.to_lowercase()) && crate::item_in_body::on_hero(s))
+            .cloned()
+            .collect();
+        if !courier.is_empty() {
+            systems.retain(|s| !courier.contains(s));
+            for hero in crate::item_builder_slots::item_heroes(&patch.block, 0).map_err(e)? {
+                let list = hero_fx.entry(hero).or_default();
+                for s in &courier {
+                    if !list.contains(s) {
+                        list.push(s.clone());
+                    }
+                }
             }
         }
         if let Some(own) = pick_own.filter(|_| !systems.is_empty() || skin != 0.0) {
@@ -308,7 +378,24 @@ pub fn item_files(
             let entry = entries.get(&at).cloned();
             let sewn = match &entry {
                 Some(en) if systems.iter().any(|s| added.contains(&s.to_lowercase())) => {
-                    sew_in(&patch.block, &patch.id, &at, en, skin, &systems, &added, &entries, &under, read)?
+                    // what the item does is in its own entry: the pick's block went without the file swaps
+                    if table.is_none() {
+                        table = read(crate::schema::SCHEMA_REL);
+                    }
+                    let apart = match (&table, &patch.item_id) {
+                        (Some(t), Some(id)) => {
+                            match crate::schema_merge::items_by_id(t).map_err(e)?.find(t, id).map_err(e)? {
+                                Some((s, end)) => crate::item_in_body::stays_apart(&t[s..end]),
+                                None => true,
+                            }
+                        }
+                        _ => crate::item_in_body::stays_apart(&patch.block),
+                    };
+                    if apart {
+                        None
+                    } else {
+                        sew_in(&patch.block, &patch.id, &at, en, skin, &systems, &added, &entries, &under, read)?
+                    }
                 }
                 _ => None,
             };
@@ -317,6 +404,7 @@ pub fn item_files(
                     entries.insert(p.to_lowercase(), entry_at(&p, d.into()));
                 }
                 entries.insert(body_at.clone(), entry_at(&body_at, sewn.body.into()));
+                emptied.insert(at.clone());
                 entries.insert(at, entry_at(own, sewn.empty_item.into()));
             } else if let Some(entry) = entry {
                 let mut roots = Vec::new();
@@ -455,6 +543,38 @@ pub fn item_files(
             None => left.push(LeftBehind { source: at.clone(), what: vec!["the hero parts it hides".into()] }),
         }
     }
+    // couriers' effects on the body, and on the hero's stock mount unless an item sewn in took its place
+    for (hero, systems) in &hero_fx {
+        let mut hosts = vec![body_path(read, hero)?];
+        if table.is_none() {
+            table = read(crate::schema::SCHEMA_REL);
+        }
+        if let Some(t) = &table {
+            hosts.extend(stock_mounts(t, hero).map_err(e)?.into_iter().filter(|m| !emptied.contains(m)));
+        }
+        let refs: Vec<&str> = systems.iter().map(String::as_str).collect();
+        for at in hosts {
+            let Some(model) = current(&entries, &at) else { continue };
+            match crate::model_particles::with_more_particles(&model, &refs) {
+                Some(m) => {
+                    entries.insert(at.clone(), entry_at(&at, m.into()));
+                }
+                None => left.push(LeftBehind { source: hero.clone(), what: vec!["its courier effect".into()] }),
+            }
+        }
+    }
+    // a body arcana's own effects on the body
+    for (hero, systems) in &body_fx {
+        let at = body_path(read, hero)?;
+        let Some(model) = current(&entries, &at) else { continue };
+        let refs: Vec<&str> = systems.iter().map(String::as_str).collect();
+        match crate::model_particles::with_more_particles(&model, &refs) {
+            Some(m) => {
+                entries.insert(at.clone(), entry_at(&at, m.into()));
+            }
+            None => left.push(LeftBehind { source: hero.clone(), what: vec!["its effect".into()] }),
+        }
+    }
     for en in beneath {
         let p = en.path().to_lowercase();
         if !entries.contains_key(&p) {
@@ -462,4 +582,34 @@ pub fn item_files(
         }
     }
     Ok(ItemFiles { entries: entries.into_values().collect(), left })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_body_arcana_with_no_model_wears_its_effects_on_the_body() {
+        let body_arcana = b"\"9059\"\n{\n\t\"item_slot\"\t\t\"hero_base\"\n\t\"prefab\"\t\t\"wearable\"\n}";
+        let wearable = b"\"9021\"\n{\n\t\"item_slot\"\t\t\"head\"\n\t\"model_player\"\t\t\"models/items/x/x.vmdl\"\n}";
+        assert!(on_body_alone(body_arcana, None, false).unwrap());
+        // an item with a model keeps its effects on its model, wherever that goes
+        assert!(!on_body_alone(wearable, None, false).unwrap());
+        assert!(!on_body_alone(wearable, Some("models/heroes/x/x_head.vmdl_c"), false).unwrap());
+        // a model the slot has no place for is reported as such, not moved to the body
+        assert!(!on_body_alone(body_arcana, None, true).unwrap());
+    }
+
+    /// On the game's own files (MM_TEST_PAK01): a rider's free mount is found for the courier's
+    /// effect to go on it as on the body; a hero with no mount has none.
+    #[test]
+    fn a_riders_free_mount_takes_the_couriers_effect_too() {
+        let Ok(pak) = std::env::var("MM_TEST_PAK01") else { return };
+        let ix = crate::vpk::Index::open(std::path::Path::new(&pak)).unwrap();
+        let text = ix.read(crate::schema::SCHEMA_REL).unwrap().unwrap();
+        let mounts = stock_mounts(&text, "npc_dota_hero_batrider").unwrap();
+        assert!(!mounts.is_empty(), "the rider has a mount");
+        assert!(mounts.iter().all(|m| m.ends_with(".vmdl_c") && ix.read(m).unwrap().is_some()), "{mounts:?}");
+        assert!(stock_mounts(&text, "npc_dota_hero_lina").unwrap().is_empty());
+    }
 }

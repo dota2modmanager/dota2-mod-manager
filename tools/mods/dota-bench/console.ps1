@@ -17,7 +17,8 @@ public static class Con {
     SendInput(1, i, Marshal.SizeOf(typeof(INPUT)));
   }
   // a key by scan code (KEYEVENTF_SCANCODE 0x08, KEYUP 0x02), as the game reads keys
-  public static void Key(ushort scan) { Send(scan, 0x08); System.Threading.Thread.Sleep(40); Send(scan, 0x0A); }
+  // an extended key (End, Home, Delete) comes as 0xE0nn and goes with KEYEVENTF_EXTENDEDKEY 0x01
+  public static void Key(ushort scan) { uint x = scan >= 0xE000 ? 1u : 0u; ushort s = (ushort)(scan & 0xFF); Send(s, 0x08 | x); System.Threading.Thread.Sleep(40); Send(s, 0x0A | x); }
   // text as characters (KEYEVENTF_UNICODE 0x04): what a text field takes and a hotkey does not
   public static void Text(string s) { foreach (char c in s) { Send(c, 0x04); Send(c, 0x06); System.Threading.Thread.Sleep(8); } }
 }

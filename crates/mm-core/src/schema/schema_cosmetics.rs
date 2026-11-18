@@ -155,11 +155,6 @@ fn slots_in(lib: &Library, game: &Path, text: &[u8], lang: &str) -> Result<Value
         let mut named: HashMap<String, Value> = HashMap::new();
         let mut entries = Vec::new();
         let mut gems_read: Option<std::sync::Arc<crate::item_builder_kinetic::Gems>> = None;
-        // the items an added effect may go on; without the game's pak to tell, every one
-        let fits = match &ix {
-            Some(ix) => Some(crate::unusual_fit::unusual_fits(text, ix).map_err(kv)?),
-            None => None,
-        };
         for it in &item_slots {
             let rec = cosmetic_record_for(lib, &it.slot);
             let mut o = match json!(it) {
@@ -171,9 +166,6 @@ fn slots_in(lib: &Library, game: &Path, text: &[u8], lang: &str) -> Result<Value
                 .iter()
                 .map(|opt| {
                     let mut v = json!(opt);
-                    if fits.as_ref().is_none_or(|f| f.contains(&opt.id)) {
-                        v["unusual"] = json!(true);
-                    }
                     if let Some(styles) = &opt.styles {
                         let names: Vec<Value> =
                             styles.iter().enumerate().map(|(i, s)| json!(style_named(s, i))).collect();

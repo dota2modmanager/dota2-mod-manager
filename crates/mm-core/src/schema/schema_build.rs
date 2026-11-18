@@ -44,6 +44,8 @@ pub struct TablePatch {
     pub unplaced: Option<bool>,
     /// worn as an item: a persona whose base is not here is worn only through the table
     pub item: Option<bool>,
+    /// the paid item a pick wears, by its id in the game's table
+    pub item_id: Option<String>,
     fx: bool,
 }
 
@@ -519,6 +521,7 @@ impl TableBuild {
                             added: Some(pick.added.clone()),
                             unplaced: Some(pick.unplaced),
                             item: Some(is_worn),
+                            item_id: Some(item_id.clone()),
                             fx: is_fx(rec),
                         });
                         let persona = !is_worn;
@@ -557,6 +560,7 @@ impl TableBuild {
                                 added: None,
                                 unplaced: None,
                                 item: None,
+                                item_id: None,
                                 fx: false,
                             });
                         }
@@ -584,6 +588,7 @@ impl TableBuild {
                     added: None,
                     unplaced: None,
                     item: None,
+                    item_id: None,
                     fx: false,
                 });
             }
