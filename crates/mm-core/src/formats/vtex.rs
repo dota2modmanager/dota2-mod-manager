@@ -146,7 +146,7 @@ pub fn rgba_from_vtex(buf: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
             return None;
         }
         let mut rgba = body.to_vec();
-        for px in rgba.chunks_exact_mut(4) {
+        for px in rgba.as_chunks_mut::<4>().0 {
             px.swap(0, 2);
         }
         return Some((width as u32, height as u32, rgba));
