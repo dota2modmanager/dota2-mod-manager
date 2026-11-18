@@ -539,12 +539,18 @@ test('a step that waits on a package mirror gives up on its own', () => {
   for (const f of workflows) {
     // a step starts at "- name:", "- uses:" or "- run:" and runs to the next one
     for (const step of read(f).split(/\n\s*- (?=name:|uses:|run:)/).slice(1)) {
-      if (!/\bapt-get\b/.test(step)) continue;
+      // the shared step installs through apt too, and cannot set its own timeout: the caller does
+      const shared = /uses: \.\/\.github\/actions\/linux-libraries\b/.test(step);
+      if (!shared && !/\bapt-get\b/.test(step)) continue;
       seen += 1;
       const name = (/^name: ([^\n]*)/.exec(step) || [])[1] || step.split('\n')[0];
       if (!/\n\s*timeout-minutes: \d+/.test(step)) missing.push(`${f}: ${name}`);
-      if (!/Acquire::http::Timeout=\d+/.test(step)) missing.push(`${f}: ${name} (apt waits on a silent mirror forever)`);
+      if (!shared && !/Acquire::http::Timeout=\d+/.test(step)) missing.push(`${f}: ${name} (apt waits on a silent mirror forever)`);
     }
+  }
+  const action = fs.readFileSync(path.join(DIR, '..', 'actions', 'linux-libraries', 'action.yml'), 'utf8');
+  for (const call of action.match(/sudo apt-get [^\n]*(?:\\\n[^\n]*)*/g) || []) {
+    if (!/Acquire::http::Timeout=\d+/.test(call)) missing.push(`linux-libraries: ${call.split('\n')[0]} (apt waits on a silent mirror forever)`);
   }
   assert.ok(seen >= 4, `only ${seen} apt-get steps found, so the split stopped finding steps`);
   assert.deepEqual(missing, [], `give these a timeout-minutes and Acquire::http::Timeout: ${missing.join('; ')}`);
@@ -615,3 +621,16 @@ function jobsOf(text) {
   }
   return out;
 }
+
+test('the Linux packages come from the Actions cache, so a mirror that only trickles cannot hold a build', () => {
+  /* On 2026-11-18 four AppImage builds in a row ran out of time downloading WebKitGTK: the mirror
+     sent each file in seconds, too slowly for the step's ten minutes and never slowly enough for
+     apt's timeout. The downloaded packages are cached now, and every job installs through that. */
+  const action = fs.readFileSync(path.join(DIR, '..', 'actions', 'linux-libraries', 'action.yml'), 'utf8');
+  assert.match(action, /uses: actions\/cache@[0-9a-f]{40}/, 'the packages are not cached');
+  assert.match(action, /Dir::Cache::Archives="\$HOME\/apt-archives"/, 'apt does not download into the cached folder');
+  assert.match(action, /path: ~\/apt-archives/, 'the cache keeps a different folder than apt fills');
+  assert.match(action, /chown -R/, 'apt leaves root-owned files the cache cannot read back');
+  const direct = workflows.filter((f) => /\bapt-get\b[^\n]*install/.test(read(f)));
+  assert.deepEqual(direct, [], 'these still install from the mirror alone');
+});
