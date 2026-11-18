@@ -517,6 +517,108 @@ mod tests {
         assert!(none.calls().is_empty(), "a build with no token asks nothing");
     }
 
+    /// One HTTP exchange on 127.0.0.1: the request as the worker would read it, and its answer.
+    fn worker_once(status: u16, reply: &'static str) -> (String, std::thread::JoinHandle<(String, Vec<u8>)>) {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let api = format!("http://{}", listener.local_addr().unwrap());
+        let worker = std::thread::spawn(move || {
+            let (mut sock, _) = listener.accept().unwrap();
+            let mut raw = Vec::new();
+            let mut buf = [0u8; 64 * 1024];
+            let (head, body) = loop {
+                let n = sock.read(&mut buf).unwrap();
+                raw.extend_from_slice(&buf[..n]);
+                if let Some(at) = raw.windows(4).position(|w| w == b"\r\n\r\n") {
+                    let head = String::from_utf8_lossy(&raw[..at]).into_owned();
+                    let length = head
+                        .lines()
+                        .find_map(|l| {
+                            l.to_ascii_lowercase().strip_prefix("content-length:").map(|v| v.trim().to_string())
+                        })
+                        .map_or(0, |v| v.parse::<usize>().unwrap());
+                    while raw.len() < at + 4 + length {
+                        let n = sock.read(&mut buf).unwrap();
+                        raw.extend_from_slice(&buf[..n]);
+                    }
+                    break (head, raw[at + 4..at + 4 + length].to_vec());
+                }
+            };
+            let answer = format!(
+                "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{reply}",
+                reply.len()
+            );
+            sock.write_all(answer.as_bytes()).unwrap();
+            (head, body)
+        });
+        (api, worker)
+    }
+
+    /// The part of a multipart body under this field name: its bytes, without the part's headers.
+    fn part<'a>(body: &'a [u8], boundary: &str, name: &str) -> &'a [u8] {
+        let marker = format!("name=\"{name}\"");
+        let start = body.windows(marker.len()).position(|w| w == marker.as_bytes()).expect(name);
+        let from = start + body[start..].windows(4).position(|w| w == b"\r\n\r\n").unwrap() + 4;
+        let end_marker = format!("\r\n--{boundary}");
+        let len = body[from..].windows(end_marker.len()).position(|w| w == end_marker.as_bytes()).unwrap();
+        &body[from..from + len]
+    }
+
+    #[test]
+    fn a_submission_through_the_real_network_layer_carries_one_vpk_per_zip() {
+        let (api, worker) = worker_once(200, r#"{"id":"local1","prUrl":"https://github.com/x/y/pull/9"}"#);
+        let net = Net::new(|| 0.0);
+        let vpk: Vec<u8> =
+            crate::vpk::SIGNATURE.to_le_bytes().iter().copied().chain((0..200_000).map(|i| i as u8)).collect();
+        let styles = [
+            UploadStyle {
+                label: "Day".into(),
+                colors: vec!["#ddd4ff".into()],
+                vpk: vpk.clone(),
+                preview: b"RIFF0000WEBP".to_vec(),
+            },
+            UploadStyle {
+                label: "Night".into(),
+                colors: vec!["#ff8f8f".into(), "#8fd3ff".into()],
+                vpk: vpk.clone(),
+                preview: b"RIFF1111WEBP".to_vec(),
+            },
+        ];
+        let reply = submit_mod(&net, &draft(json!({})), &styles, "d2pfx_local", &api).unwrap();
+        assert_eq!(reply, UploadReply { id: "local1".into(), pr_url: "https://github.com/x/y/pull/9".into() });
+
+        let (head, body) = worker.join().unwrap();
+        assert!(head.starts_with("POST /api/submit HTTP/1.1"), "{head}");
+        assert!(head.lines().any(|l| l.eq_ignore_ascii_case("authorization: Bearer d2pfx_local")), "{head}");
+        let boundary = head
+            .lines()
+            .find_map(|l| l.split_once("boundary=").map(|(_, b)| b.trim().to_string()))
+            .expect("a multipart Content-Type");
+        assert!(body.ends_with(format!("--{boundary}--\r\n").as_bytes()));
+        assert_eq!(part(&body, &boundary, "styled"), b"1");
+        let listed: Value = serde_json::from_slice(part(&body, &boundary, "styles")).unwrap();
+        assert_eq!(listed[1], json!({ "label": "Night", "colors": ["#ff8f8f", "#8fd3ff"] }));
+        assert_eq!(part(&body, &boundary, "preview2"), b"RIFF1111WEBP");
+        for (field, inside) in [("modZip", "Blue Glow.vpk"), ("modZip2", "Blue Glow Style 2.vpk")] {
+            let mut zip = zip::ZipArchive::new(std::io::Cursor::new(part(&body, &boundary, field).to_vec())).unwrap();
+            assert_eq!(zip.len(), 1, "{field} holds exactly one file");
+            let mut entry = zip.by_index(0).unwrap();
+            assert_eq!(entry.name().unwrap(), inside);
+            let mut got = Vec::new();
+            std::io::Read::read_to_end(&mut entry, &mut got).unwrap();
+            assert_eq!(got, vpk, "{field} carries the VPK byte for byte");
+        }
+    }
+
+    #[test]
+    fn a_refusal_through_the_real_network_layer_keeps_the_workers_words() {
+        let (api, worker) = worker_once(401, r#"{"error":"unauthorized","message":"Bad token"}"#);
+        let err = submit_mod(&Net::new(|| 0.0), &draft(json!({})), &[style("", 1, "RIFF....WEBP")], "nope", &api)
+            .unwrap_err();
+        worker.join().unwrap();
+        assert_eq!(err, "Bad token");
+    }
+
     #[test]
     fn the_embedded_token_reads_back_and_a_changed_byte_is_refused() {
         let token = "d2pfx_test_0123456789abcdef";
@@ -527,6 +629,20 @@ mod tests {
         let last = tampered.len() - 1;
         tampered[last] ^= 1;
         assert_eq!(decode_embedded_token(&tampered), None);
+    }
+
+    #[test]
+    fn a_file_the_release_tool_wrote_reads_back_here() {
+        // written by tools/release/uploader-token.mjs; test/uploader-token.test.ts reads it with the tool's key
+        let raw = include_bytes!("../../../../test/fixtures/uploader-token.bin");
+        assert_eq!(decode_embedded_token(raw).as_deref(), Some("d2pfx_test_0123456789abcdef"));
+
+        let root = std::env::temp_dir().join(format!("mm-upload-token-{}", uuid::Uuid::new_v4().simple()));
+        assert_eq!(embedded_upload_token(&root), None, "a build without the file has no token");
+        std::fs::create_dir_all(root.join("build").join("stats")).unwrap();
+        std::fs::write(root.join("build").join("stats").join("uploader-token.bin"), raw).unwrap();
+        assert_eq!(embedded_upload_token(&root).as_deref(), Some("d2pfx_test_0123456789abcdef"));
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     fn seal(token: &str) -> Vec<u8> {

@@ -615,13 +615,14 @@ impl Creator {
         self.root.join("consent.json")
     }
 
-    pub fn consent(&self) -> Value {
+    /// The terms as recorded; an agreement to an older version of them is not one to these.
+    pub fn consent(&self, current: &str) -> Value {
         let c: Value = std::fs::read_to_string(self.consent_file())
             .ok()
             .and_then(|t| serde_json::from_str(&t).ok())
             .unwrap_or(Value::Null);
         json!({
-            "accepted": field(&c, "accepted") == &Value::Bool(true),
+            "accepted": field(&c, "accepted") == &Value::Bool(true) && str_of(&c, "version") == current,
             "version": str_of(&c, "version"),
             "at": field(&c, "at").as_str().map(|s| json!(s)).unwrap_or(Value::Null),
         })
@@ -943,11 +944,16 @@ mod tests {
     #[test]
     fn the_terms_are_recorded_for_this_installation() {
         let f = Fixture::new();
-        assert_eq!(f.creator.consent(), json!({ "accepted": false, "version": "", "at": null }));
+        assert_eq!(f.creator.consent("1"), json!({ "accepted": false, "version": "", "at": null }));
         assert_eq!(
             f.creator.accept_terms("1", "2026-01-01T00:00:00.000Z").unwrap(),
             json!({ "accepted": true, "version": "1", "at": "2026-01-01T00:00:00.000Z" })
         );
-        assert_eq!(f.creator.consent(), json!({ "accepted": true, "version": "1", "at": "2026-01-01T00:00:00.000Z" }));
+        assert_eq!(
+            f.creator.consent("1"),
+            json!({ "accepted": true, "version": "1", "at": "2026-01-01T00:00:00.000Z" })
+        );
+        // new terms are asked for again
+        assert_eq!(f.creator.consent("2")["accepted"], json!(false));
     }
 }

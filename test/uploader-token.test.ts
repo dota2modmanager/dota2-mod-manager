@@ -41,6 +41,16 @@ test('an embedded token decrypts back, and its file holds no readable copy', () 
   assert.equal(Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8'), TOKEN);
 });
 
+test('the fixture the Rust side reads is one this tool wrote, under the same key', () => {
+  // crates/mm-core/src/tools/creator_upload.rs decodes this file too, so the two keys cannot drift
+  const raw = fs.readFileSync(path.join(root, 'test', 'fixtures', 'uploader-token.bin'));
+  assert.ok(raw.subarray(0, MAGIC.length).equals(MAGIC));
+  const iv = raw.subarray(MAGIC.length, MAGIC.length + 12);
+  const decipher = crypto.createDecipheriv('aes-256-gcm', KEY, iv);
+  decipher.setAuthTag(raw.subarray(MAGIC.length + 12, MAGIC.length + 28));
+  assert.equal(Buffer.concat([decipher.update(raw.subarray(MAGIC.length + 28)), decipher.final()]).toString('utf8'), TOKEN);
+});
+
 test('a changed byte is refused, not read as garbage', () => {
   const out = tempFile();
   run(out, TOKEN);

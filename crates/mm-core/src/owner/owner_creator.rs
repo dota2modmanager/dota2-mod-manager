@@ -65,7 +65,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
     spread(match channel {
         "creator:list" => Ok(json!({
             "drafts": store.list().iter().map(|d| store.shown(d)).collect::<Vec<_>>(),
-            "consent": store.consent(),
+            "consent": store.consent(UPLOAD_CONSENT_VERSION),
             // sending needs the token a release carries; a source checkout has none
             "uploader": embedded_upload_token(&o.opts.app_root).is_some(),
         })),
@@ -122,7 +122,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             Ok(json!({ "path": to, "size": zip.len() }))
         })(),
         "creator:upload" => (|| {
-            if store.consent().get("accepted") != Some(&Value::Bool(true)) {
+            if store.consent(UPLOAD_CONSENT_VERSION).get("accepted") != Some(&Value::Bool(true)) {
                 return Err(t("Сначала прими условия загрузки", &[]));
             }
             let Some(token) = embedded_upload_token(&o.opts.app_root) else {
