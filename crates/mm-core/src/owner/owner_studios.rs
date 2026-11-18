@@ -193,6 +193,7 @@ fn grids(o: &Owner) -> crate::hero_grid::HeroGrids {
         account_dir: Box::new(move || crate::gamelang::steam_account_dir(game.as_deref())),
         net: c.net.clone(),
         api: crate::hero_grid::HERO_STATS_API.into(),
+        copy: Some(crate::hero_grid::HERO_STATS_COPY.into()),
         now: Box::new(now),
     }
 }
