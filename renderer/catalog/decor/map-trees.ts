@@ -27,8 +27,7 @@ export function treeModelOf(name: string): string | null {
 /** A stump or the inspector's close-up copy: parts of a tree node the map does not show. */
 export const hiddenPart = (name: string): boolean => /_stump|_inspector/i.test(name);
 
-/** "models/props_tree/dire_tree004.vmdl" as "dire_tree004". */
-export const stemOf = (path: string): string => (path.split('/').pop() || '').replace(/\.vmdl(_c)?$/, '').toLowerCase();
+export { stemOf } from './map-names.ts';
 
 /** Radiant is the map's south-west half, Dire its north-east, split along the river's diagonal. */
 export function sideAt(x: number, z: number, centre: THREE.Vector3): Side {

@@ -26,8 +26,15 @@ import { RAW_BASE } from '../core/constants.ts';
 import { tokenMs } from '../core/css-time.ts';
 import { lookOn } from './season.ts';
 import { dressHalloween } from './halloween.ts';
-import { dressBlood } from './blood.ts';
 import { pumpkinMascot } from './pumpkin-art.ts';
+
+// The bloody night's dressing is asked for the first time it is worn, not with every start:
+// nearly nobody has it, and its drawings were code each start had to compile.
+let blood: Promise<typeof import('./blood.ts')> | null = null;
+function dressBlood(on: boolean): void {
+  if (!on && !blood) return;
+  (blood ||= import('./blood.ts')).then((m) => m.dressBlood(on));
+}
 import { bindThemeMenu, customCss, hasCustom } from './theme-menu.ts';
 
 const HEROES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
