@@ -564,7 +564,7 @@ fn without_a_launch_option_the_voice_language_decides_as_before() {
     );
     assert_eq!(
         gamelang::mod_folder_for(Some("english"), Some("russian"), Some("dutch")),
-        folder("english", true, None)
+        folder("russian", false, None)
     );
     // English has no folder of its own and borrows the Russian one
     assert_eq!(gamelang::mod_folder_for(None, Some("english"), None), folder("russian", false, None));
@@ -577,6 +577,14 @@ fn a_launch_option_dota_would_not_accept_is_not_followed_anywhere() {
     // the engine mounts a folder only for a language it knows
     assert_eq!(gamelang::mod_folder_for(Some("klingon"), Some("russian"), None), folder("russian", false, None));
     assert_eq!(gamelang::mod_folder_for(Some("minify"), Some("russian"), None), folder("russian", false, None));
+}
+
+#[test]
+fn a_launch_option_of_english_leaves_the_mods_where_the_game_can_read_them() {
+    // dota_english is never mounted: the mods stay in the folder the voice language picks
+    assert_eq!(gamelang::mod_folder_for(Some("english"), Some("russian"), None), folder("russian", false, None));
+    assert_eq!(gamelang::mod_folder_for(Some("English"), Some("koreana"), None), folder("koreana", false, None));
+    assert_eq!(gamelang::mod_folder_for(Some("english"), Some("english"), None), folder("russian", false, None));
 }
 
 #[test]

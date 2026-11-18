@@ -88,7 +88,11 @@ pub fn mod_folder_for(launched: Option<&str>, audio: Option<&str>, lock: Option<
         return ModFolder { suffix: lock.to_string(), followed: false, locked: Some(true) };
     }
     let forced = launched.filter(|l| !l.is_empty()).map(str::to_lowercase);
-    if let Some(forced) = forced.filter(|f| DOTA_LANGUAGES.contains(&f.as_str())) {
+    // English is the game's own and mounts no folder: dota_english is never read, and mods moved
+    // there for a `-language english` stopped working (reported 2026-10-30). They stay where the
+    // voice language puts them, and the window says to take the option out.
+    let mounts = |f: &String| f != "english" && DOTA_LANGUAGES.contains(&f.as_str());
+    if let Some(forced) = forced.filter(mounts) {
         return ModFolder { suffix: forced, followed: true, locked: None };
     }
     ModFolder { suffix: folder_for(audio).to_string(), followed: false, locked: None }
