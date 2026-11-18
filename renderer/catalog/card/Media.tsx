@@ -39,5 +39,7 @@ export function Media({ url, hoverPlay = false, autoplay = false, fallbackIcon =
   if (isAudio(src)) {
     return <div className="audio-wrap"><span className="ms audio-icon">graphic_eq</span><audio src={src} controls preload="none" /></div>;
   }
-  return <img decoding="async" src={src} loading="lazy" alt="" data-owned="react" onError={failed} />;
+  // marked on arrival, so the card shows a spinner until then and fades the picture in (catalog.css)
+  return <img decoding="async" src={src} loading="lazy" alt="" data-owned="react" onError={failed}
+    onLoad={(e) => { e.currentTarget.dataset.ready = '1'; }} />;
 }

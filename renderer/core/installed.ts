@@ -19,8 +19,13 @@ export function matchLabel(matches: Match): string {
   return matches.map((m) => catalogName(m.name) + (m.styleLabel ? ` · ${catalogLabel(m.styleLabel)}` : '')).join(' / ');
 }
 
+/** Counts every reading of the picks, so what is worked out from them can be kept until they move
+ *  (views/catalog/lists.ts cosmeticSlotList). */
+export let picksRead = 0;
+
 // refresh the catalog "installed" lookup + the library tab counter from a list
 export function applyInstalled(installed: LibRecord[]): void {
+  picksRead++;
   state.installedIndex.clear();
   state.cosmeticPicks.clear();
   for (const rec of installed) {

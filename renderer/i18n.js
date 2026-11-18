@@ -320,6 +320,7 @@ const EN = {
   'Моды выключены — игра запустится ванильной': 'Mods disabled — the game will launch vanilla',
 
   // ---------- catalog ----------
+  'Загрузка': 'Loading',
   'Загрузка каталога…': 'Loading catalog…',
   'Не удалось загрузить каталог: {0}': 'Could not load the catalog: {0}',
   'Повторить': 'Retry',

@@ -58,6 +58,11 @@ fn answer(a: Answer) -> Result<tauri::ipc::Response, String> {
     }
 }
 
+fn trace_ipc() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("MM_IPC_TRACE").is_some_and(|v| v == "1"))
+}
+
 /// ipcRenderer.invoke: the title bar's buttons answered here, everything else by the owner.
 #[tauri::command]
 async fn mm_invoke(
@@ -73,6 +78,7 @@ async fn mm_invoke(
     }
     let owner = owner.0.clone();
     tauri::async_runtime::spawn_blocking(move || {
+        let started = std::time::Instant::now();
         let list = args_of(args);
         // what the channel may be handed, before anything acts on it (src/window-guard.ts)
         if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
@@ -89,6 +95,10 @@ async fn mm_invoke(
             other => other,
         });
         after(&app, &channel, &list, res.is_ok());
+        // MM_IPC_TRACE=1: every channel's time on stderr, for measuring the window's waits
+        if trace_ipc() {
+            eprintln!("[mm-ipc] {channel} {:.1}ms", started.elapsed().as_secs_f64() * 1000.0);
+        }
         answer(res?)
     })
     .await

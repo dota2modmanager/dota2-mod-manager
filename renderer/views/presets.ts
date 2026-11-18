@@ -34,7 +34,7 @@ let ready: ReadyPresetRecord[] = [];
 let byId = new Map<string, LibRecord>();
 let key = 0;
 
-registerView('presets', () => renderPresets(true));
+registerView('presets', (o) => renderPresets(!o?.background));
 
 const STRIP = 12;
 const mods = (n: number) => `${n} ${plural(n, 'мод', 'мода', 'модов')}`;
@@ -126,8 +126,10 @@ function readyCard(p: ReadyPresetRecord): ReadyPreset {
 }
 
 async function renderPresets(fresh = false): Promise<void> {
-  [presets, ready] = await Promise.all([window.api.presets.list(), window.api.presets.ready().catch(() => [])]);
-  const { installed } = await window.api.mods.list();
+  let installed: unknown[];
+  [presets, ready, { installed }] = await Promise.all([
+    window.api.presets.list(), window.api.presets.ready().catch(() => []), window.api.mods.list(),
+  ]);
   byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
   if (fresh) key++;
   // a ready preset taken is one of yours as well: renamed, shared or deleted from your list

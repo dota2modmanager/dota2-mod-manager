@@ -23,7 +23,11 @@ export function modAuthors(m: Mod): string[] {
   return modCredits(m, null).filter((c) => c.role !== 'sender').map((c) => c.name);
 }
 
-const sameName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'accent' }) === 0;
+/* One collator for every comparison: localeCompare with options builds a new one each call, and
+ * the author list of Heroes (838 mods) made about 40 000 of them, 48 ms of the category's opening. */
+const names = new Intl.Collator(undefined, { sensitivity: 'accent' });
+/** Two spellings of one name: the same letters and accents, any case. */
+export const sameName = (a: string, b: string) => names.compare(a, b) === 0;
 const madeBy = (m: Mod, author: string) => modAuthors(m).some((a) => sameName(a, author));
 
 /**
@@ -32,11 +36,17 @@ const madeBy = (m: Mod, author: string) => modAuthors(m).some((a) => sameName(a,
  */
 export function collectAuthors(mods: Mod[]): { name: string; count: number }[] {
   const out: { name: string; count: number }[] = [];
+  // a spelling met before is found by its lower case at once; only a new one is compared with all
+  const seen = new Map<string, { name: string; count: number }>();
   for (const m of mods) {
     for (const name of new Set(modAuthors(m))) {
-      const hit = out.find((a) => sameName(a.name, name));
-      if (hit) hit.count++;
-      else out.push({ name, count: 1 });
+      const low = name.toLowerCase();
+      const hit = seen.get(low) || out.find((a) => sameName(a.name, name));
+      if (hit) { hit.count++; seen.set(low, hit); } else {
+        const a = { name, count: 1 };
+        out.push(a);
+        seen.set(low, a);
+      }
     }
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));

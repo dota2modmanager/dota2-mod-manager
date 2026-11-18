@@ -5,7 +5,7 @@
  * the mod index is built here: it is a reading of the same data. */
 import { COSMETIC_PREFIX, CATALOG_EXCLUDE, TOOLS_HIDDEN } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
-import { pickedIn } from '../../core/installed.ts';
+import { pickedIn, picksRead } from '../../core/installed.ts';
 import { shownMods, isAdult, adultShown } from '../../core/adult.ts';
 import { heroMatches } from '../hero-grid.ts';
 import { catalogMatchesSearch, cosmeticMatchesSearch } from '../../ui/hero-name.ts';
@@ -123,11 +123,24 @@ export function favoriteMods(): Mod[] {
 // (ui/game-files.ts). Until 3.0 safe mode hid all of them, and the builder with them.
 /** The free looks and the builder's slots on offer: a hero with a persona on, its persona's alone (catalog/builder/logic.ts withPersonas). */
 export function cosmeticSlotList(): CosmeticSlot[] {
-  return withPersonas(state.cosmeticSlots || [], pickedIn);
+  return slotsOnOffer().list;
 }
 
 export function slotData(slot: string): CosmeticSlot | null {
-  return cosmeticSlotList().find((s) => s.slot === slot) || null;
+  return slotsOnOffer().bySlot.get(slot) || null;
+}
+
+/* Worked out once per slot list and per reading of the picks. Asked afresh every time, the rail
+ * asked it once per slot (isItemCosmeticSlot over every slot): about a thousand filters over a
+ * thousand slots, 17 ms of a click on Items. */
+let offer: { slots: CosmeticSlot[] | null; picks: number; list: CosmeticSlot[]; bySlot: Map<string, CosmeticSlot> } | null = null;
+function slotsOnOffer(): NonNullable<typeof offer> {
+  const slots = state.cosmeticSlots || null;
+  if (!offer || offer.slots !== slots || offer.picks !== picksRead) {
+    const list = withPersonas(slots || [], pickedIn);
+    offer = { slots, picks: picksRead, list, bySlot: new Map(list.map((s) => [s.slot, s])) };
+  }
+  return offer;
 }
 
 /** A hero's item, which the item builder (views/item-builder.ts) puts on rather than a slot of its own. */

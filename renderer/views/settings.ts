@@ -30,7 +30,7 @@ let key = 0;
 /** the last run of "Repair the app", kept while the page redraws */
 let repair: SettingsModel['repair'] = null;
 
-registerView('settings', () => renderSettings(true));
+registerView('settings', (o) => renderSettings(!o?.background));
 
 async function renderSettings(fresh = false): Promise<void> {
   /* Asked all at once: one after another they were seven trips to the main process before the page

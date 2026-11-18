@@ -19,14 +19,22 @@
  * Redrawing the screen you are already on never goes through the list: changing the sort or
  * opening a category concerns the catalog and nobody else, and those call their own render
  * directly, as they always did.
+ *
+ * A switch never waits for data. A stale screen is shown at once as it was last drawn and
+ * redrawn in place when its fetch is back (`background`: no entrance played twice), and a
+ * screen drawn for the first time shows a spinner over its empty pane until it paints. Waiting
+ * for the fetch before the swap kept the old screen up for as long as main took to answer,
+ * which read as the tab not having heard the click.
  */
 import { state } from './store.ts';
 import { $ } from './dom.ts';
 import { screenChanging, paint } from '../ui/transitions.ts';
 import { createViewHistory, type ViewHistory } from './view-history.ts';
 
-/** What a screen does to draw itself; some fetch first, and the switch waits for them. */
-type Draw = () => unknown;
+/** What a screen does to draw itself; some fetch first. `background`: the screen is already on
+ *  show as it was last drawn, so this is a refresh in place rather than a visit. */
+export interface DrawOpts { background?: boolean }
+type Draw = (opts?: DrawOpts) => unknown;
 
 const screens = new Map<string, Draw>();
 const panes = new Map<string, HTMLElement>();
@@ -129,21 +137,59 @@ export function switchView(view: string, { fromHistory = false }: { fromHistory?
   window.api.presence.view(view); // what Discord shows the user is doing
 
   const el = pane(view);
-  const kept = !stale.has(view) && el.childElementCount > 0 && drawnAs.get(paneOf(view)) === view;
+  const drawn = el.childElementCount > 0 && drawnAs.get(paneOf(view)) === view;
+  const kept = !stale.has(view) && drawn;
   stale.delete(view);
   drawnAs.set(paneOf(view), view);
-  const settled = () => { main.scrollTop = scrolls.get(view) || 0; };
-  if (kept) {
-    // nothing to build, so the swap is the whole update and gets the transition to itself
-    screenChanging();
-    return paint(() => showPane(view)).then(settled);
-  }
-  // The screen animates in when it paints, not now: it may have to fetch first, and a
-  // transition started here would hold the old picture on screen for the whole wait. The
-  // swap goes with it, so an empty new screen is never on show during that fetch.
-  screenChanging(() => showPane(view));
+  const settled = () => { if (state.view === view) main.scrollTop = scrolls.get(view) || 0; };
   const draw = screens.get(view);
-  // the swap again for a screen that returned without painting - an unregistered name, or
-  // one that bailed early - so a tab click can never leave the window on the old screen
-  return Promise.resolve(draw ? draw() : undefined).then(() => { showPane(view); settled(); });
+  if (kept || (drawn && draw)) {
+    // the swap is the whole visible update and gets the transition to itself; a stale screen
+    // then catches up in place, its fetch never holding the click
+    screenChanging();
+    const shown = paint(() => showPane(view)).then(settled);
+    if (kept) return shown;
+    return shown.then(() => draw!({ background: true })).then(() => undefined);
+  }
+  // Nothing to show yet. A screen that paints within a beat swaps in with its paint, animated
+  // (screenChanging); one that takes longer has its empty pane put up with the spinner over it
+  // (loadingFor). The swap happens anyway once the draw is done, so a tab click can never leave
+  // the window on the old screen.
+  screenChanging(() => showPane(view));
+  const waiting = loadingFor(view);
+  return Promise.resolve(draw ? draw() : undefined).then(() => undefined).finally(() => {
+    waiting();
+    if (state.view === view) { showPane(view); settled(); }
+  });
+}
+
+/* The spinner over a screen that has nothing on show yet. It waits a beat before it appears, so a
+ * screen that answers at once never flashes it; then the old screen goes and the spinner stands
+ * in the new one's empty pane until it paints. One element for the whole window, outside every
+ * pane: React owns each pane's children. */
+const SPINNER_DELAY_MS = 90;
+let spinner: HTMLElement | null = null;
+let spinnerFor = '';
+
+function loadingFor(view: string): () => void {
+  const timer = setTimeout(() => {
+    if (state.view !== view) return;
+    // shown only while the pane is still empty: a screen that painted already needs none
+    if ((panes.get(paneOf(view))?.childElementCount ?? 0) > 0) return;
+    if (!spinner) {
+      spinner = document.createElement('div');
+      spinner.className = 'view-loading';
+      spinner.setAttribute('role', 'status');
+      spinner.setAttribute('aria-label', L`Загрузка`);
+      spinner.innerHTML = '<span class="spinner"></span>';
+      $('#view-root').appendChild(spinner);
+    }
+    spinnerFor = view;
+    showPane(view);
+    spinner.hidden = false;
+  }, SPINNER_DELAY_MS);
+  return () => {
+    clearTimeout(timer);
+    if (spinner && spinnerFor === view) spinner.hidden = true;
+  };
 }

@@ -23,20 +23,27 @@ import { bindRowSelect } from './library/row-select.ts';
 export { handleImportResult } from './library/import.ts';
 
 // a visit to the screen draws it fresh, the rows' entrance and all (router.js asks only when stale)
-registerView('library', () => renderLibrary(true));
+registerView('library', (o) => renderLibrary(!o?.background));
 // Ctrl and Shift with a click, Ctrl+A, Escape and Delete over the rows
 bindRowSelect(() => actions.bulk('remove'));
 
 /** Read the mods, the folder and the patch state from main again, and draw. */
 async function renderLibrary(fresh = false): Promise<void> {
-  const res = await window.api.mods.list();
-  // re-read rather than trust the boot copy: the banners over the list are about the folder on
-  // disk right now, and a mod can go missing between two visits to this screen
-  state.settings = await window.api.settings.get();
+  // Asked all at once: each answer is independent of the others, and one after another they
+  // added up to the screen's whole wait. The banners over the list are about the folder on disk
+  // right now (a mod can go missing between two visits), so the settings are read again too.
+  const [res, settings, repair, master] = await Promise.all([
+    window.api.mods.list(),
+    window.api.settings.get(),
+    window.api.patch.repairState().catch(() => ({ state: 'idle' }) as typeof lib.repair),
+    window.api.mods.masterState().then((ms) => !!ms.off, () => false),
+    refreshNotices(),
+    refreshPatchState(), // the schema conflicts and foreign-patcher banners
+  ]);
+  state.settings = settings;
   labels.map = state.settings.modLabels || {};
   lib.stuck = res.verifyStuck || [];
-  try { lib.repair = await window.api.patch.repairState(); } catch { lib.repair = { state: 'idle' }; }
-  await refreshNotices();
+  lib.repair = repair;
   // A tool is not a mod: it sits in the app's own folder and the game never mounts it. Its card in
   // the catalog says everything, so it is not listed here; the index below still gets the full
   // list, which is what tells the card it is already downloaded.
@@ -46,9 +53,8 @@ async function renderLibrary(fresh = false): Promise<void> {
   lib.slots = res.slots || 0;
   lib.slotCeil = res.slotCeil || 98;
   applyInstalled(res.installed); // the tab's counter and the catalog's badges follow the folder
-  try { const ms = await window.api.mods.masterState(); state.masterOff = !!ms.off; } catch { state.masterOff = false; }
+  state.masterOff = master;
   paintMasterSwitch();
-  await refreshPatchState(); // the schema conflicts and foreign-patcher banners
   pruneSelection(lib.sel, lib.records);
   if (fresh) lib.key++;
   await paint(draw);

@@ -384,7 +384,23 @@
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.45s var(--ease);
+  transition: transform 0.45s var(--ease), opacity var(--dur-medium-long) var(--ease);
+}
+/* A picture on its way: the spinner (base.css) in the middle of the box, and the picture fading
+   in over it once it has arrived, instead of the box sitting blank and the picture snapping in
+   line by line. Media.tsx marks it ready on load. */
+.card-media img[data-owned='react']:not([data-ready]) { opacity: 0; }
+.card-media:has(> img[data-owned='react']:not([data-ready]))::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border-radius: 50%;
+  border: var(--space-px) solid color-mix(in srgb, var(--md-primary) 16%, transparent);
+  border-top-color: var(--md-primary);
+  animation: spin var(--dur-spin) linear infinite, spinnerIn var(--dur-medium) var(--ease) var(--dur-base) both;
 }
 .card:hover .card-media img, .card:hover .card-media video { transform: scale(1.07); }
 .noimg {
