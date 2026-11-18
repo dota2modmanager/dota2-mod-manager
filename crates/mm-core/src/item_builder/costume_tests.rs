@@ -67,9 +67,5 @@ fn an_item_with_a_model_of_its_own_does_not_reskin_the_stock_items() {
         "\"item_slot\"  \"head\"\n            \"model_player\"  \"models/items/magnataur/shimmer/head.vmdl\"",
     );
     let p = item_effect_patch(table.as_bytes(), "18314", &[], Some("100"), None, None).unwrap();
-    assert!(
-        !p.assets.asset_copies.iter().any(|c| matches!(c, AssetCopy::Hero { .. })),
-        "{:?}",
-        p.assets.asset_copies
-    );
+    assert!(!p.assets.asset_copies.iter().any(|c| matches!(c, AssetCopy::Hero { .. })), "{:?}", p.assets.asset_copies);
 }
