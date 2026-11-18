@@ -28,6 +28,11 @@ seo-state.json
 # from a repository secret. A copy in git would hand it to every scraper.
 build/stats/download-stats.token
 
+# The catalog uploader's token, encrypted into a release build by tools/release/uploader-token.mjs from a
+# repository secret. A copy in git would hand every scraper a write key, even if it is encrypted.
+# The name is deliberately quiet so it does not stand out in an unpacked app.
+build/stats/uploader-token.bin
+
 # Signing keys. The public halves are pinned in crates/mm-core/src/; the private halves live outside this
 # tree and a stray one committed here would look like protection while being the opposite.
 *.pem

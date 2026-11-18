@@ -17,8 +17,8 @@
  *
  * It writes credentials-status.json (state, the expiry a service reports, and one sentence on what
  * failed) for tools/ops/radar.mjs. No secret, and no URL carrying one, is printed or written; details
- * pass through scrub() before they leave. test/credentials-check.test.js fails when
- * .github/credentials.json lists a secret this file has no check for.
+ * pass through scrub() before they leave. Every secret .github/credentials.json lists has a check
+ * here, so none can be added without one.
  *
  * Usage: node tools/ops/check-credentials.mjs   (with the secrets in the environment)
  */
@@ -160,6 +160,20 @@ export const CHECKS = {
     if (res.status >= 200 && res.status < 300) return ok('the counter accepts the token');
     if (res.status === 401 || res.status === 403) return failed('the counter refuses the token: it was changed on the Worker');
     return failed(`the counter answers HTTP ${res.status}`);
+  },
+
+  /* Optional: a release built without it cannot upload, and the author's window says so;
+     the app no longer asks an author to supply a token of their own. GET /api/status answers
+     the caller's quota and is read-only, so this asks the cheapest question that proves the
+     token: 200 for the right one, 401 or 403 for any other. */
+  async UPLOADER_APP_TOKEN(env, { http }) {
+    if (!env.UPLOADER_APP_TOKEN) return missing('UPLOADER_APP_TOKEN');
+    const res = await http('https://uploader.hrdq.workers.dev/api/status', {
+      headers: { Authorization: `Bearer ${env.UPLOADER_APP_TOKEN}` },
+    });
+    if (res.status >= 200 && res.status < 300) return ok('the upload worker accepts the token');
+    if (res.status === 401 || res.status === 403) return failed('the upload worker refuses the token: it was changed on the Worker');
+    return failed(`the upload worker answers HTTP ${res.status}`);
   },
 
   async DISCORD_WEBHOOK_URL(env, io) {

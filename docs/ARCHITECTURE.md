@@ -535,7 +535,8 @@ says what it owns. The rest:
 | `renderer/api/*` | What every channel the window calls takes and answers |
 | `renderer/i18n.js`, `renderer/locales/*` | Russian, English and Simplified Chinese for the window; the core's own strings are `crates/mm-core/src/app/i18n.rs` |
 | `renderer/catalog/*`, `renderer/library/*`, `renderer/presets/*`, `renderer/settings/*`, `renderer/studio/*`, `renderer/home/*` | The screens, in React; Home is where the window opens and where the name in the title bar leads; Items is the catalog screen with the game's looks (`renderer/views/catalog/sections.ts`), the Workshop gathers the tools built from the game's own files |
-| `renderer/creator/*` | The author's window: drafts of mods for the catalog, opened from the account menu |
+| `renderer/creator/*` | The author's window: drafts of mods for the catalog, the upload terms, and the submissions the catalog reports back, opened from the account menu |
+| `tools/release/uploader-token.mjs` | The catalog uploader's token, encrypted into `build/stats/uploader-token.bin` for a release build and never committed |
 | `renderer/views/*` | What each screen reads and does around its components |
 | `renderer/ui/*` | Dialogs, toasts, the media player, the install queue, shared chrome |
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
