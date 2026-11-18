@@ -29,6 +29,8 @@ pub fn png_from_vtex(buf: &[u8]) -> Option<&[u8]> {
 // and in the same order, so both give the same pixels.
 const DXT1: u8 = 1;
 const DXT5: u8 = 2;
+/// uncompressed, blue first: 81 item icons of the game, which went to the decoder one launch each
+const BGRA8888: u8 = 28;
 
 fn u16_at(b: &[u8], at: usize) -> u16 {
     u16::from_le_bytes([b[at], b[at + 1]])
@@ -110,7 +112,7 @@ fn ycocg(rgba: &mut [u8]) {
     }
 }
 
-/// A DXT1 or DXT5 texture of one mip as (width, height, RGBA); None for anything else.
+/// A DXT1, DXT5 or BGRA8888 texture of one mip as (width, height, RGBA); None for anything else.
 pub fn rgba_from_vtex(buf: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
     if buf.len() < 16 {
         return None;
@@ -135,8 +137,19 @@ pub fn rgba_from_vtex(buf: &[u8]) -> Option<(u32, u32, Vec<u8>)> {
     let (width, height, depth) =
         (u16_at(buf, data + 20) as usize, u16_at(buf, data + 22) as usize, u16_at(buf, data + 24));
     let (format, mips) = (buf[data + 26], buf[data + 27]);
-    if (format != DXT1 && format != DXT5) || mips != 1 || depth > 1 || width == 0 || height == 0 {
+    if (format != DXT1 && format != DXT5 && format != BGRA8888) || mips != 1 || depth > 1 || width == 0 || height == 0 {
         return None;
+    }
+    if format == BGRA8888 {
+        let body = buf.get(header..)?;
+        if body.len() != width * height * 4 {
+            return None;
+        }
+        let mut rgba = body.to_vec();
+        for px in rgba.as_chunks_mut::<4>().0 {
+            px.swap(0, 2);
+        }
+        return Some((width as u32, height as u32, rgba));
     }
     let size = if format == DXT1 { 8 } else { 16 };
     let (across, down) = (width.div_ceil(4), height.div_ceil(4));
@@ -261,5 +274,30 @@ mod tests {
         let size =
             (u32::from_be_bytes(png[16..20].try_into().unwrap()), u32::from_be_bytes(png[20..24].try_into().unwrap()));
         assert_eq!(size, (256, 170));
+    }
+
+    /// An uncompressed texture stored blue first, as 81 of the game's item icons are, comes out
+    /// red first, and one whose size does not add up is not guessed at.
+    #[test]
+    fn a_bgra_texture_is_read_red_first() {
+        let (w, h) = (2usize, 1usize);
+        let mut buf = vec![0u8; 64];
+        buf[0..4].copy_from_slice(&64u32.to_le_bytes());
+        buf[8..12].copy_from_slice(&8u32.to_le_bytes());
+        buf[12..16].copy_from_slice(&1u32.to_le_bytes());
+        buf[16..20].copy_from_slice(b"DATA");
+        buf[20..24].copy_from_slice(&4u32.to_le_bytes());
+        let data = 24;
+        buf[data + 20..data + 22].copy_from_slice(&(w as u16).to_le_bytes());
+        buf[data + 22..data + 24].copy_from_slice(&(h as u16).to_le_bytes());
+        buf[data + 24..data + 26].copy_from_slice(&1u16.to_le_bytes());
+        buf[data + 26] = super::BGRA8888;
+        buf[data + 27] = 1;
+        buf.extend_from_slice(&[10, 20, 30, 255, 1, 2, 3, 128]);
+        let (gw, gh, rgba) = super::rgba_from_vtex(&buf).expect("a BGRA texture");
+        assert_eq!((gw, gh), (2, 1));
+        assert_eq!(rgba, vec![30, 20, 10, 255, 3, 2, 1, 128]);
+        buf.pop();
+        assert!(super::rgba_from_vtex(&buf).is_none());
     }
 }
