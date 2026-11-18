@@ -194,19 +194,27 @@ export const actions: LibraryActions = {
     if (lib.open.has(id)) lib.open.delete(id); else lib.open.add(id);
     screen.draw();
   },
+  // A switch flips the moment it is pressed: the row is drawn in its new state before main is asked,
+  // and put back if main refuses. Waiting for the answer left the switch standing still for the
+  // ~75 ms main takes to rewrite the pak, which read as a press that did not land.
   toggle: async (id) => {
     const rec = recById(id);
     if (!rec) return;
-    const r = await window.api.mods.setEnabled(rec.id, !rec.enabled);
-    if (r.error) toast(r.error, 'error', 6000);
+    const want = !rec.enabled;
+    rec.enabled = want;
+    screen.draw();
+    const r = await window.api.mods.setEnabled(rec.id, want);
+    if (r.error) { rec.enabled = !want; screen.draw(); toast(r.error, 'error', 6000); }
     // a cursor that goes on takes the place of the one that was on
     else if (r.replaced?.length) toast(L`Курсор заменён — «${r.replaced.join(', ')}» выключен`, 'warn', 6000);
     await screen.reload();
   },
   toggleMember: async (packId, memberId) => {
     const m = recById(packId)?.members?.find((x) => x.id === memberId);
-    const r = await window.api.packs.setMemberEnabled(packId, memberId, !(m && m.enabled));
-    if (r.error) toast(r.error, 'error', 6000);
+    const want = !(m && m.enabled);
+    if (m) { m.enabled = want; screen.draw(); }
+    const r = await window.api.packs.setMemberEnabled(packId, memberId, want);
+    if (r.error) { if (m) { m.enabled = !want; screen.draw(); } toast(r.error, 'error', 6000); }
     await screen.reload();
   },
   removeMember: async (packId, memberId) => {

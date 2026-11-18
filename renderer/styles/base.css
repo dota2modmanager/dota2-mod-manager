@@ -133,6 +133,34 @@ img, video { -webkit-user-drag: none; user-select: none; }
    class cannot quietly put every screen on the page at once. */
 .view-pane[hidden] { display: block; content-visibility: hidden; }
 
+/* ============ Waiting ============
+   One spinner for everything that waits on main or the network: a screen with nothing on show
+   yet (core/router.ts), a card's picture on its way (catalog.css). A thin ring in the theme's
+   primary, a quarter of it lit. It shows only once a wait is long enough to notice, so it never
+   flashes, and fades in rather than popping. Under reduced motion it still turns, slower: a
+   wait that does not move reads as a window that hung. */
+.spinner {
+  display: inline-block;
+  width: var(--icon-lg);
+  height: var(--icon-lg);
+  border-radius: 50%;
+  border: var(--space-px) solid color-mix(in srgb, var(--md-primary) 16%, transparent);
+  border-top-color: var(--md-primary);
+  animation: spin var(--dur-spin) linear infinite;
+}
+@keyframes spin { to { rotate: 360deg; } }
+@keyframes spinnerIn { from { opacity: 0; } }
+.view-loading {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-7);
+  animation: spinnerIn var(--dur-medium) var(--ease) both;
+}
+.view-loading[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation-duration: calc(var(--dur-spin) * 3); }
+}
+
 /* ============ Text roles ============
    A size and a colour together, so a template never has to name either. These replaced 59
    inline style attributes; what is still inline is per-element data (a stagger index, a
