@@ -131,6 +131,12 @@ jobs:
         env:
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
 
+      # the catalog uploader's token, encrypted into the build from a secret and never into git
+      - name: Give the build the catalog uploader's token
+        run: node tools/release/uploader-token.mjs
+        env:
+          UPLOADER_APP_TOKEN: ${{ secrets.UPLOADER_APP_TOKEN }}
+
       # The Tauri build (src-tauri/), under the names a release has always carried
       # (tools/release/tauri-release.mjs). The installer is signed for tauri-plugin-updater with the
       # project's minisign key; latest.yml names it for the Electron copies people have now, whose
@@ -215,6 +221,11 @@ jobs:
         run: node tools/release/stats-token.mjs
         env:
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
+
+      - name: Give the build the catalog uploader's token
+        run: node tools/release/uploader-token.mjs
+        env:
+          UPLOADER_APP_TOKEN: ${{ secrets.UPLOADER_APP_TOKEN }}
 
       - name: Build and upload the AppImage to the draft
         env:

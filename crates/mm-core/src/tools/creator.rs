@@ -1,10 +1,11 @@
-//! The author's drafts (src/creator.ts, issue #236, step 1): a mod being made for the catalog,
-//! kept on the author's disk until it is ready, and then written out as the archive the catalog's
-//! own packer makes (src/creator-premod.ts) for the catalog's maintainer. Nothing is uploaded.
+//! The author's drafts (src/creator.ts, issue #236): a mod being made for the catalog, kept on
+//! the author's disk until it is ready, and then either written out as the archive the catalog's
+//! own packer makes (src/creator-premod.ts) for the catalog's maintainer, or sent to the catalog's
+//! upload API (src/creator-upload.ts) as the form that API takes.
 //!
 //! A draft is a folder under userData/creator/<id>/: draft.json and the files it names, copied in
 //! so the draft survives the originals being moved. Each style is a look of the mod with its own
-//! VPK and picture, the way the catalog lists styles.
+//! VPK, picture and up to two circle colours, the way the catalog lists styles.
 //!
 //! The draft is kept as the JSON it is on disk, so a field this app does not know stays as it was.
 
@@ -27,6 +28,10 @@ const LONG_HEROES: [&str; 2] = ["keeperofthelight", "naturesprophet"];
 const MAX_TEXT: usize = 2000;
 /// The biggest picture the form is sent as a data URI.
 const SHOWN: u64 = 6 * 1024 * 1024;
+const AUTHOR_MODES: [&str; 3] = ["existing", "new", "skip"];
+const EXTRA_MODES: [&str; 4] = ["none", "author", "source", "modded"];
+/// The palette the catalog offers for a style's circle, in the order a new style takes them.
+pub const STYLE_COLORS: [&str; 3] = ["#ddd4ff", "#ff8f8f", "#8fd3ff"];
 
 const NULL: Value = Value::Null;
 
@@ -46,8 +51,54 @@ fn bare(s: &str) -> String {
     s.to_lowercase().chars().filter(|c| c.is_ascii_lowercase() || c.is_ascii_digit()).collect()
 }
 
+/// The upload page's regex: Latin words, separated once by a space or the hyphen in a hero's name.
 fn latin_name(s: &str) -> bool {
-    !s.is_empty() && s.split(' ').all(|w| !w.is_empty() && w.bytes().all(|b| b.is_ascii_alphanumeric()))
+    !s.is_empty()
+        && !s.starts_with([' ', '-'])
+        && !s.ends_with([' ', '-'])
+        && s.split([' ', '-']).all(|w| !w.is_empty() && w.bytes().all(|b| b.is_ascii_alphanumeric()))
+}
+
+fn one_of<'a>(v: &'a Value, allowed: &[&str], fallback: &'a str) -> String {
+    match v.as_str().filter(|s| allowed.contains(s)) {
+        Some(s) => s.to_string(),
+        None => fallback.to_string(),
+    }
+}
+
+fn is_hex(c: &str) -> bool {
+    c.len() == 7 && c.starts_with('#') && c[1..].bytes().all(|b| b.is_ascii_hexdigit())
+}
+
+/// A style's circle colours: at most two `#rrggbb`, lowercased, with the palette as the default.
+fn colors(v: &Value, i: usize) -> Vec<String> {
+    let list: Vec<String> = v
+        .as_array()
+        .map(|a| {
+            a.iter().filter_map(Value::as_str).filter(|c| is_hex(c)).take(2).map(str::to_ascii_lowercase).collect()
+        })
+        .unwrap_or_default();
+    if list.is_empty() {
+        vec![STYLE_COLORS.get(i).copied().unwrap_or(STYLE_COLORS[0]).to_string()]
+    } else {
+        list
+    }
+}
+
+fn is_tag(k: &str) -> bool {
+    (1..=40).contains(&k.len()) && k.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+}
+
+/// The catalog's tag switches, keeping only the ones that are on.
+fn tag_switches(v: &Value) -> Value {
+    let Some(o) = v.as_object() else { return json!({}) };
+    let kept: Map<String, Value> = o
+        .iter()
+        .filter(|(k, on)| is_tag(k) && **on == Value::Bool(true))
+        .take(40)
+        .map(|(k, _)| (k.clone(), json!(true)))
+        .collect();
+    Value::Object(kept)
 }
 
 /// What the draft needs to fit the catalog's rules, beyond what is still missing, in words.
@@ -65,12 +116,16 @@ pub fn catalog_problems(d: &Value) -> Vec<String> {
     if NOT_TAKEN.contains(&category.as_str()) {
         out.push(t("эта категория в каталог через загрузку не принимается", &[]));
     }
-    if HERO_CATEGORIES.contains(&category.as_str())
-        && !hero.is_empty()
-        && !name.is_empty()
-        && !bare(&name).contains(&hero)
-    {
-        out.push(t("имя героя в названии", &[]));
+    if HERO_CATEGORIES.contains(&category.as_str()) && hero.is_empty() {
+        out.push(t("выбери героя", &[]));
+    }
+    if HERO_CATEGORIES.contains(&category.as_str()) && !hero.is_empty() && !name.is_empty() {
+        let flat = bare(&name);
+        if !flat.contains(&hero) {
+            out.push(t("имя героя в названии", &[]));
+        } else if flat.split(&hero).collect::<String>().is_empty() {
+            out.push(t("после имени героя нужно название", &[]));
+        }
     }
     let styles = field(d, "styles").as_array().cloned().unwrap_or_default();
     if styles.len() > MAX_STYLES {
@@ -99,8 +154,29 @@ pub struct PackedStyle {
     pub preview: Vec<u8>,
 }
 
+/// One look of the mod as the upload API takes it: its label, its circle colours, its VPK and preview.
+pub struct UploadStyle {
+    pub label: String,
+    pub colors: Vec<String>,
+    pub vpk: Vec<u8>,
+    pub preview: Vec<u8>,
+}
+
 fn safe_label(s: &str) -> String {
     s.chars().map(|c| if matches!(c, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') { '_' } else { c }).collect()
+}
+
+/// A name or a link, as the catalog's mod.json credits one.
+fn credit(kind: &str, name: &str, url: &str) -> Value {
+    let is_url = |s: &str| {
+        let l = s.to_ascii_lowercase();
+        l.starts_with("http://") || l.starts_with("https://")
+    };
+    if !url.is_empty() || is_url(name) {
+        json!({ "type": kind, "url": if url.is_empty() { name } else { url } })
+    } else {
+        json!({ "type": kind, "name": name })
+    }
 }
 
 /// The archive PreMod would make of these files, with the form's fields beside it: its file name and bytes.
@@ -124,13 +200,17 @@ pub fn premod_archive(d: &Value, styles: &[PackedStyle]) -> Result<(String, Vec<
     let Some(first) = named.first() else {
         return Err("Cannot read properties of undefined (reading 'preview')".into());
     };
+    // the site's three choices: a name the catalog lists, a new one, or nobody (Anonymous)
+    let mut links = Vec::new();
     let author = str_of(d, "author");
-    let is_url = {
-        let l = author.to_ascii_lowercase();
-        l.starts_with("http://") || l.starts_with("https://")
-    };
-    let link =
-        if is_url { json!({ "type": "author", "url": author }) } else { json!({ "type": "author", "name": author }) };
+    if str_of(d, "authorMode") != "skip" && !author.is_empty() {
+        links.push(credit("author", &author, &str_of(d, "authorUrl")));
+    }
+    let extra_name = str_of(d, "extraName");
+    let extra_mode = str_of(d, "extraMode");
+    if extra_mode != "none" && !extra_name.is_empty() {
+        links.push(credit(&extra_mode, &extra_name, &str_of(d, "extraUrl")));
+    }
     let mut entry = Map::new();
     entry.insert("name".into(), json!(name));
     entry.insert("preview".into(), json!(first.2));
@@ -140,7 +220,7 @@ pub fn premod_archive(d: &Value, styles: &[PackedStyle]) -> Result<(String, Vec<
         entry.insert("styles".into(), Value::Array(list));
     }
     entry.insert("tags".into(), json!({}));
-    entry.insert("links".into(), json!([link]));
+    entry.insert("links".into(), Value::Array(links));
     outer.push(("mod.json".into(), stringify(&Value::Object(entry), "  ").into_bytes()));
     let hash = json!({ "mod_name": name, "vpk_hash": sha256_hex(first.4), "vpk_zip_hash": sha256_hex(&first.3) });
     outer.push(("hash.json".into(), stringify(&hash, "  ").into_bytes()));
@@ -183,7 +263,77 @@ fn is_picture(p: &str) -> bool {
 }
 
 fn new_style() -> Value {
-    json!({ "label": "", "vpk": null, "picture": null })
+    json!({ "label": "", "vpk": null, "picture": null, "colors": [STYLE_COLORS[0]] })
+}
+
+fn null_or_string(v: &Value) -> Value {
+    v.as_str().filter(|s| !s.is_empty()).map(|s| json!(s)).unwrap_or(Value::Null)
+}
+
+/// A draft as this build reads it: what older drafts had in a different shape becomes the current
+/// fields, and a field this app does not know is kept as it was written.
+fn normalize(raw: Value) -> Value {
+    let mut d = match raw {
+        Value::Object(m) => m,
+        _ => Map::new(),
+    };
+    let raw_styles = d.get("styles").and_then(Value::as_array).cloned().unwrap_or_default();
+    let styles: Vec<Value> = raw_styles
+        .iter()
+        .take(MAX_STYLES)
+        .enumerate()
+        .map(|(i, s)| {
+            let mut st = s.as_object().cloned().unwrap_or_default();
+            st.insert("label".into(), json!(text(field(s, "label"), 120)));
+            st.insert("vpk".into(), null_or_string(field(s, "vpk")));
+            st.insert("picture".into(), null_or_string(field(s, "picture")));
+            st.insert("colors".into(), json!(colors(field(s, "colors"), i)));
+            Value::Object(st)
+        })
+        .collect();
+    let author = text(field(&Value::Object(d.clone()), "author"), 80);
+    let author_mode = one_of(field(&Value::Object(d.clone()), "authorMode"), &AUTHOR_MODES, "new");
+    // drafts from before the author modes keep the name they were typed with, as a new one
+    let legacy_source = text(field(&Value::Object(d.clone()), "source"), 2048);
+    let extra_mode = one_of(
+        field(&Value::Object(d.clone()), "extraMode"),
+        &EXTRA_MODES,
+        if legacy_source.is_empty() { "none" } else { "source" },
+    );
+    let base = Value::Object(d.clone());
+    for (k, max) in [
+        ("name", 120),
+        ("category", 60),
+        ("subcategory", 60),
+        ("hero", 60),
+        ("description", MAX_TEXT),
+        ("authorUrl", 2048),
+        ("extraName", 2048),
+        ("extraUrl", 2048),
+        ("video", 2048),
+    ] {
+        d.insert(k.into(), json!(text(field(&base, k), max)));
+    }
+    d.insert("author".into(), json!(author));
+    d.insert("authorMode".into(), json!(author_mode));
+    d.insert("extraMode".into(), json!(extra_mode));
+    d.insert("extraOrigin".into(), json!(one_of(field(&base, "extraOrigin"), &["existing", "new"], "new")));
+    // a draft written before the extra link existed has its old source name in this field
+    let extra_name = if !truthy(field(&base, "extraName")) && !legacy_source.is_empty() {
+        legacy_source
+    } else {
+        text(field(&base, "extraName"), 2048)
+    };
+    d.insert("extraName".into(), json!(extra_name));
+    d.insert("tags".into(), tag_switches(field(&base, "tags")));
+    d.insert("styles".into(), Value::Array(styles));
+    let r = field(&base, "replaces");
+    let (rc, rn) = (text(field(r, "category"), 60), text(field(r, "name"), 300));
+    d.insert(
+        "replaces".into(),
+        if truthy(r) && !rc.is_empty() && !rn.is_empty() { json!({ "category": rc, "name": rn }) } else { Value::Null },
+    );
+    Value::Object(d)
 }
 
 /// The drafts under userData/creator, and the archive one of them becomes.
@@ -213,7 +363,8 @@ impl Creator {
         let gone = || t("Черновик не найден", &[]);
         let file = self.folder(id)?.join("draft.json");
         let bytes = std::fs::read(file).map_err(|_| gone())?;
-        serde_json::from_str(&String::from_utf8_lossy(&bytes)).map_err(|_| gone())
+        let raw: Value = serde_json::from_str(&String::from_utf8_lossy(&bytes)).map_err(|_| gone())?;
+        Ok(normalize(raw))
     }
 
     // two saves in one millisecond still come out in the order they were made
@@ -259,14 +410,39 @@ impl Creator {
         let mut d = match id {
             Some(id) => self.read(id)?,
             None => json!({
-                "id": uuid::Uuid::new_v4().to_string(), "name": "", "category": "", "hero": "", "description": "",
-                "author": "", "styles": [new_style()], "replaces": null, "updatedAt": 0,
+                "id": uuid::Uuid::new_v4().to_string(), "name": "", "category": "", "subcategory": "",
+                "hero": "", "description": "", "authorMode": "new", "author": "", "authorUrl": "",
+                "extraMode": "none", "extraOrigin": "existing", "extraName": "", "extraUrl": "",
+                "video": "", "tags": {}, "styles": [new_style()], "replaces": null, "updatedAt": 0,
             }),
         };
-        for (k, max) in [("name", 120), ("category", 60), ("hero", 60), ("description", MAX_TEXT), ("author", 80)] {
+        for (k, max) in [
+            ("name", 120),
+            ("category", 60),
+            ("subcategory", 60),
+            ("hero", 60),
+            ("description", MAX_TEXT),
+            ("author", 80),
+            ("authorUrl", 2048),
+            ("extraName", 2048),
+            ("extraUrl", 2048),
+            ("video", 2048),
+        ] {
             if let Some(v) = fields.get(k) {
                 d[k] = json!(text(v, max));
             }
+        }
+        if let Some(v) = fields.get("authorMode") {
+            d["authorMode"] = json!(one_of(v, &AUTHOR_MODES, &str_of(&d, "authorMode")));
+        }
+        if let Some(v) = fields.get("extraMode") {
+            d["extraMode"] = json!(one_of(v, &EXTRA_MODES, &str_of(&d, "extraMode")));
+        }
+        if let Some(v) = fields.get("extraOrigin") {
+            d["extraOrigin"] = json!(one_of(v, &["existing", "new"], &str_of(&d, "extraOrigin")));
+        }
+        if let Some(v) = fields.get("tags") {
+            d["tags"] = tag_switches(v);
         }
         if let Some(r) = fields.get("replaces") {
             let (c, n) = (text(field(r, "category"), 60), text(field(r, "name"), 300));
@@ -288,6 +464,7 @@ impl Creator {
                         _ => json!({ "vpk": null, "picture": null }),
                     };
                     st["label"] = json!(text(field(s, "label"), 120));
+                    st["colors"] = json!(colors(field(s, "colors"), i));
                     st
                 })
                 .collect();
@@ -355,7 +532,7 @@ impl Creator {
         if !truthy(field(d, "category")) {
             out.push(t("категория", &[]));
         }
-        if !truthy(field(d, "author")) {
+        if str_of(d, "authorMode") != "skip" && !truthy(field(d, "author")) {
             out.push(t("автор", &[]));
         }
         let styles = field(d, "styles").as_array().cloned().unwrap_or_default();
@@ -385,19 +562,11 @@ impl Creator {
         out
     }
 
-    /// The draft as the archive PreMod makes, for the catalog's maintainer. Each style's preview is
-    /// the WebP the window drew from its picture; a style the window could not draw takes its
-    /// picture as it is when that is a WebP already. Refused while something is missing or the
-    /// catalog's rules say no.
-    pub fn bundle(&self, id: &str, previews: &[Option<Vec<u8>>]) -> Result<(String, Vec<u8>), String> {
-        let d = self.read(id)?;
-        let gaps: Vec<String> = Creator::missing(&d).into_iter().chain(catalog_problems(&d)).collect();
-        if !gaps.is_empty() {
-            return Err(t("Не хватает: {0}", &[json!(gaps.join(", "))]));
-        }
+    /// Each style's VPK and the WebP the window drew, or its own picture when that is already WebP.
+    fn ready_styles(&self, id: &str, d: &Value, previews: &[Option<Vec<u8>>]) -> Result<Vec<UploadStyle>, String> {
         let folder = self.folder(id)?;
         let mut styles = Vec::new();
-        for (i, s) in field(&d, "styles").as_array().cloned().unwrap_or_default().iter().enumerate() {
+        for (i, s) in field(d, "styles").as_array().cloned().unwrap_or_default().iter().enumerate() {
             let drawn = previews.get(i).and_then(|p| p.as_deref());
             let own = std::fs::read(folder.join(string(field(s, "picture")))).map_err(|e| e.to_string())?;
             let preview = if is_webp(drawn) {
@@ -409,13 +578,61 @@ impl Creator {
             };
             let label = str_of(s, "label");
             let Some(preview) = preview else {
-                let which = if label.is_empty() { str_of(&d, "name") } else { label };
+                let which = if label.is_empty() { str_of(d, "name") } else { label };
                 return Err(t("Каталогу нужна картинка-превью, а не видео: {0}", &[json!(which)]));
             };
             let vpk = std::fs::read(folder.join(string(field(s, "vpk")))).map_err(|e| e.to_string())?;
-            styles.push(PackedStyle { label, vpk, preview });
+            styles.push(UploadStyle { label, colors: colors(field(s, "colors"), i), vpk, preview });
         }
-        premod_archive(&d, &styles)
+        Ok(styles)
+    }
+
+    fn ready(&self, id: &str, previews: &[Option<Vec<u8>>]) -> Result<(Value, Vec<UploadStyle>), String> {
+        let d = self.read(id)?;
+        let gaps: Vec<String> = Creator::missing(&d).into_iter().chain(catalog_problems(&d)).collect();
+        if !gaps.is_empty() {
+            return Err(t("Не хватает: {0}", &[json!(gaps.join(", "))]));
+        }
+        let styles = self.ready_styles(id, &d, previews)?;
+        Ok((d, styles))
+    }
+
+    /// The draft as the archive PreMod makes, for the catalog's maintainer.
+    pub fn bundle(&self, id: &str, previews: &[Option<Vec<u8>>]) -> Result<(String, Vec<u8>), String> {
+        let (d, styles) = self.ready(id, previews)?;
+        let packed: Vec<PackedStyle> =
+            styles.into_iter().map(|s| PackedStyle { label: s.label, vpk: s.vpk, preview: s.preview }).collect();
+        premod_archive(&d, &packed)
+    }
+
+    /// What the upload API takes: the draft, and each style's VPK and WebP preview as bytes.
+    pub fn upload_bundle(&self, id: &str, previews: &[Option<Vec<u8>>]) -> Result<(Value, Vec<UploadStyle>), String> {
+        self.ready(id, previews)
+    }
+
+    /// The terms are per installation, as they are per browser on the site.
+    fn consent_file(&self) -> PathBuf {
+        self.root.join("consent.json")
+    }
+
+    /// The terms as recorded; an agreement to an older version of them is not one to these.
+    pub fn consent(&self, current: &str) -> Value {
+        let c: Value = std::fs::read_to_string(self.consent_file())
+            .ok()
+            .and_then(|t| serde_json::from_str(&t).ok())
+            .unwrap_or(Value::Null);
+        json!({
+            "accepted": field(&c, "accepted") == &Value::Bool(true) && str_of(&c, "version") == current,
+            "version": str_of(&c, "version"),
+            "at": field(&c, "at").as_str().map(|s| json!(s)).unwrap_or(Value::Null),
+        })
+    }
+
+    pub fn accept_terms(&self, version: &str, at: &str) -> Result<Value, String> {
+        let c = json!({ "accepted": true, "version": version, "at": at });
+        std::fs::create_dir_all(&self.root).map_err(|e| e.to_string())?;
+        std::fs::write(self.consent_file(), stringify(&c, "  ")).map_err(|e| e.to_string())?;
+        Ok(c)
     }
 
     /// A draft as the form shows it: its pictures as data URIs, and what is still missing.
@@ -476,10 +693,267 @@ mod tests {
     #[test]
     fn a_name_is_latin_words_with_single_spaces() {
         assert!(latin_name("Arcana Pudge 2"));
+        assert!(latin_name("Anti-Mage Blue Glow"));
         assert!(!latin_name("Arcana  Pudge"));
         assert!(!latin_name(" Arcana"));
         assert!(!latin_name("Пудж"));
         assert_eq!(node_extname("a/.png"), "");
         assert_eq!(node_extname("a/b.PNG"), ".PNG");
+    }
+
+    #[test]
+    fn a_hero_mod_needs_the_hero_then_a_title() {
+        let d = json!({ "name": "Blue Glow", "category": "heroes", "hero": "Anti-Mage", "styles": [] });
+        assert!(catalog_problems(&d).contains(&t("имя героя в названии", &[])));
+        let d = json!({ "name": "Anti-Mage", "category": "heroes", "hero": "Anti-Mage", "styles": [] });
+        assert!(catalog_problems(&d).contains(&t("после имени героя нужно название", &[])));
+        let d = json!({ "name": "Anti-Mage Blue Glow", "category": "heroes", "hero": "Anti-Mage", "styles": [] });
+        assert!(catalog_problems(&d).is_empty());
+    }
+
+    #[test]
+    fn a_style_takes_two_colours_and_falls_back_to_the_palette() {
+        assert_eq!(colors(&json!(["#AABBCC", "#112233", "#445566"]), 0), vec!["#aabbcc", "#112233"]);
+        assert_eq!(colors(&json!("nope"), 1), vec!["#ff8f8f"]);
+    }
+
+    struct Temp(PathBuf);
+
+    impl Temp {
+        fn new() -> Temp {
+            let dir = std::env::temp_dir().join(format!("mm-creator-test-{}", uuid::Uuid::new_v4().simple()));
+            std::fs::create_dir_all(&dir).unwrap();
+            Temp(dir)
+        }
+    }
+
+    impl Drop for Temp {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    struct Fixture {
+        _dir: Temp,
+        vpk: PathBuf,
+        png: PathBuf,
+        txt: PathBuf,
+        creator: Creator,
+    }
+
+    impl Fixture {
+        fn new() -> Fixture {
+            let dir = Temp::new();
+            let vpk = dir.0.join("glow.vpk");
+            let mut head = vec![0u8; 12];
+            head[..4].copy_from_slice(&crate::vpk::SIGNATURE.to_le_bytes());
+            std::fs::write(&vpk, &head).unwrap();
+            let png = dir.0.join("glow.png");
+            std::fs::write(&png, [0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a]).unwrap();
+            let txt = dir.0.join("notes.txt");
+            std::fs::write(&txt, "not a vpk").unwrap();
+            let creator = Creator::new(&dir.0.join("user"));
+            Fixture { _dir: dir, vpk, png, txt, creator }
+        }
+    }
+
+    const WEBP: &[u8] = b"RIFF\0\0\0\0WEBPVP8 \0\0\0\0\0\0\0\0";
+
+    fn entry(z: &mut crate::safe_zip::OpenedZip, name: &str) -> Vec<u8> {
+        let file = z.get(name).unwrap_or_else(|| panic!("{name} is in the archive"));
+        z.read(&file).unwrap()
+    }
+
+    fn style_file(f: &Fixture, id: &str, index: usize, kind: &str) -> PathBuf {
+        let d = f.creator.list().into_iter().find(|d| d["id"] == id).unwrap();
+        f.creator.folder(id).unwrap().join(d["styles"][index][kind].as_str().unwrap())
+    }
+
+    #[test]
+    fn a_new_draft_is_trimmed_and_touched_drafts_list_first() {
+        let f = Fixture::new();
+        let a = f.creator.save(None, &json!({ "name": "  Blue glow  ", "author": "me" })).unwrap();
+        assert_eq!(a["name"], "Blue glow");
+        assert_eq!(a["styles"].as_array().unwrap().len(), 1);
+        let a_id = a["id"].as_str().unwrap().to_string();
+
+        let b = f.creator.save(None, &json!({ "name": "Second" })).unwrap();
+        let b_id = b["id"].as_str().unwrap().to_string();
+        let ids =
+            |f: &Fixture| f.creator.list().iter().map(|d| d["id"].as_str().unwrap().to_string()).collect::<Vec<_>>();
+        assert_eq!(ids(&f), vec![b_id.clone(), a_id.clone()]);
+
+        let changed = f.creator.save(Some(&a_id), &json!({ "description": "x".repeat(5000) })).unwrap();
+        assert_eq!(changed["description"].as_str().unwrap().len(), 2000);
+        assert_eq!(ids(&f), vec![a_id, b_id], "two saves in one millisecond still keep their order");
+    }
+
+    #[test]
+    fn a_draft_keeps_the_forms_credits_tags_and_style_colours() {
+        let f = Fixture::new();
+        let d = f
+            .creator
+            .save(
+                None,
+                &json!({
+                    "name": "Blue Glow", "category": "hero-items", "subcategory": "weapons", "hero": "Anti-Mage",
+                    "authorMode": "new", "author": "me", "authorUrl": "https://example.com/me",
+                    "extraMode": "source", "extraOrigin": "new", "extraName": "someone", "extraUrl": "https://example.com/source",
+                    "video": "https://youtu.be/x", "tags": { "weapon": true, "effects": false, "bad key": true },
+                    "styles": [{ "label": "Day", "colors": ["#112233", "#445566"] }, { "label": "Night", "colors": ["#778899"] }],
+                }),
+            )
+            .unwrap();
+        let id = d["id"].as_str().unwrap().to_string();
+        let listed = f.creator.list().into_iter().next().unwrap();
+        assert_eq!(listed["hero"], "Anti-Mage");
+        assert_eq!(listed["subcategory"], "weapons");
+        assert_eq!(listed["authorMode"], "new");
+        assert_eq!(listed["extraMode"], "source");
+        assert_eq!(listed["extraOrigin"], "new");
+        assert_eq!(listed["tags"], json!({ "weapon": true }), "only the switches that are on are kept");
+        assert_eq!(listed["styles"][0]["colors"], json!(["#112233", "#445566"]));
+        assert_eq!(listed["styles"][1]["colors"], json!(["#778899"]));
+
+        let picked = f.creator.save(Some(&id), &json!({ "authorMode": "existing", "author": "" })).unwrap();
+        assert_eq!(picked["authorMode"], "existing");
+        let picked = f.creator.save(Some(&id), &json!({ "author": "Someone" })).unwrap();
+        assert_eq!(picked["authorMode"], "existing");
+        assert_eq!(picked["author"], "Someone");
+
+        f.creator.save(Some(&id), &json!({ "tags": { "base": true } })).unwrap();
+        assert_eq!(f.creator.list()[0]["tags"], json!({ "base": true }));
+    }
+
+    #[test]
+    fn a_file_that_is_not_a_vpk_or_a_picture_is_refused_and_the_draft_is_unchanged() {
+        let f = Fixture::new();
+        let d = f.creator.save(None, &json!({ "name": "x" })).unwrap();
+        let id = d["id"].as_str().unwrap();
+        assert!(f.creator.attach(id, &json!(0), "vpk", &f.txt).is_err());
+        assert!(f.creator.attach(id, &json!(0), "picture", &f.txt).is_err());
+        assert!(f.creator.attach(id, &json!(9), "vpk", &f.vpk).is_err());
+        assert_eq!(f.creator.list()[0]["styles"][0]["vpk"], Value::Null);
+    }
+
+    #[test]
+    fn an_id_that_is_not_a_draft_id_does_not_reach_outside_the_drafts_folder() {
+        let f = Fixture::new();
+        assert!(f.creator.remove("../../etc").is_err());
+        assert!(f.creator.save(Some("../x"), &json!({})).is_err());
+    }
+
+    #[test]
+    fn what_is_missing_is_named_and_the_archive_is_refused_until_nothing_is() {
+        let f = Fixture::new();
+        let d = f.creator.save(None, &json!({})).unwrap();
+        let id = d["id"].as_str().unwrap().to_string();
+        assert_eq!(Creator::missing(&d).len(), 5);
+        assert!(f.creator.bundle(&id, &[]).is_err());
+
+        f.creator.save(Some(&id), &json!({ "name": "Blue glow", "category": "river", "author": "me" })).unwrap();
+        f.creator.attach(&id, &json!(0), "vpk", &f.vpk).unwrap();
+        let full = f.creator.attach(&id, &json!(0), "picture", &f.png).unwrap();
+        assert!(Creator::missing(&full).is_empty());
+
+        let two = f.creator.save(Some(&id), &json!({ "styles": [{ "label": "" }, { "label": "" }] })).unwrap();
+        assert_eq!(Creator::missing(&two).len(), 4, "a second style asks for its own files and its own name");
+    }
+
+    #[test]
+    fn the_archive_is_the_one_premod_makes_with_mod_json_and_hash_json() {
+        let f = Fixture::new();
+        let d = f
+            .creator
+            .save(
+                None,
+                &json!({
+                    "name": "Blue glow", "category": "river", "author": "https://example.com/me",
+                    "styles": [{ "label": "Day" }, { "label": "Night" }],
+                }),
+            )
+            .unwrap();
+        let id = d["id"].as_str().unwrap();
+        for i in [0, 1] {
+            f.creator.attach(id, &json!(i), "vpk", &f.vpk).unwrap();
+            f.creator.attach(id, &json!(i), "picture", &f.png).unwrap();
+        }
+        assert!(f.creator.bundle(id, &[]).is_err(), "a PNG the window did not draw is no WebP preview");
+
+        let (name, zip) = f.creator.bundle(id, &[Some(WEBP.to_vec()), Some(WEBP.to_vec())]).unwrap();
+        assert_eq!(name, "Blue glow.zip");
+        let mut z = crate::safe_zip::OpenedZip::open(crate::safe_zip::Source::Bytes(zip), None, None).unwrap();
+        let mut names: Vec<String> = z.files.iter().map(|e| e.path.clone()).collect();
+        names.sort();
+        assert_eq!(
+            names,
+            vec![
+                "Blue glow Night.webp".to_string(),
+                "Blue glow Night.zip".to_string(),
+                "Blue glow.webp".to_string(),
+                "Blue glow.zip".to_string(),
+                "hash.json".to_string(),
+                "mod.json".to_string(),
+                "submit.json".to_string(),
+            ]
+        );
+
+        let modjson: Value = serde_json::from_slice(&entry(&mut z, "mod.json")).unwrap();
+        assert_eq!(modjson["name"], "Blue glow");
+        assert_eq!(modjson["file"], "Blue glow.zip");
+        assert_eq!(modjson["preview"], "Blue glow.webp");
+        assert_eq!(modjson["styles"][0]["label"], "Day");
+        assert_eq!(modjson["styles"][1]["label"], "Night");
+        assert_eq!(modjson["links"], json!([{ "type": "author", "url": "https://example.com/me" }]));
+
+        let inner_zip = entry(&mut z, "Blue glow.zip");
+        let mut inner =
+            crate::safe_zip::OpenedZip::open(crate::safe_zip::Source::Bytes(inner_zip), None, None).unwrap();
+        assert_eq!(inner.files.iter().map(|e| e.path.as_str()).collect::<Vec<_>>(), vec!["Blue glow.vpk"]);
+        assert_eq!(entry(&mut inner, "Blue glow.vpk"), std::fs::read(&f.vpk).unwrap());
+
+        let hash: Value = serde_json::from_slice(&entry(&mut z, "hash.json")).unwrap();
+        assert_eq!(hash["mod_name"], "Blue glow");
+        assert_eq!(hash["vpk_hash"].as_str().unwrap().len(), 64);
+        assert_eq!(hash["vpk_zip_hash"].as_str().unwrap().len(), 64);
+        assert!(hash["vpk_hash"].as_str().unwrap().bytes().all(|b| b.is_ascii_hexdigit()));
+        assert_eq!(entry(&mut z, "Blue glow.webp"), WEBP);
+        assert_eq!(
+            serde_json::from_slice::<Value>(&entry(&mut z, "submit.json")).unwrap(),
+            json!({ "mode": "new", "category": "river", "hero": null, "description": null })
+        );
+    }
+
+    #[test]
+    fn a_style_dropped_takes_its_files_and_a_deleted_draft_is_gone() {
+        let f = Fixture::new();
+        let d = f.creator.save(None, &json!({ "styles": [{ "label": "a" }, { "label": "b" }] })).unwrap();
+        let id = d["id"].as_str().unwrap().to_string();
+        f.creator.attach(&id, &json!(1), "vpk", &f.vpk).unwrap();
+        let file = style_file(&f, &id, 1, "vpk");
+        assert!(file.exists());
+
+        let kept = f.creator.save(Some(&id), &json!({ "styles": [{ "label": "a" }] })).unwrap();
+        assert_eq!(kept["styles"].as_array().unwrap().len(), 1);
+        assert!(!file.exists(), "the dropped style's VPK goes with it");
+
+        f.creator.remove(&id).unwrap();
+        assert!(f.creator.list().is_empty());
+    }
+
+    #[test]
+    fn the_terms_are_recorded_for_this_installation() {
+        let f = Fixture::new();
+        assert_eq!(f.creator.consent("1"), json!({ "accepted": false, "version": "", "at": null }));
+        assert_eq!(
+            f.creator.accept_terms("1", "2026-01-01T00:00:00.000Z").unwrap(),
+            json!({ "accepted": true, "version": "1", "at": "2026-01-01T00:00:00.000Z" })
+        );
+        assert_eq!(
+            f.creator.consent("1"),
+            json!({ "accepted": true, "version": "1", "at": "2026-01-01T00:00:00.000Z" })
+        );
+        // new terms are asked for again
+        assert_eq!(f.creator.consent("2")["accepted"], json!(false));
     }
 }

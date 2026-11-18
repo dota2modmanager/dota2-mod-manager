@@ -1,14 +1,30 @@
 //! The author's drafts (src/ipc-creator.ts): the drafts, one saved, a style's VPK or picture
-//! picked, one deleted, and one written out as an archive for the catalog's maintainer. The
-//! thinking is in creator.rs; this asks the user for the files and where to save.
+//! picked, one deleted, one written out as an archive for the catalog's maintainer, and one sent
+//! to the catalog's upload API. The thinking is in creator.rs and creator_upload.rs; this asks
+//! the user for the files and where to save, and puts the request on the network.
 
 use serde_json::{json, Map, Value};
 
 use crate::creator::Creator;
 use crate::i18n::t;
 use crate::owner::{arg, Owner, R};
+use crate::tools::creator_upload::{self, embedded_upload_token, UPLOAD_CONSENT_VERSION};
 
-pub const CHANNELS: &[&str] = &["creator:list", "creator:save", "creator:attach", "creator:remove", "creator:export"];
+pub const CHANNELS: &[&str] = &[
+    "creator:list",
+    "creator:accept",
+    "creator:history",
+    "creator:save",
+    "creator:attach",
+    "creator:remove",
+    "creator:export",
+    "creator:upload",
+];
+
+/// The previews the window drew, one per style, as the upload and the archive take them.
+fn previews(v: &Value) -> Vec<Option<Vec<u8>>> {
+    v.as_array().map(|a| a.iter().map(|p| crate::owner::bytes_of(p).ok().flatten()).collect()).unwrap_or_default()
+}
 
 pub fn handle(o: &Owner, channel: &str, args: &[Value]) -> Option<R> {
     CHANNELS.contains(&channel).then(|| Ok(answer(o, channel, args)))
@@ -47,7 +63,22 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
     let store = Creator::new(&o.opts.user_data);
     let id = crate::js::string(&a0);
     spread(match channel {
-        "creator:list" => Ok(json!({ "drafts": store.list().iter().map(|d| store.shown(d)).collect::<Vec<_>>() })),
+        "creator:list" => Ok(json!({
+            "drafts": store.list().iter().map(|d| store.shown(d)).collect::<Vec<_>>(),
+            "consent": store.consent(UPLOAD_CONSENT_VERSION),
+            // sending needs the token a release carries; a source checkout has none
+            "uploader": embedded_upload_token(&o.opts.app_root).is_some(),
+        })),
+        "creator:accept" => {
+            store.accept_terms(UPLOAD_CONSENT_VERSION, &crate::mods_listing::iso_now()).map(|c| json!({ "consent": c }))
+        }
+        "creator:history" => (|| {
+            let Some(token) = embedded_upload_token(&o.opts.app_root) else {
+                return Ok(json!({ "items": [] }));
+            };
+            let net = o.core().net.clone();
+            Ok(json!({ "items": creator_upload::history(&net, &token, creator_upload::UPLOAD_API) }))
+        })(),
         "creator:save" => {
             let fields = arg(args, 1);
             let fields = if crate::js::truthy(&fields) { fields } else { json!({}) };
@@ -76,10 +107,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         })(),
         "creator:remove" => store.remove(&id).map(|_| json!({})),
         "creator:export" => (|| {
-            let previews: Vec<Option<Vec<u8>>> = arg(args, 1)
-                .as_array()
-                .map(|a| a.iter().map(|p| crate::owner::bytes_of(p).ok().flatten()).collect())
-                .unwrap_or_default();
+            let previews = previews(&arg(args, 1));
             let (name, zip) = store.bundle(&id, &previews)?;
             let res = o.shell.request(
                 "dialog.save",
@@ -92,6 +120,18 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             let Some(to) = picked(&res, false) else { return Ok(json!({ "cancelled": true })) };
             std::fs::write(&to, &zip).map_err(|e| e.to_string())?;
             Ok(json!({ "path": to, "size": zip.len() }))
+        })(),
+        "creator:upload" => (|| {
+            if store.consent(UPLOAD_CONSENT_VERSION).get("accepted") != Some(&Value::Bool(true)) {
+                return Err(t("Сначала прими условия загрузки", &[]));
+            }
+            let Some(token) = embedded_upload_token(&o.opts.app_root) else {
+                return Err(t("Нет токена", &[]));
+            };
+            let (draft, styles) = store.upload_bundle(&id, &previews(&arg(args, 1)))?;
+            let net = o.core().net.clone();
+            let sent = creator_upload::submit_mod(&net, &draft, &styles, &token, creator_upload::UPLOAD_API)?;
+            Ok(json!({ "url": sent.pr_url, "id": sent.id }))
         })(),
         _ => Err(format!("no handler for {channel}")),
     })

@@ -152,6 +152,9 @@ contextBridge.exposeInMainWorld('api', {
     attach: (id, style, kind) => ipcRenderer.invoke('creator:attach', id, style, kind),
     remove: (id) => ipcRenderer.invoke('creator:remove', id),
     export: (id, previews) => ipcRenderer.invoke('creator:export', id, previews),
+    accept: () => ipcRenderer.invoke('creator:accept'),
+    upload: (id, previews) => ipcRenderer.invoke('creator:upload', id, previews),
+    history: () => ipcRenderer.invoke('creator:history'),
   },
   hud: {
     state: () => ipcRenderer.invoke('hud:state'),
