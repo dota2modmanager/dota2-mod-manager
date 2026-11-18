@@ -43,6 +43,15 @@ runs:
         # shellcheck disable=SC2086
         sudo apt-get -o Acquire::http::Timeout=30 -o Dir::Cache::Archives="$dir" \
           install -y --print-uris -qq $PACKAGES | sed -n "s/^'\([^']*\)' \([^ ]*\) .*/\1 \2/p" > "$RUNNER_TEMP/apt-uris"
+        # the runner's sources name a list of mirrors (mirror+file:/etc/apt/apt-mirrors.txt/pool/...),
+        # which curl cannot read: each package goes to the next mirror on that list in turn
+        awk 'match($1, /^mirror\+file:[^ ]*\.txt\//) {
+               list = substr($1, 13, RLENGTH - 13)
+               if (!(list in n)) while ((getline m < list) > 0) if (m ~ /^https?:/) { sub(/[ \t].*$/, "", m); sub(/\/$/, "", m); mirror[list, n[list]++] = m }
+               if (n[list]) { $1 = mirror[list, i++ % n[list]] "/" substr($1, RLENGTH + 1) }
+             } { print }' "$RUNNER_TEMP/apt-uris" > "$RUNNER_TEMP/apt-urls"
+        mv "$RUNNER_TEMP/apt-urls" "$RUNNER_TEMP/apt-uris"
+        head -2 "$RUNNER_TEMP/apt-uris"
         echo "fetching $(wc -l < "$RUNNER_TEMP/apt-uris") packages"
         timeout 360 xargs -P 8 -n 2 sh -c 'curl -fsS --retry 3 --connect-timeout 20 --max-time 120 -o "$0/$2.part" "$1" && mv "$0/$2.part" "$0/$2"' "$dir" < "$RUNNER_TEMP/apt-uris" || echo "some packages were not fetched; apt asks the mirror for them"
         rm -f "$dir"/*.part
