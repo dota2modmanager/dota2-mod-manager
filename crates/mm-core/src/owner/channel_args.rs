@@ -505,6 +505,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("cosmetics:heroPortraits", vec![list(str_or_num(100, 0), 1000), optional(bool_())]),
             ("cosmetics:heroPortraitsByName", vec![list(str_(200, 0), 1000)]),
             ("cosmetics:icons", vec![list(str_(500, 0), 20000)]),
+            ("cosmetics:effects", vec![list(str_(200, 1), 400)]),
             (
                 "cosmetics:pick",
                 vec![

@@ -22,6 +22,7 @@ import { afterPick, heroSets, isOpen, itemCosmeticSlots, openWindow, slotPane, s
 import { deleteLook, heroKey, lookIsOn, looksOf, renameLook, saveLook, wornPicks } from './item-looks.ts';
 import { heroPortrait } from './item-hub.ts';
 import { closeOverlay } from './catalog/overlay.ts';
+import { loadSlotEffects } from './catalog/lists.ts';
 import { openMenu } from '../ui/menu.ts';
 import { randomPicks, randomSet, type RandomMode } from '../catalog/builder/random-look.ts';
 import type { CosmeticSlot } from '../catalog/types.ts';
@@ -38,6 +39,11 @@ let lastTab: 'sets' | 'looks' | 'slot' = 'sets';
  * @param opts.slot  open on this slot's tab, with `query` typed into its search and `select` chosen
  */
 export function openItemHeroModal(heroName: string, from: Element | null, opts: { slot?: string; query?: string; select?: string; view?: 'gems' } = {}): void {
+  // the slots' effects first: a pick saved without them would lose the ones it has
+  void loadSlotEffects(heroSlots(heroName).map((s) => s.slot)).then(() => openHero(heroName, from, opts));
+}
+
+function openHero(heroName: string, from: Element | null, opts: { slot?: string; query?: string; select?: string; view?: 'gems' }): void {
   const slots = heroSlots(heroName);
   const sets = heroSets(heroName);
   const first = slots[0]?.slot || 'looks';
