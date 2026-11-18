@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1826,
+  "mods": 1827,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -498,6 +498,7 @@
       "name": "Dragon Knight",
       "mods": [
         {"name":"Aghanim Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
+        {"name":"Bloody Dragon Knight","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
         {"name":"Blue Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Dragon Knight Burning Scale","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
         {"name":"Dragon Knight Dragon Hold","categoryId":"heroes","styleLabel":null,"slots":["arms","misc","head","shield","shoulder","legs","weapon"]},
