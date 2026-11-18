@@ -139,8 +139,35 @@ function slotsOnOffer(): NonNullable<typeof offer> {
   if (!offer || offer.slots !== slots || offer.picks !== picksRead) {
     const list = withPersonas(slots || [], pickedIn);
     offer = { slots, picks: picksRead, list, bySlot: new Map(list.map((s) => [s.slot, s])) };
+    for (const s of list) dress(s);
   }
   return offer;
+}
+
+/* The effects a slot offers come apart from the slots: they were 1.4 of the 5 MB the window read
+ * at start and after every pick, and only a hero's window shows them. Read once a slot, they stay
+ * for the run, and every reading of the slots after a pick gets them back. */
+const fxBySlot = new Map<string, NonNullable<CosmeticSlot['effects']>>();
+const fxAsked = new Set<string>();
+function dress(s: CosmeticSlot): void {
+  const fx = fxBySlot.get(s.slot);
+  if (fx) s.effects = fx;
+}
+
+/** These slots' effects read, for the hero's window to open with them. */
+export async function loadSlotEffects(slots: string[]): Promise<void> {
+  const want = slots.filter((s) => !fxAsked.has(s));
+  if (!want.length) return;
+  for (const s of want) fxAsked.add(s);
+  try {
+    const got = await window.api.cosmetics.effects(want);
+    for (const [slot, fx] of Object.entries(got || {})) fxBySlot.set(slot, fx);
+  } catch {
+    // asked again on the next open
+    for (const s of want) fxAsked.delete(s);
+    return;
+  }
+  if (offer) for (const s of offer.list) dress(s);
 }
 
 /** A hero's item, which the item builder (views/item-builder.ts) puts on rather than a slot of its own. */

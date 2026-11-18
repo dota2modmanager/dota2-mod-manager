@@ -23,6 +23,7 @@ pub const CHANNELS: &[&str] = &[
     "schema:refresh",
     "schema:cancel",
     "cosmetics:slots",
+    "cosmetics:effects",
     "cosmetics:pick",
     "cosmetics:pickSet",
     "tools:state",
@@ -423,6 +424,10 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             }
         }
         "cosmetics:slots" => slots(o),
+        "cosmetics:effects" => {
+            let wanted: Vec<String> = a0.as_array().into_iter().flatten().map(crate::js::string).collect();
+            effects(o, &wanted)
+        }
         "cosmetics:pick" => {
             if let Some(stop) = o.blocked("cosmetics") {
                 return stop;
@@ -589,10 +594,55 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
     }
 }
 
-/// The item builder's slots, the last answer kept for its inputs. The answer is read off the
-/// whole item table and took two seconds; under the state's lock that held every other call of
-/// the window, the catalog's at start among them. Only what it reads is taken under the lock.
+/// The item builder's slots, the last answer kept for its inputs, without each slot's effects:
+/// those were 1.4 of the answer's 5 MB, read by the window in one go at start and after every
+/// pick, and only the hero's window shows them (`effects`).
 pub fn slots(o: &Owner) -> Value {
+    whole_slots(o).1
+}
+
+/// The effects each of these slots offers, by slot; a slot with none is left out.
+pub fn effects(o: &Owner, wanted: &[String]) -> Value {
+    let (whole, _) = whole_slots(o);
+    let mut out = serde_json::Map::new();
+    for slot in whole.get("slots").and_then(Value::as_array).into_iter().flatten() {
+        let Some(id) = slot.get("slot").and_then(Value::as_str) else { continue };
+        if !wanted.iter().any(|w| w == id) {
+            continue;
+        }
+        if let Some(fx) = slot.get("effects") {
+            out.insert(id.to_string(), fx.clone());
+        }
+    }
+    Value::Object(out)
+}
+
+/// The answer as `slots` answers it: each slot without its effects.
+fn without_effects(whole: &Value) -> Value {
+    let mut slim = serde_json::Map::new();
+    for (k, v) in whole.as_object().into_iter().flatten() {
+        let v = match (k.as_str(), v.as_array()) {
+            ("slots", Some(list)) => Value::Array(
+                list.iter()
+                    .map(|s| match s.as_object() {
+                        Some(o) => Value::Object(
+                            o.iter().filter(|(k, _)| *k != "effects").map(|(k, v)| (k.clone(), v.clone())).collect(),
+                        ),
+                        None => s.clone(),
+                    })
+                    .collect(),
+            ),
+            _ => v.clone(),
+        };
+        slim.insert(k.clone(), v);
+    }
+    Value::Object(slim)
+}
+
+/// The whole answer and the one `slots` gives. The answer is read off the whole item table and
+/// took two seconds; under the state's lock that held every other call of the window, the
+/// catalog's at start among them. Only what it reads is taken under the lock.
+fn whole_slots(o: &Owner) -> (std::sync::Arc<Value>, Value) {
     // one reading of the table at a time: the window asking while the start's warm-up reads it
     // waits for that one (most of two seconds) instead of reading it a second time beside it
     let _one = READING.lock().unwrap_or_else(|e| e.into_inner());
@@ -604,38 +654,51 @@ pub fn slots(o: &Owner) -> Value {
             c.user_data.clone(),
         )
     };
-    let Some(game) = game else { return json!({ "slots": [], "sets": [] }) };
+    let bare = |v: Value| {
+        let slim = without_effects(&v);
+        (std::sync::Arc::new(v), slim)
+    };
+    let Some(game) = game else { return bare(json!({ "slots": [], "sets": [] })) };
     let lang = crate::i18n::lang().code();
     let key = slots_key(&game, &lib, lang);
+    let keep = |k: &String, answer: Value| {
+        let (whole, slim) = bare(answer);
+        *SLOTS.lock().unwrap_or_else(|e| e.into_inner()) = Some((k.clone(), whole.clone(), slim.clone()));
+        (whole, slim)
+    };
     // the answer for this table, these picks and this language, kept in memory and on disk: the
     // table took most of two seconds to read on every start of the app
     if let Some(k) = &key {
-        if let Some((have, answer)) = SLOTS.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
+        if let Some((have, whole, slim)) = SLOTS.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
             if k == have {
-                return answer.clone();
+                return (whole.clone(), slim.clone());
             }
         }
         if let Some(answer) = slots_on_disk(&user_data, k) {
-            *SLOTS.lock().unwrap_or_else(|e| e.into_inner()) = Some((k.clone(), answer.clone()));
-            return answer;
+            return keep(k, answer);
         }
     }
     let text = {
         let mut core = o.core();
         match core.schema.vanilla(&game) {
-            Err(e) => return json!({ "slots": [], "sets": [], "error": e }),
+            Err(e) => return bare(json!({ "slots": [], "sets": [], "error": e })),
             Ok(b) => b,
         }
     };
     let answer = crate::schema_cosmetics::cosmetic_slots(&lib, Some(&game), &text.0, lang);
     // a failure may be the disk's for a moment: asked again, it reads again
-    let keep = key.filter(|_| answer.get("error").is_none());
-    if let Some(k) = &keep {
-        let file = user_data.join(SLOTS_FILE);
-        let _ = std::fs::write(&file, serde_json::to_vec(&json!({ "key": k, "answer": answer })).unwrap_or_default());
+    match key.filter(|_| answer.get("error").is_none()) {
+        Some(k) => {
+            let file = user_data.join(SLOTS_FILE);
+            let _ =
+                std::fs::write(&file, serde_json::to_vec(&json!({ "key": k, "answer": answer })).unwrap_or_default());
+            keep(&k, answer)
+        }
+        None => {
+            *SLOTS.lock().unwrap_or_else(|e| e.into_inner()) = None;
+            bare(answer)
+        }
     }
-    *SLOTS.lock().unwrap_or_else(|e| e.into_inner()) = keep.map(|k| (k, answer.clone()));
-    answer
 }
 
 /// Where the cosmetic slots' last answer is kept, with the key it was made for.
@@ -648,7 +711,7 @@ fn slots_on_disk(user_data: &Path, key: &str) -> Option<Value> {
     (kept.get("key")?.as_str()? == key).then(|| kept.get_mut("answer").map(Value::take)).flatten()
 }
 
-type Kept = Option<(String, Value)>;
+type Kept = Option<(String, std::sync::Arc<Value>, Value)>;
 static SLOTS: std::sync::Mutex<Kept> = std::sync::Mutex::new(None);
 static READING: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
@@ -690,5 +753,27 @@ mod slots_kept {
         std::fs::write(game.join("dota").join("pak01_dir.vpk"), b"pak, patched").unwrap();
         assert_ne!(base, key(json!([pick(true), other(true)]), "ru"));
         std::fs::remove_dir_all(&game).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod slots_tests {
+    use super::*;
+
+    #[test]
+    fn the_slots_answer_leaves_the_effects_out_and_keeps_everything_else() {
+        let whole = json!({
+            "slots": [
+                { "slot": "item:axe:head", "options": [{ "id": "1" }], "effects": [{ "id": "fire", "name": "Fire" }] },
+                { "slot": "item:axe:weapon", "options": [] },
+            ],
+            "sets": [{ "id": "9" }],
+            "heroAttrs": { "axe": "str" },
+        });
+        let slim = without_effects(&whole);
+        assert_eq!(slim["slots"][0], json!({ "slot": "item:axe:head", "options": [{ "id": "1" }] }));
+        assert_eq!(slim["slots"][1], whole["slots"][1]);
+        assert_eq!(slim["sets"], whole["sets"]);
+        assert_eq!(slim["heroAttrs"], whole["heroAttrs"]);
     }
 }
