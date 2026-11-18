@@ -189,6 +189,9 @@ impl Default for Net {
     }
 }
 
+/// How many times a download that broke off after making progress is picked up on its own.
+const RESUME_TRIES: u32 = 5;
+
 impl Net {
     pub fn new(now: fn() -> f64) -> Net {
         Net {
@@ -391,6 +394,7 @@ impl Net {
         let mirror_count = self.chain().mirrors_for(url, false, false).len().max(1);
         let mut have_origin_copy = false;
         let mut attempt = 0;
+        let mut picked_up = 0;
         loop {
             let mut have = std::fs::metadata(&part).map_or(0, |m| m.len());
             let headers = if have > 0 { vec![("Range".to_string(), format!("bytes={have}-"))] } else { vec![] };
@@ -421,14 +425,28 @@ impl Net {
                 let mut body = a.body;
                 let mut loaded = have;
                 let mut buf = vec![0u8; 64 * 1024];
-                loop {
-                    let n = body.read(&mut buf).map_err(io_error)?;
+                let broke = loop {
+                    let n = match body.read(&mut buf) {
+                        Ok(n) => n,
+                        Err(e) => break Some(io_error(e)),
+                    };
                     if n == 0 {
-                        break;
+                        break None;
                     }
                     loaded += n as u64;
                     on_progress(loaded, total);
                     out.write_all(&buf[..n]).map_err(io)?;
+                };
+                if let Some(e) = broke {
+                    // A line that drops a few megabytes in left the person pressing Install again
+                    // to resume it by hand (2026-11-16): a connection that was moving is picked
+                    // up where it stopped, a few times, before the error goes to the window.
+                    if loaded > have && picked_up < RESUME_TRIES {
+                        picked_up += 1;
+                        log(&format!("{host} broke off at {loaded} bytes ({}), picking it up", e.message));
+                        continue;
+                    }
+                    return Err(e);
                 }
             }
             let digest = sha256_file(&part).map_err(io)?;
@@ -604,6 +622,68 @@ mod tests {
         assert_eq!(super::sha256_file(&p).unwrap(), "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0");
         let _ = std::fs::remove_file(p);
     }
+    /// The line drops the first answer halfway; the download asks for the rest on its own.
+    #[test]
+    fn a_download_that_breaks_off_is_picked_up_where_it_stopped() {
+        use std::io::{Read, Write};
+        let file: Vec<u8> = (0..300_000u32).map(|i| (i % 251) as u8).collect();
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/mod.zip", listener.local_addr().unwrap());
+        let served = file.clone();
+        let server = std::thread::spawn(move || {
+            let mut ranges = Vec::new();
+            for _ in 0..2 {
+                let (mut sock, _) = listener.accept().unwrap();
+                let mut buf = [0u8; 8192];
+                let n = sock.read(&mut buf).unwrap();
+                let head = String::from_utf8_lossy(&buf[..n]).to_ascii_lowercase();
+                let from = head
+                    .lines()
+                    .find_map(|l| l.strip_prefix("range: bytes="))
+                    .and_then(|r| r.trim_end_matches('-').parse::<usize>().ok());
+                ranges.push(from);
+                match from {
+                    None => {
+                        let h = format!(
+                            "HTTP/1.1 200 OK
+Content-Length: {}
+Connection: close
+
+",
+                            served.len()
+                        );
+                        sock.write_all(h.as_bytes()).unwrap();
+                        sock.write_all(&served[..120_000]).unwrap();
+                    }
+                    Some(at) => {
+                        let rest = &served[at..];
+                        let h = format!(
+                            "HTTP/1.1 206 Partial Content
+Content-Length: {}
+Connection: close
+
+",
+                            rest.len()
+                        );
+                        sock.write_all(h.as_bytes()).unwrap();
+                        sock.write_all(rest).unwrap();
+                    }
+                }
+            }
+            ranges
+        });
+        let dir = std::env::temp_dir().join(format!("mm-resume-{}", uuid::Uuid::new_v4().simple()));
+        let dest = dir.join("mod.zip");
+        let got = super::Net::new(|| 0.0).download_file(&url, &dest, Default::default());
+        let bytes = std::fs::read(&dest).ok();
+        let _ = std::fs::remove_dir_all(&dir);
+        // checked before the server is waited on: a download that gave up never sends it the second request
+        got.unwrap();
+        let ranges = server.join().unwrap();
+        assert_eq!(ranges, vec![None, Some(120_000)]);
+        assert_eq!(bytes.as_deref(), Some(&file[..]));
+    }
+
     #[test]
     fn requests_trust_the_systems_roots_not_a_bundled_list() {
         // a bundled list failed every request to the download counter on workers.dev
