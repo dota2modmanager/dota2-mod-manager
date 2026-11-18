@@ -253,21 +253,28 @@ impl HeroPaintService {
         Ok(built)
     }
 
-    /// The compressed pictures, read out, repainted and compiled again; none without both tools.
+    /// The compressed pictures, read out, repainted and compiled again; none without both tools,
+    /// and then why, in words for the player.
     fn pictures(
         list: &[(String, Vec<u8>, Rgb, &'static str)],
         tools: &mut Tools,
         log: &mut dyn FnMut(String),
-    ) -> Vec<Entry> {
+    ) -> (Vec<Entry>, Option<String>) {
         let (Some(exe), Some(compile)) = (tools.vrf.clone(), tools.compile.as_mut()) else {
-            if !list.is_empty() {
-                let why = if tools.vrf.is_some() { "no compiler" } else { "no ValveResourceFormat" };
-                log(format!("hero paint: {} compressed picture(s) left as they are, {why}", list.len()));
+            if list.is_empty() {
+                return (vec![], None);
             }
-            return vec![];
+            let why = if tools.vrf.is_some() { "no compiler" } else { "no ValveResourceFormat" };
+            log(format!("hero paint: {} compressed picture(s) left as they are, {why}", list.len()));
+            let said = if tools.vrf.is_some() {
+                crate::resource_compiler::need_workshop_tools()
+            } else {
+                t("Не скачался ValveResourceFormat, он нужен, чтобы перекрасить картинки", &[])
+            };
+            return (vec![], Some(said));
         };
         if list.is_empty() {
-            return vec![];
+            return (vec![], None);
         }
         let made = (|| -> Result<Vec<Entry>, String> {
             let mut files: Vec<SourceFile> = Vec::new();
@@ -328,11 +335,14 @@ impl HeroPaintService {
                 })
                 .collect())
         })();
-        made.unwrap_or_else(|e| {
-            // no Workshop Tools, or the tool failed: the particles still go in
-            log(format!("hero paint: {} compressed picture(s) left as they are: {e}", list.len()));
-            vec![]
-        })
+        match made {
+            Ok(entries) => (entries, None),
+            Err(e) => {
+                // no Workshop Tools, or the tool failed: the particles still go in
+                log(format!("hero paint: {} compressed picture(s) left as they are: {e}", list.len()));
+                (vec![], Some(e))
+            }
+        }
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -349,11 +359,17 @@ impl HeroPaintService {
     ) -> Result<Value, String> {
         let Built { mut entries, compressed } =
             self.build_files(lib, vanilla, hero, colors, worn, tools.repaint, log)?;
-        for e in Self::pictures(&compressed, tools, log) {
+        let (pictures, why) = Self::pictures(&compressed, tools, log);
+        for e in pictures {
             entries.insert(e.path(), e);
         }
         if entries.is_empty() {
-            return Err(t("Ни один файл не взял цвет", &[]));
+            // the player is told what stood in the way (issue: "no file took the colour" alone,
+            // when the reason in the log was the missing Workshop Tools)
+            return Err(match why {
+                Some(why) => t("Ни один файл не взял цвет: {0}", &[json!(why)]),
+                None => t("Ни один файл не взял цвет", &[]),
+            });
         }
         let list: Vec<Entry> = entries.values().cloned().collect();
         let vpk = crate::vpk::build(&list);
@@ -525,4 +541,44 @@ pub fn vrf_png(exe: &str, vtex: &[u8], tmp: &Path, run: crate::rank_look_service
     })();
     let _ = std::fs::remove_dir_all(&dir);
     done
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn one_picture() -> Vec<(String, Vec<u8>, Rgb, &'static str)> {
+        vec![("materials/models/heroes/axe/axe_color_psd_1.vtex_c".into(), vec![1, 2, 3], [1.0, 0.0, 0.0], "tint")]
+    }
+
+    fn quiet(_: String) {}
+
+    // Players saw only "none of the files took the colour" while the log said Workshop Tools were missing.
+    #[test]
+    fn a_picture_left_unpainted_says_why() {
+        let repaint = |png: &[u8], _: Rgb, _: &str| Ok(png.to_vec());
+        let mut decode = |_: &str, f: &[u8]| Ok(f.to_vec());
+
+        let mut tools = Tools { vrf: Some("vrf.exe".into()), repaint: &repaint, decode: &mut decode, compile: None };
+        let (built, why) = HeroPaintService::pictures(&one_picture(), &mut tools, &mut quiet);
+        assert!(built.is_empty());
+        assert_eq!(why, Some(crate::resource_compiler::need_workshop_tools()), "no compiler is the Workshop Tools");
+
+        let mut decode = |_: &str, f: &[u8]| Ok(f.to_vec());
+        let mut tools = Tools { vrf: None, repaint: &repaint, decode: &mut decode, compile: None };
+        let (_, why) = HeroPaintService::pictures(&one_picture(), &mut tools, &mut quiet);
+        assert!(why.unwrap().contains("ValveResourceFormat"));
+
+        let mut decode = |_: &str, f: &[u8]| Ok(f.to_vec());
+        let mut failing = |_: &CompileJob| -> Result<Vec<Entry>, String> { Err("the compiler fell over".into()) };
+        let mut tools =
+            Tools { vrf: Some("vrf.exe".into()), repaint: &repaint, decode: &mut decode, compile: Some(&mut failing) };
+        let (_, why) = HeroPaintService::pictures(&one_picture(), &mut tools, &mut quiet);
+        assert_eq!(why.as_deref(), Some("the compiler fell over"));
+
+        let mut decode = |_: &str, f: &[u8]| Ok(f.to_vec());
+        let mut tools = Tools { vrf: None, repaint: &repaint, decode: &mut decode, compile: None };
+        let (built, why) = HeroPaintService::pictures(&[], &mut tools, &mut quiet);
+        assert!(built.is_empty() && why.is_none(), "nothing to paint, nothing to say");
+    }
 }

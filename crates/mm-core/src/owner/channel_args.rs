@@ -315,6 +315,7 @@ pub fn window_settings() -> &'static HashMap<&'static str, Check> {
             ("favorites", list(str_(500, 0), 20000)),
             ("itemLooks", list(item_look, 2000)),
             ("langPromptSeen", bool_()),
+            ("russianVoiceSeen", bool_()),
             ("langFolderLock", one_of(&[None, Some("koreana"), Some("russian"), Some("schinese")])),
             ("modLabels", custom(mod_labels)),
             ("panels", either(vec![one_of(&[None]), json(64 * 1024)])),

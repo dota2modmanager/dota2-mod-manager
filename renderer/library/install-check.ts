@@ -42,7 +42,11 @@ export function installChecks(b: BannersModel, f: CheckFacts): CheckLine[] {
   else add('ok', L`Включено модов: ${f.enabled} из ${f.total}`);
 
   if (b.mounted) add('bad', L`Игра читает dota_${b.mounted.mounted}, а моды лежат в dota_${b.mounted.folder}`);
-  else if (b.launchLang && !b.launchLang.followed) add('bad', L`В параметрах запуска стоит -language ${b.launchLang.lang}, такую папку игра не читает`);
+  else if (b.launchLang && !b.launchLang.followed) {
+    add('bad', b.launchLang.lang.toLowerCase() === 'english'
+      ? L`В параметрах запуска стоит -language english, с ним Дота не видит моды`
+      : L`В параметрах запуска стоит -language ${b.launchLang.lang}, такую папку игра не читает`);
+  }
   else add('ok', L`Моды лежат в dota_${f.folder}, и игра читает эту папку`);
 
   if (b.stranded.length) add('bad', L`Модов в папках, которые игра не читает: ${b.stranded.reduce((n, s) => n + s.modFiles, 0)}`);

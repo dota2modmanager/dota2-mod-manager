@@ -47,6 +47,9 @@ const SOURCES = [
   ['app.json.sig', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/app.json.sig'],
   ['presets.json', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/presets.json'],
   ['presets.json.sig', 'https://raw.githubusercontent.com/dota2modmanager/dota2-mod-manager/main/config/presets.json.sig'],
+  // Not needed to start, but OpenDota's host does not open for a good part of the players in
+  // Russia, and the hero grids are built from this list (crates/mm-core/src/game/hero_grid.rs).
+  ['hero-stats.json', 'https://api.opendota.com/api/heroStats'],
 ];
 
 async function one(name, url) {

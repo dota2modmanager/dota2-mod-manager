@@ -172,6 +172,12 @@ pub fn plan(game: &Path, lang_dir: &Path) -> Plan {
     if target.exists() && !is_ours(&target) {
         return Plan::Skip(format!("{pak} is somebody else's"));
     }
+    // The text speaks to someone with mods on. With none, the pak stayed as the one file in the
+    // folder that is not the game's, and the notice it reworded kept showing after every mod was
+    // gone (2026-11-15). pak01 here is the game's own voice-over.
+    if !live_paks(lang_dir).iter().any(|(_, n)| *n != 1.0) {
+        return Plan::Remove("no mod is on".into());
+    }
     let ui = ui_language(game);
     let chat_rel = localization("chat", &ui);
     let dota_rel = localization("dota", &ui);
@@ -315,5 +321,58 @@ impl NoticeText {
         } else {
             Vec::new()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A game whose main pak carries the chat file, and an empty language folder beside it.
+    fn game() -> (PathBuf, PathBuf) {
+        let root = std::env::temp_dir().join(format!("mm-notice-{}", uuid::Uuid::new_v4().simple()));
+        let game = root.join("game");
+        let lang = game.join("dota_russian");
+        fs::create_dir_all(game.join("dota")).unwrap();
+        fs::create_dir_all(&lang).unwrap();
+        let chat = String::from(
+            "\"lang\"
+{
+	\"Language\"	\"x\"
+	\"Tokens\"
+	{
+	}
+}
+",
+        );
+        let rel = localization("chat", &ui_language(&game));
+        fs::write(
+            game.join("dota").join("pak01_dir.vpk"),
+            vpk::build(&[vpk::entry_at(&rel, chat.into_bytes().into())]),
+        )
+        .unwrap();
+        // the game's own voice-over pak of the language folder
+        fs::write(lang.join("pak01_dir.vpk"), vpk::build(&[vpk::entry_at("sounds/a.txt", b"a".to_vec().into())]))
+            .unwrap();
+        (root, lang)
+    }
+
+    #[test]
+    fn no_mod_on_leaves_no_notice_pak() {
+        let (root, lang) = game();
+        let game = root.join("game");
+        let with_mod = {
+            fs::write(lang.join("pak30_dir.vpk"), vpk::build(&[vpk::entry_at("x.txt", b"x".to_vec().into())])).unwrap();
+            apply_notice(Some(&game), Some(&lang)).unwrap()
+        };
+        let had = lang.join(notice_pak()).exists();
+        fs::rename(lang.join("pak30_dir.vpk"), lang.join("pak30_dir.vpk.off")).unwrap();
+        let without = apply_notice(Some(&game), Some(&lang)).unwrap();
+        let left = lang.join(notice_pak()).exists();
+        let _ = fs::remove_dir_all(&root);
+        assert!(with_mod.starts_with("written"), "{with_mod}");
+        assert!(had);
+        assert_eq!(without, "removed: no mod is on");
+        assert!(!left);
     }
 }

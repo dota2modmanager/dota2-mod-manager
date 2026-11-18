@@ -409,6 +409,29 @@ pub fn item_effect_patch(
         });
         assets.asset_copies.splice(0..0, first);
     }
+    // an item with no model of its own that only puts the hero in another material set (the
+    // Diretide Shimmer costumes): the server picks the set, never the table, so the set goes into
+    // the hero's body and stock items as files
+    let reskins = source_model.is_empty() && !assets.asset_copies.iter().any(|c| matches!(c, AssetCopy::Hero { .. }));
+    if let Some(skin) = skin.filter(|_| reskins) {
+        for hero in &heroes {
+            assets.asset_copies.push(AssetCopy::Hero {
+                from: String::new(),
+                hero: hero.clone(),
+                activities: Vec::new(),
+                skin: Some(skin),
+            });
+        }
+        for model in crate::item_builder_slots::stock_models(base, &heroes).map_err(err)? {
+            assets.asset_copies.push(AssetCopy::Path {
+                from: model.clone(),
+                to: model,
+                optional: Some(true),
+                skin: Some(skin),
+                form: None,
+            });
+        }
+    }
 
     let mut copied_units = HashSet::new();
     let mut copied_stock = HashSet::new();
@@ -476,3 +499,7 @@ pub fn item_effect_patch(
         assets,
     })
 }
+
+#[cfg(test)]
+#[path = "costume_tests.rs"]
+mod costume_tests;

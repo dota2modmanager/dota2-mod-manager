@@ -34,6 +34,7 @@ export function banners(): BannersModel {
     stranded: gl.stranded || [],
     // followed: mods already go where the game reads, so this is news rather than trouble
     launchLang: lang ? { lang, followed: Boolean(gl.folder) && String(lang).toLowerCase() === String(gl.folder).toLowerCase() } : null,
+    russianVoice: !lang && gl.folder === 'russian' && gl.uiLanguage === 'english' && Boolean(gl.voice) && !s.russianVoiceSeen,
     minify: note && m ? {
       case: note.case, kind: note.kind, folder: m.folder || '', mounted: m.mounted ?? null,
       ourFolder: m.ourFolder || '', reservedLabel: m.reservedLabel || null, ourMods,

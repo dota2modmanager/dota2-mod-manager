@@ -14,6 +14,8 @@ export interface StoredSettings {
   langFolderLock?: string | null;
   uiLang: 'en' | 'ru' | 'zh-CN';
   langPromptSeen: boolean;
+  /** the hint about Russian voices under English text was waved away */
+  russianVoiceSeen?: boolean;
   uiScale: number;
   theme: string;
   /** starred catalog mods, as "<categoryId>|<name>" */
@@ -85,6 +87,10 @@ export interface AppSettings extends StoredSettings {
     folder: string;
     /** our mods left in a folder the game does not mount */
     stranded: { suffix: string; modFiles: number }[];
+    /** the text language in the game's own settings */
+    uiLanguage: string | null;
+    /** Valve's voice paks are downloaded into our folder */
+    voice: boolean;
   };
   /** news, once: the mods moved to another language folder on this start */
   langMigration: { from?: string; to: string } | null;

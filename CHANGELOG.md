@@ -2,6 +2,43 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.1.0
+
+### Send your mod to the catalog
+
+Signed in with Discord, open your name at the top and pick **Author's desk**. Make a draft there:
+name, category, hero, styles with one VPK each, pictures and tags. The draft stays on your
+computer until you send it, and then it goes to the catalog's moderators. **History** shows what
+you sent and what happened to it.
+
+### Fixes
+
+- Diretide Shimmer costumes now show in the game. They have no model of their own and only switch
+  the hero into another set of materials, which the game server chooses, so the app now writes the
+  hero's body and default items in that set into the files.
+- On Linux the app starts again on Ubuntu 24.04 and Linux Mint 22. 4.0.0 stopped at
+  "GLIBC_2.43 not found" before the window opened.
+- On Linux the update from 3.8 no longer starts from nothing: the app finds the settings, mods and
+  presets 3.8 kept in `~/.config/Dota 2 Mod Manager`.
+- With `-language english` in Steam's launch options the app used to move your mods into a folder
+  Dota never reads. They stay where the game sees them now, mods already moved come back, and the
+  window tells you to remove the option: you keep English text and voices without it.
+- With English text and the Russian voice downloaded, the voices in the game are Russian. The
+  window now says so once and tells you where to change it in Steam.
+- A download that broke off partway picks up where it stopped, up to five times, instead of
+  failing until you press Install again.
+- The mod's window no longer starts the same download several times when it opens.
+- Hero grids build again for players who cannot reach OpenDota. The app asks the site's copy of
+  the hero stats instead.
+- When no pakNN slot is left, the message names the slots that files outside My mods hold and
+  points to Combine into pack.
+- If you turned the app off in Task Manager's startup list, it stays off after an update.
+- A recolour that changed no file says why, for example that Dota 2 Workshop Tools are missing,
+  and offers to open them in Steam.
+- Typing in a slot's search on the Items screen no longer loses focus after the first letter.
+- The anti-cheat notice no longer stays in the game folder after you remove or switch off every
+  mod.
+
 ## 4.0.0
 
 We rewrote the app. The window looks as before, but the code behind it (installing mods, building

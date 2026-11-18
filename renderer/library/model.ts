@@ -114,6 +114,8 @@ export interface BannersModel {
   stranded: { suffix: string; modFiles: number }[];
   /** -language in Steam's launch options; followed when it names our folder */
   launchLang: { lang: string; followed: boolean } | null;
+  /** English text with the Russian voice downloaded: the voices are Russian too */
+  russianVoice: boolean;
   /** Minify beside us (core/minify-notice.ts), with the folders it and we build into */
   minify: { case: string; kind: string; folder: string; mounted: string | null; ourFolder: string; reservedLabel: string | null; ourMods: number } | null;
   prelaunch: boolean;

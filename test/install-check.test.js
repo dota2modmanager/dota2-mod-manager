@@ -7,7 +7,7 @@ const load = () => import('../renderer/library/install-check.ts');
 
 const clean = {
   masterOff: false, tableOff: 0, matched: 0, nearLimit: null, conflicts: null, foreign: null, vanillaBad: false,
-  mounted: null, stranded: [], launchLang: null, minify: null, prelaunch: false, stuck: [], updates: [], delisted: [],
+  mounted: null, stranded: [], launchLang: null, russianVoice: false, minify: null, prelaunch: false, stuck: [], updates: [], delisted: [],
   repair: { state: 'idle' },
 };
 const facts = { gameFound: true, folder: 'russian', dotaRunning: false, enabled: 3, total: 4, slots: 3, slotCeil: 98 };

@@ -239,7 +239,9 @@ function item() {
 }
 
 // Minimal but structurally real items_game.txt, used only when the real game is not
-// installed. Enough for src/schema.ts to parse, find an items block and patch a base item.
+// installed. Enough for src/schema.ts to parse, find an items block and patch a base item, and
+// for the Items screen to list one slot of the game's looks (the HUD) with something to pick, so
+// the end-to-end run on CI can type into a slot's search as it does on a developer's machine.
 const FALLBACK_SCHEMA = `"items_game"
 {
 	"items"
@@ -252,6 +254,28 @@ const FALLBACK_SCHEMA = `"items_game"
 			"used_by_heroes"
 			{
 				"npc_dota_hero_axe"		"1"
+			}
+		}
+		"587"
+		{
+			"name"		"Default Hud Skin"
+			"prefab"		"hud_skin"
+			"item_name"		"#DOTA_Item_Default_Hud_Skin"
+			"baseitem"		"1"
+		}
+		"10137"
+		{
+			"name"		"Cruel Diretide"
+			"prefab"		"hud_skin"
+			"item_name"		"#DOTA_Item_Cruel_Diretide"
+			"visuals"
+			{
+				"asset_modifier0"
+				{
+					"type"		"hud_skin"
+					"asset"		"diretide"
+					"modifier"		"diretide"
+				}
 			}
 		}
 	}

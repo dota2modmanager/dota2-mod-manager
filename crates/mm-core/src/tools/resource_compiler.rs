@@ -251,9 +251,7 @@ impl ResourceCompiler {
         run: RunProcess,
         log: &mut dyn FnMut(String),
     ) -> Result<(PathBuf, PathBuf, Option<PathBuf>), String> {
-        let (exe, install, _) = self.locate(keeper, log).ok_or_else(|| {
-            t("Нужны Dota 2 Workshop Tools, бесплатное дополнение в Steam. Открой свойства Dota 2, вкладку «Доп. контент», отметь Dota 2 Workshop Tools и дождись загрузки", &[])
-        })?;
+        let (exe, install, _) = self.locate(keeper, log).ok_or_else(need_workshop_tools)?;
         if !self.needs_wine {
             return Ok((exe, install, None));
         }
@@ -427,4 +425,9 @@ impl ResourceCompiler {
         log(format!("resourcecompiler: check {how} in {} s", crate::js::to_fixed(seconds, 1)));
         Value::Object(result)
     }
+}
+
+/// What the player is told when Valve's compiler is not there, wherever a build needs it.
+pub fn need_workshop_tools() -> String {
+    t("Нужны Dota 2 Workshop Tools, бесплатное дополнение в Steam. Открой свойства Dota 2, вкладку «Доп. контент», отметь Dota 2 Workshop Tools и дождись загрузки", &[])
 }

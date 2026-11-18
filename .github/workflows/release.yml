@@ -193,7 +193,8 @@ jobs:
   linux:
     needs: build
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
+    # the oldest runner, for the oldest glibc the bundled WebKitGTK asks for (linux.yml says why)
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: write
@@ -237,6 +238,8 @@ jobs:
         run: |
           set -euo pipefail
           npx tauri build --bundles appimage --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          (cd "$RUNNER_TEMP" && "$GITHUB_WORKSPACE"/target/release/bundle/appimage/*.AppImage --appimage-extract > /dev/null)
+          node tools/release/glibc-floor.mjs "$RUNNER_TEMP/squashfs-root" 2.39
           node tools/release/tauri-release.mjs linux dist "${TAG#v}"
           cat dist/latest-linux.yml
           gh release upload "$TAG" --repo "$REPO" --clobber \

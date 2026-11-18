@@ -109,7 +109,14 @@ impl Shell {
         if self.login_allowed {
             use tauri_plugin_autostart::ManagerExt;
             let auto = app.autolaunch();
-            let r = if mm_core::tray::in_background(&s) { auto.enable() } else { auto.disable() };
+            let r = if !mm_core::tray::in_background(&s) {
+                auto.disable()
+            } else if mm_core::tray::switched_off_in_windows(startup_approved().as_deref()) {
+                // the person turned it off in Task Manager: their word stands over the setting
+                Ok(())
+            } else {
+                auto.enable()
+            };
             if let Err(e) = r {
                 eprintln!("[mm-shell] login item not set: {e}");
             }
@@ -279,6 +286,35 @@ fn leave_for_browser(app: &AppHandle, url: &tauri::Url) {
         use tauri_plugin_opener::OpenerExt;
         let _ = app.opener().open_url(url.as_str(), None::<&str>);
     }
+}
+
+/// The login item's `StartupApproved\Run` value, where Task Manager records it switched on or off.
+#[cfg(windows)]
+fn startup_approved() -> Option<Vec<u8>> {
+    use windows_sys::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_BINARY};
+    let wide = |s: &str| s.encode_utf16().chain(Some(0)).collect::<Vec<u16>>();
+    let key = wide(r"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run");
+    let name = wide(mm_core::tray::LOGIN_ITEM_NAME);
+    let mut buf = [0u8; 64];
+    let mut len = buf.len() as u32;
+    // SAFETY: both strings end in a nul, buf is as long as len says
+    let r = unsafe {
+        RegGetValueW(
+            HKEY_CURRENT_USER,
+            key.as_ptr(),
+            name.as_ptr(),
+            RRF_RT_REG_BINARY,
+            std::ptr::null_mut(),
+            buf.as_mut_ptr().cast(),
+            &mut len,
+        )
+    };
+    (r == 0).then(|| buf[..len as usize].to_vec())
+}
+
+#[cfg(not(windows))]
+fn startup_approved() -> Option<Vec<u8>> {
+    None
 }
 
 #[cfg(test)]

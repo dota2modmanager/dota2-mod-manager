@@ -27,7 +27,10 @@ permissions:
 jobs:
   build:
     name: Build the AppImage
-    runs-on: ubuntu-latest
+    # Not ubuntu-latest: the AppImage carries the build machine's WebKitGTK, which asks for that
+    # machine's glibc. Built on Ubuntu 26.04, 4.0.0 needed glibc 2.43 and did not start on Linux
+    # Mint 22 or Ubuntu 24.04. The oldest runner is the widest reach.
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -55,7 +58,7 @@ jobs:
       # its own release build, saved on main for the next merge
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          shared-key: release
+          shared-key: release-ubuntu-24.04
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build
         run: npx tauri build --bundles appimage
@@ -70,6 +73,9 @@ jobs:
           chmod +x "$img"
           "$img" --appimage-extract > /dev/null
           ls squashfs-root
+
+      - name: The AppImage starts on glibc 2.39 (Ubuntu 24.04, Linux Mint 22)
+        run: node tools/release/glibc-floor.mjs squashfs-root 2.39
 
       # The .desktop file inside the AppImage is what an AppImage integrator reads, and it has to
       # name the preset file type (tauri.conf.json fileAssociations).

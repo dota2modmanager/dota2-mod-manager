@@ -71,6 +71,26 @@ fn names_in(dir: &std::path::Path) -> Vec<String> {
     crate::js::dir_names(dir)
 }
 
+/// The message for a full load order; `foreign` are the slots held by files the library does not know.
+pub fn no_free_slot_message(foreign: &[u32]) -> String {
+    let mut msg = t("Свободных слотов pakNN не осталось (30-99 заняты)", &[]);
+    if !foreign.is_empty() {
+        let list: Vec<String> = foreign.iter().take(8).map(|n| format!("pak{n:02}")).collect();
+        let more = if foreign.len() > 8 { ", ..." } else { "" };
+        msg.push_str(". ");
+        msg.push_str(&t(
+            "{0} из них заняли файлы, которых нет в «Моих модах» ({1}{2}): моды, поставленные руками или другой программой",
+            &[Value::from(foreign.len()), Value::from(list.join(", ")), Value::from(more)],
+        ));
+    }
+    msg.push_str(". ");
+    msg.push_str(&t(
+        "Освободить слоты можно и так: выдели несколько модов в «Моих модах» и нажми «Объединить в пак»",
+        &[],
+    ));
+    msg
+}
+
 impl Installer {
     /// Every slot name the folder holds, whatever state its file is in.
     pub fn used_pak_names(&self) -> Result<HashSet<String>, String> {
@@ -84,9 +104,26 @@ impl Installer {
             .then(|| free_slot_in(Zone::Priority, used))
             .flatten()
             .or_else(|| free_slot_in(Zone::Normal, used))
-            .ok_or_else(|| t("Свободных слотов pakNN не осталось (30-99 заняты)", &[]))?;
+            .ok_or_else(|| self.no_free_slot(used))?;
         used.insert(name.clone());
         Ok(name)
+    }
+
+    /// Why a mod found no slot, and the way out: five people hit the bare "30-99 are taken" after
+    /// 4.0 with no idea that leftovers of other tools held part of them or that mods can share one.
+    fn no_free_slot(&self, used: &HashSet<String>) -> String {
+        let lib = crate::library::Library::new(&self.user_data);
+        let ours: HashSet<String> =
+            lib.list().iter().filter_map(|r| self.slot_base(r)).map(|b| format!("{b}_dir.vpk")).collect();
+        // the app's own pack and the slots kept for Minify are never handed out, so they are not counted
+        let foreign: Vec<u32> = (crate::slot_zones::NORMAL_FIRST..=99)
+            .filter(|n| !RESERVED_PAKS.contains(n) && *n != APP_PAK)
+            .filter(|n| {
+                let name = format!("{}_dir.vpk", crate::slot_zones::pak_base(*n));
+                used.contains(&name) && !ours.contains(&name)
+            })
+            .collect();
+        no_free_slot_message(&foreign)
     }
 
     /// Map the .vpk files of an archive onto slots of ours, one slot per volume set.
@@ -341,5 +378,37 @@ impl Installer {
             library.save(None).map_err(|e| e.to_string())?;
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_full_load_order_names_the_slots_held_by_strangers_and_the_way_out() {
+        let root = std::env::temp_dir().join(format!("mm-slots-{}", uuid::Uuid::new_v4().simple()));
+        let lang = root.join("game").join("dota_russian");
+        std::fs::create_dir_all(&lang).unwrap();
+        let ud = root.join("ud");
+        std::fs::create_dir_all(&ud).unwrap();
+        for n in crate::slot_zones::NORMAL_FIRST..=99 {
+            std::fs::write(lang.join(format!("{}_dir.vpk", crate::slot_zones::pak_base(n))), b"").unwrap();
+        }
+        // every slot but two belongs to a mod in the library
+        let installed: Vec<Value> = (crate::slot_zones::NORMAL_FIRST..=97)
+            .map(|n| {
+                serde_json::json!({ "id": format!("m{n}"),
+                    "files": [{ "root": "lang", "relPath": format!("{}_dir.vpk", crate::slot_zones::pak_base(n)) }] })
+            })
+            .collect();
+        std::fs::write(ud.join("manifest.json"), serde_json::json!({ "installed": installed }).to_string()).unwrap();
+        let mut inst = Installer::new(Some(root.join("game")), "russian");
+        inst.user_data = ud;
+        let err = inst.allocate_pak(&mut inst.used_pak_names().unwrap(), false).unwrap_err();
+        let _ = std::fs::remove_dir_all(&root);
+        assert!(err.contains("pak98, pak99"), "{err}");
+        assert!(err.starts_with("No free pakNN slots left"), "{err}");
+        assert!(err.contains("Combine into pack"), "{err}");
     }
 }

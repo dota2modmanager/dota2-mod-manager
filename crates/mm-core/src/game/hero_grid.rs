@@ -21,6 +21,9 @@ use crate::net_fetch::Net;
 
 /// Where the numbers come from.
 pub const HERO_STATS_API: &str = "https://api.opendota.com/api/heroStats";
+/// The site's daily copy of the same list (site/tools/mirror.mjs): OpenDota's host does not open
+/// for a good part of the players in Russia, and the grid button then had nothing to build from.
+pub const HERO_STATS_COPY: &str = "https://dota2modmanager.com/mirror/hero-stats.json";
 /// How the app's grids are told apart from the user's in the same file.
 pub const GRID_PREFIX: &str = "D2MM · ";
 /// The grids the app can make.
@@ -277,6 +280,8 @@ pub struct HeroGrids {
     pub account_dir: Box<dyn Fn() -> Option<PathBuf> + Send + Sync>,
     pub net: Arc<Net>,
     pub api: String,
+    /// asked when `api` does not answer
+    pub copy: Option<String>,
     pub now: Box<dyn Fn() -> f64 + Send + Sync>,
 }
 
@@ -292,7 +297,15 @@ impl HeroGrids {
     }
 
     fn fetch(&self) -> Result<Vec<Value>, String> {
-        let (status, body) = self.net.direct("GET", &self.api, &[], None, 15000).map_err(|e| e.message.clone())?;
+        let first = self.fetch_from(&self.api);
+        match (&first, &self.copy) {
+            (Err(why), Some(copy)) => self.fetch_from(copy).map_err(|_| why.clone()),
+            _ => first,
+        }
+    }
+
+    fn fetch_from(&self, url: &str) -> Result<Vec<Value>, String> {
+        let (status, body) = self.net.direct("GET", url, &[], None, 15000).map_err(|e| e.message.clone())?;
         if !(200..300).contains(&status) {
             return Err(format!("HTTP {status}"));
         }
@@ -384,5 +397,54 @@ mod tests {
         let out = merge_grids(Some(mine), vec![json!({"config_name": "D2MM · new", "categories": []})]).unwrap();
         assert_eq!(grids_in(Some(&out)), vec!["D2MM · new".to_string()]);
         assert!(out.contains("\"Mine\""));
+    }
+
+    /// Serves one GET with `body` on 127.0.0.1.
+    fn serve_once(body: String) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}/hero-stats.json", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            let (mut sock, _) = listener.accept().unwrap();
+            let mut buf = [0u8; 8192];
+            let _ = sock.read(&mut buf);
+            let head = format!(
+                "HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: {}
+Connection: close
+
+",
+                body.len()
+            );
+            sock.write_all(head.as_bytes()).unwrap();
+            sock.write_all(body.as_bytes()).unwrap();
+        });
+        url
+    }
+
+    #[test]
+    fn an_unreachable_opendota_falls_back_to_the_sites_copy() {
+        let heroes: Vec<Value> =
+            (1..=120).map(|id| json!({ "id": id, "primary_attr": "str", "pub_pick": 10, "pub_win": 5 })).collect();
+        let copy = serve_once(Value::Array(heroes).to_string());
+        // nothing listens on the port a closed listener left
+        let dead = {
+            let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            format!("http://{}/api/heroStats", l.local_addr().unwrap())
+        };
+        let dir = std::env::temp_dir().join(format!("mm-hero-grid-{}", uuid::Uuid::new_v4().simple()));
+        let grids = HeroGrids {
+            data_dir: dir.clone(),
+            account_dir: Box::new(|| None),
+            net: Arc::new(Net::new(|| 0.0)),
+            api: dead,
+            copy: Some(copy),
+            now: Box::new(|| 1.0),
+        };
+        let got = grids.fresh_stats();
+        let _ = std::fs::remove_dir_all(&dir);
+        let (_, stats) = got.unwrap();
+        assert_eq!(stats.as_array().map(Vec::len), Some(120));
     }
 }
