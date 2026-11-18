@@ -584,8 +584,12 @@ jobs:
         run: |
           $p = Start-Process -FilePath .\previous.exe -ArgumentList '/S' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "the last release's installer exited with $($p.ExitCode)" }
-          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs" -Recurse -Filter 'Dota 2 Mod Manager.exe' | Select-Object -First 1
-          if (-not $exe) { throw 'the last release installed no Dota 2 Mod Manager.exe under LOCALAPPDATA\Programs' }
+          # Electron's installer put it under LOCALAPPDATA\Programs; a fresh Tauri install goes to
+          # LOCALAPPDATA\Dota 2 Mod Manager (src-tauri/windows/installer.nsi), and one that came
+          # over 3.8 stays where 3.8 was. 4.0.0 is the last release now, so both are looked in.
+          $roots = @("$env:LOCALAPPDATA\Dota 2 Mod Manager", "$env:LOCALAPPDATA\Programs") | Where-Object { Test-Path $_ }
+          $exe = $roots | ForEach-Object { Get-ChildItem $_ -Recurse -Filter 'Dota 2 Mod Manager.exe' } | Select-Object -First 1
+          if (-not $exe) { throw 'the last release installed no Dota 2 Mod Manager.exe under LOCALAPPDATA' }
           "APP=$($exe.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "installed: $($exe.FullName) $($exe.VersionInfo.ProductVersion)"
 
