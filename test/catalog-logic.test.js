@@ -215,7 +215,14 @@ test('the author list counts one author written two ways once, keeps accents apa
   ]);
   // Heroes holds ~840 mods by ~50 authors: building a collator per comparison took ~50 ms here
   const big = Array.from({ length: 2000 }, (_, i) => by(`author${i % 60}`, i % 3 ? `Author${i % 60}` : 'x'));
-  const t = performance.now();
   assert.equal(filters.collectAuthors(big).length, 61);
-  assert.ok(performance.now() - t < 40, `took ${Math.round(performance.now() - t)} ms`);
+  // the best of five: one run on a busy CI runner took 44 ms (2026-11-18), while the slow code
+  // this guards against is slow on every run
+  let best = Infinity;
+  for (let i = 0; i < 5; i++) {
+    const t = performance.now();
+    filters.collectAuthors(big);
+    best = Math.min(best, performance.now() - t);
+  }
+  assert.ok(best < 40, `took ${Math.round(best)} ms at best`);
 });
