@@ -2,7 +2,7 @@ name: Tauri handover
 
 # The way over from the Electron build to the Tauri one, rehearsed before a release relies on it.
 #
-# The last published Electron release is installed from its own page, given a mark in its userData,
+# The last published Electron release (3.x) is installed from its own page, given a mark in its userData,
 # then the Tauri installer built from this commit is run over it the way electron-updater runs an
 # update (`--updated /S --force-run`). The Tauri build has to land in the Electron build's folder
 # under the same exe name, take its place in Windows' list of programs, claim d2mm:// links, start
@@ -59,15 +59,19 @@ jobs:
           npx tauri build --bundles nsis
           cp target/release/bundle/nsis/*-setup.exe tauri-setup.exe
 
-      - name: Download the installer of the last release
+      # The last Electron release, not the last release: since 4.0.0 that is a Tauri build, which
+      # installs under LOCALAPPDATA\Dota 2 Mod Manager with no Electron uninstall entry, and every
+      # run from 2026-11-18 stopped at "the last release is not in ...\Programs\dota2-mod-manager".
+      # electron-builder put a .blockmap beside every installer it made; the Tauri build makes none.
+      - name: Download the installer of the last Electron release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          last=$(gh release list --repo "$REPO" --exclude-drafts --exclude-pre-releases --limit 1 --json tagName --jq '.[0].tagName')
-          [ -n "$last" ] || { echo "::error::no published release to hand over from"; exit 1; }
+          last=$(gh api "repos/$REPO/releases?per_page=100" --jq '[.[] | select((.draft or .prerelease) | not) | select(any(.assets[]; .name == "Dota-2-Mod-Manager-Setup.exe.blockmap"))][0].tag_name // empty')
+          [ -n "$last" ] || { echo "::error::no published Electron release to hand over from"; exit 1; }
           echo "handing over from $last"
           gh release download "$last" --repo "$REPO" --pattern Dota-2-Mod-Manager-Setup.exe --output previous.exe
 
