@@ -26,7 +26,7 @@ pub(crate) use app::{
     app_info, app_log, diagnostics, discord_auth, discord_presence, disk_space, folder_size, mod_doctor, notice_text,
     presence_status, settings, settings_view, support_prompt, ui_lang,
 };
-pub use app::{cli, i18n, main_window, portable_update, tray, updater, write_jail};
+pub use app::{cli, host_env, i18n, main_window, portable_update, tray, updater, write_jail};
 pub use arcana::arcana_base_store;
 pub use arcana::build_arcana;
 pub(crate) use arcana::{

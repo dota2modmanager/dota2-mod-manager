@@ -8,6 +8,7 @@ pub mod discord_auth;
 pub mod discord_presence;
 pub mod disk_space;
 pub mod folder_size;
+pub mod host_env;
 pub mod i18n;
 pub mod main_window;
 pub mod mod_doctor;

@@ -46,6 +46,9 @@ fn run_at(
     if let Some(dir) = cwd {
         cmd.current_dir(dir);
     }
+    // Wine and the system's tools, not the AppImage's libraries (host_env.rs); the caller's own
+    // variables still go on top
+    crate::host_env::apply(&mut cmd);
     for (k, v) in env {
         cmd.env(k, v);
     }

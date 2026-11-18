@@ -37,3 +37,5 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Securit
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = "6.2"
+# the opener plugin's launchers, run with the host's environment from the AppImage (src/host_open.rs)
+open = "5.4"

@@ -10,6 +10,7 @@
 mod backend;
 mod command_line;
 mod harness;
+mod host_open;
 mod icons;
 mod native;
 mod ported;

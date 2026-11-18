@@ -134,11 +134,11 @@ pub fn request(app: &AppHandle, method: &str, args: &[Value]) -> Result<Value, S
             {
                 return Err(format!("not a link the app opens: {url}"));
             }
-            app.opener().open_url(url, None::<&str>).map_err(|e| e.to_string())?;
+            crate::host_open::open(&url)?;
             Ok(Value::Null)
         }
         "shell.openPath" => {
-            app.opener().open_path(str_arg(args, 0), None::<&str>).map_err(|e| e.to_string())?;
+            crate::host_open::open(&str_arg(args, 0))?;
             Ok(Value::Null)
         }
         "shell.showItemInFolder" => {

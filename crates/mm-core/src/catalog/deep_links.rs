@@ -160,5 +160,7 @@ pub fn install_desktop_entry(
 
 /// update-desktop-database over the folder, ignored when the system has none.
 pub fn refresh_desktop_database(dir: &Path) {
-    let _ = std::process::Command::new("update-desktop-database").arg(dir).spawn();
+    let mut cmd = std::process::Command::new("update-desktop-database");
+    crate::host_env::apply(&mut cmd);
+    let _ = cmd.arg(dir).spawn();
 }
