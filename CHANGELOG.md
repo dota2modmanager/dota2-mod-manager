@@ -2,6 +2,45 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.2.0
+
+### Unusual effects on any item
+
+- In the item builder you can now give an unusual to any item, not only the ones the game lists for
+  it. A courier's effect (Ethereal Flame, Trail of Burning Doom, Touch of Frost and the rest) burns
+  over the whole hero, as on a courier. A seasonal one (Frostbloom and the like) spreads over the
+  item.
+- An item that goes into the hero's body keeps its own effects on its own points: a weapon's glow
+  stays on the weapon instead of jumping to the hero's point of the same name.
+- A body arcana in the base slot brings its own aura again, and its second style brings its
+  second-step material and aura.
+- An item asking for a material set its model does not have (the Dead Heat Coronet) keeps its
+  fire and the unusual in a match instead of losing both.
+
+### Faster
+
+- Switching tabs never waits: a screen shows at once as you left it and refreshes in place.
+  Opening Heroes in the catalog takes 17 ms instead of 73 ms.
+- Building the item table no longer holds up the window. Clicks during a build answer at once
+  instead of after up to 2.5 s.
+- The app reads a slot's effects only when that hero's window opens, so it loads about a quarter
+  less at start.
+- Item pictures the game stores uncompressed are read straight away, and pictures missing from
+  the game are no longer looked for on every screen.
+- Scrolling is smooth on machines that draw without a GPU.
+- The window starts with less code to compile: the 3D viewer, the QR code and the bloody night
+  theme load when they are first used.
+
+### Fixes
+
+- A build no longer stops with "the file is in use" (os error 32) while removing an empty item
+  table folder on a game installed on C:.
+- On Linux, Sign in and every link open in your own default browser. From the AppImage they
+  could open another one, for example Chromium instead of a Flatpak Brave, and Wine and the
+  tools the app downloads no longer load the AppImage's libraries.
+- Notices, the beta list and extra download mirrors reach the app again. Since 15 November it
+  rejected the file they come in.
+
 ## 4.1.0
 
 ### Send your mod to the catalog
