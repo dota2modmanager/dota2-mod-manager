@@ -93,9 +93,20 @@ fn vrf(c: &Core) -> Option<PathBuf> {
     crate::toolchain::Toolchain::new(&c.user_data, None).path_of("vrf")
 }
 
+/// How long a ValveResourceFormat run may take. A model or a picture is seconds, but the whole
+/// map (a `.vwrld_c`, the decor window's 3D) is minutes on a slow disk: at one minute it never
+/// finished for somebody on an HDD, ten times running, and the window only said it failed.
+pub fn tool_timeout_ms(args: &[String]) -> u64 {
+    if args.iter().any(|a| a.ends_with(".vwrld_c")) {
+        10 * 60_000
+    } else {
+        60_000
+    }
+}
+
 /// A ValveResourceFormat run: the exit code 0 or the error.
 pub fn run_tool(exe: &str, args: &[String]) -> Result<(), String> {
-    match crate::run_process::run(exe, args, None, &[], 60_000)? {
+    match crate::run_process::run(exe, args, None, &[], tool_timeout_ms(args))? {
         (0, _) => Ok(()),
         (code, out) => Err(format!("{exe} exited {code}: {}", out.trim())),
     }
@@ -512,4 +523,17 @@ pub fn build_later(c: &mut Core, ids: &[String], log: &mut dyn FnMut(String)) ->
         crate::owner_packs::after_deploy_master(c);
     }
     any
+}
+
+#[cfg(test)]
+mod tool_timeout_tests {
+    use super::tool_timeout_ms;
+
+    #[test]
+    fn the_whole_map_is_given_ten_minutes_and_a_model_one() {
+        let map = crate::map_scene::export_args("dota.vpk", "world.glb");
+        assert_eq!(tool_timeout_ms(&map), 600_000);
+        let model: Vec<String> = ["-i", "pak01_dir.vpk", "-f", "models/heroes/axe/axe.vmdl_c", "-o", "x"].iter().map(|s| s.to_string()).collect();
+        assert_eq!(tool_timeout_ms(&model), 60_000);
+    }
 }

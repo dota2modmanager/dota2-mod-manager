@@ -69,7 +69,7 @@ function prepare(mat: THREE.Material): void {
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
 export async function mountMapView(host: HTMLElement, samples: Partial<Record<DecorGroup, DecorSample>>, map: string | null,
-  onProgress: (text: string | null) => void): Promise<MapView> {
+  onProgress: (text: string | null, failed?: boolean) => void): Promise<MapView> {
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // a map of five million triangles at twice the pixels is a slideshow: one and a half is enough
@@ -179,12 +179,12 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   void (async () => {
     const ready = await window.api.decor.scene(map ?? undefined).catch(() => null);
     if (disposed) return;
-    if (!ready?.ready) { onProgress(ready && !ready.tool ? L`Для 3D-карты нужны инструменты Source 2: их можно скачать в настройках` : L`Не удалось выгрузить карту`); return; }
+    if (!ready?.ready) { onProgress(ready && !ready.tool ? L`Для 3D-карты нужны инструменты Source 2: их можно скачать в настройках` : L`Не удалось выгрузить карту`, true); return; }
     onProgress(L`Загружаю карту`);
     const gltf = await loadGlb(map).catch(() => null);
     const world = gltf?.scene ?? null;
     if (disposed) return;
-    if (!world) { onProgress(L`Не удалось загрузить карту`); return; }
+    if (!world) { onProgress(L`Не удалось загрузить карту`, true); return; }
     const owner = new Map<string, DecorGroup>();
     for (const [g, s] of Object.entries(samples) as [DecorGroup, DecorSample][]) for (const m of s.materials ?? []) owner.set(m.toLowerCase(), g);
     const treeMeshes: THREE.Mesh[] = [];

@@ -3,6 +3,7 @@
 import { state } from '../core/store.ts';
 import { render } from '../core/router.ts';
 import { switchOffStaleTerrains } from '../core/terrain-age.ts';
+import { refreshInstalledIndex } from '../core/installed.ts';
 import { esc } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 
@@ -58,6 +59,13 @@ window.api.update.onUpdate((evt) => {
 window.api.patch.onRepair((st) => {
   // an update can change the map under a whole-map terrain (core/terrain-age.ts)
   if (st.state === 'done') switchOffStaleTerrains().then((off: unknown[]) => { if (off.length && state.view === 'library') render(); });
+  // a HUD the patch made unable to start the game was switched off (game_repair.rs): the cards
+  // and the list say so, and away from My mods a toast does, since Dota would not start with it
+  const off = st.touched?.off || [];
+  if (off.length) {
+    void refreshInstalledIndex().then(() => { if (state.view === 'library') render(); });
+    if (state.view !== 'library') toast(L`Dota обновилась. Выключено: ${off.join(', ')}. Этот мод возвращает прежний интерфейс игры, и с ним Dota не запускается`, 'warn', 12000);
+  }
   if (state.view === 'library') { render(); return; }
   // a button started it (Settings' "Repair the app"), and that button shows what came of it
   if (st.reason === 'manual') return;

@@ -208,6 +208,21 @@ impl UpdateImpact {
             .collect()
     }
 
+    /// Whether the game's own map (`maps/dota.vpk`, an archive beside pak01) is another file than
+    /// when this was last asked. The first time only takes note, and says no.
+    pub fn map_moved(&self) -> Result<bool, String> {
+        let Some(game) = &self.game else { return Ok(false) };
+        let Some(now) = file_sig(&game.join("dota").join("maps").join("dota.vpk")) else { return Ok(false) };
+        let mut s = self.load();
+        let was = s.get("map").and_then(Value::as_str).map(str::to_string);
+        if was.as_deref() == Some(now.as_str()) {
+            return Ok(false);
+        }
+        s.insert("map".into(), Value::String(now));
+        self.save(&s)?;
+        Ok(was.is_some())
+    }
+
     /// Take one mod's mark off; whether it was marked.
     pub fn clear(&self, id: &str) -> Result<bool, String> {
         let mut s = self.load();

@@ -395,5 +395,8 @@ const EN = {
   "В этом моде нет моделей, которые можно показать": "This mod has no models that can be shown",
   "Скачиваю мод и собираю модели…": "Downloading the mod and building its models…",
   "Модели мода": "The mod's models",
+  ". Мод {0} выключен: патч поменял интерфейс игры, а мод возвращает прежний, и с ним Dota не запускается. Включи его снова, когда автор обновит мод": ". {0} is off: the patch changed the game's interface, the mod brings back the old one, and Dota will not start with it. Turn it back on once its author updates it",
+  ". Моды {0} выключены: патч поменял интерфейс игры, а они возвращают прежний, и с ними Dota не запускается. Включи их снова, когда авторы обновят моды": ". {0} are off: the patch changed the game's interface, these mods bring back the old one, and Dota will not start with them. Turn them back on once their authors update them",
+  "Dota обновилась. Выключено: {0}. Этот мод возвращает прежний интерфейс игры, и с ним Dota не запускается": "Dota updated. Switched off: {0}. It brings back the game's old interface, and Dota will not start with it",
 };
 window.EN_MORE = EN;

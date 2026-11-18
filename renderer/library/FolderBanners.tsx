@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { plural } from '../ui/format.ts';
 import type { BannersModel, LibraryActions } from './model.ts';
 import { Banner, BannerButton } from './Banner.tsx';
+import type { RepairState } from './types.ts';
 
 type Minify = NonNullable<BannersModel['minify']>;
 
@@ -74,8 +75,24 @@ function LaunchLang({ lang, followed }: { lang: string; followed: boolean }) {
 
 /* The mods whose files the patch changed: they put the old versions back over the new ones, and
  * carry a "pre-patch" mark in the list. Three by name, the rest counted. */
-function touchedText(mods: string[] | undefined): string {
-  if (!mods || !mods.length) return '';
+function touchedText(touched: RepairState['touched']): string {
+  const off = touched?.off || [];
+  const mods = (touched?.mods || []).filter((n) => !off.includes(n));
+  return offText(off) + markedText(mods);
+}
+
+/* A HUD that brings back the game's old interface stops the patched Dota at start (7.42:
+ * "Unable to load layout file hud_reborn.xml"), so the repair switched it off. */
+function offText(off: string[]): string {
+  if (!off.length) return '';
+  const names = off.map((n) => `«${n}»`).join(', ');
+  return off.length === 1
+    ? L`. Мод ${names} выключен: патч поменял интерфейс игры, а мод возвращает прежний, и с ним Dota не запускается. Включи его снова, когда автор обновит мод`
+    : L`. Моды ${names} выключены: патч поменял интерфейс игры, а они возвращают прежний, и с ними Dota не запускается. Включи их снова, когда авторы обновят моды`;
+}
+
+function markedText(mods: string[]): string {
+  if (!mods.length) return '';
   const shown = mods.slice(0, 3).map((n) => `«${n}»`).join(', ');
   const names = mods.length > 3 ? `${shown} ${L`и ещё ${mods.length - 3}`}` : shown;
   return mods.length === 1
@@ -118,7 +135,7 @@ function Repair({ b, actions }: { b: BannersModel; actions: LibraryActions }) {
     const what = (r.healed || []).length ? L`, моды и настройки вернули на место` : L`, менять ничего не пришлось`;
     return (
       <Banner kind="info" icon="update" action={<BannerButton id="repairSeenBtn" label={L`Понятно`} ghost onClick={() => actions.banner('repairSeen')} />}>
-        <b>{L`Dota обновилась`}</b>{`${what}${touchedText(r.touched?.mods) || L`. Можно играть.`}`}
+        <b>{L`Dota обновилась`}</b>{`${what}${touchedText(r.touched) || L`. Можно играть.`}`}
         {/* the patch came while the app was closed (src/game-repair.ts): a launch from Steam in
             between ran on the old table, which is the error people bring to Discord */}
         {r.whileClosed && ` ${L`Обновление пришло, пока приложение было закрыто. Если Dota с тех пор запускалась из Steam с ошибкой, причина в этом, и теперь всё исправлено. После обновлений Доты открывай приложение до игры или запускай её кнопкой «Играть» здесь.`}`}

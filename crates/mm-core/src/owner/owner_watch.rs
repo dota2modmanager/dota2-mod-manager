@@ -274,6 +274,103 @@ mod tests {
         let _ = std::fs::remove_dir_all(ud);
     }
 
+    /// 7.42 (2026-11-18): a catalog HUD that put back the old layout stopped Dota at start with
+    /// "Unable to load layout file hud/hud_reborn.xml", and people had to find the mod by hand. Now
+    /// a patch that changes a layout a mod replaces switches that mod off and says so, while a mod
+    /// whose pictures the patch changed stays on with its mark.
+    #[test]
+    fn a_patch_that_changes_a_layout_a_mod_replaces_switches_the_mod_off() {
+        let ud = std::env::temp_dir().join(format!("mm-owner-hudoff-{}", uuid::Uuid::new_v4().simple()));
+        let game = ud.join("game");
+        let dota = game.join("dota");
+        std::fs::create_dir_all(&dota).unwrap();
+        let gameinfo = "\"GameInfo\"\n{\n\tFileSystem\n\t{\n\t\tSearchPaths\n\t\t{\n\t\t\tGame\t\tdota\n\t\t\tMod\t\tdota\n\t\t}\n\t}\n}\n";
+        std::fs::write(dota.join("gameinfo.gi"), gameinfo).unwrap();
+        std::fs::write(
+            dota.join("gameinfo_branchspecific.gi"),
+            "\"GameInfo\"\r\n{\r\n\tFileSystem\r\n\t{\r\n\t\tSteamAppId\t\t570\r\n\t}\r\n}\r\n",
+        )
+        .unwrap();
+        const LAYOUT: &str = "panorama/layout/hud/hud_reborn.vxml_c";
+        const PICTURE: &str = "panorama/images/hud/reborn/minimap_bg_psd.vtex_c";
+        let pak = |layout: &[u8]| {
+            let table: crate::vpk::Bytes = b"\"items_game\"\n{\n}\n".to_vec().into();
+            crate::vpk::build(&[
+                crate::vpk::entry_at(crate::schema::SCHEMA_REL, table),
+                crate::vpk::entry_at(LAYOUT, layout.to_vec().into()),
+                crate::vpk::entry_at(PICTURE, layout.to_vec().into()),
+            ])
+        };
+        std::fs::write(dota.join("pak01_dir.vpk"), pak(b"before")).unwrap();
+        let settings =
+            json!({ "dotaGamePath": game.to_string_lossy(), "gameStamp": crate::patch_watch::game_stamp(Some(&game)) });
+        std::fs::write(ud.join("settings.json"), settings.to_string()).unwrap();
+        let told = Arc::new(Told::default());
+        let o = Owner::start(
+            Options {
+                user_data: ud.clone(),
+                app_version: "9.9.9".into(),
+                app_root: ud.clone(),
+                downloads: ud.clone(),
+                uninstall: false,
+                system_languages: None,
+                find_game: Box::new(|| None),
+                dota_running: Box::new(|| false),
+                now,
+            },
+            told.clone(),
+        );
+        // two catalog mods: a HUD over the layout, and a minimap picture
+        let (hud, picture) = {
+            let mut c = o.core();
+            let folder = c.installer.lang_folder().unwrap();
+            std::fs::create_dir_all(&folder).unwrap();
+            let mut ids = Vec::new();
+            for (pak_name, name, path) in [("pak61_dir.vpk", "Old HUD", LAYOUT), ("pak62_dir.vpk", "Old minimap", PICTURE)] {
+                std::fs::write(folder.join(pak_name), crate::vpk::build(&[crate::vpk::entry_at(path, b"old".to_vec().into())]))
+                    .unwrap();
+                let rec = json!({ "name": name, "files": [{ "root": "lang", "relPath": pak_name }] });
+                ids.push(crate::js::string(&c.library.add(&rec, None).unwrap()["id"]));
+            }
+            // and a map of one's own, which lives beside pak01 as the game's does
+            std::fs::create_dir_all(folder.join("maps")).unwrap();
+            std::fs::write(folder.join("maps").join("dota.vpk"), b"my map").unwrap();
+            let rec = json!({ "name": "My map", "files": [{ "root": "lang", "relPath": "maps/dota.vpk" }] });
+            let made = c.library.add(&rec, None).unwrap();
+            c.library.update(&made["id"], &json!({ "generated": { "map": ["ground:emerald"] } }), None).unwrap();
+            (ids[0].clone(), ids[1].clone())
+        };
+        std::fs::create_dir_all(dota.join("maps")).unwrap();
+        std::fs::write(dota.join("maps").join("dota.vpk"), b"the map before").unwrap();
+        // the first look takes note of the game as it is
+        crate::owner_game::repair_after_patch(&o, json!("manual"));
+        o.take_log();
+        told.0.lock().unwrap().clear();
+        // the update changes both files, and the map
+        std::fs::write(dota.join("pak01_dir.vpk"), pak(b"after the patch")).unwrap();
+        std::fs::write(dota.join("maps").join("dota.vpk"), b"the map after the patch").unwrap();
+        crate::owner_game::repair_after_patch(&o, json!("manual"));
+        let log = o.take_log();
+        let sent: Vec<Value> =
+            told.0.lock().unwrap().iter().filter(|(ch, _)| ch == "patch-repair").map(|(_, v)| v.clone()).collect();
+        assert_eq!(sent.len(), 1, "{sent:?} {log:?}");
+        assert_eq!(sent[0]["touched"]["off"], json!(["Old HUD"]), "{sent:?} {log:?}");
+        assert!(log.iter().any(|l| l.contains("the game's map changed") && l.contains("built again on it")), "{log:?}");
+        {
+            let c = o.core();
+            let on = |id: &str| {
+                c.library.list().iter().find(|r| crate::js::string(&r["id"]) == id).map(|r| r["enabled"].clone())
+            };
+            assert_eq!(on(&hud), Some(json!(false)), "the HUD is off");
+            assert_ne!(on(&picture), Some(json!(false)), "the picture stays on");
+            let folder = c.installer.lang_folder().unwrap();
+            assert!(!folder.join("pak61_dir.vpk").is_file(), "the HUD's pak left the game's folder");
+            assert!(folder.join("pak62_dir.vpk").is_file(), "the picture's pak is still there");
+        }
+        drop(o);
+        let _ = std::fs::remove_dir_all(ud);
+    }
+
     /// A Dota update that reaches a mod the app built out of the game's files: the mod is built
     /// again rather than reported, and keeps no mark. Without the rebuild handed to the repair it
     /// stayed marked and named in the banner, and nothing built it again.

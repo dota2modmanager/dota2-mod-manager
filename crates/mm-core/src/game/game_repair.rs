@@ -133,15 +133,38 @@ impl GameRepair {
     ) -> Option<Value> {
         let impact = impact?;
         let mods = impact_mods(ctx.lib.list(), &|r| ctx.inst.lang_file_on_disk(r).unwrap_or_default());
+        // the map is an archive of its own beside pak01, so a patch that moves it shows in no CRC
+        // of the note: "Своя карта" stayed the map from before 7.42 until it was built again by hand
+        let map_owners: Vec<String> = match impact.note.map_moved() {
+            Ok(true) => ctx
+                .lib
+                .list()
+                .iter()
+                .filter(|r| crate::js::truthy(&r["generated"]["map"]))
+                .map(|r| crate::js::string(&r["id"]))
+                .collect(),
+            Ok(false) => vec![],
+            Err(e) => {
+                diag(format!("update impact: map check skipped: {e}"));
+                vec![]
+            }
+        };
         let reached = match impact.note.check(&mods, impact.build.clone(), &mut *diag) {
             Ok(v) if !v.is_null() => v,
+            Ok(_) if !map_owners.is_empty() => json!({ "to": impact.build.clone(), "ids": [] }),
             Ok(_) => return None,
             Err(e) => {
                 diag(format!("update impact skipped: {e}"));
                 return None;
             }
         };
-        let ids: Vec<String> = reached["ids"].as_array().into_iter().flatten().map(crate::js::string).collect();
+        let mut ids: Vec<String> = reached["ids"].as_array().into_iter().flatten().map(crate::js::string).collect();
+        for id in map_owners {
+            if !ids.contains(&id) {
+                diag(format!("update impact: the game's map changed, {id} is built again on it"));
+                ids.push(id);
+            }
+        }
         let rebuilt: Vec<String> = match rebuild {
             Some(f) => f(ctx.inst, ctx.lib, &ids),
             None => vec![],
@@ -164,14 +187,58 @@ impl GameRepair {
                 (r.get("id").map(crate::js::string).unwrap_or_default(), r.get("name").cloned().unwrap_or(Value::Null))
             })
             .collect();
-        let mods: Vec<Value> = ids
-            .iter()
-            .map(|id| match names.get(id.as_str()) {
-                Some(n) if crate::js::truthy(n) => n.clone(),
-                _ => json!(id),
-            })
-            .collect();
-        Some(json!({ "build": reached.get("to").cloned().unwrap_or(Value::Null), "mods": mods }))
+        let name_of = |id: &str| match names.get(id) {
+            Some(n) if crate::js::truthy(n) => n.clone(),
+            _ => json!(id),
+        };
+        let mods: Vec<Value> = ids.iter().map(|id| name_of(id)).collect();
+        let off: Vec<Value> = self.switch_off_crashing(ctx, impact, &mods_of(&ids), diag).iter().map(|id| name_of(id)).collect();
+        let mut out = json!({ "build": reached.get("to").cloned().unwrap_or(Value::Null), "mods": mods });
+        if !off.is_empty() {
+            out["off"] = json!(off);
+        }
+        Some(out)
+    }
+
+    /// Switch off the mods whose old interface files would stop Dota from starting, and say which.
+    ///
+    /// A mod that puts back an older copy of Panorama's layout or scripts (a HUD) leaves the
+    /// patched game unable to load its interface: on 7.42 (2026-11-18) Dota stopped at start with
+    /// "Unable to load layout file hud/hud_reborn.xml" for everyone with such a HUD on, and the
+    /// way out was to find and remove the mod by hand. Pictures, sounds and styles from before a
+    /// patch only look old, so those mods stay on with their mark.
+    fn switch_off_crashing(&self, ctx: &mut Ctx, impact: &Impact, ids: &[String], diag: &mut dyn FnMut(String)) -> Vec<String> {
+        let mods = impact_mods(ctx.lib.list(), &|r| ctx.inst.lang_file_on_disk(r).unwrap_or_default());
+        let marks = impact.note.marked(&mods);
+        let mut off = Vec::new();
+        for id in ids {
+            let Some(mark) = marks.get(id) else { continue };
+            if !breaks_start(mark) {
+                continue;
+            }
+            // the note keeps ids as text, and a record's id can be a number
+            let Some(rec) = ctx.lib.list().iter().find(|r| r.get("id").map(crate::js::string).as_deref() == Some(id)).cloned()
+            else {
+                continue;
+            };
+            let rec_id = rec.get("id").cloned().unwrap_or(Value::Null);
+            if rec.get("enabled") == Some(&Value::Bool(false)) {
+                continue;
+            }
+            let files = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null));
+            let done = crate::file_tx::FileTx::run(ctx.inst.journal_dir.as_deref(), ctx.inst.tx_log(), |tx| {
+                ctx.inst.set_enabled(&files, false, Some(id))?;
+                ctx.lib.set_enabled(&rec_id, false, Some(tx)).map_err(|e| e.to_string()).map(|_| ())
+            });
+            match done {
+                Ok(()) => off.push(id.clone()),
+                Err(e) => diag(format!("update impact: could not switch off {id}: {e}")),
+            }
+        }
+        if !off.is_empty() {
+            diag(format!("update impact: switched off {} mod(s) with pre-patch interface files", off.len()));
+        }
+        off
     }
 
     /// Repair after a patch, or say to wait: for Dota to close (`running`), or for Steam's file
@@ -281,4 +348,19 @@ impl GameRepair {
         }
         wants
     }
+}
+
+fn mods_of(ids: &[&String]) -> Vec<String> {
+    ids.iter().map(|s| (*s).clone()).collect()
+}
+
+/// Whether a mod's mark names a file of the game's interface code that the patch changed:
+/// Panorama's layouts (`.vxml_c`) and scripts (`.vjs_c`), which the game will not start without
+/// in a shape it expects. Its styles and images are left: an old one looks wrong, it does not stop
+/// the game.
+pub fn breaks_start(mark: &Value) -> bool {
+    mark.get("changed").and_then(Value::as_array).into_iter().flatten().filter_map(Value::as_str).any(|p| {
+        let p = p.to_ascii_lowercase();
+        p.starts_with("panorama/") && (p.ends_with(".vxml_c") || p.ends_with(".vjs_c"))
+    })
 }
