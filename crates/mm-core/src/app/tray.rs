@@ -26,6 +26,13 @@ pub fn in_background(settings: &Value) -> bool {
     settings.get("runInBackground") != Some(&Value::Bool(false))
 }
 
+/// Whether a person switched the login item off in Task Manager. Windows keeps that choice in
+/// `StartupApproved\Run` as a value whose first byte is odd (0x02 on, 0x03 off); enabling the item
+/// again on every start undid it, and the app came back at sign-in after each update.
+pub fn switched_off_in_windows(approved: Option<&[u8]>) -> bool {
+    approved.and_then(|b| b.first()).is_some_and(|b| b & 1 == 1)
+}
+
 /// Whether the app may put itself in front of the next sign-in: only an installed Windows build,
 /// never a portable copy (its folder is gone after it exits), a dev run or a jailed run.
 pub fn login_item_allowed(windows: bool, packaged: bool, portable: bool, jailed: bool) -> bool {
@@ -96,5 +103,16 @@ impl TrayKeeper {
             return Close::Close;
         }
         Close::Hide { hint: !crate::js::truthy(settings.get("trayHintSeen").unwrap_or(&Value::Null)) }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn a_login_item_switched_off_in_task_manager_stays_off() {
+        assert!(super::switched_off_in_windows(Some(&[3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
+        assert!(!super::switched_off_in_windows(Some(&[2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])));
+        assert!(!super::switched_off_in_windows(Some(&[])));
+        assert!(!super::switched_off_in_windows(None));
     }
 }
