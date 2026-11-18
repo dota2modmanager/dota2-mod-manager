@@ -212,7 +212,9 @@ export async function renderCosmeticCategory(slot: string, actions: ScreenAction
   const meta = cosmeticMeta(slot);
   const waiting = (note: string) => paint(() => showScreen(
     { kind: 'list', key: `cos:${slot}:note`, title: tr(meta.label), toolbar: null, note, mods: null, cosmetics: null }, actions));
-  await waiting(L`Читаем схему игры…`);
+  // said only while the schema is still being read: shown on every typed letter, the note took the
+  // slot's screen away and the search box lost its focus after one character
+  if (!state.cosmeticSlots) await waiting(L`Читаем схему игры…`);
   await firstCosmeticSlots();
   if (state.activeCategory !== COSMETIC_PREFIX + slot) return; // moved on while reading
 

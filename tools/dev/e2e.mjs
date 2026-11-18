@@ -251,6 +251,28 @@ export const EVAL_REMOVE = `
   confirm.querySelector('[data-c="yes"]').click();
   const gone = await until(() => (row() ? null : true), 30000);
   step('confirming removes it from My mods', gone, toasts());
+  // A slot of the game's looks has its own search. Each letter used to repaint the slot through a
+  // "reading the schema" note, which took the box away: a player could type one letter at a time.
+  document.querySelector('[data-view="items"]')?.click();
+  const slot = await until(() => document.querySelector('[data-cat="cosmetic:hud_skin"]'), 15000);
+  if (step('the Items screen lists the HUD slot', slot, 'no cosmetic:hud_skin in the rail')) {
+    slot.click();
+    const box = await until(() => document.getElementById('cosSearch'), 30000);
+    if (step('the HUD slot has its search box', box, 'no #cosSearch')) {
+      box.focus();
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      for (const ch of 'the') {
+        const now = document.getElementById('cosSearch');
+        setValue.call(now, now.value + ch);
+        now.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(400);
+      }
+      const after = document.getElementById('cosSearch');
+      step('typing in a slot search keeps the box and every letter',
+        after && after.value === 'the' && document.activeElement === after,
+        'value ' + JSON.stringify(after && after.value) + ', focus on ' + (document.activeElement && (document.activeElement.id || document.activeElement.tagName)));
+    }
+  }
   out.version = await window.api.update.version();
   return out;
 `;
