@@ -52,16 +52,24 @@ export function frame(points, { pad = 220, min = [640, 480], win = [1920, 1080] 
 }
 
 /**
- * The abilities to cast, from "q,w,r@enemy": a key each, and whether it is aimed at the enemy
- * hero. An aimed one is cast with the cursor already on the enemy, which works for quick cast as
- * much as for the click after the key; one with no target is cast where it stands.
+ * The abilities to cast, from "q,w,r@enemy,e@self": a key each, and where it is aimed. One aimed
+ * at the enemy hero is cast with the cursor already on the enemy, which works for quick cast as
+ * much as for the click after the key; @self the same on our own hero, for one that wants a point
+ * or a unit and is wanted where the hero stands (Nature's Prophet's Sprout, then Nature's Call on
+ * the trees it grew). One with no target is cast where it stands: an ability that waits for a
+ * click would go off only when the bench clicks its hero again, after the pictures.
+ * "q@self+e@self" casts the two one right after the other and films once after the last: the
+ * trees Sprout grows are gone before a step's pictures are done.
  */
 export function readSkills(spec) {
-  return String(spec).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean).map((s) => {
-    const [key, at] = s.split('@');
-    if (!/^[a-z]$/.test(key)) throw new Error(`bench: "${s}" is not a key`);
-    if (at && at !== 'enemy') throw new Error(`bench: "${s}": the only target is @enemy`);
-    return { key, enemy: at === 'enemy' };
+  return String(spec).split(',').map((s) => s.trim().toLowerCase()).filter(Boolean).map((step) => {
+    const casts = step.split('+').map((s) => {
+      const [key, at] = s.split('@');
+      if (!/^[a-z]$/.test(key)) throw new Error(`bench: "${s}" is not a key`);
+      if (at && at !== 'enemy' && at !== 'self') throw new Error(`bench: "${s}": the targets are @enemy and @self`);
+      return { key, enemy: at === 'enemy', self: at === 'self' };
+    });
+    return { ...casts[casts.length - 1], key: casts.map((c) => c.key).join(''), casts };
   });
 }
 
@@ -94,5 +102,7 @@ export const SCAN = { '`': 0x29, '\\': 0x2B, I: 0x17, F11: 0x57, F12: 0x58, INSE
 export const SKILLS = {
   terrorblade: 'e,w',
   necrolyte: 'q,w,d@enemy,f,r@enemy',
+  // Sprout around the hero, then Nature's Call on those trees: the treants come out of them
+  furion: 'q@self+e@self,w@self,r',
 };
 export const DEFAULT_SKILLS = 'q,w,e,d,f,r@enemy';
