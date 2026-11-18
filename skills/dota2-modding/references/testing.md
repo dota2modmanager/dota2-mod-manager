@@ -48,7 +48,7 @@ it closes Dota, copies the console log and removes the mod.
 | Option | For |
 |---|---|
 | `--short` | stop after the attack |
-| `--skills "q,w,r@enemy"` | which abilities, `@enemy` aims at the enemy hero |
+| `--skills "q,w,r@enemy,q@self+e@self"` | which abilities; `@enemy` aims at the enemy hero, `@self` at your own hero (for one that waits for a click, cast where the hero stands), and `+` casts the next right after, filmed once (Sprout, then Nature's Call on its trees) |
 | `--camera 700` | camera distance (closer than the game's 1134) |
 | `--idle-seconds 12` | film a long idle from the front in the inspect view (a gesture every few loops) |
 | `--spawn` | kill the hero and film the respawn |
