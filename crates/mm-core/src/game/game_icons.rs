@@ -27,6 +27,9 @@ pub struct GameIcons {
 /// it is stored in, with 86 rows of smear under it.
 const CACHE_KIND: u32 = 2;
 
+/// The list of pictures the game does not have, beside the cache.
+const ABSENT: &str = "absent.txt";
+
 /// A cached picture written whole or not at all (GameIcons::keep says why): to a name of its own,
 /// then renamed in. A rename that loses to a reader holding the file leaves the one there.
 pub(crate) fn write_whole(file: &Path, buf: &[u8]) -> bool {
@@ -66,6 +69,22 @@ impl GameIcons {
 
     fn cached_uri(&self, image_path: &str) -> Option<String> {
         std::fs::read(self.cache_file(image_path)).ok().map(|png| crate::vtex::data_url(&png))
+    }
+
+    /// The pictures the decoder found nothing for, in this build of the game: the file goes with
+    /// the cache when a new build drops it.
+    fn absent(&self) -> std::collections::HashSet<String> {
+        std::fs::read_to_string(self.root.join(ABSENT))
+            .map(|t| t.lines().map(String::from).collect())
+            .unwrap_or_default()
+    }
+
+    fn mark_absent(&self, image_path: &str) {
+        use std::io::Write;
+        let file = std::fs::OpenOptions::new().create(true).append(true).open(self.root.join(ABSENT));
+        if let Ok(mut f) = file {
+            let _ = writeln!(f, "{image_path}");
+        }
     }
 
     fn pak(game: &Path) -> PathBuf {
@@ -171,6 +190,11 @@ impl GameIcons {
         log: &mut dyn FnMut(String),
     ) -> Result<(), String> {
         let left = self.take_ready_made(game, paths, log);
+        // a picture the decoder found no file for once is not looked for again: 133 of the game's
+        // item pictures are not in its pak at all, and each screen showing one started the
+        // decoder anew, for seconds, to find nothing
+        let absent = self.absent();
+        let left: Vec<String> = left.into_iter().filter(|p| !absent.contains(p)).collect();
         let Some(exe) = vrf.filter(|_| !left.is_empty()) else { return Ok(()) };
         let tmp = std::env::temp_dir().join(format!("d2mm-icons-{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&tmp).map_err(|e| e.to_string())?;
@@ -193,8 +217,11 @@ impl GameIcons {
                     for part in format!("{p}_png.png").split('/') {
                         from.push(part);
                     }
-                    if let Ok(png) = std::fs::read(&from) {
-                        self.keep(p, &png);
+                    match std::fs::read(&from) {
+                        Ok(png) => {
+                            self.keep(p, &png);
+                        }
+                        Err(_) => self.mark_absent(p),
                     }
                 }
                 Ok(())
@@ -344,5 +371,21 @@ mod tests {
         let g = GameIcons::new(Path::new("nowhere"));
         assert!(g.ability_icons(None, None, &[serde_json::json!("x")], &mut |_| {}).is_empty());
         assert!(!GameIcons::ready(Some(Path::new("nowhere"))));
+    }
+
+    /// A picture the decoder once found nothing for is not looked for again: the decoder here
+    /// does not exist, so starting it would be an error.
+    #[test]
+    fn a_picture_the_game_has_not_got_does_not_start_the_decoder_again() {
+        let ud = std::env::temp_dir().join(format!("mm-icons-absent-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&ud);
+        let g = GameIcons::new(&ud);
+        std::fs::create_dir_all(&g.root).unwrap();
+        let (game, vrf) = (ud.join("game"), ud.join("no-such-decoder.exe"));
+        let gone = vec!["econ/items/x/gone".to_string()];
+        assert!(g.extract(&game, Some(&vrf), &gone, &mut |_| {}).is_err(), "not yet known: the decoder is asked");
+        g.mark_absent(&gone[0]);
+        assert!(g.extract(&game, Some(&vrf), &gone, &mut |_| {}).is_ok());
+        let _ = std::fs::remove_dir_all(&ud);
     }
 }
