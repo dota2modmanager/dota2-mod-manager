@@ -3,7 +3,7 @@
  * The bench: a mod tried in the real game, by the machine, with pictures to read afterwards.
  *
  *   npm run dota:bench -- --vpk <mod_dir.vpk> [--hero terrorblade] [--out <folder>] [--camera 900]
- *                          [--skills "q,w,r@enemy"] [--console-key "\\"] [--short] [--now]
+ *                          [--skills "q,w,r@enemy,e@self"] [--console-key "\\"] [--short] [--now]
  *                          [--idle-seconds 12] [--spawn] [--death] [--map small|full]
  *   npm run dota:bench -- --vpk towers_dir.vpk --towers     the demo's two towers, for tower looks
  *   npm run dota:bench -- --hero terrorblade                the game as it is, for comparison
@@ -523,24 +523,29 @@ async function main() {
       const recorder = sound ? spawn('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(HERE, 'dota-bench', 'record.ps1'), '-Out', heard, '-Seconds', '600', '-Stop', stop], { stdio: 'ignore' }) : null;
       const recorded = recorder ? new Promise((r) => recorder.on('exit', r)) : null;
       // every ability, cooldowns refreshed before each, the ones aimed at a hero on the enemy
-      for (const { key, enemy: aimed } of skills) {
+      for (const { key, casts } of skills) {
         const look = path.join(out, `07-before-${key}.png`);
         ps('shot.ps1', '-Out', look);
         bars = readBars(ps('bars.ps1', '-In', look));
         fs.rmSync(look, { force: true });
         heroBar = me(bars, heroBar) ?? heroBar;
-        const target = aimed ? (enemy && follow(bars, enemy, 'red', [dummy])) || follow(bars, dummy, 'red') : null;
-        if (aimed && enemy && target) enemy = target;
         if (!wtf) {
           click(AT.refresh);
           await sleep(600);
         }
-        if (target) input('hover', ...bodyOf(target, cam));
-        await sleep(200);
-        input('key', key);
-        await sleep(150);
-        if (target) click(bodyOf(target, cam));
-        else if (aimed) note(`${key}: no enemy on screen to aim at`);
+        let target = null;
+        for (const [n, c] of casts.entries()) {
+          target = c.enemy ? (enemy && follow(bars, enemy, 'red', [dummy])) || follow(bars, dummy, 'red') : c.self ? heroBar : null;
+          if (c.enemy && enemy && target) enemy = target;
+          if (target) input('hover', ...bodyOf(target, cam));
+          await sleep(200);
+          input('key', c.key);
+          await sleep(150);
+          if (target) click(bodyOf(target, cam));
+          else if (c.enemy) note(`${c.key}: no enemy on screen to aim at`);
+          // the next one of a "+" step waits for this cast to land, not for pictures
+          if (n < casts.length - 1) await sleep(700);
+        }
         const points = [bodyOf(heroBar, cam), ...(target ? [bodyOf(target, cam)] : [])];
         burst(`07-skill-${key}`, frame(points, { pad: 260, min: [900, 640] }), 12, 220, 0.45);
         shot(`07-skill-${key}-after`, bodyOf(heroBar, cam));
