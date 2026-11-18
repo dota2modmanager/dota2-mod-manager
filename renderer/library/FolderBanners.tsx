@@ -52,6 +52,14 @@ function minifyBody(m: Minify) {
  * language settings from it and mounts the folder it names. Worth saying even when it names our
  * folder, since it takes the choice of text language away and breaks the day either side changes. */
 function LaunchLang({ lang, followed }: { lang: string; followed: boolean }) {
+  // English has no folder of its own: the game falls back to its base files and never sees ours
+  if (lang.toLowerCase() === 'english' && !followed) {
+    return (
+      <Banner kind="warn" icon="warning">
+        <b>{L`В параметрах запуска Dota стоит -language english`}</b>{L`. У английского нет своей папки, с ним Дота не увидит моды. Убери параметр: английские текст и голоса останутся. Steam → Dota 2 → Свойства → Параметры запуска.`}
+      </Banner>
+    );
+  }
   return followed
     ? (
       <Banner kind="info" icon="info">
@@ -138,6 +146,11 @@ export function FolderBanners({ b, actions }: { b: BannersModel; actions: Librar
         </Banner>
       ))}
       {b.launchLang && <LaunchLang lang={b.launchLang.lang} followed={b.launchLang.followed} />}
+      {b.russianVoice && (
+        <Banner kind="info" icon="translate" action={<BannerButton id="russianVoiceSeenBtn" label={L`Понятно`} ghost onClick={() => actions.banner('russianVoiceSeen')} />}>
+          <b>{L`Голоса в игре будут русскими`}</b>{L`: у Dota скачана русская озвучка. Нужны английские - поставь в Steam английский язык игры: Dota 2 → Свойства → Язык. Моды останутся на месте.`}
+        </Banner>
+      )}
       {b.minify && (
         <Banner kind={b.minify.kind} icon={b.minify.kind === 'warn' ? 'warning' : 'handshake'}>{minifyBody(b.minify)}</Banner>
       )}

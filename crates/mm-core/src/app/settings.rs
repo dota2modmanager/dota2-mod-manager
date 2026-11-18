@@ -16,6 +16,7 @@ pub fn defaults() -> Map<String, Value> {
         "langFolderLock": null,
         "uiLang": "en",
         "langPromptSeen": false,
+        "russianVoiceSeen": false,
         "uiScale": 1,
         "theme": "ursa",
         "pumpkin": false,

@@ -721,6 +721,13 @@ const EN = {
   'В параметрах запуска Dota стоит -language {0}': 'Dota has -language {0} in its launch options',
   ', поэтому игра читает папку dota_{0} — туда приложение моды и ставит. Уберёшь параметр, и они переедут обратно сами.':
     ', so the game reads dota_{0} and that is where the app installs. Remove the option and they move back on their own.',
+  'В параметрах запуска Dota стоит -language english': "Dota's launch options have -language english",
+  '. У английского нет своей папки, с ним Дота не увидит моды. Убери параметр: английские текст и голоса останутся. Steam → Dota 2 → Свойства → Параметры запуска.':
+    '. English has no folder of its own, so with it Dota does not see the mods. Remove the option: the English text and voices stay. Steam → Dota 2 → Properties → Launch options.',
+  'Голоса в игре будут русскими': 'The voices in the game will be Russian',
+  ': у Dota скачана русская озвучка. Нужны английские - поставь в Steam английский язык игры: Dota 2 → Свойства → Язык. Моды останутся на месте.':
+    ': Dota has the Russian voice downloaded. For English voices, set the game language to English in Steam: Dota 2 → Properties → Language. The mods stay where they are.',
+  'В параметрах запуска стоит -language english, с ним Дота не видит моды': 'The launch options have -language english, and with it Dota does not see the mods',
   '. Такого языка у Доты нет, папку по нему она не смонтирует, а язык текста он всё равно заберёт. Убери его: Steam → Dota 2 → Свойства → Параметры запуска.':
     '. Dota has no such language, so it will mount no folder for it, and it takes the text language anyway. Remove it: Steam → Dota 2 → Properties → Launch options.',
   '. Пока он там, игра берёт язык из него и монтирует папку dota_{0}, что бы приложение ни настроило. Убери его: Steam → Dota 2 → Свойства → Параметры запуска.':

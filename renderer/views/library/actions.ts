@@ -1,6 +1,7 @@
 /* What My mods can ask for (library/model.ts, LibraryActions): the ticks, the search, the switches,
  * the bulk bar, the banners and the foreign files. What a single row's menu does is in
  * record-actions.ts. */
+import { state } from '../../core/store.ts';
 import { showInstallCheck } from './check.ts';
 import { banners } from './build.ts';
 import { allowItemTable } from '../../ui/game-files.ts';
@@ -172,6 +173,9 @@ async function banner(what: string, data?: string) {
     if (lib.repair.state === 'waiting') toast(L`Dota всё ещё запущена — закрой её полностью`, 'warn', 6000);
   } else if (what === 'repairSeen') {
     lib.repair = await window.api.patch.repairSeen();
+  } else if (what === 'russianVoiceSeen') {
+    // a player who chose Russian voices on purpose should not see the hint again
+    state.settings = await window.api.settings.set('russianVoiceSeen', true);
   } else if (what === 'moveFrom') {
     const r = await window.api.settings.moveLangFiles(data);
     if (r?.error) toast(r.error, 'error');

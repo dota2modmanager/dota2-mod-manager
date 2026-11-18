@@ -92,6 +92,10 @@ pub fn settings_view(v: ViewInput) -> Value {
             "launchLang": if lang.source == Some("launch") { json!(lang.audio) } else { Value::Null },
             "folder": v.lang_folder,
             "stranded": stranded,
+            // the text language the game has set, and whether Valve's voice is downloaded into our
+            // folder: an English player with Russian voice paks hears Russian (boot.vcfg names it)
+            "uiLanguage": lang.ui_language,
+            "voice": game.is_some_and(|g| gamelang::voice_installed(g, v.lang_folder)),
         }),
     );
     out.insert("langMigration".into(), v.migration);
