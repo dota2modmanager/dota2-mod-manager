@@ -80,6 +80,17 @@ pub fn safe_file_name(raw: &str, fallback: &str) -> String {
     }
 }
 
+/// The lock for one file of the download cache, shared by everyone asking for that file.
+fn one_at_a_time(dest: &std::path::Path) -> std::sync::Arc<std::sync::Mutex<()>> {
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex, OnceLock};
+    static LOCKS: OnceLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> = OnceLock::new();
+    let mut all = LOCKS.get_or_init(Default::default).lock().unwrap_or_else(|e| e.into_inner());
+    // the ones nobody holds any more go, so the map stays as small as the downloads under way
+    all.retain(|_, l| Arc::strong_count(l) > 1);
+    all.entry(dest.to_path_buf()).or_default().clone()
+}
+
 /// One archive in the download cache, as Settings lists it (issue #430).
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -151,6 +162,11 @@ impl Installer {
     ) -> Result<PathBuf, String> {
         let url = file_url(category_id, file_ref);
         let (dest, key, decoded) = self.download_target(category_id, file_ref);
+        // one download of a file at a time: the mod's window asks for its archive from the 3D
+        // stage twice and again on every reopening, and each request started the same file over
+        // into the same .part (2026-11-17). A second asker waits and takes the cached copy.
+        let one = one_at_a_time(&dest);
+        let _held = one.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(dir) = dest.parent() {
             fs::create_dir_all(dir).map_err(|e| e.to_string())?;
         }
@@ -294,4 +310,19 @@ pub fn folder_size(dir: &std::path::Path) -> u64 {
         }
     }
     bytes
+}
+
+#[cfg(test)]
+mod tests {
+    /// Two askers of one file share its lock while either holds it; another file is not held up.
+    #[test]
+    fn askers_of_one_file_wait_for_each_other() {
+        let a = std::path::Path::new("downloads/heroes/a.zip");
+        let first = super::one_at_a_time(a);
+        let held = first.lock().unwrap();
+        assert!(super::one_at_a_time(a).try_lock().is_err());
+        assert!(super::one_at_a_time(std::path::Path::new("downloads/heroes/b.zip")).try_lock().is_ok());
+        drop(held);
+        assert!(super::one_at_a_time(a).try_lock().is_ok());
+    }
 }
