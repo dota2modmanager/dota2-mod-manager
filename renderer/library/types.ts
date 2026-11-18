@@ -96,8 +96,9 @@ export interface RepairState {
   state: 'idle' | 'waiting' | 'failed' | 'done' | string;
   error?: string;
   healed?: unknown[];
-  /** the mods whose files the patch changed, by name */
-  touched?: { build: string | null; mods: string[] };
+  /** the mods whose files the patch changed, by name; `off`, those switched off because their old
+   * interface files would stop Dota from starting (src game_repair.rs switch_off_crashing) */
+  touched?: { build: string | null; mods: string[]; off?: string[] };
   /** the patch landed while the app was closed, and the game was put back only at start */
   whileClosed?: true;
   /** waiting on Steam's file check or an update rather than on Dota */

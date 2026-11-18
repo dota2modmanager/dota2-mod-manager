@@ -78,12 +78,13 @@ export interface DecorModalActions {
 function MapStage({ samples, groups, looks, ground, map, paint, weather, lights }: { samples: Partial<Record<DecorGroup, DecorSample>>; groups: DecorGroup[]; looks: MapLooks; ground: GroundLook; map: string | null; paint: TerrainPaint | null; weather: string | null; lights: Record<string, ZoneLight> | null }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<import('./map-view.ts').MapView | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  // a failure is not still working: it shows without the spinner
+  const [note, setNote] = useState<{ text: string; failed: boolean } | null>(null);
   useEffect(() => {
     let gone = false;
     void import('./map-view.ts').then(async ({ mountMapView }) => {
       if (gone || !host.current) return;
-      const v = await mountMapView(host.current, samples, map, (t) => { if (!gone) setNote(t); });
+      const v = await mountMapView(host.current, samples, map, (t, failed) => { if (!gone) setNote(t ? { text: t, failed: !!failed } : null); });
       if (gone) { v.dispose(); return; }
       view.current = v;
       v.show(new Set(groups), looks, ground);
@@ -99,7 +100,7 @@ function MapStage({ samples, groups, looks, ground, map, paint, weather, lights 
   useEffect(() => { view.current?.weather(weather, lights); }, [weather, lights]);
   return (
     <div className="opt-map" ref={host}>
-      {note && <div className="opt-map-note"><span className="ms">progress_activity</span>{note}</div>}
+      {note && <div className="opt-map-note"><span className="ms">{note.failed ? 'error' : 'progress_activity'}</span>{note.text}</div>}
       <span className="opt-map-hint">{L`Мышью: крутить, приближать, двигать (правая кнопка)`}</span>
     </div>
   );
