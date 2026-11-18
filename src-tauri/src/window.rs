@@ -229,8 +229,6 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
         login_allowed: o.login_allowed,
     });
     app.manage(shell.clone());
-    let opener = app.handle().clone();
-    let popups = app.handle().clone();
     let mut builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()));
     if let Some(dir) = &o.webview_data {
         builder = builder.data_directory(dir.clone());
@@ -250,12 +248,12 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
                 return true;
             }
             eprintln!("[mm-shell] blocked navigation to {}", url.as_str().chars().take(200).collect::<String>());
-            leave_for_browser(&opener, url);
+            leave_for_browser(url);
             false
         })
         .on_new_window(move |url, _| {
             eprintln!("[mm-shell] blocked window.open to {}", url.as_str().chars().take(200).collect::<String>());
-            leave_for_browser(&popups, &url);
+            leave_for_browser(&url);
             tauri::webview::NewWindowResponse::Deny
         })
         .center()
@@ -281,10 +279,9 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
     Ok(win)
 }
 
-fn leave_for_browser(app: &AppHandle, url: &tauri::Url) {
+fn leave_for_browser(url: &tauri::Url) {
     if matches!(url.scheme(), "http" | "https") {
-        use tauri_plugin_opener::OpenerExt;
-        let _ = app.opener().open_url(url.as_str(), None::<&str>);
+        let _ = crate::host_open::open(url.as_str());
     }
 }
 
