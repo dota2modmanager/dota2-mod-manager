@@ -220,6 +220,17 @@ pub struct ItemFiles {
     pub left: Vec<LeftBehind>,
 }
 
+/// Whether a pick wears its effects on the hero's body alone: it has no model of its own and so
+/// no stock path (a body arcana in the base slot, Bladeform Legacy, Demon Eater), and it is not a
+/// model the slot has no place for.
+fn on_body_alone(block: &[u8], own: Option<&str>, unplaced: bool) -> Result<bool, KvError> {
+    if own.is_some() || unplaced {
+        return Ok(false);
+    }
+    let fields = crate::schema::item_fields(block, 0)?;
+    Ok(fields.iter().find(|(k, _)| k == "model_player").is_none_or(|(_, v)| v.trim().is_empty()))
+}
+
 /// The compiled paths of the free mount models the hero wears (a rider's beast), lowercased: a
 /// courier's effect goes on them as on the body.
 fn stock_mounts(table: &[u8], hero: &str) -> Result<Vec<String>, KvError> {
@@ -296,6 +307,8 @@ pub fn item_files(
     // couriers' effects the person added, by hero: they go on the body (and its mount), as a
     // courier wears them, where dota-studio puts them too
     let mut hero_fx: IndexMap<String, Vec<String>> = IndexMap::new();
+    // the effects of a pick with no stock path (a body arcana), by hero: they go on the body alone
+    let mut body_fx: IndexMap<String, Vec<String>> = IndexMap::new();
     // the stock paths an item sewn into its body left with nothing to draw
     let mut emptied: HashSet<String> = HashSet::new();
     let mut table: Option<Vec<u8>> = None;
@@ -327,6 +340,21 @@ pub fn item_files(
         }
         // a courier's effect the person added goes on the hero's whole body, not on the item
         let added_all: HashSet<String> = patch.added.iter().flatten().map(|s| s.to_lowercase()).collect();
+        // and a pick with no stock path of its own (a body arcana in the hero's base slot) wears all
+        // of its effects there: by the table the game hangs them on the hero, and without a path
+        // they were left out ("without the table has not got its effect"), the arcana's aura lost
+        if !systems.is_empty() && on_body_alone(&patch.block, pick_own, patch.unplaced == Some(true)).map_err(e)? {
+            what.retain(|w| w != "its effect");
+            for hero in crate::item_builder_slots::item_heroes(&patch.block, 0).map_err(e)? {
+                let list = body_fx.entry(hero).or_default();
+                for s in &systems {
+                    if !list.contains(s) {
+                        list.push(s.clone());
+                    }
+                }
+            }
+            systems.clear();
+        }
         let courier: Vec<String> = systems
             .iter()
             .filter(|s| added_all.contains(&s.to_lowercase()) && crate::item_in_body::on_hero(s))
@@ -535,6 +563,18 @@ pub fn item_files(
             }
         }
     }
+    // a body arcana's own effects on the body
+    for (hero, systems) in &body_fx {
+        let at = body_path(read, hero)?;
+        let Some(model) = current(&entries, &at) else { continue };
+        let refs: Vec<&str> = systems.iter().map(String::as_str).collect();
+        match crate::model_particles::with_more_particles(&model, &refs) {
+            Some(m) => {
+                entries.insert(at.clone(), entry_at(&at, m.into()));
+            }
+            None => left.push(LeftBehind { source: hero.clone(), what: vec!["its effect".into()] }),
+        }
+    }
     for en in beneath {
         let p = en.path().to_lowercase();
         if !entries.contains_key(&p) {
@@ -547,6 +587,18 @@ pub fn item_files(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_body_arcana_with_no_model_wears_its_effects_on_the_body() {
+        let body_arcana = b"\"9059\"\n{\n\t\"item_slot\"\t\t\"hero_base\"\n\t\"prefab\"\t\t\"wearable\"\n}";
+        let wearable = b"\"9021\"\n{\n\t\"item_slot\"\t\t\"head\"\n\t\"model_player\"\t\t\"models/items/x/x.vmdl\"\n}";
+        assert!(on_body_alone(body_arcana, None, false).unwrap());
+        // an item with a model keeps its effects on its model, wherever that goes
+        assert!(!on_body_alone(wearable, None, false).unwrap());
+        assert!(!on_body_alone(wearable, Some("models/heroes/x/x_head.vmdl_c"), false).unwrap());
+        // a model the slot has no place for is reported as such, not moved to the body
+        assert!(!on_body_alone(body_arcana, None, true).unwrap());
+    }
 
     /// On the game's own files (MM_TEST_PAK01): a rider's free mount is found for the courier's
     /// effect to go on it as on the body; a hero with no mount has none.
