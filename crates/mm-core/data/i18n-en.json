@@ -299,6 +299,8 @@
 ["Выбери ландшафт, погоду или вид карты","Pick a terrain, a weather or a look for the map"],
 ["Нет такого героя: {0}","No such hero: {0}"],
 ["Ни один файл не взял цвет","None of the files took the colour"],
+["Ни один файл не взял цвет: {0}","None of the files took the colour: {0}"],
+["Не скачался ValveResourceFormat, он нужен, чтобы перекрасить картинки","ValveResourceFormat did not download, and repainting pictures needs it"],
 ["Перекраска: {0}","Recolor: {0}"],
 ["Выбери цвет хотя бы для одного слоя","Pick a colour for at least one layer"],
 ["Черновик не найден","Draft not found"],
