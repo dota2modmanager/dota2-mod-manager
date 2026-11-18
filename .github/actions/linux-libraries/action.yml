@@ -39,7 +39,8 @@ runs:
         mkdir -p "$dir/partial"
         echo "had=$(find "$dir" -maxdepth 1 -name '*.deb' | wc -l)" >> "$GITHUB_OUTPUT"
         sudo apt-get -o Acquire::Retries=3 -o Acquire::http::Timeout=30 update
-        # the packages not on disk yet, as "url file" lines; eight at a time, each given two minutes
+        # the packages not on disk yet, as "url file" lines: eight at a time, five minutes each, and
+        # a dropped one goes on from where it stopped
         # shellcheck disable=SC2086
         sudo apt-get -o Acquire::http::Timeout=30 -o Dir::Cache::Archives="$dir" \
           install -y --print-uris -qq $PACKAGES | sed -n "s/^'\([^']*\)' \([^ ]*\) .*/\1 \2/p" > "$RUNNER_TEMP/apt-uris"
@@ -53,7 +54,7 @@ runs:
         mv "$RUNNER_TEMP/apt-urls" "$RUNNER_TEMP/apt-uris"
         head -2 "$RUNNER_TEMP/apt-uris"
         echo "fetching $(wc -l < "$RUNNER_TEMP/apt-uris") packages"
-        timeout 360 xargs -P 8 -n 2 sh -c 'curl -fsS --retry 3 --connect-timeout 20 --max-time 120 -o "$0/$2.part" "$1" && mv "$0/$2.part" "$0/$2"' "$dir" < "$RUNNER_TEMP/apt-uris" || echo "some packages were not fetched; apt asks the mirror for them"
+        timeout 420 xargs -P 8 -n 2 sh -c 'curl -fsS --retry 5 --retry-all-errors --connect-timeout 20 --max-time 300 -C - -o "$0/$2.part" "$1" && mv "$0/$2.part" "$0/$2"' "$dir" < "$RUNNER_TEMP/apt-uris" || echo "some packages were not fetched; apt asks the mirror for them"
         rm -f "$dir"/*.part
         sudo rm -f "$dir/lock"  # apt's, root's own, and the cache could not read it
         echo "has=$(find "$dir" -maxdepth 1 -name '*.deb' | wc -l)" >> "$GITHUB_OUTPUT"
