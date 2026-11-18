@@ -288,21 +288,6 @@ fn leave_for_browser(app: &AppHandle, url: &tauri::Url) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn only_the_apps_own_page_may_load() {
-        let own = |u: &str| is_own_page(&tauri::Url::parse(u).unwrap());
-        assert!(own("http://tauri.localhost/index.html"));
-        assert!(own("tauri://localhost/"));
-        assert!(!own("https://tauri.localhost.example.com/"));
-        assert!(!own("https://github.com/"));
-        assert!(!own("file:///C:/Windows/"));
-    }
-}
-
 /// The login item's `StartupApproved\Run` value, where Task Manager records it switched on or off.
 #[cfg(windows)]
 fn startup_approved() -> Option<Vec<u8>> {
@@ -330,4 +315,19 @@ fn startup_approved() -> Option<Vec<u8>> {
 #[cfg(not(windows))]
 fn startup_approved() -> Option<Vec<u8>> {
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_the_apps_own_page_may_load() {
+        let own = |u: &str| is_own_page(&tauri::Url::parse(u).unwrap());
+        assert!(own("http://tauri.localhost/index.html"));
+        assert!(own("tauri://localhost/"));
+        assert!(!own("https://tauri.localhost.example.com/"));
+        assert!(!own("https://github.com/"));
+        assert!(!own("file:///C:/Windows/"));
+    }
 }

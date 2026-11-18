@@ -335,15 +335,15 @@ mod tests {
         let lang = game.join("dota_russian");
         fs::create_dir_all(game.join("dota")).unwrap();
         fs::create_dir_all(&lang).unwrap();
-        let chat = format!(
+        let chat = String::from(
             "\"lang\"
-{{
+{
 	\"Language\"	\"x\"
 	\"Tokens\"
-	{{
-	}}
-}}
-"
+	{
+	}
+}
+",
         );
         let rel = localization("chat", &ui_language(&game));
         fs::write(
