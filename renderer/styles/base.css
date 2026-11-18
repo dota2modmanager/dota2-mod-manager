@@ -119,6 +119,9 @@ img, video { -webkit-user-drag: none; user-select: none; }
   overflow-y: auto;
   min-width: 0;
 }
+/* the list scrolling (ui/scroll-idle.ts): nothing in it under the pointer is hovered meanwhile.
+   #main itself stays hit-testable, or the wheel would fall through to the page behind it. */
+.is-scrolling #view-root { pointer-events: none; }
 #view-root {
   zoom: var(--content-zoom);
   padding: 22px 26px 90px;

@@ -10,7 +10,7 @@
 /* ============ Title bar ============ */
 /* The bar owns a layer of its own, above the content it sits over.
  *
- * It has a backdrop-filter, and that makes it a stacking context: everything inside it,
+ * It is a stacking context (isolation): everything inside it,
  * including an open dropdown, is trapped at the bar's own level. The bar had none, so it
  * painted in document order - underneath the catalog's cards, which do claim a level. The
  * help menu therefore slid behind the mods as soon as the page scrolled under it. */
@@ -26,7 +26,11 @@
   gap: 14px;
   padding: 0 0 0 14px;
   background: color-mix(in srgb, var(--md-surface) 78%, transparent);
-  backdrop-filter: blur(18px);
+  isolation: isolate;
+  /* no backdrop blur: under it is only the fixed ambient gradient, already soft, and a screenshot
+     with and without it differs in no pixel; it cost a blurred copy of the window behind every
+     frame, which without a GPU was most of a frame */
+
   border-bottom: 1px solid var(--border);
   -webkit-app-region: drag; --drag: 1;
 }
@@ -347,7 +351,6 @@
   padding: 14px 10px 60px;
   border-right: 1px solid var(--border);
   background: color-mix(in srgb, var(--md-surface) 55%, transparent);
-  backdrop-filter: blur(10px);
 }
 .cat-rail.hidden { display: none; }
 
@@ -426,7 +429,6 @@
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--md-surface) 68%, transparent);
-  backdrop-filter: blur(12px);
 }
 #dotaStatusText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warning); flex-shrink: 0; }

@@ -7,7 +7,28 @@
  * it after `most` all the same. */
 
 let last = 0;
-const mark = (): void => { last = performance.now(); };
+
+/* While the page moves, what is under the pointer is not asked about. Cards slide under a still
+ * pointer as the list scrolls, and each one it crossed was hit-tested, put on hover (lifted,
+ * scaled, its shadow grown) and painted again, then let go a frame later: on a machine drawing
+ * without a GPU that was most of a scroll's time. The class goes on with the first tick and off
+ * once the wheel has been quiet a moment; the browser looks under the pointer again then. */
+const CALM_MS = 140;
+let calm: ReturnType<typeof setTimeout> | null = null;
+const root = document.documentElement;
+function moving(): void {
+  if (!calm) root.classList.add('is-scrolling');
+  else clearTimeout(calm);
+  calm = setTimeout(() => { calm = null; root.classList.remove('is-scrolling'); }, CALM_MS);
+}
+
+const mark = (e: Event): void => {
+  last = performance.now();
+  // only the page's own list: a scroll inside a window or a menu keeps its pointer
+  if (e.type !== 'touchmove' && (e.target === mainPane() || (e.type === 'wheel' && mainPane()?.contains(e.target as Node)))) moving();
+};
+let main: HTMLElement | null = null;
+const mainPane = (): HTMLElement | null => (main ||= document.getElementById('main'));
 for (const type of ['wheel', 'scroll', 'touchmove'] as const) {
   document.addEventListener(type, mark, { capture: true, passive: true });
 }

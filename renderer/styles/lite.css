@@ -1,0 +1,76 @@
+/* The light look (ui/gfx.ts): for a window drawn without a GPU. Every colour, size and place stays
+ * as it is; what goes is what is only paid for frame by frame on the processor there - blurs
+ * behind and of things, big soft shadows, a card lifting and growing under the pointer, loops that
+ * never stop. Measured scrolling a category of 123 backgrounds in software: 29 frames over 33 ms
+ * with all of it, the frames it left were the cards being painted. */
+
+/* a window's scrim stays dark, only no longer a blurred copy of the page behind it */
+:root[data-gfx='lite'] *,
+:root[data-gfx='lite'] *::before,
+:root[data-gfx='lite'] *::after {
+  backdrop-filter: none !important;
+  text-shadow: none !important;
+}
+
+/* without the blur the page behind a window read as sharp as the window: a darker scrim
+   separates them the way the blur did */
+:root[data-gfx='lite'] .modal-overlay,
+:root[data-gfx='lite'] .confirm-overlay {
+  background: rgba(3, 3, 6, 0.86);
+}
+
+/* a blur of the thing itself, a glow; colour filters (grayscale, brightness) stay */
+:root[data-gfx='lite'] [class*='glow'],
+:root[data-gfx='lite'] .blob {
+  filter: none !important;
+}
+
+/* cards: the border and the background say "under the pointer", without lifting, growing or a
+   shadow that has to be painted again as it grows */
+:root[data-gfx='lite'] .card,
+:root[data-gfx='lite'] .cat-tile,
+:root[data-gfx='lite'] .hero-tile,
+:root[data-gfx='lite'] .hub-tile {
+  box-shadow: none !important;
+  transition-property: border-color, background-color, opacity !important;
+}
+:root[data-gfx='lite'] .card:hover,
+:root[data-gfx='lite'] .cat-tile:hover,
+:root[data-gfx='lite'] .hero-tile:hover,
+:root[data-gfx='lite'] .hub-tile:hover {
+  translate: none !important;
+  scale: none !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+:root[data-gfx='lite'] .card-media img,
+:root[data-gfx='lite'] .card-media video {
+  transition: opacity var(--dur-base) linear !important;
+  transform: none !important;
+}
+
+/* buttons and menus keep their colours, not their shadows */
+:root[data-gfx='lite'] .btn:hover {
+  box-shadow: none;
+  transform: none;
+}
+:root[data-gfx='lite'] .confirm-box,
+:root[data-gfx='lite'] .modal,
+:root[data-gfx='lite'] .menu,
+:root[data-gfx='lite'] .toast {
+  box-shadow: 0 0 0 1px var(--border-strong) !important;
+}
+
+/* a loop runs once and stops where it ends; the loading ring is the one that has to keep turning */
+:root[data-gfx='lite'] *:not(.spinner),
+:root[data-gfx='lite'] *::before,
+:root[data-gfx='lite'] *::after {
+  animation-iteration-count: 1 !important;
+}
+:root[data-gfx='lite'] .card-media:has(img[data-owned='react']:not([data-ready]))::after {
+  animation-iteration-count: infinite !important;
+}
+:root[data-gfx='lite'] .preview3d[data-status='loading'] .preview3d-note .ms,
+:root[data-gfx='lite'] .preview3d-tools[data-busy='true'] .custom-select-icon {
+  animation-iteration-count: infinite !important;
+}

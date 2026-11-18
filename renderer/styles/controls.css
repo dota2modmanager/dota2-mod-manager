@@ -13,7 +13,6 @@
   font-weight: 600;
   transition: all 0.25s var(--ease);
   white-space: nowrap;
-  backdrop-filter: blur(8px);
 }
 .btn:hover { background: var(--surface-hover); border-color: var(--border-strong); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(5, 3, 12, 0.4); }
 .btn:active { transform: scale(0.96); }
@@ -81,7 +80,6 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  backdrop-filter: blur(14px);
 }
 .toolbar:has(.custom-select-wrap.open) {
   z-index: 200;
