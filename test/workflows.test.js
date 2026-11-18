@@ -625,9 +625,12 @@ function jobsOf(text) {
 test('the Linux packages come from the Actions cache, so a mirror that only trickles cannot hold a build', () => {
   /* On 2026-11-18 four AppImage builds in a row ran out of time downloading WebKitGTK: the mirror
      sent each file in seconds, too slowly for the step's ten minutes and never slowly enough for
-     apt's timeout. The downloaded packages are cached now, and every job installs through that. */
+     apt's timeout. The packages are fetched eight at a time and cached, even from a run that gave
+     up, and every job installs through that. */
   const action = fs.readFileSync(path.join(DIR, '..', 'actions', 'linux-libraries', 'action.yml'), 'utf8');
-  assert.match(action, /uses: actions\/cache@[0-9a-f]{40}/, 'the packages are not cached');
+  assert.match(action, /uses: actions\/cache\/save@[0-9a-f]{40}/, 'the packages are not cached');
+  assert.match(action, /if: always\(\)[^\n]*\n\s*uses: actions\/cache\/save@/, 'a run that gave up saves nothing, so a slow mirror is never got round');
+  assert.match(action, /xargs -P \d+/, "the packages are fetched one at a time, and the mirror's pauses add up");
   assert.match(action, /Dir::Cache::Archives="\$HOME\/apt-archives"/, 'apt does not download into the cached folder');
   assert.match(action, /path: ~\/apt-archives/, 'the cache keeps a different folder than apt fills');
   assert.match(action, /chown -R/, 'apt leaves root-owned files the cache cannot read back');
