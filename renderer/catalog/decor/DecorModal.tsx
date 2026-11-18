@@ -9,7 +9,7 @@ import type { DecorGroup, DecorSample, MapKind, MapOption } from '../../api/cont
 import type { TerrainPaint, ZoneLight } from '../../api/decor.ts';
 import type { GroundLook, MapLooks } from './map-view.ts';
 import { mapOf } from './pickers.tsx';
-import { stemOf } from './map-trees.ts';
+import { stemOf } from './map-names.ts';
 import { LOOK_GROUPS, type LevelId, type SliderId } from './levels.ts';
 import { OptSide } from './OptSide.tsx';
 import { MapSide } from './MapSide.tsx';

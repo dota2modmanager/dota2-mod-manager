@@ -23,7 +23,6 @@ import { showPresets } from '../presets/PresetsScreen.tsx';
 import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from '../presets/model.ts';
 import type { PresetRecord, ReadyPresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
-import { presetPicture } from './presets/picture.ts';
 import { recPreviewUrl } from '../ui/thumb.ts';
 import { isVideo } from '../ui/media.ts';
 
@@ -150,7 +149,7 @@ async function share(id: string) {
   const covers = (preset.modIds || []).map((m) => byId.get(m)).map((r) => (r ? recPreviewUrl(r) : null))
     .filter((u): u is string => Boolean(u) && !isVideo(u!));
   const card = ownCard(preset, byId);
-  const picture = link.web ? () => presetPicture({ name: preset.name, count: card.count, covers, link: link.web! }) : undefined;
+  const picture = link.web ? () => import('./presets/picture.ts').then((m) => m.presetPicture({ name: preset.name, count: card.count, covers, link: link.web! })) : undefined;
   if (await shareSheet(preset, link.error ? null : link, picture) !== 'file') return;
   const plan = await window.api.presets.exportPlan(id);
   if (plan.error) { toast(plan.error, 'error', 6000); return; }
