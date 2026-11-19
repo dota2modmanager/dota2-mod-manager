@@ -35,7 +35,8 @@ pub(crate) use arcana::{
 };
 pub use catalog::{beta, catalog_signature, deep_links, net_fetch, preview_cache, remote_config};
 pub(crate) use catalog::{
-    download_stats, feature_gate, fingerprints, icon_match, mod_preview, mod_preview_pick, net_mirrors, wiki_icons,
+    download_stats, feature_gate, fingerprints, icon_match, manifest, mod_preview, mod_preview_pick, net_mirrors,
+    wiki_icons,
 };
 pub use catalog::{Catalog, RAW_BASE};
 pub(crate) use formats::{cursor_files, glb_embed, lz4, material, meshopt, panorama_files, png_paint, png_strip};
