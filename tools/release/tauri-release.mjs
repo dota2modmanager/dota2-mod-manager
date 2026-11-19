@@ -15,6 +15,7 @@
  *
  * Usage:
  *   node tools/release/tauri-release.mjs windows <dist> <version>   Setup.exe and its .sig, Portable.exe, latest.yml, portable.yml
+ *   node tools/release/tauri-release.mjs windows-feeds <dist> <version>  latest.yml and portable.yml again, for exes signed after the build
  *   node tools/release/tauri-release.mjs linux <dist> <version>     the AppImage and its .sig, latest-linux.yml
  *   node tools/release/tauri-release.mjs feeds <dir> <version> [notes.md]
  *                                                           latest.json and beta.json from the .sig files in <dir>
@@ -128,9 +129,18 @@ function windows(dist, version) {
   const setup = only(bundle, '-setup.exe');
   copy(setup, path.join(dist, SETUP));
   copy(`${setup}.sig`, path.join(dist, `${SETUP}.sig`));
-  verified(path.join(dist, SETUP), path.join(dist, `${SETUP}.sig`));
   // the same exe the installer carries, bare: src-tauri/src/main.rs runs it as the portable build
   copy(path.join(root, 'target', 'release', 'Dota 2 Mod Manager.exe'), path.join(dist, PORTABLE));
+  windowsFeeds(dist, version);
+}
+
+/**
+ * latest.yml and portable.yml from the two exes in `dist`, after the installer's signature is
+ * checked. Run again once SignPath has signed them: Authenticode changes the bytes, so the
+ * installer is signed for the updater anew (tauri signer sign) and both hashes are taken again.
+ */
+function windowsFeeds(dist, version) {
+  verified(path.join(dist, SETUP), path.join(dist, `${SETUP}.sig`));
   fs.writeFileSync(path.join(dist, 'latest.yml'), electronFeed({ file: SETUP, bytes: fs.readFileSync(path.join(dist, SETUP)), version }));
   portableManifest.build(dist, version);
 }
@@ -160,9 +170,9 @@ function feeds(dir, version, notesFile) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [cmd, dir, raw, notes] = process.argv.slice(2);
   const version = String(raw || '').replace(/^v/, '');
-  const run = { windows, linux, feeds }[cmd];
+  const run = { windows, 'windows-feeds': windowsFeeds, linux, feeds }[cmd];
   if (!run || !dir || !/^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$/.test(version)) {
-    console.error('usage: node tools/release/tauri-release.mjs windows|linux|feeds <dir> <version> [notes.md]');
+    console.error('usage: node tools/release/tauri-release.mjs windows|windows-feeds|linux|feeds <dir> <version> [notes.md]');
     process.exit(1);
   }
   fs.mkdirSync(dir, { recursive: true });
