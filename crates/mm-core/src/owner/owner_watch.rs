@@ -326,9 +326,14 @@ mod tests {
             let folder = c.installer.lang_folder().unwrap();
             std::fs::create_dir_all(&folder).unwrap();
             let mut ids = Vec::new();
-            for (pak_name, name, path) in [("pak61_dir.vpk", "Old HUD", LAYOUT), ("pak62_dir.vpk", "Old minimap", PICTURE)] {
-                std::fs::write(folder.join(pak_name), crate::vpk::build(&[crate::vpk::entry_at(path, b"old".to_vec().into())]))
-                    .unwrap();
+            for (pak_name, name, path) in
+                [("pak61_dir.vpk", "Old HUD", LAYOUT), ("pak62_dir.vpk", "Old minimap", PICTURE)]
+            {
+                std::fs::write(
+                    folder.join(pak_name),
+                    crate::vpk::build(&[crate::vpk::entry_at(path, b"old".to_vec().into())]),
+                )
+                .unwrap();
                 let rec = json!({ "name": name, "files": [{ "root": "lang", "relPath": pak_name }] });
                 ids.push(crate::js::string(&c.library.add(&rec, None).unwrap()["id"]));
             }

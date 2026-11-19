@@ -50,6 +50,11 @@ export interface LibRecord {
   match?: Match | null;
   files: LibFile[];
   members?: Member[];
+  /** a mod inside a pack, as the installed index lists it: the pack that holds it */
+  packId?: string;
+  packName?: string;
+  /** the shared pack the app folds mods into when the pak slots run out */
+  auto?: boolean;
   /** the part of the load order a mod keeps to (src/slot-zones.ts) */
   zone?: unknown;
   /** how many heroes an import skins: two or more can be split */

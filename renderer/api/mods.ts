@@ -27,7 +27,8 @@ type Parts = Reply<{ count: number; names: string[] }>;
 type Adopted = Reply<{ name: string; matched?: boolean }>;
 
 export interface ModsApi {
-  install: (payload: InstallRequest) => Promise<Reply<{ record: LibRecord; replaced?: string[]; already?: boolean }>>;
+  /** `folded`: the mods the shared pack took in to make room (crates/mm-core/src/owner/owner_packs.rs make_room) */
+  install: (payload: InstallRequest) => Promise<Reply<{ record: LibRecord; replaced?: string[]; already?: boolean; folded?: string[] }>>;
   list: () => Promise<ModsList>;
   switchOffStaleTerrains: () => Promise<Reply<{ names: string[] }>>;
   setEnabled: (id: string, enabled: boolean) => Promise<Reply<{ replaced?: string[] }>>;

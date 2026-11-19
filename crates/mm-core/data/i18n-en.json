@@ -134,7 +134,6 @@
 ["перекачиваю повреждённый файл","the cached file was damaged, downloading again"],
 ["Свободных слотов pakNN не осталось (30-99 заняты)","No free pakNN slots left (30-99 are taken)"],
 ["{0} из них заняли файлы, которых нет в «Моих модах» ({1}{2}): моды, поставленные руками или другой программой", "{0} of them hold files that are not in My mods ({1}{2}): mods put there by hand or by another tool"],
-["Освободить слоты можно и так: выдели несколько модов в «Моих модах» и нажми «Объединить в пак»", "You can also free slots: select a few mods in My mods and press Combine into pack"],
 ["установка","installing"],
 ["{0}: в архиве не найдено assets/custom","{0}: no assets/custom found in the archive"],
 ["{0}: в архиве не найдена папка cursor","{0}: no cursor folder found in the archive"],
@@ -343,5 +342,7 @@
 ["Играть","Play"],
 ["Выйти","Quit"],
 ["Приложение работает в трее и вернёт моды после обновления Доты. Выйти можно правым кликом по значку, отключить в Настройках.","The app keeps running in the tray and puts your mods back after a Dota update. Right-click the icon to quit, or turn this off in Settings."],
-["Архив больше 100 МБ: каталог такой не примет","The archive is over 100 MB: the catalog will not take it"]
+["Архив больше 100 МБ: каталог такой не примет","The archive is over 100 MB: the catalog will not take it"],
+["Освободить слоты можно так: включи в настройках «Общий пак, когда кончаются слоты», и приложение сложит старые моды в один пак само. Или выдели несколько модов в «Моих модах» и нажми «Объединить в пак»", "To free slots, turn on “Shared pack when slots run out” in Settings and the app folds older mods into one pack by itself. Or select a few mods in My mods and press Combine into pack"],
+["Общий пак", "Shared pack"]
 ]

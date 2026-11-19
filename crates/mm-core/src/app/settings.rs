@@ -29,6 +29,7 @@ pub fn defaults() -> Map<String, Value> {
         "discordPresence": true,
         "runInBackground": true,
         "countDownloads": true,
+        "autoPack": true,
         "schemaPatch": false,
         "cosmetics": {},
         "itemLooks": [],

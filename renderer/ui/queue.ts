@@ -21,7 +21,9 @@ import { thumbHtml } from './thumb.ts';
 import type { QueueEntry } from '../catalog/queueing.ts';
 
 const items = new Map<string, QueueEntry>();
-let installer: ((list: QueueEntry[]) => Promise<void>) | null = null;
+/** why a mod of the last run did not go in, by its key; it stays in the list until it does */
+const failures = new Map<string, string>();
+let installer: ((list: QueueEntry[]) => Promise<Map<string, string>>) | null = null;
 let busy = false;
 const listeners = new Set<() => void>();
 
@@ -32,7 +34,7 @@ export function onQueueChange(fn: () => void): () => void {
 }
 
 /** The catalog registers what to do with the list once the user commits to it. */
-export function useInstaller(fn: (list: QueueEntry[]) => Promise<void>): void { installer = fn; }
+export function useInstaller(fn: (list: QueueEntry[]) => Promise<Map<string, string>>): void { installer = fn; }
 
 export const isQueued = (key: string): boolean => items.has(key);
 
@@ -54,6 +56,7 @@ export function toggleQueued(entry: QueueEntry): boolean {
 
 function clearQueue(): void {
   items.clear();
+  failures.clear();
   paintBadge();
   drawPanel();
 }
@@ -93,6 +96,7 @@ function rowsHtml(): string {
       <div class="queue-info">
         <div class="queue-name" title="${esc(it.title)}">${esc(catalogName(it.name))}${it.label ? ` · ${esc(catalogLabel(it.label))}` : ''}</div>
         <div class="queue-cat">${esc(it.catName)}</div>
+        ${failures.has(it.key) ? `<div class="queue-error" title="${esc(failures.get(it.key) || '')}"><span class="ms">error</span>${esc(failures.get(it.key) || '')}</div>` : ''}
       </div>
       <button class="queue-drop" data-drop="${esc(it.key)}" aria-label="${L`Убрать`}"><span class="ms">close</span></button>
     </div>`).join('');
@@ -102,6 +106,7 @@ function bindRows(): void {
   $('#queueRows')?.querySelectorAll<HTMLElement>('[data-drop]').forEach((b) => {
     b.addEventListener('click', () => {
       items.delete(b.dataset.drop || '');
+      failures.delete(b.dataset.drop || '');
       paintBadge();
       // only the rows, so the search box keeps both its text and the cursor in it
       $('#queueRows').innerHTML = rowsHtml();
@@ -157,15 +162,20 @@ async function runInstall(): Promise<void> {
   busy = true;
   drawPanel();
   const list = [...items.values()];
+  let failed = new Map<string, string>();
   try {
-    await installer(list);
+    failed = await installer(list);
   } finally {
     busy = false;
-    // whatever went in is no longer waiting: what failed is reported by the installer, and
-    // a list that survives its own run is a list nobody trusts
-    items.clear();
+    // What went in leaves the list. What did not stays, with its reason under it: forty mods
+    // that found no room used to flash by as forty toasts and were gone from the list too, and
+    // people had to find all forty again in the catalog.
+    for (const it of list) if (!failed.has(it.key)) items.delete(it.key);
+    failures.clear();
+    for (const [k, e] of failed) if (items.has(k)) failures.set(k, e);
     paintBadge();
-    closePanel();
+    if (items.size) drawPanel();
+    else closePanel();
   }
 }
 

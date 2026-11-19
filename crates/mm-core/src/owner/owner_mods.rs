@@ -268,7 +268,9 @@ fn install(o: &Owner, payload: &Value) -> Value {
             let mut c = o.core();
             let style = payload.get("styleLabel").cloned().unwrap_or(Value::Null);
             let key = (payload.get("categoryId").unwrap_or(&Value::Null), payload.get("name").unwrap_or(&Value::Null));
-            if c.library.find_by_key(key.0, key.1, Some(&style)).is_some() {
+            if c.library.find_by_key(key.0, key.1, Some(&style)).is_some()
+                || crate::owner_packs::packed(&c.library, key.0, key.1, Some(&style)).is_some()
+            {
                 return Ok(json!({ "error": t("Уже установлено", &[]), "already": true }));
             }
             // a cursor set is written straight over the one in resource\cursor, so the set that is
@@ -286,9 +288,23 @@ fn install(o: &Owner, payload: &Value) -> Value {
         }
         let local = download(o, &cat, &text(payload.get("fileRef")), &name)?;
         o.progress(json!({ "type": "stage", "label": name, "stage": t("установка", &[]) }));
-        let (rec, rebuild) = {
+        let (rec, rebuild, folded) = {
             let mut c = o.core();
+            let on = crate::owner_packs::auto_pack_on(&c.settings);
             let Core { installer, library, .. } = &mut *c;
+            // the slots about to run out: the shared pack takes some of what is in (owner_packs.rs)
+            let priority = crate::slot_zones::PRIORITY_CATEGORIES.contains(&cat.as_str());
+            let folded = if cat == "tools" || cat == "fonts" || cat == "cursors" {
+                Vec::new()
+            } else {
+                crate::owner_packs::make_room(installer, library, on, priority, 1).unwrap_or_else(|e| {
+                    o.diag(&format!("shared pack: could not make room: {e}"));
+                    Vec::new()
+                })
+            };
+            if !folded.is_empty() {
+                o.diag(&format!("shared pack: {} mod(s) folded in to free pak slots", folded.len()));
+            }
             // the record is written in the install's own transaction: paks without a record, or a
             // record without its paks, is not a state a killed process can leave behind
             let rec = FileTx::run(installer.journal_dir.as_deref(), installer.tx_log(), |tx| {
@@ -312,14 +328,14 @@ fn install(o: &Owner, payload: &Value) -> Value {
                 let _ = c.installer.set_master_enabled(false);
                 crate::cursors::apply_master_to_cursors(&c.installer, &c.library, false);
             }
-            (c.library.find(&id).cloned().unwrap_or(rec), lifted.is_some_and(|(d, _)| d > 0))
+            (c.library.find(&id).cloned().unwrap_or(rec), lifted.is_some_and(|(d, _)| d > 0), folded)
         };
         if rebuild {
             let _ = o.refresh_schema_in_background().recv();
         }
         o.progress(json!({ "type": "done", "label": name }));
         count_install(o, &cat, &name, payload.get("styleLabel"));
-        Ok(json!({ "ok": true, "record": rec, "replaced": replaced }))
+        Ok(json!({ "ok": true, "record": rec, "replaced": replaced, "folded": folded }))
     };
     match run() {
         Ok(v) => v,

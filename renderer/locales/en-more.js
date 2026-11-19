@@ -398,5 +398,14 @@ const EN = {
   ". Мод {0} выключен: патч поменял интерфейс игры, а мод возвращает прежний, и с ним Dota не запускается. Включи его снова, когда автор обновит мод": ". {0} is off: the patch changed the game's interface, the mod brings back the old one, and Dota will not start with it. Turn it back on once its author updates it",
   ". Моды {0} выключены: патч поменял интерфейс игры, а они возвращают прежний, и с ними Dota не запускается. Включи их снова, когда авторы обновят моды": ". {0} are off: the patch changed the game's interface, these mods bring back the old one, and Dota will not start with them. Turn them back on once their authors update them",
   "Dota обновилась. Выключено: {0}. Этот мод возвращает прежний интерфейс игры, и с ним Dota не запускается": "Dota updated. Switched off: {0}. It brings back the game's old interface, and Dota will not start with it",
+  "Мод лежит в паке «{0}»: так несколько модов занимают один слот pakNN. Включается и выключается он там же, в «Моих модах».": "This mod sits in the pack «{0}», so several mods take one pakNN slot. Switch it on and off there, in My mods.",
+  "Общий пак, когда кончаются слоты": "Shared pack when slots run out",
+  "Dota читает не больше 99 паков, и примерно на шестидесятом моде место кончается. Тогда приложение само сложит выключенные и самые новые моды в «Общий пак»: он занимает один слот, а каждый мод в нём включается и выключается по отдельности в «Моих модах». Выключи, если следишь за слотами сам.": "Dota reads no more than 99 paks, and room runs out at about the sixtieth mod. Then the app moves mods that are off, and the newest ones, into the «Shared pack». It takes one slot, and every mod in it still switches on and off by itself in My mods. Turn this off if you keep track of the slots yourself.",
+  "Слоты pakNN почти кончились, поэтому «{0}» теперь лежит в «Общем паке». В игре он работает как раньше, включать и выключать его можно в «Моих модах».": "The pakNN slots were nearly full, so «{0}» now sits in the «Shared pack». It works in the game as before, and you can switch it on and off in My mods.",
+  "Слоты pakNN почти кончились, поэтому {0} модов теперь лежат в «Общем паке». В игре они работают как раньше, включать и выключать их можно в «Моих модах».": "The pakNN slots were nearly full, so {0} mods now sit in the «Shared pack». They work in the game as before, and you can switch them on and off in My mods.",
+  "Не удалось установить": "Could not install",
+  "Пак «{0}»: установлено {1}, пропущено {2}{3}{4}": "Pack «{0}»: {1} installed, {2} skipped{3}{4}",
+  "Список: установлено {0}, не установились {1}: они остались в списке. {2}": "List: {0} installed, {1} did not go in and stay in the list. {2}",
+  "Список: установлено {0}{1}": "List: {0} installed{1}",
 };
 window.EN_MORE = EN;

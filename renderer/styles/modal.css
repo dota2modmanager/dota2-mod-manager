@@ -458,6 +458,9 @@ audio::-webkit-media-controls-panel { background: var(--surface-solid); }
 .queue-info { flex: 1; min-width: 0; }
 .queue-name { font-weight: var(--weight-semibold); font-size: var(--text-sm); }
 .queue-cat { color: var(--text-faint); font-size: var(--text-xs); }
+/* why a mod of the last run did not go in: it stays in the list for another try */
+.queue-error { color: var(--danger); font-size: var(--text-xs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue-error .ms { font-size: var(--text-sm); vertical-align: middle; margin-right: var(--space-1); }
 .queue-drop {
   border: none;
   background: none;

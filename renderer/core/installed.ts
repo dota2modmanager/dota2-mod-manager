@@ -34,6 +34,18 @@ export function applyInstalled(installed: LibRecord[]): void {
     // slot list: the option lists only change when the game does, while a pick can be
     // deleted or switched off from the Library at any moment.
     if (rec.categoryId === 'cosmetic' && rec.slot && rec.enabled !== false) state.cosmeticPicks.set(rec.slot, rec);
+    // A mod inside a pack is still installed: the catalog's badge says so, a second install is
+    // not offered, and the mod window switches it through the pack (views/catalog/mod-window.ts).
+    // The shared pack folds mods in by itself when the slots run out, so this is the usual case.
+    if (rec.kind === 'pack') {
+      for (const m of rec.members ?? []) {
+        const k = keyOf(m.categoryId, m.name, m.styleLabel ?? null);
+        if (!state.installedIndex.has(k)) {
+          state.installedIndex.set(k, { id: m.id, name: m.name, categoryId: m.categoryId, styleLabel: m.styleLabel ?? null,
+            enabled: m.enabled !== false && rec.enabled !== false, files: [], packId: rec.id, packName: rec.name });
+        }
+      }
+    }
   }
   // tools live in the index so their card knows it has them, but they are not in the Library
   // and must not be counted on its tab
@@ -47,7 +59,7 @@ export function applyInstalled(installed: LibRecord[]): void {
   // Sorted, because the folder is read again on every visit to the Library and the order it
   // comes back in is not promised. Comparing an unsorted join made an identical read look
   // like a change, and the catalog was thrown away for nothing.
-  const sig = installed.map((r) => `${r.id}:${r.enabled === false ? 0 : 1}:${r.slot ?? ''}:${r.targetItemId ?? ''}`).sort().join('|');
+  const sig = installed.map((r) => `${r.id}:${r.enabled === false ? 0 : 1}:${r.slot ?? ''}:${r.targetItemId ?? ''}:${(r.members ?? []).map((m) => `${m.id}${m.enabled === false ? 0 : 1}`).join(',')}`).sort().join('|');
   if (sig !== lastInstalledSig) { lastInstalledSig = sig; invalidateViews(); }
 }
 

@@ -30,6 +30,8 @@ export interface StoredSettings {
   runInBackground?: boolean;
   /** installs of catalog mods are counted by the catalog's download counter (src/download-stats.ts) */
   countDownloads: boolean;
+  /** fold mods into the shared pack when the pak slots run out; on unless turned off */
+  autoPack?: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (src/item-builder-everyone.ts) */
   everyoneWearsMine: boolean;
   /** the heroes it leaves alone, by id: every other hero built is dressed, as the game's limit allows (crates/mm-core/src/item_builder/item_builder_everyone_budget.rs) */
