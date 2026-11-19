@@ -37,7 +37,7 @@ function supportDialog({ auto }: { auto: boolean }): Promise<void> {
           <li class="support-step">
             <div class="support-step-title">${L`Расскажи о нас`}</div>
             <button class="btn" data-c="copy"><span class="ms">link</span>${L`Скопировать ссылку`}</button>
-            <p>${L`Пост на Reddit, сообщение в Discord, комментарий под видео про моды. Это помогает получить бесплатную подпись программы от SignPath: без неё Windows пугает «неизвестным издателем». Прошлую заявку отклонили, потому что о проекте мало кто знает.`}</p>
+            <p>${L`Пост на Reddit, сообщение в Discord, комментарий под видео про моды: так приложение находят новые люди.`}</p>
           </li>
         </ol>
         <div class="confirm-actions">
