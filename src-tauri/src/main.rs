@@ -211,7 +211,34 @@ fn webview_switch(name: &std::ffi::OsStr) -> bool {
     name.to_str().is_some_and(|n| n.to_ascii_uppercase().starts_with("WEBVIEW2_"))
 }
 
+/// From the AppImage on a host that has its own WebKitGTK, start once more on the host's
+/// libraries (mm_core::host_env::host_libs_plan, #761). Replaces this process, so the AppImage
+/// runtime keeps its image mounted for the same pid; if that fails, the app runs on the bundle.
+#[cfg(target_os = "linux")]
+fn host_libs_once() {
+    use std::os::unix::process::CommandExt;
+    let vars = std::env::vars_os().filter_map(|(k, v)| Some((k.into_string().ok()?, v.into_string().ok()?)));
+    let Some(plan) = mm_core::host_env::host_libs_plan(vars, |p| std::path::Path::new(p).exists()) else { return };
+    let mut args = std::env::args_os();
+    let mut cmd = std::process::Command::new("/proc/self/exe");
+    if let Some(arg0) = args.next() {
+        cmd.arg0(arg0);
+    }
+    cmd.args(args);
+    for (key, value) in plan {
+        match value {
+            Some(v) => cmd.env(key, v),
+            None => cmd.env_remove(key),
+        };
+    }
+    let err = cmd.exec();
+    eprintln!("could not start again on the host's libraries, staying on the AppImage's: {err}");
+}
+
 fn main() {
+    // before anything else: the second start is the one that runs
+    #[cfg(target_os = "linux")]
+    host_libs_once();
     if !cfg!(debug_assertions) {
         // before any thread starts, so nothing reads the environment while it changes
         let switches: Vec<_> = std::env::vars_os().map(|(k, _)| k).filter(|k| webview_switch(k)).collect();
@@ -317,6 +344,14 @@ fn main() {
                     .ok()
                     .filter(|v| !v.is_empty())
                     .or_else(|| std::env::current_exe().ok().map(|p| p.to_string_lossy().into_owned()));
+                if mm_core::host_env::inside_appimage() {
+                    let on = if std::env::var_os(mm_core::host_env::HOST_LIBS_MARK).is_some() {
+                        "the host's, the AppImage's for what it lacks"
+                    } else {
+                        "the AppImage's"
+                    };
+                    owner.0.get().diag(&format!("libraries: {on}"));
+                }
                 if let (Some(exe), Some(home)) = (exe, std::env::var_os("HOME")) {
                     let icon = app_root(app).join("build").join("icon.png");
                     let o = owner.0.get().clone();
