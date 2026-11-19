@@ -27,7 +27,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { buildCommits, compare } from '../mods/dota-diff.mjs';
+import { buildCommits, compare, fetchAt } from '../mods/dota-diff.mjs';
 
 export const TITLE = 'Dota updates';
 const REPO = process.env.GITHUB_REPOSITORY || 'dota2modmanager/dota2-mod-manager';
@@ -156,7 +156,7 @@ export function discordText(r, url) {
 // ---------- GitHub ----------
 
 async function api(route, { method = 'GET', body, token } = {}) {
-  const res = await fetch(`https://api.github.com/${route}`, {
+  const res = await fetchAt(`${method} ${route}`, `https://api.github.com/${route}`, {
     method,
     headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'dota2-mod-manager/dota-watch', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
@@ -216,7 +216,7 @@ async function main(argv) {
   const webhook = process.env.RADAR_DISCORD_WEBHOOK || '';
   if (critical(r)) {
     if (!webhook) { console.log('::warning::the update reaches the patch and RADAR_DISCORD_WEBHOOK is not set, so nobody was messaged'); return; }
-    const res = await fetch(webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: discordText(r, posted.html_url), allowed_mentions: { parse: [] } }) });
+    const res = await fetchAt('the Discord webhook', webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: discordText(r, posted.html_url), allowed_mentions: { parse: [] } }) });
     console.log(res.ok ? 'maintainer messaged on Discord' : `::warning::Discord answered ${res.status}`);
   }
 }

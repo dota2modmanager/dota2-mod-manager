@@ -182,10 +182,22 @@ export function buildOf(inf) {
 
 const token = () => process.env.GH_TOKEN || process.env.GITHUB_TOKEN || '';
 
+/* fetch(), saying where and why when the request never gets an answer. Node's own error is
+ * "fetch failed" with the reason in .cause, and that was the whole log of a watcher that stopped
+ * reporting Dota builds. `what` names the address; a secret one is passed by a label instead. */
+export async function fetchAt(what, url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (e) {
+    const c = e.cause;
+    throw new Error(`${what}: ${e.message}${c ? ` (${[c.code, c.message].filter(Boolean).join(' ')})` : ''}`);
+  }
+}
+
 async function github(url) {
   const headers = { 'User-Agent': 'dota2-mod-manager/dota-diff', Accept: 'application/vnd.github+json' };
   if (token()) headers.Authorization = `Bearer ${token()}`;
-  const res = await fetch(url, { headers });
+  const res = await fetchAt(url, url, { headers });
   if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
   return res.json();
 }
@@ -223,7 +235,8 @@ async function resolve(ref, commits) {
  */
 async function file(sha, rel) {
   if (!/^[0-9a-f]{40}$/.test(sha)) throw new Error(`not a commit: ${sha}`);
-  const res = await fetch(`https://raw.githubusercontent.com/${REPO}/${sha}/${rel}`, { headers: { 'User-Agent': 'dota2-mod-manager/dota-diff' } });
+  const raw = `https://raw.githubusercontent.com/${REPO}/${sha}/${rel}`;
+  const res = await fetchAt(raw, raw, { headers: { 'User-Agent': 'dota2-mod-manager/dota-diff' } });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`${rel} at ${sha.slice(0, 7)}: HTTP ${res.status}`);
   return Buffer.from(await res.arrayBuffer()).toString('latin1');
