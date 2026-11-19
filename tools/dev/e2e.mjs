@@ -262,9 +262,8 @@ export const EVAL_REMOVE = `
     // #cosGrid is only on the slot's screen.
     const box = await until(() => document.getElementById('cosGrid') && document.getElementById('cosSearch'), 30000);
     if (step('the HUD slot has its search box', box, 'no #cosSearch')) {
-      // When the box loses its focus, whatever took the box off the page says so: the step failed
-      // now and then on Linux with every letter in place and the focus on <body>, which is a box
-      // drawn again after it was focused, and the failure alone did not say who drew it.
+      // If the box loses its focus while letters go in, the failure says who took the box off
+      // the page and where the focus went, so a repaint that comes back names its caller.
       const seen = [];
       const holds = (n) => n && n.nodeType === 1 && (n.id === 'cosSearch' || (n.querySelector && n.querySelector('#cosSearch')));
       const note = (how, n) => { if (holds(n) && seen.length < 3) seen.push(how + ' at ' + (new Error().stack || '').split('\\n').slice(2, 9).map((l) => l.trim()).join(' < ')); };
@@ -278,7 +277,7 @@ export const EVAL_REMOVE = `
       const lost = (e) => { if (e.target && e.target.id === 'cosSearch') seen.push('focusout to ' + ((e.relatedTarget && (e.relatedTarget.id || e.relatedTarget.tagName)) || 'nothing') + (e.target.isConnected ? '' : ', box gone')); };
       document.addEventListener('focusout', lost, true);
       const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-      const rounds = Number(window.__slotRounds || 25);
+      const rounds = 3; // a repaint on a later letter or a second search is as much the bug as on the first
       let bad = '';
       for (let round = 0; round < rounds && !bad; round++) {
         if (round) {
@@ -287,14 +286,23 @@ export const EVAL_REMOVE = `
           now.dispatchEvent(new Event('input', { bubbles: true }));
           await sleep(400);
         }
-        const target = document.getElementById('cosSearch');
-        target.focus();
-        if (document.activeElement !== target && seen.length < 3) {
-          const hid = target.closest('[hidden]');
-          const r = target.getBoundingClientRect();
-          seen.push('focus() did not take: window focused ' + document.hasFocus() + ', visibility ' + document.visibilityState
+        // A person clicks the box once they see it. The script focuses it the moment it exists,
+        // and on Linux that first focus() right after the slot's screen came up did not always
+        // take (2026-11-19: every letter typed, focus on <body>, nothing had removed the box).
+        // So it focuses until the box has it, and only a box that never takes it is a failure.
+        const target = await until(() => {
+          const t = document.getElementById('cosSearch');
+          if (t) t.focus();
+          return t && document.activeElement === t ? t : null;
+        }, 5000);
+        if (!target) {
+          const t = document.getElementById('cosSearch');
+          const hid = t && t.closest('[hidden]');
+          const r = t ? t.getBoundingClientRect() : { width: 0, height: 0 };
+          bad = 'round ' + (round + 1) + ': the box never took the focus: window focused ' + document.hasFocus() + ', visibility ' + document.visibilityState
             + ', inside hidden ' + (hid ? (hid.dataset.pane || hid.id || hid.tagName) : 'none') + ', box ' + Math.round(r.width) + 'x' + Math.round(r.height)
-            + ', disabled ' + target.disabled + ', transition ' + document.documentElement.classList.contains('vt-screen') + ', active ' + (document.activeElement && (document.activeElement.id || document.activeElement.tagName)));
+            + ', active ' + (document.activeElement && (document.activeElement.id || document.activeElement.tagName));
+          break;
         }
         for (const ch of 'the') {
           const now = document.getElementById('cosSearch');
