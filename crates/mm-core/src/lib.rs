@@ -50,6 +50,7 @@ pub(crate) use install::{
     installer_write, library, mod_id, mod_update, mods_listing, overlays, remove_everything, slot_zones,
 };
 pub use install::{file_tx, installer, installer_repack, uninstall};
+pub use item_builder::ability_sounds::{events_file as sound_events_file, GAME_SOUNDS};
 pub use item_builder::item_effect_patch;
 pub(crate) use item_builder::{
     ability_icons, ability_icons_service, ability_sounds, ability_sounds_service, cosmetic_names,

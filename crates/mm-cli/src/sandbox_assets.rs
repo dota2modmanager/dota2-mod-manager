@@ -10,6 +10,7 @@
 //!   text     the dota_ and items_ text in english, russian and schinese
 //!   chat     every language's chat file (the anti-cheat notice is built from them)
 //!   arcana   what the Terrorblade arcana window builds from
+//!   sounds   the sound window's events: the game's own (match found, pings) and two heroes'
 //! It prints {"written": n, "found": [the item names the builder offers]}.
 
 use std::collections::BTreeSet;
@@ -28,6 +29,7 @@ struct Spec {
     text: bool,
     chat: bool,
     arcana: bool,
+    sounds: bool,
 }
 
 /// A path as the archive keeps it: lower case, forward slashes, the compiled `_c` name.
@@ -91,6 +93,14 @@ pub fn run(pak: &Path, schema_file: &Path, out: &Path, spec_file: &Path) -> Resu
             want.insert(format!("panorama/images/heroes/npc_dota_hero_{id}_png.vtex_c"));
             want.insert(format!("panorama/images/heroes/selection/npc_dota_hero_{id}_png.vtex_c"));
             want.insert(format!("scripts/npc/heroes/npc_dota_hero_{id}.txt"));
+        }
+    }
+    if spec.sounds {
+        for (_, file, _) in mm_core::GAME_SOUNDS {
+            want.insert(file.to_string());
+        }
+        for hero in ["antimage", "juggernaut"] {
+            want.insert(mm_core::sound_events_file(hero));
         }
     }
     if spec.text {

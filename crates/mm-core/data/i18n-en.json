@@ -344,5 +344,8 @@
 ["Приложение работает в трее и вернёт моды после обновления Доты. Выйти можно правым кликом по значку, отключить в Настройках.","The app keeps running in the tray and puts your mods back after a Dota update. Right-click the icon to quit, or turn this off in Settings."],
 ["Архив больше 100 МБ: каталог такой не примет","The archive is over 100 MB: the catalog will not take it"],
 ["Освободить слоты можно так: включи в настройках «Общий пак, когда кончаются слоты», и приложение сложит старые моды в один пак само. Или выдели несколько модов в «Моих модах» и нажми «Объединить в пак»", "To free slots, turn on “Shared pack when slots run out” in Settings and the app folds older mods into one pack by itself. Or select a few mods in My mods and press Combine into pack"],
-["Общий пак", "Shared pack"]
+["Общий пак", "Shared pack"],
+["Матч, пинги и чат", "Match, pings and chat"],
+["Меню и лобби", "Menu and lobby"],
+["Руны, курьер и общие звуки", "Runes, courier and other sounds"]
 ]

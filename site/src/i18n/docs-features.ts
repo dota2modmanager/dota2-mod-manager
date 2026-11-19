@@ -81,12 +81,12 @@ export const featureDocs: Record<'en' | 'ru', { features: Doc }> = {
           t: '<b>Where:</b> Workshop, Your own item colour. Pick an arcana, then one of the game\'s prismatic gems or a colour of your own. It paints the model and the effects. For Terrorblade, Techies and Razor you can install the whole item, or the colour alone if you own the arcana already.',
         },
 
-        { k: 'h2', t: 'Your own sound on an ability', id: 'sounds' },
+        { k: 'h2', t: 'Your own sounds', id: 'sounds' },
         {
           k: 'steps',
           items: [
-            ['Open it', 'Workshop, Hero, Your own sound on an ability.'],
-            ['Pick the ability', 'Choose a hero and a sound of theirs.'],
+            ['Open it', 'Workshop, Hero, Your own sounds.'],
+            ['Pick the sound', 'Choose a hero and a sound of theirs. Match found, pings and the chat wheel are under Match, pings and chat at the top; runes and the courier under Runes, courier and other sounds.'],
             ['Pick your file', 'MP3, WAV or OGG. Choose whether it replaces the game\'s sound or plays on top, and set the volume.'],
             ['Install', 'The compiler from Workshop Tools builds it.'],
           ],
@@ -294,12 +294,12 @@ export const featureDocs: Record<'en' | 'ru', { features: Doc }> = {
           t: '<b>Где:</b> Мастерская, «Свой цвет предмета». Выбери аркану, потом призматический гем игры или свой цвет. Красится и модель, и эффекты. Для Террорблейда, Течиса и Разора можно поставить предмет целиком или только цвет, если аркана уже куплена.',
         },
 
-        { k: 'h2', t: 'Свой звук на способность', id: 'sounds' },
+        { k: 'h2', t: 'Свои звуки', id: 'sounds' },
         {
           k: 'steps',
           items: [
-            ['Открой', 'Мастерская, Герой, «Свой звук на способность».'],
-            ['Выбери способность', 'Выбери героя и его звук.'],
+            ['Открой', 'Мастерская, Герой, «Свои звуки».'],
+            ['Выбери звук', 'Выбери героя и его звук. Найденный матч, пинги и колесо чата лежат в «Матч, пинги и чат» вверху списка, руны и курьер в «Руны, курьер и общие звуки».'],
             ['Выбери файл', 'MP3, WAV или OGG. Реши, заменит он звук игры или ляжет поверх, и задай громкость.'],
             ['Поставь', 'Соберёт компилятор из Workshop Tools.'],
           ],

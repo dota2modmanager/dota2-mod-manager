@@ -132,7 +132,7 @@ impl AbilitySoundsService {
             return Ok(Value::Null);
         }
         let vpk = self.build(hero, &edits, compile, log)?;
-        let name = t("Свои звуки: {0}", &[json!(crate::hero_names::display_name(&sound_hero(hero)))]);
+        let name = t("Свои звуки: {0}", &[json!(crate::ability_sounds::sounds_label(hero))]);
         let generated = json!({ "sounds": hero, "edits": edits });
         if let Some(old) = old {
             let files = swap_pak(inst, &old, &vpk, false)?;
@@ -154,13 +154,16 @@ impl AbilitySoundsService {
     /// Every hero with an events file: the file's name, the hero's own id, and his name.
     pub fn heroes(&self) -> Result<Value, String> {
         let ix = self.pak01()?;
-        Ok(json!(heroes_with_sounds(ix.paths())
-            .into_iter()
-            .map(|id| {
-                let hero = sound_hero(&id);
-                json!({ "id": id, "name": crate::hero_names::display_name(&hero), "hero": hero })
-            })
-            .collect::<Vec<_>>()))
+        let present: std::collections::HashSet<&str> = ix.paths().collect();
+        // the game's own sounds first, then every hero
+        let game = crate::ability_sounds::GAME_SOUNDS.iter().filter(|(_, file, _)| present.contains(file)).map(
+            |(id, _, _)| json!({ "id": id, "name": crate::ability_sounds::sounds_label(id), "hero": "", "game": true }),
+        );
+        let heroes = heroes_with_sounds(ix.paths()).into_iter().map(|id| {
+            let hero = sound_hero(&id);
+            json!({ "id": id, "name": crate::hero_names::display_name(&hero), "hero": hero })
+        });
+        Ok(json!(game.chain(heroes).collect::<Vec<_>>()))
     }
 
     /// A hero's events and the sounds of the user's on them.
