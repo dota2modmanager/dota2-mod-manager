@@ -52,6 +52,13 @@ jobs:
         with:
           node-version: 24
 
+      # Built here rather than by the script's first call to it (tools/dev/mm-cli.js): that call
+      # comes between reading the issue and commenting on it, and two minutes of compiling left the
+      # API connection idle until GitHub closed it, so the comment went out on a dead socket (EPIPE)
+      # every time a new build came in.
+      - name: Build mm-cli
+        run: cargo build -p mm-cli
+
       # The webhook address is a credential. The script never prints it, including in an error.
       - name: Report a new Dota build
         env:
