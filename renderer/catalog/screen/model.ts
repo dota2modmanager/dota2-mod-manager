@@ -84,6 +84,8 @@ export type ScreenModel =
     rankLead?: RankCardModel | null;
     /** the map without its decor, first in Optimization */
     decorLead?: DecorCardModel | null;
+    /** the author's drafts, first when a search asks for a mod of one's own (tool-search.ts) */
+    creatorLead?: boolean;
     mods: (GridModel & { heading: boolean }) | null;
     cosmetics: { items: CosmeticItem[]; emptyText?: string; more?: string } | null;
   }
@@ -136,4 +138,5 @@ export interface ScreenActions {
   openCursor: (card: HTMLElement) => void;
   openRank: (card: HTMLElement) => void;
   openDecor: (card: HTMLElement, kind: 'map' | 'optimize') => void;
+  openCreator: (card: HTMLElement) => void;
 }

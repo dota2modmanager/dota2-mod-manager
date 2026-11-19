@@ -9,6 +9,7 @@ import { hudLead } from './hud.ts';
 import { cursorLead } from './cursor.ts';
 import { rankLead } from './rank.ts';
 import { decorLead } from './decor.ts';
+import { toolsForSearch } from '../../catalog/screen/tool-search.ts';
 import { RAW_BASE, COSMETIC_PREFIX, cosmeticMeta } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';
 import { pickedIn, firstCosmeticSlots } from '../../core/installed.ts';
@@ -129,14 +130,26 @@ export async function renderSearchResults(actions: ScreenActions): Promise<void>
   const cos = filterCosmetics(cosAll);
   const shownCos = cos.slice(0, COS_SEARCH_LIMIT);
 
+  // weather, a background or a mod of one's own: the tool that does it, above whatever mods the
+  // word also names. Not when the toolbar narrows to installed or starred mods: a tool is neither
+  const f = view.filters;
+  const tools = f.favOnly || f.installedOnly ? [] : toolsForSearch(q);
+  const leads = {
+    decorLead: tools.includes('map') ? decorLead('terrains') : null,
+    backgroundLead: tools.includes('background') ? backgroundLead('backgrounds') : null,
+    creatorLead: tools.includes('creator'),
+  };
+  const anyTool = tools.length > 0;
+
   await paint(() => showScreen({
     kind: 'list',
     key: 'search',
     title: L`Поиск:`,
     accent: state.search.trim(),
-    toolbar: toolbarModel(mods.length + cos.length, { installable, all }),
-    note: !mods.length && !cos.length ? L`Ничего не найдено` : undefined,
-    mods: mods.length ? { heading: cos.length > 0, mods, withCat: true } : null,
+    toolbar: toolbarModel(mods.length + cos.length + Number(!!leads.decorLead) + Number(!!leads.backgroundLead) + Number(leads.creatorLead), { installable, all }),
+    note: !mods.length && !cos.length && !anyTool ? L`Ничего не найдено` : undefined,
+    ...leads,
+    mods: mods.length || anyTool ? { heading: cos.length > 0, mods, withCat: true } : null,
     cosmetics: cos.length ? {
       items: cosmeticItems(shownCos, true),
       more: cos.length > shownCos.length ? L`…и ещё ${cos.length - shownCos.length} — уточни запрос` : undefined,

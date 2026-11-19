@@ -17,6 +17,7 @@ import { HudCard } from '../hud/HudCard.tsx';
 import { CursorCard } from '../cursor/CursorCard.tsx';
 import { RankCard } from '../rank/RankCard.tsx';
 import { DecorCard } from '../decor/DecorCard.tsx';
+import { CreatorCard } from '../creator/CreatorCard.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -74,7 +75,8 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
             {m.cursorLead && <CursorCard m={m.cursorLead} onOpen={actions.openCursor} />}
             {m.rankLead && <RankCard m={m.rankLead} onOpen={actions.openRank} />}
             {m.decorLead && <DecorCard m={m.decorLead} onOpen={actions.openDecor} />}
-            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead || m.hudLead || m.cursorLead || m.rankLead || m.decorLead ? undefined : m.mods.emptyText}
+            {m.creatorLead && <CreatorCard onOpen={actions.openCreator} />}
+            <ModGrid listKey={m.key} mods={m.mods.mods} grouped={m.mods.grouped} withCat={m.mods.withCat} emptyText={m.lead?.length || m.mapLead || m.soundLead || m.backgroundLead || m.hudLead || m.cursorLead || m.rankLead || m.decorLead || m.creatorLead ? undefined : m.mods.emptyText}
               onOpen={actions.openMod} onFavChanged={actions.favChanged} />
           </div>
         </>

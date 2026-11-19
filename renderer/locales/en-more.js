@@ -60,6 +60,7 @@ const EN = {
   "Герои по проценту побед, по атрибутам и по частоте пиков этого патча, прямо в выборе героя.": "Heroes by win rate, by attribute and by pick rate this patch, right in the hero picker.",
   "Своё": "Your own",
   "Собери свой мод в архив по правилам каталога: стили, обложка, описание.": "Pack your mod into an archive the catalog accepts: styles, cover, description.",
+  "Свой мод или фон в каталог: черновик и модерация": "Your own mod or background in the catalog: draft and review",
   "Поставить свой VPK": "Install your own VPK",
   "Мод из файла, архива или папки: приложение само узнает героя и предметы.": "A mod from a file, an archive or a folder: the app works out the hero and items itself.",
   "Мод с помощью ИИ": "A mod made with AI",
