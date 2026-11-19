@@ -34,7 +34,33 @@ pub struct HeroEvent {
 
 /// The hero's events file in pak01.
 pub fn events_file(hero: &str) -> String {
-    format!("soundevents/game_sounds_heroes/game_sounds_{hero}.vsndevts_c")
+    match game_sounds(hero) {
+        Some((_, file, _)) => file.to_string(),
+        None => format!("soundevents/game_sounds_heroes/game_sounds_{hero}.vsndevts_c"),
+    }
+}
+
+/// The game's own events files that are no hero's, listed in the sound window beside the heroes:
+/// (the window's id, the file, its name). Match found, pings and the chat wheel; the menu and the
+/// lobby; runes, the courier and the rest. An id here is no hero's, so no events file of a hero
+/// takes it.
+pub const GAME_SOUNDS: [(&str, &str, &str); 3] = [
+    ("ui", "soundevents/game_sounds_ui_imported.vsndevts_c", "Матч, пинги и чат"),
+    ("ui_menu", "soundevents/soundevents_dota_ui.vsndevts_c", "Меню и лобби"),
+    ("game", "soundevents/game_sounds.vsndevts_c", "Руны, курьер и общие звуки"),
+];
+
+/// The game's own events file by the window's id, if `hero` is one.
+pub fn game_sounds(hero: &str) -> Option<(&'static str, &'static str, &'static str)> {
+    GAME_SOUNDS.iter().copied().find(|(id, _, _)| *id == hero)
+}
+
+/// What the window and My mods call the events file: a hero's name, or a game file's.
+pub fn sounds_label(hero: &str) -> String {
+    match game_sounds(hero) {
+        Some((_, _, name)) => crate::i18n::t(name, &[]),
+        None => crate::hero_names::display_name(&sound_hero(hero)),
+    }
 }
 
 /// Where a sound of the user's goes, compiled: one folder of ours per hero.
@@ -275,3 +301,7 @@ pub fn wav_problem(buf: &[u8]) -> Option<String> {
     }
     Some("no fmt chunk".into())
 }
+
+#[cfg(test)]
+#[path = "ability_sounds_tests.rs"]
+mod tests;

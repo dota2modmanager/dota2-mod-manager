@@ -12,7 +12,7 @@ export function SoundCard({ m, onOpen }: { m: SoundCardModel; onOpen: (card: HTM
         <div className="noimg"><span className="ms">graphic_eq</span></div>
       </div>
       <div className="card-body">
-        <CardName>{L`Свой звук на способность`}</CardName>
+        <CardName>{L`Свои звуки`}</CardName>
         <div className="card-meta card-meta-split">
           <span>{m.installed ? L`Героев со своими звуками: ${m.installed}` : L`MP3, WAV или OGG`}</span>
         </div>

@@ -225,7 +225,7 @@ export interface HeroEvent { name: string; type: string; files: number }
 
 export interface SoundsApi {
   /** every hero with an events file: the file's name, the hero's own id (for his portrait) and his name */
-  heroes: () => Promise<Reply<{ heroes: { id: string; hero: string; name: string }[] }>>;
+  heroes: () => Promise<Reply<{ heroes: { id: string; hero: string; name: string; game?: boolean }[] }>>;
   /** a hero's events, and the sounds of the user's on them */
   hero: (hero: string) => Promise<Reply<{ hero: string; events: HeroEvent[]; edits: SoundEdit[]; recId: string | null }>>;
   /** a 16-bit PCM WAV on an event, the hero compiled again and put in My mods */

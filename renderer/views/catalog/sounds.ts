@@ -15,7 +15,7 @@ import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay
 import { screen } from './state.ts';
 
 let open = false;
-let heroes: { id: string; hero: string; name: string }[] = [];
+let heroes: { id: string; hero: string; name: string; game?: boolean }[] = [];
 let portraits: Record<string, string> = {};
 let heroFilter = '';
 let m: Omit<SoundModalModel, 'heroes' | 'portraits' | 'sounded' | 'heroFilter'> = blank(null);
@@ -39,7 +39,8 @@ export async function openSounds(from: Element | null, hero: string | null = nul
   if (!heroes.length) {
     const r = await window.api.sounds.heroes();
     if (r.error || !('heroes' in r)) { toast(r.error || L`Не удалось прочитать звуки игры`, 'error'); return; }
-    heroes = [...r.heroes].sort((a, b) => a.name.localeCompare(b.name));
+    // the game's own sounds (match found, pings, runes) ahead of the heroes, as the main process lists them
+    heroes = [...r.heroes].sort((a, b) => Number(!!b.game) - Number(!!a.game) || (a.game ? 0 : a.name.localeCompare(b.name)));
   }
   takeOverlay();
   open = true;
@@ -50,7 +51,7 @@ export async function openSounds(from: Element | null, hero: string | null = nul
   // the portraits come after the window is up: the first time they take the game a moment
   if (!Object.keys(portraits).length) {
     // the portraits are by the hero's own id, the window's keys by the events file's
-    const got: Record<string, string> = await window.api.cosmetics.heroPortraits(heroes.map((h) => h.hero)).catch(() => ({}));
+    const got: Record<string, string> = await window.api.cosmetics.heroPortraits(heroes.filter((h) => !h.game).map((h) => h.hero)).catch(() => ({}));
     portraits = Object.fromEntries(heroes.filter((h) => got[h.hero]).map((h) => [h.id, got[h.hero]]));
     draw();
   }

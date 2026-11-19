@@ -8,7 +8,7 @@ import { SoundHeroes, SoundHeroHead } from './SoundHeroes.tsx';
 import type { HeroEvent, SoundEdit, SoundMode } from '../../api/content.ts';
 
 export interface SoundModalModel {
-  heroes: { id: string; name: string }[];
+  heroes: { id: string; name: string; game?: boolean }[];
   portraits: Record<string, string>;
   /** heroes with a sound of the user's on them */
   sounded: string[];
@@ -49,18 +49,18 @@ export function SoundModal({ m, actions }: { m: SoundModalModel; actions: SoundM
   return (
     <div className="modal-body sound-own">
       <div className="modal-title-row">
-        <div className="modal-title">{L`Свой звук на способность`}</div>
+        <div className="modal-title">{L`Свои звуки`}</div>
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}>
           <span className="ms">close</span>
         </button>
       </div>
-      <div className="modal-sub"><span>{L`Твой файл вместо звука игры или поверх него`}</span></div>
+      <div className="modal-sub"><span>{L`Способности героев, найденный матч, пинги, руны: твой файл вместо звука игры или поверх него`}</span></div>
 
       {!m.hero && <SoundHeroes m={{ heroes: m.heroes, portraits: m.portraits, sounded: m.sounded, query: m.heroFilter }} pick={actions.hero} search={actions.heroFilter} />}
 
       {m.hero && (
         <div className="map-side">
-          <SoundHeroHead name={m.heroes.find((h) => h.id === m.hero)?.name || m.hero} portrait={m.portraits[m.hero]} back={actions.heroes} />
+          <SoundHeroHead name={m.heroes.find((h) => h.id === m.hero)?.name || m.hero} portrait={m.portraits[m.hero]} game={m.heroes.find((h) => h.id === m.hero)?.game} back={actions.heroes} />
           <div className="map-side-label">{L`Звук`} <span className="text-meta">{shown.length === m.events.length ? m.events.length : `${shown.length} / ${m.events.length}`}</span></div>
           <PickerSearch id="soundFilter" value={m.filter} onChange={actions.filter} />
           <div className="sound-events">

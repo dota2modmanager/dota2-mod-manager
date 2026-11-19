@@ -361,7 +361,7 @@ function buildGameTree() {
     }
     if (origin !== 'fallback stub') {
       try {
-        extras = assets(realPak, schemaFile, dir, { items: BUILDER_SAMPLE, heroes: true, text: true, chat: true, arcana: true }).written;
+        extras = assets(realPak, schemaFile, dir, { items: BUILDER_SAMPLE, heroes: true, text: true, chat: true, arcana: true, sounds: true }).written;
       } catch (e) {
         log('  could not copy the item builder\'s, the notice\'s and the arcana\'s files:', e.message);
       }

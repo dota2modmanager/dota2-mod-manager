@@ -172,6 +172,8 @@ const EN = {
   "Свечение глаз не садится на предмет, поэтому его здесь нет.": "Eye glows do not sit on an item, so they are not here.",
   "Есть свой звук": "Has a sound of yours",
   "Другой герой": "Another hero",
+  "Свои звуки": "Your own sounds",
+  "Способности героев, найденный матч, пинги, руны: твой файл вместо звука игры или поверх него": "Heroes' abilities, match found, pings, runes: your file instead of the game's sound or over it",
   "Из игры": "The game's own",
   "Иконки способностей": "Ability icons",
   "Любая иконка способности из предметов этого героя": "Any ability icon this hero's items have",

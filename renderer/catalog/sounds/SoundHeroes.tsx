@@ -4,7 +4,8 @@
 import { PickerSearch } from '../builder/parts.tsx';
 
 export interface SoundHeroesModel {
-  heroes: { id: string; name: string }[];
+  /** game: the game's own sounds (match found, pings, runes), not a hero's */
+  heroes: { id: string; name: string; game?: boolean }[];
   /** the selection portraits out of the game, by hero id; one missing draws its name alone */
   portraits: Record<string, string>;
   /** heroes with a sound of the user's on them */
@@ -14,8 +15,8 @@ export interface SoundHeroesModel {
   mark?: { icon: string; title: string };
 }
 
-function Portrait({ src }: { src: string | undefined }) {
-  return src ? <img decoding="async" className="sound-hero-pic" src={src} alt="" draggable={false} /> : <span className="sound-hero-pic"><span className="ms">person</span></span>;
+function Portrait({ src, game }: { src: string | undefined; game?: boolean }) {
+  return src ? <img decoding="async" className="sound-hero-pic" src={src} alt="" draggable={false} /> : <span className="sound-hero-pic"><span className="ms">{game ? 'notifications' : 'person'}</span></span>;
 }
 
 /** Every hero, searchable. */
@@ -30,7 +31,7 @@ export function SoundHeroes({ m, pick, search }: { m: SoundHeroesModel; pick: (i
       <div className="sound-heroes" id="soundHeroes">
         {shown.map((h) => (
           <button key={h.id} className={`sound-hero ${sounded.has(h.id) ? 'has' : ''}`} data-hero={h.id} onClick={() => pick(h.id)}>
-            <Portrait src={m.portraits[h.id]} />
+            <Portrait src={m.portraits[h.id]} game={h.game} />
             <span className="sound-hero-name">{h.name}</span>
             {sounded.has(h.id) && <span className="ms sound-hero-mark" title={mark.title}>{mark.icon}</span>}
           </button>
@@ -42,10 +43,10 @@ export function SoundHeroes({ m, pick, search }: { m: SoundHeroesModel; pick: (i
 }
 
 /** The hero picked, and the way back to the others. */
-export function SoundHeroHead({ name, portrait, back }: { name: string; portrait: string | undefined; back: () => void }) {
+export function SoundHeroHead({ name, portrait, back, game }: { name: string; portrait: string | undefined; back: () => void; game?: boolean }) {
   return (
     <div className="sound-hero-head">
-      <Portrait src={portrait} />
+      <Portrait src={portrait} game={game} />
       <span className="sound-hero-head-name">{name}</span>
       <button className="btn btn-ghost btn-sm" id="soundHeroBack" onClick={back}><span className="ms">swap_horiz</span>{L`Другой герой`}</button>
     </div>
