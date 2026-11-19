@@ -459,6 +459,10 @@ async function downloadMods() {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = Buffer.from(await res.arrayBuffer());
+      // said the same way as for a cached copy: the list pins a hash, and a download that no
+      // longer matches it is a mod its author replaced, which the next manifest then records
+      const expected = known.get(label)?.sha256;
+      if (expected && expected !== sha256(data)) log(`  ! ${label}: sha256 changed upstream`);
       fs.writeFileSync(dest, data);
       const bytes = data.length;
       log(`  + ${label} (${(bytes / 1024 / 1024).toFixed(1)} MB)`);
