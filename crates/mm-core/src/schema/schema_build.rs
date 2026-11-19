@@ -116,6 +116,48 @@ fn enabled(rec: &Value) -> bool {
     rec.get("enabled") != Some(&Value::Bool(false))
 }
 
+/// The particles the ability effects picks replace, taken out of every other patch and out of the
+/// game's items that replace them too (item_builder_fx_first.rs), so the pick is what the game shows.
+fn fx_over_worn(vanilla: &[u8], out: &mut Vec<TablePatch>) -> Result<(), crate::kv::KvError> {
+    use crate::item_builder_fx_first::{fx_particles, items_over, without_particles};
+    let mut taken = HashSet::new();
+    for p in out.iter().filter(|p| p.fx) {
+        taken.extend(fx_particles(&p.block)?);
+    }
+    if taken.is_empty() {
+        return Ok(());
+    }
+    let mut skip: HashSet<String> = HashSet::new();
+    let mut source = String::new();
+    for p in out.iter_mut() {
+        skip.insert(p.id.clone());
+        if p.fx {
+            if source.is_empty() {
+                source = p.source.clone();
+            }
+            continue;
+        }
+        if let Some(b) = without_particles(&p.block, &taken)? {
+            p.block = b;
+        }
+    }
+    for (id, block) in items_over(vanilla, &taken, &skip)? {
+        out.push(TablePatch {
+            id,
+            block,
+            assets: None,
+            source: source.clone(),
+            own: None,
+            added: None,
+            unplaced: None,
+            item: None,
+            item_id: None,
+            fx: false,
+        });
+    }
+    Ok(())
+}
+
 fn persona_of(rec: &Value) -> Option<&Value> {
     rec.get("persona").filter(|p| crate::js::truthy(p))
 }
@@ -605,6 +647,8 @@ impl TableBuild {
                 }
             }
         }
+        // an ability effect picked goes over the one a worn item gives the same ability
+        fx_over_worn(vanilla, &mut out).map_err(|e| e.to_string())?;
         // every hero's picks in one ability effects slot dress the one stock item all heroes wear there
         let mut list = merge_fx_patches(out, |p| p.fx).map_err(|e| e.to_string())?;
         // the soundevents, portraits and sprites of every pick go into one copy of each, ahead of
