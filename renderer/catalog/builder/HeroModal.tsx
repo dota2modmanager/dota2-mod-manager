@@ -107,7 +107,7 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
                   : <span className="ward-thumb"><div className="noimg"><span className="ms">{s.icon}</span></div></span>}
                 <span className="ward-rail-text">
                   <span className="ward-rail-label card-name">{s.label}</span>
-                  <span className="ward-rail-sub">{s.liveName ? cosmeticName(s.liveName) : `${L`Стандартный`} · ${s.options}`}</span>
+                  <span className="ward-rail-sub">{s.liveName ? cosmeticName(s.liveName) : (s.options ? `${L`Стандартный`} · ${s.options}` : L`Стандартный`)}</span>
                 </span>
               </button>
               {s.liveName && (

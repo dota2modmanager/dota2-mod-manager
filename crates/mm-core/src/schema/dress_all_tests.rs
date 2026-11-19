@@ -59,12 +59,15 @@ fn slot_of(hero: &str, equip: &str) -> String {
 fn every_hero_gets_one_of_its_own_sets_whole() {
     let (_dir, mut lib) = library("all");
     let d = dress_all(&mut lib, TABLE, true, 42).unwrap();
-    assert_eq!(d, Dressed { heroes: 2, kept: 0 });
+    assert_eq!(d, Dressed { heroes: 2, kept: 0, arcanas: 0, immortals: 0 });
     let on = worn(&lib);
     let items: Vec<&str> = on.iter().map(|(_, i)| i.as_str()).collect();
     // Axe in its set; Lina in the crown set, the only one of hers that goes on whole
     assert_eq!(items, ["200", "300", "400"], "worn: {on:?}");
-    assert!(on.iter().all(|(slot, item)| (item == "400") == slot.contains("lina")), "a piece on the wrong hero: {on:?}");
+    assert!(
+        on.iter().all(|(slot, item)| (item == "400") == slot.contains("lina")),
+        "a piece on the wrong hero: {on:?}"
+    );
 }
 
 #[test]
@@ -73,11 +76,11 @@ fn a_hero_already_wearing_a_pick_keeps_it_unless_told_otherwise() {
     let helm = slot_of("axe", "head");
     pick_cosmetic(&mut lib, &helm, "200", Some("Horned Helm"), None, "").unwrap();
     let d = dress_all(&mut lib, TABLE, true, 7).unwrap();
-    assert_eq!(d, Dressed { heroes: 1, kept: 1 });
+    assert_eq!(d, Dressed { heroes: 1, kept: 1, arcanas: 0, immortals: 0 });
     assert!(!worn(&lib).iter().any(|(_, i)| i == "300"), "Axe got his set over the pick he chose");
 
     let d = dress_all(&mut lib, TABLE, false, 7).unwrap();
-    assert_eq!(d, Dressed { heroes: 2, kept: 0 });
+    assert_eq!(d, Dressed { heroes: 2, kept: 0, arcanas: 0, immortals: 0 });
     assert!(worn(&lib).iter().any(|(_, i)| i == "300"), "Axe was not dressed with keep_worn off");
 }
 
@@ -95,4 +98,31 @@ fn a_batch_writes_the_manifest_once_at_its_end() {
     assert_eq!(d.heroes, 2);
     let back = Library::new(file.parent().unwrap());
     assert_eq!(worn(&back), worn(&lib), "the manifest on disk is not what the batch left in memory");
+}
+
+/// The looks on the real table, printed: `MM_ITEMS_GAME=<items_game.txt> cargo test -p mm-core looks_on_the_real_table -- --ignored --nocapture`
+#[test]
+#[ignore]
+fn looks_on_the_real_table() {
+    use crate::item_builder_worth as worth;
+    let Ok(path) = std::env::var("MM_ITEMS_GAME") else { return };
+    let text = std::fs::read(path).unwrap();
+    let slots = crate::item_builder_slots::item_slots(&text).unwrap();
+    let sets = crate::item_builder_sets::item_sets(&text, &slots).unwrap();
+    let drops = worth::drops(&text).unwrap();
+    eprintln!("cache {} bonus {} treasure {}", drops.cache.len(), drops.bonus.len(), drops.treasure.len());
+    let looks = worth::best_looks(&slots, &sets, &drops, &mut worth::Rng::new(7));
+    let only = std::env::var("MM_HEROES").unwrap_or_default();
+    for (hero, look) in &looks {
+        if !only.is_empty() && !only.split(',').any(|h| hero.contains(h)) {
+            continue;
+        }
+        let set = look
+            .set
+            .map(|s| format!("{} [{} {}]", s.name, s.rarity, worth::set_worth(s, &drops)))
+            .unwrap_or("-".into());
+        let over: Vec<String> =
+            look.over.iter().map(|p| format!("{}: {}", p.slot.rsplit(':').next().unwrap_or(""), p.name)).collect();
+        eprintln!("{hero}: {set}\n    {}", over.join(" | "));
+    }
 }

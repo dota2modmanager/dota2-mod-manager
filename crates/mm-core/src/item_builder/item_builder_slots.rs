@@ -653,6 +653,21 @@ pub fn stock_item_slots(text: &[u8]) -> Result<Vec<ItemSlot>, KvError> {
     slots_of(text, true)
 }
 
+/// The slots the builder shows: item_slots, and the stock slots of a hero with no paid item at
+/// all, so a hero the store has nothing for yet (Largo at his release) still opens for his
+/// effects, his colours and his 3D view.
+pub fn builder_slots(text: &[u8]) -> Result<Vec<ItemSlot>, KvError> {
+    let mut out = item_slots(text)?;
+    let dressed: HashSet<String> = out.iter().flat_map(|s| s.hero_ids.iter().cloned()).collect();
+    let bare: Vec<ItemSlot> = stock_item_slots(text)?
+        .into_iter()
+        .filter(|s| s.options.is_empty() && s.persona.is_none() && s.ability_fx.is_none())
+        .filter(|s| !s.hero_ids.is_empty() && s.hero_ids.iter().all(|h| !dressed.contains(h)))
+        .collect();
+    out.extend(bare);
+    Ok(out)
+}
+
 fn slots_of(text: &[u8], bare_too: bool) -> Result<Vec<ItemSlot>, KvError> {
     let items = items_of(text)?;
     let mut hero_cache: HashMap<String, Vec<String>> = HashMap::new();

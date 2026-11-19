@@ -41,14 +41,14 @@ const hubActions = (): ScreenActions => ({
 
 let dressing = false;
 
-/** A random set worn whole on every hero who wears nothing yet: one reading of the game's table in the core for all of them. */
+/** Every hero who wears nothing yet in their best look (crates/mm-core/src/item_builder/item_builder_worth.rs): one reading of the game's table in the core for all of them. */
 async function dressAll(): Promise<void> {
   if (dressing) return;
-  const ok = await confirmDialog(L`Каждый герой без надетых предметов получит случайный набор целиком. Кто уже что-то носит, останется как есть.`, { okLabel: L`Одеть всех`, danger: false });
+  const ok = await confirmDialog(L`Каждый герой без надетых предметов получит лучшее, что есть в игре: набор из коллекционного сундука или редкий дроп сокровищницы, а поверх него аркану и имморталки, золотые и парами, где они есть. Кто уже что-то носит, останется как есть.`, { okLabel: L`Одеть всех`, danger: false });
   if (!ok) return;
   dressing = true;
   drawHub();
-  let r: { error?: string; heroes?: number; kept?: number };
+  let r: { error?: string; heroes?: number; kept?: number; arcanas?: number; immortals?: number };
   try {
     r = await window.api.cosmetics.dressAll(true);
   } catch (err) {
@@ -59,7 +59,10 @@ async function dressAll(): Promise<void> {
   const kept = r.kept || 0;
   if (r.error) toast(r.error, 'error');
   else if (!heroes) toast(L`Все герои уже одеты`);
-  else toast(kept ? L`Одето героев: ${heroes}, ещё ${kept} в своём` : L`Одето героев: ${heroes}`);
+  else {
+    const worn = L`Одето героев: ${heroes}, аркан: ${r.arcanas || 0}, имморталок: ${r.immortals || 0}`;
+    toast(kept ? `${worn}. ${L`Ещё ${kept} в своём`}` : worn);
+  }
   if (!r.error && heroes) await afterPick();
   drawHub();
 }

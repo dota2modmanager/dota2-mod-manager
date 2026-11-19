@@ -509,22 +509,19 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 let c = &mut *core;
                 match c.game() {
                     None => Err(t("Путь к Dota 2 не задан", &[])),
-                    Some(g) => c
-                        .schema
-                        .vanilla(&g)
-                        .and_then(|b| {
-                            let text = &b.0;
-                            c.library
-                                .batch(|lib| crate::schema_cosmetics::dress_all(lib, text, keep_worn, seed))
-                                .map_err(|e| e.to_string())
-                                .and_then(|r| r)
-                        }),
+                    Some(g) => c.schema.vanilla(&g).and_then(|b| {
+                        let text = &b.0;
+                        c.library
+                            .batch(|lib| crate::schema_cosmetics::dress_all(lib, text, keep_worn, seed))
+                            .map_err(|e| e.to_string())
+                            .and_then(|r| r)
+                    }),
                 }
             };
             match dressed {
                 Ok(d) => {
                     let _ = o.refresh_schema_in_background().recv();
-                    json!({ "ok": true, "heroes": d.heroes, "kept": d.kept })
+                    json!({ "ok": true, "heroes": d.heroes, "kept": d.kept, "arcanas": d.arcanas, "immortals": d.immortals })
                 }
                 Err(e) => json!({ "error": e }),
             }
@@ -758,8 +755,13 @@ fn slots_key(game: &Path, lib: &crate::library::Library, lang: &str) -> Option<S
     let stamp = crate::pak_stamp::game_schema_stamp(game).ok()?;
     let picks: Vec<&Value> =
         lib.list().iter().filter(|r| r.get("categoryId").and_then(Value::as_str) == Some("cosmetic")).collect();
-    Some(format!("{}|{stamp}|{lang}|{}", game.display(), serde_json::to_string(&picks).ok()?))
+    Some(format!("{SLOTS_SHAPE}|{}|{stamp}|{lang}|{}", game.display(), serde_json::to_string(&picks).ok()?))
 }
+
+/// The shape of the answer the app makes: raised when a new version answers differently for the
+/// same table, so the answer kept on disk by the version before is made again (2: heroes with
+/// only stock items, Largo).
+const SLOTS_SHAPE: u32 = 2;
 
 #[cfg(test)]
 mod slots_kept {
