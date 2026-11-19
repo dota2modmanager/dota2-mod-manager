@@ -63,6 +63,7 @@ jobs:
           YANDEX_OAUTH_TOKEN: ${{ secrets.YANDEX_OAUTH_TOKEN }}
           FINGERPRINTS_DEPLOY_KEY: ${{ secrets.FINGERPRINTS_DEPLOY_KEY }}
           VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
           STATS_APP_TOKEN: ${{ secrets.STATS_APP_TOKEN }}
           UPLOADER_APP_TOKEN: ${{ secrets.UPLOADER_APP_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}

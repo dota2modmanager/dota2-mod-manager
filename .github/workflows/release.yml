@@ -73,6 +73,8 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+      # SignPath fetches the unsigned exes from this run's artifacts with the workflow token
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
@@ -144,19 +146,53 @@ jobs:
       # The portable build is the same exe without the installer around it, and portable.yml is
       # what it checks a new one against: it cannot install over itself, so it fetches the new one
       # beside itself (crates/mm-core/src/app/portable_update.rs).
-      - name: Build the installer and the portable exe, and upload them to the draft
+      - name: Build the installer and the portable exe
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: |
           set -euo pipefail
           npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":true}}'
           node tools/release/tauri-release.mjs windows dist "${TAG#v}"
+
+      # Authenticode through SignPath Foundation (.github/actions/signpath-windows), once the
+      # repository variable SIGNPATH_SIGNING_POLICY names the policy. Until the release certificate
+      # is issued it stays unset and a release goes out unsigned, as before: an exe signed with the
+      # self-signed test certificate is no better to Windows than an unsigned one, and that test
+      # runs in code-signing.yml instead. The signing changes both exes, so the updater's
+      # signature and both feeds are made again from the signed bytes.
+      - name: Sign the installer and the portable exe
+        if: startsWith(github.ref, 'refs/tags/') && vars.SIGNPATH_SIGNING_POLICY != ''
+        uses: ./.github/actions/signpath-windows
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          signing-policy: ${{ vars.SIGNPATH_SIGNING_POLICY }}
+          dir: dist
+
+      - name: Sign the signed installer for the updater again, and write the feeds from it
+        if: startsWith(github.ref, 'refs/tags/') && vars.SIGNPATH_SIGNING_POLICY != ''
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          set -euo pipefail
+          npx tauri signer sign dist/Dota-2-Mod-Manager-Setup.exe
+          node tools/release/tauri-release.mjs windows-feeds dist "${TAG#v}"
+
+      - name: Upload the installer and the portable exe to the draft
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
           cat dist/latest.yml dist/portable.yml
           gh release upload "$TAG" --repo "$REPO" --clobber \
             dist/Dota-2-Mod-Manager-Setup.exe dist/Dota-2-Mod-Manager-Setup.exe.sig \

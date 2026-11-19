@@ -1,0 +1,86 @@
+name: Code signing
+
+# The SignPath round trip on a build of any commit, without a release: build the installer and the
+# portable exe as release.yml does, send them to SignPath, check what comes back, and keep the
+# signed files as this run's artifact for anyone who wants to look at them on Windows.
+#
+# It signs with the test certificate by default. release.yml signs only once the repository
+# variable SIGNPATH_SIGNING_POLICY is set, and that waits for SignPath Foundation to issue the
+# release certificate after it has reviewed a run of this workflow. Nothing here is uploaded to a
+# release or reaches a user.
+on:
+  workflow_dispatch:
+    inputs:
+      signing-policy:
+        description: SignPath signing policy
+        type: choice
+        options:
+          - test-signing
+          - release-signing
+        default: test-signing
+
+permissions:
+  contents: read
+
+jobs:
+  sign:
+    # SignPath Foundation signs only what GitHub-hosted runners built, from start to finish
+    runs-on: windows-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      # SignPath fetches the unsigned exes from this run's artifacts with the workflow token
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      - name: Build the installer and the portable exe
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          set -euo pipefail
+          npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          node tools/release/tauri-release.mjs windows dist "$(node -p "require('./package.json').version")"
+
+      - name: Sign them through SignPath
+        uses: ./.github/actions/signpath-windows
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          signing-policy: ${{ inputs.signing-policy }}
+          dir: dist
+
+      # the same steps release.yml takes after signing, so a run here proves them too
+      - name: Sign the signed installer for the updater again, and write the feeds from it
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+        run: |
+          set -euo pipefail
+          npx tauri signer sign dist/Dota-2-Mod-Manager-Setup.exe
+          node tools/release/tauri-release.mjs windows-feeds dist "$(node -p "require('./package.json').version")"
+          cat dist/latest.yml dist/portable.yml
+
+      - name: Keep the signed files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: signed-windows
+          path: |
+            dist/Dota-2-Mod-Manager-Setup.exe
+            dist/Dota-2-Mod-Manager-Setup.exe.sig
+            dist/Dota-2-Mod-Manager-Portable.exe
+            dist/latest.yml
+            dist/portable.yml
+          retention-days: 14
