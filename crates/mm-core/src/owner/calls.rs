@@ -55,6 +55,9 @@ fn s(args: &[Value], i: usize) -> String {
 pub fn call(name: &str, args: &[Value]) -> Result<Value, String> {
     Ok(match name {
         "hero-names.heroIdFromName" => json!(hero_names::id_from_name(&s(args, 0))),
+        // tools/mods/dota-diff.mjs groups a Dota update's files by hero with these two
+        "hero-names.heroKey" => json!(hero_names::key(&s(args, 0))),
+        "hero-names.heroDisplayName" => json!(hero_names::display_name(&s(args, 0))),
         "patcher.script" => {
             // (game, backupDir, ops): ["state", folder] ["apply", folder] ["revert", folder]
             let game = std::path::PathBuf::from(s(args, 0));
