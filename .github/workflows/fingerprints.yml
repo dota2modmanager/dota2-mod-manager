@@ -57,7 +57,6 @@ jobs:
         run: |
           cp data/fingerprints.json data/hero-index.json .
           cp data/site/src/data/heroes.json data/site/src/data/categories.json site/src/data/
-          rsync -a --delete data/site/public/mods/ site/public/mods/
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
@@ -66,6 +65,11 @@ jobs:
 
       - name: Install deps
         run: npm ci
+
+      # The pictures the pages already have, from the bucket, so the rebuild below only fetches
+      # what the catalog gained. A gap is said and left for the rebuild to fill.
+      - name: Bring in the catalog pictures
+        run: node tools/catalog/site-previews.mjs pull --best-effort
 
       # The per-mod checkpoint that makes this job incremental. It belongs to the job and to
       # nothing else, so it is cached rather than committed - see .gitignore. The key moves
@@ -110,7 +114,8 @@ jobs:
         run: |
           cp ../fingerprints.json ../hero-index.json ../mod-paths.json .
           cp ../site/src/data/heroes.json ../site/src/data/categories.json site/src/data/
-          rsync -a --delete ../site/public/mods/ site/public/mods/
+          # the pictures went to R2 above; the copies this branch held until 2026-11-19 go
+          git rm -r -q --ignore-unmatch site/public/mods
           if [ -z "$(git status --porcelain)" ]; then
             echo "catalog unchanged"
           else
