@@ -39,6 +39,7 @@ import { openHud } from './catalog/hud.ts';
 import { openCursor } from './catalog/cursor.ts';
 import { openRank } from './catalog/rank.ts';
 import { openDecor } from './catalog/decor.ts';
+import { openCreator } from './creator.ts';
 import { remember, screen, startFilters, view } from './catalog/state.ts';
 import { onDownloadCounts } from '../core/download-counts.ts';
 
@@ -160,6 +161,7 @@ const actions: ScreenActions = {
   openCursor: (card) => void openCursor(card),
   openRank: (card) => void openRank(card),
   openDecor: (card, kind) => void openDecor(card, kind),
+  openCreator: (card) => void openCreator(card),
 };
 
 async function renderCatalog(): Promise<void> {
