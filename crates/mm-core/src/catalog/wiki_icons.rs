@@ -108,6 +108,18 @@ impl WikiIcons {
         let _ = std::fs::write(&self.miss_file, serde_json::to_string(misses).unwrap_or_default());
     }
 
+    /// What the disk already knows of a picture, without asking the wiki: the picture, or that
+    /// there is none; None when only the network can tell.
+    pub fn known(&self, name: &str) -> Option<Option<String>> {
+        if let Ok(buf) = std::fs::read(self.cache_path(name)) {
+            if let Some(mime) = sniff(&buf) {
+                return Some(Some(Self::data_uri(&buf, mime)));
+            }
+        }
+        let missed = self.misses.lock().unwrap_or_else(|e| e.into_inner()).get(name).copied();
+        missed.is_some_and(|at| (self.now)() - at < MISS_TTL_MS).then_some(None)
+    }
+
     /// The disk cache and the misses around one lookup.
     fn cached(&self, key: &str, resolve: impl FnOnce() -> Got) -> Option<String> {
         let file = self.cache_path(key);

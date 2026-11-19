@@ -1,7 +1,10 @@
 /* One free look, drawn like a mod card (same .card/.grid classes): a picture, a star, and the same
  * green edge on whichever look is live. Its picture comes out of the game's own files and is
- * fetched once the card is near the screen (ui/cosmetic-icons.ts, watchIconFor). */
+ * fetched once the card is near the screen (ui/cosmetic-icons.ts, watchIconFor). Until it is known
+ * the tile shows the same spinner a mod's picture on its way does, and a picture that arrives
+ * fades in over it; one the game has not got is the slot's icon. */
 import { useEffect, useReducer, useRef, useSyncExternalStore, type CSSProperties, type MouseEvent } from 'react';
+import { GrowMarker, useGrowing } from '../../ui/growing.ts';
 import { cosmeticIcon, subscribeIcon, watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { toggleFavorite, isFavKey } from '../favorites.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
@@ -34,6 +37,8 @@ interface Props {
 export function CosmeticCard({ item, index, onOpen, onFavChanged }: Props) {
   const thumb = useRef<HTMLSpanElement>(null);
   const icon = useCosmeticIcon(item.name);
+  // a picture already known when the tile is drawn (scrolled back to) is simply there
+  const waited = useRef(icon === undefined);
   const fav = isFavKey(item.favKey);
   const [, redraw] = useReducer((n: number) => n + 1, 0);
   useEffect(() => (thumb.current ? watchIconFor(thumb.current, item.name) : undefined), [item.name]);
@@ -50,8 +55,9 @@ export function CosmeticCard({ item, index, onOpen, onFavChanged }: Props) {
     <div className={`card ${item.picked ? 'installed' : ''}`} data-cos={item.slot} data-cos-id={item.id}
       style={{ '--i': Math.min(index, 28) } as CSSProperties} onClick={(e) => onOpen(item.slot, item.id, e.currentTarget)}>
       <div className="card-media">
-        <span className="card-thumb" data-name={item.name} data-owned="react" ref={thumb}>
-          {icon ? <img decoding="async" src={icon} alt="" loading="lazy" /> : <div className="noimg"><span className="ms">{item.fallbackIcon}</span></div>}
+        <span className={`card-thumb ${icon === undefined ? 'loading' : ''}`} data-name={item.name} data-owned="react" ref={thumb}>
+          {icon ? <img decoding="async" src={icon} alt="" className={waited.current ? 'arrived' : undefined} />
+            : icon === null ? <div className="noimg"><span className="ms">{item.fallbackIcon}</span></div> : null}
         </span>
         <div className="card-actions">
           <button className={`fav-btn ${fav ? 'on' : ''}`} data-fav={item.favKey} data-owned="react"
@@ -68,10 +74,21 @@ export function CosmeticCard({ item, index, onOpen, onFavChanged }: Props) {
   );
 }
 
-/** The cards of a list of looks, or what an empty one says. */
+/** The cards of a list of looks, or what an empty one says. A page at a time, as the mods are
+ * (ui/growing.ts): the loading screens are over two thousand cards, and drawn whole they held
+ * the window for the moment the slot opened and made every star and filter redraw all of them. */
 export function CosmeticGrid({ items, emptyText, onOpen, onFavChanged }: {
   items: CosmeticItem[]; emptyText?: string; onOpen: Props['onOpen']; onFavChanged: () => void;
 }) {
+  const first = items[0], last = items[items.length - 1];
+  // another slot, filter or search starts at the top again; a star changes none of these
+  const listKey = `${items.length}|${first?.slot}|${first?.id}|${last?.id}`;
+  const { limit, marker, more } = useGrowing(items.length, listKey);
   if (!items.length) return emptyText ? <div className="empty-note">{emptyText}</div> : null;
-  return <>{items.map((it, i) => <CosmeticCard key={`${it.slot}|${it.id}`} item={it} index={i} onOpen={onOpen} onFavChanged={onFavChanged} />)}</>;
+  return (
+    <>
+      {items.slice(0, limit).map((it, i) => <CosmeticCard key={`${it.slot}|${it.id}`} item={it} index={i} onOpen={onOpen} onFavChanged={onFavChanged} />)}
+      {more && <GrowMarker marker={marker} total={items.length} className="grid-more" />}
+    </>
+  );
 }

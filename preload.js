@@ -120,7 +120,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   cosmetics: {
     slots: () => ipcRenderer.invoke('cosmetics:slots'),
-    icons: (names) => ipcRenderer.invoke('cosmetics:icons', names),
+    icons: (names, quick) => ipcRenderer.invoke('cosmetics:icons', names, quick),
     effects: (slots) => ipcRenderer.invoke('cosmetics:effects', slots),
     heroPortraits: (ids, tall) => ipcRenderer.invoke('cosmetics:heroPortraits', ids, tall),
     heroPortraitsByName: (names) => ipcRenderer.invoke('cosmetics:heroPortraitsByName', names),

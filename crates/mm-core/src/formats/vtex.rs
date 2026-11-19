@@ -242,10 +242,11 @@ fn fill_size(buf: &[u8]) -> Option<(usize, usize)> {
     None
 }
 
-/// A PNG as a data: URL.
+/// A PNG, or a picture cut down to a JPEG (picture_shrink.rs), as a data: URL.
 pub fn data_url(png: &[u8]) -> String {
     use base64::Engine;
-    format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(png))
+    let kind = crate::picture_shrink::media_type(png);
+    format!("data:{kind};base64,{}", base64::engine::general_purpose::STANDARD.encode(png))
 }
 
 #[cfg(test)]

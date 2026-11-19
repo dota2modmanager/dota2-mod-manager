@@ -11,6 +11,8 @@
 //!   chat     every language's chat file (the anti-cheat notice is built from them)
 //!   arcana   what the Terrorblade arcana window builds from
 //!   sounds   the sound window's events: the game's own (match found, pings) and two heroes'
+//!   icons    {slot: n}: the pictures of the first n items of each slot (couriers, loading
+//!            screens), so the Items screens load and scroll real pictures
 //! It prints {"written": n, "found": [the item names the builder offers]}.
 
 use std::collections::BTreeSet;
@@ -30,6 +32,7 @@ struct Spec {
     chat: bool,
     arcana: bool,
     sounds: bool,
+    icons: std::collections::BTreeMap<String, usize>,
 }
 
 /// A path as the archive keeps it: lower case, forward slashes, the compiled `_c` name.
@@ -101,6 +104,18 @@ pub fn run(pak: &Path, schema_file: &Path, out: &Path, spec_file: &Path) -> Resu
         }
         for hero in ["antimage", "juggernaut"] {
             want.insert(mm_core::sound_events_file(hero));
+        }
+    }
+    if !spec.icons.is_empty() {
+        let items = mm_core::schema::list_items(&schema).map_err(|e| e.to_string())?;
+        for (slot, &n) in &spec.icons {
+            // by name, as the screen lists them, so the first screen of the slot has its pictures
+            let mut images: Vec<_> =
+                items.iter().filter(|i| (&i.slot == slot || &i.prefab == slot) && !i.image.is_empty()).collect();
+            images.sort_by_key(|i| i.name.to_lowercase());
+            for it in images.into_iter().take(n) {
+                want.insert(format!("panorama/images/{}_png.vtex_c", it.image.to_lowercase()));
+            }
         }
     }
     if spec.text {

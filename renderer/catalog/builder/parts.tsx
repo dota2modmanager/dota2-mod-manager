@@ -5,15 +5,19 @@ import { watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { useCosmeticIcon } from '../cosmetic/CosmeticCard.tsx';
 import type { BuilderAction } from './model.ts';
 
-/** A look's picture out of the game's own files, fetched once it is near the screen. */
+/** A look's picture out of the game's own files, fetched once it is near the screen: the spinner
+ * while it is on its way and a fade as it lands, as on the Items screens (CosmeticCard.tsx). */
 export function CosThumb({ name, fallback, cls = 'card-thumb' }: { name: string | null; fallback: string; cls?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const icon = useCosmeticIcon(name || '');
   useEffect(() => (name && ref.current ? watchIconFor(ref.current, name) : undefined), [name]);
   const shown = name ? icon : null;
+  const waited = useRef(shown === undefined);
   return (
-    <span className={cls} data-name={name || undefined} data-owned={name ? 'react' : undefined} ref={ref}>
-      {shown ? <img src={shown} alt="" loading="lazy" /> : <div className="noimg"><span className="ms">{fallback || 'checkroom'}</span></div>}
+    <span className={`${cls} ${shown === undefined ? 'loading' : ''}`} data-name={name || undefined} data-owned={name ? 'react' : undefined} ref={ref}>
+      {shown ? <img src={shown} alt="" className={waited.current ? 'arrived' : undefined} />
+        // the small ones elsewhere have no room for a spinner: their icon stands in meanwhile
+        : shown === null || cls !== 'card-thumb' ? <div className="noimg"><span className="ms">{fallback || 'checkroom'}</span></div> : null}
     </span>
   );
 }
