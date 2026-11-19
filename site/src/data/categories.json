@@ -2656,6 +2656,24 @@
     {
       "id": "backgrounds",
       "mods": [
+        {
+          "name": "Saya No Uta Cloud",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/saya-no-uta-cloud.webp","width":854,"height":480},
+          "author": "roolato",
+          "authorUrl": "https://steamcommunity.com/id/Roolato/",
+          "date": 1795085800
+        },
+        {
+          "name": "Saya No Uta Hair",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/saya-no-uta-hair.webp","width":854,"height":480},
+          "author": "roolato",
+          "authorUrl": "https://steamcommunity.com/id/Roolato/",
+          "date": 1795085800
+        },
         {"name":"Sewerslvt","styleLabel":null,"group":null,"image":{"src":"/mods/sewerslvt.webp","width":854,"height":480},"author":"darkblad3s","authorUrl":null,"date":1795046713},
         {
           "name": "Juuzou Suzuya Bg",
