@@ -112,6 +112,10 @@ export function byHero(diff) {
   // each hero's key and name from the app's hero names (crates/mm-core/src/game/hero_names.rs), in one call
   const heroes = [...new Set(hits.map(([, h]) => h))];
   const named = heroes.length ? mm('call', jsonFile(heroes.flatMap((h) => [['hero-names.heroKey', h], ['hero-names.heroDisplayName', h]]))) : [];
+  // a call the core no longer has answers { error }, and reading .ok of that put every hero in
+  // one row called "undefined" for weeks, so it stops here instead
+  const bad = named.find((n) => n.error !== undefined);
+  if (bad) throw new Error(`hero names: ${bad.error}`);
   const of = new Map(heroes.map((h, i) => [h, { key: named[2 * i].ok, name: named[2 * i + 1].ok }]));
   const rows = new Map();
   for (const [kind, h] of hits) {
