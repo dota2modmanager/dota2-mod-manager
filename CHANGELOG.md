@@ -2,6 +2,37 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.3.0
+
+### More mods than the game has slots for
+
+- Dota loads pak01 to pak99 and nothing past them, so a long list used to fail at about the
+  sixtieth mod with "No free pakNN slots left". Now, before an install would leave fewer than two free
+  slots, the app folds mods you already have into one "Shared pack" and frees ten. Mods that are
+  off go first, then the newest. Priority slots, mods the app builds, mods in a saved preset and
+  anything that is not a plain pak stay as they are.
+- Each mod in the shared pack still switches on and off by itself in My mods. The catalog shows it
+  as installed, and its window switches or removes it through the pack.
+- Settings > Game > "Shared pack when slots run out" is on by default. Turn it off and nothing is
+  folded; the old message then tells you where the switch is.
+- The install list keeps the mods that did not go in, with the reason under each, and one toast
+  sums up the run instead of one toast per mod.
+
+### After a Dota patch
+
+- When a patch changes a layout or script file that an enabled mod replaces, the app switches that
+  mod off and the banner names it. Such a mod used to make Dota quit at start with "Unable to load
+  layout file". Mods that only change pictures, sounds or models stay on.
+- Mods built from the game's map (own map) are built again on the new map after a patch.
+- Exporting the whole map for the 3D preview gets ten minutes instead of one, and a failed export
+  shows an error instead of spinning.
+
+### Linux
+
+- The AppImage runs on your system's WebKitGTK when you have one, and uses its own copies only for
+  what is missing. On Arch with KDE Wayland the window came up black. Set `D2MM_BUNDLED_LIBS=1`
+  to keep the bundled libraries.
+
 ## 4.2.0
 
 ### Unusual effects on any item
