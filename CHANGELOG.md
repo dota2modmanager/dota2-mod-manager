@@ -2,6 +2,33 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.4.0
+
+### Dress all heroes
+
+- The hero builder has a "Dress all heroes" button. Every hero who wears nothing yet gets the
+  best the game has: a set from a Collector's Cache or a treasure's rare drop, and over it the
+  hero's arcana and immortals. Golden versions and matching pairs come first, so Anti-Mage gets
+  both Golden Bashers of Mage Skulls, not one of each.
+- A hero you already dressed keeps your look. Press the button again and the sets are drawn
+  again among ones of about the same worth. "Put all defaults back" in a hero's window undoes it
+  for that hero.
+- Largo and Kez are in the hero builder. They have no paid items yet, and the builder used to
+  leave such heroes out. Their windows now open for recolouring and the 3D view.
+
+### Search finds the tools
+
+- Search the catalog for weather, rain, snow, a background or uploading your own mod, and the
+  tool that does it comes first: "Map of your own" for the weather, the background tool, and the
+  Author's desk.
+
+### Fixes
+
+- After many items went on at once, the first open of My mods took up to half a minute: the app
+  wrote its list of mods to disk once for every item. It writes once now.
+- The support report names files in the mod folder that the app did not install, with the heroes
+  they change. A stray pak there can put items on a hero that the app shows as default.
+
 ## 4.3.0
 
 ### More mods than the game has slots for
