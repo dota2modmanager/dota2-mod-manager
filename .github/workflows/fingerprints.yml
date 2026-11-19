@@ -96,6 +96,15 @@ jobs:
       - name: Rebuild the hero and category pages
         run: npm run catalog --prefix site
 
+      # The pictures those pages show live in the R2 bucket under site/mods/ and nowhere in git
+      # (tools/catalog/site-previews.mjs). Only what the bucket lacks at that size is sent.
+      - name: Send the new previews to R2
+        run: node tools/catalog/site-previews.mjs push
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
       - name: Commit to catalog-data if changed
         working-directory: data
         run: |

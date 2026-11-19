@@ -389,29 +389,23 @@ stores on disk.
 
 *Check:* `PRIVACY.md`, and grep the source for an outbound call: `grep -rn "fetch\|https.get" crates/mm-core/src/`.
 
-### The catalog's preview images are committed, and stay committed
+### The catalog's preview images live in the R2 bucket, not in git
 
-`site/public/mods/` is 1,324 files and 47.3 MB of a 57.2 MB pack once history is counted in: 83%
-of it. It grows by five to ten files a day, and the generated JSON at the root that reviews
-usually blame for the size is 1.3 MB, so this is where the weight is.
+Decided 2026-11-19, replacing "The catalog's preview images are committed, and stay committed".
+`site/public/mods/` had grown to 1,584 files on `main` and kept growing on `catalog-data`, in a
+repository that keeps every version of every file: most of a 133 MB pack. They are in the bucket
+now, under `site/mods/`, and git holds none of them.
 
-It stays. The two alternatives both cost more than they save. Fetching the pictures during the
-site build makes every build depend on the catalog being up, for files that are written once and
-almost never rewritten. Moving them to the R2 bucket changes their public addresses, and those
-addresses are indexed: the catalog and hero pages are what the site is found by, and trading a
-settled position in search for repository size is a bad trade for a project whose whole problem
-is that too few people know it exists.
+The public addresses do not change, which was the reason the old decision gave for keeping them.
+The bucket is where the files are kept, not where the site points: the site build downloads them
+into `site/public/mods/` (`tools/catalog/site-previews.mjs pull`), so every page still shows
+`/mods/<file>` on our own domain, and what search engines indexed stays where it was. The catalog
+job sends each new picture up (`push`) after it rebuilds the pages. The cost is that a site build
+needs the bucket to answer, the same bucket every mod download already needs; a build that cannot
+get every picture fails instead of deploying pages with holes in them.
 
-What makes it affordable is that these files are append-only. A picture arrives, and that is the
-last time it is written, so the pack grows by what the catalog gains rather than by what anyone
-edits. Since 2026-10-07 the pictures the catalog gains land on `catalog-data` with the rest of the
-bot's files, and the site build copies them in. `main` keeps the 1,584 it held that day, and stops
-growing.
-
-*Check:*
-```
-git rev-list --objects --all | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize:disk) %(rest)' | awk '$1=="blob"&&$4~/^site\/public\/mods\//{n+=$3} END{print n/1048576" MB"}'
-```
+*Check:* `git ls-files site/public/mods` prints nothing; `node tools/catalog/site-previews.mjs pull`
+fetches what the page data names.
 
 ### TypeScript stays on 5.x, for its compiler API
 
