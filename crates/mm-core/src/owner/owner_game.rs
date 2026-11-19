@@ -26,6 +26,7 @@ pub const CHANNELS: &[&str] = &[
     "cosmetics:effects",
     "cosmetics:pick",
     "cosmetics:pickSet",
+    "cosmetics:dressAll",
     "tools:state",
     "tools:install",
     "tools:remove",
@@ -492,6 +493,39 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 Err(e) => json!({ "error": e }),
             }
         }
+        // a random whole set on every hero, in one go (schema_cosmetics::dress_all); a hero already
+        // wearing a pick keeps it unless the window says otherwise
+        "cosmetics:dressAll" => {
+            if let Some(stop) = o.blocked("cosmetics") {
+                return stop;
+            }
+            let keep_worn = arg(args, 0) != Value::Bool(false);
+            let seed = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_nanos() as u64)
+                .unwrap_or(1);
+            let dressed = {
+                let mut core = o.core();
+                let c = &mut *core;
+                match c.game() {
+                    None => Err(t("Путь к Dota 2 не задан", &[])),
+                    Some(g) => c.schema.vanilla(&g).and_then(|b| {
+                        let text = &b.0;
+                        c.library
+                            .batch(|lib| crate::schema_cosmetics::dress_all(lib, text, keep_worn, seed))
+                            .map_err(|e| e.to_string())
+                            .and_then(|r| r)
+                    }),
+                }
+            };
+            match dressed {
+                Ok(d) => {
+                    let _ = o.refresh_schema_in_background().recv();
+                    json!({ "ok": true, "heroes": d.heroes, "kept": d.kept, "arcanas": d.arcanas, "immortals": d.immortals })
+                }
+                Err(e) => json!({ "error": e }),
+            }
+        }
         "tools:state" => {
             let c = o.core();
             let tc = crate::toolchain::Toolchain::new(&c.user_data, None);
@@ -650,7 +684,7 @@ fn whole_slots(o: &Owner) -> (std::sync::Arc<Value>, Value) {
         let c = o.core();
         (
             c.game(),
-            crate::library::Library { file: c.library.file.clone(), data: c.library.data.clone() },
+            crate::library::Library { file: c.library.file.clone(), data: c.library.data.clone(), deferred: false },
             c.user_data.clone(),
         )
     };
@@ -721,8 +755,13 @@ fn slots_key(game: &Path, lib: &crate::library::Library, lang: &str) -> Option<S
     let stamp = crate::pak_stamp::game_schema_stamp(game).ok()?;
     let picks: Vec<&Value> =
         lib.list().iter().filter(|r| r.get("categoryId").and_then(Value::as_str) == Some("cosmetic")).collect();
-    Some(format!("{}|{stamp}|{lang}|{}", game.display(), serde_json::to_string(&picks).ok()?))
+    Some(format!("{SLOTS_SHAPE}|{}|{stamp}|{lang}|{}", game.display(), serde_json::to_string(&picks).ok()?))
 }
+
+/// The shape of the answer the app makes: raised when a new version answers differently for the
+/// same table, so the answer kept on disk by the version before is made again (2: heroes with
+/// only stock items, Largo).
+const SLOTS_SHAPE: u32 = 2;
 
 #[cfg(test)]
 mod slots_kept {
@@ -732,7 +771,7 @@ mod slots_kept {
 
     fn lib(installed: Value) -> Library {
         let Value::Object(data) = json!({ "installed": installed, "presets": [] }) else { unreachable!() };
-        Library { file: std::path::PathBuf::from("manifest.json"), data }
+        Library { file: std::path::PathBuf::from("manifest.json"), data, deferred: false }
     }
 
     #[test]

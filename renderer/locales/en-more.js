@@ -4,6 +4,13 @@
  * size budget (tools/size-budget.mjs). tools/dev/check-i18n.js reads both. */
 'use strict';
 const EN = {
+  "Каждому герою без надетого - лучший набор, арканы и имморталки": "Best set, arcanas and immortals on every hero who wears nothing yet",
+  "Каждый герой без надетых предметов получит лучшее, что есть в игре: набор из коллекционного сундука или редкий дроп сокровищницы, а поверх него аркану и имморталки, золотые и парами, где они есть. Кто уже что-то носит, останется как есть.": "Every hero who wears nothing yet gets the best the game has: a set from a Collector's Cache or a rare treasure drop, with the hero's arcana and immortals over it, golden and in pairs where the game has them. Heroes already wearing something stay as they are.",
+  "Одето героев: {0}, аркан: {1}, имморталок: {2}": "Dressed {0} heroes: {1} arcanas, {2} immortals",
+  "Ещё {0} в своём": "{0} more kept their own",
+  "Одеваю…": "Dressing…",
+  "Одеть всех": "Dress all heroes",
+  "Все герои уже одеты": "Every hero is already dressed",
   "Запускать вместе с Windows и сворачивать в трей": "Start with Windows and hide in the tray",
   "Работа в фоне": "Running in the background",
   "Когда Дота обновляется, приложение возвращает моды и таблицу предметов на место, но только пока оно запущено. Если обновление пришло при закрытом приложении, игра из Steam может выдать ошибку или запуститься без модов. С этой настройкой приложение стартует вместе с Windows без окна, а крестик прячет его в трей: оттуда оно следит за обновлениями и за вылетами после «Играть». Выйти совсем можно правым кликом по значку в трее.": "When Dota updates, the app puts your mods and the item table back, but only while it is running. If an update lands while the app is closed, Dota started from Steam can fail with an error or start without mods. With this on, the app starts with Windows without a window, and the close button hides it in the tray, where it watches for updates and for crashes after Play. To quit for real, right-click the tray icon.",

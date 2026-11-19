@@ -28,6 +28,12 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
             <span className="ms">check_circle</span>{L`Надетые`}
           </button>
           <span className="count" id="cosCount">{m.count}</span>
+          {actions.dressAll && (
+            <button className="btn" id="dressAllBtn" disabled={m.dressing} title={L`Каждому герою без надетого - лучший набор, арканы и имморталки`}
+              onClick={() => actions.dressAll?.()}>
+              <span className="ms">{m.dressing ? 'hourglass_top' : 'auto_awesome'}</span>{m.dressing ? L`Одеваю…` : L`Одеть всех`}
+            </button>
+          )}
         </div>
       </div>
       <div id="itemHub" className="hub-columns">

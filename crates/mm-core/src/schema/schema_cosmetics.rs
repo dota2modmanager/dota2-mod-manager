@@ -123,7 +123,7 @@ fn slots_in(lib: &Library, game: &Path, text: &[u8], lang: &str) -> Result<Value
     let pak = game.join("dota").join("pak01_dir.vpk");
     let ix = if pak.exists() { crate::vpk_shared::shared_index(&pak).ok() } else { None };
     let read = |p: &str| ix.as_ref().and_then(|ix| ix.read(p).ok().flatten());
-    let listed = crate::item_builder_slots::item_slots(text).map_err(kv)?;
+    let listed = crate::item_builder_slots::builder_slots(text).map_err(kv)?;
     // an ability effects slot by its ability's name, and none the hero has not got
     let item_slots =
         if ix.is_some() { crate::item_builder_ability_fx::named_fx_slots(listed, &read, lang) } else { listed };
@@ -372,6 +372,69 @@ pub fn pick_set(lib: &mut Library, text: &[u8], set_id: &str, style: f64) -> Res
     let slots = crate::item_builder_slots::item_slots(text).map_err(kv)?;
     let sets = crate::item_builder_sets::item_sets(text, &slots).map_err(kv)?;
     let set = sets.iter().find(|s| s.id == set_id).ok_or_else(|| t("Набор не найден", &[]))?;
+    put_set(lib, text, set, style)
+}
+
+/// What [`dress_all`] did: heroes dressed, heroes left as they were because they already wore
+/// something the player picked, and the arcanas and immortals put on over the sets.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Dressed {
+    pub heroes: usize,
+    pub kept: usize,
+    pub arcanas: usize,
+    pub immortals: usize,
+}
+
+/// Every hero in their best look at once (item_builder_worth.rs): the most prized set that goes
+/// on whole, then the hero's arcana and immortals over it, golden and in pairs where the game has
+/// them. One reading of the table for all of them. With `keep_worn`, a hero with any pick of the
+/// player's on keeps it. `seed` draws among sets of about the same worth; the same seed, the same
+/// looks.
+pub fn dress_all(lib: &mut Library, text: &[u8], keep_worn: bool, seed: u64) -> Result<Dressed, String> {
+    use crate::item_builder_worth as worth;
+    let kv = |e: crate::kv::KvError| e.to_string();
+    let slots = crate::item_builder_slots::item_slots(text).map_err(kv)?;
+    let sets = crate::item_builder_sets::item_sets(text, &slots).map_err(kv)?;
+    let drops = worth::drops(text).map_err(kv)?;
+    let looks = worth::best_looks(&slots, &sets, &drops, &mut worth::Rng::new(seed));
+    let mut done = Dressed { heroes: 0, kept: 0, arcanas: 0, immortals: 0 };
+    for (hero, look) in looks {
+        if look.set.is_none() && look.over.is_empty() {
+            continue;
+        }
+        let prefix = format!("item:{hero}:");
+        let worn = lib.list().iter().any(|r| {
+            str_of(r, "categoryId") == Some("cosmetic")
+                && on(r)
+                && str_of(r, "slot").is_some_and(|s| s.starts_with(&prefix))
+        });
+        if keep_worn && worn {
+            done.kept += 1;
+            continue;
+        }
+        if let Some(set) = look.set {
+            put_set(lib, text, set, 0.0)?;
+        }
+        for p in &look.over {
+            pick_cosmetic(lib, &p.slot, &p.item_id, Some(&p.name), None, "")?;
+            if p.arcana {
+                done.arcanas += 1;
+            } else {
+                done.immortals += 1;
+            }
+        }
+        done.heroes += 1;
+    }
+    Ok(done)
+}
+
+/// One set put on, the hero's other picks of its slots off: pick_set once the set is found.
+fn put_set(
+    lib: &mut Library,
+    text: &[u8],
+    set: &crate::item_builder_sets::ItemSet,
+    style: f64,
+) -> Result<(usize, usize), String> {
     let set = json!(set);
     let pieces = set["pieces"].as_array().cloned().unwrap_or_default();
     let fits: Vec<&Value> =
@@ -523,3 +586,7 @@ pub fn migrate_cosmetic_settings(
     let _ = settings.set("cosmetics", json!({}));
     picked
 }
+
+#[cfg(test)]
+#[path = "dress_all_tests.rs"]
+mod dress_all_tests;

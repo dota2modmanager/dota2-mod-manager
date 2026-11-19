@@ -32,6 +32,7 @@ pub mod item_builder_refits;
 pub mod item_builder_sets;
 pub mod item_builder_slots;
 pub mod item_builder_styles;
+pub mod item_builder_worth;
 pub mod item_portraits;
 pub mod item_skin;
 pub mod item_sounds;

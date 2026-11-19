@@ -30,43 +30,89 @@ pub fn guard(
 ) -> Result<Vec<String>, String> {
     let earned = blood_key.as_str().is_some_and(|k| !k.is_empty());
     let mut caught = Vec::new();
-    let records: Vec<Value> = lib.list().to_vec();
     let io = |e: std::io::Error| e.to_string();
-    for mut rec in records {
-        if rec.get("kind").and_then(Value::as_str) == Some("pack") {
-            continue;
-        }
-        let id = rec.get("id").cloned().unwrap_or(Value::Null);
-        if !rec.get("scream").is_some_and(Value::is_boolean) {
-            let Some(paths) = paths_of(&rec) else { continue };
-            let s = is_scream(&paths);
-            lib.update(&id, &json!({ "scream": s }), None).map_err(io)?;
-            rec["scream"] = json!(s);
-        }
-        if !crate::js::truthy(&rec["scream"]) {
-            continue;
-        }
-        let cheat = rec.get("cheat").is_some_and(crate::js::truthy);
-        if earned {
-            if cheat {
-                lib.update(&id, &json!({ "cheat": false }), None).map_err(io)?;
+    // one write of the manifest for the lot: a set put on every hero is some 470 new records,
+    // and their "scream" written one by one held the first mods:list after it for 23 seconds
+    lib.batch(|lib| -> Result<(), String> {
+        let records: Vec<Value> = lib.list().to_vec();
+        for mut rec in records {
+            if rec.get("kind").and_then(Value::as_str) == Some("pack") {
+                continue;
             }
-            continue;
-        }
-        if !cheat {
-            lib.update(&id, &json!({ "cheat": true }), None).map_err(io)?;
-            rec["cheat"] = json!(true);
-        }
-        if rec.get("enabled") != Some(&Value::Bool(false)) {
-            let name = rec.get("name").map(crate::js::string).unwrap_or_default();
-            match switch_off(lib, &rec) {
-                Ok(()) => {
-                    log(format!("scream: a copy nobody earned here, switched off: {name}"));
-                    caught.push(name);
+            let id = rec.get("id").cloned().unwrap_or(Value::Null);
+            if !rec.get("scream").is_some_and(Value::is_boolean) {
+                let Some(paths) = paths_of(&rec) else { continue };
+                let s = is_scream(&paths);
+                lib.update(&id, &json!({ "scream": s }), None).map_err(io)?;
+                rec["scream"] = json!(s);
+            }
+            if !crate::js::truthy(&rec["scream"]) {
+                continue;
+            }
+            let cheat = rec.get("cheat").is_some_and(crate::js::truthy);
+            if earned {
+                if cheat {
+                    lib.update(&id, &json!({ "cheat": false }), None).map_err(io)?;
                 }
-                Err(e) => log(format!("scream: not switched off: Error: {e}")),
+                continue;
+            }
+            if !cheat {
+                lib.update(&id, &json!({ "cheat": true }), None).map_err(io)?;
+                rec["cheat"] = json!(true);
+            }
+            if rec.get("enabled") != Some(&Value::Bool(false)) {
+                let name = rec.get("name").map(crate::js::string).unwrap_or_default();
+                match switch_off(lib, &rec) {
+                    Ok(()) => {
+                        log(format!("scream: a copy nobody earned here, switched off: {name}"));
+                        caught.push(name);
+                    }
+                    Err(e) => log(format!("scream: not switched off: Error: {e}")),
+                }
             }
         }
-    }
+        Ok(())
+    })
+    .map_err(io)??;
     Ok(caught)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_record_is_looked_into_with_one_write_and_a_copy_nobody_earned_goes_off() {
+        let dir = std::env::temp_dir().join(format!("mm-scream-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut lib = Library::new(&dir);
+        let pick = lib.add(&json!({ "name": "pick", "categoryId": "cosmetic" }), None).unwrap();
+        let pumpkin = lib.add(&json!({ "name": "pumpkin", "categoryId": "imported" }), None).unwrap();
+        let file = lib.file.clone();
+        let written = || std::fs::read_to_string(&file).unwrap();
+        let before = written();
+        let caught = guard(
+            &mut lib,
+            &Value::Null,
+            &mut |rec| {
+                Some(if rec["name"] == "pumpkin" { vec!["materials/scream_fx/a.vmat_c".into()] } else { vec![] })
+            },
+            &mut |lib, rec| {
+                // the batch has not written the flags yet
+                assert_eq!(std::fs::read_to_string(&lib.file).unwrap(), before);
+                lib.set_enabled(&rec["id"], false, None).map(|_| ()).map_err(|e| e.to_string())
+            },
+            &mut |_| {},
+        )
+        .unwrap();
+        assert_eq!(caught, ["pumpkin"]);
+        let back = Library::new(&dir);
+        let find = |id: &Value| back.list().iter().find(|r| &r["id"] == id).cloned().unwrap();
+        assert_eq!(find(&pick["id"])["scream"], false);
+        assert_eq!(find(&pumpkin["id"])["scream"], true);
+        assert_eq!(find(&pumpkin["id"])["cheat"], true);
+        assert_eq!(find(&pumpkin["id"])["enabled"], false);
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 }
