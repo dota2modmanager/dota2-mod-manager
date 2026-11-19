@@ -127,6 +127,7 @@ contextBridge.exposeInMainWorld('api', {
     pick: (slot, itemId, itemName, effectId, targetItemId) => ipcRenderer.invoke('cosmetics:pick', slot, itemId, itemName, effectId, targetItemId),
     pickSet: (setId, style) => ipcRenderer.invoke('cosmetics:pickSet', setId, style),
     wearLook: (hero, picks) => ipcRenderer.invoke('cosmetics:wearLook', hero, picks),
+    dressAll: (keepWorn) => ipcRenderer.invoke('cosmetics:dressAll', keepWorn),
   },
   // the 3D preview: the hero's models out of the game, or a catalog mod's files over them
   preview3d: {

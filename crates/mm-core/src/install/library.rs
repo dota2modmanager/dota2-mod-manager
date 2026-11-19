@@ -67,6 +67,8 @@ pub struct Member {
 pub struct Library {
     pub file: PathBuf,
     pub data: Map<String, Value>,
+    /// inside `batch`: the changes stay in memory and the file is written once at its end
+    pub deferred: bool,
 }
 
 fn empty() -> Map<String, Value> {
@@ -78,7 +80,7 @@ fn empty() -> Map<String, Value> {
 
 impl Library {
     pub fn new(user_data_dir: &Path) -> Library {
-        let mut l = Library { file: user_data_dir.join("manifest.json"), data: empty() };
+        let mut l = Library { file: user_data_dir.join("manifest.json"), data: empty(), deferred: false };
         l.load();
         l
     }
@@ -117,11 +119,28 @@ impl Library {
     /// Write the manifest: as one more step of a change when handed one (its record and its files
     /// commit together; a rollback leaves the caller to load() again), else in one step.
     pub fn save(&self, tx: Option<&mut FileTx>) -> std::io::Result<()> {
+        if self.deferred && tx.is_none() {
+            return Ok(());
+        }
         let text = self.text();
         match tx {
             Some(tx) => tx.write(&self.file, text.as_bytes()).map(|_| ()),
             None => write_file_atomic(&self.file, text.as_bytes()),
         }
+    }
+
+    /// Many changes with one write of the file at the end, whatever `f` returns: a hundred heroes
+    /// dressed at once wrote it some 370 times, eleven seconds with the core held. A change that
+    /// carries its own FileTx still writes through it.
+    pub fn batch<T>(&mut self, f: impl FnOnce(&mut Library) -> T) -> std::io::Result<T> {
+        let outer = self.deferred;
+        self.deferred = true;
+        let r = f(self);
+        self.deferred = outer;
+        if !outer {
+            self.save(None)?;
+        }
+        Ok(r)
     }
 
     fn installed(&self) -> &[Value] {

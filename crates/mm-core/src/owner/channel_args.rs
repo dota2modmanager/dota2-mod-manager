@@ -518,6 +518,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
                 ],
             ),
             ("cosmetics:pickSet", vec![str_or_num(100, 1), optional(num(0.0, 64.0))]),
+            ("cosmetics:dressAll", vec![optional(bool_())]),
             ("cosmetics:wearLook", vec![str_(200, 1), list(look_pick(), 40)]),
             ("preview:video", vec![str_(500, 1)]),
             ("preview:frame", vec![str_(500, 1), bytes(32.0 * MB)]),

@@ -372,6 +372,67 @@ pub fn pick_set(lib: &mut Library, text: &[u8], set_id: &str, style: f64) -> Res
     let slots = crate::item_builder_slots::item_slots(text).map_err(kv)?;
     let sets = crate::item_builder_sets::item_sets(text, &slots).map_err(kv)?;
     let set = sets.iter().find(|s| s.id == set_id).ok_or_else(|| t("Набор не найден", &[]))?;
+    put_set(lib, text, set, style)
+}
+
+/// What [`dress_all`] did: heroes put in a set, and heroes left as they were because they already
+/// wore something the player picked.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Dressed {
+    pub heroes: usize,
+    pub kept: usize,
+}
+
+/// A whole set on every hero at once, drawn at random from the hero's sets that go on whole: one
+/// reading of the table for all of them, where a pick_set a hero read it a hundred times over.
+/// With `keep_worn`, a hero with any pick of the player's on keeps it. `seed` makes the draw;
+/// the same seed draws the same sets.
+pub fn dress_all(lib: &mut Library, text: &[u8], keep_worn: bool, seed: u64) -> Result<Dressed, String> {
+    use crate::item_builder_sets::SetPiece;
+    let kv = |e: crate::kv::KvError| e.to_string();
+    let slots = crate::item_builder_slots::item_slots(text).map_err(kv)?;
+    let sets = crate::item_builder_sets::item_sets(text, &slots).map_err(kv)?;
+    // a set of one hero's, every piece of it on a slot of its own: what "a set on the hero" means
+    let mut by_hero: std::collections::BTreeMap<&str, Vec<&crate::item_builder_sets::ItemSet>> = Default::default();
+    for set in &sets {
+        if let [hero] = set.hero_ids.as_slice() {
+            if !set.pieces.is_empty() && set.pieces.iter().all(|p| matches!(p, SetPiece::Fits { .. })) {
+                by_hero.entry(hero.as_str()).or_default().push(set);
+            }
+        }
+    }
+    let mut state = seed | 1;
+    let mut next = move || {
+        // xorshift64: no crate for a draw nobody depends on being unpredictable
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        state
+    };
+    let mut done = Dressed { heroes: 0, kept: 0 };
+    for (hero, list) in by_hero {
+        let prefix = format!("item:{hero}:");
+        let worn = lib.list().iter().any(|r| {
+            str_of(r, "categoryId") == Some("cosmetic") && on(r) && str_of(r, "slot").is_some_and(|s| s.starts_with(&prefix))
+        });
+        if keep_worn && worn {
+            done.kept += 1;
+            continue;
+        }
+        let set = list[(next() % list.len() as u64) as usize];
+        put_set(lib, text, set, 0.0)?;
+        done.heroes += 1;
+    }
+    Ok(done)
+}
+
+/// One set put on, the hero's other picks of its slots off: pick_set once the set is found.
+fn put_set(
+    lib: &mut Library,
+    text: &[u8],
+    set: &crate::item_builder_sets::ItemSet,
+    style: f64,
+) -> Result<(usize, usize), String> {
     let set = json!(set);
     let pieces = set["pieces"].as_array().cloned().unwrap_or_default();
     let fits: Vec<&Value> =
@@ -523,3 +584,7 @@ pub fn migrate_cosmetic_settings(
     let _ = settings.set("cosmetics", json!({}));
     picked
 }
+
+#[cfg(test)]
+#[path = "dress_all_tests.rs"]
+mod dress_all_tests;

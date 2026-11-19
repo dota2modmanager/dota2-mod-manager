@@ -21,7 +21,9 @@ import { plural } from '../ui/format.ts';
 import { heroMatchesSearch } from '../ui/hero-name.ts';
 import { paint } from '../ui/transitions.ts';
 import { remember, view } from './catalog/state.ts';
-import { catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
+import { afterPick, catalogActions, heroSets, itemCosmeticSlots } from './item-builder.ts';
+import { confirmDialog } from '../ui/dialog.ts';
+import { toast } from '../ui/toast.ts';
 import { catalogOnShow } from '../core/router.ts';
 
 const HUB = COSMETIC_PREFIX + 'items';
@@ -34,7 +36,33 @@ const hubActions = (): ScreenActions => ({
     if (installedOnly !== undefined) { view.filters.installedOnly = installedOnly; remember({ installedOnly }); }
     drawHub();
   },
+  dressAll: () => void dressAll(),
 });
+
+let dressing = false;
+
+/** A random set worn whole on every hero who wears nothing yet: one reading of the game's table in the core for all of them. */
+async function dressAll(): Promise<void> {
+  if (dressing) return;
+  const ok = await confirmDialog(L`Каждый герой без надетых предметов получит случайный набор целиком. Кто уже что-то носит, останется как есть.`, { okLabel: L`Одеть всех`, danger: false });
+  if (!ok) return;
+  dressing = true;
+  drawHub();
+  let r: { error?: string; heroes?: number; kept?: number };
+  try {
+    r = await window.api.cosmetics.dressAll(true);
+  } catch (err) {
+    r = { error: String((err as Error)?.message || err) };
+  }
+  dressing = false;
+  const heroes = r.heroes || 0;
+  const kept = r.kept || 0;
+  if (r.error) toast(r.error, 'error');
+  else if (!heroes) toast(L`Все герои уже одеты`);
+  else toast(kept ? L`Одето героев: ${heroes}, ещё ${kept} в своём` : L`Одето героев: ${heroes}`);
+  if (!r.error && heroes) await afterPick();
+  drawHub();
+}
 
 /** The groups' names, as the game's hero grid heads them. */
 const GROUP_NAMES = (): string[] => [L`Сила`, L`Ловкость`, L`Интеллект`, L`Универсальные`, L`Другие`];
@@ -61,6 +89,7 @@ function hubModel(): ScreenModel {
     search: view.cosSearch,
     installedOnly: f.installedOnly,
     count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
+    dressing,
     groups,
   };
 }

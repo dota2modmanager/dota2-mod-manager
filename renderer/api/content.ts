@@ -128,6 +128,8 @@ export interface CosmeticsApi {
   /** style: the look each piece that has it goes on in, 0 for the first */
   pickSet: (setId: string, style?: number) => Promise<Reply<{ applied: number; pieces: number }>>;
   wearLook: (hero: string, picks: LookPick[]) => Promise<Reply<{ applied: number; picks: number }>>;
+  /** a random set worn whole on every hero; keepWorn (the default) leaves a hero already wearing a pick as it is */
+  dressAll: (keepWorn?: boolean) => Promise<Reply<{ heroes: number; kept: number }>>;
 }
 
 /** The whole arcana, or only its colour over one the player has (src/arcana-service.ts). */

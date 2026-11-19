@@ -4,6 +4,13 @@
  * size budget (tools/size-budget.mjs). tools/dev/check-i18n.js reads both. */
 'use strict';
 const EN = {
+  "Каждому герою без надетого - случайный набор целиком": "A random full set on every hero who wears nothing yet",
+  "Одеваю…": "Dressing…",
+  "Одеть всех": "Dress all heroes",
+  "Каждый герой без надетых предметов получит случайный набор целиком. Кто уже что-то носит, останется как есть.": "Every hero who wears nothing yet gets a random full set. Heroes already wearing something stay as they are.",
+  "Все герои уже одеты": "Every hero is already dressed",
+  "Одето героев: {0}, ещё {1} в своём": "Dressed {0} heroes, {1} kept their own",
+  "Одето героев: {0}": "Dressed {0} heroes",
   "Запускать вместе с Windows и сворачивать в трей": "Start with Windows and hide in the tray",
   "Работа в фоне": "Running in the background",
   "Когда Дота обновляется, приложение возвращает моды и таблицу предметов на место, но только пока оно запущено. Если обновление пришло при закрытом приложении, игра из Steam может выдать ошибку или запуститься без модов. С этой настройкой приложение стартует вместе с Windows без окна, а крестик прячет его в трей: оттуда оно следит за обновлениями и за вылетами после «Играть». Выйти совсем можно правым кликом по значку в трее.": "When Dota updates, the app puts your mods and the item table back, but only while it is running. If an update lands while the app is closed, Dota started from Steam can fail with an error or start without mods. With this on, the app starts with Windows without a window, and the close button hides it in the tray, where it watches for updates and for crashes after Play. To quit for real, right-click the tray icon.",
