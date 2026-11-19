@@ -24,8 +24,13 @@ pub struct GameIcons {
 
 /// How the cached pictures are made. 2: a block-compressed icon is cut to the size the game
 /// shows (vtex.rs fill_size); before, an item's 256x170 picture was kept as the 256x256 texture
-/// it is stored in, with 86 rows of smear under it.
-const CACHE_KIND: u32 = 2;
+/// it is stored in, with 86 rows of smear under it. 3: a picture wider than a tile is kept at a
+/// tile's size (picture_shrink.rs); a loading screen was kept at 1920x1080, megabytes each.
+const CACHE_KIND: u32 = 3;
+
+/// The prefix of a name asked for at the game's own size, for the one picture a window shows
+/// large: a loading screen cut down for its tile is soft across the whole modal.
+pub const FULL_SIZE: &str = "big:";
 
 /// The list of pictures the game does not have, beside the cache.
 const ABSENT: &str = "absent.txt";
@@ -64,7 +69,16 @@ impl GameIcons {
     /// item names often share one picture: written in place, one call read the PNG while another
     /// was still writing it, and the window drew the top of the item over a smear of grey rows.
     fn keep(&self, image_path: &str, png: &[u8]) -> bool {
-        write_whole(&self.cache_file(image_path), png)
+        let small = crate::picture_shrink::shrink(png, crate::picture_shrink::TILE_WIDTH);
+        write_whole(&self.cache_file(image_path), small.as_deref().unwrap_or(png))
+    }
+
+    /// One picture at the game's own size, read out of the pak and not kept: there is one on
+    /// screen at a time. None where the game has it only in a form the decoder alone reads.
+    fn full_size(&self, game: &Path, image_path: &str) -> Option<String> {
+        let ix = crate::vpk_shared::shared_index(&Self::pak(game)).ok()?;
+        let buf = ix.read(&texture_path(image_path)).ok()??;
+        crate::vtex::picture_from_vtex(&buf).map(|png| crate::vtex::data_url(&png))
     }
 
     fn cached_uri(&self, image_path: &str) -> Option<String> {
@@ -246,6 +260,12 @@ impl GameIcons {
         let Some(map) = self.name_index(game, log) else { return out };
         let mut wanted: IndexMap<String, Vec<String>> = IndexMap::new();
         for name in names {
+            if let Some(n) = name.strip_prefix(FULL_SIZE) {
+                if let Some(uri) = map.get(n).and_then(|image| self.full_size(game, image)) {
+                    out.insert(name.clone(), uri);
+                }
+                continue;
+            }
             let Some(image) = map.get(name) else { continue };
             if let Some(uri) = self.cached_uri(image) {
                 out.insert(name.clone(), uri);
@@ -388,4 +408,81 @@ mod tests {
         assert!(g.extract(&game, Some(&vrf), &gone, &mut |_| {}).is_ok());
         let _ = std::fs::remove_dir_all(&ud);
     }
+
+    /// A loading screen is kept at a tile's size, as a JPEG; asked for at full size, it comes
+    /// out of nothing kept.
+    #[test]
+    fn a_picture_wider_than_a_tile_is_kept_small() {
+        let ud = std::env::temp_dir().join(format!("mm-icons-small-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&ud);
+        let g = GameIcons::new(&ud);
+        std::fs::create_dir_all(&g.root).unwrap();
+        let rgba: Vec<u8> = (0..1920 * 1080u32).flat_map(|i| [(i % 7) as u8 * 30, 40, 90, 255]).collect();
+        assert!(g.keep("loadingscreens/x", &crate::png_strip::encode_png(1920, 1080, &rgba)));
+        assert!(g.cached_uri("loadingscreens/x").unwrap().starts_with("data:image/jpeg;base64,"));
+        assert!(std::fs::metadata(g.cache_file("loadingscreens/x")).unwrap().len() < 200_000);
+        let _ = std::fs::remove_dir_all(&ud);
+    }
+}
+
+/// MM_GAME: the game's `game` folder (read only). How long a slot's pictures take, cold and warm,
+/// and how many the game has not got.
+#[cfg(test)]
+#[test]
+#[ignore]
+fn icons_on_the_real_game() {
+    let game = PathBuf::from(std::env::var("MM_GAME").unwrap());
+    let ud = std::env::temp_dir().join(format!("mm-icons-real-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&ud);
+    let g = GameIcons::new(&ud);
+    let mut log = |m: String| println!("  {m}");
+    let t = std::time::Instant::now();
+    let (text, _) = crate::schema::read_game_schema(&game).unwrap();
+    println!("schema read {:?}", t.elapsed());
+    let items = crate::schema::list_items(&text).unwrap();
+    println!("schema listed {:?}", t.elapsed());
+    for slot in ["courier", "loading_screen", "ward", "hud_skin", "terrain", "weather", "announcer", "music"] {
+        let names: Vec<String> =
+            items.iter().filter(|i| i.slot == slot || i.prefab == slot).map(|i| i.name.clone()).collect();
+        for pass in ["cold", "warm"] {
+            let mut worst = std::time::Duration::ZERO;
+            let mut got = 0;
+            let t = std::time::Instant::now();
+            for chunk in names.chunks(12) {
+                let c = std::time::Instant::now();
+                got += g.get_many(Some(&game), None, chunk, &mut log).len();
+                worst = worst.max(c.elapsed());
+            }
+            println!("{slot} {pass}: {got}/{} in {:?}, worst batch {worst:?}", names.len(), t.elapsed());
+            if pass == "cold" {
+                let have = g.get_many(Some(&game), None, &names, &mut |_| {});
+                let miss: Vec<&String> = names.iter().filter(|n| !have.contains_key(*n)).take(8).collect();
+                println!("  missing: {miss:?}");
+            }
+        }
+    }
+    println!("cache {} MB", g.size() >> 20);
+    // the window's picture of a loading screen: the game's own size, the tile's cut down
+    let screens: Vec<String> = items.iter().filter(|i| i.prefab == "loading_screen").map(|i| i.name.clone()).collect();
+    let tiles = g.get_many(Some(&game), None, &screens, &mut |_| {});
+    let bytes = |uri: &str| {
+        use base64::Engine;
+        base64::engine::general_purpose::STANDARD.decode(uri.split_once(',').unwrap().1).unwrap()
+    };
+    let cut = |uri: &str| {
+        let b = bytes(uri);
+        crate::picture_shrink::media_type(&b) == "image/jpeg" || u32::from_be_bytes([b[16], b[17], b[18], b[19]]) == 640
+    };
+    let jpeg = tiles.values().filter(|u| u.starts_with("data:image/jpeg")).count();
+    let all: Vec<&String> = tiles.iter().filter(|(_, u)| cut(u)).map(|(n, _)| n).collect();
+    println!("{} of {} loading screens cut down, {jpeg} as JPEG", all.len(), screens.len());
+    let name = all[0].clone();
+    let tile = g.get_many(Some(&game), None, std::slice::from_ref(&name), &mut |_| {});
+    let full = g.get_many(Some(&game), None, &[format!("{FULL_SIZE}{name}")], &mut |_| {});
+    let size = |uri: &str| {
+        let b = bytes(uri);
+        (crate::picture_shrink::media_type(&b), b.len() >> 10)
+    };
+    println!("tile {:?}, full {:?}", size(&tile[&name]), size(full.values().next().unwrap()));
+    let _ = std::fs::remove_dir_all(&ud);
 }

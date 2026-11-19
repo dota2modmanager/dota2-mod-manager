@@ -49,6 +49,15 @@ const mkdir = (p) => fs.mkdirSync(p, { recursive: true });
 // the app's own code for everything that reads or writes a VPK or the table (tools/dev/mm-cli.js)
 const { mm } = require('./mm-cli.js');
 
+// The pictures of the Items screens' looks, so they load and scroll the game's own pictures: every
+// courier and ward, and a part of the loading screens, which the game keeps at 1920x1080 (two
+// thousand of them would be gigabytes; eighty are enough to scroll through).
+const ITEM_PICTURES = Object.fromEntries([
+  'courier', 'ward', 'hud_skin', 'music', 'announcer', 'terrain', 'weather', 'mega_kills', 'versus_screen',
+  'streak_effect', 'multikill_banner', 'radiantcreeps', 'direcreeps', 'radianttowers', 'diretowers',
+  'radiantsiegecreeps', 'diresiegecreeps', 'tormentor',
+].map((slot) => [slot, 400]).concat([['loading_screen', 80]]));
+
 /** A folder to stage a VPK's files in, at their paths inside it; `vpk-build` packs it. */
 function stage(name) {
   return fs.mkdtempSync(path.join(os.tmpdir(), `mm-sandbox-${name}-`));
@@ -361,7 +370,7 @@ function buildGameTree() {
     }
     if (origin !== 'fallback stub') {
       try {
-        extras = assets(realPak, schemaFile, dir, { items: BUILDER_SAMPLE, heroes: true, text: true, chat: true, arcana: true, sounds: true }).written;
+        extras = assets(realPak, schemaFile, dir, { items: BUILDER_SAMPLE, heroes: true, text: true, chat: true, arcana: true, sounds: true, icons: ITEM_PICTURES }).written;
       } catch (e) {
         log('  could not copy the item builder\'s, the notice\'s and the arcana\'s files:', e.message);
       }

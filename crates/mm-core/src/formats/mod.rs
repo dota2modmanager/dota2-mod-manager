@@ -9,6 +9,7 @@ pub mod material;
 pub mod meshopt;
 pub mod pak_stamp;
 pub mod panorama_files;
+pub mod picture_shrink;
 pub mod png_paint;
 pub mod png_strip;
 pub mod resource;

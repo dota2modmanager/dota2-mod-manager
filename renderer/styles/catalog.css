@@ -707,29 +707,7 @@
 .modal-title-row .fav-btn.on { border-color: rgba(251, 113, 133, 0.45); }
 .rail-item.fav .ms { color: var(--accent); }
 
-/* ============ Cosmetics: same .card/.grid/.toolbar as the mod catalog ============ */
-
-/* icon-loader target inside a .card-media — sized to fill it, same as a plain <img> would */
-.card-thumb { display: block; width: 100%; height: 100%; }
-.cat-search { width: 240px; }
-.cat-search input { border: none; background: none; color: var(--text); font: inherit; font-size: 13px; width: 100%; outline: none; }
-
-/* A picture the wiki simply does not have: the tile still has to look like a finished
-   card, not a broken image — the slot's own icon on the same soft glow as everywhere. */
-.card-thumb .noimg {
-  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--md-primary) 16%, transparent), transparent 68%);
-}
-.card-thumb .noimg .ms { font-size: 34px; }
-
-/* a look with no picture on the wiki: the same soft glow the cards use, not an empty box */
-.modal-media.cos {
-  display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--md-primary) 18%, transparent), transparent 70%), var(--bg-elev);
-}
-.modal-media.cos .noimg .ms { font-size: 64px; }
-
-/* "…and N more" under a search grid that was cut short */
-.search-more { color: var(--text-faint); font-size: 12.5px; padding: 14px 2px 0; text-align: center; }
+/* ============ Cosmetics: in cosmetics.css ============ */
 
 /* Library: head of the cosmetics section — its own select-all, count and bulk switch,
    mirroring .lib-listhead above the mods */

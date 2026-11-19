@@ -120,8 +120,9 @@ export interface CosmeticsApi {
   slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[]; heroAttrs?: Record<string, HeroAttribute>; names?: Record<string, string> } & Record<string, unknown>>;
   /** the effects each of these slots offers, by slot: `slots` leaves them out (views/catalog/lists.ts loadSlotEffects) */
   effects: (slots: string[]) => Promise<Record<string, { id: string; name: string }[]>>;
-  /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts) */
-  icons: (names: string[]) => Promise<{ pictures: Record<string, string | null>; decode: string[] }>;
+  /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts).
+   * quick: names only the wiki's network can answer come back in `later`, to be asked again */
+  icons: (names: string[], quick?: boolean) => Promise<{ pictures: Record<string, string | null>; decode: string[]; later?: string[] }>;
   heroPortraits: (ids: string[], tall?: boolean) => Promise<Record<string, string>>;
   heroPortraitsByName: (names: string[]) => Promise<Record<string, string>>;
   pick: (slot: string, itemId: string, itemName: string, effectId: string, targetItemId?: string) => Promise<Reply<{ record: LibRecord }>>;

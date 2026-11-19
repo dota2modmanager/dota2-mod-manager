@@ -1,7 +1,9 @@
 /* The window a look opens: the mod window's twin, with the same markup and classes. A look goes
  * into the game's own item table rather than into a file, so the window says what taking it
  * will do to the slot, and which look it replaces. */
+import { useEffect } from 'react';
 import { useCosmeticIcon } from './CosmeticCard.tsx';
+import { cosmeticIconKnown, loadCosmeticIcons } from '../../ui/cosmetic-icons.ts';
 import { plural } from '../../ui/format.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 
@@ -29,7 +31,13 @@ export interface CosmeticModalActions {
 }
 
 export function CosmeticModal({ m, actions }: { m: CosmeticModalModel; actions: CosmeticModalActions }) {
-  const icon = useCosmeticIcon(m.name);
+  // The tile's picture is kept at a tile's size (crates/mm-core picture_shrink.rs), soft across a
+  // window this wide; the game's own one is asked for once the window is open and replaces it.
+  const full = `big:${m.name}`;
+  useEffect(() => { if (!cosmeticIconKnown(full)) loadCosmeticIcons([full], () => {}).catch(() => {}); }, [full]);
+  const big = useCosmeticIcon(full);
+  const tile = useCosmeticIcon(m.name);
+  const icon = big || tile;
   const favLabel = m.fav ? L`Убрать из избранного` : L`В избранное`;
   return (
     <>

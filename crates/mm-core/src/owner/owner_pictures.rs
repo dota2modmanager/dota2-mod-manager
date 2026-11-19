@@ -80,7 +80,11 @@ fn key_of(v: &Value) -> String {
 }
 
 /// Pictures for the tiles' chains, and the clips still worth a frame from the window.
-fn icons(o: &Owner, names: &Value) -> Value {
+/// Pictures by name: a mod's preview, the game's picture, the wiki's. `quick`: what the wiki has
+/// not answered before is left for another call, named in `later`, so the batch's other pictures
+/// do not wait on the network. A name the game has not got went to Fandom and then Liquipedia,
+/// one request every two seconds, and the eleven tiles beside it sat empty all that time.
+fn icons(o: &Owner, names: &Value, quick: bool) -> Value {
     let wanted: Vec<String> = first(names, 60).iter().map(crate::js::string).collect();
     let chains: Vec<(String, Vec<String>)> = wanted
         .iter()
@@ -100,6 +104,7 @@ fn icons(o: &Owner, names: &Value) -> Value {
         (previews(&c, &lines), c.game(), vrf(&c), c.game_icons.clone(), c.wiki.clone())
     };
     let mut found: HashMap<String, Option<String>> = HashMap::new();
+    let mut later: Vec<String> = Vec::new();
     let mods: Vec<String> = sources.iter().filter(|s| is_mod(s)).cloned().collect();
     for (k, v) in prev.get_many(&mods) {
         found.insert(k, Some(v));
@@ -109,7 +114,27 @@ fn icons(o: &Owner, names: &Value) -> Value {
     if !for_icons.is_empty() {
         let mut log = |m: String| lines.lock().unwrap_or_else(|e| e.into_inner()).push(m);
         let from_game = game_icons.get_many(game.as_deref(), tool.as_deref(), &for_icons, &mut log);
-        let left: Vec<String> = for_icons.iter().filter(|n| !from_game.contains_key(*n)).cloned().collect();
+        // the full-size picture is the game's or nobody's: the tile's own answer stands in for it
+        let left: Vec<String> = for_icons
+            .iter()
+            .filter(|n| !from_game.contains_key(*n) && !n.starts_with(crate::game_icons::FULL_SIZE))
+            .cloned()
+            .collect();
+        let left = if quick {
+            let mut ask = Vec::new();
+            for n in left {
+                match wiki.known(&n) {
+                    Some(v) => {
+                        found.insert(n, v);
+                    }
+                    None => ask.push(n),
+                }
+            }
+            later = ask;
+            Vec::new()
+        } else {
+            left
+        };
         if !left.is_empty() {
             for (k, v) in wiki.get_many(&left) {
                 found.insert(k, v);
@@ -122,6 +147,12 @@ fn icons(o: &Owner, names: &Value) -> Value {
     let hit = |s: &String| found.get(s).and_then(Clone::clone);
     let mut pictures = Map::new();
     let mut decode: Vec<String> = Vec::new();
+    // a name is left for later only when nothing earlier in its chain answered
+    let later: Vec<String> = chains
+        .iter()
+        .filter(|(_, chain)| chain.iter().find_map(hit).is_none() && chain.iter().any(|s| later.contains(s)))
+        .map(|(key, _)| key.clone())
+        .collect();
     for (key, chain) in &chains {
         if let Some(p) = chain.iter().find_map(hit) {
             pictures.insert(key.clone(), json!(p));
@@ -134,7 +165,7 @@ fn icons(o: &Owner, names: &Value) -> Value {
         }
     }
     flush(o, &lines);
-    json!({ "pictures": pictures, "decode": decode })
+    json!({ "pictures": pictures, "decode": decode, "later": later })
 }
 
 /// Heroes' portraits out of the game, by id.
@@ -174,7 +205,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             }
             Value::Object(out)
         }
-        "cosmetics:icons" => icons(o, &a0),
+        "cosmetics:icons" => icons(o, &a0, arg(args, 1) == Value::Bool(true)),
         "preview:video" => {
             let lines: Lines = Arc::new(Mutex::new(Vec::new()));
             let prev = previews(&o.core(), &lines);
