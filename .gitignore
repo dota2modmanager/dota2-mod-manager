@@ -4,6 +4,10 @@ dist/
 # Astro's generated types and content cache: rebuilt on every build.
 .astro/
 
+# The catalog's pictures for the site live in the R2 bucket (site/mods/), not in git: the site
+# build fetches them here with `node tools/catalog/site-previews.mjs pull`. DECISIONS.md says why.
+site/public/mods/
+
 # Throwaway Dota tree and downloaded mods built by tools/dev/sandbox.js. The list of what a
 # sandbox should hold travels with the repo in tools/dev/sandbox-mods.json; the files do not.
 sandbox/
