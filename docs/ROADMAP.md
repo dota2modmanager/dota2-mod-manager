@@ -13,9 +13,10 @@ already shipped or has clearly stalled, that is a bug in this file and worth an 
 ## Next
 
 **A signed Windows installer.** SmartScreen warns about every unsigned download, and that warning
-is the first thing a new user sees. The first application to SignPath was turned down for public
-visibility rather than for anything in the code, and the picture has changed since. Applying
-again is the single change that would most improve how this app arrives on a machine.
+is the first thing a new user sees. SignPath Foundation accepted the project on 2026-11-19, after
+turning the first application down for public visibility. The Windows build already goes through
+SignPath (`code-signing.yml`, `.github/actions/signpath-windows`); releases start being signed
+once SignPath has reviewed that setup and issued the release certificate.
 
 **A download route that does not depend on GitHub.** When GitHub was down for three hours in
 August 2026, no mod could be installed at all: every fallback in the app was GitHub wearing a

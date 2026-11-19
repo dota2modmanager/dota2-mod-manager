@@ -615,7 +615,7 @@ const EN = {
   'Звёзды видят разработчики. По ним они находят проект и приходят добавлять функции, чинить ошибки и улучшать приложение.': 'Developers notice stars. That is how they find the project and come to add features, fix bugs and improve the app.',
   'Поставить звезду': 'Star on GitHub',
   'Расскажи о нас': 'Tell people about us',
-  'Пост на Reddit, сообщение в Discord, комментарий под видео про моды. Это помогает получить бесплатную подпись программы от SignPath: без неё Windows пугает «неизвестным издателем». Прошлую заявку отклонили, потому что о проекте мало кто знает.': 'A Reddit post, a Discord message, a comment under a modding video. It helps us get free code signing from SignPath: without it, Windows warns about an "unknown publisher". Our last application was turned down because too few people know the project.',
+  'Пост на Reddit, сообщение в Discord, комментарий под видео про моды: так приложение находят новые люди.': 'A Reddit post, a Discord message, a comment under a modding video: that is how new people find the app.',
   'Скопировать ссылку': 'Copy link',
   'Ссылка скопирована': 'Link copied',
   'Напомнить позже': 'Remind me later',
