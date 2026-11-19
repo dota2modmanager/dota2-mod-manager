@@ -15,8 +15,68 @@
 
 use std::process::Command;
 
-/// The variables the AppImage runtime adds about itself.
-const ABOUT_THE_IMAGE: &[&str] = &["APPDIR", "APPIMAGE", "ARGV0", "OWD"];
+/// The variables the AppImage runtime adds about itself, and the mark [`host_libs_plan`] leaves:
+/// a program the app starts, an update of itself included, decides that for itself.
+const ABOUT_THE_IMAGE: &[&str] = &["APPDIR", "APPIMAGE", "ARGV0", "OWD", HOST_LIBS_MARK];
+
+/* The libraries the app itself runs on (#761). The AppImage is built on Ubuntu 24.04 and carries
+ * that machine's WebKitGTK, GTK, GLib, ICU, libsystemd and half of Wayland (libwayland-egl and
+ * -server, not -client, which comes from the host). On EndeavourOS with KDE on Wayland that mix
+ * drew a black window, or one without its menu, and deleting usr/lib from the unpacked image put
+ * it right: everything the bundle carries, the host had, in versions made to work together.
+ *
+ * So when the host has its own WebKitGTK 4.1, the app starts once more with the host's library
+ * folders ahead of the image's in LD_LIBRARY_PATH. The image's binaries name their folder in
+ * RUNPATH, which LD_LIBRARY_PATH goes before, so whatever the host has comes from the host and
+ * whatever it lacks still comes from the image. GTK's module lookups pointed into the image go
+ * too, or the host's GTK would load loaders and modules built against the image's GLib.
+ * A host without WebKitGTK 4.1 (Ubuntu and Mint as installed) runs on the bundle as before, and
+ * D2MM_BUNDLED_LIBS=1 asks for the bundle on any host. */
+
+/// Set on the second start, so the app starts again only once.
+pub const HOST_LIBS_MARK: &str = "D2MM_HOST_LIBS";
+/// Set by a person who wants the libraries the AppImage carries whatever the host has.
+pub const BUNDLED_LIBS: &str = "D2MM_BUNDLED_LIBS";
+/// Where distributions keep 64-bit shared libraries: Debian and Ubuntu, Fedora, Arch.
+const HOST_LIB_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/lib/x86_64-linux-gnu", "/usr/lib64", "/usr/lib"];
+/// The library that says the host can run the app on its own stack.
+const WEBKIT: &str = "libwebkit2gtk-4.1.so.0";
+/// linuxdeploy's GTK hook points these into the image.
+const BUNDLE_LOOKUPS: &[&str] = &[
+    "GTK_PATH",
+    "GTK_EXE_PREFIX",
+    "GTK_DATA_PREFIX",
+    "GIO_MODULE_DIR",
+    "GDK_PIXBUF_MODULE_FILE",
+    "GTK_IM_MODULE_FILE",
+    "GI_TYPELIB_PATH",
+    "GSETTINGS_SCHEMA_DIR",
+];
+
+/// The environment to start the app again with, on the host's libraries, or None to run on as
+/// it is. `exists` answers for a path on the host (a folder or a file).
+pub fn host_libs_plan<I, K, V>(vars: I, exists: impl Fn(&str) -> bool) -> Option<Vec<(String, Option<String>)>>
+where
+    I: IntoIterator<Item = (K, V)>,
+    K: Into<String>,
+    V: Into<String>,
+{
+    let vars: Vec<(String, String)> = vars.into_iter().map(|(k, v)| (k.into(), v.into())).collect();
+    let get = |name: &str| vars.iter().find(|(k, _)| k == name).map(|(_, v)| v.as_str());
+    get("APPDIR").filter(|d| !d.is_empty())?;
+    if get(HOST_LIBS_MARK).is_some() || get(BUNDLED_LIBS) == Some("1") {
+        return None;
+    }
+    if !HOST_LIB_DIRS.iter().any(|d| exists(&format!("{d}/{WEBKIT}"))) {
+        return None;
+    }
+    let mut path: Vec<&str> = HOST_LIB_DIRS.iter().copied().filter(|d| exists(d)).collect();
+    path.extend(get("LD_LIBRARY_PATH").unwrap_or("").split(':').filter(|e| !e.is_empty()));
+    let mut out = vec![("LD_LIBRARY_PATH".to_string(), Some(path.join(":")))];
+    out.extend(BUNDLE_LOOKUPS.iter().filter(|k| get(k).is_some()).map(|k| (k.to_string(), None)));
+    out.push((HOST_LIBS_MARK.to_string(), Some("1".into())));
+    Some(out)
+}
 
 fn under(entry: &str, appdir: &str) -> bool {
     entry == appdir || entry.strip_prefix(appdir).is_some_and(|rest| rest.starts_with('/'))
@@ -138,7 +198,8 @@ mod tests {
 
     #[test]
     fn what_the_image_says_about_itself_goes() {
-        for k in ABOUT_THE_IMAGE {
+        // the runtime's own four; the app's mark has a test of its own below
+        for k in ABOUT_THE_IMAGE.iter().filter(|k| **k != HOST_LIBS_MARK) {
             assert_eq!(got(k), Some(None), "{k}");
         }
     }
@@ -164,5 +225,54 @@ mod tests {
         let vars: Vec<_> = mint().into_iter().filter(|(k, _)| k != "APPDIR").collect();
         assert!(changes(vars).is_empty());
         assert!(changes([("APPDIR", "/"), ("PATH", "/usr/bin")]).is_empty());
+    }
+
+    /// The host as EndeavourOS has it (#761): Arch keeps everything in /usr/lib, /usr/lib64 links there.
+    fn arch(p: &str) -> bool {
+        matches!(p, "/usr/lib" | "/usr/lib64" | "/usr/lib/libwebkit2gtk-4.1.so.0" | "/usr/lib64/libwebkit2gtk-4.1.so.0")
+    }
+
+    fn image() -> Vec<(String, String)> {
+        let a = APPDIR;
+        vec![
+            ("APPDIR".into(), a.into()),
+            ("LD_LIBRARY_PATH".into(), format!("{a}/usr/lib/:{a}/lib/:")),
+            ("GTK_PATH".into(), format!("{a}//usr/lib/gtk-3.0")),
+            ("GDK_PIXBUF_MODULE_FILE".into(), format!("{a}//usr/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache")),
+            ("GTK_THEME".into(), "Adwaita:dark".into()),
+        ]
+    }
+
+    #[test]
+    fn a_host_with_its_own_webkit_runs_the_app_on_its_own_libraries() {
+        let plan = host_libs_plan(image(), arch).expect("starts again");
+        let get = |k: &str| plan.iter().find(|(n, _)| n == k).map(|(_, v)| v.clone());
+        // the host's folders first, the image's after them for what the host lacks
+        assert_eq!(get("LD_LIBRARY_PATH"), Some(Some(format!("/usr/lib64:/usr/lib:{APPDIR}/usr/lib/:{APPDIR}/lib/"))));
+        assert_eq!(get("GTK_PATH"), Some(None));
+        assert_eq!(get("GDK_PIXBUF_MODULE_FILE"), Some(None));
+        assert_eq!(get(HOST_LIBS_MARK), Some(Some("1".into())));
+        // only what points into the image's GTK goes; the theme the hook picked stays
+        assert_eq!(get("GTK_THEME"), None);
+    }
+
+    #[test]
+    fn the_bundle_stays_when_the_host_has_no_webkit_or_the_app_already_started_again() {
+        // Ubuntu and Mint as installed: no WebKitGTK 4.1, the image's is the only one
+        assert!(host_libs_plan(image(), |p| p == "/usr/lib/x86_64-linux-gnu" || p == "/usr/lib").is_none());
+        let mut again = image();
+        again.push((HOST_LIBS_MARK.into(), "1".into()));
+        assert!(host_libs_plan(again, arch).is_none());
+        let mut asked = image();
+        asked.push((BUNDLED_LIBS.into(), "1".into()));
+        assert!(host_libs_plan(asked, arch).is_none());
+        // a build that is not the AppImage
+        assert!(host_libs_plan(image().into_iter().filter(|(k, _)| k != "APPDIR"), arch).is_none());
+    }
+
+    #[test]
+    fn a_program_the_app_starts_does_not_inherit_the_mark() {
+        let vars = [("APPDIR", APPDIR), (HOST_LIBS_MARK, "1")];
+        assert!(changes(vars).contains(&(HOST_LIBS_MARK.to_string(), None)));
     }
 }
