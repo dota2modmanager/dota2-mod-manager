@@ -147,6 +147,26 @@ fn inputs(o: &Owner) -> crate::diagnostics::ReportInputs {
             "notices": c.remote.notices(&lang).len(),
         }),
     );
+    // packs in the mod folder the app did not put there: they load beside the app's and can dress a
+    // hero in what the app says it took off (a Magnus in a set the library has no record of)
+    let known = c.library.known_files().unwrap_or_default();
+    let foreign: Vec<Value> = c
+        .installer
+        .external_files(&known, false)
+        .unwrap_or_default()
+        .into_iter()
+        .map(|f| {
+            json!({
+                "file": f.file_name.clone().unwrap_or_else(|| f.key.clone()),
+                "size": f.size,
+                "enabled": f.enabled,
+                "heroes": f.hero_names.clone().unwrap_or_default(),
+                "items": f.items.clone().unwrap_or_default().into_iter().take(12).collect::<Vec<_>>(),
+                "kind": f.kind_tag.clone(),
+            })
+        })
+        .collect();
+    extra.insert("foreignFiles".into(), Value::Array(foreign));
     extra.insert("toolchain".into(), crate::toolchain::Toolchain::new(&c.user_data, None).state());
     extra.insert("compiler".into(), compiler);
     let log_file = c.user_data.join("logs").join("app.log");

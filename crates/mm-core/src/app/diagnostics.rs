@@ -194,6 +194,28 @@ pub fn find_problems(r: &Value, update_error: &Value) -> Vec<Value> {
             "Expected when mods share files; the load order decides.".into(),
         );
     }
+    let foreign = field(r, "foreignFiles").as_array().cloned().unwrap_or_default();
+    let loaded: Vec<&Value> = foreign.iter().filter(|f| field(f, "enabled") != &json!(false)).collect();
+    if !loaded.is_empty() {
+        let said = loaded
+            .iter()
+            .map(|f| {
+                let heroes = field(f, "heroes").as_array().cloned().unwrap_or_default();
+                if heroes.is_empty() {
+                    return tpl(f.get("file"));
+                }
+                let names: Vec<String> = heroes.iter().take(4).map(string).collect();
+                let more = if heroes.len() > 4 { format!(" +{}", heroes.len() - 4) } else { String::new() };
+                format!("{} ({}{more})", tpl(f.get("file")), names.join(", "))
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        add(
+            "note",
+            format!("{} file(s) in dota_{} were not installed by the app", loaded.len(), tpl(lang)),
+            format!("{said}. The game loads them beside the app's mods, and they can change what a hero wears."),
+        );
+    }
     let mirrors = field(r, "mirrors").as_array().cloned().unwrap_or_default();
     let bad: Vec<&Value> = mirrors.iter().filter(|m| to_number(field(m, "fails")) > 0.0).collect();
     let said = || {
@@ -361,6 +383,7 @@ pub fn render_detailed(r: &Value, files: &IndexMap<String, String>) -> String {
         ("remoteConfig", "Remote config"),
         ("toolchain", "Source 2 toolchain"),
         ("compiler", "resourcecompiler.exe"),
+        ("foreignFiles", "Files in the mod folder the app did not install"),
     ] {
         if truthy(field(r, key)) {
             block(&mut l, title, field(r, key));
@@ -543,6 +566,7 @@ pub fn build_report(i: ReportInputs) -> (Value, IndexMap<String, String>) {
         "compiler": extra("compiler"),
         "displays": extra("displays"),
         "gpu": extra("gpu"),
+        "foreignFiles": extra("foreignFiles"),
     });
     let problems = find_problems(&report, &i.update_error);
     report["problems"] = Value::Array(problems);
@@ -580,4 +604,42 @@ pub fn build_report(i: ReportInputs) -> (Value, IndexMap<String, String>) {
         files.insert("backups-listing.txt".into(), folder_listing_text(&ud.join("backups"), None, home));
     }
     (report, files)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn report(foreign: Value) -> Value {
+        json!({
+            "dota": { "path": "D:/dota 2 beta/game", "pathValid": true, "activeVoiceInstalled": true },
+            "settings": { "langSuffix": "russian" },
+            "foreignFiles": foreign,
+        })
+    }
+
+    // a 4.3.0 report named pak06/pak07 only in a folder listing, and which hero they dressed had to
+    // be guessed
+    #[test]
+    fn a_file_the_app_did_not_install_is_named_with_its_heroes() {
+        let r = report(json!([
+            { "file": "pak07_dir.vpk", "enabled": true, "heroes": ["Magnus"] },
+            { "file": "pak06_dir.vpk", "enabled": true, "heroes": [] },
+            { "file": "pak08_dir.vpk.off", "enabled": false, "heroes": ["Axe"] },
+        ]));
+        let p = find_problems(&r, &Value::Null);
+        let hit = p.iter().find(|p| tpl(p.get("what")).contains("not installed by the app")).expect("a verdict");
+        assert_eq!(tpl(hit.get("what")), "2 file(s) in dota_russian were not installed by the app");
+        let detail = tpl(hit.get("detail"));
+        assert!(detail.starts_with("pak07_dir.vpk (Magnus), pak06_dir.vpk."), "{detail}");
+        assert!(!detail.contains("pak08"), "a switched-off file is not loaded: {detail}");
+    }
+
+    #[test]
+    fn no_foreign_files_no_verdict() {
+        for r in [report(json!([])), report(Value::Null)] {
+            let p = find_problems(&r, &Value::Null);
+            assert!(!p.iter().any(|p| tpl(p.get("what")).contains("not installed by the app")), "{p:?}");
+        }
+    }
 }
