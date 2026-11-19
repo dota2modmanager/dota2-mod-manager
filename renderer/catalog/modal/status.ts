@@ -6,17 +6,19 @@ import { catalogName } from '../../ui/catalog-name.ts';
 import type { LibRecord } from '../../library/types.ts';
 
 /** One thing the window says about the record: a switch to turn it on, or the way to My mods. */
-export interface ModState { key: 'off' | 'covered' | 'schema' | 'prePatch'; icon: string; text: string; act: 'enable' | 'library' | null }
+export interface ModState { key: 'off' | 'covered' | 'schema' | 'prePatch' | 'packed'; icon: string; text: string; act: 'enable' | 'library' | null }
 
-type Rec = Pick<LibRecord, 'enabled' | 'coveredBy' | 'schemaCount' | 'schemaLive' | 'prePatch'>;
+type Rec = Pick<LibRecord, 'enabled' | 'coveredBy' | 'schemaCount' | 'schemaLive' | 'prePatch' | 'packId' | 'packName'>;
 
 /** What the window says about `rec`, in the order to deal with it; empty when nothing is wrong. */
 export function modStates(rec: Rec | null | undefined): ModState[] {
   if (!rec) return [];
+  const packed: ModState[] = rec.packId ? [{ key: 'packed', icon: 'inventory_2', act: 'library',
+    text: L`Мод лежит в паке «${rec.packName ?? ''}»: так несколько модов занимают один слот pakNN. Включается и выключается он там же, в «Моих модах».` }] : [];
   if (rec.enabled === false) {
-    return [{ key: 'off', icon: 'toggle_off', text: L`Мод установлен, но выключен в «Моих модах»: в игре его нет.`, act: 'enable' }];
+    return [{ key: 'off', icon: 'toggle_off', text: L`Мод установлен, но выключен в «Моих модах»: в игре его нет.`, act: 'enable' }, ...packed];
   }
-  const out: ModState[] = [];
+  const out: ModState[] = [...packed];
   const by = rec.coveredBy ?? [];
   if (by.length) {
     const who = by.map((c) => `«${catalogName(c.name)}»`).join(', ');

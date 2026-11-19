@@ -533,7 +533,10 @@ mod tool_timeout_tests {
     fn the_whole_map_is_given_ten_minutes_and_a_model_one() {
         let map = crate::map_scene::export_args("dota.vpk", "world.glb");
         assert_eq!(tool_timeout_ms(&map), 600_000);
-        let model: Vec<String> = ["-i", "pak01_dir.vpk", "-f", "models/heroes/axe/axe.vmdl_c", "-o", "x"].iter().map(|s| s.to_string()).collect();
+        let model: Vec<String> = ["-i", "pak01_dir.vpk", "-f", "models/heroes/axe/axe.vmdl_c", "-o", "x"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
         assert_eq!(tool_timeout_ms(&model), 60_000);
     }
 }

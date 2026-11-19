@@ -159,7 +159,10 @@ function drawModal(): void {
     },
     uninstall: async () => {
       if (!installedRec || !await confirmDialog(L`Удалить «${catalogName(mod.name)}»?`)) return;
-      const r = await window.api.mods.remove(installedRec.id);
+      // a mod inside a pack leaves the pack, and the pack is rebuilt without it
+      const r = installedRec.packId
+        ? await window.api.packs.removeMember(installedRec.packId, installedRec.id)
+        : await window.api.mods.remove(installedRec.id);
       if (r.error) toast(r.error, 'error');
       else toast(L`${catalogName(mod.name)} удалён`);
       await refreshInstalledIndex();
@@ -168,7 +171,9 @@ function drawModal(): void {
     },
     enable: async () => {
       if (!installedRec) return;
-      const r = await window.api.mods.setEnabled(installedRec.id, true);
+      const r = installedRec.packId
+        ? await window.api.packs.setMemberEnabled(installedRec.packId, installedRec.id, true)
+        : await window.api.mods.setEnabled(installedRec.id, true);
       if (r.error) { toast(r.error, 'error'); return; }
       toast(L`${catalogName(mod.name)} включён`);
       await refreshInstalledIndex();

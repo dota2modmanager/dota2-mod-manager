@@ -81,10 +81,145 @@ pub fn deploy_into(inst: &Installer, lib: &mut Library, pack: &Value) -> Result<
 
 /// A record's files taken out of the game, and the record gone: it lives on as a member.
 fn absorb(c: &mut Core, pack_id: &str, rec: &Value) -> Result<Value, String> {
-    let m = c.installer.add_pack_member_from_record(pack_id, rec, &uuid())?;
-    let _ = c.installer.remove(&files_of(rec.get("files").unwrap_or(&Value::Null)), None, true);
-    c.library.remove_record(&rec["id"], None).map_err(io)?;
+    absorb_into(&c.installer, &mut c.library, pack_id, rec)
+}
+
+fn absorb_into(inst: &Installer, lib: &mut Library, pack_id: &str, rec: &Value) -> Result<Value, String> {
+    let m = inst.add_pack_member_from_record(pack_id, rec, &uuid())?;
+    let _ = inst.remove(&files_of(rec.get("files").unwrap_or(&Value::Null)), None, true);
+    lib.remove_record(&rec["id"], None).map_err(io)?;
     Ok(m)
+}
+
+// ---------- the shared pack: room made by itself when the pak slots run out ----------
+//
+// Dota reads pak01-pak99 from the language folder and nothing past it, so about sixty mods of the
+// usual zone fill the order. Installing the sixty-first from a long list used to fail with "no
+// free pakNN slots" over and over, one red toast per mod, and the mods that did not fit were gone
+// from the list. People asked in Discord with a screenshot of the toast, five of them in a week.
+//
+// Now, when an install would leave fewer than ROOM_LOW slots free, mods already in the game are
+// folded into one pack, "Shared pack", until ROOM_BATCH slots are free again. A pack is one slot
+// whatever it holds, and each mod in it still switches on and off by itself in My mods. Folded
+// first are the mods that are off (they do nothing in the game, so nothing changes there), then
+// the newest. Never folded: a mod in a priority slot (its place in the order is the point of it),
+// a mod the app builds itself, a mod a saved preset names (the preset finds mods by their record),
+// and anything that is not a plain pak.
+//
+// Somebody who wants the order in their own hands turns it off in Settings (`autoPack`), and gets
+// the old message, which now also says where the switch is.
+
+/// Folding starts when an install would leave fewer free slots than this: the last one, and one more.
+pub const ROOM_LOW: usize = 2;
+/// Free slots one round of folding leaves, so the pack is rebuilt once in several installs.
+pub const ROOM_AFTER: usize = 10;
+
+/// Whether the app may fold mods into the shared pack by itself (on unless turned off).
+pub fn auto_pack_on(settings: &crate::settings::Settings) -> bool {
+    settings.get("autoPack") != Some(&Value::Bool(false))
+}
+
+fn is_auto_pack(r: &Value) -> bool {
+    r.get("kind").and_then(Value::as_str) == Some("pack") && r.get("auto") == Some(&Value::Bool(true))
+}
+
+/// The pack and the member that hold a mod, when it was folded into a pack.
+pub fn packed<'a>(lib: &'a Library, category: &Value, name: &Value, style: Option<&Value>) -> Option<&'a Value> {
+    let style = style.filter(|s| !s.is_null() && crate::js::truthy(s));
+    lib.list().iter().filter(|r| r.get("kind").and_then(Value::as_str) == Some("pack")).find(|p| {
+        members(p).iter().any(|m| {
+            m.get("categoryId") == Some(category)
+                && m.get("name") == Some(name)
+                && m.get("styleLabel").filter(|s| !s.is_null() && crate::js::truthy(s)) == style
+        })
+    })
+}
+
+/// A record that can go into the shared pack: plain paks in the usual zone, nothing the app builds.
+fn foldable(inst: &Installer, kept: &std::collections::HashSet<String>, r: &Value) -> bool {
+    static PAK: std::sync::OnceLock<regex::Regex> = std::sync::OnceLock::new();
+    let pak = PAK.get_or_init(|| regex::Regex::new(r"(?i)^pak\d+_(dir|\d{3})\.vpk$").unwrap());
+    let files = r.get("files").and_then(Value::as_array).map_or(&[][..], Vec::as_slice);
+    packable_record(Some(r))
+        && !r.get("generated").is_some_and(crate::js::truthy)
+        && !kept.contains(&id_of(r))
+        && !files.is_empty()
+        && files.iter().all(|f| {
+            f.get("root").and_then(Value::as_str) == Some("lang")
+                && f.get("relPath").and_then(Value::as_str).is_some_and(|p| pak.is_match(p))
+        })
+        && inst.slot_number(r).is_some_and(|n| n >= crate::slot_zones::NORMAL_FIRST)
+}
+
+/// Free slots an install into `priority` (or the usual zone) can take.
+fn room_for(inst: &Installer, priority: bool) -> Result<usize, String> {
+    use crate::slot_zones::{free_slots, Zone};
+    let used = inst.used_pak_names()?;
+    Ok(free_slots(Zone::Normal, &used) + if priority { free_slots(Zone::Priority, &used) } else { 0 })
+}
+
+/// Before `need` installs: when the slots are about to run out, fold mods into the shared pack.
+/// Answers the names folded (none when there was room, or the switch is off).
+pub fn make_room(
+    inst: &Installer,
+    lib: &mut Library,
+    on: bool,
+    priority: bool,
+    need: usize,
+) -> Result<Vec<Value>, String> {
+    if !on || inst.lang_folder().map_or(true, |l| !l.is_dir()) {
+        return Ok(Vec::new());
+    }
+    let free = room_for(inst, priority)?;
+    if free >= need + ROOM_LOW - 1 {
+        return Ok(Vec::new());
+    }
+    let kept: std::collections::HashSet<String> = lib
+        .list_presets()
+        .iter()
+        .flat_map(|p| lib.preset_mod_ids(Some(p)).unwrap_or_default())
+        .map(|id| crate::js::string(&id))
+        .collect();
+    let mut pick: Vec<Value> = lib.list().iter().filter(|r| foldable(inst, &kept, r)).cloned().collect();
+    // the ones that are off first (the game does not see them), then the newest
+    let at = |r: &Value| r.get("installedAt").and_then(Value::as_f64).unwrap_or(0.0);
+    pick.sort_by(|a, b| {
+        let off = |r: &Value| r.get("enabled") == Some(&Value::Bool(false));
+        off(b).cmp(&off(a)).then(at(b).total_cmp(&at(a)))
+    });
+    let existing = lib.list().iter().find(|r| is_auto_pack(r)).cloned();
+    // a new pack takes one of the slots it frees
+    let want = ROOM_AFTER.max(need + ROOM_LOW) - free + usize::from(existing.is_none());
+    pick.truncate(want);
+    if pick.is_empty() || (existing.is_none() && pick.len() < 2) {
+        return Ok(Vec::new());
+    }
+    let mut pack = match existing {
+        Some(p) => p,
+        None => {
+            let p = lib
+                .add(
+                    &json!({
+                        "name": t("Общий пак", &[]), "categoryId": "combined", "styleLabel": null, "fileRef": null,
+                        "preview": null, "files": [], "kind": "pack", "members": [],
+                    }),
+                    None,
+                )
+                .map_err(io)?;
+            lib.update(&p["id"], &json!({ "auto": true }), None).map_err(io)?.unwrap_or(p)
+        }
+    };
+    let pid = id_of(&pack);
+    std::fs::create_dir_all(inst.pack_folder(&pid)).map_err(io)?;
+    let mut list = members(&pack);
+    let mut names = Vec::new();
+    for r in &pick {
+        list.push(absorb_into(inst, lib, &pid, r)?);
+        names.push(r.get("name").cloned().unwrap_or(Value::Null));
+    }
+    pack["members"] = Value::Array(list);
+    deploy_into(inst, lib, &pack)?;
+    Ok(names)
 }
 
 fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
@@ -275,4 +410,101 @@ fn combine(c: &mut Core, payload: &Value) -> Result<Value, String> {
     }
     let conflicts = deploy_and_apply(c, &target)?;
     Ok(json!({ "ok": true, "pack": c.library.find(&target["id"]), "conflicts": conflicts }))
+}
+
+#[cfg(test)]
+mod shared_pack_tests {
+    use super::*;
+    use crate::slot_zones::{free_slots, pak_base, Zone, APP_PAK, NORMAL_FIRST};
+
+    /// A game whose usual zone has one slot left, every other one a mod of the library's, plus a
+    /// mod in a priority slot, one the app built, and one a saved preset names.
+    fn full_game() -> (std::path::PathBuf, Installer, Library) {
+        let root = std::env::temp_dir().join(format!("mm-shared-pack-{}", uuid::Uuid::new_v4().simple()));
+        let lang = root.join("game").join("dota_russian");
+        std::fs::create_dir_all(&lang).unwrap();
+        std::fs::create_dir_all(root.join("game").join("dota")).unwrap();
+        std::fs::write(root.join("game").join("dota").join("pak01_dir.vpk"), crate::vpk::build(&[])).unwrap();
+        let ud = root.join("ud");
+        std::fs::create_dir_all(&ud).unwrap();
+        let slots: Vec<u32> =
+            (NORMAL_FIRST..=99).filter(|n| !crate::minify::RESERVED_PAKS.contains(n) && *n != APP_PAK).collect();
+        let mut installed = Vec::new();
+        let mut put = |n: u32, extra: Value| {
+            let file = format!("{}_dir.vpk", pak_base(n));
+            let body = format!("mod {n}").into_bytes();
+            std::fs::write(
+                lang.join(&file),
+                crate::vpk::build(&[crate::vpk::entry_at(&format!("materials/mod{n}.vtex_c"), body.into())]),
+            )
+            .unwrap();
+            let mut rec = json!({ "id": format!("m{n}"), "name": format!("Mod {n}"), "categoryId": "heroes",
+                "styleLabel": null, "enabled": !n.is_multiple_of(10), "installedAt": n,
+                "files": [{ "root": "lang", "relPath": file }] });
+            if let (Some(r), Some(e)) = (rec.as_object_mut(), extra.as_object()) {
+                r.extend(e.clone());
+            }
+            installed.push(rec);
+        };
+        put(5, json!({ "categoryId": "trees" }));
+        for (i, n) in slots[..slots.len() - 1].iter().enumerate() {
+            put(*n, if i == slots.len() - 2 { json!({ "generated": { "map": true } }) } else { json!({}) });
+        }
+        let presets = json!([{ "id": "p1", "name": "Mine", "modIds": [format!("m{}", slots[slots.len() - 3])] }]);
+        std::fs::write(ud.join("manifest.json"), json!({ "installed": installed, "presets": presets }).to_string())
+            .unwrap();
+        let mut inst = Installer::new(Some(root.join("game")), "russian");
+        inst.user_data = ud.clone();
+        (root, inst, Library::new(&ud))
+    }
+
+    #[test]
+    fn the_last_free_slot_folds_mods_into_one_shared_pack_and_leaves_room() {
+        let (root, inst, mut lib) = full_game();
+        let before = free_slots(Zone::Normal, &inst.used_pak_names().unwrap());
+        assert_eq!(before, 1);
+        let names = make_room(&inst, &mut lib, true, false, 1).unwrap();
+        let free = free_slots(Zone::Normal, &inst.used_pak_names().unwrap());
+        assert!(free >= ROOM_AFTER, "{free} free after folding {names:?}");
+
+        let pack = lib.list().iter().find(|r| is_auto_pack(r)).cloned().expect("the shared pack");
+        let held = members(&pack);
+        assert_eq!(held.len(), names.len());
+        // the mods that are off went in first, and keep their state
+        let off: Vec<&Value> = held.iter().filter(|m| m["enabled"] == json!(false)).collect();
+        assert!(off.len() >= 6, "{held:?}");
+        // never folded: the priority slot, the mod the app built, the one a preset names
+        {
+            let kept = "m5";
+            assert!(lib.find(&json!(kept)).is_some(), "{kept} stays where it is");
+        }
+        assert!(lib.list().iter().any(|r| r.get("generated").is_some()), "the built mod stays");
+        let named = lib.list_presets()[0]["modIds"][0].clone();
+        assert!(lib.find(&named).is_some(), "the preset's mod stays");
+        // a folded mod is still installed as far as the catalog asks, and still in the game
+        let m = &held.iter().find(|m| m["enabled"] == json!(true)).expect("an enabled one");
+        assert!(packed(&lib, &m["categoryId"], &m["name"], None).is_some());
+        let base = Installer::pack_base(&files_of(&pack["files"])).expect("the pack is deployed");
+        let lang = inst.lang_folder().unwrap();
+        let paths = crate::vpk::list_paths(&std::fs::read(lang.join(format!("{base}_dir.vpk"))).unwrap()).unwrap();
+        let n = m["name"].as_str().unwrap().trim_start_matches("Mod ");
+        assert!(paths.iter().any(|p| p == &format!("materials/mod{n}.vtex_c")), "{paths:?}");
+
+        // room enough: the next install folds nothing, and a second round adds to the same pack
+        assert!(make_room(&inst, &mut lib, true, false, 1).unwrap().is_empty());
+        let more = make_room(&inst, &mut lib, true, false, free + 1).unwrap();
+        assert!(!more.is_empty());
+        assert_eq!(lib.list().iter().filter(|r| is_auto_pack(r)).count(), 1);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn with_the_switch_off_nothing_is_folded() {
+        let (root, inst, mut lib) = full_game();
+        let count = lib.list().len();
+        assert!(make_room(&inst, &mut lib, false, false, 1).unwrap().is_empty());
+        assert_eq!(lib.list().len(), count);
+        assert!(lib.list().iter().all(|r| !is_auto_pack(r)));
+        let _ = std::fs::remove_dir_all(&root);
+    }
 }

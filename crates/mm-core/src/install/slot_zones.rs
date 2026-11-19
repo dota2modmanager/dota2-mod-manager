@@ -69,6 +69,18 @@ pub fn free_slot_in(zone: Zone, used: &HashSet<String>) -> Option<String> {
         .find(|name| !used.contains(name))
 }
 
+/// How many slots of a part of the load order are still free.
+pub fn free_slots(zone: Zone, used: &HashSet<String>) -> usize {
+    let (from, to) = match zone {
+        Zone::Priority => PRIORITY_SLOTS,
+        Zone::Normal => (NORMAL_FIRST, 99),
+    };
+    (from..=to)
+        .filter(|n| !RESERVED_PAKS.contains(n) && *n != APP_PAK)
+        .filter(|n| !used.contains(&format!("{}_dir.vpk", pak_base(*n))))
+        .count()
+}
+
 fn category(rec: &Value) -> String {
     rec.get("categoryId").map(crate::js::string).unwrap_or_else(|| "undefined".into())
 }

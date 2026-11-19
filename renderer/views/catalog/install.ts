@@ -23,6 +23,16 @@ interface InstallResult {
   /** the cursors switched off, since the game shows one */
   replaced?: string[];
   cancelled?: boolean;
+  /** the mods the shared pack took in to make room for this one */
+  folded?: string[];
+}
+
+/** What the shared pack took in, said once: for one install, or for a whole list at its end. */
+function foldedToast(names: string[]): void {
+  if (!names.length) return;
+  toast(names.length === 1
+    ? L`Слоты pakNN почти кончились, поэтому «${catalogName(names[0])}» теперь лежит в «Общем паке». В игре он работает как раньше, включать и выключать его можно в «Моих модах».`
+    : L`Слоты pakNN почти кончились, поэтому ${names.length} модов теперь лежат в «Общем паке». В игре они работают как раньше, включать и выключать их можно в «Моих модах».`, 'ok', 9000);
 }
 
 interface Entry { categoryId: string; mod: Mod; styleLabel: string | null; fileRef?: string; preview?: string }
@@ -80,6 +90,14 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
     r = { error: String((err as Error)?.message || err) };
   }
   installing.delete(k);
+  // a list reports once at its end, so forty failures are one line and not forty toasts
+  if (batch) {
+    await refreshInstalledIndex();
+    redrawScreen();
+    changed();
+    return r;
+  }
+  foldedToast(r.folded ?? []);
   if (r.error && !r.already) {
     const hint = isNetworkDownloadError(r.error) ? ` — ${L`Возможно, нужно настроить прокси или включить VPN`}` : '';
     toast(`${catalogName(mod.name)}: ${r.error}${hint}`, 'error', 7000);
@@ -98,19 +116,33 @@ export async function doInstall(categoryId: string, mod: Mod, styleLabel: string
  * a pack from the catalog, and the list the user built themselves. Sequential on purpose -
  * these are downloads into the same folder, and a mod's pak slot depends on what is already
  * there, so they cannot be raced. */
-async function installMany(entries: Entry[]): Promise<{ ok: number; skip: number; fail: number }> {
-  let ok = 0, fail = 0, skip = 0;
+interface ManyResult { ok: number; skip: number; fail: number; failed: { key: string; error: string }[] }
+
+async function installMany(entries: Entry[]): Promise<ManyResult> {
+  let ok = 0, skip = 0;
+  const failed: { key: string; error: string }[] = [];
+  const folded: string[] = [];
   for (const { categoryId, mod, styleLabel, fileRef, preview } of entries) {
     if (!fileRef || !/\.(vpk|zip)$/i.test(fileRef)) { skip++; continue; }
-    if (state.installedIndex.has(keyOf(categoryId, mod.name, styleLabel))) { skip++; continue; }
+    const key = keyOf(categoryId, mod.name, styleLabel);
+    if (state.installedIndex.has(key)) { skip++; continue; }
     const r = await doInstall(categoryId, mod, styleLabel, fileRef, preview, { batch: true });
+    folded.push(...(r?.folded ?? []));
     if (r?.ok) ok++;
-    else if (r?.cancelled) skip++;
-    else fail++;
+    else if (r?.cancelled || r?.already) skip++;
+    else failed.push({ key, error: r?.error || L`Не удалось установить` });
   }
   await refreshInstalledIndex();
   render();
-  return { ok, skip, fail };
+  foldedToast(folded);
+  return { ok, skip, fail: failed.length, failed };
+}
+
+/** The reasons a run failed for, each once: forty mods out of room are one reason, not forty. */
+function reasons(failed: { error: string }[]): string {
+  const counts = new Map<string, number>();
+  for (const f of failed) counts.set(f.error, (counts.get(f.error) ?? 0) + 1);
+  return [...counts].slice(0, 2).map(([e, n]) => (n > 1 ? `${e} (×${n})` : e)).join('; ');
 }
 
 /** A pack's `mods` entry is usually a mod's name, but the catalog also ships { name, style }. */
@@ -131,22 +163,26 @@ export async function installPack(pack: Mod, excluded: Set<string>): Promise<voi
     const style = mod.file ? null : mod.styles?.[0];
     entries.push({ categoryId, mod, styleLabel: style?.label || null, fileRef: mod.file || style?.file, preview: style?.preview || mod.preview });
   }
-  const { ok, skip, fail } = await installMany(entries);
-  toast(L`Пак «${catalogName(pack.name)}»: установлено ${ok}, пропущено ${skip + missing}${fail ? L`, ошибок ${fail}` : ''}`, fail ? 'warn' : 'ok', 7000);
+  const { ok, skip, fail, failed } = await installMany(entries);
+  toast(L`Пак «${catalogName(pack.name)}»: установлено ${ok}, пропущено ${skip + missing}${fail ? L`, ошибок ${fail}` : ''}${fail ? `. ${reasons(failed)}` : ''}`, fail ? 'warn' : 'ok', fail ? 12000 : 7000);
 }
 
 // The install list hands its contents back here, since this is where installing lives.
-useInstaller(async (list: QueueEntry[]) => {
+useInstaller(async (list: QueueEntry[]): Promise<Map<string, string>> => {
   const entries = list
     .map(({ cat, name, label, file, preview }): Entry | null => {
       const mod = findModByName(cat, name);
       return mod ? { categoryId: cat, mod, styleLabel: label, fileRef: file, preview: preview ?? undefined } : null;
     })
     .filter((e): e is Entry => e !== null);
-  const { ok, skip, fail } = await installMany(entries);
+  const { ok, skip, fail, failed } = await installMany(entries);
   toast(
-    L`Список: установлено ${ok}${skip ? L`, пропущено ${skip}` : ''}${fail ? L`, ошибок ${fail}` : ''}`,
+    fail
+      ? L`Список: установлено ${ok}, не установились ${fail}: они остались в списке. ${reasons(failed)}`
+      : L`Список: установлено ${ok}${skip ? L`, пропущено ${skip}` : ''}`,
     fail ? 'warn' : 'ok',
-    7000,
+    fail ? 12000 : 7000,
   );
+  // what did not go in stays in the list, with why, for another try
+  return new Map(failed.map((f) => [f.key, f.error]));
 });

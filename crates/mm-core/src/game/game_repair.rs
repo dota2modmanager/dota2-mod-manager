@@ -192,7 +192,8 @@ impl GameRepair {
             _ => json!(id),
         };
         let mods: Vec<Value> = ids.iter().map(|id| name_of(id)).collect();
-        let off: Vec<Value> = self.switch_off_crashing(ctx, impact, &mods_of(&ids), diag).iter().map(|id| name_of(id)).collect();
+        let off: Vec<Value> =
+            self.switch_off_crashing(ctx, impact, &mods_of(&ids), diag).iter().map(|id| name_of(id)).collect();
         let mut out = json!({ "build": reached.get("to").cloned().unwrap_or(Value::Null), "mods": mods });
         if !off.is_empty() {
             out["off"] = json!(off);
@@ -207,7 +208,13 @@ impl GameRepair {
     /// "Unable to load layout file hud/hud_reborn.xml" for everyone with such a HUD on, and the
     /// way out was to find and remove the mod by hand. Pictures, sounds and styles from before a
     /// patch only look old, so those mods stay on with their mark.
-    fn switch_off_crashing(&self, ctx: &mut Ctx, impact: &Impact, ids: &[String], diag: &mut dyn FnMut(String)) -> Vec<String> {
+    fn switch_off_crashing(
+        &self,
+        ctx: &mut Ctx,
+        impact: &Impact,
+        ids: &[String],
+        diag: &mut dyn FnMut(String),
+    ) -> Vec<String> {
         let mods = impact_mods(ctx.lib.list(), &|r| ctx.inst.lang_file_on_disk(r).unwrap_or_default());
         let marks = impact.note.marked(&mods);
         let mut off = Vec::new();
@@ -217,7 +224,8 @@ impl GameRepair {
                 continue;
             }
             // the note keeps ids as text, and a record's id can be a number
-            let Some(rec) = ctx.lib.list().iter().find(|r| r.get("id").map(crate::js::string).as_deref() == Some(id)).cloned()
+            let Some(rec) =
+                ctx.lib.list().iter().find(|r| r.get("id").map(crate::js::string).as_deref() == Some(id)).cloned()
             else {
                 continue;
             };

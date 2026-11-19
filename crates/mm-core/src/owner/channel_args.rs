@@ -310,6 +310,7 @@ pub fn window_settings() -> &'static HashMap<&'static str, Check> {
         HashMap::from([
             ("discordPresence", bool_()),
             ("countDownloads", bool_()),
+            ("autoPack", bool_()),
             ("everyoneWearsMine", bool_()),
             ("everyoneExcluded", list(str_(64, 0), 300)),
             ("favorites", list(str_(500, 0), 20000)),

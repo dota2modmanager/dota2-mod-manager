@@ -34,6 +34,7 @@ export interface SettingsModel {
   presence: boolean;
   /** installs of catalog mods are counted by the catalog's download counter */
   countDownloads: boolean;
+  autoPack: boolean;
   /** the item builder's look on everybody playing the hero */
   everyone: EveryoneModel;
   beta: { eligible: boolean; on: boolean };
@@ -61,6 +62,7 @@ export interface SettingsActions extends CompilerActions {
   scaleStep: (delta: number | null) => void;
   presence: () => void;
   countDownloads: () => void;
+  autoPack: () => void;
   everyone: () => void;
   /** a hero excluded from the look on everybody, or let back in */
   everyoneHero: (id: string) => void;
@@ -176,6 +178,10 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
                 <button className="btn btn-sm" id="detectBtn" onClick={actions.detect}>{L`Найти автоматически`}</button>
                 <button className="btn btn-sm" id="browseBtn" onClick={actions.browse}>{L`Указать вручную`}</button>
               </div>
+            </Row>
+            <Row label={L`Общий пак, когда кончаются слоты`}
+              hint={L`Dota читает не больше 99 паков, и примерно на шестидесятом моде место кончается. Тогда приложение само сложит выключенные и самые новые моды в «Общий пак»: он занимает один слот, а каждый мод в нём включается и выключается по отдельности в «Моих модах». Выключи, если следишь за слотами сам.`}>
+              <Toggle id="autoPackToggle" on={m.autoPack} label={L`Общий пак, когда кончаются слоты`} onClick={actions.autoPack} />
             </Row>
             <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} onHero={actions.everyoneHero} />
             <GridRows />

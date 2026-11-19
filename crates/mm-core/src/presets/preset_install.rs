@@ -87,6 +87,16 @@ pub fn install_from_catalog(
     Ok(Some(rec))
 }
 
+/// Room for `need` mods made once, before a preset installs any: folding in the middle of one
+/// would take records the preset is about to switch on by their ids (owner_packs.rs make_room).
+fn room_before(d: &mut Deps, need: usize) {
+    if need == 0 {
+        return;
+    }
+    let on = d.settings.as_deref().is_none_or(crate::owner_packs::auto_pack_on);
+    let _ = crate::owner_packs::make_room(d.inst, d.lib, on, false, need);
+}
+
 /// An own preset: whatever the catalog still has of its gone mods installed first, a mod of the
 /// user's own named as missing, then the preset applied. A mod that could not be switched fails
 /// the preset; one that could not be fetched is a warning.
@@ -96,6 +106,7 @@ pub fn apply_own(d: &mut Deps, preset: &Value, cat: &CatalogIndex) -> Result<Out
     let mut missing = Vec::new();
     let mut errors = Vec::new();
     let mut installed = 0;
+    room_before(d, absent.len());
     for identity in &absent {
         if identity.get("categoryId").and_then(Value::as_str) == Some("imported") {
             missing.push(name_of(identity));
@@ -144,6 +155,18 @@ pub fn resolve(d: &mut Deps, preset: &Value, cat: &CatalogIndex) -> Result<Outco
         },
         None => None,
     };
+    let wanted = preset.get("wanted").and_then(Value::as_array).cloned().unwrap_or_default();
+    let need = wanted
+        .iter()
+        .map(|e| {
+            if e.get("kind").and_then(Value::as_str) == Some("pack") {
+                1
+            } else {
+                usize::from(e.get("kind").and_then(Value::as_str) != Some("cosmetic"))
+            }
+        })
+        .sum();
+    room_before(d, need);
     let mut fps = crate::preset_plan::installed_fp_index(d.lib, d.inst);
     let mut errors: Vec<String> = Vec::new();
     let mut schema = false;
