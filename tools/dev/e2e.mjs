@@ -257,7 +257,10 @@ export const EVAL_REMOVE = `
   const slot = await until(() => document.querySelector('[data-cat="cosmetic:hud_skin"]'), 15000);
   if (step('the Items screen lists the HUD slot', slot, 'no cosmetic:hud_skin in the rail')) {
     slot.click();
-    const box = await until(() => document.getElementById('cosSearch'), 30000);
+    // the Items hub has a #cosSearch of its own: on a slow runner the hub's box was found, typed
+    // into, and then replaced by the slot's screen, which read as the bug this step guards against.
+    // #cosGrid is only on the slot's screen.
+    const box = await until(() => document.getElementById('cosGrid') && document.getElementById('cosSearch'), 30000);
     if (step('the HUD slot has its search box', box, 'no #cosSearch')) {
       box.focus();
       const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
