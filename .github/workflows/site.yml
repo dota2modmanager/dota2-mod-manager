@@ -66,13 +66,13 @@ jobs:
           # its "no history here" state instead of the chart.
           fetch-depth: 0
 
-      # The hero and category pages and their previews are written by the catalog job to the
-      # catalog-data branch (DECISIONS.md, "The catalog job commits to a branch of its own"),
-      # at the paths they take here.
+      # The hero and category pages are written by the catalog job to the catalog-data branch
+      # (DECISIONS.md, "The catalog job commits to a branch of its own"), at the paths they take
+      # here. Their pictures are in the R2 bucket and come in after node is set up.
       - name: Bring in the catalog data
         run: |
           git fetch --no-tags --depth=1 origin catalog-data
-          git checkout FETCH_HEAD -- site/src/data/heroes.json site/src/data/categories.json site/public/mods
+          git checkout FETCH_HEAD -- site/src/data/heroes.json site/src/data/categories.json
 
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
@@ -83,6 +83,12 @@ jobs:
       - name: Install
         working-directory: site
         run: npm ci
+
+      # Every picture those pages name, from the bucket into site/public/mods (DECISIONS.md, "The
+      # catalog's preview images live in the R2 bucket"). One missing fails the build, so no
+      # deploy goes out with a hole where a mod's picture should be.
+      - name: Bring in the catalog pictures
+        run: node tools/catalog/site-previews.mjs pull
 
       # The build reaches out to the catalogue and to the GitHub API for the four numbers on
       # the landing. If either is unreachable it falls back to committed figures rather than
