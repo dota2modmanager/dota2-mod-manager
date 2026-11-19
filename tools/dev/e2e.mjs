@@ -287,7 +287,15 @@ export const EVAL_REMOVE = `
           now.dispatchEvent(new Event('input', { bubbles: true }));
           await sleep(400);
         }
-        document.getElementById('cosSearch').focus();
+        const target = document.getElementById('cosSearch');
+        target.focus();
+        if (document.activeElement !== target && seen.length < 3) {
+          const hid = target.closest('[hidden]');
+          const r = target.getBoundingClientRect();
+          seen.push('focus() did not take: window focused ' + document.hasFocus() + ', visibility ' + document.visibilityState
+            + ', inside hidden ' + (hid ? (hid.dataset.pane || hid.id || hid.tagName) : 'none') + ', box ' + Math.round(r.width) + 'x' + Math.round(r.height)
+            + ', disabled ' + target.disabled + ', transition ' + document.documentElement.classList.contains('vt-screen') + ', active ' + (document.activeElement && (document.activeElement.id || document.activeElement.tagName)));
+        }
         for (const ch of 'the') {
           const now = document.getElementById('cosSearch');
           setValue.call(now, now.value + ch);
