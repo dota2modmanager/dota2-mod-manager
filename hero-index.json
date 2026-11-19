@@ -1,6 +1,6 @@
 {
   "heroes": 151,
-  "mods": 1827,
+  "mods": 1828,
   "byHero": {
     "abaddon": {
       "name": "Abaddon",
@@ -680,6 +680,7 @@
         {"name":"Natures Prophet Immortal Allfather","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Natures Prophet Saya","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon","shoulder","legs"]},
         {"name":"Natures Prophet Spectral Sage","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
+        {"name":"Natures Prophet Treant Swap","categoryId":"heroes","styleLabel":null,"slots":["misc","arms","back","head","weapon"]},
         {"name":"Nemestice Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Pink Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},
         {"name":"Red Diretide Ranged Attack","categoryId":"ranged-attack","styleLabel":null,"slots":[]},

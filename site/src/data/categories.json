@@ -2656,6 +2656,7 @@
     {
       "id": "backgrounds",
       "mods": [
+        {"name":"Sewerslvt","styleLabel":null,"group":null,"image":{"src":"/mods/sewerslvt.webp","width":854,"height":480},"author":"darkblad3s","authorUrl":null,"date":1795046713},
         {
           "name": "Juuzou Suzuya Bg",
           "styleLabel": null,
@@ -5075,6 +5076,24 @@
       "id": "mega-kill",
       "mods": [
         {
+          "name": "Ambient Mega Kill",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/ambient-mega-kill.webp","width":854,"height":480},
+          "author": "hahatun",
+          "authorUrl": "https://t.me/hahtundota",
+          "date": 1795046713
+        },
+        {
+          "name": "Viperr Mega Kill",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/viperr-mega-kill.webp","width":854,"height":480},
+          "author": "samoredoto",
+          "authorUrl": "https://t.me/samoredoto",
+          "date": 1795046713
+        },
+        {
           "name": "Barboskiny X Naruto",
           "styleLabel": null,
           "group": null,
@@ -5715,6 +5734,15 @@
     {
       "id": "sounds",
       "mods": [
+        {
+          "name": "Warcraft 3 Voices Korean",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/warcraft-3-voices-korean.webp","width":854,"height":480},
+          "author": "Fr0dech",
+          "authorUrl": "https://t.me/fr0dech_vpk",
+          "date": 1795046713
+        },
         {
           "name": "Warcraft 3 Voices French",
           "styleLabel": null,
@@ -6671,6 +6699,7 @@
     {
       "id": "trees",
       "mods": [
+        {"name":"Gray Trees","styleLabel":null,"group":null,"image":{"src":"/mods/gray-trees.webp","width":854,"height":480},"author":"Robbyz","authorUrl":"https://github.com/robbyz512","date":1795046713},
         {"name":"Catbuns Trees","styleLabel":null,"group":null,"image":{"src":"/mods/catbuns-trees.webp","width":854,"height":480},"author":"VPKDota","authorUrl":"https://t.me/vpkdota","date":1794777219},
         {
           "name": "Cone Trees",
