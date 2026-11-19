@@ -262,18 +262,46 @@ export const EVAL_REMOVE = `
     // #cosGrid is only on the slot's screen.
     const box = await until(() => document.getElementById('cosGrid') && document.getElementById('cosSearch'), 30000);
     if (step('the HUD slot has its search box', box, 'no #cosSearch')) {
-      box.focus();
+      // When the box loses its focus, whatever took the box off the page says so: the step failed
+      // now and then on Linux with every letter in place and the focus on <body>, which is a box
+      // drawn again after it was focused, and the failure alone did not say who drew it.
+      const seen = [];
+      const holds = (n) => n && n.nodeType === 1 && (n.id === 'cosSearch' || (n.querySelector && n.querySelector('#cosSearch')));
+      const note = (how, n) => { if (holds(n) && seen.length < 3) seen.push(how + ' at ' + (new Error().stack || '').split('\\n').slice(2, 9).map((l) => l.trim()).join(' < ')); };
+      const patches = [[Node.prototype, 'removeChild', (n) => n], [Node.prototype, 'replaceChild', (_, old) => old],
+        [Element.prototype, 'remove', function () { return this; }], [Element.prototype, 'replaceChildren', function () { return this.firstElementChild && this; }]];
+      const kept = patches.map(([proto, name, which]) => {
+        const orig = proto[name];
+        proto[name] = function (...args) { note(name, which.apply(this, args)); return orig.apply(this, args); };
+        return () => { proto[name] = orig; };
+      });
+      const lost = (e) => { if (e.target && e.target.id === 'cosSearch') seen.push('focusout to ' + ((e.relatedTarget && (e.relatedTarget.id || e.relatedTarget.tagName)) || 'nothing') + (e.target.isConnected ? '' : ', box gone')); };
+      document.addEventListener('focusout', lost, true);
       const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-      for (const ch of 'the') {
-        const now = document.getElementById('cosSearch');
-        setValue.call(now, now.value + ch);
-        now.dispatchEvent(new Event('input', { bubbles: true }));
-        await sleep(400);
+      const rounds = Number(window.__slotRounds || 25);
+      let bad = '';
+      for (let round = 0; round < rounds && !bad; round++) {
+        if (round) {
+          const now = document.getElementById('cosSearch');
+          setValue.call(now, '');
+          now.dispatchEvent(new Event('input', { bubbles: true }));
+          await sleep(400);
+        }
+        document.getElementById('cosSearch').focus();
+        for (const ch of 'the') {
+          const now = document.getElementById('cosSearch');
+          setValue.call(now, now.value + ch);
+          now.dispatchEvent(new Event('input', { bubbles: true }));
+          await sleep(400);
+        }
+        const after = document.getElementById('cosSearch');
+        if (!(after && after.value === 'the' && document.activeElement === after)) {
+          bad = 'round ' + (round + 1) + ' of ' + rounds + ': value ' + JSON.stringify(after && after.value) + ', focus on ' + (document.activeElement && (document.activeElement.id || document.activeElement.tagName)) + (seen.length ? '; ' + seen.join(' | ') : '');
+        }
       }
-      const after = document.getElementById('cosSearch');
-      step('typing in a slot search keeps the box and every letter',
-        after && after.value === 'the' && document.activeElement === after,
-        'value ' + JSON.stringify(after && after.value) + ', focus on ' + (document.activeElement && (document.activeElement.id || document.activeElement.tagName)));
+      document.removeEventListener('focusout', lost, true);
+      kept.forEach((undo) => undo());
+      step('typing in a slot search keeps the box and every letter', !bad, bad);
     }
   }
   out.version = await window.api.update.version();
