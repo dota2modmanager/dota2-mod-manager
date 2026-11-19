@@ -106,6 +106,34 @@ fn claims(ability: &str, hero: &str, particle: &str) -> bool {
     short.chars().count() >= 6 && rest.contains(&short)
 }
 
+/// Every icon the game has for each of the hero's abilities: the stock one, and the ones his
+/// arcanas, immortals and personas put in its place (`juggernaut_blade_fury_arcana`,
+/// `pudge/immortal_gold/pudge_meat_hook`, `marci/boltheart_brawler/marci_boltheart_grapple`).
+/// An icon goes to the ability with the longest name that claims it, as particles do.
+pub fn ability_icon_files(paths: &[&str], hero: &str, abilities: &[String]) -> Vec<(String, String)> {
+    const DIR: &str = "panorama/images/spellicons/";
+    let own_dir = format!("{DIR}{hero}/");
+    let mut longest: Vec<&String> = abilities.iter().collect();
+    longest.sort_by_key(|a| std::cmp::Reverse(a.encode_utf16().count()));
+    let mut out = Vec::new();
+    for p in paths.iter().copied().filter(|p| p.ends_with("_png.vtex_c")) {
+        let in_root = p.starts_with(DIR) && !p[DIR.len()..].contains('/');
+        if !in_root && !p.starts_with(&own_dir) {
+            continue;
+        }
+        let name = &p[p.rfind('/').map_or(0, |i| i + 1)..p.len() - "_png.vtex_c".len()];
+        let claimed = longest.iter().find(|a| {
+            let whole = flat(name).starts_with(&flat(a));
+            // a root icon only by its whole name: marci_unleash_flurry is an ability of its own
+            whole || (!in_root && claims(a, hero, &format!("{name}.vpcf_c")))
+        });
+        if let Some(a) = claimed {
+            out.push(((*a).clone(), p.to_string()));
+        }
+    }
+    out
+}
+
 /// The layers a hero has, from the paths in pak01. A layer with no files is left out.
 pub fn hero_layers(
     paths: &[&str],
@@ -141,14 +169,17 @@ pub fn hero_layers(
         layers.push(RecolorLayer { id: "effects".into(), kind: "effects", name: None, files: rest });
     }
     let present: HashSet<&str> = paths.iter().copied().collect();
+    let icons = ability_icon_files(paths, hero, abilities);
     for ability in abilities {
         let icon = format!("panorama/images/spellicons/{ability}_png.vtex_c");
         if present.contains(icon.as_str()) {
+            let mut files = vec![icon.clone()];
+            files.extend(icons.iter().filter(|(a, p)| a == ability && *p != icon).map(|(_, p)| p.clone()));
             layers.push(RecolorLayer {
                 id: format!("abilityIcon:{ability}"),
                 kind: "abilityIcon",
                 name: Some(ability.clone()),
-                files: vec![icon],
+                files,
             });
         }
     }
@@ -357,3 +388,7 @@ pub fn item_model_paths(block: &str) -> Vec<String> {
     }
     out
 }
+
+#[cfg(test)]
+#[path = "recolor_layers_icon_tests.rs"]
+mod icon_tests;
