@@ -1,10 +1,18 @@
 /* What became of the mods sent from the author's window: the catalog's own record for the upload
  * key, asked for when the panel opens and again on Refresh. Drawn above the author's window so it
- * works from the drafts list as well as from a draft. */
+ * works from the drafts list as well as from a draft.
+ *
+ * Each row also answers what the author wants next: a turned-down mod says why (the moderator
+ * writes it on the pull request, crates/mm-core/src/tools/creator_upload.rs fetches it), an
+ * accepted one how many times it was downloaded, and a click opens the pull request. */
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import type { CreatorActions, CreatorModel } from './CreatorModal.tsx';
 import type { CreatorHistoryItem } from '../api/creator.ts';
+import { useDownloads } from '../catalog/card/hooks.ts';
+import { findModByName } from '../views/catalog/lists.ts';
+import { formatCount } from '../core/download-counts.ts';
+import type { Mod } from '../catalog/types.ts';
 
 function stamped(iso?: string): string {
   if (!iso) return '';
@@ -12,19 +20,33 @@ function stamped(iso?: string): string {
   return isNaN(d.getTime()) ? '' : d.toLocaleString(window.I18N_LANG === 'ru' ? 'ru-RU' : 'en-GB');
 }
 
+/** The accepted mod's downloads, once the catalog lists it and the counter has answered. */
+function Downloads({ mod }: { mod: Mod }) {
+  const n = useDownloads(mod._cat || '', mod);
+  return n > 0 ? <> · <span className="ms">download</span>{formatCount(n)}</> : null;
+}
+
 function Row({ item }: { item: CreatorHistoryItem }) {
   const status = (item.status || 'moderation').toLowerCase();
+  const listed = status === 'accepted' && item.name ? findModByName('', item.name) : null;
+  const why = item.reason || item.note;
+  // the record comes from the catalog's worker: only a GitHub page opens, as on the catalog's site
+  const url = item.url?.startsWith('https://github.com/') ? item.url : undefined;
+  const open = url ? () => void window.api.misc.openExternal(url) : undefined;
   const label = status === 'accepted' ? L`Принято` : status === 'rejected' ? L`Отклонено` : L`На модерации`;
   const icon = status === 'accepted' ? 'check_circle' : status === 'rejected' ? 'cancel' : 'hourglass_top';
   return (
-    <div className={`creator-history-item ${status}`}>
+    <div className={`creator-history-item ${status}${open ? ' link' : ''}`} role={open ? 'link' : undefined}
+      tabIndex={open ? 0 : undefined} title={open ? L`Открыть заявку на GitHub` : undefined} onClick={open}
+      onKeyDown={(e) => { if (open && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } }}>
       <div className="creator-history-text">
         <div className="creator-history-name">{item.name || L`Без имени`}</div>
         <div className="text-meta">
           {item.kind === 'update' && <>{L`Обновление`} · </>}
           {stamped(item.createdAt)}
+          {listed && <Downloads mod={listed} />}
         </div>
-        {status === 'rejected' && item.reason && <div className="creator-history-reason">{item.reason}</div>}
+        {status === 'rejected' && why && <div className="creator-history-reason">{why}</div>}
       </div>
       <span className="creator-history-status"><span className="ms">{icon}</span>{label}</span>
     </div>

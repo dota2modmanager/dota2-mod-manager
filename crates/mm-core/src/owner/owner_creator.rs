@@ -87,7 +87,9 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 return Ok(json!({ "items": [] }));
             };
             let net = o.core().net.clone();
-            Ok(json!({ "items": creator_upload::history(&net, &token, creator_upload::UPLOAD_API) }))
+            let items = creator_upload::history(&net, &token, creator_upload::UPLOAD_API);
+            let notes = o.opts.user_data.join("creator-notes.json");
+            Ok(json!({ "items": creator_upload::with_notes(&net, items, &notes) }))
         })(),
         "creator:save" => {
             let fields = arg(args, 1);
