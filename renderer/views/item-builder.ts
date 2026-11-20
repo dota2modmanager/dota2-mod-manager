@@ -115,6 +115,12 @@ export function tryOnPick(st: SlotState | null) {
   return { itemId: st.selectedId, effectId, ...(st.targetItemId ? { targetItemId: st.targetItemId } : {}) };
 }
 
+/** The slot worn empty: its own stock item picked for it (crates/mm-core/src/item_builder/empty_slot.rs).
+ * Not for a persona's slot or an ability effects slot, which have no model of their own to hide. */
+function emptyOption(data: { targetId?: string; persona?: unknown; abilityFx?: number }): { id: string; name: string; tags: string[] }[] {
+  return data.targetId && !data.persona && !data.abilityFx ? [{ id: String(data.targetId), name: L`Пусто`, tags: [] }] : [];
+}
+
 /** An effect of the game's own (Ethereal Flame and the like), crates/mm-core/src/item_builder/unusual_effects.rs. */
 const GAME_EFFECT = /^unusual-\d+$/;
 const GROUPS: EffectGroup[] = ['kinetic', 'unusual', 'seasonal', 'courier'];
@@ -128,7 +134,8 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
   const live = pickedIn(st.slot);
   const hasItem = !!st.selectedId;
   const effects = (data.effects || []).filter((fx) => fx.id);
-  const chosen = hasItem ? data.options.find((o) => o.id === st.selectedId) : null;
+  const empty = emptyOption(data)[0]?.id ?? '';
+  const chosen = hasItem ? [...emptyOption(data) as typeof data.options, ...data.options].find((o) => o.id === st.selectedId) : null;
   const gem = gemSetOf(chosen?.name);
   const styles = chosen?.styles && chosen.styles.length > 1 ? chosen.styles : null;
   // a tab with nothing to show for the item chosen falls back to the items
@@ -144,12 +151,13 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
     title: data.slotLabel || data.label || '',
     query: st.query,
     slotIcon: data.icon || 'checkroom',
+    emptyId: empty,
     view: st.view,
     gem: gem ? { set: gem, equipped: live?.itemId === st.selectedId } : undefined,
     // the hero's own item first: choosing it is how a pick comes off
     options: (st.view === 'replacement'
       ? replacementOptions([{ id: '', name: L`Стандартный предмет`, tags: [] }, ...data.options], st.selectedId, st.query)
-      : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
+      : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...emptyOption(data) as typeof data.options, ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
       id: o.id, name: o.name, picked: st.view === 'replacement' ? o.id === st.targetItemId : o.id === st.selectedId,
       on: st.view !== 'replacement' && (o.id ? live?.itemId === o.id : !live), ...facts(o),
       ...('note' in o && o.note ? { note: o.note } : {}),
@@ -192,8 +200,8 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
         if (st.busy) return;
         st.selectedId = id;
         if (!id || id === st.targetItemId) st.targetItemId = '';
-        if (!id) st.effectIds = []; // the stock item takes no effects
-        if (!id || id === st.donor) st.donor = '';
+        if (!id || id === empty) st.effectIds = []; // the stock item takes no effects, nor does an empty slot
+        if (!id || id === empty || id === st.donor) st.donor = '';
         // another item starts in its first style, or the one it is on in
         st.style = live?.itemId === id ? liveStyle(live) : 0;
         redraw();

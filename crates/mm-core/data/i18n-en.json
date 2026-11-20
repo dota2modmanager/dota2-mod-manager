@@ -1,4 +1,5 @@
 [
+["У предмета {0} нет своей модели: в этом слоте нечего снимать","Item {0} has no model of its own: there is nothing to take off in this slot"],
 ["Для каталога здесь мало своей работы: {0}","Too little of your own work here for the catalog: {0}"],
 ["перекрась хотя бы {0} части в {1} разных цвета","paint at least {0} parts in {1} different colours"],
 ["замени звуки хотя бы у {0} событий","give at least {0} events sounds of your own"],
