@@ -44,6 +44,8 @@ export interface LibRecord {
   itemId?: string;
   effectId?: string;
   targetItemId?: string;
+  /** put on by "dress all" and not changed by the player since (crates/mm-core/src/schema/schema_cosmetics.rs undress_all) */
+  dressedAll?: boolean;
   styleLabel?: string | null;
   /** what the analysis says the file is, for an import */
   info?: string;

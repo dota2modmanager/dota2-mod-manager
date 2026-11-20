@@ -28,6 +28,7 @@ pub const CHANNELS: &[&str] = &[
     "cosmetics:pick",
     "cosmetics:pickSet",
     "cosmetics:dressAll",
+    "cosmetics:undressAll",
     "tools:state",
     "tools:install",
     "tools:remove",
@@ -524,6 +525,23 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 Ok(d) => {
                     let _ = o.refresh_schema_in_background().recv();
                     json!({ "ok": true, "heroes": d.heroes, "kept": d.kept, "arcanas": d.arcanas, "immortals": d.immortals })
+                }
+                Err(e) => json!({ "error": e }),
+            }
+        }
+        // what "dress all" put on and the player left as it was, off again (schema_cosmetics::undress_all)
+        "cosmetics:undressAll" => {
+            if let Some(stop) = o.blocked("cosmetics") {
+                return stop;
+            }
+            let undressed =
+                o.core().library.batch(crate::schema_cosmetics::undress_all).map_err(|e| e.to_string()).and_then(|r| r);
+            match undressed {
+                Ok(heroes) => {
+                    if heroes > 0 {
+                        let _ = o.refresh_schema_in_background().recv();
+                    }
+                    json!({ "ok": true, "heroes": heroes })
                 }
                 Err(e) => json!({ "error": e }),
             }

@@ -100,6 +100,35 @@ fn a_batch_writes_the_manifest_once_at_its_end() {
     assert_eq!(worn(&back), worn(&lib), "the manifest on disk is not what the batch left in memory");
 }
 
+#[test]
+fn undressing_takes_off_what_the_button_put_on_and_nothing_the_player_chose() {
+    let (_dir, mut lib) = library("undress");
+    let helm = slot_of("axe", "head");
+    pick_cosmetic(&mut lib, &helm, "200", Some("Horned Helm"), None, "").unwrap();
+    let d = dress_all(&mut lib, TABLE, true, 3).unwrap();
+    assert_eq!((d.heroes, d.kept), (1, 1));
+    // the player changes one of Lina's pieces by hand afterwards: that one is theirs now
+    let crown = slot_of("lina", "head");
+    assert!(worn(&lib).contains(&(crown.clone(), "400".into())));
+    pick_cosmetic(&mut lib, &crown, "120", Some("Lina Default Head"), None, "").unwrap();
+
+    assert_eq!(undress_all(&mut lib).unwrap(), 0, "Lina's only piece from the button was replaced by hand");
+    assert_eq!(worn(&lib), [(helm.clone(), "200".into()), (crown.clone(), "120".into())]);
+
+    let d = dress_all(&mut lib, TABLE, false, 3).unwrap();
+    assert_eq!(d.heroes, 2);
+    assert_eq!(undress_all(&mut lib).unwrap(), 2);
+    // the helm was the player's before either press: it stays
+    assert_eq!(worn(&lib), [(helm, "200".into())]);
+    assert!(lib.list().iter().all(|r| r.get(DRESSED_ALL).is_none()), "a mark stayed behind");
+    // the rows the button made are gone; Lina's crown (made by the first press, the player's
+    // since they picked over it and back) is not, nor the head they picked by hand
+    let items: HashSet<String> = lib.list().iter().map(|r| crate::js::string(&r["itemId"])).collect();
+    assert!(!items.contains("300"), "the set's blade the button made is still in My mods");
+    assert!(items.contains("120") && items.contains("200"), "a pick of the player's was removed: {items:?}");
+    assert_eq!(undress_all(&mut lib).unwrap(), 0, "a second undo found something");
+}
+
 /// The looks on the real table, printed: `MM_ITEMS_GAME=<items_game.txt> cargo test -p mm-core looks_on_the_real_table -- --ignored --nocapture`
 #[test]
 #[ignore]

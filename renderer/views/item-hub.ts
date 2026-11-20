@@ -37,6 +37,7 @@ const hubActions = (): ScreenActions => ({
     drawHub();
   },
   dressAll: () => void dressAll(),
+  undressAll: () => void undressAll(),
 });
 
 let dressing = false;
@@ -67,6 +68,26 @@ async function dressAll(): Promise<void> {
   drawHub();
 }
 
+/** Take off what "dress all" put on; what the player picked since stays. */
+async function undressAll(): Promise<void> {
+  if (dressing) return;
+  const ok = await confirmDialog(L`Снять предметы, которые надела кнопка «Одеть всех»? Что ты выбрал сам, останется.`, { okLabel: L`Снять`, danger: false });
+  if (!ok) return;
+  dressing = true;
+  drawHub();
+  let r: { error?: string; heroes?: number };
+  try {
+    r = await window.api.cosmetics.undressAll();
+  } catch (err) {
+    r = { error: String((err as Error)?.message || err) };
+  }
+  dressing = false;
+  if (r.error) toast(r.error, 'error');
+  else toast(L`Сняты предметы у героев: ${r.heroes || 0}`);
+  if (!r.error && r.heroes) await afterPick();
+  drawHub();
+}
+
 /** The groups' names, as the game's hero grid heads them. */
 const GROUP_NAMES = (): string[] => [L`Сила`, L`Ловкость`, L`Интеллект`, L`Универсальные`, L`Другие`];
 
@@ -93,6 +114,7 @@ function hubModel(): ScreenModel {
     installedOnly: f.installedOnly,
     count: (view.cosSearch || f.installedOnly) ? `${shown.length} ${plural(shown.length, 'герой', 'героя', 'героев')}` : '',
     dressing,
+    dressed: [...state.cosmeticPicks.values()].some((r) => r.dressedAll),
     groups,
   };
 }

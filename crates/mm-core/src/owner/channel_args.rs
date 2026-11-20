@@ -467,6 +467,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "diag:export",
             "uninstall:plan",
             "uninstall:cancel",
+            "cosmetics:undressAll",
         ];
         for c in none {
             m.insert(c, vec![]);
