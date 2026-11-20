@@ -66,11 +66,26 @@ fn each_mod(mods_data: Option<&mut Value>, f: &mut dyn FnMut(&mut serde_json::Ma
     }
 }
 
+/// The download a tool built for both systems names for this one. The catalog gives such a tool
+/// `fileWin` and `fileLinux` and no `file` (VPKTool, the Compiler...), and without one the
+/// tool's window had nothing to download.
+fn platform_file(m: &mut serde_json::Map<String, Value>) {
+    if m.get("file").is_some_and(crate::js::truthy) {
+        return;
+    }
+    // only this system's build: the other one would download and then not start
+    let own = if cfg!(target_os = "linux") { "fileLinux" } else { "fileWin" };
+    if let Some(file) = m.get(own).filter(|v| v.as_str().is_some_and(|s| !s.is_empty())).cloned() {
+        m.insert("file".into(), file);
+    }
+}
+
 /// The older pair of link fields folded into the `links` array, so the rest of the app only
-/// ever sees the array.
+/// ever sees the array; a tool's file for this system put where every other mod keeps its file.
 pub fn normalize_catalog(mods: &mut Value) {
     let data = mods.as_object_mut().and_then(|m| m.get_mut("modsData"));
     each_mod(data, &mut |m| {
+        platform_file(m);
         let truthy = |k: &str| m.get(k).is_some_and(crate::js::truthy);
         if !truthy("linkType") || !truthy("linkUrl") {
             return;
@@ -268,6 +283,30 @@ impl Catalog {
         }
         let v = hashes.get(format!("{category_id}/{file}"))?.as_str()?;
         (v.len() == 64 && v.bytes().all(|b| b.is_ascii_hexdigit())).then(|| v.to_lowercase())
+    }
+}
+
+#[cfg(test)]
+mod normalize {
+    use super::normalize_catalog;
+    use serde_json::json;
+
+    #[test]
+    fn a_tool_for_both_systems_gets_the_file_for_this_one() {
+        let mut mods = json!({ "modsData": { "tools": [
+            { "name": "VPKTool", "multiPlatform": true, "fileWin": "https://x/VPKTool-Win.zip", "fileLinux": "https://x/VPKTool-Linux.zip" },
+            { "name": "Windows only", "fileWin": "https://x/only-Win.zip" },
+            { "name": "Own file", "file": "own.zip", "fileWin": "https://x/other.zip" },
+        ] } });
+        normalize_catalog(&mut mods);
+        let tools = &mods["modsData"]["tools"];
+        let own = if cfg!(target_os = "linux") { "https://x/VPKTool-Linux.zip" } else { "https://x/VPKTool-Win.zip" };
+        assert_eq!(tools[0]["file"], own);
+        // no build for this system: nothing to download rather than a program that will not start
+        let only_win =
+            if cfg!(target_os = "linux") { serde_json::Value::Null } else { json!("https://x/only-Win.zip") };
+        assert_eq!(tools[1]["file"], only_win);
+        assert_eq!(tools[2]["file"], "own.zip");
     }
 }
 

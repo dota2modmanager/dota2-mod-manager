@@ -3,6 +3,7 @@
  * maintainer, and one sent to the catalog's upload API. The form is catalog/../creator/CreatorModal.tsx. */
 import { state } from '../core/store.ts';
 import { RAIL_SECTIONS } from '../core/constants.ts';
+import { railSections } from '../catalog/rail-sections.ts';
 import { catName } from '../core/categories.ts';
 import { catalogConstants, catalogData } from '../catalog/data.ts';
 import { toast } from '../ui/toast.ts';
@@ -15,8 +16,8 @@ import type { CategoryData } from '../catalog/types.ts';
 import { ensureHero, HERO_CATEGORIES, nameFor, swapHero } from '../creator/naming.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './catalog/overlay.ts';
 
-// a mod for the catalog is a mod: not a tool, a guide or a link, and not the categories the upload API refuses
-const NOT_MODS = new Set(['tools', 'guides', 'sites', 'packs', 'creeps', 'fonts', 'news']);
+// the categories the catalog's upload page refuses (BLACKLISTED_CATEGORIES in h6rd/Dota2PornFxWeb's upload.js)
+const NOT_MODS = new Set(['packs', 'cursors', 'tools', 'news', 'guides', 'sites', 'fonts']);
 const HERO_CATS = HERO_CATEGORIES;
 const VIDEO_CATS = ['sounds', 'hero-sounds', 'huds', 'ti-bp-effects'];
 const SLOT_EXCLUDE = new Set(['effects', 'icons', 'sounds']);
@@ -72,7 +73,10 @@ sharesOverlay(() => { open = false; });
 
 function draw(): void {
   if (!open) return;
-  const categories = RAIL_SECTIONS.flatMap(([, ids]) => ids).filter((id) => !NOT_MODS.has(id)).map((id) => ({ value: id, label: catName(id) }));
+  // the catalog's own categories when it is loaded, so one it added since is offered too
+  const listed = Object.keys(catalogData()?.mods?.modsData || {});
+  const sections = listed.length ? railSections(listed) : RAIL_SECTIONS;
+  const categories = sections.flatMap(([, ids]) => ids).filter((id) => !NOT_MODS.has(id)).map((id) => ({ value: id, label: catName(id) }));
   showCreatorModal({ ...m, categories, heroCats: HERO_CATS, ...options(categories.map((x) => x.value)) }, {
     close: closeOverlay,
     create: () => void create(),

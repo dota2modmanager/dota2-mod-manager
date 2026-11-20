@@ -24,7 +24,7 @@ export const CAT_RU: Record<string, string> = {
   couriers: 'Курьеры', terrains: 'Ландшафты', creeps: 'Крипы', trees: 'Деревья', river: 'Река',
   'ti-bp-effects': 'Паки эффектов', emblems: 'Эмблемы', 'creep-deny': 'Денай крипов',
   music: 'Музыка', 'hero-sounds': 'Звуки героев', sounds: 'Звуки', 'ranged-attack': 'Дальние атаки',
-  other: 'Разное', ranks: 'Ранги', 'item-icons': 'Иконки предметов', 'versus-screens': 'Экраны Versus',
+  other: 'Разное', ranks: 'Ранги', 'item-icons': 'Иконки предметов', 'hero-icons': 'Иконки героев', 'neutral-creeps': 'Нейтральные крипы', 'versus-screens': 'Экраны Versus',
   announcers: 'Анонсеры', wards: 'Варды', pedestal: 'Пьедесталы', huds: 'HUD', parts: 'Части',
   herofx: 'Эффекты героев', pings: 'Пинги', packs: 'Паки', optimization: 'Оптимизация',
   tormentor: 'Торментор', 'high-five': 'High Five', ancient: 'Древние', roshan: 'Рошан',
@@ -35,12 +35,12 @@ export const CAT_RU: Record<string, string> = {
 export const CAT_ICON: Record<string, string> = {
   all: 'apps', heroes: 'person', 'hero-items': 'swords', herofx: 'auto_fix_high',
   'hero-sounds': 'record_voice_over', terrains: 'landscape', trees: 'forest', river: 'water',
-  creeps: 'bug_report', towers: 'cell_tower', roshan: 'skull', ancient: 'castle',
+  creeps: 'bug_report', 'neutral-creeps': 'pest_control', towers: 'cell_tower', roshan: 'skull', ancient: 'castle',
   tormentor: 'deployed_code', wards: 'visibility', couriers: 'pets', pedestal: 'podium',
   'creep-deny': 'block', shaders: 'palette', 'ti-bp-effects': 'auto_awesome',
   'item-effects': 'bolt', 'ranged-attack': 'my_location', 'high-five': 'waving_hand',
   backgrounds: 'wallpaper', huds: 'dashboard', parts: 'brick', emblems: 'military_tech',
-  'versus-screens': 'compare_arrows', 'item-icons': 'category', ranks: 'workspace_premium',
+  'versus-screens': 'compare_arrows', 'item-icons': 'category', 'hero-icons': 'account_box', ranks: 'workspace_premium',
   pings: 'notifications_active', cursors: 'arrow_selector_tool', fonts: 'text_fields',
   announcers: 'mic', 'mega-kill': 'campaign', music: 'music_note', sounds: 'volume_up',
   packs: 'inventory_2', optimization: 'speed', other: 'widgets', guides: 'menu_book',
@@ -93,9 +93,9 @@ export function cosmeticMeta(slot: string): SlotMeta {
 // rail sections: [label, [categoryIds]]
 export const RAIL_SECTIONS: [label: string, categoryIds: string[]][] = [
   ['Герои', ['heroes', 'hero-items', 'herofx', 'hero-sounds']],
-  ['Мир', ['terrains', 'trees', 'river', 'creeps', 'towers', 'roshan', 'ancient', 'tormentor', 'wards', 'couriers', 'pedestal', 'creep-deny']],
+  ['Мир', ['terrains', 'trees', 'river', 'creeps', 'neutral-creeps', 'towers', 'roshan', 'ancient', 'tormentor', 'wards', 'couriers', 'pedestal', 'creep-deny']],
   ['Эффекты', ['shaders', 'ti-bp-effects', 'item-effects', 'ranged-attack', 'high-five']],
-  ['Интерфейс', ['backgrounds', 'huds', 'parts', 'emblems', 'versus-screens', 'item-icons', 'ranks', 'pings', 'cursors', 'fonts']],
+  ['Интерфейс', ['backgrounds', 'huds', 'parts', 'emblems', 'versus-screens', 'item-icons', 'hero-icons', 'ranks', 'pings', 'cursors', 'fonts']],
   ['Звук', ['announcers', 'mega-kill', 'music', 'sounds']],
   ['Прочее', ['packs', 'optimization', 'other', 'tools', 'guides', 'sites']],
 ];

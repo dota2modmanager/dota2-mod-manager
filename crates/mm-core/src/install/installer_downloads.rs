@@ -229,10 +229,7 @@ impl Installer {
         let known = self.download_index().get(&key).filter(|k| crate::js::truthy(k)).cloned();
         let known_sha =
             known.as_ref().and_then(|k| k.get("sha256")).filter(|s| crate::js::truthy(s)).map(crate::js::string);
-        // The catalog's signed list first: the manifest is unsigned and is also read from mirrors,
-        // so its hash only stands in for an archive the signed list does not cover yet. (On
-        // 2026-11-20 the two agreed on all 2033 archives.)
-        let published = published(category_id, &decoded).or_else(|| crate::manifest::sha256(category_id, &decoded));
+        let published = expected_sha256(published(category_id, &decoded), category_id, &decoded);
         if let Some(size) = fs::metadata(&dest).ok().map(|m| m.len()).filter(|n| *n > 0) {
             // a copy cut short, or one the catalog now disagrees with, is not a cached copy
             let disowned = published.as_ref().is_some_and(|p| known_sha.as_ref().is_some_and(|k| k != p));
@@ -339,30 +336,13 @@ impl Installer {
         let _ = fs::remove_dir_all(self.downloads_dir());
         let _ = fs::create_dir_all(self.downloads_dir());
     }
+}
 
-    /// What `download` decides before it fetches: reuse the cached copy, or fetch (and why).
-    /// `published` is the catalog's sha256 for the file, when it has one.
-    pub fn cache_verdict(&self, category_id: &str, file_ref: &str, published: Option<&str>) -> Value {
-        let (dest, key, decoded) = self.download_target(category_id, file_ref);
-        let known = self.download_index().get(&key).cloned();
-        let size = fs::metadata(&dest).map(|m| m.len()).unwrap_or(0);
-        let published = crate::manifest::sha256(category_id, file_ref).or_else(|| published.map(String::from));
-        if size > 0 {
-            let known_sha =
-                known.as_ref().and_then(|k| k.get("sha256")).and_then(Value::as_str).filter(|s| !s.is_empty());
-            let disowned = matches!((published.as_deref(), known_sha), (Some(p), Some(k)) if !p.is_empty() && k != p);
-            let size_ok = known.as_ref().is_none_or(|k| k.get("size").and_then(Value::as_f64) == Some(size as f64));
-            if !disowned && size_ok {
-                return json!({ "use": dest, "key": key, "decoded": decoded });
-            }
-            return json!({ "refetch": dest, "key": key, "decoded": decoded,
-                "expect": published.filter(|p| !p.is_empty()).or_else(|| known_sha.map(String::from)) });
-        }
-        let expect = published
-            .filter(|p| !p.is_empty())
-            .or_else(|| known.as_ref().and_then(|k| k.get("sha256")).and_then(Value::as_str).map(String::from));
-        json!({ "fetch": dest, "key": key, "decoded": decoded, "expect": expect })
-    }
+/// The hash an archive has to arrive with. The catalog's signed list first: the release manifest
+/// is unsigned and is also read from mirrors, so its hash only stands in for an archive the signed
+/// list does not cover yet; a manifest that disagrees with the list is never believed (#783).
+fn expected_sha256(signed: Option<String>, category_id: &str, file: &str) -> Option<String> {
+    signed.or_else(|| crate::manifest::sha256(category_id, file))
 }
 
 /// Bytes under a folder, however deep; what cannot be read is skipped (app/folder_size.rs).
@@ -405,6 +385,22 @@ mod tests {
         assert_eq!(unmatched.len(), 2);
         assert!(unmatched[0].starts_with("https://huggingface.co/"));
         assert!(unmatched[1].starts_with("https://raw.githubusercontent.com/"));
+    }
+
+    /// A manifest someone swapped on a mirror names its own hash for an archive. The signed list's
+    /// hash still decides; the manifest's counts only for an archive the list does not have.
+    #[test]
+    fn the_signed_hash_beats_a_manifest_that_disagrees() {
+        let forged = "f".repeat(64);
+        let text = format!(
+            r#"{{"files":[{{"category":"test-forged","name":"Mod.zip","asset":"Mod.zip",
+            "url":"https://example.invalid/Mod.zip","sha256":"{forged}","size":1,"date":1}}]}}"#
+        );
+        crate::manifest::remember(crate::manifest::Manifest::parse(&text).unwrap());
+        let signed = "a".repeat(64);
+        assert_eq!(super::expected_sha256(Some(signed.clone()), "test-forged", "Mod.zip"), Some(signed));
+        assert_eq!(super::expected_sha256(None, "test-forged", "Mod.zip"), Some(forged));
+        assert_eq!(super::expected_sha256(None, "test-forged", "Other.zip"), None);
     }
 
     /// Two askers of one file share its lock while either holds it; another file is not held up.
