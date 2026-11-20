@@ -6,8 +6,10 @@
 .card-thumb { display: block; width: 100%; height: 100%; }
 /* A look's picture on its way: the spinner of a mod's picture (catalog.css), on the tile itself rather
    than through :has(), which the browser would check again for every card on every frame of a
-   scroll. It shows only after a moment, so a picture that comes at once never flashes it. */
-.card-thumb.loading::after {
+   scroll. It shows only after a moment, so a picture that comes at once never flashes it, and only
+   on a tile on screen (ui/cosmetic-icons.ts marks it): a turning spinner on each of the twelve
+   hundred tiles still waiting in a slot of loading screens kept the page from drawing a frame. */
+.card-thumb.loading[data-on-screen]::after {
   content: '';
   position: absolute;
   inset: 0;

@@ -5,7 +5,7 @@
  * fades in over it; one the game has not got is the slot's icon. */
 import { useEffect, useReducer, useRef, useSyncExternalStore, type CSSProperties, type MouseEvent } from 'react';
 import { GrowMarker, useGrowing } from '../../ui/growing.ts';
-import { cosmeticIcon, subscribeIcon, watchIconFor } from '../../ui/cosmetic-icons.ts';
+import { cosmeticIcon, prefetchIcons, subscribeIcon, watchIconFor } from '../../ui/cosmetic-icons.ts';
 import { toggleFavorite, isFavKey } from '../favorites.ts';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';
 import { CardName } from '../card/CardName.tsx';
@@ -83,7 +83,11 @@ export function CosmeticGrid({ items, emptyText, onOpen, onFavChanged }: {
   const first = items[0], last = items[items.length - 1];
   // another slot, filter or search starts at the top again; a star changes none of these
   const listKey = `${items.length}|${first?.slot}|${first?.id}|${last?.id}`;
-  const { limit, marker, more } = useGrowing(items.length, listKey);
+  // A page of loading screens is thirty rows of tall cards, which a fling crosses in a moment:
+  // the next page joins three screens ahead, so the list never runs out under the scroll.
+  const { limit, marker, more } = useGrowing(items.length, listKey, '3600px 0px');
+  // the slot's pictures come in its order while the user looks at the first ones
+  useEffect(() => prefetchIcons(items.map((it) => it.name)), [listKey]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!items.length) return emptyText ? <div className="empty-note">{emptyText}</div> : null;
   return (
     <>

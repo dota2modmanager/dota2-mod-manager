@@ -10,6 +10,8 @@
 // Item pictures come from the main process as data URIs (src/icons.ts). A slot can hold two
 // thousand items, so only what is actually on screen is ever asked for: an observer collects
 // the tiles that scroll into view and fetches them in small batches.
+import SHIPPED_LOOKS from './shipped-looks.json' with { type: 'json' };
+
 const cosIconCache = new Map<string, string | null>();
 
 // Readers for everyone else. The cache stays private: a picture is either known or it is
@@ -72,7 +74,7 @@ export async function loadCosmeticIcons(names: string[], onEach: (names: string[
   await Promise.all(Array.from({ length: Math.min(AT_ONCE, chunks.length) }, worker));
 }
 
-/* Names the game has no picture for, on their way from the wiki in a call of their own: the
+/* Library stand-ins ("hero:", "generic:") on their way from the wiki in a call of their own: the
  * batch they came in is drawn without waiting for them (owner_pictures.rs icons, `quick`). */
 const onTheWiki = new Set<string>();
 
@@ -104,11 +106,19 @@ async function loadChunk(chunk: string[], onEach: (names: string[]) => void): Pr
   }
 }
 
+/* The few looks the game names a picture for and never packed, drawn from their own models by
+ * tools/mods/look-pictures.mjs and shipped with the window. */
+const shipped = (name: string): string | null => {
+  const file = (SHIPPED_LOOKS as Record<string, string>)[name.split('|')[0]];
+  return file ? `./assets/looks/${file}` : null;
+};
+
 /** These names' pictures decoded, then known, and their tiles told. */
 async function settle(names: string[], pictures: Record<string, string | null>, onEach: (names: string[]) => void): Promise<void> {
   if (!names.length) return;
-  await decoded(names.map((n) => pictures[n]));
-  for (const n of names) cosIconCache.set(n, pictures[n] || null);
+  const got = (n: string): string | null => pictures[n] || shipped(n);
+  await decoded(names.map(got));
+  for (const n of names) cosIconCache.set(n, got(n));
   announce(names);
   onEach(names);
 }
@@ -165,18 +175,47 @@ const NEAR = 1;
 let inflight = 0;
 let pumpTimer = 0;
 
+/* The rest of an open slot, in its order, fetched while nothing near the screen waits. A slot of
+ * loading screens opened cold took a second or two for each screen of tiles the user scrolled to:
+ * the pictures were read out of the game only once their tiles came near. Now they are read in
+ * the background from the moment the slot opens, two batches at a time so a tile the user scrolls
+ * to still goes first, and by the time the scroll gets there most are known. */
+let background: string[] = [];
+const BACKGROUND_AT_ONCE = 2;
+
+/** Fetch these names' pictures behind whatever is on screen; another call replaces the list. */
+export function prefetchIcons(names: string[]): () => void {
+  background = names.filter((n) => n && !cosIconCache.has(n));
+  soon();
+  const mine = background;
+  return () => { if (background === mine) background = []; };
+}
+
 function pump(): void {
   pumpTimer = 0;
+  while (!waiting.size && inflight < BACKGROUND_AT_ONCE && background.length) {
+    const names: string[] = [];
+    while (names.length < BATCH && background.length) {
+      const n = background.shift() as string;
+      if (wants(n)) names.push(n);
+    }
+    if (!names.length) break;
+    send(names);
+  }
   while (inflight < AT_ONCE && waiting.size) {
     const names = [...waiting].sort((a, b) => a[1] - b[1]).slice(0, BATCH).map(([n]) => n);
-    for (const n of names) { waiting.delete(n); asked.add(n); }
-    inflight++;
-    loadChunk(names, () => {}).catch(() => {}).finally(() => {
-      for (const n of names) asked.delete(n);
-      inflight--;
-      pump();
-    });
+    send(names);
   }
+}
+
+function send(names: string[]): void {
+  for (const n of names) { waiting.delete(n); asked.add(n); }
+  inflight++;
+  loadChunk(names, () => {}).catch(() => {}).finally(() => {
+    for (const n of names) asked.delete(n);
+    inflight--;
+    pump();
+  });
 }
 // the tiles of one stretch of scrolling go out together rather than one call each
 const soon = (): void => { if (!pumpTimer) pumpTimer = window.setTimeout(pump, 40); };
@@ -203,6 +242,9 @@ function observers(): [IntersectionObserver, IntersectionObserver] {
     }, { rootMargin: '1200px 0px', scrollMargin: '1200px 0px' } as IntersectionObserverInit);
     seen = new IntersectionObserver((entries) => {
       for (const en of entries) {
+        // the spinner turns only on a tile on screen (cosmetics.css): a slot of two thousand
+        // loading screens with a turning spinner on every tile still waiting froze the page
+        en.target.toggleAttribute('data-on-screen', en.isIntersecting);
         const n = (en.target as HTMLElement).dataset.name;
         if (!n) continue;
         if (en.isIntersecting && wants(n)) waiting.set(n, ON_SCREEN);

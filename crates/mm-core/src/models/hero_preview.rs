@@ -938,12 +938,12 @@ pub fn motions(glb: &dyn Exporter, body: &str) -> Option<Vec<u8>> {
     std::fs::read(got).ok()
 }
 
-/// One model alone, a map prop's or a tower look's, as GLB bytes with its pictures inside; None
-/// where the game has none.
+/// One model alone (a map prop, a tower look, a worn piece for tools/mods/look-pictures.mjs) as
+/// GLB bytes with its pictures inside; None where the game has none.
 pub fn model(glb: &dyn Exporter, file: &str) -> R<Option<Vec<u8>>> {
     static RE: OnceLock<Regex> = OnceLock::new();
-    let re = RE.get_or_init(|| Regex::new(r"(?i)^models/(props_|items/world/)[\w/.-]+\.vmdl$").unwrap());
-    if !re.is_match(file) {
+    let re = RE.get_or_init(|| Regex::new(r"(?i)^models/[\w/.-]+\.vmdl$").unwrap());
+    if !re.is_match(file) || file.split('/').any(|p| p == ".." || p == ".") {
         return Ok(None);
     }
     match glb.glbs(&[file.to_string()], &Clips::Some(vec![]), false).get(file).cloned().flatten() {
@@ -1031,3 +1031,7 @@ pub fn prefetch(
     });
     all.len()
 }
+
+#[cfg(test)]
+#[path = "hero_preview_model_tests.rs"]
+mod model_tests;
