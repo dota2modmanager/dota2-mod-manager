@@ -188,11 +188,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
               hint={L`Dota читает не больше 99 паков, и примерно на шестидесятом моде место кончается. Тогда приложение само сложит выключенные и самые новые моды в «Общий пак»: он занимает один слот, а каждый мод в нём включается и выключается по отдельности в «Моих модах». Выключи, если следишь за слотами сам.`}>
               <Toggle id="autoPackToggle" on={m.autoPack} label={L`Общий пак, когда кончаются слоты`} onClick={actions.autoPack} />
             </Row>
-            <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} onHero={actions.everyoneHero} />
-            <Row label={L`Обычные портреты героев`}
-              hint={L`Аркана или личность в конструкторе меняет портрет героя в сетке выбора, на верхней панели и в таблице счёта. Включи, и портреты останутся как у Valve, а сам образ в матче не изменится.`}>
-              <Toggle id="stockPortraitsToggle" on={m.stockPortraits} label={L`Обычные портреты героев`} onClick={actions.stockPortraits} />
-            </Row>
+            <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} onHero={actions.everyoneHero} stock={m.stockPortraits} onStock={actions.stockPortraits} />
             <GridRows />
           </Section>
 

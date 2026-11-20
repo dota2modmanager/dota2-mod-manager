@@ -57,7 +57,8 @@ async function renderSettings(fresh = false): Promise<void> {
     presence: s.discordPresence !== false,
     countDownloads: s.countDownloads !== false,
     autoPack: s.autoPack !== false,
-function flip(field: 'presence' | 'adult' | 'countDownloads' | 'autoPack' | 'preview3d' | 'stockPortraits'): boolean {
+    preview3d: s.modPreview3d !== false,
+    stockPortraits: s.heroPortraitsStock === true,
     everyone: {
       on: s.everyoneWearsMine === true,
       built: s.everyoneBuilt ?? [],
@@ -122,7 +123,11 @@ const actions: SettingsActions = {
   autoPack: async () => {
     state.settings = await window.api.settings.set('autoPack', flip('autoPack'));
   },
-function flip(field: 'presence' | 'adult' | 'countDownloads' | 'autoPack' | 'preview3d' | 'stockPortraits'): boolean {
+  preview3d: async () => {
+    state.settings = await window.api.settings.set('modPreview3d', flip('preview3d'));
+  },
+  stockPortraits: async () => {
+    state.settings = await window.api.settings.set('heroPortraitsStock', flip('stockPortraits'));
   },
   everyone: async () => {
     if (!model) return;

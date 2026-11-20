@@ -37,7 +37,11 @@ function trouble(): boolean {
   return Boolean(st.stale || !st.patched || (st.signable && !st.signed) || st.foreign);
 }
 
-export function GameFilesRows({ everyone, onEveryone, onHero }: { everyone: EveryoneModel; onEveryone: () => void; onHero: (id: string) => void }) {
+export function GameFilesRows({ everyone, onEveryone, onHero, stock, onStock }: {
+  everyone: EveryoneModel; onEveryone: () => void; onHero: (id: string) => void;
+  /** hero portraits as Valve drew them, whatever arcana or persona the builder put on */
+  stock: boolean; onStock: () => void;
+}) {
   // read from the settings on every draw, not kept here: a screen drawn again (a language change
   // remounts it) from a copy taken mid-switch showed the table off while it was on (2026-11-04)
   const on = Boolean(state.settings?.schemaPatch);
@@ -74,6 +78,10 @@ export function GameFilesRows({ everyone, onEveryone, onHero }: { everyone: Ever
         <Toggle id="everyoneToggle" on={everyone.on} label={everyoneLabel} disabled={!on} onClick={onEveryone} />
       </Row>
       {on && everyone.on && everyone.built.length > 0 && <EveryoneHeroes m={everyone} onHero={onHero} />}
+      <Row label={L`Обычные портреты героев`}
+        hint={L`Аркана или личность в конструкторе меняет портрет героя в сетке выбора, на верхней панели и в таблице счёта. Включи, и портреты останутся как у Valve, а сам образ в матче не изменится.`}>
+        <Toggle id="stockPortraitsToggle" on={stock} label={L`Обычные портреты героев`} onClick={onStock} />
+      </Row>
       <ModFolderRow redraw={() => redraw((n) => n + 1)} />
     </>
   );

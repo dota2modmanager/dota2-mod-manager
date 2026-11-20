@@ -35,9 +35,9 @@ pub fn without_portrait_swaps(block: &[u8]) -> Result<Vec<u8>, KvError> {
         if !c.key.to_ascii_lowercase().starts_with(b"asset_modifier") {
             continue;
         }
-        let swaps_picture = kv::children(block, body)?.iter().any(|f| {
-            f.key.eq_ignore_ascii_case(b"type") && f.value.is_some_and(|v| v.eq_ignore_ascii_case(MODIFIER))
-        });
+        let swaps_picture = kv::children(block, body)?
+            .iter()
+            .any(|f| f.key.eq_ignore_ascii_case(b"type") && f.value.is_some_and(|v| v.eq_ignore_ascii_case(MODIFIER)));
         if swaps_picture {
             cut.push((c.start, c.end));
         }
@@ -58,12 +58,17 @@ pub fn keep_stock_portraits(built: &mut Built) -> Result<(), String> {
         }
     }
     built.beneath.retain(|e| !is_portrait(&e.path()));
+    // the picks' own pak, when the table is off, is made from these
+    built.files_shared.entries.retain(|e| !is_portrait(&e.path()));
+    built.files_shared.paths.retain(|p| !is_portrait(p));
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::schema::schema_build::{FilesShared, TablePatch};
+    use crate::vpk::Entry;
 
     #[test]
     fn the_picture_swap_goes_and_everything_else_stays() {
@@ -81,6 +86,55 @@ mod tests {
         assert!(is_portrait("panorama/images/heroes/selection/npc_dota_hero_pudge_png.vtex_c"));
         assert!(!is_portrait("panorama/images/heroes/icons/npc_dota_hero_pudge_png.vtex_c"));
         assert!(!is_portrait("panorama/images/spellicons/pudge_meat_hook_png.vtex_c"));
+    }
+
+    fn entry(path: &str) -> Entry {
+        let (folder, file) = path.rsplit_once('/').unwrap();
+        let (name, ext) = file.rsplit_once('.').unwrap();
+        Entry {
+            ext: ext.into(),
+            folder: folder.into(),
+            name: name.into(),
+            crc: 0,
+            preload: Default::default(),
+            data: Default::default(),
+        }
+    }
+
+    #[test]
+    fn a_build_keeps_no_portrait_anywhere_and_every_other_file() {
+        let portrait = "panorama/images/heroes/npc_dota_hero_juggernaut_png.vtex_c";
+        let selection = "panorama/images/heroes/selection/npc_dota_hero_juggernaut_png.vtex_c";
+        let icon = "panorama/images/heroes/icons/npc_dota_hero_juggernaut_png.vtex_c";
+        let model = "models/heroes/juggernaut/juggernaut_arcana.vmdl_c";
+        let block = b"\"9059\"
+{
+	\"visuals\"
+	{
+		\"asset_modifier\"
+		{
+			\"type\" \"icon_replacement_hero\"
+			\"asset\" \"npc_dota_hero_juggernaut\"
+			\"modifier\" \"npc_dota_hero_juggernaut_alt1\"
+		}
+	}
+}
+";
+        let mut built = Built {
+            list: vec![TablePatch::of(block, vec![entry(portrait), entry(selection), entry(icon), entry(model)])],
+            beneath: vec![entry(portrait), entry(model)],
+            files_shared: FilesShared {
+                paths: vec![selection.into(), model.into()],
+                entries: vec![entry(selection), entry(model)],
+            },
+        };
+        keep_stock_portraits(&mut built).unwrap();
+        let paths = |v: &[Entry]| v.iter().map(Entry::path).collect::<Vec<_>>();
+        assert_eq!(paths(built.list[0].assets.as_deref().unwrap()), vec![icon.to_string(), model.to_string()]);
+        assert_eq!(paths(&built.beneath), vec![model.to_string()]);
+        assert_eq!(paths(&built.files_shared.entries), vec![model.to_string()]);
+        assert_eq!(built.files_shared.paths, vec![model.to_string()]);
+        assert!(!String::from_utf8_lossy(&built.list[0].block).contains("icon_replacement_hero"));
     }
 
     #[test]
