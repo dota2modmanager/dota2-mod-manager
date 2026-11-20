@@ -45,13 +45,13 @@ and components are written that way: one component per file, logic that decides 
 modules with tests. Everything behind the
 window is Rust: `crates/mm-core/` does the work, `src-tauri/` is the app around it, and
 `crates/mm-cli/` runs the same functions from the command line for the tests and the tools.
-`preload.js` stays CommonJS JavaScript checked through its JSDoc. DECISIONS.md, "The window is
-built by Vite", says why.
+The two scripts the shell runs in the page before it, `src-tauri/src/page/`, stay plain
+JavaScript checked through their JSDoc. DECISIONS.md, "The window is built by Vite", says why.
 
 ```
 src-tauri/src/main.rs           the order the app starts in: the window, the tray, updates. Nothing else belongs here
 crates/mm-core/src/owner/mod.rs every long-lived service, built once, and every channel it answers
-preload.js         the only bridge the renderer gets. Every channel is listed once
+src-tauri/src/page/ the only bridge the renderer gets: bridge.js carries the calls, api.js names them
 renderer/api/      its types: every name on window.api, and what each handler answers
 crates/mm-core/src/               everything that thinks: installer, vpk, schema, gamelang, catalog…
 crates/mm-core/src/owner/owner_*.rs       one file per group of channels, each naming what it needs

@@ -1,14 +1,15 @@
-// Type checking for the JavaScript the app still ships: the two preload bridges and the removal window.
+// Type checking for the JavaScript the app still ships: the page scripts in src-tauri/src/page/
+// and the removal window.
 //
-// Nothing is compiled and nothing is emitted: this reads preload.js, preload-uninstall.js and
+// Nothing is compiled and nothing is emitted: this reads api.js, uninstall-api.js and
 // renderer/uninstall.js with the JSDoc they carry and says where the code and its own
-// documentation disagree.
+// documentation disagree. page.d.ts says what bridge.js leaves on window for the first two.
 //
-// The preloads stay JavaScript on purpose: the Tauri window puts each one, as it is, in front of
-// src-tauri/src/bridge.js in the page's initialization script, and a preload that failed to load
-// would leave the window with no window.api at all.
+// The page scripts stay JavaScript on purpose: the shell puts each one, as it is, behind bridge.js
+// in the page's initialization script, and one that failed to load would leave the window with no
+// window.api at all.
 // The removal window is a classic script loaded without a build (vite.config.mjs says why), and
-// renderer/uninstall-bridge.d.ts describes what its preload gives it.
+// renderer/uninstall-bridge.d.ts describes what uninstall-api.js gives it.
 //
 // Why these settings:
 //   checkJs with strict off - the point is to catch what is wrong, not to fail on every value that
@@ -27,8 +28,7 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "skipLibCheck": true,
-    "strict": false,
-    "types": ["node"]
+    "strict": false
   },
-  "include": ["preload.js", "preload-uninstall.js", "renderer/uninstall.js", "renderer/uninstall-bridge.d.ts"]
+  "include": ["src-tauri/src/page/api.js", "src-tauri/src/page/uninstall-api.js", "src-tauri/src/page/page.d.ts", "renderer/uninstall.js", "renderer/uninstall-bridge.d.ts"]
 }

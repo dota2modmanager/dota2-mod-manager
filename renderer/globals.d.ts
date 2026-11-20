@@ -1,4 +1,4 @@
-/* What a module finds on window before it runs: the bridge preload.js exposes (typed in api/),
+/* What a module finds on window before it runs: the bridge src-tauri/src/page/api.js exposes (typed in api/),
  * and the translation helpers i18n.js publishes (app.js imports it first). */
 import type { Api } from './api/index.ts';
 

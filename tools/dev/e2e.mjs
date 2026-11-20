@@ -370,7 +370,7 @@ export function evalUninstall({ mods = false, data = false, revert = false, canc
 `;
 }
 
-/* Runs in the removal window, which is a different window with a different preload.
+/* Runs in the removal window, which is a different window with a different page script.
  *
  * The window is opened by the uninstaller, so nothing a player does reaches it and no other
  * check here comes near it. It opened once where it should not have - in the middle of an

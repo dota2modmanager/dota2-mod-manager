@@ -137,14 +137,12 @@ here: every one of those tests exists because something in it broke somebody's g
 npm run typecheck
 ```
 
-The main process is TypeScript with no build step: Node strips the types when it loads a file,
-so what you edit is what runs, in development and inside the installer. `test/tsconfig.json` checks
-it strictly, `test/tsconfig.json` the tests written in TypeScript, and a new error in either fails
-the run. The window is TypeScript and React (DECISIONS.md, "The window is built by Vite"),
-checked as strictly by `renderer/tsconfig.json`. The two preload bridges stay JavaScript,
-and `tsc --checkJs` reads their JSDoc. Before the main process moved, the same check over
-JavaScript found a `require` that had never resolved, and three functions whose JSDoc described a
-different signature than the one underneath it.
+Three projects get checked. The window is TypeScript and React (DECISIONS.md, "The window is
+built by Vite"), checked strictly by `renderer/tsconfig.json`. `test/tsconfig.json` checks the
+tests written in TypeScript just as strictly. The two scripts the shell runs in the page before
+the window, `src-tauri/src/page/api.js` and `src-tauri/src/page/uninstall-api.js`, stay
+JavaScript with no build step, and the root `tsconfig.json` reads their JSDoc. A new error in any
+of the three fails the run.
 
 Errors are counted per file in `.github/typecheck-baseline.json`, which has stood at zero since
 2026-09-28, and the check fails when a file goes above its line or when a file that was clean

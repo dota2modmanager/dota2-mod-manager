@@ -1,8 +1,9 @@
-/* window.api: the bridge preload.js exposes, typed for the window's TypeScript.
+/* window.api: the bridge src-tauri/src/page/api.js exposes, typed for the window's TypeScript.
  *
- * Every name here is a name in preload.js and the other way round (test/api-types.test.js), and
- * every channel behind them has a handler (test/ipc-contract.test.js). A reply's type is written
- * from its handler in src/ipc-*.js; a change to what a handler answers changes the type beside
+ * Every name here is a name in api.js and the other way round (test/api-types.test.ts), and
+ * every channel behind them has an entry in the argument table and a handler in Rust
+ * (test/rust-channels.test.ts). A reply's type is written from its handler in
+ * crates/mm-core/src/owner/owner_*.rs; a change to what a handler answers changes the type beside
  * the others of its group here. */
 import type { AppApi } from './app.ts';
 import type { ArcanaApi, BackgroundApi, CatalogApi, HudApi, RankApi, DecorApi, PaintApi, MapLooksApi, SoundsApi, CompilerApi, ConfigApi, CosmeticsApi, PatchApi, PresetsApi, PreviewApi, ToolsApi } from './content.ts';

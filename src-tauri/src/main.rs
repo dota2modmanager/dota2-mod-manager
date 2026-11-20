@@ -1,7 +1,7 @@
 //! Dota 2 Mod Manager under Tauri.
 //!
 //! The window is the React page in renderer/, built to out/renderer-tauri, with window.api:
-//! preload.js runs in the page against src/bridge.js. The title bar's buttons are the shell's
+//! src/page/api.js on top of src/page/bridge.js. The title bar's buttons are the shell's
 //! (src/native.rs); every other call is the Rust owner's (src/backend.rs, mm_core::owner).
 
 // no console window behind the app in a release build
@@ -162,7 +162,7 @@ fn mm_key(app: tauri::AppHandle, key: String, control: bool, alt: bool) {
     }
 }
 
-/// A press on the title bar (src-tauri/src/bridge.js): the window follows the mouse, or a second
+/// A press on the title bar (src-tauri/src/page/bridge.js): the window follows the mouse, or a second
 /// press in a row maximizes or restores it. Synchronous, so it runs on the window's own thread
 /// while the button is still down.
 #[tauri::command]
@@ -193,13 +193,13 @@ fn app_root(app: &tauri::App) -> PathBuf {
     }
 }
 
+/// What a window's page runs before its own scripts: the bridge, then the api built on it.
+pub(crate) fn page_script(api: &str) -> String {
+    format!("{}\n;{}", include_str!("page/bridge.js"), api)
+}
+
 fn init_script() -> String {
-    // preload.js is CommonJS for Electron's sandboxed preload: `require` is the bridge's
-    format!(
-        "{}\n;(function (require) {{\n{}\n}})(window.__mmRequire);\n",
-        include_str!("bridge.js"),
-        include_str!("../../preload.js")
-    )
+    page_script(include_str!("page/api.js"))
 }
 
 /// WebView2 takes switches from the environment: WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS opens a

@@ -1,4 +1,4 @@
-//! The main process's strings: Russian is the source, English and Chinese
+//! The core's own strings: Russian is the source, English and Chinese
 //! are keyed by the exact Russian text, with {0}, {1}... for values. A missing key falls back to
 //! the Russian, so nothing shows empty.
 

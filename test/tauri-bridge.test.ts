@@ -1,4 +1,4 @@
-// The Tauri bridge (src-tauri/src/bridge.js) tells the shell the page has loaded only once the
+// The Tauri bridge (src-tauri/src/page/bridge.js) tells the shell the page has loaded only once the
 // page's own scripts have run and the bridge listens for the shell's events: told any earlier,
 // a d2mm:// link the app was started by reached no subscriber and the mod's window never opened.
 import { test } from 'node:test';
@@ -8,7 +8,9 @@ import path from 'node:path';
 import vm from 'node:vm';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const SOURCE = fs.readFileSync(path.join(ROOT, 'src-tauri', 'src', 'bridge.js'), 'utf8');
+const PAGE = path.join(ROOT, 'src-tauri', 'src', 'page');
+const SOURCE = fs.readFileSync(path.join(PAGE, 'bridge.js'), 'utf8');
+const API = fs.readFileSync(path.join(PAGE, 'api.js'), 'utf8');
 
 function page(readyState: string) {
   const calls: string[] = [];
@@ -85,4 +87,38 @@ test('a press where the CSS marks the bar draggable moves the window, a second o
   press('', 1);
   press('1', 1, 2);
   assert.equal(JSON.stringify(drags()), JSON.stringify([{ toggle: false }, { toggle: true }]));
+});
+
+// window.api is api.js on top of the bridge, the way main.rs page_script puts them in the page:
+// a call goes to Rust as mm_invoke with its channel, and what the shell sends reaches a subscriber
+// as its value alone.
+test('window.api calls a channel through Rust and hears what the shell sends', async () => {
+  const calls: { cmd: string; args: { channel?: string; args?: unknown[]; event?: string } }[] = [];
+  const handlers: ((e: { payload: unknown }) => void)[] = [];
+  const window: Record<string, unknown> = {
+    __TAURI_INTERNALS__: {
+      transformCallback: (fn: (e: { payload: unknown }) => void) => handlers.push(fn) - 1,
+      invoke: (cmd: string, args: { channel?: string; args?: unknown[]; event?: string; handler?: number }) => {
+        calls.push({ cmd, args });
+        return Promise.resolve(cmd === 'mm_invoke' ? { ok: true } : undefined);
+      },
+    },
+    addEventListener: () => {},
+  };
+  const document = { readyState: 'complete', addEventListener: () => {} };
+  vm.runInNewContext(`${SOURCE}
+;${API}`, { window, document, navigator: { userAgent: 'test' }, btoa, atob, console });
+  const api = window.api as { win: { minimize(): Promise<unknown>; onMaximized(cb: (v: boolean) => void): void } };
+
+  assert.equal(JSON.stringify(await api.win.minimize()), '{"ok":true}');
+  const call = calls.find((c) => c.cmd === 'mm_invoke');
+  assert.equal(call?.args.channel, 'win:minimize');
+  assert.equal(JSON.stringify(call?.args.args), '[]', 'no arguments');
+
+  const heard: unknown[] = [];
+  api.win.onMaximized((v) => heard.push(v));
+  const listen = calls.findIndex((c) => c.cmd === 'plugin:event|listen' && c.args.event === 'mm');
+  assert.ok(listen >= 0, 'the bridge listens for the shell');
+  handlers[0]({ payload: { channel: 'win:maximized', args: [true] } });
+  assert.deepEqual(heard, [true]);
 });

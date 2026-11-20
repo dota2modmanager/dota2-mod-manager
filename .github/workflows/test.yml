@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # Node 24 for the test runner: the tests use zlib.crc32 (Node 22+). Nothing under test/ or
-      # tools/ is packaged into the app - the shell embeds the built page and preload.js - so this
+      # tools/ is packaged into the app - the shell embeds the built page and src-tauri/src/page/ - so this
       # cannot drift into runtime code.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
