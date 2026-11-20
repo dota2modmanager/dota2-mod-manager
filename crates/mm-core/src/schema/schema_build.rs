@@ -46,6 +46,9 @@ pub struct TablePatch {
     pub item: Option<bool>,
     /// the paid item a pick wears, by its id in the game's table
     pub item_id: Option<String>,
+    /// a part of an arcana whose base is here (not a persona's): the base's files are its look
+    /// without the table, so its block in items_game is not taken apart again on top of them
+    pub based: bool,
     fx: bool,
 }
 
@@ -63,6 +66,24 @@ impl TablePatch {
             unplaced: None,
             item: None,
             item_id: None,
+            based: false,
+            fx: false,
+        }
+    }
+
+    /// An item pick worn as an item, with no model of its own, for tests of the picks' files.
+    pub(crate) fn worn_pick(id: &str, block: &[u8], based: bool) -> Self {
+        TablePatch {
+            id: id.into(),
+            block: block.to_vec(),
+            assets: Some(Vec::new()),
+            source: id.into(),
+            own: None,
+            added: Some(Vec::new()),
+            unplaced: Some(false),
+            item: Some(true),
+            item_id: Some(id.into()),
+            based,
             fx: false,
         }
     }
@@ -171,6 +192,7 @@ fn fx_over_worn(vanilla: &[u8], out: &mut Vec<TablePatch>) -> Result<(), crate::
             unplaced: None,
             item: None,
             item_id: None,
+            based: false,
             fx: false,
         });
     }
@@ -572,6 +594,9 @@ impl TableBuild {
                             without_base_files(&item_id, pick.assets.clone(), &ready)
                         };
                         let is_worn = worn(rec);
+                        let based = persona_of(rec).is_none()
+                            && !is_fx(rec)
+                            && own_base(rec, &ready).is_some_and(|b| b.base.persona != Some(true));
                         owned.push((out.len(), pick.own.clone()));
                         out.push(TablePatch {
                             id: pick.id.clone(),
@@ -583,6 +608,7 @@ impl TableBuild {
                             unplaced: Some(pick.unplaced),
                             item: Some(is_worn),
                             item_id: Some(item_id.clone()),
+                            based,
                             fx: is_fx(rec),
                         });
                         let persona = !is_worn;
@@ -622,6 +648,7 @@ impl TableBuild {
                                 unplaced: None,
                                 item: None,
                                 item_id: None,
+                                based: false,
                                 fx: false,
                             });
                         }
@@ -650,6 +677,7 @@ impl TableBuild {
                     unplaced: None,
                     item: None,
                     item_id: None,
+                    based: false,
                     fx: false,
                 });
             }

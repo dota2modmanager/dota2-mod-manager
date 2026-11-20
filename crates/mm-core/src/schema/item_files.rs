@@ -330,8 +330,20 @@ pub fn item_files(
             continue;
         }
         let pick_own = patch.own.as_deref().filter(|o| !o.is_empty());
-        let Parts { mut systems, skin, motions, groups, extras, left: mut what } =
+        let Parts { mut systems, mut skin, mut motions, mut groups, mut extras, left: mut what } =
             pick_parts(&patch.block, pick_own, patch.unplaced == Some(true)).map_err(e)?;
+        // an arcana with its base here is the base's files, compiled by hand with all the arcana
+        // does (its effects, material, motions, paired and levelled effects): its block in
+        // items_game is not taken apart on top of them. Only an effect the person added still goes on.
+        if patch.based {
+            let added: HashSet<String> = patch.added.iter().flatten().map(|s| s.to_lowercase()).collect();
+            systems.retain(|s| added.contains(&s.to_lowercase()));
+            skin = 0.0;
+            motions.clear();
+            groups.clear();
+            extras.clear();
+            what.clear();
+        }
         for en in patch.assets.as_deref().unwrap_or(&[]) {
             let p = en.path().to_lowercase();
             if !own.contains(&p) && !entries.contains_key(&p) {
@@ -598,6 +610,30 @@ mod tests {
         assert!(!on_body_alone(wearable, Some("models/heroes/x/x_head.vmdl_c"), false).unwrap());
         // a model the slot has no place for is reported as such, not moved to the body
         assert!(!on_body_alone(body_arcana, None, true).unwrap());
+    }
+
+    /// An arcana whose base is here goes as the base's files alone: what its block in items_game
+    /// asks of the table (paired effects, arcana levels) is not counted as left behind, and the
+    /// base's body is not written over. The same arcana with no base still says what it lost.
+    #[test]
+    fn an_arcana_with_its_base_here_asks_nothing_of_the_table() {
+        let block = b"\"9059\"\n{\n\t\"item_slot\"\t\t\"hero_base\"\n\t\"prefab\"\t\t\"wearable\"\n\t\"visuals\"\n\t{\n\
+\t\t\"asset_modifier0\"\n\t\t{\n\t\t\t\"type\"\t\t\"particle_create\"\n\t\t\t\"modifier\"\t\t\"particles/econ/items/juggernaut/jugg_arcana/juggernaut_arcana_ambient.vpcf\"\n\t\t}\n\
+\t\t\"asset_modifier1\"\n\t\t{\n\t\t\t\"type\"\t\t\"arcana_level\"\n\t\t\t\"modifier\"\t\t\"1\"\n\t\t}\n\
+\t\t\"asset_modifier2\"\n\t\t{\n\t\t\t\"type\"\t\t\"particle_combined\"\n\t\t\t\"asset\"\t\t\"a.vpcf\"\n\t\t\t\"modifier\"\t\t\"b.vpcf\"\n\t\t}\n\
+\t}\n}";
+        let body = "models/heroes/juggernaut/juggernaut.vmdl_c";
+        let beneath = vec![entry_at(body, b"the base's body".to_vec().into())];
+        let read = |_: &str| None;
+        let plain = item_files(&[TablePatch::worn_pick("9059", block, false)], &beneath, &read, None).unwrap();
+        assert_eq!(plain.left.len(), 1);
+        assert!(plain.left[0].what.contains(&"its arcana levels".to_string()), "{:?}", plain.left);
+        assert!(plain.left[0].what.contains(&"its paired effects".to_string()), "{:?}", plain.left);
+        let based = item_files(&[TablePatch::worn_pick("9059", block, true)], &beneath, &read, None).unwrap();
+        assert!(based.left.is_empty(), "{:?}", based.left);
+        let paths: Vec<String> = based.entries.iter().map(|e| e.path()).collect();
+        assert_eq!(paths, vec![body.to_string()]);
+        assert_eq!(&*based.entries[0].data, b"the base's body");
     }
 
     /// On the game's own files (MM_TEST_PAK01): a rider's free mount is found for the courier's
