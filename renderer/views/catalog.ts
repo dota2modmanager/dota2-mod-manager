@@ -32,7 +32,8 @@ import type { Mod } from '../catalog/types.ts';
 import { pickStyle } from '../catalog/looks.ts';
 import type { ModLink } from '../api/content.ts';
 import { buildModIndex, cosmeticSlotList, favoriteCosmetics, favoriteMods, findLinkedMod, isItemCosmeticSlot, visibleCategories } from './catalog/lists.ts';
-import { renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderRecent, renderSearchResults } from './catalog/screens.ts';
+import { renderAuthor, renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderRecent, renderSearchResults } from './catalog/screens.ts';
+import { AUTHOR_PREFIX } from '../catalog/author-mods.ts';
 import { openModWindow } from './catalog/mod-window.ts';
 import { afterCosmeticPick, openCosmeticWindow, pickCosmetic } from './catalog/cosmetics.ts';
 import { openArcanaWindow } from './catalog/arcana.ts';
@@ -186,6 +187,7 @@ async function renderCatalog(): Promise<void> {
   if (active === 'all') await (state.search.trim() ? renderSearchResults(actions) : renderHome(actions));
   else if (active === 'favorites') await renderFavorites(actions);
   else if (active === 'recent') await renderRecent(actions);
+  else if (active.startsWith(AUTHOR_PREFIX)) await renderAuthor(active.slice(AUTHOR_PREFIX.length), actions);
   else if (active.startsWith(COSMETIC_PREFIX)) await renderCosmeticCategory(active.slice(COSMETIC_PREFIX.length), actions);
   else await renderCategory(active, actions);
   // the no-game banner goes on last so it ends up on top: a user with no Dota has a more

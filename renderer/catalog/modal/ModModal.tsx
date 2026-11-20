@@ -100,7 +100,7 @@ function Info({ m, actions, favLabel }: { m: ModModalModel; actions: ModModalAct
             ))}
           </div>
         )}
-        {m.creator && <Creator c={m.creator} onAll={() => actions.showAuthor(m.creator!.name)} />}
+        {m.creator && <Creator c={m.creator} onAll={() => actions.showAuthor(m.creator!.name)} onPage={() => actions.authorPage(m.creator!.name)} />}
         {m.issue && <div className="modal-note warn" role="note"><b>{L`Известная проблема`}:</b> {m.issue}</div>}
         {m.note && <div className="modal-note">{m.note}</div>}
       </div>

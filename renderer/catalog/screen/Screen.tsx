@@ -60,6 +60,7 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
           </button>
         )}
         <h1 className="view-title">{m.title}{m.accent !== undefined && <> <span className="accent">{m.accent}</span></>}</h1>
+        {m.meta && <span className="view-meta">{m.meta}</span>}
       </div>
       {m.toolbar && <Toolbar model={m.toolbar} actions={actions} />}
       {m.note && <div className="empty-note">{m.note}</div>}
