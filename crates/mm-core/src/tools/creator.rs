@@ -191,7 +191,7 @@ pub fn premod_archive(d: &Value, styles: &[PackedStyle]) -> Result<(String, Vec<
             let label = if s.label.is_empty() { (i + 1).to_string() } else { s.label.clone() };
             format!("{name} {}", safe_label(&label))
         };
-        let zip = crate::safe_zip::write_zip(&[(format!("{base}.vpk"), s.vpk.clone())])?;
+        let zip = crate::tools::creator_upload::vpk_archive(&base, &s.vpk)?;
         outer.push((format!("{base}.zip"), zip.clone()));
         outer.push((format!("{base}.webp"), s.preview.clone()));
         let label = if s.label.is_empty() { Value::Null } else { json!(s.label) };
@@ -909,8 +909,13 @@ mod tests {
         let inner_zip = entry(&mut z, "Blue glow.zip");
         let mut inner =
             crate::safe_zip::OpenedZip::open(crate::safe_zip::Source::Bytes(inner_zip), None, None).unwrap();
-        assert_eq!(inner.files.iter().map(|e| e.path.as_str()).collect::<Vec<_>>(), vec!["Blue glow.vpk"]);
-        assert_eq!(entry(&mut inner, "Blue glow.vpk"), std::fs::read(&f.vpk).unwrap());
+        // the game loads only pakNN_dir.vpk: a VPK named after the mod did nothing when unpacked by hand
+        let pak = crate::tools::creator_upload::pak_name("Blue glow");
+        assert!(pak.starts_with("pak") && pak.ends_with("_dir.vpk"), "{pak}");
+        let n: u16 = pak[3..5].parse().unwrap();
+        assert!((30..=99).contains(&n), "{pak} is outside the mods' slots");
+        assert_eq!(inner.files.iter().map(|e| e.path.as_str()).collect::<Vec<_>>(), vec![pak.as_str()]);
+        assert_eq!(entry(&mut inner, &pak), std::fs::read(&f.vpk).unwrap());
 
         let hash: Value = serde_json::from_slice(&entry(&mut z, "hash.json")).unwrap();
         assert_eq!(hash["mod_name"], "Blue glow");
