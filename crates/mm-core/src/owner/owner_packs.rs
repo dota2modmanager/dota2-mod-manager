@@ -335,6 +335,11 @@ fn unpack_members(
                 None,
             )
             .map_err(io)?;
+        // a mod out of a pack is still the same mod: the tool that made it and where it came from
+        let origin = crate::tools::own_work::origin(&m);
+        if !origin.is_empty() {
+            c.library.update(&rec["id"], &Value::Object(origin), None).map_err(io)?;
+        }
         if m.get("enabled") == Some(&Value::Bool(false)) {
             let _ = c.installer.set_enabled(&files, false, None);
             c.library.set_enabled(&rec["id"], false, None).map_err(io)?;
@@ -495,6 +500,18 @@ mod shared_pack_tests {
         let more = make_room(&inst, &mut lib, true, false, free + 1).unwrap();
         assert!(!more.is_empty());
         assert_eq!(lib.list().iter().filter(|r| is_auto_pack(r)).count(), 1);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_mod_in_a_pack_keeps_the_tool_that_made_it() {
+        let (root, inst, mut lib) = full_game();
+        let made = lib.list().iter().find(|r| r.get("generated").is_some()).cloned().unwrap();
+        let m = absorb_into(&inst, &mut lib, "p1", &made).unwrap();
+        assert_eq!(m["generated"], made["generated"], "{m}");
+        assert_eq!(crate::tools::own_work::origin(&m).get("generated"), Some(&made["generated"]));
+        let catalog = lib.list().iter().find(|r| r.get("generated").is_none()).cloned().unwrap();
+        assert!(crate::tools::own_work::origin(&absorb_into(&inst, &mut lib, "p1", &catalog).unwrap()).is_empty());
         let _ = std::fs::remove_dir_all(&root);
     }
 
