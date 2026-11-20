@@ -29,6 +29,7 @@ pub fn defaults() -> Map<String, Value> {
         "runInBackground": true,
         "countDownloads": true,
         "autoPack": true,
+        "modPreview3d": true,
         "schemaPatch": false,
         "cosmetics": {},
         "itemLooks": [],

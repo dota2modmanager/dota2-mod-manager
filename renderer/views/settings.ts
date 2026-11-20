@@ -57,6 +57,7 @@ async function renderSettings(fresh = false): Promise<void> {
     presence: s.discordPresence !== false,
     countDownloads: s.countDownloads !== false,
     autoPack: s.autoPack !== false,
+    preview3d: s.modPreview3d !== false,
     everyone: {
       on: s.everyoneWearsMine === true,
       built: s.everyoneBuilt ?? [],
@@ -86,7 +87,7 @@ function draw(): void {
 }
 
 /** A switch that shows its new position at once and tells main after. */
-function flip(field: 'presence' | 'adult' | 'countDownloads' | 'autoPack'): boolean {
+function flip(field: 'presence' | 'adult' | 'countDownloads' | 'autoPack' | 'preview3d'): boolean {
   if (!model) return false;
   model = { ...model, [field]: !model[field] };
   draw();
@@ -120,6 +121,9 @@ const actions: SettingsActions = {
   },
   autoPack: async () => {
     state.settings = await window.api.settings.set('autoPack', flip('autoPack'));
+  },
+  preview3d: async () => {
+    state.settings = await window.api.settings.set('modPreview3d', flip('preview3d'));
   },
   everyone: async () => {
     if (!model) return;

@@ -23,10 +23,12 @@ use indexmap::IndexMap;
 use regex::bytes::Regex;
 use serde_json::{json, Map, Value};
 
+use crate::ability_icons::icon_modifiers;
 use crate::ability_sounds_service::Compile;
 use crate::generated_pak::{files_json, swap_pak, write_pak};
 use crate::hero_paint_parts::{materials_by_color, parts_view};
 use crate::i18n::t;
+use crate::icon_paint::widen_icon_layers;
 use crate::installer::Installer;
 use crate::library::Library;
 use crate::paint_recipe::{parse_look, part_of, split_key, Recipe};
@@ -214,6 +216,17 @@ impl HeroPaintService {
     }
 
     fn layers(&self, lib: &Library, vanilla: &[u8], hero: &str, worn: &[String]) -> Result<Vec<RecolorLayer>, String> {
+        Ok(self.layers_from(lib, vanilla, hero, worn)?.0)
+    }
+
+    /// The layers, and the file each painted icon is read from where that is another (icon_paint.rs).
+    fn layers_from(
+        &self,
+        lib: &Library,
+        vanilla: &[u8],
+        hero: &str,
+        worn: &[String],
+    ) -> Result<(Vec<RecolorLayer>, IndexMap<String, String>), String> {
         let no_hero = || t("Нет такого героя: {0}", &[json!(hero)]);
         if !is_hero(hero) {
             return Err(no_hero());
@@ -227,6 +240,8 @@ impl HeroPaintService {
         let paths: Vec<&str> = index.paths().collect();
         let items = self.picked(lib, vanilla, hero, worn)?;
         let mut all = hero_layers(&paths, hero, &hero_abilities(&text), &items, hero_model_folder(&text).as_deref());
+        let picks = crate::ability_icons_service::AbilityIconsService::picks_of(lib, hero);
+        let from = widen_icon_layers(&mut all, &icon_modifiers(vanilla), &picks, &|p| index.has(p));
         // an item's particles create others: those are its effect too
         let mut refs = |p: &str| -> Vec<String> {
             let Some(file) = index.read(p).ok().flatten() else { return vec![] };
@@ -274,7 +289,7 @@ impl HeroPaintService {
                 l.files = with_copies(&l.files, &by_part);
             }
         }
-        Ok(all)
+        Ok((all, from))
     }
 
     /// Ability names in the app's language, out of the game's abilities_*.txt.
@@ -302,7 +317,8 @@ impl HeroPaintService {
         let mut built = Built { entries: IndexMap::new(), compressed: Vec::new() };
         // what each file gets; a later layer's wins, as an item's own colour over the body's
         let mut plans: IndexMap<String, Recipe> = IndexMap::new();
-        for layer in self.layers(lib, vanilla, hero, worn)? {
+        let (layers, from) = self.layers_from(lib, vanilla, hero, worn)?;
+        for layer in layers {
             let model = layer.kind == "body" || layer.kind == "itemModel";
             for p in &layer.files {
                 let r = Recipe::of(colors, &layer.id, &if model { part_of(p) } else { String::new() });
@@ -314,7 +330,7 @@ impl HeroPaintService {
         let with_mats: Vec<String> = plans.iter().filter(|(_, r)| r.has_mats()).map(|(p, _)| p.clone()).collect();
         let mats = if with_mats.is_empty() { IndexMap::new() } else { materials_by_color(&index, &with_mats) };
         for (p, recipe) in plans {
-            let Some(file) = index.read(&p).ok().flatten() else { continue };
+            let Some(file) = index.read(from.get(&p).unwrap_or(&p)).ok().flatten() else { continue };
             let made = (|| -> Result<(), String> {
                 if p.ends_with(".vpcf_c") {
                     let Some((color, _)) = recipe.base.color else { return Ok(()) };
@@ -539,22 +555,31 @@ impl HeroPaintService {
         }
         let name = t("Перекраска: {0}", &[json!(label)]);
         log(format!("hero paint: {hero}, {} layer(s), {count} file(s)", colors.len()));
-        if let Some(old) = Self::mine(lib, hero) {
+        let icons: Vec<String> =
+            entries.keys().filter(|p| p.starts_with("panorama/images/spellicons/")).cloned().collect();
+        let rec = if let Some(old) = Self::mine(lib, hero) {
             let off = keep_off && old.get("enabled") == Some(&Value::Bool(false));
             let files = swap_pak(inst, &old, &vpk, off)?;
             let fields = json!({
                 "name": name, "files": files_json(&files), "generated": g, "enabled": !off,
                 "updatedAt": crate::js::json_number(crate::library::now()),
             });
-            return Ok(lib.update(&old["id"], &fields, None).map_err(io)?.unwrap_or(Value::Null));
+            lib.update(&old["id"], &fields, None).map_err(io)?.unwrap_or(Value::Null)
+        } else {
+            let files = write_pak(inst, &vpk)?;
+            let new = json!({
+                "name": name, "categoryId": "hero-items", "styleLabel": null, "fileRef": null, "preview": null,
+                "files": files_json(&files),
+            });
+            let made = lib.add(&new, None).map_err(io)?;
+            lib.update(&made["id"], &json!({ "generated": g }), None).map_err(io)?.unwrap_or(Value::Null)
+        };
+        if icons.is_empty() {
+            return Ok(rec);
         }
-        let files = write_pak(inst, &vpk)?;
-        let new = json!({
-            "name": name, "categoryId": "hero-items", "styleLabel": null, "fileRef": null, "preview": null,
-            "files": files_json(&files),
-        });
-        let made = lib.add(&new, None).map_err(io)?;
-        Ok(lib.update(&made["id"], &json!({ "generated": g }), None).map_err(io)?.unwrap_or(Value::Null))
+        // the hero's Ability icons record copies its picks over these same files: the paint goes first
+        let his_icons = |o: &Value| o["generated"]["abilityIcons"].as_str() == Some(hero);
+        crate::ability_icons_service::AbilityIconsService::move_ahead(inst, lib, rec, &icons, &his_icons, log)
     }
 
     /// The hero's layers and the colours on now (`vrf`: whether ValveResourceFormat is here).

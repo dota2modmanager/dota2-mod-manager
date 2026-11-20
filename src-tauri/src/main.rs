@@ -15,6 +15,7 @@ mod icons;
 mod native;
 mod ported;
 mod shell;
+mod startup_failure;
 mod uninstall;
 mod update;
 mod window;
@@ -236,6 +237,7 @@ fn host_libs_once() {
 }
 
 fn main() {
+    startup_failure::install();
     // before anything else: the second start is the one that runs
     #[cfg(target_os = "linux")]
     host_libs_once();

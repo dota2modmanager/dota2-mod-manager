@@ -127,11 +127,64 @@ pub fn ability_icon_files(paths: &[&str], hero: &str, abilities: &[String]) -> V
             // a root icon only by its whole name: marci_unleash_flurry is an ability of its own
             whole || (!in_root && claims(a, hero, &format!("{name}.vpcf_c")))
         });
+        // a cosmetic's icon in the hero's folder ends with what it stands for: ta_2022_immortal_trap_gold
+        let claimed = claimed.or_else(|| {
+            if in_root {
+                return None;
+            }
+            let word = icon_word(name);
+            longest.iter().find(|a| {
+                ability_short(a, hero).is_some_and(|short| {
+                    let ends = |w: &str| word == w || word.ends_with(&format!("_{w}"));
+                    ends(short)
+                        || short.strip_suffix('s').is_some_and(ends)
+                        || ICON_WORDS.iter().any(|(icon, ability)| *ability == short && ends(icon))
+                })
+            })
+        });
         if let Some(a) = claimed {
             out.push(((*a).clone(), p.to_string()));
         }
     }
     out
+}
+
+/// What Valve named a cosmetic's icon for, where it is not the ability's own name: the item's
+/// word on the left, the ability's name past the hero's on the right. Read off the game's
+/// spellicons folders in 7.42, every one checked against the hero's script.
+const ICON_WORDS: &[(&str, &str)] = &[
+    ("missile", "homing_missile"),
+    ("hex", "voodoo"),
+    ("moonlight_shadow", "invis"),
+    ("sacred_arrow", "arrow"),
+    ("arcane_curse", "curse_of_the_silent"),
+    ("corrosive_haze", "amplify_damage"),
+    ("retaliate", "return"),
+    ("crypt_swarm", "carrion_swarm"),
+    ("gust", "wave_of_silence"),
+    ("spring", "primal_spring"),
+    ("tree_jump", "tree_dance"),
+    ("proximity_mine", "land_mines"),
+    ("tp", "teleportation"),
+    ("soulbind", "soul_chain"),
+    ("spinners_snare", "sticky_snare"),
+];
+
+/// An icon's name without the look it comes in: ta_2022_immortal_trap_gold -> ta_2022_immortal_trap.
+fn icon_word(name: &str) -> &str {
+    let style = re(r"_(gold|golden|crimson|red|style[0-9]+)$");
+    let mut n = name;
+    while let Some(m) = style.find(n) {
+        n = &n[..m.start()];
+    }
+    n
+}
+
+/// The ability's name past the hero's: `trap` of templar_assassin_trap, `burrowstrike` of
+/// sandking_burrowstrike (whose hero is sand_king).
+fn ability_short<'a>(ability: &'a str, hero: &str) -> Option<&'a str> {
+    let fh = flat(hero);
+    ability.match_indices('_').map(|(i, _)| i).find(|&i| flat(&ability[..i]) == fh).map(|i| &ability[i + 1..])
 }
 
 /// The layers a hero has, from the paths in pak01. A layer with no files is left out.
