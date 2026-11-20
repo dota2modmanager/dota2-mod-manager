@@ -2,6 +2,51 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.5.0
+
+### A pedestal for every hero
+
+- The hero builder has a Pedestal tab: stand a hero on any of the game's 68 pedestals, with a
+  height of its own. The 3D view shows it, and in the game the hero stands on it on the loadout
+  screen. An arcana or persona with a pedestal of its own brings it by itself.
+- With the item table off, a switch hides the game's own pedestal under every hero. The tab says
+  what that does to heroes without a pedestal of their own.
+
+### Your own sounds for the game
+
+- The sound window now changes the game's own sounds, not only heroes': match found, pings, the
+  chat wheel, level up and deny; the menu and lobby; runes and the courier. Replace a sound or put
+  yours over it, with its own volume.
+
+### Item pictures
+
+- Every look in Items and the hero builder has its picture from the game. The few Valve never
+  made an icon for (the Crownfall fishing poles, Mars' debut set and others) come drawn from their
+  models.
+- Pictures come at once and scrolling stays smooth: big pictures such as loading screens are kept
+  at the size a tile shows, and a slot's pictures load in the background while you look at the
+  first ones.
+
+### Items
+
+- With the item table off, the looks that need it (weather, couriers, loading screens and the
+  rest of "Looks from the game") show greyed. Click one and the app offers to turn the table on,
+  then opens the look.
+
+### Builder
+
+- An ability effect picked in the hero builder now shows over the effect of the immortal the hero
+  wears for that ability.
+- Hero paint colours every icon an ability has, so a painted Meat Hook shows in the game even
+  with an arcana, immortal or persona on.
+
+### Fixes
+
+- The loading screen list stopped at 400 of the game's 2164 screens. Everything after the letter E
+  could only be found through search. The whole list is there now.
+- Catalog mods download from the catalog's new release files, with the Hugging Face copy and the
+  old files as fallbacks, and every archive is still checked against the catalog's signed hashes.
+
 ## 4.4.0
 
 ### Dress all heroes
