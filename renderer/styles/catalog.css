@@ -281,7 +281,7 @@
   color: var(--text-muted);
 }
 .item-picker-sum b { color: var(--text); font-weight: 600; }
-/* what is known to go wrong with the chosen item in the game (src/arcana-notes.ts), under its name
+/* what is known to go wrong with the chosen item in the game (crates/mm-core/src/arcana/arcana_notes.rs), under its name
    and next to the button that puts it on, where it is read before the click */
 .item-picker-sum .item-note {
   display: flex;

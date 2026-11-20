@@ -1,4 +1,4 @@
-//! Taking out everything the app put into the game, in one go (src/remove-everything.ts): for the
+//! Taking out everything the app put into the game, in one go: for the
 //! uninstaller, and for the button in Settings that gives the game back the way Steam gave it.
 //! Everything goes through the code the app uses day to day, so a mod comes out the way removing
 //! it from My mods would and the patch the way the safe-mode switch would.

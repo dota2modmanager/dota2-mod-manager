@@ -1,4 +1,4 @@
-//! The game's own prismatic gem colours, read out of items_game.txt (src/gem-colors.ts): its
+//! The game's own prismatic gem colours, read out of items_game.txt: its
 //! "colors" section, one block per gem with a color_name and a hex_color. The section is found by
 //! its line rather than by walking every block before it.
 

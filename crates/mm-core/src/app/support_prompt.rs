@@ -1,5 +1,5 @@
-//! When the window asking people to support the project comes up on its own
-//! (src/support-prompt.ts): not before the third launch, "later" puts it away for a week, three
+//! When the window asking people to support the project comes up on its own:
+//! not before the third launch, "later" puts it away for a week, three
 //! times at most; after that, or after "I did it", it only opens from Settings.
 
 use serde::Serialize;

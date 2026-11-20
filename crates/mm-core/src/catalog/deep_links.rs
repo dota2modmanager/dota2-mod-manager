@@ -1,4 +1,4 @@
-//! d2mm:// links (src/deep-links.ts): a preset or a single mod clicked anywhere on the system, and
+//! d2mm:// links: a preset or a single mod clicked anywhere on the system, and
 //! on Linux, telling the desktop that this program opens them. Nothing installs from a link: a
 //! preset parks in the Presets tab, a mod opens its window in the catalog.
 

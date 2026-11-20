@@ -1,6 +1,5 @@
 //! resourcecompiler.exe: Valve's compiler from the Dota 2 Workshop Tools, run on sources the app
-//! staged, for the compiled files an arcana base, a hero's paint or an ability's sounds are made of
-//! (src/resource-compiler.ts).
+//! staged, for the compiled files an arcana base, a hero's paint or an ability's sounds are made of.
 //!
 //! The compiler is not ours to ship: it comes with the Workshop Tools, a free DLC of Dota's in
 //! Steam. It is found in game/bin/win64 of the user's game, or in a file the user picked, or in

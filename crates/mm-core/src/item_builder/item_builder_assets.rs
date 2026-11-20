@@ -1,5 +1,4 @@
-//! What an item builder pick needs beyond its block in items_game, replacing
-//! src/item-builder-assets.ts: the game's files it puts under the plain paths (models, particles,
+//! What an item builder pick needs beyond its block in items_game: the game's files it puts under the plain paths (models, particles,
 //! pictures, the hero's own model), and the sounds and voice it makes the hero's own.
 
 use indexmap::IndexMap;

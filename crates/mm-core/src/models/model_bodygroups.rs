@@ -1,4 +1,4 @@
-//! A model with some of its body groups shown differently by default (src/model-bodygroups.ts).
+//! A model with some of its body groups shown differently by default.
 //! Each mesh belongs to a choice of a group, `m_meshGroups` names the choices ("head_@1_#&1" is
 //! choice 1 of "head"), and `m_nDefaultMeshGroupMask` holds a bit per choice: a file can make any
 //! choice the model's own default, with no line of the item table.

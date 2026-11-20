@@ -1,5 +1,5 @@
 //! Finding an effect by what it is, not by its file: a hero, his abilities, and the effects that
-//! belong to each (src/effect-finder.ts). What belongs to an ability is read off the game's file
+//! belong to each. What belongs to an ability is read off the game's file
 //! names, as a hero's recolour reads it (`recolor_layers`). An ability's files include what its
 //! effects create, so a file another one in the group brings along is left out of the list.
 

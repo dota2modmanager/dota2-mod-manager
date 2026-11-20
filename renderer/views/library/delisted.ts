@@ -17,7 +17,7 @@ export function isDelisted(rec: LibRecord): boolean {
   return delistedFrom(listing, rec);
 }
 
-/** What the signed config says about an installed catalog mod (src/remote-config-format.ts
+/** What the signed config says about an installed catalog mod (crates/mm-core/src/catalog/remote_config.rs
  * `issues`), or null. A pack is several mods under one name, so it is never matched whole. */
 export function configIssue(rec: LibRecord): ModIssue | null {
   if (rec.kind === 'pack' || !rec.categoryId || !rec.name) return null;

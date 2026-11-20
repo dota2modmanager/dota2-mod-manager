@@ -1,7 +1,7 @@
 /* The progress bar over the status bar: a download with its size, a batch counted in items (how
  * many of how many, not a guessed percentage), a stage of work, and the end. The item table's build
  * has Cancel on it, which stops the build and puts back the change that started it
- * (src/build-undo.ts, issue #425). */
+ * (crates/mm-core/src/schema/build_undo.rs, issue #425). */
 import { fmtMB } from '../ui/format.ts';
 import { toast } from '../ui/toast.ts';
 import { refreshInstalledIndex } from '../core/installed.ts';

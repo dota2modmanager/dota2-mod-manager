@@ -1,4 +1,4 @@
-/* Hero grids in Settings (src/hero-grid.ts, issue #428): a switch per grid, on when the grid is in
+/* Hero grids in Settings (crates/mm-core/src/game/hero_grid.rs, issue #428): a switch per grid, on when the grid is in
  * the account's file. A switch writes at once, so the state is always the file's. The numbers are
  * OpenDota's, and the line under the switches says from when. */
 import { useEffect, useState } from 'react';

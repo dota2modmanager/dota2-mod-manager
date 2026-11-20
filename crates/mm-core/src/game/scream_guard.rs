@@ -1,4 +1,4 @@
-//! The pumpkin's mod belongs to whoever opened the pumpkin (src/scream-guard.ts). It is known by
+//! The pumpkin's mod belongs to whoever opened the pumpkin. It is known by
 //! folders only it has; an install that never spent a key of its own and has it anyway was handed
 //! a copy, so the mod is switched off, marked, and stays off. Every mod is looked into once
 //! (`scream` on its record).

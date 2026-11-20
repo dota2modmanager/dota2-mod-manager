@@ -1,5 +1,5 @@
 //! Whether Dota is open, asked of the system every few seconds and told to the window when it
-//! changes, and Dota closing seconds after Play (src/game-launch.ts watchGame). The logic is in
+//! changes, and Dota closing seconds after Play (game/game_watch.rs). The logic is in
 //! game_watch.rs; this is its loop over the owner's state, on a thread of its own that ends with
 //! the owner.
 
@@ -55,7 +55,7 @@ pub fn start(o: &Arc<Owner>) {
     });
 }
 
-/// The patch watcher (src/main.ts createPatchWatcher): from the build the last start saw, a
+/// The patch watcher (owner/mod.rs): from the build the last start saw, a
 /// patch landing while the app is open is repaired at once. With safe mode off the search path
 /// belongs in the game, so Steam's file check taking it out counts as a patch too.
 pub fn start_patch(o: &Arc<Owner>) {

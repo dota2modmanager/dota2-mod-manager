@@ -1,4 +1,4 @@
-//! The in-game HUD laid out by hand (src/hud-scale.ts, issue #420): which panels the window offers,
+//! The in-game HUD laid out by hand (issue #420): which panels the window offers,
 //! what it sent cleaned into values in range, and the CSS that goes at the end of the HUD's style.
 
 use indexmap::IndexMap;

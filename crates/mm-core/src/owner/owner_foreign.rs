@@ -1,4 +1,4 @@
-//! Files the app did not install, as My mods lists them (src/ipc-foreign.ts): switching one off and
+//! Files the app did not install, as My mods lists them: switching one off and
 //! on, removing it with its data volumes, taking it into the library, recognising a cursor set or a
 //! font installed by hand, and cutting a file with several heroes into one mod per hero.
 

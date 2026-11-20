@@ -1,5 +1,4 @@
-//! The particle effects the item builder can put on top of an item, replacing
-//! src/item-builder-effects.ts: the effect's id, its name in the picker, and the particle the
+//! The particle effects the item builder can put on top of an item: the effect's id, its name in the picker, and the particle the
 //! game creates for it.
 //!
 //! Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece

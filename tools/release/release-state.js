@@ -11,7 +11,7 @@
  */
 const { betaName } = require('../catalog/mirror-plan.js');
 
-/** What electron-updater reads on each channel, what src/portable-update.ts reads, and what
+/** What electron-updater reads on each channel, what crates/mm-core/src/app/portable_update.rs reads, and what
  *  the Tauri builds' updater reads (tools/release/tauri-release.mjs). */
 const FEEDS = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', 'latest.json', 'beta.json'];
 /** What those feeds point at. */

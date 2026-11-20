@@ -1,4 +1,4 @@
-//! What a VPK has to go through before it counts as a mod (src/adopt.ts): a name that says what
+//! What a VPK has to go through before it counts as a mod: a name that says what
 //! is in it, the item blocks lifted out of it, a split when it turns out to be several heroes in
 //! one file. Every route into the library comes through here: the import button, drag and drop,
 //! and the mods that arrive inside a shared preset.

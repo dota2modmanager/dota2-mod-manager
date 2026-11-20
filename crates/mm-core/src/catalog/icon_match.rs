@@ -1,4 +1,4 @@
-//! Which wiki file is an item's picture (src/icon-match.ts): the file names to try first, and how
+//! Which wiki file is an item's picture: the file names to try first, and how
 //! a wiki's listing is matched against the game's name, give or take a typo but never a different
 //! number or an extra word.
 

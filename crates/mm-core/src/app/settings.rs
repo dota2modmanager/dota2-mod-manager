@@ -1,6 +1,5 @@
 //! settings.json in userData: the defaults, what the file adds over them, and the file written back
-//! as the TypeScript writes it. Replacing src/settings.ts, whose comments say what each setting is
-//! for and why it starts where it does.
+//! as the TypeScript writes it.
 
 use serde_json::{json, Map, Value};
 use std::path::{Path, PathBuf};

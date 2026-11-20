@@ -1,5 +1,4 @@
-//! The game's unusual and ethereal effects read out of items_game.txt (issue #393), replacing
-//! src/unusual-effects.ts and src/item-builder-unusual.ts: what each effect number draws (its
+//! The game's unusual and ethereal effects read out of items_game.txt (issue #393): what each effect number draws (its
 //! "attribute_controlled_attached_particles" entry), and the effects the item builder offers.
 
 use regex::Regex;

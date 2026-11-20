@@ -1,4 +1,4 @@
-//! The state of the game and what shapes it (src/ipc-game.ts): what the remote config says, the
+//! The state of the game and what shapes it: what the remote config says, the
 //! search-path patch and its repair after a Dota update, the item table, free cosmetics, the
 //! Source 2 toolchain, and the arcanas and map looks built out of the game's own files.
 
@@ -69,7 +69,7 @@ fn steam_busy(game: Option<&Path>) -> Option<&'static str> {
     crate::steam_appstate::steam_work(crate::steam_appstate::read_app_state(game).as_ref())
 }
 
-/// Repair after a patch (src/game-repair.ts repairAfterPatch): the window is told what came of it,
+/// Repair after a patch (game/game_repair.rs repairAfterPatch): the window is told what came of it,
 /// and while Dota or Steam holds the game the repair looks again in a while.
 pub fn repair_after_patch(o: &Owner, reason: Value) {
     let running = (o.opts.dota_running)();
@@ -165,7 +165,7 @@ fn state_of(v: &Value) -> &str {
     v.get("state").and_then(Value::as_str).unwrap_or("")
 }
 
-/// Settings' "Repair the app" (src/app-repair.ts): the patch, the mod files, the pictures, a line each.
+/// Settings' "Repair the app": the patch, the mod files, the pictures, a line each.
 fn repair_app(o: &Owner) -> Value {
     let mut steps = Vec::new();
     repair_after_patch(o, json!("manual"));

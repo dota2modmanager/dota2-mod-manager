@@ -2,7 +2,7 @@
 /**
  * A copy of the catalog's preview pictures that does not live on GitHub.
  *
- * The app asks this copy first for every preview (src/preview-cache.ts), so somebody who cannot
+ * The app asks this copy first for every preview (crates/mm-core/src/catalog/preview_cache.rs), so somebody who cannot
  * reach GitHub still gets a catalog full of pictures. Everything under assets/previews comes to
  * about 400 MB, clips included.
  *

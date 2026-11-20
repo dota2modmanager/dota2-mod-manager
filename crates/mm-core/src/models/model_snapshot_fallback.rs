@@ -1,5 +1,5 @@
 //! A last-resort particle snapshot for a model whose .vsnap is not in the installed archive
-//! (src/model-snapshot-fallback.ts; PA's arcana weapon surfaces): points sampled off the actual
+//! (PA's arcana weapon surfaces): points sampled off the actual
 //! skinned GLB, which beats dropping every particle that samples that snapshot. Never a stand-in
 //! for a real .vsnap, and never a point floating free in space.
 

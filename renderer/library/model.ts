@@ -121,11 +121,11 @@ export interface BannersModel {
   prelaunch: boolean;
   /** fonts and cursors Steam put back, with no archive left to reinstall from */
   stuck: string[];
-  /** catalog mods whose author published a new version, by name (src/mod-update.ts) */
+  /** catalog mods whose author published a new version, by name (crates/mm-core/src/install/mod_update.rs) */
   updates: string[];
   /** catalog mods the catalog no longer lists, by name (catalog/mods.ts delistedFrom) */
   delisted: string[];
-  /** installed mods the signed config revokes, with its words (src/remote-config-format.ts) */
+  /** installed mods the signed config revokes, with its words (crates/mm-core/src/catalog/remote_config.rs) */
   revoked: Array<{ id: string; name: string; text: string }>;
   repair: RepairState;
 }

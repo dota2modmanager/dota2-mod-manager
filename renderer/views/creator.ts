@@ -1,5 +1,5 @@
 /* The author's window (issue #236), opened from the account menu: the drafts from the main process
- * (src/creator.ts), each saved as it is typed into, one written out as an archive for the catalog's
+ * (crates/mm-core/src/tools/creator.rs), each saved as it is typed into, one written out as an archive for the catalog's
  * maintainer, and one sent to the catalog's upload API. The form is catalog/../creator/CreatorModal.tsx. */
 import { state } from '../core/store.ts';
 import { RAIL_SECTIONS } from '../core/constants.ts';

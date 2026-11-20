@@ -1,4 +1,4 @@
-//! A GLB with its pictures inside (src/glb-embed.ts, issue #417).
+//! A GLB with its pictures inside (issue #417).
 //!
 //! The toolchain exports a model as a GLB whose textures are PNG files beside it, named by
 //! relative links. The window reads a model from the bytes it is handed, with no folder to follow

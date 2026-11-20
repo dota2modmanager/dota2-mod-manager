@@ -83,7 +83,7 @@
   border-color: rgba(74, 222, 128, 0.4);
 }
 /* mod carries item-schema changes: live (effects assembled) vs waiting for the patch; and a
-   catalog mod whose author has published a new version (src/mod-update.ts) */
+   catalog mod whose author has published a new version (crates/mm-core/src/install/mod_update.rs) */
 .lib-tag.schema,
 .lib-tag.update {
   color: var(--primary-soft);
@@ -117,7 +117,7 @@ button.lib-tag.opens:hover { border-color: var(--warning); }
   background: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.4);
 }
-/* a copy of the pumpkin's mod nobody earned here (src/scream-guard.ts): said in red, in full */
+/* a copy of the pumpkin's mod nobody earned here (crates/mm-core/src/game/scream_guard.rs): said in red, in full */
 .lib-tag.cheat {
   max-width: none;
   color: #ff4d5e;

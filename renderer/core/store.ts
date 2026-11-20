@@ -24,13 +24,13 @@ export interface State {
   catalog: CatalogData | null;
   /** free-cosmetics slots from the game's own schema (safe mode off) */
   cosmeticSlots: CosmeticSlot[] | null;
-  /** the item builder's sets (src/item-builder.ts itemSets) */
+  /** the item builder's sets (crates/mm-core/src/item_builder/mod.rs) */
   cosmeticSets: CosmeticSet[] | null;
   /** each hero's main attribute by its id, for the order of the game's hero grid */
   heroAttrs: Record<string, HeroAttribute>;
-  /** src/patcher.ts + schema-service state: patched/signed/conflicts/foreign */
+  /** crates/mm-core/src/game/patcher.rs + schema-service state: patched/signed/conflicts/foreign */
   patchState: PatchState | null;
-  /** what settings.json holds (src/settings.ts) */
+  /** what settings.json holds (crates/mm-core/src/app/settings.rs) */
   settings: AppSettings | null;
   /** written by the shell too: safe mode can retire the open category */
   activeCategory: string;

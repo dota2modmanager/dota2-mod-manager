@@ -1,5 +1,5 @@
 //! An arcana base in a colour of the user's: Terrorblade's, for the arcana window
-//! (src/arcana-base-color.ts, issue #118). The base was compiled with the gem's colour written in,
+//! (issue #118). The base was compiled with the gem's colour written in,
 //! so that colour is what moves: written particle colours move as far as the gem's colour moves to
 //! the chosen one, a particle that sets the gem's colour on control point 15 gets the chosen colour
 //! there, and a material's constant near the gem's colour becomes the chosen one.

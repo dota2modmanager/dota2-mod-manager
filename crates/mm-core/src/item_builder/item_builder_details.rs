@@ -1,5 +1,4 @@
-//! What the item builder's window shows beside the items, out of the game's own files, replacing
-//! src/item-builder-details.ts: each hero's main attribute, an item's rarity and date, the game's
+//! What the item builder's window shows beside the items, out of the game's own files: each hero's main attribute, an item's rarity and date, the game's
 //! names of its events, and a description as plain text.
 
 use indexmap::IndexMap;
@@ -50,7 +49,7 @@ pub fn hero_attributes(
 }
 
 /// Every hero the game has a script for (scripts/npc/heroes/npc_dota_hero_<id>.txt), A-Z, so a
-/// hero with no item in the table yet still has its attribute (src/item-builder-details.ts).
+/// hero with no item in the table yet still has its attribute.
 pub fn game_hero_ids<'a>(paths: impl Iterator<Item = &'a str>) -> Vec<String> {
     let mut out: Vec<String> = paths
         .filter_map(|p| p.strip_prefix("scripts/npc/heroes/npc_dota_hero_")?.strip_suffix(".txt"))

@@ -1,4 +1,4 @@
-//! What My mods is drawn from: the answer to mods:list (src/mods-listing.ts), which every screen
+//! What My mods is drawn from: the answer to mods:list, which every screen
 //! asks for again after anything changes. A mod whose files were deleted from the game folder
 //! drops out of the library; a foreign file is named as a copy of a library mod or as a catalog
 //! mod; an import still called "pakNN" gets a real name once; every row says which switched-on

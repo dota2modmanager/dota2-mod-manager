@@ -1,4 +1,4 @@
-//! Compiled Source 2 resources at the block level, replacing src/resource.ts: the blocks of a
+//! Compiled Source 2 resources at the block level: the blocks of a
 //! file, one replaced by new bytes, and the list of other resources a file names (RERL).
 //!
 //! A resource is a header, a table of blocks (name, offset from the entry, size) and the blocks.
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn murmur_ids_match_the_typescript() {
-        // values from src/resource.ts resourceId
+        // the resource ids Valve's compiler writes
         assert_eq!(resource_id(""), resource_id(""));
         assert_ne!(resource_id("particles/a.vpcf"), resource_id("particles/b.vpcf"));
     }

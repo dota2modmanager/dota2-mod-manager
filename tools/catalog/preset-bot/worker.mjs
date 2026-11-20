@@ -4,7 +4,7 @@
  * HTTP interactions, with no gateway connection to keep alive, so it is asked rather than reading
  * the channel: `/preset link:<link>`, or Apps > "Show preset" on a message that has one.
  *
- * The link is decoded here, without the app, the same way src/preset-link.ts decodes it (the test
+ * The link is decoded here, without the app, the same way crates/mm-core/src/presets/preset_link.rs decodes it (the test
  * holds the two to the same answers). Names, covers and pages come from the site's public catalog
  * data, /catalog/data.json, kept for an hour per instance. Nothing about the preset is stored.
  *
@@ -57,7 +57,7 @@ async function inflateRaw(bytes) {
 }
 
 /**
- * A code back into a preset, with src/preset-link.ts's rules: its name, author and mods, or null
+ * A code back into a preset, with crates/mm-core/src/presets/preset_link.rs's rules: its name, author and mods, or null
  * for anything that is not a preset.
  */
 export async function decodeCode(code) {

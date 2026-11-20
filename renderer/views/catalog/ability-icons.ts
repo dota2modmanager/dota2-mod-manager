@@ -1,6 +1,6 @@
 /* A hero's ability icons picked from his own cosmetics': the window, opened from the Workshop and from
  * the hero's record in My mods. The heroes, their abilities and the icons come from the main process
- * (src/ability-icons-service.ts); a pick goes on at once, as a mod in My mods, one per hero. */
+ * (crates/mm-core/src/item_builder/ability_icons_service.rs); a pick goes on at once, as a mod in My mods, one per hero. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';
 import { switchView } from '../../core/router.ts';

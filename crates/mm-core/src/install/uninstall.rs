@@ -3,8 +3,8 @@
 //!
 //! An update runs the old uninstaller too, so the same flag arrives on a run where nothing may be
 //! removed; [`is_update_run`] is the app's half of the pair of locks against that. The other half
-//! is the installer's: src-tauri/windows/hooks.nsh for the Tauri build, build/installer.nsh in the
-//! Electron copies still installed. The window itself is drawn by the shell; this is what it shows and
+//! is the installer's: src-tauri/windows/hooks.nsh for the Tauri build, and
+//! build/installer.nsh (at tag v3.8.0) in the Electron copies still installed. The window itself is drawn by the shell; this is what it shows and
 //! what its answer does.
 
 use crate::installer::Installer;

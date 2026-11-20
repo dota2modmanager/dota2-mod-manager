@@ -81,7 +81,7 @@ async fn mm_invoke(
     tauri::async_runtime::spawn_blocking(move || {
         let started = std::time::Instant::now();
         let list = args_of(args);
-        // what the channel may be handed, before anything acts on it (src/window-guard.ts)
+        // what the channel may be handed, before anything acts on it (mm-core's channel_args.rs)
         if let Some(why) = mm_core::channel_args::check_args(&channel, &list) {
             eprintln!("[mm-shell] ipc: refused {channel}: {why}");
             return Err(format!("refused: {why}"));
@@ -264,7 +264,7 @@ fn main() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            // the uninstaller's run: a copy in the tray gives way to it (src/tray.ts lockOnceFreed)
+            // the uninstaller's run: a copy in the tray gives way to it (crates/mm-core/src/app/tray.rs)
             if argv.iter().any(|a| a == "--uninstall") {
                 if let Some(shell) = app.try_state::<Arc<window::Shell>>() {
                     shell.quitting();
@@ -277,7 +277,7 @@ fn main() {
                 let _ = w.show();
                 let _ = w.set_focus();
             }
-            // a preset or mod link clicked while the app runs (src/deep-links.ts)
+            // a preset or mod link clicked while the app runs (crates/mm-core/src/catalog/deep_links.rs)
             if let Some(owner) = app.try_state::<Owner>() {
                 owner.0.second(argv);
             }
@@ -331,13 +331,13 @@ fn main() {
                     argv: argv.clone(),
                     first_run,
                     // a packaged build updates itself; a checkout's build and a sandbox run do not
-                    // (src/main.ts: the updater keeps its cache outside any sandbox)
+                    // (crates/mm-core/src/owner/mod.rs: the updater keeps its cache outside any sandbox)
                     updates: !cfg!(debug_assertions) && flag(&argv, "write-jail").is_none(),
                 },
             )));
             app.manage(Owner(owner.clone()));
             // Linux: the .desktop entry that tells the desktop this program opens d2mm:// links and
-            // presets, pointing at the AppImage the person ran (src/deep-links.ts). A jailed run
+            // presets, pointing at the AppImage the person ran (crates/mm-core/src/catalog/deep_links.rs). A jailed run
             // writes nothing outside its folder.
             if cfg!(target_os = "linux") && flag(&argv, "write-jail").is_none() {
                 let exe = std::env::var("APPIMAGE")
@@ -365,7 +365,7 @@ fn main() {
                     );
                 }
             }
-            // the uninstaller's run: its one window and nothing else, no tray (src/main.ts)
+            // the uninstaller's run: its one window and nothing else, no tray (crates/mm-core/src/owner/mod.rs)
             if mm_core::uninstall::is_uninstall_run(&argv) {
                 uninstall::open(app, std::env::var_os("MM_QUIET").is_some())?;
                 return Ok(());

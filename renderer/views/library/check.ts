@@ -6,7 +6,7 @@ import { checkAdvice, installChecks, type CheckLine } from '../../library/instal
 import type { BannersModel } from '../../library/model.ts';
 import { lib } from './state.ts';
 
-// whether Dota is open, as src/game-watch.ts reports it
+// whether Dota is open, as crates/mm-core/src/game/game_watch.rs reports it
 let dotaRunning = false;
 window.api.game.onRunning((running) => { dotaRunning = running; });
 

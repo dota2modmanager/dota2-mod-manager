@@ -1,5 +1,5 @@
 //! The download cache: where a catalog mod's archive lives, what it is called on disk, and what
-//! each file hashed to when it arrived, replacing the disk half of src/installer-downloads.ts.
+//! each file hashed to when it arrived.
 //! `download` brings a catalog archive over the mirror chain (`net_fetch.rs`).
 
 use std::fs;
@@ -10,7 +10,7 @@ use serde_json::{json, Map, Value};
 
 use crate::installer::Installer;
 
-/// The catalog's old files tree (src/catalog.ts RAW_BASE): the last place an archive can come
+/// The catalog's old files tree (catalog/mod.rs RAW_BASE): the last place an archive can come
 /// from now that the releases carry it.
 pub const RAW_BASE: &str = "https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main";
 
@@ -365,7 +365,7 @@ impl Installer {
     }
 }
 
-/// Bytes under a folder, however deep; what cannot be read is skipped (src/folder-size.ts).
+/// Bytes under a folder, however deep; what cannot be read is skipped (app/folder_size.rs).
 pub fn folder_size(dir: &std::path::Path) -> u64 {
     let Ok(entries) = fs::read_dir(dir) else { return 0 };
     let mut bytes = 0;

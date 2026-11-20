@@ -1,7 +1,7 @@
-/* The item builder's 3D preview (src/hero-preview.ts, issue #417): the models as GLB bytes, the
+/* The item builder's 3D preview (crates/mm-core/src/models/hero_preview.rs, issue #417): the models as GLB bytes, the
  * game's staging of the hero, and its particles and attachment points as the main process reads them. */
 
-/** How the game stages the hero on its loadout (src/hero-showcase.ts): GLB space, linear colours. */
+/** How the game stages the hero on its loadout (crates/mm-core/src/models/hero_showcase.rs): GLB space, linear colours. */
 export interface HeroStage {
   scale: number;
   camera: [number, number, number];
@@ -22,7 +22,7 @@ export interface SnapshotPoint {
 }
 
 export type ParticleJson = null | boolean | number | string | ParticleJson[] | { [k: string]: ParticleJson };
-/** A game particle system as JSON, its children inlined (src/particle-spec.ts). */
+/** A game particle system as JSON, its children inlined (crates/mm-core/src/models/particle_spec.rs). */
 export interface ParticleDef { path: string; tree: { [k: string]: ParticleJson }; children: ParticleDef[]; childGroup?: number; delay?: number; endcap?: boolean; snapshot?: SnapshotPoint[]; snapshots?: Record<number, SnapshotPoint[]> }
 /** An attachment point of a model: its bone, and its offset and turn from it in Source units. */
 export interface LoadoutAttachment { bones: string[]; offsets: number[][]; rotations: number[][]; weights: number[]; ignoreRotation: boolean }
@@ -38,10 +38,10 @@ export interface Attachment extends Partial<LoadoutAttachment> { name: string; b
 /** A hero's other form or summon on the stage (crates/mm-core/src/models/hero_companions.rs). */
 export interface Companion { model: string; clip: string | null; glb: Uint8Array }
 
-/** What a body can be shown doing (src/model-loadout.ts motionList). */
+/** What a body can be shown doing (crates/mm-core/src/models/model_loadout.rs motionList). */
 export interface Motion { name: string; group: 'stance' | 'idle' | 'run' | 'attack' | 'ability' | 'emote' | 'other'; act: string; mods: string[]; once: boolean }
 
-/** The item builder's 3D preview (src/hero-preview.ts): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
+/** The item builder's 3D preview (crates/mm-core/src/models/hero_preview.rs): the body with its loadout clip, each slot's model and the pedestal, as GLB bytes. */
 export interface PreviewSlot { slot: string; stock: string; tryOn?: { itemId: string; effectId: string; targetItemId?: string } }
 
 export interface Preview3dApi {

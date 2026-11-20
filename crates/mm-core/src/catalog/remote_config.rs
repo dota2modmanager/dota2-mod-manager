@@ -1,5 +1,4 @@
-//! The one thing the app can be told after it has shipped (src/remote-config.ts and its format,
-//! src/remote-config-format.ts): a small signed file on main that can switch a feature off with a
+//! The one thing the app can be told after it has shipped: a small signed file on main that can switch a feature off with a
 //! reason, put a dated notice in front of people, name the beta's testers, add hosts to the
 //! mirror chain and mark catalog mods that misbehave.
 //!

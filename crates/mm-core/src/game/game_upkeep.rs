@@ -1,6 +1,6 @@
-//! Keeping the game folder the way the user left it, while other programs change it underneath
-//! (src/game-upkeep.ts). The game's audio language decides which folder the engine mounts, so
-//! mods follow it; Steam's file check and a Dota patch are src/game-repair.ts's. Once at start,
+//! Keeping the game folder the way the user left it, while other programs change it underneath.
+//! The game's audio language decides which folder the engine mounts, so
+//! mods follow it; Steam's file check and a Dota patch are game/game_repair.rs's. Once at start,
 //! before the window opens, and nothing written while Dota runs: it holds gameinfo and its paks
 //! open, and rewrites boot.vcfg when it exits.
 //!
@@ -158,7 +158,7 @@ impl GameUpkeep {
         }
     }
 
-    /// The load order in two parts, once (src/slot-zones.ts). It renames files the game holds open,
+    /// The load order in two parts, once (install/slot_zones.rs). It renames files the game holds open,
     /// so it waits for a start with Dota closed; a failure puts everything back and tries again.
     pub fn layout_slots_once(&mut self, ctx: &mut Ctx, running: &mut dyn FnMut() -> bool) -> Result<(), String> {
         if ctx.settings.get("slotZones").and_then(Value::as_f64) == Some(1.0) {

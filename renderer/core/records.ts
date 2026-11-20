@@ -38,7 +38,7 @@ export function isPackableRec(rec: Rec | null | undefined): boolean {
 
 /** An item builder pick's effects by name, after its slot: " · Fire, Snow", or '' for none; its
  *  style, when not the item's first, by name too (" · Fire, Golden").
- *  One item keeps one record whatever its effects (src/item-builder.ts effectKey), so this is
+ *  One item keeps one record whatever its effects (crates/mm-core/src/item_builder/mod.rs effectKey), so this is
  *  what tells two picks of it apart on screen. */
 export function effectNames(rec: Rec | null | undefined): string {
   if (!rec || !rec.effectId) return '';

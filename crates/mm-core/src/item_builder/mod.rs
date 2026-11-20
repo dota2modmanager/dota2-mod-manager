@@ -1,5 +1,5 @@
 //! The item builder: a hero's stock item built from one of its wearables, with an effect on top.
-//! Replacing src/item-builder.ts, the part that writes a pick: the wearable's block under the stock
+//! This part writes a pick: the wearable's block under the stock
 //! item's id, name and prefab=default_item, without the styles and unlocks a free base item cannot
 //! use, with the chosen effects in its visuals, and the files to copy out of pak01 under the stock
 //! paths (item_builder_assets.rs).

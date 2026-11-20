@@ -1,4 +1,4 @@
-//! Sign in with Discord, without a server of our own (src/discord-auth.ts).
+//! Sign in with Discord, without a server of our own.
 //!
 //! Discord's implicit grant hands the access token straight to the redirect, so a desktop app can
 //! identify a user with nothing but a public client id. The token arrives in the URL fragment,

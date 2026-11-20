@@ -37,19 +37,19 @@ fn list<T: serde::de::DeserializeOwned>(text: &str) -> Vec<T> {
     serde_json::from_str(text).expect("a data table that is not a list of its rows")
 }
 
-/// The item builder's own effects (src/item-builder-effects.ts ITEM_EFFECTS), in the picker's order.
+/// The item builder's own effects (item_builder/item_builder_effects.rs), in the picker's order.
 pub fn item_effects() -> &'static [crate::item_builder_effects::ItemEffect] {
     static T: OnceLock<Vec<crate::item_builder_effects::ItemEffect>> = OnceLock::new();
     T.get_or_init(|| list(include_str!("../../data/item-effects.json")))
 }
 
-/// The arcana bases (src/arcana-bases.ts ARCANA_BASES), in their order.
+/// The arcana bases (arcana/arcana_bases.rs), in their order.
 pub fn arcana_bases() -> &'static [crate::arcana_notes::ArcanaBase] {
     static T: OnceLock<Vec<crate::arcana_notes::ArcanaBase>> = OnceLock::new();
     T.get_or_init(|| list(include_str!("../../data/arcana-bases.json")))
 }
 
-/// Arcanas played and found wanting, by hero (src/arcana-notes.ts ARCANA_NOTES).
+/// Arcanas played and found wanting, by hero (arcana/arcana_notes.rs).
 pub fn arcana_notes() -> &'static [(String, crate::arcana_notes::Noted)] {
     static T: OnceLock<Vec<(String, crate::arcana_notes::Noted)>> = OnceLock::new();
     T.get_or_init(|| list(include_str!("../../data/arcana-notes.json")))
@@ -67,13 +67,13 @@ pub fn heroes_not_checked() -> &'static [String] {
     T.get_or_init(|| list(include_str!("../../data/heroes-not-checked.json")))
 }
 
-/// The arcanas the app can build (src/arcana-sets.ts ARCANA_SETS), by name, in its order.
+/// The arcanas the app can build (data/arcana-sets.json), by name, in its order.
 pub fn arcana_sets() -> &'static [(String, crate::arcana::ArcanaSet)] {
     static T: OnceLock<Vec<(String, crate::arcana::ArcanaSet)>> = OnceLock::new();
     T.get_or_init(|| list(include_str!("../../data/arcana-sets.json")))
 }
 
-/// What src/recolor.ts can recolour (src/recolor-sets.ts RECOLOR_SETS), by name, in its order.
+/// What looks/recolor.rs can recolour (looks/recolor.rs), by name, in its order.
 pub fn recolor_sets() -> &'static [(String, crate::recolor::RecolorSet)] {
     static T: OnceLock<Vec<(String, crate::recolor::RecolorSet)>> = OnceLock::new();
     T.get_or_init(|| list(include_str!("../../data/recolor-sets.json")))

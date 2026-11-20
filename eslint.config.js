@@ -1,7 +1,7 @@
 /* What a test cannot see: a name that is not there.
  *
  * On 2026-09-06 splitting registerIpc moved a call to `blocked('install')` into
- * src/ipc-mods.js and left the function it calls in src/ipc-game.js. Every test passed. The
+ * crates/mm-core/src/owner/owner_mods.rs and left the function it calls in crates/mm-core/src/owner/owner_game.rs. Every test passed. The
  * contract test read the files as text and found every channel name in its place; the unit
  * tests never load a module that needs Electron. Two releases shipped in which pressing
  * Install threw on the handler's first line, and nobody could install a mod at all.

@@ -1,5 +1,5 @@
-//! The menu background of the user's own as a record in My mods (src/menu-background-service.ts;
-//! the pak itself is menu_background.rs). One record: a new background takes the place of the one
+//! The menu background of the user's own as a record in My mods (the pak
+//! itself is menu_background.rs). One record: a new background takes the place of the one
 //! before, in its slot. The WebM is kept in userData/menu-backgrounds by its sha1, so a Dota update
 //! that reached the record builds it again out of the new layouts with nothing asked of the user.
 

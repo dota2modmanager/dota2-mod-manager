@@ -1,5 +1,5 @@
-//! The regular Crest of the Vengeful Storm drawn on its golden finish's rig
-//! (src/razor-crest-preview.ts): the gold model's geometry and bones, the normal one's look.
+//! The regular Crest of the Vengeful Storm drawn on its golden finish's rig:
+//! the gold model's geometry and bones, the normal one's look.
 
 use std::path::Path;
 

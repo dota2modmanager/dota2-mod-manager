@@ -1,5 +1,5 @@
 //! The animation a hero plays on the game's loadout screen, for the 3D preview
-//! (src/model-loadout.ts, issue #417).
+//! (issue #417).
 //!
 //! A hero's model lists its sequences in its ASEQ block, each with the activities it answers to:
 //! the first is an ACT_ name, the rest are modifiers an item can switch on. The loadout plays the

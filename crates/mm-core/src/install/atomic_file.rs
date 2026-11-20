@@ -1,5 +1,5 @@
 //! Replace a small file so that whoever reads it next finds the old contents or the new ones, never
-//! half of either. Replacing src/atomic-file.ts, which tells the story (a cut-off manifest.json
+//! half of either..json
 //! once showed every installed mod as somebody else's file).
 
 use std::fs;

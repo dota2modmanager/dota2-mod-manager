@@ -1,4 +1,4 @@
-//! Putting the game back after something else changed it (src/game-repair.ts). A Dota patch
+//! Putting the game back after something else changed it. A Dota patch
 //! overwrites the patched gameinfo and moves the item table; Steam's file check puts back files a
 //! font or cursor mod replaced. Repaired once at start for a game that changed while the app was
 //! closed, and again the moment the patch watcher sees a patch land. Never while Dota is running:

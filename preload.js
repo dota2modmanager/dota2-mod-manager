@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
-// The big pieces of a 3D preview answer come in slices (src/large-answer.ts), and go back in their places.
+// The big pieces of a 3D preview answer come in slices (crates/mm-core/src/owner/large_answer.rs), and go back in their places.
 async function wholeAnswer(value) {
   if (Array.isArray(value)) return Promise.all(value.map(wholeAnswer));
   if (!value || typeof value !== 'object' || ArrayBuffer.isView(value)) return value;
@@ -43,7 +43,7 @@ contextBridge.exposeInMainWorld('api', {
     load: (force) => ipcRenderer.invoke('catalog:load', force),
     terrainAges: () => ipcRenderer.invoke('catalog:terrainAges'),
     downloadCounts: () => ipcRenderer.invoke('catalog:downloadCounts'),
-    // a d2mm://mod/ link clicked outside the app (src/deep-links.ts)
+    // a d2mm://mod/ link clicked outside the app (crates/mm-core/src/catalog/deep_links.rs)
     onModLink: (cb) => ipcRenderer.on('mod-link', (e, link) => cb(link)),
   },
   mods: {
@@ -223,9 +223,9 @@ contextBridge.exposeInMainWorld('api', {
     launch: () => ipcRenderer.invoke('game:launch'),
     steamDownloads: () => ipcRenderer.invoke('game:steamDownloads'),
     steamProperties: () => ipcRenderer.invoke('game:steamProperties'),
-    // Dota opened or closed: while it is open nothing is written to the game (src/game-watch.ts)
+    // Dota opened or closed: while it is open nothing is written to the game (crates/mm-core/src/game/game_watch.rs)
     onRunning: (cb) => ipcRenderer.on('game:running', (e, running) => cb(!!running)),
-    // Dota closed seconds after Play (src/crash-watch.ts)
+    // Dota closed seconds after Play (crates/mm-core/src/game/game_watch.rs)
     onQuickExit: (cb) => ipcRenderer.on('game:quickExit', (e, exit) => cb(exit)),
   },
   packs: {
@@ -257,7 +257,7 @@ contextBridge.exposeInMainWorld('api', {
     signIn: () => ipcRenderer.invoke('account:signIn'),
     signOut: () => ipcRenderer.invoke('account:signOut'),
   },
-  // the beta channel: shown only to an account the signed list names (src/beta.ts)
+  // the beta channel: shown only to an account the signed list names (crates/mm-core/src/catalog/beta.rs)
   beta: {
     state: () => ipcRenderer.invoke('beta:state'),
     set: (on) => ipcRenderer.invoke('beta:set', on),
@@ -265,7 +265,7 @@ contextBridge.exposeInMainWorld('api', {
   presence: {
     view: (name) => ipcRenderer.invoke('presence:view', name),
   },
-  // the window asking for support (src/support-prompt.ts)
+  // the window asking for support (crates/mm-core/src/app/support_prompt.rs)
   support: {
     state: () => ipcRenderer.invoke('support:state'),
     choose: (choice) => ipcRenderer.invoke('support:choose', choice),
@@ -281,7 +281,7 @@ contextBridge.exposeInMainWorld('api', {
     cacheRemove: (key) => ipcRenderer.invoke('misc:cacheRemove', key),
     runTool: (dirName) => ipcRenderer.invoke('misc:runTool', dirName),
   },
-  // the pumpkin's key and the mod it opens (src/ipc-pumpkin.ts)
+  // the pumpkin's key and the mod it opens (crates/mm-core/src/owner/owner_studios.rs)
   pumpkin: {
     redeem: (key) => ipcRenderer.invoke('pumpkin:redeem', key),
     prizeAgain: () => ipcRenderer.invoke('pumpkin:prizeAgain'),

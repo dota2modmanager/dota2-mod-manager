@@ -15,7 +15,7 @@ export function GemsPane({ set, item, gems, art, color, equipped, unavailable, c
   const value = toHex(color);
   const valid = hex === null || fromHex(hex) !== null;
   /* Worn through the builder, the arcana's base comes with the pick and the record colours it
-   * (src/arcana-base-color.ts); `own`: the player has the item in the game, and only its effects
+   * (crates/mm-core/src/arcana/arcana_base_color.rs); `own`: the player has the item in the game, and only its effects
    * are coloured, over the one Valve's files give them. Either way the record is the colour alone,
    * unless the arcana window built the whole arcana before. */
   const install = async (own = false) => {

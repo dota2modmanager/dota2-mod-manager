@@ -1,4 +1,4 @@
-//! Finding Steam, and then Dota inside it (src/steam.ts).
+//! Finding Steam, and then Dota inside it.
 //!
 //! Only the first step differs by platform: Windows keeps the answer in the registry, Linux in
 //! one of four folders depending on how Steam was installed. After that it is Steam's own

@@ -1,5 +1,5 @@
 //! Trees on the map from another of the game's tree sets, one set for Radiant and one for Dire
-//! (src/tree-sets.ts, issue #421). Trees name their model by path and the two sides use models of
+//! (issue #421). Trees name their model by path and the two sides use models of
 //! their own, so a pak that puts other models under the default trees' names changes one side's
 //! trees and leaves the other alone.
 

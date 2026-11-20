@@ -1,6 +1,5 @@
 //! What a mod changes, read from the paths inside it: which heroes, which equip slots, or which
-//! kind of content, and a name for it. Replacing src/vpk-analyze.ts, which says at length why each
-//! rule is there.
+//! kind of content, and a name for it.
 
 use indexmap::{IndexMap, IndexSet};
 use regex::Regex;

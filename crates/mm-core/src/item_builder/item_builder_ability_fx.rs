@@ -1,5 +1,4 @@
-//! An item's ability effects without its model, as the game's loadout wears them, replacing
-//! src/item-builder-ability-fx.ts.
+//! An item's ability effects without its model, as the game's loadout wears them.
 //!
 //! Every hero has hidden loadout slots, ability_effects_1 to ability_effects_9. An item that can go
 //! in one says so in its static attributes (`"can_equip_as_ability_effects" "2"`) and marks the

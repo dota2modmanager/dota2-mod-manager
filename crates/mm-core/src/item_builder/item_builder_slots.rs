@@ -1,5 +1,4 @@
-//! The item builder's offer, replacing src/item-builder-slots.ts and the slot-making halves of
-//! src/item-builder-personas.ts and src/item-builder-ability-fx.ts: for each hero, the slots it
+//! The item builder's offer: for each hero, the slots it
 //! can dress, the paid wearables that fit each one, a persona's own slots, and the hidden ability
 //! effects slots.
 //!

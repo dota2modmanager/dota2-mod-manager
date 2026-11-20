@@ -1,4 +1,4 @@
-/* "Работа в фоне" in Settings (src/tray.ts): start with Windows and hide in the tray on close, so
+/* "Работа в фоне" in Settings (crates/mm-core/src/app/tray.rs): start with Windows and hide in the tray on close, so
  * the app is there to put the game back when a Dota update lands. Read from the settings on every
  * draw; the switch writes at once, and main moves the tray and the sign-in entry with it. */
 import { useState } from 'react';

@@ -1,5 +1,5 @@
 /* A hero's sets, the first tab of its window, and one set: every piece of it put on in one write
- * (src/item-builder.ts itemSets). A piece the builder cannot put on stays in the picture, dimmed,
+ * (crates/mm-core/src/item_builder/mod.rs). A piece the builder cannot put on stays in the picture, dimmed,
  * with why: it is part of what the set looks like, and without it "4 of 6" would not add up. */
 import { useRef, type CSSProperties } from 'react';
 import { cosmeticName } from '../../ui/cosmetic-name.ts';

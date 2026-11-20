@@ -1,5 +1,4 @@
-//! Making the catalog's own author the only person who can change the catalog
-//! (src/catalog-signature.ts).
+//! Making the catalog's own author the only person who can change the catalog.
 //!
 //! The catalog files can arrive through public proxies, and a proxy is a stranger handing over
 //! bytes that claim to be GitHub's. The author signs each file with an ed25519 key only they hold

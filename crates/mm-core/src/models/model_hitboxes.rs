@@ -1,5 +1,4 @@
-//! Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item,
-//! replacing src/model-hitboxes.ts.
+//! Hitboxes laid over a wearable's surface, so an effect started on it spreads over the item.
 //!
 //! A wearable has no hitboxes, and the mesh the game's effects read instead it keeps only for a
 //! hero's body, so on an item the same system piles up at the model's origin. Boxes made from the
@@ -266,8 +265,8 @@ pub fn surface_boxes(file: &[u8]) -> Result<Vec<SurfaceBox>, String> {
 
 /// Vertices as boxes, as fine as MAX_BOXES lets them be: the cells grow until there are few
 /// enough, and once a cell is wider than the model reaches from its origin, growing it changes
-/// nothing more, so the boxes go straight to one per bone (src/model-hitboxes.ts fitBoxes says
-/// what the long way there cost). A model with more bones than MAX_BOXES keeps a box per bone.
+/// nothing more, so the boxes go straight to one per bone.
+/// A model with more bones than MAX_BOXES keeps a box per bone.
 pub fn fit_boxes(points: &[(String, [f64; 3])]) -> Vec<SurfaceBox> {
     if points.is_empty() {
         return vec![];

@@ -1,5 +1,5 @@
-//! A model put under a plain hero's path with its attachments in the plain model's order,
-//! replacing src/model-attachments.ts. Online the server names an attachment by its number in the
+//! A model put under a plain hero's path with its attachments in the plain model's order.
+//! Online the server names an attachment by its number in the
 //! plain model's list, so each plain number gets the model's own attachment of that name, a
 //! stand-in (attach_hitloc, or the first) under the plain name where it has none, and the model's
 //! others after them.

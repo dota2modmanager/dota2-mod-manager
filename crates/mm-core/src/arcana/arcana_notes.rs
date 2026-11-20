@@ -1,6 +1,5 @@
 //! What an arcana does in the game once the item builder puts it on, as somebody played it, and
-//! which arcanas have a base rebuilt by hand; replacing src/arcana-notes.ts and the table of
-//! src/arcana-bases.ts. The tables are in data/arcana-*.json, written from the TypeScript.
+//! which arcanas have a base rebuilt by hand. The tables are in data/arcana-*.json.
 //!
 //! The notes are in Russian, the app's source language, and translated where they are shown.
 

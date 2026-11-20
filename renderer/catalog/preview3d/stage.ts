@@ -1,5 +1,5 @@
 /* Where the hero stands in the 3D preview (issue #417), as the game's loadout stages it
- * (src/hero-showcase.ts): the loadout camera straight in front of the hero at the height of its
+ * (crates/mm-core/src/models/hero_showcase.rs): the loadout camera straight in front of the hero at the height of its
  * waist, looking level; the hero at its LoadoutScale on the pedestal its showcase names; its key
  * light and ambient from its showcase entry, the background its colour. The hero turns, not the
  * camera, so the light stays where the game keeps it.

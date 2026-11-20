@@ -1,5 +1,4 @@
-//! The studios that read the game's own pictures, sounds and effects (src/ipc-sounds.ts,
-//! ipc-icons.ts, ipc-effects.ts, ipc-rank.ts, ipc-paint.ts). Their services keep indexes worth
+//! The studios that read the game's own pictures, sounds and effects. Their services keep indexes worth
 //! keeping between calls, so [`Kept`] holds them until the game folder or the language changes.
 
 use std::path::{Path, PathBuf};

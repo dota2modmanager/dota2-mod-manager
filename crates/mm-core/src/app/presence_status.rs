@@ -1,4 +1,4 @@
-//! What the user's Discord profile says while the app is open (src/presence-status.ts): which
+//! What the user's Discord profile says while the app is open: which
 //! screen they are on, and how many mods are switched on, in the language the user chose for the
 //! app. The connection itself is the shell's (src-tauri, Discord's local socket); this decides
 //! what it says.

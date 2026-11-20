@@ -1,5 +1,4 @@
-//! What is already installed, read and rewritten, replacing src/installer-repack.ts and
-//! src/installer-packs.ts: a mod's files merged into one or written out as a folder, the
+//! What is already installed, read and rewritten: a mod's files merged into one or written out as a folder, the
 //! whole-game tables stripped out of it, a pack of heroes split, and combined packs (several
 //! mods in one slot, each kept as its own file in userData and rebuilt from the ones that are on).
 
@@ -208,7 +207,7 @@ impl Installer {
         Ok((deltas, stripped))
     }
 
-    /// A mod's packs written again without the shop's item pictures (src/item-icons-drop.ts),
+    /// A mod's packs written again without the shop's item pictures,
     /// switched on or off as they were; folded volumes drop out of `records`. How many went.
     pub fn drop_item_icons(&self, records: &mut Vec<LibFile>) -> Result<usize, String> {
         let lang = self.lang_folder()?;
@@ -438,7 +437,7 @@ impl Installer {
 /// One hero's part of a split: its name, its VPK, the paths it owns.
 pub type HeroPart = (String, Vec<u8>, Vec<String>);
 
-/// A merged multi-hero VPK as one self-contained VPK per hero it is about (src/vpk-write.ts
+/// A merged multi-hero VPK as one self-contained VPK per hero it is about (formats/vpk.rs
 /// splitVpkByHero): (hero name, bytes, the paths it owns). Empty under two heroes.
 pub fn split_by_hero(dir_path: &Path) -> Result<Vec<HeroPart>, String> {
     let buf = fs::read(dir_path).map_err(io)?;

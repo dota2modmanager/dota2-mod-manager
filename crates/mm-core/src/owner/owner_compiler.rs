@@ -1,4 +1,4 @@
-//! Valve's resource compiler as the app finds and runs it (src/ipc-compiler.ts): found in the game
+//! Valve's resource compiler as the app finds and runs it: found in the game
 //! or picked in Settings, under Wine off Windows, and the copy of the Workshop Tools kept for when
 //! Steam takes them away. The other studios compile through [`compile`].
 

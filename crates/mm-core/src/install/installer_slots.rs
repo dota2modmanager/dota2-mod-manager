@@ -1,6 +1,5 @@
 //! The load order: which pak slot a mod sits in, moving and swapping slots, and which mods are
-//! covered by which. Replacing src/installer-slots.ts, which explains the rules (a smaller pak
-//! number sits on top; the first copy of a file wins).
+//! covered by which.; the first copy of a file wins).
 
 use indexmap::IndexMap;
 use regex::Regex;

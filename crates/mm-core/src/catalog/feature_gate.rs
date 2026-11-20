@@ -1,4 +1,4 @@
-//! Is this feature switched off right now (src/feature-gate.ts)? `config/app.json` can turn a
+//! Is this feature switched off right now? `config/app.json` can turn a
 //! feature off after a release, and the check sits on the main-process side of every channel it
 //! guards. Dota being open closes every gate too: the game holds its files.
 

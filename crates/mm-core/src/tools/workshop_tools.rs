@@ -1,5 +1,4 @@
-//! A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build
-//! (src/workshop-tools.ts).
+//! A copy of the Workshop Tools kept in userData, for a Linux machine that plays the Linux build.
 //!
 //! On Linux the tools come only with the Windows build of Dota, which Steam installs while the
 //! game is forced through Proton and takes away again with the Linux build. So the first time the

@@ -51,7 +51,7 @@ impl mm_core::owner::Shell for TauriShell {
     }
 }
 
-/// For the support report: the window, the screens, the updater, as src/ipc-diagnostics.ts
+/// For the support report: the window, the screens, the updater, as crates/mm-core/src/owner/owner_support.rs
 /// gathers them from Electron. The graphics card is not known here.
 fn report(app: &AppHandle) -> Value {
     let windows: Vec<Value> = app
@@ -140,7 +140,7 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
             now: mm_core::net_fetch::now_ms,
         };
         let owner = Owner::start(opts, Arc::new(TauriShell(app)));
-        // a jailed run says so first, as src/write-jail.ts jailLogTo does: e2e.mjs looks for it.
+        // a jailed run says so first, as crates/mm-core/src/app/write_jail.rs does: e2e.mjs looks for it.
         // Under Tauri the jail holds the game folder (installer::validate_game_path) and the user
         // data folder, checked at start (write_jail::refuse_outside); other writes are not routed
         // through it
@@ -148,7 +148,7 @@ pub fn start_owner(app: &AppHandle, s: Start) -> Arc<Owned> {
         if !roots.is_empty() {
             owner.diag(&format!("write jail: writes held to {} (game folder)", roots.join(" | ")));
         }
-        // the uninstaller's run puts the game right and asks; no catalog, no watches (src/main.ts)
+        // the uninstaller's run puts the game right and asks; no catalog, no watches (crates/mm-core/src/owner/mod.rs)
         if !owner.opts.uninstall {
             mm_core::owner_watch::start(&owner);
             mm_core::owner_watch::start_patch(&owner);

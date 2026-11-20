@@ -1,5 +1,5 @@
-//! The window's half of a hero's ability icons picked from his own cosmetics'
-//! (src/ability-icons-service.ts); what there is to pick and how it goes in is `ability_icons`.
+//! The window's half of a hero's ability icons picked from his own cosmetics';
+//! what there is to pick and how it goes in is `ability_icons`.
 //! One record in My mods per hero; each ability's pick can be put back to the game's own on its
 //! own, and putting back the last takes the record with it.
 //!

@@ -1,6 +1,6 @@
 /* A hero's saved looks in the item builder (issue #527): what the hero wears, kept under a name
  * and put back on in one click. They live in the settings under itemLooks, apart from presets:
- * a preset is the whole app, a look is one hero. Putting one on is src/schema-cosmetics.ts wearLook. */
+ * a preset is the whole app, a look is one hero. Putting one on is crates/mm-core/src/schema/schema_cosmetics.rs wearLook. */
 import { state } from '../core/store.ts';
 import { pickedIn } from '../core/installed.ts';
 import type { CosmeticSlot, ItemLook, LookPick } from '../catalog/types.ts';

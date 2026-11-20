@@ -1,4 +1,4 @@
-//! The one window and the tray icon beside it (src/main-window.ts, src/tray.ts, src/background.ts).
+//! The one window and the tray icon beside it (crates/mm-core/src/app/main_window.rs, crates/mm-core/src/app/tray.rs).
 //! The logic is mm-core's (`main_window`, `tray`); this is Tauri doing what it answers.
 //!
 //! The owner holds settings.json, so the two settings the window writes go through it: `uiScale`
@@ -242,7 +242,7 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
         .background_color(tauri::window::Color(5, 5, 6, 255))
         .initialization_script(&o.init_script)
         // The window shows one page and never another: a page it navigated to would inherit
-        // window.api (src/main-window.ts has the whole reason). A link that wants a browser gets one.
+        // window.api (crates/mm-core/src/app/main_window.rs has the whole reason). A link that wants a browser gets one.
         .on_navigation(move |url| {
             if is_own_page(url) {
                 return true;
@@ -261,7 +261,7 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
     let events = app.handle().clone();
     let w = win.clone();
     // Resized fires at every step of dragging an edge; the page hears only a change of state,
-    // as Electron's maximize and unmaximize events told it (src/main-window.ts).
+    // as Electron's maximize and unmaximize events told it (crates/mm-core/src/app/main_window.rs).
     let was_max = std::sync::atomic::AtomicBool::new(win.is_maximized().unwrap_or(false));
     win.on_window_event(move |e| match e {
         WindowEvent::Resized(_) => {

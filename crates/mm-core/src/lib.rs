@@ -1,7 +1,7 @@
 //! The parts of Dota 2 Mod Manager that read and write the game's files, rewritten from the
-//! TypeScript core the repository held until tag v3.8.0. A comment naming src/*.ts or test/*.ts,
-//! or "the TypeScript", means that core as the tag has it, where the reasons are written out at
-//! length: `git show v3.8.0:src/patcher.ts`.
+//! TypeScript core the repository held until tag v3.8.0. "The TypeScript" in a comment means
+//! that core: what it wrote to disk older copies still read, so the Rust keeps its formats. How a
+//! module came to be is in the tag: `git show v3.8.0:src/patcher.ts`.
 
 // The crate's public API is what the shell (src-tauri), mm-cli and the tests in tests/ call, and
 // nothing more: everything else is crate-private, so rustc reports code nobody calls. A module the

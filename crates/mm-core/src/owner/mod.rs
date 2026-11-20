@@ -1,6 +1,6 @@
 //! The app's state in one owner: settings.json, the library, the installer and the services over
-//! them, built at start in the order src/services.ts and src/main.ts build them, and the window's
-//! channels answered over it (the src/ipc-*.ts modules, one `owner_*` module each).
+//! them, built at start, and the window's channels answered over
+//! it (one `owner_*` module per group of channels).
 //!
 //! The owner is the only writer of settings.json and the library's manifest.json, which is why
 //! it takes their channels all together. What only the shell can do (a dialog, a link opened, the
@@ -123,7 +123,7 @@ pub struct Core {
     pub download_stats: Arc<crate::download_stats::DownloadStats>,
     /// whether the download counter may count (settings countDownloads), read off the settings' thread
     pub counting: Arc<AtomicBool>,
-    /// which of the game's items a mod's models are (src/mod-id.ts), for the game in the settings
+    /// which of the game's items a mod's models are (install/mod_id.rs), for the game in the settings
     pub mod_id: Arc<crate::mod_id::ModIdentity>,
     /// Cancel on the build bar: what the game wore before the change that started the build
     pub undo: crate::build_undo::BuildUndo,
@@ -171,7 +171,7 @@ pub type R = Result<Value, String>;
 /// A group of channels (one src/ipc-*.ts module): its names, and what answers them.
 type Group = (&'static [&'static str], fn(&Owner, &str, &[Value]) -> Option<R>);
 
-/// Every group the owner answers, in the order src/main.ts registers them.
+/// Every group the owner answers.
 const GROUPS: &[Group] = &[
     (crate::owner_settings::CHANNELS, crate::owner_settings::handle),
     (crate::owner_library::CHANNELS, crate::owner_library::handle),
@@ -249,7 +249,7 @@ impl Owner {
         let library = Library::new(&ud);
         let remote = crate::remote_config::RemoteConfig::new(&ud, &opts.app_version, None, Box::new(opts.now));
         let mut upkeep = GameUpkeep::default();
-        // the start's upkeep (src/game-upkeep.ts atStart): the game folder, then the mods' folder
+        // the start's upkeep (game/game_upkeep.rs atStart): the game folder, then the mods' folder
         let _ = crate::game_upkeep::check_game_path(
             &mut settings,
             &|p| crate::installer::validate_game_path(p),
@@ -464,7 +464,7 @@ impl Owner {
     }
 
     /// The answer when a feature may not run now: Dota is open and holds its files, or the remote
-    /// config switched it off (src/feature-gate.ts).
+    /// config switched it off (catalog/feature_gate.rs).
     pub fn blocked(&self, name: &str) -> Option<Value> {
         let open = (self.opts.dota_running)();
         let core = self.core();
@@ -531,7 +531,7 @@ impl Owner {
         }
     }
 
-    /// What a Dota update broke put right (src/schema-service.ts heal): the search-path patch, or
+    /// What a Dota update broke put right (schema/schema_service.rs heal): the search-path patch, or
     /// the game's own file in safe mode; a table that needs building again is built in the
     /// background.
     pub fn heal(&self) -> Value {
@@ -566,7 +566,7 @@ impl Owner {
     }
 
     /// One build of the item table, the bar at the bottom counting the picks built anew
-    /// (src/build-bar.ts: shown after 400 ms, and only when there are picks to build). The state
+    /// (shown after 400 ms, and only when there are picks to build). The state
     /// is held to take what the build needs and to write what it made, not while it is made: a
     /// build takes seconds, and the window's every call waited that long behind it.
     fn refresh_schema(&self, stop: &dyn Fn() -> bool) -> Value {
@@ -642,7 +642,7 @@ impl Owner {
     }
 }
 
-/// What follows a table written or dropped (src/services.ts onDeployed): the arcanas give way to
+/// What follows a table written or dropped (formats/png_paint.rs): the arcanas give way to
 /// the builder's picks over the paths they share, and Cancel's picture is taken again.
 fn after_deploys(c: &mut Core, filled: Option<std::collections::HashSet<String>>, lines: &mut Vec<String>) {
     let Some(filled) = filled else { return };
@@ -669,7 +669,7 @@ fn model_glb(
     )
 }
 
-/// The start's steps that need more than the upkeep holds (src/game-upkeep.ts atStart).
+/// The start's steps that need more than the upkeep holds (game/game_upkeep.rs atStart).
 fn other_step(name: &str, ctx: &mut crate::schema_service::Ctx) -> Result<(), String> {
     let game = game_of(ctx.settings);
     match name {
@@ -702,7 +702,7 @@ fn other_step(name: &str, ctx: &mut crate::schema_service::Ctx) -> Result<(), St
 }
 
 /// The installer over a game folder and language folder, asking the game's item table what a mod's
-/// models are (src/services.ts).
+/// models are (formats/png_paint.rs).
 fn make_installer(
     at: &(Option<PathBuf>, String),
     user_data: &Path,

@@ -1,4 +1,4 @@
-//! What a pick in an ability effects slot writes, replacing src/item-builder-fx-patch.ts: the
+//! What a pick in an ability effects slot writes: the
 //! stock item of the slot, with the marked modifiers of the item picked, and the files they need
 //! under the plain paths. The item's model, and every modifier the slot does not take, stay out.
 

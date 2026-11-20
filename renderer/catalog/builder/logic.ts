@@ -1,6 +1,6 @@
 /* The item builder's rules, out of its screen (views/item-builder.ts): what the one button does
  * with what is chosen, which heroes and sets a search leaves, and what a hero's card says. What a
- * pick does to the game is src/item-builder.ts. */
+ * pick does to the game is crates/mm-core/src/item_builder/mod.rs. */
 import { plural } from '../../ui/format.ts';
 import { cosmeticNameMatches } from '../../ui/cosmetic-name.ts';
 import type { CosmeticSet, CosmeticSlot, HeroAttribute } from '../types.ts';
@@ -15,8 +15,8 @@ interface LivePick { itemId?: string; name?: string; effectId?: string; targetIt
 type PickedIn = (slot: string) => LivePick | null | undefined;
 
 /** The effects of a pick in the order the slot offers them, as one string: 'fire,snow'; then the item
- *  whose effect it wears, 'from-7365' (src/item-builder-donor.ts); and its style last when it is not
- *  the item's first, 'fire,snow,style-2' (src/item-builder.ts effectKey). */
+ *  whose effect it wears, 'from-7365' (crates/mm-core/src/item_builder/item_builder_donor.rs); and its style last when it is not
+ *  the item's first, 'fire,snow,style-2' (crates/mm-core/src/item_builder/mod.rs effectKey). */
 export function effectKey(effects: ItemEffect[] | undefined, ids: string[] | undefined, style = 0, donor = ''): string {
   const want = new Set(ids || []);
   const fx = (effects || []).map((e) => e.id).filter((id) => id && want.has(id));
@@ -33,7 +33,7 @@ export function liveDonor(live: LivePick | null | undefined): string {
 
 const STYLE = /^style-(\d+)$/;
 
-/** A record's effects as a list (a record keeps them comma separated, src/item-builder.ts effectKey). */
+/** A record's effects as a list (a record keeps them comma separated, crates/mm-core/src/item_builder/mod.rs effectKey). */
 export function liveEffects(live: LivePick | null | undefined): string[] {
   return live?.effectId ? String(live.effectId).split(',').filter((id) => id && !STYLE.test(id) && !DONOR.test(id)) : [];
 }
@@ -111,7 +111,7 @@ export function personaHeroes(slots: ItemSlot[], pickedIn: PickedIn): Set<string
 }
 
 /**
- * The slots on offer once the personas picked are counted (src/item-builder-personas.ts): a hero
+ * The slots on offer once the personas picked are counted (crates/mm-core/src/item_builder/item_builder_personas.rs): a hero
  * with a persona on shows the persona's slot and its own ones alone, and a hero without one shows
  * its plain slots and the slot to pick a persona in. A persona is worn with its own items only.
  */
@@ -132,7 +132,7 @@ export const attributeRank = (slots: ItemSlot[], attrs: Record<string, HeroAttri
 
 /**
  * The builder's slots by the hero they belong to, in the order of the game's hero grid: strength,
- * agility, intelligence, universal, each alphabetical (attrs: src/item-builder-details.ts). Without
+ * agility, intelligence, universal, each alphabetical (attrs: crates/mm-core/src/item_builder/item_builder_details.rs). Without
  * the attributes, alphabetical.
  */
 export function heroesOf(slots: ItemSlot[], attrs: Record<string, HeroAttribute> = {}): [string, ItemSlot[]][] {
@@ -171,7 +171,7 @@ export function setCount(set: ItemSet): string {
 /** The shelves of a slot's effects tab: the hero's kinetic gems, the courier unusuals, the seasonal ones, and the ambients of particular couriers. */
 export type EffectGroup = 'kinetic' | 'unusual' | 'seasonal' | 'courier';
 
-// the builder's own effects by what the game draws them for (src/item-builder-effects.ts); the
+// the builder's own effects by what the game draws them for (crates/mm-core/src/item_builder/item_builder_effects.rs); the
 // game's are unusual-<number>, and its numbers from 800 up are the seasonal ones (Frostbloom 826)
 const OWN_GROUP: Record<string, EffectGroup> = {
   fire: 'unusual', lightnings: 'unusual', frostbloom: 'seasonal', snow: 'seasonal', bubbles: 'seasonal', 'sand-storm': 'courier', ghost: 'courier',

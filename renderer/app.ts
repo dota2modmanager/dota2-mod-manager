@@ -130,6 +130,6 @@ async function offerToolchain(): Promise<void> {
   // changed while they were away
   const sawNotes = await showWhatsNew();
 
-  // from the third start: a star, a word about us, and why (ui/support.ts, src/support-prompt.ts)
+  // from the third start: a star, a word about us, and why (ui/support.ts, crates/mm-core/src/app/support_prompt.rs)
   await offerSupport({ quiet: sawNotes });
 })();

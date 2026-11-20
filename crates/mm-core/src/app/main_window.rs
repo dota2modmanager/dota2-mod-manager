@@ -1,6 +1,5 @@
 //! The one window's size on the screen it opens on, the scale a first launch starts at, and the
-//! keys that scale its content (src/main-window.ts). The shell (src-tauri) builds the window from
-//! these; the reasons for each number are in the TypeScript's comments.
+//! keys that scale its content. The shell (src-tauri) builds the window from these.
 
 use serde_json::Value;
 

@@ -1,4 +1,4 @@
-//! How a picture takes its layer's colour in the hero's recolour (src/recolor-modes.ts): the
+//! How a picture takes its layer's colour in the hero's recolour: the
 //! window, the 3D preview and the build move a pixel by the same rule.
 //!
 //!   tint   greys stay; the rest take the hue, saturation and brightness scaled by the colour's

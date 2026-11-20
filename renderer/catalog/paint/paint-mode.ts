@@ -1,5 +1,5 @@
 /* The ways a picture takes its layer's colour, as the window offers them. The rule is the build's
- * (src/recolor-modes.ts), and the 3D preview's shader draws it the same way
+ * (crates/mm-core/src/looks/recolor_modes.rs), and the 3D preview's shader draws it the same way
  * (vendor/dota-loadout/src/material.js, studioPaint): what the window shows is what the game will.
  *
  * A layer's colour goes to the main process as '#rrggbb' (tint) or '#rrggbb:mode'. */

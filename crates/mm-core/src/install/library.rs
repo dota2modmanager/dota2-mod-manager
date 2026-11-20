@@ -1,5 +1,4 @@
-//! manifest.json in userData: the installed mods and the presets. Replacing src/library.ts, whose
-//! comments say why a preset holds a mod's identity and not its id, and why a look is kept apart.
+//! manifest.json in userData: the installed mods and the presets.
 //!
 //! Records stay JSON objects, so every field another part of the app keeps on one survives a save.
 //! A key the TypeScript left undefined (and JSON.stringify then dropped) is a key not inserted.

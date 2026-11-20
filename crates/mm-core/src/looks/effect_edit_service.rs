@@ -1,4 +1,4 @@
-//! The effect editor's service (src/effect-edit-service.ts): finding an effect among the game's,
+//! The effect editor's service: finding an effect among the game's,
 //! showing it changed, and a change put in My mods. The changes themselves are `effect_edit`. One
 //! record per effect, built from the game's own file: making the same effect again replaces it, in
 //! its place in the load order.

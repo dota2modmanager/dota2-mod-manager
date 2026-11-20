@@ -2,7 +2,7 @@
    hero's models with their animations, its materials and textures, and its particles.
 
    Everything else is either the editor's own bookkeeping (tools_thumbnail_cache, tools_asset_info),
-   something the app already writes for every pick at once (soundevents, which src/item-sounds.ts
+   something the app already writes for every pick at once (soundevents, which crates/mm-core/src/item_builder/item_sounds.rs
    merges; panorama pictures, which it copies out of pak01), or a particle every hero in the match
    uses (Blink Dagger, stuns, item effects, the engine's error particle), which the game already
    switches for the arcana's owner and a mod would switch for everyone.

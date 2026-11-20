@@ -1,5 +1,4 @@
-//! The item table and the search-path patch, kept in step with the library and the installed game
-//! (src/schema-service.ts):
+//! The item table and the search-path patch, kept in step with the library and the installed game:
 //!   - the table is ALWAYS rebuilt from the installed game's own items_game.txt, so it can never
 //!     be the stale copy a mod happened to ship;
 //!   - a mod's changes live in the library record (record.schema), never in its VPK;

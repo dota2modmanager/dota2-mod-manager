@@ -75,7 +75,7 @@ window.api.patch.onRepair((st) => {
   else if (st.state === 'done') toast(L`Dota обновилась — моды на месте`, 'ok', 6000);
 });
 
-// Dota closed seconds after Play (src/crash-watch.ts). The mods put in since the game last ran
+// Dota closed seconds after Play (crates/mm-core/src/game/game_watch.rs). The mods put in since the game last ran
 // normally are the first suspects; switching them off waits for a press, since a game closed on
 // purpose looks the same from here.
 window.api.game.onQuickExit((exit) => {

@@ -1,7 +1,7 @@
 /* What the catalog reads out of the data it holds: a category's mods, the starred ones, the free
  * looks a search or the favourites reach, the user's own packs. Nothing is drawn here.
  *
- * What is offered comes from the upstream catalog (src/catalog.ts via loadCatalog), which is why
+ * What is offered comes from the upstream catalog (crates/mm-core/src/catalog/mod.rs via loadCatalog), which is why
  * the mod index is built here: it is a reading of the same data. */
 import { COSMETIC_PREFIX, CATALOG_EXCLUDE, TOOLS_HIDDEN } from '../../core/constants.ts';
 import { state } from '../../core/store.ts';

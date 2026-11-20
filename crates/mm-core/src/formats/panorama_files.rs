@@ -1,5 +1,5 @@
 //! Panorama's compiled styles (vcss_c) and scripts (vjs_c), read and written without Valve's
-//! resourcecompiler (src/panorama-files.ts). A script's DATA block is its JavaScript as it is
+//! resourcecompiler. A script's DATA block is its JavaScript as it is
 //! (from version 4). A style's DATA is a CRC, the pictures it names with their sizes (and a CRC
 //! from version 3), then its CSS as text. A picture the new CSS names that the style did not is
 //! added to the list and to the style's references, as the compiler does.

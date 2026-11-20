@@ -1,4 +1,4 @@
-//! The uninstaller's window (src/uninstall-window.ts) as the owner answers it: what there is to
+//! The uninstaller's window as the owner answers it: what there is to
 //! remove, the removal, and the answer back to the uninstaller as the exit code. The thinking is
 //! in uninstall.rs; the window and its close (which counts as cancelling) are the shell's.
 

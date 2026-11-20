@@ -1,5 +1,5 @@
-//! A material's own inputs, as the game compiled them (`readLoadoutMaterial` in
-//! src/loadout-material.ts): its shader, its numbers, vectors and textures, from a KV3 material or
+//! A material's own inputs, as the game compiled them (`read_loadout_material`):
+//! its shader, its numbers, vectors and textures, from a KV3 material or
 //! an older NTRO one. The textures are what the recolour of an item's model reads (`g_tColor`);
 //! with the expressions that tint by the gem's colour (`gemParams`) and the loadout shader's
 //! descriptor (`loadoutDescriptor`), they are what the 3D preview draws with.
@@ -329,7 +329,7 @@ pub fn loadout_descriptor(m: &NativeMaterial) -> Value {
 }
 
 /// Texture roles the loadout shader reads from the GLB's extras instead of glTF's PBR channels.
-/// cube: the six faces as one strip (src/png-strip.ts); a metal without it came out black.
+/// cube: the six faces as one strip (formats/png_strip.rs); a metal without it came out black.
 pub const LOADOUT_MASKS: [(&str, &str); 10] = [
     ("opacity", "g_tOpacity"),
     ("masks", "g_tMasks1"),

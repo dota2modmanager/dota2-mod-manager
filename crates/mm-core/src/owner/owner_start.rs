@@ -1,4 +1,4 @@
-//! What the start sets going and does not wait for (src/services.ts): the remote config, then the
+//! What the start sets going and does not wait for (formats/png_paint.rs): the remote config, then the
 //! catalog's second copies it names; the ready-made presets; the map from a file's fingerprint to
 //! its catalog mod. Each is fetched off the owner's lock, so the window is answered meanwhile, and
 //! being offline leaves the last good copy in place. Once the item table has settled, a rank look

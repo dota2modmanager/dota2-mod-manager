@@ -8,7 +8,7 @@ import { gemOf, isCutOut, toHex, useArcanaPicture, useTinted, type Rgb } from '.
 
 export type ArcanaMode = 'mod' | 'recolor';
 
-/** A prismatic gem's colour, as items_game names it (src/gem-colors.ts). */
+/** A prismatic gem's colour, as items_game names it (crates/mm-core/src/arcana/gem_colors.rs). */
 export interface Gem { key: string; name: string; rgb: Rgb }
 
 export interface ArcanaModalModel {

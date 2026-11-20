@@ -1,4 +1,4 @@
-//! A picture moved to a colour (src/services.ts electronRepaint): the PNG decoded, its pixels
+//! A picture moved to a colour: the PNG decoded, its pixels
 //! painted by crates/mm-core/src/looks/recolor_modes.rs, and written back as a PNG.
 
 /// The PNG's pixels as RGBA, with its width.

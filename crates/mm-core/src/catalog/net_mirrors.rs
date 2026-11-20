@@ -1,4 +1,4 @@
-//! The mirror chain (src/net-mirrors.ts): which hosts carry a copy of a GitHub file and how a URL
+//! The mirror chain: which hosts carry a copy of a GitHub file and how a URL
 //! is written for each, which of them a file may come from, and how each host has been doing.
 //! A host that keeps failing is stood down for a while.
 //!

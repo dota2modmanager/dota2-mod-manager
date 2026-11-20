@@ -1,4 +1,4 @@
-//! A program run to its end the way the main process runs Valve's tools (src/run-process.ts): its
+//! A program run to its end the way the main process runs Valve's tools: its
 //! output and errors read together, no console window on Windows, killed at the time limit.
 
 use std::io::Read;

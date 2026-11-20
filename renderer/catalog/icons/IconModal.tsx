@@ -1,4 +1,4 @@
-/* The window for a hero's ability icons picked from his own cosmetics' (src/ability-icons-service.ts):
+/* The window for a hero's ability icons picked from his own cosmetics' (crates/mm-core/src/item_builder/ability_icons_service.rs):
  * a hero, then each of his abilities as a row of pictures, the game's own first and then every icon
  * an item or set of his shows for it. A click puts it on at once (it is a copy of the game's own file,
  * no compiler), and the plain one takes it off. The heroes are the sound window's grid

@@ -1,5 +1,5 @@
 //! Reading items_game.txt: the items section, one item's fields, the list the pickers show, the
-//! free item of a slot, the game's own table out of its pak01. Rewritten from src/schema-items.ts.
+//! free item of a slot, the game's own table out of its pak01.
 //! The table is bytes (latin1 in the TypeScript), so a block found here splices back unchanged.
 
 // The item table (items_game): reading, merging, building and deploying it, and undoing a build.
@@ -25,7 +25,7 @@ use crate::vpk;
 /// Where the item table sits inside a VPK.
 pub const SCHEMA_REL: &str = "scripts/items/items_game.txt";
 
-/// The slots with no free item of their own (src/schema-items.ts OWNERLESS_SLOTS).
+/// The slots with no free item of their own.
 pub const OWNERLESS_SLOTS: [&str; 2] = ["multikill_banner", "tormentor"];
 
 /// An item as the pickers read it; field for field the TypeScript SchemaItem.
@@ -185,7 +185,7 @@ fn read_item(text: &[u8], c: &Child<'_>, ends: Ends<'_>) -> kv::Result<SchemaIte
     })
 }
 
-/// Every item of a table, listed once per table (src/schema-items.ts keeps its list per text).
+/// Every item of a table, listed once per table.
 pub fn items_of(text: &[u8]) -> kv::Result<std::sync::Arc<Vec<SchemaItem>>> {
     static SLOT: crate::memo::Slot<Vec<SchemaItem>> = std::sync::Mutex::new(None);
     crate::memo::per_text(&SLOT, text, list_items)

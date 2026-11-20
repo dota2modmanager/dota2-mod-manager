@@ -1,5 +1,4 @@
-//! What the app sees of the game after Play (src/game-watch.ts, src/crash-watch.ts,
-//! src/game-launch.ts, `dotaIsRunning` in src/game-upkeep.ts): whether Dota is open, asked of the
+//! What the app sees of the game after Play: whether Dota is open (`dota_is_running`), asked of the
 //! system every few seconds and told to the window when it changes, and whether it closed seconds
 //! after Play, with the mods that are new since it last ran normally.
 //!
@@ -182,7 +181,7 @@ impl CrashWatch {
     }
 }
 
-/// Both watches over one process check (src/game-launch.ts): what the window is told for one
+/// Both watches over one process check: what the window is told for one
 /// answer of the system, as (channel, value) pairs, and the log line for a quick exit.
 pub fn tell(
     game: &mut GameWatch,

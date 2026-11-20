@@ -1,4 +1,4 @@
-//! The free cosmetics and the item builder's picks (src/schema-cosmetics.ts): the slots the game
+//! The free cosmetics and the item builder's picks: the slots the game
 //! has a free base item for and what can go on each, the look picked for one, a whole set put on
 //! at once, a saved look worn, and the one-time move of picks that used to live in settings.json.
 //! A pick is a library record like any other mod.

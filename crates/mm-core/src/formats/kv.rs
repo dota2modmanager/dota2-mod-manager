@@ -1,5 +1,5 @@
 //! KeyValues navigation for items_game.txt: a block's braces, its direct children, without
-//! building a tree. Rewritten from src/schema-kv.ts.
+//! building a tree.
 //!
 //! The TypeScript read the table as a latin1 string, one character per byte, so every offset
 //! it hands out is a byte offset. Here the table is the bytes themselves and the offsets are the

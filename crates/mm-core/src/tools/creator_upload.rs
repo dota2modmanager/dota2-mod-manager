@@ -1,4 +1,4 @@
-//! The hand-off to the catalog's upload API (src/creator-upload.ts, issue #236): the form the
+//! The hand-off to the catalog's upload API (issue #236): the form the
 //! site posts, one zip holding one VPK per style, the token a release build carries, and the
 //! worker's answer. The draft rules and the files are in creator.rs; this only puts them on the
 //! wire.

@@ -2,8 +2,8 @@
 /*
  * A copy of the pinned toolchain that does not share GitHub's fate.
  *
- * src/toolchain.ts downloads Source 2 Viewer from its own project's GitHub release, pinned by
- * version and SHA-256, to read item icons out of the game's own files. Every mirror src/net.ts
+ * crates/mm-core/src/tools/toolchain.rs downloads Source 2 Viewer from its own project's GitHub release, pinned by
+ * version and SHA-256, to read item icons out of the game's own files. Every mirror crates/mm-core/src/catalog/net_mirrors.rs
  * knows is a proxy standing in front of GitHub, so when GitHub is down the whole chain is, and
  * the feature falls back to scraping the wiki.
  *

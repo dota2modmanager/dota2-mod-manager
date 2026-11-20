@@ -1,7 +1,7 @@
-//! Settings, the beta channel, the support prompt and the Discord account (src/ipc-settings.ts).
+//! Settings, the beta channel, the support prompt and the Discord account.
 //!
 //! Both settings handlers answer with the whole view rather than the bare store, because the
-//! window caches whatever it is handed (src/settings-view.ts).
+//! window caches whatever it is handed (app/settings_view.rs).
 
 use serde_json::{json, Value};
 

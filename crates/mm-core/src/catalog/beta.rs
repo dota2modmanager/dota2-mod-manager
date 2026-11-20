@@ -1,4 +1,4 @@
-//! The beta channel: who is let in, and which update feed this copy reads (src/beta.ts). The list
+//! The beta channel: who is let in, and which update feed this copy reads. The list
 //! of testers lives in the signed config as salted sha256 hashes of Discord ids; the gate decides
 //! who is offered the beta, not who is able to run it.
 

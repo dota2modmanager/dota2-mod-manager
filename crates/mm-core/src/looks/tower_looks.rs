@@ -1,4 +1,4 @@
-//! Tower looks as a file mod (src/tower-looks.ts, issue #446). The items that dress the towers say
+//! Tower looks as a file mod (issue #446). The items that dress the towers say
 //! in their visuals which model the tower entity wears, which model stands in for each stage of its
 //! destruction, and which particles it swaps. Those are files, so a pak can put them under the
 //! default tower's names, for one side or both, with safe mode on. What a file cannot carry (a

@@ -7,7 +7,7 @@ import { state } from '../core/store.ts';
 import { $ } from '../core/dom.ts';
 
 // Small, and only fetched where it is shown: My mods' banners about the item table and the
-// "Game files" block in Settings (src/schema-service.ts state).
+// "Game files" block in Settings (crates/mm-core/src/schema/schema_service.rs state).
 export async function refreshPatchState(): Promise<void> {
   state.patchState = await window.api.patch.state();
 }
@@ -34,7 +34,7 @@ export async function refreshMasterSwitch(): Promise<void> {
 // is the app's business, not the user's - the full path is in Settings and in a diagnostics
 // report, which is where somebody actually chasing a problem goes.
 // Dota open is said here too: the app stays up beside the game for the catalog and the presets,
-// and nothing is written to the game until it closes (src/game-watch.ts)
+// and nothing is written to the game until it closes (crates/mm-core/src/game/game_watch.rs)
 let gameOpen = false;
 window.api.game.onRunning((running) => {
   gameOpen = running;

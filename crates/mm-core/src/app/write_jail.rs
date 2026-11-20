@@ -1,4 +1,4 @@
-//! A run that may write only inside the folders it was given (src/write-jail.ts). This half
+//! A run that may write only inside the folders it was given. This half
 //! answers "is this path inside?" on the real path: the nearest part of it that exists is
 //! resolved through links, so "..", a symlink or a junction pointing out is outside. Holding
 //! every write to it is the shell's part once the Tauri build is the one that writes.

@@ -1,4 +1,4 @@
-//! What goes into the item table (src/schema-build.ts createTableBuild): every enabled record's
+//! What goes into the item table: every enabled record's
 //! patches, each pick of the item builder built once and kept. A pick is kept by item and effects
 //! for as long as the game's table and the game are the ones it was built from; the sounds and
 //! portraits, made from all the picks at once, for as long as the picks ask for the same ones.

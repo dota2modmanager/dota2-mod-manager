@@ -1,5 +1,4 @@
-//! A model with one of its material sets made the one it wears by default, replacing
-//! src/model-skin.ts. An item can wear its model in another material set ("skin" in its
+//! A model with one of its material sets made the one it wears by default. An item can wear its model in another material set ("skin" in its
 //! visuals), and a model put under a plain unit's path is worn in set 0 online. So the meshes draw
 //! with the set's materials, matched to set 0's by place, and set 0 takes the set's list.
 

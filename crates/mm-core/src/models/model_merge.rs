@@ -1,5 +1,5 @@
-//! Two models as one file: the mesh of a second model carried inside the first
-//! (src/model-merge.ts). An item can wear a second model (`additional_wearable`), which the game
+//! Two models as one file: the mesh of a second model carried inside the first.
+//! An item can wear a second model (`additional_wearable`), which the game
 //! makes from its table; a pick that goes as files has only its slot's stock path. A compiled model
 //! keeps its meshes inside itself, each a pair of blocks `CTRL.embedded_meshes` names, so the second
 //! model's blocks come along: named in CTRL under the next mesh index, given lines in DATA's group

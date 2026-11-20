@@ -1,6 +1,6 @@
 /* A sound of the user's own on a hero's event (issue #423): the card first among the hero sounds
  * and its window. The heroes and their events come from the main process
- * (src/ability-sounds-service.ts); the file is decoded here (catalog/sounds/wav.ts) and handed over
+ * (crates/mm-core/src/item_builder/ability_sounds_service.rs); the file is decoded here (catalog/sounds/wav.ts) and handed over
  * as 16-bit PCM; what it builds is a mod in My mods like any other, one per hero. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';

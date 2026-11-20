@@ -1,5 +1,5 @@
 //! The load order in two parts: slots 02-29 for the categories that have to load first, 30 and up
-//! for the rest. Replacing src/slot-zones.ts, which tells how the ranges came to be.
+//! for the rest.
 
 use serde_json::{json, Value};
 use std::collections::HashSet;

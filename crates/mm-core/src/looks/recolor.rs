@@ -1,5 +1,5 @@
-//! An item's effects in a colour of the user's choosing, built from the game's own files,
-//! replacing src/recolor.ts (the sets are src/recolor-sets.ts, here data/recolor-sets.json).
+//! An item's effects in a colour of the user's choosing, built from the game's own files
+//! (the sets are data/recolor-sets.json).
 //!
 //! The game passes a gem's colour to the hero's particles through control point 15 and to its
 //! materials as `$GemColor`. Neither can be set from a mod, so the mod changes what the files do
@@ -133,7 +133,7 @@ struct Tint {
 }
 
 fn num(kv: &Block, n: &Node) -> f64 {
-    // numberOf in src/kv3.ts: its bytes, or its type
+    // numberOf in formats/kv3.rs: its bytes, or its type
     match &n.value {
         Value::Number { cell: Some(c), .. } => kv.read_cell(*c),
         Value::Number { ty, .. } => {

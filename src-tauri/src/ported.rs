@@ -1,4 +1,4 @@
-//! The catalog's pictures on the mm-preview scheme (src/preview-cache.ts servePreviews), which
+//! The catalog's pictures on the mm-preview scheme (crates/mm-core/src/catalog/preview_cache.rs), which
 //! bridge.js points the page's images at: from disk, else from the mirror before GitHub.
 
 use std::path::{Path, PathBuf};

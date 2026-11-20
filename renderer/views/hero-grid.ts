@@ -56,7 +56,7 @@ export function heroGridWanted(filters: Filters): boolean {
   return !filters.hero && heroLayout() === 'grid';
 }
 
-// Portraits come out of the player's own game (src/game-icons.ts heroPortraits): upright, as the
+// Portraits come out of the player's own game (crates/mm-core/src/game/game_icons.rs heroPortraits): upright, as the
 // game's hero grid and the item builder draw them, by the hero's id; landscape by the name the
 // catalog prints for a hero the item table does not know. null means asked and not found, so the
 // tile keeps its stand-in.

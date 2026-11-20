@@ -1,4 +1,4 @@
-//! The picks' pak (src/item-files-service.ts): the item builder's looks in the language folder, for
+//! The picks' pak: the item builder's looks in the language folder, for
 //! the game to read with nothing of its own changed (item_files.rs says what goes in). One record in
 //! My mods, marked `generated`, so its slot, its switch and the master switch work as for any mod;
 //! built again in its slot when a pick changes, and taken away with the last pick.

@@ -1,4 +1,4 @@
-//! A material's expressions, replacing src/material.ts: what an item's gem colours.
+//! A material's expressions: what an item's gem colours.
 //!
 //! A material can set a parameter from an expression the game evaluates, such as Terrorblade's
 //! `g_vDetail1ColorTint = exists($GemColor) ? $GemColor : float3(0.35, 0.74, 1.0)`, compiled to the

@@ -1,4 +1,4 @@
-//! Shareable preset files (src/preset-share.ts): a .d2mm is a zip holding preset.json plus the
+//! Shareable preset files: a .d2mm is a zip holding preset.json plus the
 //! VPK of every mod the receiver cannot fetch for itself. A catalog mod travels as its identity
 //! (category, name, style) with a fingerprint, a free cosmetic pick as its slot and item, and
 //! only a user's own import as bytes.

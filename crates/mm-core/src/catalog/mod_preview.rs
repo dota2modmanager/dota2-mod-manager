@@ -1,4 +1,4 @@
-//! A picture for a mod that came with none, taken out of the mod itself (src/mod-preview.ts).
+//! A picture for a mod that came with none, taken out of the mod itself.
 //!
 //! The catalog ships a preview for every mod it lists; a mod the user dragged in, or one lying in
 //! the game folder, has nothing. Almost every mod carries its own picture though: the hero's

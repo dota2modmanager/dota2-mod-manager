@@ -1,4 +1,4 @@
-//! The ready-made presets' format (src/ready-presets-format.ts, config/presets.json, issue #391):
+//! The ready-made presets' format (config/presets.json, issue #391):
 //! a short list of builds picked from the catalog, signed with the remote config's key. The
 //! fetched JSON is cut down to presets with an id, a name and at least one catalog mod.
 

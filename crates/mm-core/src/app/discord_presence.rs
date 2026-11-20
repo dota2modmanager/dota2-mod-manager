@@ -1,5 +1,5 @@
-//! "Playing Dota 2 Mod Manager" in Discord, over Discord's local IPC socket
-//! (src/discord-presence.ts). No OAuth and no account: presence needs only the application id.
+//! "Playing Dota 2 Mod Manager" in Discord, over Discord's local IPC socket.
+//! No OAuth and no account: presence needs only the application id.
 //! Discord listens on a named pipe (a unix socket elsewhere) and speaks a tiny framed protocol,
 //! [opcode i32][length i32][json] (src/presence-status.rs writes and reads the frames).
 //!

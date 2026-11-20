@@ -1,4 +1,4 @@
-//! The catalog's pictures, kept on this disk and served from it (src/preview-cache.ts).
+//! The catalog's pictures, kept on this disk and served from it.
 //!
 //! Where GitHub is blocked a picture request hangs rather than fails, so the window's requests
 //! for catalog pictures are answered here: from disk when the picture is there, otherwise from the

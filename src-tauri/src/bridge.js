@@ -14,7 +14,7 @@
   window.__mmBridge = true;
 
   // Electron points the window's catalog pictures at mm-preview://, which answers from disk and
-  // from the mirror before GitHub (src/preview-cache.ts servePreviews). A webview has no request
+  // from the mirror before GitHub (crates/mm-core/src/catalog/preview_cache.rs). A webview has no request
   // redirect, so an image's address is changed as the page sets it; Rust answers the scheme
   // (Previews in src-tauri/src/ported.rs). WebView2 serves a custom scheme as http://<name>.localhost.
   const RAW = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/';
@@ -121,7 +121,7 @@
     invoke('mm_drag', { toggle: e.detail === 2 }).catch(() => {});
   }, true);
 
-  // Ctrl +/-/0 scale the content, as Electron's before-input-event did (src/main-window.ts)
+  // Ctrl +/-/0 scale the content, as Electron's before-input-event did (crates/mm-core/src/app/main_window.rs)
   window.addEventListener('keydown', (e) => {
     if (!e.ctrlKey || e.altKey || !['=', '+', '-', '_', '0'].includes(e.key)) return;
     e.preventDefault();

@@ -1,4 +1,4 @@
-/* What Settings' "Repair the app" found, a line per step (src/app-repair.ts). A red line points at
+/* What Settings' "Repair the app" found, a line per step (crates/mm-core/src/owner/owner_game.rs). A red line points at
  * the support report under it: the report shows the step that failed. */
 
 /** One run of the repair: still going, or its lines. */

@@ -1,4 +1,4 @@
-//! The points of a compiled particle snapshot (.vsnap_c), replacing src/particle-snapshot.ts: what
+//! The points of a compiled particle snapshot (.vsnap_c): what
 //! the 3D preview spreads a snapshot's particles from, in the snapshot's own space.
 
 use serde_json::{json, Map, Value};

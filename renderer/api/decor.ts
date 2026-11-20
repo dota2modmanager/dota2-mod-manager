@@ -1,4 +1,4 @@
-/* The Optimization window's channels (src/ipc-decor.ts, crates/mm-core/src/looks/map_decor.rs, owner_preview3d.rs). */
+/* The Optimization window's channels (crates/mm-core/src/looks/map_decor.rs, owner_studios.rs, owner_preview3d.rs). */
 import type { LibRecord } from '../library/types.ts';
 import type { Reply } from './reply.ts';
 
@@ -29,7 +29,7 @@ export interface ZoneLight {
   lightning_intensity_max?: number; lightning_period_min?: number; lightning_period_max?: number;
 }
 
-/** The map without its decor, and the rest of Optimization (src/ipc-decor.ts). */
+/** The map without its decor, and the rest of Optimization. */
 export interface DecorApi {
   /** the groups taken out now, how many files each takes on this map, and what the scene stands for each */
   state: () => Promise<Reply<{ installed: { id: string; groups: string[]; enabled: boolean } | null;

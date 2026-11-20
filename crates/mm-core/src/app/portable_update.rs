@@ -1,4 +1,4 @@
-//! Updating a copy that was never installed (src/portable-update.ts).
+//! Updating a copy that was never installed.
 //!
 //! A portable build has no installer to hand a download to, and an exe that rewrites and
 //! relaunches itself is the shape antivirus heuristics look for. So the new version is put NEXT
@@ -146,7 +146,7 @@ pub fn portable_dir() -> Option<PathBuf> {
 }
 
 /// The data folder beside a portable exe, made and writable; None when the folder is read-only
-/// (the exe dropped into Program Files), so the ordinary location is used instead (src/main.ts).
+/// (the exe dropped into Program Files), so the ordinary location is used instead (owner/mod.rs).
 pub fn data_beside(dir: &Path) -> Option<PathBuf> {
     let beside = dir.join(DATA_DIR);
     std::fs::create_dir_all(&beside).ok()?;

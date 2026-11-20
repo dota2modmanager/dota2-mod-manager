@@ -1,5 +1,4 @@
-//! Fonts and cursors: loose files written over the game's own, replacing src/overlays.ts and
-//! src/overlays-cursor.ts.
+//! Fonts and cursors: loose files written over the game's own.
 //!
 //! A font or a cursor set replaces files in dota\panorama\fonts and dota\resource\cursor that
 //! the game needs, so the first write keeps the game's copy under backups\, and removing the mod

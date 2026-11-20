@@ -63,7 +63,7 @@ export function wikiFallbackKey(rec: LibRecord | Member): { key: string; icon: s
     : { key: 'generic:pack', icon: 'auto_awesome' };
 }
 
-// The mod's own *_dir.vpk, which is what a picture can be taken out of (see src/mod-preview.ts).
+// The mod's own *_dir.vpk, which is what a picture can be taken out of (see crates/mm-core/src/catalog/mod_preview.rs).
 function modFileRef(files: LibFile[] | undefined): string | null {
   const f = (files || []).find((x) => x.root === 'lang' && /_dir\.vpk$/i.test(x.relPath));
   return f ? f.relPath : null;

@@ -1,4 +1,4 @@
-//! How the game stages a hero on its loadout, for the 3D preview, replacing src/hero-showcase.ts:
+//! How the game stages a hero on its loadout, for the 3D preview:
 //! the loadout camera (loadout_camera_fullbody's one keyframe), the hero's LoadoutScale, and its
 //! light, ambient, background and pedestal from scripts/npc/portraits_showcase.txt.
 //!

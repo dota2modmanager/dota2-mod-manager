@@ -1,4 +1,4 @@
-/* The mods channels (src/ipc-mods.ts, ipc-library.ts, ipc-foreign.ts, ipc-packs.ts): what is
+/* The mods channels (crates/mm-core/src/owner/owner_mods.rs, ipc-library.ts, ipc-foreign.ts, ipc-packs.ts): what is
  * installed, putting mods in and out of the game, the load order, the files found in the mods
  * folder, and packs. */
 import type { ExternalFile, LibRecord } from '../library/types.ts';

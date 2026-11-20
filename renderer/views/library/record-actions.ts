@@ -135,7 +135,7 @@ export async function combineSelection(ids: string[] | null): Promise<void> {
   await screen.reload();
 }
 
-/* The catalog's new version of a mod, in its own slot and with its own switch (src/mod-update.ts).
+/* The catalog's new version of a mod, in its own slot and with its own switch (crates/mm-core/src/install/mod_update.rs).
  * The download shows on the bar at the bottom like an install. */
 export async function updateRecord(id: string): Promise<boolean> {
   const rec = recById(id);

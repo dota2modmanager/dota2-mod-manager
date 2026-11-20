@@ -1,4 +1,4 @@
-//! Which model-born particles the hero preview runs for a chosen style (src/hero-particle-styles.ts).
+//! Which model-born particles the hero preview runs for a chosen style.
 
 use indexmap::IndexMap;
 use serde_json::{json, Value};

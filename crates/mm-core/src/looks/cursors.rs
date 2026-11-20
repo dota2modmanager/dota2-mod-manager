@@ -1,4 +1,4 @@
-//! Which cursor set is live, and which look a slot is wearing (src/cursors.ts).
+//! Which cursor set is live, and which look a slot is wearing.
 //!
 //! A cursor set is loose files written straight over Valve's own in game\dota\resource\cursor,
 //! and every set writes the same names: it cannot be switched off by renaming and two sets cannot

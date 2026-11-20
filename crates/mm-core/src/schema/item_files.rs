@@ -1,4 +1,4 @@
-//! The item builder's picks as files alone (src/item-files.ts): a look the game takes from a pak in
+//! The item builder's picks as files alone: a look the game takes from a pak in
 //! the language folder, with no edit of the game's files and no line in its item table. The item's
 //! effects go into the wearable's key values with hitboxes on its surface, its material set becomes
 //! the model's default, its motions are taken off the hero's body, the hero parts it hides become

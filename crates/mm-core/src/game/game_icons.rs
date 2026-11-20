@@ -1,4 +1,4 @@
-//! Pictures taken from the installed game (src/game-icons.ts): an item's picture by the item table's
+//! Pictures taken from the installed game: an item's picture by the item table's
 //! `image_inventory`, a hero's portrait, an ability's icon. Most are a PNG behind a short header in
 //! pak01 and come out by slicing it off; the rest are block-compressed and need the toolchain's
 //! decoder, fetched only if the user asked for it. Everything lands in one cache in userData.

@@ -1,4 +1,4 @@
-//! The app around the mods (src/ipc-misc.ts, ipc-launch.ts, ipc-window.ts): folders and the
+//! The app around the mods: folders and the
 //! download cache opened, a tool started, Dota started, the window's buttons, the version and what
 //! changed in it, the star count on Home and the interface's scale.
 
@@ -183,7 +183,7 @@ fn is_maximized(o: &Owner) -> bool {
 }
 
 /// Dota started through Steam: the item table that is still building goes in first, and what a
-/// Dota update broke is put right before the game reads it (src/ipc-launch.ts startDota).
+/// Dota update broke is put right before the game reads it.
 fn launch(o: &Owner) -> Value {
     o.settled();
     o.heal();
@@ -197,7 +197,7 @@ fn launch(o: &Owner) -> Value {
 const STARS_API: &str = "https://api.github.com/repos/dota2modmanager/dota2-mod-manager";
 const STARS_FRESH_MS: f64 = 6.0 * 60.0 * 60.0 * 1000.0;
 
-/// The repository's star count for Home (src/repo-stars.ts): the cached one while it is six hours
+/// The repository's star count for Home (app/app_info.rs): the cached one while it is six hours
 /// fresh, otherwise asked for, the old one when GitHub does not answer.
 fn stars(o: &Owner) -> Value {
     let (file, net) = {
@@ -230,7 +230,7 @@ fn stars(o: &Owner) -> Value {
 
 /// A portable copy cannot install over itself (src/portable_update.rs): the new build is put
 /// beside the running one, and the window is told where, so the person closes this one and
-/// starts that (src/ipc-window.ts update:fetchPortable).
+/// starts that (`update:fetchPortable`).
 fn fetch_portable(o: &Owner) -> Value {
     let Some(dir) = crate::portable_update::portable_dir() else {
         return json!({ "error": t("Это не портативная сборка", &[]) });

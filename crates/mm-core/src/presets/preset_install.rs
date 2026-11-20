@@ -1,4 +1,4 @@
-//! Putting a preset on (src/preset-install.ts): an own one whose mods may have gone, or a
+//! Putting a preset on: an own one whose mods may have gone, or a
 //! received one that is still a wish list. The Presets screen and the command line both come
 //! through here: the same catalog downloads, the same one-cursor rule, the table built once.
 //!

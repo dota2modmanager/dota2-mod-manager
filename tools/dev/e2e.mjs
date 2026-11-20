@@ -81,7 +81,7 @@ const BIN = APP || DEBUG_APP;
 // between the first launch and the second (release.yml, "Update the last release")
 const upgradeAt = process.argv.indexOf('--upgrade');
 const UPGRADE = upgradeAt > 0 && process.argv[upgradeAt + 1] ? path.resolve(process.argv[upgradeAt + 1]) : null;
-/** What the removal window answers with on exit (src/uninstall-window.ts). */
+/** What the removal window answers with on exit (crates/mm-core/src/owner/owner_uninstall.rs). */
 export const EXIT = { done: 0, cancelled: 3, wipeData: 4 };
 
 export const MOD = { categoryId: 'heroes', hero: 'Brewmaster', name: 'Brewmaster E2E Fixture', file: 'Brewmaster E2E Fixture.zip' };
@@ -164,7 +164,7 @@ export function setNoticeAside(d, isMarked = () => mm('vpk-entries', path.join(L
 
 /**
  * What in the app's log means the run failed even though every click landed: a name that does not
- * resolve (2.6.5, Install dead), and a call the IPC gate refused (src/window-guard.ts) - a check
+ * resolve (2.6.5, Install dead), and a call the IPC gate refused (crates/mm-core/src/owner/channel_args.rs) - a check
  * stricter than the window is a button that stopped working.
  */
 export function logProblems(text) {

@@ -1,4 +1,4 @@
-//! Auto-update as the owner runs it (src/main.ts createUpdater, src/updater.ts): the driver in
+//! Auto-update as the owner runs it (owner/mod.rs, app/updater.rs): the driver in
 //! updater.rs aims the shell's updater at a feed and a channel, hears what it finds, and tells the
 //! window. The channel is read on every look, from the account, the signed config's list of
 //! testers and the setting, so a tester taken off the list is back on stable at the next look.

@@ -1,5 +1,5 @@
 /* The shapes the catalog screen works with: a mod as the upstream catalog ships it
- * (src/catalog.ts fetches mods.json and constants.json), plus the few fields this app adds. */
+ * (crates/mm-core/src/catalog/mod.rs fetches mods.json and constants.json), plus the few fields this app adds. */
 
 export interface ModStyle {
   label: string;
@@ -43,13 +43,13 @@ export interface CosmeticOption {
   id: string;
   name: string;
   tags?: string[];
-  /** an item builder wearable's styles by name, when it has more than one (src/item-builder-styles.ts) */
+  /** an item builder wearable's styles by name, when it has more than one (crates/mm-core/src/item_builder/item_builder_styles.rs) */
   styles?: string[];
-  /** what is known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts) */
+  /** what is known to go wrong with it in the game, or that nobody has checked (crates/mm-core/src/arcana/arcana_notes.rs) */
   note?: { status: 'issues' | 'broken' | 'untested'; text: string };
-  /** it creates a particle of its own, which another item of the slot can wear (src/item-builder-donor.ts) */
+  /** it creates a particle of its own, which another item of the slot can wear (crates/mm-core/src/item_builder/item_builder_donor.rs) */
   fx?: boolean;
-  /** an item builder wearable's rarity key ("mythical") and release day ("2021-09-01"), src/item-builder-details.ts itemFacts */
+  /** an item builder wearable's rarity key ("mythical") and release day ("2021-09-01"), crates/mm-core/src/item_builder/item_builder_details.rs itemFacts */
   rarity?: string;
   date?: string;
 }
@@ -67,13 +67,13 @@ export interface CosmeticSlot {
   icon?: string;
   options: CosmeticOption[];
   effects?: { id: string; name: string }[];
-  /** a persona's slot (src/item-builder-personas.ts): `part` false where the persona is picked */
+  /** a persona's slot (crates/mm-core/src/item_builder/item_builder_personas.rs): `part` false where the persona is picked */
   persona?: { hero: string; part: boolean };
-  /** an ability effects slot's number: its picks give their effects, not their model (src/item-builder-ability-fx.ts) */
+  /** an ability effects slot's number: its picks give their effects, not their model (crates/mm-core/src/item_builder/item_builder_ability_fx.rs) */
   abilityFx?: number;
 }
 
-/** One piece of an item set, and whether the builder can put it on (src/item-builder.ts itemSets). */
+/** One piece of an item set, and whether the builder can put it on (crates/mm-core/src/item_builder/mod.rs). */
 export interface SetPiece {
   slot: string;
   itemId: string;
@@ -91,7 +91,7 @@ export interface CosmeticSet {
   heroLabel: string;
   fit: number;
   pieces: SetPiece[];
-  /** what the game says about it (src/item-builder-details.ts): a rarity key ("mythical") and its
+  /** what the game says about it (crates/mm-core/src/item_builder/item_builder_details.rs): a rarity key ("mythical") and its
    * name, "2021-08-18", the event's id ("EVENT_ID_SPRING_2021") and its name in the player's
    * language, the description, and the names of its looks when it has several */
   rarity?: string;
@@ -105,7 +105,7 @@ export interface CosmeticSet {
   styleNames?: string[];
 }
 
-/** A hero's main attribute, the four groups of the game's hero grid (src/item-builder-details.ts). */
+/** A hero's main attribute, the four groups of the game's hero grid (crates/mm-core/src/item_builder/item_builder_details.rs). */
 export type HeroAttribute = 'str' | 'agi' | 'int' | 'all';
 
 /** One pick of a saved look: what goes on a slot, as a pick record has it. */

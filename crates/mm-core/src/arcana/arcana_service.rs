@@ -1,4 +1,4 @@
-//! The arcana window's side (src/arcana-service.ts, issue #118): what the window shows, and the
+//! The arcana window's side (issue #118): what the window shows, and the
 //! mod it builds out of the player's own game files, installed like any other.
 //!
 //! Two builds: the whole arcana for a player who has not got it (arcana.rs), and only its colour

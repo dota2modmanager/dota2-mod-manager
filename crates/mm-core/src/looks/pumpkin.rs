@@ -1,4 +1,4 @@
-//! The pumpkin's side of the key (src/pumpkin.ts; renderer/ui/pumpkin.ts asks, tools/ops/pumpkin-worker
+//! The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/ops/pumpkin-worker
 //! answers). Each key the site hands out opens one pumpkin: the worker ties it to the first install
 //! name that brings it, a random name made here the first time it is needed and sent nowhere else.
 //! The key opens the bloody theme (settings `blood`) and a mod nobody else has yet, downloaded from

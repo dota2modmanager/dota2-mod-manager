@@ -1,4 +1,4 @@
-//! An item's styles in the item builder, replacing src/item-builder-styles.ts: which ones it has,
+//! An item's styles in the item builder: which ones it has,
 //! and its visuals with one of them made its only one.
 //!
 //! A worn item's visuals carry every style at once: an entry marked "style" "1" applies in the

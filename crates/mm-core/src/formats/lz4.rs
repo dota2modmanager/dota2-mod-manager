@@ -1,4 +1,4 @@
-//! LZ4 block format, replacing src/lz4.ts: literals and back-references, the compression Valve's
+//! LZ4 block format: literals and back-references, the compression Valve's
 //! KV3 writer uses (kv3.rs). Decoding is the whole format; encoding writes literals only, which any
 //! decoder reads and which is all a rewritten block needs.
 

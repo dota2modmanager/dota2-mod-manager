@@ -1,4 +1,4 @@
-//! The app beside the game rather than in front of it (src/tray.ts, plan item 9). By default it
+//! The app beside the game rather than in front of it (plan item 9). By default it
 //! starts with Windows, hidden, and closing the window hides it in the tray instead of quitting,
 //! so the patch watcher keeps running. Off, the app closes when its window does.
 //!

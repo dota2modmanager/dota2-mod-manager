@@ -1,5 +1,5 @@
 //! What Home shows about the app itself: the release notes out of the changelogs the build
-//! carries (src/release-notes.ts) and the project's star count on GitHub (src/repo-stars.ts).
+//! carries, and the project's star count on GitHub.
 
 use std::path::Path;
 

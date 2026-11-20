@@ -1,4 +1,4 @@
-//! Installing, updating, importing, exporting and listing mods (src/ipc-mods.ts): the channels the
+//! Installing, updating, importing, exporting and listing mods: the channels the
 //! Library screen and the catalog's install buttons reach for. What My mods is drawn from is built
 //! in crates/mm-core/src/install/mods_listing.rs.
 
@@ -170,7 +170,7 @@ fn vanilla(c: &mut Core) -> Option<Arc<(Vec<u8>, String)>> {
     c.schema.vanilla(&game).ok()
 }
 
-/// Lift the item blocks a freshly installed mod changed (src/schema-harvest.ts): the counts, or
+/// Lift the item blocks a freshly installed mod changed (schema/schema_harvest.rs): the counts, or
 /// None when there was nothing.
 fn harvest(c: &mut Core, id: &Value) -> Option<(usize, usize)> {
     let rec = c.library.find(id).cloned()?;

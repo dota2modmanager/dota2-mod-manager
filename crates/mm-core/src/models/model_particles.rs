@@ -1,4 +1,4 @@
-//! Particles a model brings by itself, with no item table to create them (src/model-particles.ts).
+//! Particles a model brings by itself, with no item table to create them.
 //! A model's key values can list particles (`particle_cfg_list`): each row names a system and the
 //! control point configuration to start it with, "preview" the one pointed at the model's
 //! attachments. The key values are KV3 text in the model's DATA block, and a system named there

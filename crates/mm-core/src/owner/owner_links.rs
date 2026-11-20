@@ -1,4 +1,4 @@
-//! d2mm:// links under the owner (src/main.ts takeLink, src/deep-links.ts handleDeepLink): the one
+//! d2mm:// links under the owner (owner/mod.rs, catalog/deep_links.rs): the one
 //! the app was started by, told to the page once it has loaded, and one a second start hands over.
 //! A preset parks in the Presets tab, a mod opens its window in the catalog; nothing installs.
 
