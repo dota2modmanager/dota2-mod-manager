@@ -203,6 +203,10 @@ pub fn resolve(d: &mut Deps, preset: &Value, cat: &CatalogIndex) -> Result<Outco
                         None,
                     )?;
                     schema |= a.schema;
+                    // somebody else's file: theirs to publish, not this user's (tools/own_work.rs)
+                    for r in &a.records {
+                        d.lib.update(&r["id"], &json!({ "shared": true }), None).map_err(|e| e.to_string())?;
+                    }
                     if let (Some(fp), [one]) = (fp, a.records.as_slice()) {
                         fps.insert(fp, one["id"].clone());
                     }

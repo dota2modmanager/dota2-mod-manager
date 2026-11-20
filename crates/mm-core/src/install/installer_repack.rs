@@ -356,12 +356,18 @@ impl Installer {
             }
         }
         let or_null = |k: &str| rec.get(k).filter(|v| crate::js::truthy(v)).cloned().unwrap_or(Value::Null);
-        Ok(json!({
+        let mut member = json!({
             "id": member_id, "name": rec.get("name").cloned().unwrap_or(Value::Null),
             "categoryId": rec.get("categoryId").cloned().unwrap_or(Value::Null),
             "styleLabel": or_null("styleLabel"), "preview": or_null("preview"),
             "enabled": rec.get("enabled") != Some(&Value::Bool(false)), "heroes": heroes, "info": info, "fp": fp,
-        }))
+        });
+        // where the mod came from, so the pack can still tell the user's own work from a catalog
+        // mod's or a shared preset's (crates/mm-core/src/tools/own_work.rs)
+        if let Some(m) = member.as_object_mut() {
+            m.extend(crate::tools::own_work::origin(rec));
+        }
+        Ok(member)
     }
 
     /// The slot base ("pak10") a pack deploys to, from its recorded files.

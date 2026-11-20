@@ -109,10 +109,17 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             Ok(json!({ "draft": store.shown(&d) }))
         })(),
         "creator:fromRecord" => (|| {
-            let c = o.core();
-            let rec = c.library.find(&a0).cloned().ok_or_else(|| t("Мод не найден", &[]))?;
-            match crate::tools::own_work::own_work(&rec) {
-                None => return Err(t("Этот мод уже из каталога: публикует его автор", &[])),
+            let mut c = o.core();
+            let mut rec = c.library.find(&a0).cloned().ok_or_else(|| t("Мод не найден", &[]))?;
+            // the fingerprint the listing works out, so a catalog file dragged in reads the same here
+            if let Some(fp) =
+                c.installer.analyze_record(&crate::overlays::files_of(&rec["files"])).and_then(|a| a.get("fp").cloned())
+            {
+                rec["fp"] = fp;
+            }
+            let fingerprints = &mut c.fingerprints;
+            match crate::tools::own_work::own_work(&rec, &mut |fp| fingerprints.matches(Some(fp)).is_some()) {
+                None => return Err(t("Этот мод сделал не ты: публикует его автор", &[])),
                 Some(Err(why)) => return Err(why),
                 Some(Ok(())) => {}
             }
@@ -121,8 +128,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             let category = crate::js::string(rec.get("categoryId").unwrap_or(&Value::Null));
             let fields = json!({
                 "name": crate::js::string(rec.get("name").unwrap_or(&Value::Null)),
-                // "imported" is this app's shelf for unknown files, not a catalog category
-                "category": if category == "imported" { String::new() } else { category },
+                // "imported" and "combined" are this app's shelves, not catalog categories
+                "category": if category == "imported" || category == "combined" { String::new() } else { category },
             });
             let d = store.draft_around(&fields, &vpk)?;
             Ok(json!({ "draft": store.shown(&d) }))

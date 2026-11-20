@@ -197,6 +197,7 @@ export function menuFor(id: string): MenuItem[] | null {
     { label: L`Добавить моды в пак`, icon: 'add', onPick: () => addToPack(rec.id) },
     { label: L`Разобрать на отдельные моды`, icon: 'call_split', onPick: () => disbandPack(rec.id) },
     langDir(rec) && { label: L`Сохранить одним файлом`, icon: 'save', onPick: () => exportRecord(rec.id) },
+    langDir(rec) && Boolean(rec.publish) && { label: L`Опубликовать в каталог`, icon: 'publish', onPick: () => publishRecord(rec.id) },
     ...naming,
     ordered && { separator: true },
     ...orderItems(rec),
