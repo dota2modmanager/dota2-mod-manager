@@ -44,6 +44,8 @@ export interface SlotPaneModel {
   title: string;
   query: string;
   slotIcon: string;
+  /** the card that wears the slot empty: the slot's stock item id, or '' where it has none */
+  emptyId: string;
   view: SlotView;
   gem?: { set: string; equipped: boolean };
   options: OptionCard[];

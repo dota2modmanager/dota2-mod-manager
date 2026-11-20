@@ -18,6 +18,7 @@ pub mod ability_icons_service;
 pub mod ability_sounds;
 pub mod ability_sounds_service;
 pub mod cosmetic_names;
+pub mod empty_slot;
 pub mod hero_pedestals;
 pub mod item_builder_ability_fx;
 pub mod item_builder_assets;
@@ -352,6 +353,10 @@ pub fn item_effect_patch(
     else {
         return Err(t("items_game: предмет {0} не найден", &[json!(item_id)]));
     };
+    // the slot's own stock item picked for it: the slot worn empty (empty_slot.rs)
+    if let Some(p) = crate::empty_slot::empty_slot_patch(base, item_id)? {
+        return Ok(p);
+    }
     let target = match target_id.filter(|i| !i.is_empty()) {
         Some(id) => items_of(base).map_err(err)?.iter().find(|i| i.id == id).cloned(),
         None => default_item_for_wearable(base, item_id)?,

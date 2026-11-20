@@ -551,7 +551,7 @@ const EN = {
   'Добавить': 'Add',
 
   // ---------- account ----------
-  'Показывать в Discord, что ты в Mod Manager': 'Show in Discord that you are in Mod Manager', 'Считать мои скачивания': 'Count my downloads', 'Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.': 'When you install a mod from the catalog, the app tells the catalog counter its name and nothing else. The download numbers on the cards come from that counter.',
+  'Показывать в Discord, что ты в Mod Manager': 'Show in Discord that you are in Mod Manager', 'Считать мои скачивания': 'Count my downloads', 'Пусто': 'Empty', 'Когда ставишь мод из каталога, приложение сообщает счётчику каталога его название, и больше ничего. Из этого счётчика и цифры скачиваний на карточках.': 'When you install a mod from the catalog, the app tells the catalog counter its name and nothing else. The download numbers on the cards come from that counter.',
   'Скопировано': 'Copied',
   'Войти': 'Sign in',
   'Вход нужен, чтобы подписывать свои сборки': 'Signing in puts your name on the builds you share',

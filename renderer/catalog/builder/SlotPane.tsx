@@ -80,7 +80,8 @@ export function SlotPane({ m, actions, gems, gemCount }: { m: SlotPaneModel; act
                 data-item-option={o.id} data-rarity={o.rarity || undefined} aria-pressed={o.picked}
                 style={stagger(i)} onClick={() => m.view === 'replacement' ? actions.replacement(o.id) : actions.choose(o.id)}>
                 <div className="card-media">
-                  {o.id === '' ? <div className="noimg"><span className="ms">block</span></div> : <CosThumb name={o.name} fallback={m.slotIcon} />}
+                  {o.id === '' ? <div className="noimg"><span className="ms">block</span></div>
+                    : o.id === m.emptyId ? <div className="noimg"><span className="ms">check_box_outline_blank</span></div> : <CosThumb name={o.name} fallback={m.slotIcon} />}
                   {o.note && <div className="media-tags"><span className="mtag warn" title={o.note.text}>{NOTE_TAG[o.note.status]()}</span></div>}
                 </div>
                 <div className="card-body">
