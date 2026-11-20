@@ -49,6 +49,25 @@ pub struct TablePatch {
     fx: bool,
 }
 
+#[cfg(test)]
+impl TablePatch {
+    /// A patch of a block and its files, the rest left empty.
+    pub fn of(block: &[u8], assets: Vec<Entry>) -> Self {
+        TablePatch {
+            id: String::new(),
+            block: block.to_vec(),
+            assets: Some(assets),
+            source: String::new(),
+            own: None,
+            added: None,
+            unplaced: None,
+            item: None,
+            item_id: None,
+            fx: false,
+        }
+    }
+}
+
 impl FxJoin for TablePatch {
     fn id(&self) -> &str {
         &self.id
