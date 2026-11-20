@@ -8,6 +8,9 @@ import type { LibRecord, RepairState } from '../library/types.ts';
 import type { Dialog, Reply } from './reply.ts';
 
 /** One mod of a preset as sharing it would carry it (src/presets-service.ts planShape). */
+/** A pedestal the hero builder offers: its model and the item that brings it (none: a plain one). */
+export interface PedestalOption { model: string; itemId: string | null; name: string; image: string | null }
+
 export interface ShareEntry {
   key: string;
   /** 'catalog' travels as a name, 'embedded' as its bytes, 'missing' cannot travel */
@@ -118,6 +121,8 @@ export interface ConfigApi {
 
 export interface CosmeticsApi {
   slots: () => Promise<{ slots: CosmeticSlot[]; sets: CosmeticSet[]; heroAttrs?: Record<string, HeroAttribute>; names?: Record<string, string> } & Record<string, unknown>>;
+  /** every pedestal of the game, for a hero's own (crates/mm-core/src/item_builder/hero_pedestals.rs) */
+  pedestals: () => Promise<{ options: PedestalOption[] } | { error: string }>;
   /** the effects each of these slots offers, by slot: `slots` leaves them out (views/catalog/lists.ts loadSlotEffects) */
   effects: (slots: string[]) => Promise<Record<string, { id: string; name: string }[]>>;
   /** pictures by name; the clips among them come back to be decoded here (ui/cosmetic-icons.ts).

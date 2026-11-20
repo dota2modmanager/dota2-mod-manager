@@ -680,6 +680,7 @@ impl HeroPreview {
                 return Ok(HeroModels::Not("no-body"));
             }
         };
+        crate::hero_pedestals::stage_pedestal(&mut p.stage, text, library, slots, hero)?;
         // a summon slot's pick (a Spirit Bear set) is the summon's model, not something the hero
         // wears: it stands beside him in the summon's place (hero_companions.rs)
         let summoned = crate::hero_companions::summon_pick(text, slots, library).or_else(|| {
@@ -867,7 +868,7 @@ impl HeroPreview {
             recover_arcana_snapshots(&mut resources, body, weapon)?;
         }
         let sprites = if same { early_sprites } else { sprites_of(&defs_of(&particles), &resources, glb) };
-        let pedestal = stand.map(|s| crate::glb_embed::embed_glb(&s)).transpose()?;
+        let pedestal = crate::hero_pedestals::preview_glb(stand, &p.stage)?;
         let worn_models: Vec<String> = p.parts.iter().map(|x| x.model.clone()).collect();
         let others =
             crate::hero_companions::companion_models(read, game.has, hero, &p.body, &worn_models, summoned.as_deref());
@@ -938,8 +939,7 @@ pub fn motions(glb: &dyn Exporter, body: &str) -> Option<Vec<u8>> {
     std::fs::read(got).ok()
 }
 
-/// One model alone (a map prop, a tower look, a worn piece for tools/mods/look-pictures.mjs) as
-/// GLB bytes with its pictures inside; None where the game has none.
+/// One model alone (a map prop, a tower look, a worn piece for look-pictures.mjs) as GLB, or None.
 pub fn model(glb: &dyn Exporter, file: &str) -> R<Option<Vec<u8>>> {
     static RE: OnceLock<Regex> = OnceLock::new();
     let re = RE.get_or_init(|| Regex::new(r"(?i)^models/[\w/.-]+\.vmdl$").unwrap());

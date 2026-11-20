@@ -120,6 +120,7 @@ contextBridge.exposeInMainWorld('api', {
   },
   cosmetics: {
     slots: () => ipcRenderer.invoke('cosmetics:slots'),
+    pedestals: () => ipcRenderer.invoke('cosmetics:pedestals'),
     icons: (names, quick) => ipcRenderer.invoke('cosmetics:icons', names, quick),
     effects: (slots) => ipcRenderer.invoke('cosmetics:effects', slots),
     heroPortraits: (ids, tall) => ipcRenderer.invoke('cosmetics:heroPortraits', ids, tall),
@@ -137,6 +138,8 @@ contextBridge.exposeInMainWorld('api', {
     motions: (body) => ipcRenderer.invoke('preview3d:motions', body).then(wholeAnswer),
     effect: (id) => ipcRenderer.invoke('preview3d:effect', id).then(wholeAnswer),
     model: (file) => ipcRenderer.invoke('preview3d:model', file).then(wholeAnswer),
+    pedestalPicture: (model) => ipcRenderer.invoke('preview3d:pedestalPicture', model),
+    keepPedestalPicture: (model, webp) => ipcRenderer.invoke('preview3d:keepPedestalPicture', model, webp),
     modHero: (category, file, hint) => ipcRenderer.invoke('preview3d:modHero', category, file, hint),
     modModels: (category, file, hero, slots) => ipcRenderer.invoke('preview3d:modModels', category, file, hero, slots).then(wholeAnswer),
     modProps: (category, file, index) => ipcRenderer.invoke('preview3d:modProps', category, file, index).then(wholeAnswer),

@@ -18,6 +18,7 @@ use serde::Serialize;
 use serde_json::{json, Map, Value};
 
 use crate::arcana_bases::BaseSource;
+use crate::hero_pedestals::PedestalAsk;
 use crate::installer::Installer;
 use crate::item_builder_everyone::{everyone_wears_by_hero, SchemaPatch};
 use crate::item_builder_everyone_budget::{heroes_by_recency, within_budget, EVERYONE_ENTRY_BUDGET};
@@ -108,6 +109,10 @@ impl Ctx<'_> {
     fn picks_on(&self) -> usize {
         self.lib.list().iter().filter(|r| r.get("enabled") != Some(&Value::Bool(false)) && is_item_pick(r)).count()
     }
+    /// The picks, and a pedestal chosen counts as one: it is built into the same pak.
+    fn looks_on(&self) -> usize {
+        self.picks_on() + PedestalAsk::of(self.settings).chosen.len()
+    }
 }
 
 /// The game's table and the stamp of its content.
@@ -134,6 +139,7 @@ pub struct Inputs {
     excluded: HashSet<String>,
     picks: usize,
     records: Vec<Value>,
+    pedestals: PedestalAsk,
 }
 
 impl Inputs {
@@ -151,6 +157,7 @@ impl Inputs {
             excluded,
             picks: ctx.picks_on(),
             records: ctx.lib.list().to_vec(),
+            pedestals: PedestalAsk::of(ctx.settings),
         }
     }
 }
@@ -271,7 +278,7 @@ impl SchemaService {
                 return Self::drop_table(ctx, &game).map(Err);
             }
             if !ctx.on("schemaPatch") {
-                if self.files.is_none() || ctx.picks_on() == 0 {
+                if self.files.is_none() || ctx.looks_on() == 0 {
                     if self.files.is_some() {
                         ItemFilesPak::clear(ctx.inst, ctx.lib)?;
                     }
@@ -328,7 +335,7 @@ impl SchemaService {
                 crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
             let read = |p: &str| ix.read(p).ok().flatten();
             let files = files.as_mut().expect("begin keeps the pak only with picks to put in it");
-            let filled = files.build(&built, &read, inputs.picks)?;
+            let filled = files.build(&built, &read, inputs.picks, &inputs.pedestals, log)?;
             return Ok(Making::Files { filled });
         }
         let mut list: Vec<SchemaPatch> = built
@@ -341,10 +348,35 @@ impl SchemaService {
                 source: p.source.clone(),
             })
             .collect();
+        // each hero's pedestal sewn into the model the picks leave it, the game's hidden under it
+        let mut beneath = built.beneath.clone();
+        let worn = built.list.iter().filter(|p| p.item == Some(true)).map(|p| p.block.as_slice());
+        let pedestals = crate::hero_pedestals::pedestals(&inputs.pedestals.chosen, worn);
+        if !pedestals.is_empty() {
+            let ix =
+                crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
+            let read = |p: &str| ix.read(p).ok().flatten();
+            let current = |p: &str| {
+                list.iter()
+                    .flat_map(|x| x.assets.iter())
+                    .chain(beneath.iter())
+                    .find(|e| e.path().to_lowercase() == p)
+                    .map(|e| e.data.to_vec())
+            };
+            let sewn =
+                crate::hero_pedestals::pedestal_files(&pedestals, &inputs.pedestals.lifts, &current, &read, false, log);
+            let paths: HashSet<String> = sewn.entries.iter().map(|e| e.path().to_lowercase()).collect();
+            for p in list.iter_mut() {
+                p.assets.retain(|e| !paths.contains(&e.path().to_lowercase()));
+            }
+            beneath.retain(|e| !paths.contains(&e.path().to_lowercase()));
+            beneath.extend(sewn.entries);
+            crate::hero_pedestals::hide_in_table(&mut list, &base.0, &sewn.heroes)?;
+        }
         // every other player of the hero in the user's look, when asked for
         let mut left_out = None;
         if inputs.everyone {
-            let (more, left) = Self::everyone(&inputs.excluded, &base.0, &list, &built.beneath, records, game, log)?;
+            let (more, left) = Self::everyone(&inputs.excluded, &base.0, &list, &beneath, records, game, log)?;
             list.extend(more);
             left_out = Some(left);
         }
@@ -357,11 +389,11 @@ impl SchemaService {
         let patches: Vec<Patch> =
             list.iter().map(|p| Patch { id: p.id.clone(), block: p.block.clone(), source: p.source.clone() }).collect();
         let mut assets: Vec<&[crate::vpk::Entry]> = list.iter().map(|p| p.assets.as_slice()).collect();
-        assets.push(&built.beneath);
+        assets.push(&beneath);
         let ready = schema_deploy::prepare(&patches, &assets, (&base.0, &base.1))?;
         // with the bases' files, which the arcana window covered with Valve's: a plain body
         let filled =
-            list.iter().flat_map(|p| p.assets.iter()).chain(&built.beneath).map(|e| e.path().to_lowercase()).collect();
+            list.iter().flat_map(|p| p.assets.iter()).chain(&beneath).map(|e| e.path().to_lowercase()).collect();
         Ok(Making::Table { ready: Box::new(ready), filled, left_out })
     }
 

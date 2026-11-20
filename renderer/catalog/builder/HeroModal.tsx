@@ -15,6 +15,7 @@ import { GemsPane } from './GemsPane.tsx';
 import { SlotPane } from './SlotPane.tsx';
 import { SetPane, SetsPane } from './SetsPane.tsx';
 import { LooksPane } from './LooksPane.tsx';
+import { PedestalPane, pedestalName } from './PedestalPane.tsx';
 import { Preview3d } from '../preview3d/Preview3d.tsx';
 
 export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModalActions }) {
@@ -118,6 +119,10 @@ export function HeroModal({ m, actions }: { m: HeroModalModel; actions: HeroModa
               )}
             </div>
           ))}
+          {m.pedestal && (
+            <RailTab id="pedestal" tab={m.tab} actions={actions} icon="podium" label={L`Пьедестал`} count={0}
+              sub={m.pedestal.model ? cosmeticName(pedestalName(m.pedestal.model)) : L`Как в игре`} on={!!m.pedestal.model} data={{ 'data-pedestal-tab': 'true' }} />
+          )}
           <div className="ward-rail-sep" />
           <RailTab id="looks" tab={m.tab} actions={actions} icon="bookmarks" label={L`Мои образы`} count={m.looks}
             sub={m.looks ? `${m.looks} ${plural(m.looks, 'образ', 'образа', 'образов')}` : L`Сохрани надетое`} on={false} data={{ 'data-looks-tab': 'true' }} />
@@ -151,6 +156,7 @@ function Pane({ pane, m, actions, gems, gemCount }: { pane: HeroPane; m: HeroMod
     case 'slot': return <SlotPane m={pane.m} actions={pane.actions} gems={gems} gemCount={gemCount} />;
     case 'sets': return <SetsPane m={pane.m} actions={pane.actions} />;
     case 'set': return <SetPane m={pane.m} actions={pane.actions} />;
+    case 'pedestal': return <PedestalPane hero={pane.hero} onChange={actions.redraw} />;
     default: return <LooksPane looks={pane.looks} canSave={pane.canSave} busy={m.busy} actions={actions} />;
   }
 }

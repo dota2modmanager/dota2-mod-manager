@@ -143,14 +143,15 @@ interface SlotRow {
   options: number;
 }
 
-/** The middle column: 'sets', 'looks' or a slot's id. */
+/** The middle column: 'sets', 'looks', 'pedestal' or a slot's id. */
 export type HeroTab = string;
 
 export type HeroPane =
   | { kind: 'slot'; m: SlotPaneModel; actions: SlotPaneActions }
   | { kind: 'sets'; m: SetsPaneModel; actions: SetsPaneActions }
   | { kind: 'set'; m: SetPaneModel; actions: SetPaneActions }
-  | { kind: 'looks'; looks: LookRow[]; canSave: boolean };
+  | { kind: 'looks'; looks: LookRow[]; canSave: boolean }
+  | { kind: 'pedestal'; hero: string };
 
 export interface HeroModalModel {
   hero: string;
@@ -172,12 +173,16 @@ export interface HeroModalModel {
   preview: { hero: string; slots: PreviewSlot[]; sig: string; open: boolean; gemSlots: Record<string, string> } | null;
   /** the hero's npc name for the recolour window (views/hero-paint.ts); null hides its button */
   paint: string | null;
+  /** the hero's own pedestal (catalog/builder/PedestalPane.tsx): its hero id and the model chosen; null hides the tab */
+  pedestal: { hero: string; model: string | null } | null;
   pane: HeroPane;
 }
 
 export interface HeroModalActions {
   close: () => void;
   tab: (tab: HeroTab) => void;
+  /** a pedestal chosen or the switch under it flipped: the window again */
+  redraw: () => void;
   togglePreview: () => void;
   openPaint: () => void;
   takeOff: (slot: string) => void;

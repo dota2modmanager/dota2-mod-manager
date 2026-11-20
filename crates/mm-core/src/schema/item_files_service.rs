@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use serde_json::{json, Value};
 
 use crate::generated_pak::{files_json, swap_pak, write_pak};
+use crate::hero_pedestals::{self, PedestalAsk};
 use crate::i18n::t;
 use crate::installer::Installer;
 use crate::item_files::{item_files, LeftBehind};
@@ -40,16 +41,27 @@ impl ItemFilesPak {
         mine(lib).and_then(|r| r.get("generated").and_then(|g| g.get("left")).cloned()).unwrap_or(json!([]))
     }
 
-    /// The picks' files, ready for `commit`: the paths they fill, lowercased.
+    /// The picks' files, ready for `commit`: the paths they fill, lowercased. Each hero's
+    /// pedestal is sewn into the model the picks leave it (hero_pedestals.rs).
     pub fn build(
         &mut self,
         built: &Built,
         read: &dyn Fn(&str) -> Option<Vec<u8>>,
         picks: usize,
+        pedestals: &PedestalAsk,
+        log: &mut dyn FnMut(String),
     ) -> Result<HashSet<String>, String> {
         let made = item_files(&built.list, &built.beneath, read, Some(&built.files_shared))?;
-        let paths = made.entries.iter().map(|e| e.path().to_lowercase()).collect();
-        self.built = Some((made.entries, picks, made.left));
+        let worn = built.list.iter().filter(|p| p.item == Some(true)).map(|p| p.block.as_slice());
+        let all = hero_pedestals::pedestals(&pedestals.chosen, worn);
+        let mut entries = made.entries;
+        if !all.is_empty() {
+            let current = |p: &str| entries.iter().find(|e| e.path().to_lowercase() == p).map(|e| e.data.to_vec());
+            let sewn = hero_pedestals::pedestal_files(&all, &pedestals.lifts, &current, read, pedestals.hide_base, log);
+            entries = hero_pedestals::put_over(entries, sewn.entries);
+        }
+        let paths = entries.iter().map(|e| e.path().to_lowercase()).collect();
+        self.built = Some((entries, picks, made.left));
         Ok(paths)
     }
 

@@ -87,7 +87,18 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
                 crate::owner_presence::apply(o);
             }
             // the table is what these change; the bar at the bottom counts the build
-            if r.is_ok() && matches!(arg(args, 0).as_str(), Some("everyoneWearsMine" | "everyoneExcluded")) {
+            if r.is_ok()
+                && matches!(
+                    arg(args, 0).as_str(),
+                    Some(
+                        "everyoneWearsMine"
+                            | "everyoneExcluded"
+                            | "heroPedestals"
+                            | "heroPedestalHeights"
+                            | "pedestalHideBase"
+                    )
+                )
+            {
                 drop(o.refresh_schema_in_background());
             }
             r

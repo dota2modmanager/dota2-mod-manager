@@ -56,7 +56,7 @@ pub use install::{file_tx, installer, installer_repack, uninstall};
 pub use item_builder::ability_sounds::{events_file as sound_events_file, GAME_SOUNDS};
 pub use item_builder::item_effect_patch;
 pub(crate) use item_builder::{
-    ability_icons, ability_icons_service, ability_sounds, ability_sounds_service, cosmetic_names,
+    ability_icons, ability_icons_service, ability_sounds, ability_sounds_service, cosmetic_names, hero_pedestals,
     item_builder_ability_fx, item_builder_assets, item_builder_donor, item_builder_effects, item_builder_everyone,
     item_builder_everyone_budget, item_builder_fx_first, item_builder_fx_patch, item_builder_kinetic,
     item_builder_personas, item_builder_refits, item_builder_sets, item_builder_styles, item_builder_worth,
@@ -72,10 +72,10 @@ pub(crate) use looks::{
 pub use looks::{recolor, tower_looks, tree_sets};
 pub(crate) use models::{
     courier_models, hero_companions, hero_particle_styles, hero_preview, hero_preview_fx, hero_preview_picks,
-    hero_showcase, loadout_material, loadout_resources, loadout_sheet, mod_look, mod_props, model_attachments,
-    model_bodygroups, model_cloth, model_glb, model_loadout, model_merge, model_scale, model_sequences, model_skin,
-    model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec, particle_surface,
-    razor_crest_preview,
+    hero_showcase, loadout_material, loadout_pedestal, loadout_resources, loadout_sheet, mod_look, mod_props,
+    model_attachments, model_bodygroups, model_cloth, model_glb, model_loadout, model_merge, model_scale,
+    model_sequences, model_skin, model_snapshot_fallback, model_style_meshes, particle_snapshot, particle_spec,
+    particle_surface, razor_crest_preview,
 };
 pub use models::{model_hitboxes, model_particles};
 pub use owner::{

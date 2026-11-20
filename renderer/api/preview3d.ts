@@ -53,6 +53,10 @@ export interface Preview3dApi {
   effect: (id: string) => Promise<{ def: ParticleDef; sprites: Record<string, Uint8Array>; resources?: LoadoutResources } | null>;
   /** a map prop's model alone (a tree set's) as GLB bytes, for its picture; null without the game or the toolchain */
   model: (file: string) => Promise<Uint8Array | null>;
+  /** a pedestal's picture kept in the app's folder, as a data URI, or null (item_builder/hero_pedestals.rs) */
+  pedestalPicture: (model: string) => Promise<string | null>;
+  /** keep a pedestal's picture the window drew, a WebP, for the next time */
+  keepPedestalPicture: (model: string, webp: Uint8Array) => Promise<{ ok: true } | { error: string }>;
   /** every clip of a body, without its pictures, as GLB bytes; null without the game or the toolchain */
   motions: (body: string) => Promise<Uint8Array | null>;
   /** the hero a catalog mod is for (its archive downloaded and unpacked the first time), by its files or else by `hint`, its name */

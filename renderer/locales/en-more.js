@@ -417,5 +417,16 @@ const EN = {
   "Пак «{0}»: установлено {1}, пропущено {2}{3}{4}": "Pack «{0}»: {1} installed, {2} skipped{3}{4}",
   "Список: установлено {0}, не установились {1}: они остались в списке. {2}": "List: {0} installed, {1} did not go in and stay in the list. {2}",
   "Список: установлено {0}{1}": "List: {0} installed{1}",
+  "Пьедестал": "Pedestal",
+  "Пьедестал вшивается в анимацию героя на экране снаряжения и в матче не виден. Если тут ничего не выбрано, аркана со своим пьедесталом ставит его сама.": "The pedestal is sewn into the hero's animation on the loadout screen and is not seen in a match. With nothing chosen here, an arcana with a pedestal of its own puts that one on.",
+  "Пьедестал игры под героем скрывается через таблицу предметов, только у героев со своим пьедесталом.": "The game's pedestal under the hero is hidden through the item table, only for heroes with a pedestal of their own.",
+  "Скрыть пьедестал игры у всех героев": "Hide the game's pedestal for every hero",
+  "Включено: пьедестал игры пропадает у всех героев. Свой стоит у тех, кому ты его выбрал, остальные остаются без пьедестала.": "On: the game's pedestal is gone for every hero. Yours stands under the heroes you chose it for, the others stand on none.",
+  "Выключено: свой пьедестал ставится поверх пьедестала игры. Таблица предметов выключена, поэтому скрыть пьедестал игры у одного героя нельзя.": "Off: your pedestal stands over the game's. The item table is off, so the game's pedestal cannot be hidden for one hero alone.",
+  "Не удалось прочитать пьедесталы из файлов игры.": "Could not read the pedestals from the game's files.",
+  "Выбрано": "Chosen",
+  "Ноги героя проваливаются в пьедестал или висят над ним: подвинь пьедестал. Каждому герою — своя высота.": "The hero's feet sink into the pedestal or hang above it: move the pedestal. Every hero has a height of its own.",
+  "Высота пьедестала": "Pedestal height",
+  "Сбросить": "Reset",
 };
 window.EN_MORE = EN;

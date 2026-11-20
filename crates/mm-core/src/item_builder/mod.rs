@@ -18,6 +18,7 @@ pub mod ability_icons_service;
 pub mod ability_sounds;
 pub mod ability_sounds_service;
 pub mod cosmetic_names;
+pub mod hero_pedestals;
 pub mod item_builder_ability_fx;
 pub mod item_builder_assets;
 pub mod item_builder_details;
