@@ -10,9 +10,9 @@ Tauri, one Rust core, one bridge.
 
 ```
 src-tauri/src/     the app around the core: the window, the tray, updates, dialogs, the bridge
+  └─ page/         window.api, run in the page before it: api.js on top of bridge.js
   └─ crates/mm-core/src/owner/   the state the window talks to, and every channel it answers
        └─ crates/mm-core/src/    everything that touches disk, network or the game folder
-preload.js         window.api, run in the page against src-tauri/src/bridge.js
 renderer/          the window: TypeScript and React, built by Vite into out/renderer-tauri
 crates/mm-cli/     the same Rust functions from the command line, for the tests and the tools
 ```
@@ -63,7 +63,7 @@ Anything a user can do to a mod touches four places, in this order:
 1. A `crates/mm-core/src/owner/owner_*.rs` module answers the channel (`mods:something`) by
    calling into `crates/mm-core/src/`, and `crates/mm-core/src/owner/channel_args.rs` says what it
    may be handed
-2. `preload.js` exposes it as `api.mods.something`
+2. `src-tauri/src/page/api.js` exposes it as `api.mods.something`
 3. `renderer/api/` gives it a type: what it takes and what its handler answers
 4. `renderer/views/` calls it and draws the result
 
@@ -215,8 +215,8 @@ through the same compiler, Valve's `resourcecompiler.exe` from the Workshop Tool
 `content/dota_addons/d2mm_<id>/` of the install the compiler belongs to, compiled one at a time
 into `game/dota_addons/d2mm_<id>/`, read back as VPK entries, and both folders are deleted whether
 the compile worked or not. The compiler is never downloaded, because it is Valve's and not open
-source: it is the game's own (`game/bin/win64`), or one picked in Settings through a dialog of the
-main process, never a path from the window. The tools exist only for the Windows build of Dota:
+source: it is the game's own (`game/bin/win64`), or one picked in Settings through a dialog the
+shell opens, never a path from the window. The tools exist only for the Windows build of Dota:
 on Linux Steam installs them while Dota runs through Proton, and the compiler runs under Wine, in a
 prefix of the app's own in `userData/wine` made once with `wineboot` (`crates/mm-core/src/tools/wine.rs`). Going back to
 the Linux build to play, Steam deletes the Windows files and the compiler with them, so once the app
@@ -526,9 +526,9 @@ says what it owns. The rest:
 | File | What it owns |
 |---|---|
 | `src-tauri/src/*.rs` | The app around the core: the window and tray, the updater, dialogs, the command line, the screenshot switches (`harness.rs`) |
-| `src-tauri/src/bridge.js` | What `preload.js` runs against in the page: one Tauri command for every call, one event for everything the core sends |
+| `src-tauri/src/page/bridge.js` | What `api.js` runs on in the page: one Tauri command for every call, one event for everything the core sends |
 | `crates/mm-cli/src/*.rs` | The core's functions from the command line: `mm-cli call`, the sandbox's builds and the mod kit |
-| `preload.js` | The `window.api` surface, and nothing else crosses |
+| `src-tauri/src/page/api.js`, `src-tauri/src/page/uninstall-api.js` | The `window.api` surface, and the removal window's `window.uninstall`; nothing else crosses |
 | `tools/catalog/sign-catalog.js` | The signing side, for whoever holds a private key |
 | `renderer/settings/PreviewCacheBlock.tsx` | Optional per-hero preparation of the GLB and particle-resource disk cache via `preview3d:warm` |
 | `renderer/app.ts`, `renderer/shell/*` | The window's start, and its own elements every screen reaches: the title bar, search, the switches, progress, drops, updates |
@@ -542,7 +542,7 @@ says what it owns. The rest:
 | `renderer/core/*` | What the screens share: the store, the router, the records, the categories, the 18+ question |
 | `renderer/motion/*` | How things move: travel, fold, swap, reveal |
 | `renderer/styles/*`, `renderer/fonts/*` | The tokens every size and colour comes from, and the faces |
-| `renderer/uninstall.html`, `renderer/uninstall.js`, `renderer/uninstall-bridge.d.ts` | The removal window, a classic script loaded without a build, and the types of the bridge its preload gives it |
+| `renderer/uninstall.html`, `renderer/uninstall.js`, `renderer/uninstall-bridge.d.ts` | The removal window, a classic script loaded without a build, and the types of the bridge `uninstall-api.js` gives it |
 | `tools/dev/sandbox.js` | The throwaway game tree |
 | `tools/dev/e2e.mjs`, `test/fixtures/e2e/*` | Installing, switching and removing a mod by clicking through the real window, offline, in the sandbox |
 | `tools/catalog/r2-sync.mjs`, `tools/release/r2-release.mjs`, `tools/catalog/r2-client.js`, `tools/catalog/mirror-plan.js` | The picture mirror, the update mirror, the signing they share, and which pictures the mirror copies again or refuses |
@@ -560,7 +560,7 @@ says what it owns. The rest:
 | `tools/ops/radar.mjs` | The daily "Project status" issue and the maintainer's overdue alerts; reads expiry dates from `.github/credentials.json` and lists a closed `regression` issue that no file in `docs/incidents/` names |
 | `tools/dev/gen-doc-facts.js` | Writes the sentences in the READMEs that come from `package.json`, between `facts:` markers |
 | `tools/ops/sync-labels.mjs` | Makes the repository's labels match `.github/labels.json` |
-| `tools/dev/typecheck.mjs` | Runs `tsc` over the four projects (the two preloads through their JSDoc, then the main process, the tests and the window, all three strict) and holds the error count per file at or below `.github/typecheck-baseline.json` |
+| `tools/dev/typecheck.mjs` | Runs `tsc` over the three projects (the page scripts through their JSDoc, then the tests and the window, both strict) and holds the error count per file at or below `.github/typecheck-baseline.json` |
 | `tools/dev/fuzz-parsers.mjs` | Throws damaged VPK indexes at the tree walkers and damaged zips at the archive door for as long as you let it, from a seed, and keeps anything they mishandle |
 | `tools/release/rollback.mjs` | Switches a feature off for the broken releases only, or everywhere, writes and signs `config/app.json`, and refuses a range old copies cannot read or a key the app does not pin |
 

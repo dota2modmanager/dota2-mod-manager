@@ -1,4 +1,4 @@
-/* What preload-uninstall.js puts on window for the removal window (renderer/uninstall.js), with
+/* What src-tauri/src/page/uninstall-api.js puts on window for the removal window (renderer/uninstall.js), with
  * the answers crates/mm-core/src/owner/owner_uninstall.rs gives. The removal window is a classic script, loaded
  * without a build, so it is type-checked through its JSDoc by tsconfig.json at the root, the way
  * the preloads are. renderer/tsconfig.json leaves this file out: the main window has no such

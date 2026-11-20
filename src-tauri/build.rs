@@ -1,6 +1,5 @@
 fn main() {
-    // the page's api is preload.js itself (src/bridge.js): a change to it is a change to the binary
-    println!("cargo:rerun-if-changed=../preload.js");
-    println!("cargo:rerun-if-changed=src/bridge.js");
+    // the page scripts are built into the binary (main.rs page_script): a change to one is a change to it
+    println!("cargo:rerun-if-changed=src/page");
     tauri_build::build()
 }

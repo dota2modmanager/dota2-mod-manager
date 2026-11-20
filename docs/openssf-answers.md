@@ -35,7 +35,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 | `floss_license_osi` | Met: GPL-3.0 is OSI approved | repo LICENSE |
 | `license_location` | Met: LICENSE in the repository root | repo LICENSE |
 | `documentation_basics` | Met | site, and repo README.md |
-| `documentation_interface` | Met | repo renderer/api/, the typed window calls, held against preload.js in CI |
+| `documentation_interface` | Met | repo renderer/api/, the typed window calls, held against window.api and the Rust channels in CI |
 | `sites_https` | Met: github.com, dota2modmanager.com and cdn.dota2modmanager.com are TLS only | site |
 | `discussion` | Met: GitHub Issues and Discussions, plus the project's Discord | repo issues |
 | `english` | Met: every document in the repository is English; README.ru.md and CHANGELOG.ru.md are twins for Russian users | repo README.md |
@@ -46,7 +46,7 @@ Shorthand used below: **repo** is `https://github.com/dota2modmanager/dota2-mod-
 > The app is a desktop program, and its external interfaces are documented in three places: the
 > window itself is described with screenshots on the site, the `d2mm://` link format and the
 > settings file are described in ARCHITECTURE.md, and every call the window makes into the app is
-> in renderer/api/, typed and held against the bridge in preload.js, which fails CI when they drift.
+> in renderer/api/, typed and held against window.api and the Rust that answers each channel, which fails CI when they drift.
 
 ## Change control
 

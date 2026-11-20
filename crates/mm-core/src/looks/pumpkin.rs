@@ -95,7 +95,7 @@ fn encode(s: &str) -> String {
 /// errors: [{error}]}` or `{error}`, as the window's own import gives it.
 pub type Import<'a> = &'a mut dyn FnMut(&[PathBuf], &mut Library) -> Value;
 
-/// The pumpkin's side in the main process, over the network and the worker's address.
+/// The pumpkin's side in the core, over the network and the worker's address.
 pub struct Pumpkin<'a> {
     pub net: &'a Net,
     pub host: String,

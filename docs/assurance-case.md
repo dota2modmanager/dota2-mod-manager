@@ -25,7 +25,7 @@ is short and public ([PRIVACY.md](PRIVACY.md)).
 |---|---|---|---|
 | 1 | The network and the app | Catalog data, mod archives, the switches file, one external tool | `crates/mm-core/src/catalog/net_fetch.rs`, `crates/mm-core/src/catalog/catalog_signature.rs`, `crates/mm-core/src/catalog/remote_config.rs`, `crates/mm-core/src/tools/toolchain.rs` |
 | 2 | Foreign archives and the disk | Zip and VPK contents, file names, paths | `crates/mm-core/src/formats/safe_zip.rs`, `crates/mm-core/src/formats/vpk.rs`, `crates/mm-core/src/install/file_tx.rs` |
-| 3 | The main process and the window | Every action the UI can ask for | `preload.js` and the `crates/mm-core/src/owner/owner_*.rs` modules |
+| 3 | The core and the window | Every action the UI can ask for | `src-tauri/src/page/api.js`, `crates/mm-core/src/owner/channel_args.rs` and the `crates/mm-core/src/owner/owner_*.rs` modules |
 | 4 | The app and the game folder | Mod packs, loose fonts and cursors, one patched text file | `crates/mm-core/src/install/installer.rs`, `crates/mm-core/src/install/overlays.rs`, `crates/mm-core/src/game/patcher.rs` |
 | 5 | The user and everything above | Files they drop, presets from other people | `crates/mm-core/src/install/import.rs`, `crates/mm-core/src/presets/preset_share.rs`, `crates/mm-core/src/install/adopt.rs` |
 
@@ -70,14 +70,14 @@ round-trips byte for byte).
 
 **Catalog text rendered as code.** Guides are HTML written by people who are not us. They go
 through an allowlist of tags, and the window runs under a content security policy with no remote
-scripts, no node integration and context isolation on, so text that got through would still have
-nothing to reach.
+scripts. The page gets no Tauri globals and no plugin commands, only the app's own calls, so text
+that got through would still have nothing to reach.
 *Check:* `renderer/ui/guide.ts` (`sanitizeGuideHtml`), `renderer/index.html` (the policy itself),
-`crates/mm-core/src/app/main_window.rs` (`contextIsolation: true`, `nodeIntegration: false`).
+`src-tauri/tauri.conf.json` (`withGlobalTauri: false`), `src-tauri/capabilities/main.json` (no plugin permissions).
 
 **The window asking for something the app should not do.** The renderer cannot touch the
 filesystem or start a process, and the policy limits what it may fetch to pictures from two
-hosts. Everything else it does is a channel `preload.js` exposes. Every channel sits behind
+hosts. Everything else it does is a channel `src-tauri/src/page/api.js` exposes. Every channel sits behind
 `crates/mm-core/src/owner/channel_args.rs`: a call is answered only from the top frame of the app's own page and only
 with arguments that fit its entry in `crates/mm-core/src/owner/channel_args.rs`, and the window may change only the
 settings it has a control for. Both windows run sandboxed, the page gets two browser permissions,

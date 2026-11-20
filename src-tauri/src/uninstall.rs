@@ -13,13 +13,9 @@ pub fn allowed(label: &str, channel: &str) -> bool {
     label != LABEL || mm_core::owner_uninstall::CHANNELS.contains(&channel)
 }
 
-/// preload-uninstall.js run in the page against the bridge, as preload.js is for the main window.
+/// The removal window's page gets uninstall-api.js on the bridge, and none of the main window's api.
 fn init_script() -> String {
-    format!(
-        "{}\n;(function (require) {{\n{}\n}})(window.__mmRequire);\n",
-        include_str!("bridge.js"),
-        include_str!("../../preload-uninstall.js")
-    )
+    crate::page_script(include_str!("page/uninstall-api.js"))
 }
 
 pub fn open(app: &tauri::App, quiet: bool) -> tauri::Result<()> {

@@ -1,20 +1,22 @@
-/* window.api under Tauri: preload.js itself, run against a stand-in for Electron's renderer half.
+/* The page's way to the app. Rust puts this file in front of api.js (or uninstall-api.js for the
+ * removal window) in the page's initialization script (src-tauri/src/main.rs init_script), and
+ * the two build window.api on what this one leaves at window.__mm:
  *
- * Rust puts this file and preload.js together into the page's initialization script
- * (src-tauri/src/lib.rs), so the window gets the very same api object it gets in Electron and
- * nothing under renderer/ changes. ipcRenderer.invoke becomes one Tauri command, mm_invoke, which
- * Rust answers itself or hands to the TypeScript host; what the main process sends arrives as the
- * Tauri event "mm".
+ *   invoke(channel, ...args)  one Tauri command, mm_invoke, that Rust answers; a Promise
+ *   send(channel, ...args)    the same, when nothing waits for an answer
+ *   on(channel, cb)           what the shell sends, the Tauri event "mm", by channel
+ *   pathOf(file)              the full path of a file dropped on the window
  *
- * Bytes travel as {$b64} both ways (src-tauri/host/wire.ts), and come out as Uint8Array here; an
- * answer that is only bytes arrives raw, as an ArrayBuffer (answerOf).
+ * Bytes travel as {$b64} both ways and come out as Uint8Array here; an answer that is only bytes
+ * arrives raw, as an ArrayBuffer (answerOf). The rest of this file is what a webview does not do
+ * by itself: the catalog's pictures from disk, the title bar, Ctrl +/-/0.
  */
 (function () {
   if (window.__mmBridge) return;
   window.__mmBridge = true;
 
-  // Electron points the window's catalog pictures at mm-preview://, which answers from disk and
-  // from the mirror before GitHub (crates/mm-core/src/catalog/preview_cache.rs). A webview has no request
+  // The catalog's pictures come through mm-preview://, which answers from disk and from the mirror
+  // before GitHub (crates/mm-core/src/catalog/preview_cache.rs). A webview has no request
   // redirect, so an image's address is changed as the page sets it; Rust answers the scheme
   // (Previews in src-tauri/src/ported.rs). WebView2 serves a custom scheme as http://<name>.localhost.
   const RAW = 'https://raw.githubusercontent.com/h6rd/Dota2PornFxWeb/main/';
@@ -71,7 +73,7 @@
   const invoke = (cmd, args) => tauri().invoke(cmd, args);
 
   /* Files dropped on the window: Tauri reports their paths apart from the DOM's File objects,
-     so the last drop's paths are kept by name for webUtils.getPathForFile. */
+     so the last drop's paths are kept by name for pathOf. */
   const dropped = new Map();
   const pathOf = (file) => dropped.get(file && file.name) || '';
 
@@ -80,9 +82,8 @@
     const list = subscribers.get(channel);
     if (!list) return;
     const decoded = decode(args || []);
-    for (const cb of list) { try { cb({}, ...decoded); } catch (err) { console.error(err); } }
+    for (const cb of list) { try { cb(...decoded); } catch (err) { console.error(err); } }
   };
-  window.__mmDeliver = deliver;
 
   const listen = (event, handler) => {
     const cb = tauri().transformCallback((e) => handler(e.payload));
@@ -94,7 +95,7 @@
       dropped.clear();
       for (const full of (p && p.paths) || []) dropped.set(full.split(/[\\/]/).pop(), full);
     });
-    /* "loaded" as Electron's did-finish-load means it: the page's scripts have run and subscribed,
+    /* "loaded" means the page's scripts have run and subscribed,
        so what the shell says next (a d2mm:// link the app was started by, whether Dota is open)
        has someone to hear it. Told any earlier, it went nowhere. */
     const loaded = () => events.catch(() => {}).then(() => invoke('mm_loaded', {})).catch(() => {});
@@ -102,12 +103,12 @@
   };
   if (tauri()) start(); else document.addEventListener('DOMContentLoaded', start, { once: true });
 
-  // The title bar moves the window. Electron reads that from -webkit-app-region: drag; WebView2
-  // honours it too, but recomputes the regions synchronously at every step of a resize, about
-  // 900 ms each (measured 2026-11-14), so dragging an edge stalled and leaving a maximized window
-  // froze for seconds. Here the regions are switched off, and a press where the CSS marks the bar
-  // draggable (--drag: 1 beside each app-region rule) asks Rust to move the window, a second
-  // press in a row to maximize it, as a native caption does.
+  // The title bar moves the window. WebView2 honours -webkit-app-region: drag, but recomputes the
+  // regions synchronously at every step of a resize, about 900 ms each (measured 2026-11-14), so
+  // dragging an edge stalled and leaving a maximized window froze for seconds. Here the regions are
+  // switched off, and a press where the CSS marks the bar draggable (--drag: 1 beside each app-region
+  // rule) asks Rust to move the window, a second press in a row to maximize it, as a native caption
+  // does.
   const noRegions = () => {
     const off = document.createElement('style');
     off.textContent = '*, *::before, *::after { -webkit-app-region: no-drag !important; }';
@@ -121,31 +122,20 @@
     invoke('mm_drag', { toggle: e.detail === 2 }).catch(() => {});
   }, true);
 
-  // Ctrl +/-/0 scale the content, as Electron's before-input-event did (crates/mm-core/src/app/main_window.rs)
+  // Ctrl +/-/0 scale the content (crates/mm-core/src/app/main_window.rs)
   window.addEventListener('keydown', (e) => {
     if (!e.ctrlKey || e.altKey || !['=', '+', '-', '_', '0'].includes(e.key)) return;
     e.preventDefault();
     invoke('mm_key', { key: e.key, control: true, alt: false }).catch(() => {});
   }, true);
 
-  const ipcRenderer = {
+  window.__mm = {
     invoke: (channel, ...args) => invoke('mm_invoke', { channel, args: encode(args) }).then(answerOf),
     send: (channel, ...args) => { invoke('mm_send', { channel, args: encode(args) }).catch(() => {}); },
     on: (channel, cb) => {
       if (!subscribers.has(channel)) subscribers.set(channel, new Set());
       subscribers.get(channel).add(cb);
-      return ipcRenderer;
     },
-    removeListener: (channel, cb) => { subscribers.get(channel)?.delete(cb); return ipcRenderer; },
-    removeAllListeners: (channel) => { subscribers.delete(channel); return ipcRenderer; },
-  };
-  const electron = {
-    ipcRenderer,
-    contextBridge: { exposeInMainWorld: (key, value) => { window[key] = value; } },
-    webUtils: { getPathForFile: pathOf },
-  };
-  window.__mmRequire = (name) => {
-    if (name === 'electron') return electron;
-    throw new Error(`preload under Tauri: no module ${name}`);
+    pathOf,
   };
 })();

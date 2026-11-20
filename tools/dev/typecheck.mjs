@@ -72,7 +72,7 @@ export function compare(baseline, now) {
 
 /**
  * Run tsc through the local install over every project, and hand back whatever it printed.
- * tsconfig.json is the two preload bridges, the JavaScript left, checked through JSDoc;
+ * tsconfig.json is the page scripts in src-tauri/src/page/, checked through JSDoc;
  * test/tsconfig.json is the tests written in TypeScript and renderer/tsconfig.json the window's
  * TypeScript, both strict and with nothing in the
  * baseline, so any error there is a file that appeared with errors and fails the run.

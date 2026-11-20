@@ -168,7 +168,7 @@ struct Builds {
 
 pub type R = Result<Value, String>;
 
-/// A group of channels (one src/ipc-*.ts module): its names, and what answers them.
+/// A group of channels (one owner_*.rs module): its names, and what answers them.
 type Group = (&'static [&'static str], fn(&Owner, &str, &[Value]) -> Option<R>);
 
 /// Every group the owner answers.

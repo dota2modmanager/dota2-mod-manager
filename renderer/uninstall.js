@@ -7,7 +7,7 @@
  * "delete all data" means nothing until you know it is 340 MB of pictures. The footer adds
  * up what the ticked ones free, so the answer is in front of the button that acts on it.
  *
- * Nothing here reaches the network or the rest of the app: see preload-uninstall.js.
+ * Nothing here reaches the network or the rest of the app: see src-tauri/src/page/uninstall-api.js.
  */
 'use strict';
 

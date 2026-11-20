@@ -92,8 +92,8 @@ module.exports = [
     ],
   },
   {
-    // the preload bridge, the tests and the tools
-    files: ['preload.js', 'test/**/*.js', 'tools/**/*.js'],
+    // the tests and the tools
+    files: ['test/**/*.js', 'tools/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'commonjs', globals: NODE },
     rules,
   },
@@ -121,21 +121,21 @@ module.exports = [
     rules,
   },
   {
-    /* The Tauri shell's bridge (src-tauri/src/bridge.js): a classic script injected into the page
-       before anything else runs, so browser globals and no module syntax. */
+    /* The page scripts the Tauri shell puts in front of the window (src-tauri/src/page/): classic
+       scripts that run before anything else, so browser globals and no module syntax. */
     files: ['src-tauri/src/**/*.js'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'script', globals: BROWSER },
     rules,
   },
   {
-    // the window: browser globals, plus the bridge preload.js puts there
+    // the window: browser globals, plus the api src-tauri/src/page/api.js puts there
     files: ['renderer/**/*.js'],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: 'module',
       /* `L` and `tr` are the translation helpers, put on window by renderer/i18n.js so every
-         screen can use them without importing anything; `api` is the bridge preload.js
-         installs. All three are globals in fact, so they are globals here. */
+         screen can use them without importing anything; `api` is what
+         src-tauri/src/page/api.js installs. All three are globals in fact, so they are globals here. */
       globals: { ...BROWSER, api: 'readonly', L: 'readonly', tr: 'readonly' },
     },
     rules,

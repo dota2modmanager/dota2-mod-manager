@@ -1,5 +1,5 @@
 //! Everything the Settings screen is told, in one answer: the stored values
-//! plus the facts about this machine only the main process can answer (the game path is valid,
+//! plus the facts about this machine only the core can answer (the game path is valid,
 //! the folder the game will really mount, whose mods those are, what Minify is doing, and what is
 //! stranded outside the folder). Both settings channels answer with this, never the bare store.
 
