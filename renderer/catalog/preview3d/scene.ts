@@ -100,7 +100,9 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     source.manifest.terrorbladeWeaponOwners = weaponOwners(options);
     // beside the hero, not on his bones: vendor/dota-loadout's viewer stands each on its own clip
     source.manifest.companions=(options.isolated?[]:options.companions??[]).map((c,i)=>{const owner='companion-'+i;source.addGlb(c.glb,{key:owner,owner,model:c.model});delete source.manifest.attachments[owner];return {owner,clip:c.clip};});
-    if(!options.isolated){const response=await fetch(new URL('./studio-pedestal.glb',import.meta.url),{signal});if(!response.ok)throw Error('Cannot load local pedestal');const pedestal=new Uint8Array(await response.arrayBuffer());check();source.addGlb(pedestal,{key:'pedestal',owner:'pedestal'});source.manifest.studioPedestal=true;}
+    // the hero's own pedestal out of the game (item_builder/hero_pedestals.rs), else the window's stand
+    if(!options.isolated&&options.pedestal){source.addGlb(options.pedestal,{key:'pedestal',owner:'pedestal'});}
+    else if(!options.isolated){const response=await fetch(new URL('./studio-pedestal.glb',import.meta.url),{signal});if(!response.ok)throw Error('Cannot load local pedestal');const pedestal=new Uint8Array(await response.arrayBuffer());check();source.addGlb(pedestal,{key:'pedestal',owner:'pedestal'});source.manifest.studioPedestal=true;}
     if(options.clip&&source.manifest.animations)source.manifest.animations.idle=options.clip;
     if(options.stage?.background)host.style.setProperty('--stage-tint',`rgb(${options.stage.background.map(x=>Math.round(x*255)).join(',')})`);
     let textures=await loadoutTextures(textureSource,options.sprites??{},options.resources);check();

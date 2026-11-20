@@ -7,10 +7,11 @@
 //! misreads is refused instead of patched. The layout follows ValveResourceFormat's BinaryKV3.cs
 //! (MIT), versions 1 to 5.
 
+use super::kv3_zstd::before_v5;
+pub use super::kv3_zstd::{zstd, zstd_pack};
 use indexmap::IndexMap;
 use serde_json::{json, Value as Json};
 use std::collections::HashMap;
-use std::io::Read;
 
 use crate::lz4;
 
@@ -171,21 +172,6 @@ fn i32_at(b: &[u8], at: usize) -> Result<i32, Kv3Error> {
 }
 fn put_i32(b: &mut [u8], at: usize, v: i64) {
     b[at..at + 4].copy_from_slice(&(v as i32).to_le_bytes());
-}
-
-/// A zstd frame unpacked, checked against the size the header gives when there is one.
-pub fn zstd(src: &[u8], size: Option<usize>) -> Result<Vec<u8>, Kv3Error> {
-    let mut d = ruzstd::decoding::StreamingDecoder::new(src).map_err(|e| Kv3Error(format!("zstd: {e}")))?;
-    let mut out = Vec::new();
-    d.read_to_end(&mut out).map_err(|e| Kv3Error(format!("zstd: {e}")))?;
-    if size.is_some_and(|s| s != out.len()) {
-        return err("a zstd buffer of another size");
-    }
-    Ok(out)
-}
-
-fn zstd_pack(src: &[u8]) -> Vec<u8> {
-    ruzstd::encoding::compress_to_vec(src, ruzstd::encoding::CompressionLevel::Fastest)
 }
 
 /// The blob table after the types, or None when there are no blobs; either way the trailer that
@@ -506,7 +492,7 @@ pub fn read(block: &[u8]) -> Result<Block, Kv3Error> {
     let mut p = 20usize;
     let method = u32_at(block, p)?;
     p += 4;
-    if method != LZ4 && method != NONE && !(method == ZSTD && version >= 5) {
+    if method != LZ4 && method != NONE && !(method == ZSTD && version >= 2) {
         return err(format!("compression {method} is not handled"));
     }
     let mut fields: HashMap<&'static str, (i64, usize)> = HashMap::new();
@@ -573,8 +559,14 @@ pub fn read(block: &[u8]) -> Result<Block, Kv3Error> {
             _ => lz4::decode(src, size as usize),
         }
     };
+    // before version 5, zstd packs the buffer and then the blobs (kv3_zstd.rs)
+    let mut zstd_blobs: Option<Vec<u8>> = None;
     let buffers = if version >= 5 {
         vec![unpack(h("unc1"), h("cmp1"), &mut p)?, unpack(h("unc2"), h("cmp2"), &mut p)?]
+    } else if method == ZSTD {
+        let (raw, blobs) = before_v5(block, &mut p, h("cmp"), h("unc"))?;
+        zstd_blobs = Some(blobs);
+        vec![raw]
     } else {
         let csize = if version == 1 { (block.len() - header_end) as i64 } else { h("cmp") };
         vec![unpack(h("unc"), csize, &mut p)?]
@@ -669,7 +661,10 @@ pub fn read(block: &[u8]) -> Result<Block, Kv3Error> {
     let mut blob_data = Vec::new();
     p = blobs_at;
     if let Some(t) = &table {
-        let (data, end) = if method == ZSTD {
+        let (data, end) = if let Some(mut raw) = zstd_blobs.take() {
+            raw.extend_from_slice(block.get(p..p + 4).unwrap_or(&[]));
+            (read_blobs(&raw, 0, t, &buffers[tbuf], h("blobs"))?.0, p + 4)
+        } else if method == ZSTD {
             let size = (h("cmp") - h("cmp1") - h("cmp2")).max(0) as usize;
             let mut raw = zstd(block.get(p..p + size).ok_or_else(|| Kv3Error("the blobs ran out".into()))?, None)?;
             raw.extend_from_slice(block.get(p + size..p + size + 4).unwrap_or(&[]));
@@ -856,6 +851,10 @@ impl Block {
 
     /// The block with the buffers and blobs as they are now, compressed the way it came.
     pub fn encode(&mut self) -> Result<Vec<u8>, Kv3Error> {
+        // one zstd frame for the buffer and the blobs: `write` writes such a block anew
+        if self.method == ZSTD && self.version < 5 {
+            return err("a zstd block before version 5 is written with kv3::write");
+        }
         let mut head = self.head.clone();
         let mut out = self.buffers.clone();
         let mut blob_part = self.blob_part.clone();

@@ -8,6 +8,7 @@ pub mod hero_preview_fx;
 pub mod hero_preview_picks;
 pub mod hero_showcase;
 pub mod loadout_material;
+pub mod loadout_pedestal;
 pub mod loadout_resources;
 pub mod loadout_sheet;
 pub mod mod_look;

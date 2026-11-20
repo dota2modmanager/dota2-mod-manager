@@ -110,7 +110,10 @@ function heroPreview(slots: CosmeticSlot[], active: SlotState | null) {
   return {
     hero,
     slots: previewSlots,
-    sig: JSON.stringify(previewSlots.map(s => [s.slot, s.stock, pick(s)?.itemId ?? '', pick(s)?.effectId ?? '', pick(s)?.targetItemId ?? ''])),
+    // the hero's own pedestal stands under it too: a new one draws the stage again
+    sig: JSON.stringify([...previewSlots.map(s => [s.slot, s.stock, pick(s)?.itemId ?? '', pick(s)?.effectId ?? '', pick(s)?.targetItemId ?? '']),
+      state.settings?.heroPedestals?.[hero.replace(/^npc_dota_hero_/, '')] ?? '',
+      state.settings?.heroPedestalHeights?.[hero.replace(/^npc_dota_hero_/, '')] ?? 0]),
     open: previewOpen,
     gemSlots: Object.fromEntries(previewSlots.flatMap((s, i) => {
       const item = pick(s);
@@ -151,13 +154,15 @@ function drawHero(key: number, st: HeroState): void {
     again();
   };
   // a slot the hero lost (a persona taken off) leaves its tab for the first one
-  if (st.tab !== 'sets' && st.tab !== 'looks' && !slots.some((s) => s.slot === st.tab)) {
+  if (st.tab !== 'sets' && st.tab !== 'looks' && st.tab !== 'pedestal' && !slots.some((s) => s.slot === st.tab)) {
     st.tab = sets.length ? 'sets' : slots[0]?.slot || 'looks';
     st.slot = st.tab === 'sets' || st.tab === 'looks' ? null : slotState(st.tab);
   }
   const looks = looksOf(hero);
   let pane: HeroPane;
+  const heroId = heroNpc(slots) || '';
   if (st.tab === 'sets') pane = setsPane(heroName, st.sets, again, goSlot);
+  else if (st.tab === 'pedestal' && heroId) pane = { kind: 'pedestal', hero: heroId };
   else if (st.tab === 'looks') {
     pane = {
       kind: 'looks',
@@ -194,6 +199,7 @@ function drawHero(key: number, st: HeroState): void {
     looks: looks.length,
     preview: heroPreview(slots, st.slot),
     paint: heroNpc(slots),
+    pedestal: heroId ? { hero: heroId, model: state.settings?.heroPedestals?.[heroId] ?? null } : null,
     pane,
   }, {
     close: closeOverlay,
@@ -201,8 +207,9 @@ function drawHero(key: number, st: HeroState): void {
       if (tab === st.tab && tab !== 'sets') return;
       if (tab === 'sets') { st.sets.set = null; lastTab = 'sets'; loadSetIcons(heroName); }
       if (tab === 'looks') lastTab = 'looks';
-      if (tab === 'sets' || tab === 'looks') { st.tab = tab; st.slot = null; again(); } else goSlot(tab);
+      if (tab === 'sets' || tab === 'looks' || tab === 'pedestal') { st.tab = tab; st.slot = null; again(); } else goSlot(tab);
     },
+    redraw: again,
     togglePreview: () => { previewOpen = !previewOpen; again(); },
     openPaint: () => { const npc = heroNpc(slots); if (npc) void openPaint(npc, heroName, () => openItemHeroModal(heroName, null), paintPreview(slots)); },
     takeOff: (slot) => void busy(async () => {

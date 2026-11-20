@@ -38,6 +38,12 @@ export interface StoredSettings {
   everyoneExcluded: string[];
   /** the heroes the last build left out to stay under that limit */
   everyoneLeftOut: string[];
+  /** each hero's own pedestal on the loadout screen, hero id to model (crates/mm-core/src/item_builder/hero_pedestals.rs) */
+  heroPedestals?: Record<string, string>;
+  /** each hero's pedestal moved up or down from its feet, in the game's units (-64 to 64) */
+  heroPedestalHeights?: Record<string, number>;
+  /** without the item table: the game's pedestal hidden for every hero, so the chosen ones stand alone */
+  pedestalHideBase?: boolean;
   schemaPatch: boolean;
   cosmetics: Record<string, unknown>;
   /** the item builder's saved looks (views/item-looks.ts) */

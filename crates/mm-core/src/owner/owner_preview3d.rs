@@ -20,6 +20,8 @@ pub const CHANNELS: &[&str] = &[
     "preview3d:motions",
     "preview3d:effect",
     "preview3d:model",
+    "preview3d:pedestalPicture",
+    "preview3d:keepPedestalPicture",
     "decor:scene",
     "decor:map",
     "decor:ground",
@@ -117,6 +119,7 @@ pub(crate) fn pack(o: &Owner, v: Value) -> Value {
 /// The answer of preview3d:models before packing.
 fn models(o: &Owner, hero: &str, slots: &[Value], with_tool: Option<bool>) -> Result<HeroModels, String> {
     let i = inputs(o);
+    crate::hero_pedestals::set_preview_ask(crate::hero_pedestals::PedestalAsk::of(&o.core().settings));
     let tool = with_tool.unwrap_or(i.tool);
     let text: &[u8] = i.text.as_ref().map(|t| t.0.as_slice()).unwrap_or_default();
     let lines = std::sync::Mutex::new(Vec::<String>::new());
@@ -427,6 +430,26 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 }
             }
             pack(o, json!({ "materials": out }))
+        }
+        // a pedestal's picture the window drew before, kept in the app's folder
+        "preview3d:pedestalPicture" => {
+            let dir = o.core().user_data.clone();
+            match crate::hero_pedestals::kept_picture(&dir, &crate::js::string(&a0)) {
+                Some(b) => {
+                    json!(format!("data:image/webp;base64,{}", base64::engine::general_purpose::STANDARD.encode(b)))
+                }
+                None => Value::Null,
+            }
+        }
+        "preview3d:keepPedestalPicture" => {
+            let dir = o.core().user_data.clone();
+            let kept = crate::owner::bytes_of(&arg(args, 1)).and_then(|b| {
+                crate::hero_pedestals::keep_picture(&dir, &crate::js::string(&a0), &b.unwrap_or_default())
+            });
+            match kept {
+                Ok(()) => json!({ "ok": true }),
+                Err(e) => json!({ "error": e }),
+            }
         }
         "preview3d:model" => {
             let i = inputs(o);

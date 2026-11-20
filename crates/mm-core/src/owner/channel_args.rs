@@ -270,6 +270,47 @@ fn mod_labels(v: Option<&Value>) -> Option<String> {
     None
 }
 
+/// Each hero's pedestal: a hero id to a model path (hero_pedestals.rs takes only model paths).
+fn hero_pedestals(v: Option<&Value>) -> Option<String> {
+    let Some(o) = obj_view(v) else { return fail("an object") };
+    if o.len() > 300 {
+        return fail("at most 300 heroes");
+    }
+    for (hero, model) in o.iter() {
+        let id = !hero.is_empty()
+            && hero.len() <= 64
+            && hero.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'_');
+        if !id {
+            return Some(format!("hero {}: expected a hero id", crate::js::slice_utf16(hero, 60)));
+        }
+        if model.as_str().and_then(crate::hero_pedestals::clean_model).is_none() {
+            return Some(format!("pedestal of {hero}: expected a model path"));
+        }
+    }
+    None
+}
+
+/// Each hero's pedestal height: a hero id to a number of the game's units, within the limit.
+fn hero_pedestal_heights(v: Option<&Value>) -> Option<String> {
+    let Some(o) = obj_view(v) else { return fail("an object") };
+    if o.len() > 300 {
+        return fail("at most 300 heroes");
+    }
+    let max = crate::loadout_pedestal::LIFT_MAX;
+    for (hero, n) in o.iter() {
+        let id = !hero.is_empty()
+            && hero.len() <= 64
+            && hero.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'_');
+        if !id {
+            return Some(format!("hero {}: expected a hero id", crate::js::slice_utf16(hero, 60)));
+        }
+        if !n.as_f64().is_some_and(|n| n.is_finite() && (-max..=max).contains(&n)) {
+            return Some(format!("height of {hero}: expected a number from -{max} to {max}"));
+        }
+    }
+    None
+}
+
 fn ui_lang(v: Option<&Value>) -> Option<String> {
     let ok = v.and_then(Value::as_str).is_some_and(|s| {
         let b = s.as_bytes();
@@ -313,6 +354,9 @@ pub fn window_settings() -> &'static HashMap<&'static str, Check> {
             ("autoPack", bool_()),
             ("everyoneWearsMine", bool_()),
             ("everyoneExcluded", list(str_(64, 0), 300)),
+            ("heroPedestals", custom(hero_pedestals)),
+            ("heroPedestalHeights", custom(hero_pedestal_heights)),
+            ("pedestalHideBase", bool_()),
             ("favorites", list(str_(500, 0), 20000)),
             ("itemLooks", list(item_look, 2000)),
             ("langPromptSeen", bool_()),
@@ -388,6 +432,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "schema:refresh",
             "schema:cancel",
             "cosmetics:slots",
+            "cosmetics:pedestals",
             "tools:state",
             "compiler:state",
             "compiler:browse",
@@ -568,6 +613,8 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("decor:scene", vec![optional(str_(220, 0))]),
             ("decor:map", vec![optional(str_(220, 0))]),
             ("preview3d:model", vec![str_(200, 1)]),
+            ("preview3d:pedestalPicture", vec![str_(200, 1)]),
+            ("preview3d:keepPedestalPicture", vec![str_(200, 1), bytes(2.0 * MB)]),
             ("sounds:hero", vec![str_(60, 1)]),
             ("sounds:remove", vec![str_(60, 1), str_(200, 1)]),
             (

@@ -23,6 +23,7 @@ pub const CHANNELS: &[&str] = &[
     "schema:refresh",
     "schema:cancel",
     "cosmetics:slots",
+    "cosmetics:pedestals",
     "cosmetics:effects",
     "cosmetics:pick",
     "cosmetics:pickSet",
@@ -425,6 +426,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             }
         }
         "cosmetics:slots" => slots(o),
+        "cosmetics:pedestals" => pedestals(o),
         "cosmetics:effects" => {
             let wanted: Vec<String> = a0.as_array().into_iter().flatten().map(crate::js::string).collect();
             effects(o, &wanted)
@@ -631,6 +633,21 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
 /// The item builder's slots, the last answer kept for its inputs, without each slot's effects:
 /// those were 1.4 of the answer's 5 MB, read by the window in one go at start and after every
 /// pick, and only the hero's window shows them (`effects`).
+/// Every pedestal of the game, for a hero's own (hero_pedestals.rs): {options} or {error}.
+pub fn pedestals(o: &Owner) -> Value {
+    let read = || -> Result<Value, String> {
+        let mut core = o.core();
+        let c = &mut *core;
+        let game = c.game().ok_or_else(|| t("Путь к Dota 2 не задан", &[]))?;
+        let text = c.schema.vanilla(&game)?;
+        let ix =
+            crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
+        let options = crate::hero_pedestals::pedestal_options(&text.0, ix.paths());
+        Ok(json!({ "options": options }))
+    };
+    read().unwrap_or_else(|e| json!({ "error": e }))
+}
+
 pub fn slots(o: &Owner) -> Value {
     whole_slots(o).1
 }
