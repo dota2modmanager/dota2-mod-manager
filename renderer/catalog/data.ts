@@ -15,6 +15,8 @@ interface CatalogConstants {
   MOD_SENDER?: Record<string, string>;
   /** the catalog's known sources, by name, as the upload form's extra-link list uses them */
   MOD_SOURCES?: Record<string, string>;
+  /** the maintainer's note on a category, HTML, shown when enabled (catalog/category-note.ts) */
+  categoryNotes?: Record<string, { enabled?: boolean; text?: string } | undefined>;
   /** the mascots of the window's themes, by theme (ui/theme.ts) */
   GIF_CONFIG?: { themes?: string[]; gifs?: string[] };
 }
