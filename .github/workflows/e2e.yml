@@ -105,6 +105,11 @@ jobs:
       - name: Build the shell
         run: cargo build -p dota2-mod-manager
 
+      # comctl32 delay-loaded (src-tauri/build.rs): a Windows without its version 6 assembly
+      # would otherwise refuse to start the exe over TaskDialogIndirect
+      - name: The exe starts without comctl32's version 6
+        run: node tools/dev/pe-imports.mjs target/debug/dota2-mod-manager.exe --refuse comctl32.dll
+
       - name: Click through installing a mod, removing it, and the removal window
         shell: bash
         run: node tools/dev/e2e.mjs --app target/debug/dota2-mod-manager.exe

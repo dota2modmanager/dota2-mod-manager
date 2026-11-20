@@ -113,6 +113,8 @@ export type ScreenModel =
     count: string;
     /** the "dress every hero" button is waiting for the core */
     dressing?: boolean;
+    /** something "dress all" put on is still worn as it left it */
+    dressed?: boolean;
     /** the heroes in the four groups of the game's hero grid, then any the game did not say */
     groups: { attr: string; name: string; heroes: { hero: string; icon: string | null; installed: boolean; meta: string }[] }[];
   };
@@ -136,6 +138,7 @@ export interface ScreenActions {
   openHero: (hero: string, card: HTMLElement) => void;
   /** the builder hub: a random whole set on every hero not wearing anything yet */
   dressAll?: () => void;
+  undressAll?: () => void;
   openArcana: (set: string, card: HTMLElement) => void;
   openMapLooks: (kind: MapKind, card: HTMLElement) => void;
   openSounds: (card: HTMLElement) => void;

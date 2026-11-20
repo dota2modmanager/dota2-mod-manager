@@ -135,7 +135,8 @@ impl AbilityIconsService {
         lib.list().iter().find(|r| hero_of(r) == Some(hero)).cloned()
     }
 
-    fn picks_of(lib: &Library, hero: &str) -> Picks {
+    /// The icons the player picked for the hero, by ability; none without his record.
+    pub fn picks_of(lib: &Library, hero: &str) -> Picks {
         Self::record_of(lib, hero).map(|r| picks_in(&r)).unwrap_or_default()
     }
 
@@ -212,8 +213,8 @@ impl AbilityIconsService {
         n.parse().ok()
     }
 
-    /// The record moved ahead of every switched-on mod that carries one of its files, since the
-    /// lower pak wins: into a free slot below the first such mod, or in its place (swapped).
+    /// The record moved ahead of every switched-on mod that carries one of its files, but the
+    /// hero's own recolour: that one paints the picked icons and has to stay in front (icon_paint.rs).
     fn ahead(
         &self,
         inst: &Installer,
@@ -222,11 +223,26 @@ impl AbilityIconsService {
         files: &[String],
         log: &mut dyn FnMut(String),
     ) -> Result<Value, String> {
+        let hero = hero_of(&rec).map(String::from);
+        let not_paint = |o: &Value| o["generated"]["paint"].as_str() != hero.as_deref();
+        Self::move_ahead(inst, lib, rec, files, &not_paint, log)
+    }
+
+    /// The record moved ahead of every switched-on mod `over` names that carries one of its files,
+    /// since the lower pak wins: into a free slot below the first such mod, or in its place (swapped).
+    pub fn move_ahead(
+        inst: &Installer,
+        lib: &mut Library,
+        rec: Value,
+        files: &[String],
+        over: &dyn Fn(&Value) -> bool,
+        log: &mut dyn FnMut(String),
+    ) -> Result<Value, String> {
         let Some(mine) = Self::slot_of(inst, &rec) else { return Ok(rec) };
         let lang = inst.lang_folder()?;
         let mut first: Option<(Value, u32)> = None;
         for other in lib.list() {
-            if other.get("id") == rec.get("id") || other.get("enabled") == Some(&Value::Bool(false)) {
+            if other.get("id") == rec.get("id") || other.get("enabled") == Some(&Value::Bool(false)) || !over(other) {
                 continue;
             }
             let Some(n) = Self::slot_of(inst, other) else { continue };

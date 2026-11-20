@@ -34,6 +34,12 @@ export function BuilderHub({ m, actions }: { m: Model; actions: ScreenActions })
               <span className="ms">{m.dressing ? 'hourglass_top' : 'auto_awesome'}</span>{m.dressing ? L`Одеваю…` : L`Одеть всех`}
             </button>
           )}
+          {actions.undressAll && m.dressed && !m.dressing && (
+            <button className="btn" id="undressAllBtn" title={L`Снять то, что надела «Одеть всех»; выбранное тобой останется`}
+              onClick={() => actions.undressAll?.()}>
+              <span className="ms">undo</span>{L`Снять одетое`}
+            </button>
+          )}
         </div>
       </div>
       <div id="itemHub" className="hub-columns">

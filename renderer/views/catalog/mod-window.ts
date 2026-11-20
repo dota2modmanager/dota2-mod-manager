@@ -121,7 +121,7 @@ function drawModal(): void {
     note: NOTE[categoryId]?.() ?? null,
     issue: modIssue(categoryId, mod.name),
     states: categoryId === 'tools' ? [] : modStates(installedRec),
-    stage: modStage(categoryId, mod, target),
+    stage: modStage(categoryId, mod, target, state.settings?.modPreview3d !== false),
     creator: categoryId === 'tools' || isPack ? null : creatorOf(mod, [...state.modIndex.values()].map((x) => x.mod), categoryMods(categoryId)),
   };
 

@@ -136,6 +136,8 @@ export interface CosmeticsApi {
   wearLook: (hero: string, picks: LookPick[]) => Promise<Reply<{ applied: number; picks: number }>>;
   /** every hero in their best look: the most prized set, its arcana and immortals over it; keepWorn (the default) leaves a hero already wearing a pick as it is */
   dressAll: (keepWorn?: boolean) => Promise<Reply<{ heroes: number; kept: number; arcanas: number; immortals: number }>>;
+  /** what dressAll put on and the player has not changed since, taken off again */
+  undressAll: () => Promise<Reply<{ heroes: number }>>;
 }
 
 /** The whole arcana, or only its colour over one the player has (crates/mm-core/src/arcana/arcana_service.rs). */

@@ -352,6 +352,7 @@ pub fn window_settings() -> &'static HashMap<&'static str, Check> {
             ("discordPresence", bool_()),
             ("countDownloads", bool_()),
             ("autoPack", bool_()),
+            ("modPreview3d", bool_()),
             ("everyoneWearsMine", bool_()),
             ("everyoneExcluded", list(str_(64, 0), 300)),
             ("heroPedestals", custom(hero_pedestals)),
@@ -467,6 +468,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "diag:export",
             "uninstall:plan",
             "uninstall:cancel",
+            "cosmetics:undressAll",
         ];
         for c in none {
             m.insert(c, vec![]);
