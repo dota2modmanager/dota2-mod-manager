@@ -32,6 +32,8 @@ export interface StoredSettings {
   countDownloads: boolean;
   /** fold mods into the shared pack when the pak slots run out; on unless turned off */
   autoPack?: boolean;
+  /** a hero's mod in 3D in its window; off, the window shows the mod's picture as before 4.5 */
+  modPreview3d?: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (crates/mm-core/src/item_builder/item_builder_everyone.rs) */
   everyoneWearsMine: boolean;
   /** the heroes it leaves alone, by id: every other hero built is dressed, as the game's limit allows (crates/mm-core/src/item_builder/item_builder_everyone_budget.rs) */
