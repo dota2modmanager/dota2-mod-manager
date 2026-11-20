@@ -56,6 +56,41 @@ fn an_icon_goes_to_the_ability_it_is_named_for_and_to_no_other() {
     );
 }
 
+#[test]
+fn a_cosmetics_icon_goes_to_the_ability_it_ends_with() {
+    let paths = [
+        "panorama/images/spellicons/phoenix/phoenix_ti10_immortal_ability_icon/phoenix_ti10_immortal_fire_spirit_png.vtex_c",
+        "panorama/images/spellicons/templar_assassin/ta_2022_immortal_ability_icon/ta_2022_immortal_trap_gold_png.vtex_c",
+        "panorama/images/spellicons/templar_assassin/ta_2022_immortal_ability_icon/ta_2022_immortal_crimson_self_trap_png.vtex_c",
+        "panorama/images/spellicons/sand_king/king_of_egypt/king_of_egypt_burrowstrike_png.vtex_c",
+        "panorama/images/spellicons/lion/dungeon_poacher/dungeon_poacher_hex_png.vtex_c",
+        "panorama/images/spellicons/tidehunter/arcana_style1/tidehunter_arcana_gush_style1_png.vtex_c",
+    ];
+    let of = |hero: &str, abilities: &[&str]| -> Vec<(String, String)> {
+        let abilities: Vec<String> = abilities.iter().map(|a| a.to_string()).collect();
+        ability_icon_files(&paths, hero, &abilities)
+            .into_iter()
+            .map(|(a, p)| (a, p[p.rfind('/').unwrap() + 1..].to_string()))
+            .collect()
+    };
+    assert_eq!(
+        of("phoenix", &["phoenix_fire_spirits", "phoenix_launch_fire_spirit"]),
+        [("phoenix_fire_spirits".to_string(), "phoenix_ti10_immortal_fire_spirit_png.vtex_c".to_string())]
+    );
+    let ta = of(
+        "templar_assassin",
+        &["templar_assassin_trap", "templar_assassin_self_trap", "templar_assassin_trap_teleport"],
+    );
+    assert!(ta.contains(&("templar_assassin_trap".into(), "ta_2022_immortal_trap_gold_png.vtex_c".into())), "{ta:?}");
+    assert!(
+        ta.contains(&("templar_assassin_self_trap".into(), "ta_2022_immortal_crimson_self_trap_png.vtex_c".into())),
+        "{ta:?}"
+    );
+    assert_eq!(of("sand_king", &["sandking_burrowstrike"]).len(), 1);
+    assert_eq!(of("lion", &["lion_voodoo", "lion_impale"])[0].0, "lion_voodoo");
+    assert_eq!(of("tidehunter", &["tidehunter_gush"]).len(), 1);
+}
+
 /// What the real game gives: MM_PAK01_LIST is `mm-cli vpk-entries` of pak01.
 #[test]
 #[ignore]
@@ -76,4 +111,39 @@ fn icons_on_the_real_game() {
             println!("{}: {:?}", l.name.unwrap(), l.files.iter().map(|f| &f[27..]).collect::<Vec<_>>());
         }
     }
+}
+
+/// Every hero's icons no ability takes, on the real game: MM_PAK01_LIST as above, MM_HERO_SCRIPTS
+/// a folder of scripts/npc/heroes/*.txt out of pak01.
+#[test]
+#[ignore]
+fn icons_no_ability_takes_on_the_real_game() {
+    let list: Vec<(String, u64)> =
+        serde_json::from_slice(&std::fs::read(std::env::var("MM_PAK01_LIST").unwrap()).unwrap()).unwrap();
+    let paths: Vec<&str> = list.iter().map(|(p, _)| p.as_str()).collect();
+    let dir = std::path::PathBuf::from(std::env::var("MM_HERO_SCRIPTS").unwrap());
+    let mut missed = 0;
+    for e in std::fs::read_dir(dir).unwrap() {
+        let file = e.unwrap().path();
+        let hero = file.file_stem().unwrap().to_str().unwrap().trim_start_matches("npc_dota_hero_").to_string();
+        let abilities = hero_abilities(&std::fs::read_to_string(&file).unwrap());
+        let pairs = ability_icon_files(&paths, &hero, &abilities);
+        if std::env::var("MM_SHOW_TAKEN").is_ok() {
+            for (a, p) in &pairs {
+                let name = &p[p.rfind('/').unwrap() + 1..];
+                if !name.replace('_', "").contains(&a[a.find('_').unwrap() + 1..].replace('_', "")) {
+                    println!("  {a} <- {}", &p[27..]);
+                }
+            }
+        }
+        let taken: Vec<String> = pairs.into_iter().map(|(_, p)| p).collect();
+        let own = format!("panorama/images/spellicons/{hero}/");
+        for p in paths.iter().filter(|p| p.starts_with(&own) && p.ends_with("_png.vtex_c")) {
+            if !taken.iter().any(|t| t == p) {
+                missed += 1;
+                println!("{hero}: {}", &p[27..]);
+            }
+        }
+    }
+    println!("{missed} icons no ability takes");
 }
