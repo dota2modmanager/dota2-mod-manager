@@ -1,79 +1,82 @@
-/* What the recolour window's 3D hero is painted in, worked out from the layers that are on: the
- * body's colour, each worn item's own, and the colour of the effects the stage plays. The scene
- * (preview3d/scene.ts) asks `materialPaint` for each of its materials.
+/* What the recolour window's 3D hero is painted in, worked out from the values that are on: each
+ * material of the scene gets the recipe of its texture (paint-recipe.ts), a tone and a material per
+ * colour zone, and the effects the stage plays their colour. The scene (preview3d/scene.ts) asks
+ * `scenePaints` for its materials.
  *
- * It follows what the build will change (src/recolor-layers.ts): the body layer is the textures of
- * the hero's own model folder, which the stock items share, so a stock item without a colour of its
- * own takes the body's; an item's own colour wins over the body's. */
+ * It follows what the build will change (crates/mm-core/src/looks/hero_paint_service.rs): the body
+ * layer is the textures of the hero's own model folder, which the stock items share, so a stock
+ * item with nothing of its own takes the body's; an item's own wins over the body's. A material
+ * finds its part by the list the layer gave (PaintLayer.parts: the materials drawn from each). */
 import type { PaintLayer } from '../../api/content.ts';
 import { fromHex, type Rgb } from '../arcana/tint.ts';
-import { hsv01, modeNumber, type PaintMode } from './paint-mode.ts';
-
-/** A colour for the shader: [h, s, v] (0 to 1) and the mode's number. */
-export type PaintTone = [number, number, number, number];
+import { emptyRecipe, parseLook, recipeOf, shaderPaint, splitKey, type ShaderPaint } from './paint-recipe.ts';
 
 export interface PreviewPaint {
-  body: PaintTone | null;
-  /** by preview slot: the colour of the item worn there; absent where it has no layer of its own on */
-  parts: Record<string, PaintTone>;
+  /** the values on, by key, as the window would send them */
+  values: Record<string, string>;
+  /** by model layer, its part for each material (materials/….vmat, lower case) */
+  parts: Record<string, Record<string, string>>;
+  /** by preview slot, the item worn there */
+  items: Record<string, string>;
   /** by particle (no _c), the colour its effect layer gives it */
   effects: Record<string, Rgb>;
 }
 
-export const NO_PAINT: PreviewPaint = { body: null, parts: {}, effects: {} };
+export const NO_PAINT: PreviewPaint = { values: {}, parts: {}, items: {}, effects: {} };
 
-const tone = (hex: string, mode: PaintMode): PaintTone | null => {
-  const rgb = fromHex(hex);
-  return rgb ? [...hsv01(rgb), modeNumber(mode)] as PaintTone : null;
-};
+const vmat = (path: string) => path.toLowerCase().replace(/\\/g, '/').replace(/_c$/, '');
 
 /**
- * @param color  a layer's colour as the window would send it
- * @param items  by preview slot, the item worn there
+ * @param values  by key, the values that are on, as the window would send them
+ * @param items   by preview slot, the item worn there
  */
-export function previewPaint(layers: readonly PaintLayer[], on: ReadonlySet<string>, color: (id: string) => { hex: string; mode: PaintMode }, items: Record<string, string>): PreviewPaint {
-  const out: PreviewPaint = { body: null, parts: {}, effects: {} };
-  const lit = (id: string) => on.has(id) && layers.some((l) => l.id === id);
-  if (lit('body')) { const c = color('body'); out.body = tone(c.hex, c.mode); }
-  for (const [slot, item] of Object.entries(items)) {
-    const id = `itemModel:${item}`;
-    if (!lit(id)) continue;
-    const c = color(id);
-    const t = tone(c.hex, c.mode);
-    if (t) out.parts[slot] = t;
-  }
+export function previewPaint(layers: readonly PaintLayer[], values: Readonly<Record<string, string>>, items: Record<string, string>): PreviewPaint {
+  const out: PreviewPaint = { values: { ...values }, parts: {}, items: { ...items }, effects: {} };
   for (const l of layers) {
-    if (!on.has(l.id) || !l.particles?.length) continue;
-    const rgb = fromHex(color(l.id).hex);
+    if (l.parts?.length) out.parts[l.id] = Object.fromEntries(l.parts.flatMap((p) => p.materials.map((m) => [vmat(m), p.id])));
+    const v = values[l.id];
+    if (!v || !l.particles?.length) continue;
+    const hex = parseLook(v)?.hex;
+    const rgb = hex ? fromHex(hex) : null;
     if (rgb) for (const p of l.particles) out.effects[p.toLowerCase().replace(/_c$/, '')] = rgb;
   }
   return out;
 }
 
 /**
- * One material's colour in the scene, or null for its own.
+ * One material's paint in the scene, or null for its own.
  * @param owner  'hero' for the body, 'part-<n>' for the n-th worn item
  * @param path   the material's file, materials/models/…/x.vmat
  * @param slot   the n-th item's preview slot
  */
-export function materialPaint(owner: string, path: string, slot: string | undefined, paint: PreviewPaint): PaintTone | null {
-  if (owner === 'hero') return paint.body;
-  if (!owner.startsWith('part-')) return null;
-  const own = slot ? paint.parts[slot] : undefined;
-  if (own) return own;
-  return path.toLowerCase().replace(/\\/g, '/').startsWith('materials/models/heroes/') ? paint.body : null;
+export function materialPaint(owner: string, path: string, slot: string | undefined, paint: PreviewPaint): ShaderPaint | null {
+  const file = vmat(path);
+  const layers: string[] = [];
+  if (owner === 'hero') layers.push('body');
+  else if (owner.startsWith('part-')) {
+    const item = slot ? paint.items[slot] : undefined;
+    if (item) layers.push(`itemModel:${item}`);
+    if (file.startsWith('materials/models/heroes/')) layers.push('body');
+  }
+  const used = new Set(Object.keys(paint.values).map((k) => splitKey(k).layer));
+  for (const layer of layers) {
+    if (!used.has(layer)) continue;
+    const recipe = recipeOf(paint.values, layer, paint.parts[layer]?.[file] ?? '');
+    if (!emptyRecipe(recipe)) return shaderPaint(recipe);
+  }
+  return null;
 }
 
 /**
- * Every material of the scene with a colour, by its id: the scene's materials as [id, owner and
+ * Every material of the scene with a paint, by its id: the scene's materials as [id, owner and
  * file], and the slot each worn part (part-<n>) stands in.
  */
-export function scenePaints(materials: Iterable<[string, { owner: string; materialPath: string }]>, partSlots: readonly string[], paint: PreviewPaint): Record<string, PaintTone> {
-  const out: Record<string, PaintTone> = {};
+export function scenePaints(materials: Iterable<[string, { owner: string; materialPath: string }]>, partSlots: readonly string[], paint: PreviewPaint): Record<string, ShaderPaint> {
+  const out: Record<string, ShaderPaint> = {};
   for (const [id, m] of materials) {
     const part = /^part-(\d+)$/.exec(m.owner);
-    const tone = materialPaint(m.owner, m.materialPath, part ? partSlots[Number(part[1])] : undefined, paint);
-    if (tone) out[id] = tone;
+    const p = materialPaint(m.owner, m.materialPath, part ? partSlots[Number(part[1])] : undefined, paint);
+    if (p) out[id] = p;
   }
   return out;
 }

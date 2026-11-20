@@ -359,12 +359,19 @@ const INIT = {
   // blades) hold points in the space of the snapshot's control point, which here is the arm.
   // A snapshot's other attributes (its points' colours, radii, normals) go to the particle born on
   // that point: Bane's Origin of the Unmaking's tentacles are dark blue in theirs, not white.
+  // A snapshot the effect says is in a control point's own space (m_nLocalSpaceCP) goes there as the
+  // game puts it, and is not fitted to a bone: a weapon's glowing edge is in its CP 4, the
+  // weapon's attach_blade, and fitted to the hand's bone it hung beside the blade.
   C_INIT_InitFromCPSnapshot(d) {
     const cp = d.m_nControlPointNumber ?? 0, random = d.m_bRandom, attr = field(d.m_nAttributeToRead, F.Position), out = field(d.m_nAttributeToWrite, attr);
+    const localCP = Number.isInteger(d.m_nLocalSpaceCP) && d.m_nLocalSpaceCP >= 0 ? d.m_nLocalSpaceCP : -1;
     const key = { [F.Color]: 'color', [F.Radius]: 'radius', [F.Normal]: 'normal', [F.Alpha]: 'alpha' }[attr];
     return (p, s) => { const snap = s.snapshot(cp); if (!snap) return;
       if (attr !== F.Position) { const values = key && snap.data[key]; if (!values?.length) return; const v = values[p.snap >= 0 ? p.snap % values.length : p.uid % values.length];
         if (Array.isArray(v)) p.setV(out, new THREE.Vector3(...v)); else p.setS(out, v); return; } const i = random ? Math.floor(rnd() * snap.count) : p.uid % snap.count; p.snap = i; p.snapFrom = snap;
+      // a bone on a rigid snapshot is only a fitted guess (the .vsnap names none): the CP the effect names wins
+      const inLocal = localCP >= 0 && !snap.rawData.skinning?.some((row) => row?.length);
+      if (inLocal) { p.pos.copy(new THREE.Vector3(...snap.rawData.position[i]).applyMatrix4(s.cp(localCP).matrix())); p.prev.copy(p.pos); return; }
       p.pos.copy(snap.point(i, s.cp(cp).matrix())); p.prev.copy(p.pos); if (snap.data.bone && s.model) p.bone = s.model.bone(snap.boneName()); };
   },
   C_INIT_CreateOnModel(d) {

@@ -220,7 +220,7 @@ export interface BackgroundApi {
 }
 
 /** A hero recoloured part by part: its own file, renderer/api/paint.ts. */
-export type { PaintApi, PaintLayer } from './paint.ts';
+export type { PaintApi, PaintLayer, PaintPart, PaintPartPicture } from './paint.ts';
 
 /** How a sound of the user's goes on an event: instead of Valve's, or with it. */
 export type SoundMode = 'replace' | 'layer';

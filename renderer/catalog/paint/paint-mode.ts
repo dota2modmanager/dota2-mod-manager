@@ -5,8 +5,9 @@
  * A layer's colour goes to the main process as '#rrggbb' (tint) or '#rrggbb:mode'. */
 import type { Rgb } from '../arcana/tint.ts';
 
-export type PaintMode = 'tint' | 'keep' | 'full' | 'rgb';
-export const PAINT_MODES: readonly PaintMode[] = ['tint', 'keep', 'full', 'rgb'];
+export type PaintMode = 'tint' | 'keep' | 'full' | 'rgb' | 'grad';
+/** grad, a gradient map between two colours, is for a model's textures (paint-recipe.ts) */
+export const PAINT_MODES: readonly PaintMode[] = ['tint', 'keep', 'full', 'rgb', 'grad'];
 
 /** The shader's number for a mode: 0 is off. */
 export const modeNumber = (mode: PaintMode): number => PAINT_MODES.indexOf(mode) + 1;
@@ -38,7 +39,7 @@ function rgb01([h, s, v]: Rgb): Rgb {
 export function paintPixel(from: Rgb, target: Rgb, mode: PaintMode, u = 0, v = 0): Rgb | null {
   const [, s, val] = hsv01(from);
   const [th, ts, tv] = target;
-  if (mode === 'full') return rgb01([th, ts, Math.min(1, val * tv)]);
+  if (mode === 'full' || mode === 'grad') return rgb01([th, ts, Math.min(1, val * tv)]);
   if (s < 0.1) return null;
   if (mode === 'keep') return rgb01([th, s, val]);
   if (mode === 'rgb') return rgb01([(th + (u % 1 + v % 1) * 0.5) % 1, Math.max(s, 0.6), Math.min(1, val * Math.max(tv, 0.5) * 1.2)]);

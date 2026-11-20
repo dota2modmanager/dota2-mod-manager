@@ -1,20 +1,22 @@
 /* A hero recoloured part by part (issue #422): the window opened from the hero's window in the item
- * builder. It keeps a switch, a colour and, for a picture, a mode per layer, and the layer the editor
+ * builder. It keeps a switch and a look (colour, mode, material) per key: a layer, or a part of a
+ * model and a colour zone of its texture (catalog/paint/paint-recipe.ts), and the key the editor
  * works on; the 3D hero in it is painted from those as they change (catalog/paint/preview-paint.ts).
  * Nothing reaches the game until its button is pressed, and then the main process builds one pak
- * for the hero (src/hero-paint-service.ts), a mod in My mods like any other. */
+ * for the hero (crates/mm-core/src/looks/hero_paint_service.rs), a mod in My mods like any other. */
 import { refreshInstalledIndex } from '../core/installed.ts';
 import { toast } from '../ui/toast.ts';
 import { showPaintModal } from '../catalog/modal/root.tsx';
 import type { PaintCell, PaintModalModel } from '../catalog/paint/PaintModal.tsx';
-import type { PaintLayer } from '../api/content.ts';
+import type { PaintLayer, PaintPartPicture } from '../api/content.ts';
 import type { PreviewSlot } from '../api/preview3d.ts';
 import { closeOverlay } from './catalog/overlay.ts';
 import { isOpen, openWindow } from './item-builder.ts';
 import { toHex } from '../catalog/arcana/tint.ts';
-import { paintValue, splitPaint, type PaintMode } from '../catalog/paint/paint-mode.ts';
+import type { PaintMode } from '../catalog/paint/paint-mode.ts';
+import { MATERIAL_PRESETS, parseLook, splitKey, type Look } from '../catalog/paint/paint-recipe.ts';
 import { previewPaint } from '../catalog/paint/preview-paint.ts';
-import { editorOf, isPicture, layerLabel, paintSummary } from './hero-paint-model.ts';
+import { editorOf, isModel, keyLabel, lookOf, moveKey, paintSummary, wantedValues } from './hero-paint-model.ts';
 
 /** What the hero wears, as the hero's window shows him: the 3D stage's slots, and the item in each. */
 export interface PaintPreview { hero: string; slots: PreviewSlot[]; sig: string; items: Record<string, string> }
@@ -24,14 +26,15 @@ export interface PaintState {
   label: string;
   back: () => void;
   layers: PaintLayer[];
+  /** the keys on: layers, and parts and zones of model layers */
   on: Set<string>;
-  colors: Map<string, string>;
-  modes: Map<string, PaintMode>;
+  /** by key; a layer without one takes `all` and `allMode` */
+  looks: Map<string, Look>;
   /** what is in the game now, to say whether the button changes anything */
   installed: Record<string, string> | null;
   all: string;
   allMode: PaintMode;
-  /** the layer the editor works on; null: all that are on */
+  /** the key the editor works on; null: all layers that are on */
   selected: string | null;
   busy: boolean;
   vrf: boolean;
@@ -41,6 +44,9 @@ export interface PaintState {
   icons: Record<string, string>;
   gems: { key: string; name: string; hex: string }[];
   preview: PaintPreview | null;
+  /** the model's textures as pictures with their zones, by file; asked for once a model layer is picked */
+  pictures: Record<string, PaintPartPicture>;
+  asked: Set<string>;
 }
 
 const START = '#7f5af0';
@@ -51,13 +57,14 @@ export async function openPaint(hero: string, label: string, back: () => void, p
   const r = await window.api.paint.state(hero, worn);
   if (r.error || !('layers' in r)) { toast(r.error || L`Не удалось прочитать файлы героя`, 'error'); return; }
   const installed = r.installed?.layers ?? null;
-  const split = Object.entries(installed || {}).map(([id, v]) => [id, splitPaint(v)] as const);
+  const looks = new Map<string, Look>();
+  for (const [k, v] of Object.entries(installed || {})) { const l = parseLook(v); if (l) looks.set(k, l); }
+  const first = [...looks.values()].find((l) => l.hex);
   const st: PaintState = {
     hero, label, back, layers: r.layers, installed,
-    on: new Set(split.map(([id]) => id)),
-    colors: new Map(split.map(([id, p]) => [id, p.hex])),
-    modes: new Map(split.map(([id, p]) => [id, p.mode])),
-    all: split[0]?.[1].hex || START,
+    on: new Set(looks.keys()),
+    looks,
+    all: first?.hex || START,
     allMode: 'tint',
     selected: null,
     busy: false,
@@ -67,6 +74,8 @@ export async function openPaint(hero: string, label: string, back: () => void, p
     icons: {},
     gems: [],
     preview,
+    pictures: {},
+    asked: new Set(),
   };
   openWindow(null, true, (key) => { draw(key, st); void pictures(key, st); });
 }
@@ -86,15 +95,17 @@ async function pictures(key: number, st: PaintState): Promise<void> {
   draw(key, st);
 }
 
-/** A layer's colour and mode as it would be sent; an effect has no mode. */
-const colorOf = (st: PaintState, id: string): { hex: string; mode: PaintMode } => {
-  const layer = st.layers.find((l) => l.id === id);
-  return { hex: st.colors.get(id) || st.all, mode: layer && isPicture(layer) ? st.modes.get(id) || st.allMode : 'tint' };
-};
-
-/** The colours the button would put on: a '#rrggbb[:mode]' for each layer that is on. */
-const wanted = (st: PaintState): Record<string, string> =>
-  Object.fromEntries(st.layers.filter((l) => st.on.has(l.id)).map((l) => { const c = colorOf(st, l.id); return [l.id, paintValue(c.hex, c.mode)]; }));
+/** A model layer's parts as pictures with their zones, once, when it is first picked. */
+async function partPictures(key: number, st: PaintState, layerId: string): Promise<void> {
+  const layer = st.layers.find((l) => l.id === layerId);
+  const files = (layer?.parts ?? []).map((p) => p.file).filter((f) => !st.asked.has(f));
+  if (!files.length) return;
+  for (const f of files) st.asked.add(f);
+  const got = await window.api.paint.parts(files).catch(() => ({} as Record<string, PaintPartPicture>));
+  // one it could not read shows no picture and no zones, but does not wait for one
+  for (const f of files) st.pictures[f] = got[f] ?? { picture: '', zones: [] };
+  draw(key, st);
+}
 
 const same = (a: Record<string, string>, b: Record<string, string> | null) =>
   !!b && Object.keys(a).length === Object.keys(b).length && Object.entries(a).every(([k, v]) => b[k]?.toLowerCase() === v.toLowerCase());
@@ -105,33 +116,31 @@ function draw(key: number, st: PaintState): void {
   if (!isOpen(key)) return;
   const cell = (id: string): PaintCell | null => {
     if (!st.layers.some((l) => l.id === id)) return null;
-    const c = colorOf(st, id);
-    return { id, on: st.on.has(id), color: c.hex, mode: c.mode, selected: st.selected === id };
+    const c = lookOf(st, id);
+    const sel = st.selected ? splitKey(st.selected).layer === id : false;
+    return { id, on: st.on.has(id), color: c.hex ?? st.all, mode: c.mode, selected: sel };
   };
-  const abilities = st.layers.filter((l) => l.kind === 'ability' || l.kind === 'abilityIcon')
+  const named = (kinds: string[]) => st.layers.filter((l) => kinds.includes(l.kind))
     .reduce<{ key: string; name: string }[]>((out, l) => {
       const k = l.id.slice(l.id.indexOf(':') + 1);
       if (!out.some((a) => a.key === k)) out.push({ key: k, name: l.name || k });
       return out;
     }, []);
-  const items = st.layers.filter((l) => l.kind === 'item' || l.kind === 'itemModel')
-    .reduce<{ key: string; name: string }[]>((out, l) => {
-      const k = l.id.slice(l.id.indexOf(':') + 1);
-      if (!out.some((a) => a.key === k)) out.push({ key: k, name: l.name || k });
-      return out;
-    }, []);
-  const want = wanted(st);
+  const abilities = named(['ability', 'abilityIcon']);
+  const items = named(['item', 'itemModel']);
+  const want = wantedValues(st);
   const m: PaintModalModel = {
     hero: st.label,
     portrait: st.portrait,
-    preview: st.preview && { ...st.preview, paint: previewPaint(st.layers, st.on, (id) => colorOf(st, id), st.preview.items) },
+    preview: st.preview && { ...st.preview, paint: previewPaint(st.layers, want, st.preview.items) },
     editor: editorOf(st),
     abilities: abilities.map((a) => ({ key: a.key, name: a.name, picture: st.icons[a.key] || null, effect: cell(`ability:${a.key}`), icon: cell(`abilityIcon:${a.key}`) })),
     own: { effects: cell('effects'), portrait: cell('portrait'), body: cell('body') },
     items: items.map((it) => ({ name: it.name, model: cell(`itemModel:${it.key}`), effect: cell(`item:${it.key}`) })),
-    on: st.on.size,
+    // layers with anything on: a part or zone counts for its layer, not as one more
+    on: new Set(Object.keys(want).map((k) => splitKey(k).layer)).size,
     total: st.layers.length,
-    summary: paintSummary(st.layers.filter((l) => st.on.has(l.id)).map(layerLabel)),
+    summary: paintSummary(Object.keys(want).map((k) => keyLabel(st.layers, k))),
     action: !Object.keys(want).length
       ? { label: st.installed ? L`Включи хотя бы один слой` : L`Поставить`, icon: 'format_paint', off: true }
       : same(want, st.installed)
@@ -143,37 +152,57 @@ function draw(key: number, st: PaintState): void {
   };
   const redraw = () => draw(key, st);
   // items drawn from one texture take one colour in the game: their layers move together
-  const linked = (id: string) => [id, ...(st.layers.find((l) => l.id === id)?.shares ?? [])];
+  const linked = (id: string) => [id, ...(splitKey(id).part || splitKey(id).zone ? [] : st.layers.find((l) => l.id === id)?.shares ?? [])];
+  /** a key's look changed by `f`, and the key on */
+  const change = (id: string, f: (l: Look) => Look) => {
+    for (const x of linked(id)) { st.looks.set(x, f({ ...lookOf(st, x), mats: [...lookOf(st, x).mats] })); st.on.add(x); }
+    redraw();
+  };
+  const select = (id: string) => {
+    st.selected = id;
+    const layer = st.layers.find((l) => l.id === splitKey(id).layer);
+    if (layer && isModel(layer)) void partPictures(key, st, layer.id);
+    redraw();
+  };
   const toggle = (id: string) => {
     const off = st.on.has(id);
     for (const x of linked(id)) if (off) st.on.delete(x); else st.on.add(x);
-    if (!off) st.selected = id;
+    if (!off) { select(id); return; }
     redraw();
   };
-  const color = (id: string, hex: string) => { for (const x of linked(id)) { st.colors.set(x, hex); st.on.add(x); } redraw(); };
   showPaintModal(key, m, {
     back: st.back,
     close: closeOverlay,
     toggle,
-    color,
-    select: (id) => { st.selected = id; redraw(); },
+    color: (id, hex) => change(id, (l) => ({ ...l, hex })),
+    select,
     editor: {
       color: (hex) => {
-        if (st.selected) { color(st.selected, hex); return; }
+        if (st.selected) { change(st.selected, (l) => ({ ...l, hex })); return; }
         st.all = hex;
-        for (const id of st.on) st.colors.set(id, hex);
+        for (const id of st.on) if (!splitKey(id).part && !splitKey(id).zone) st.looks.set(id, { ...lookOf(st, id), hex });
         redraw();
       },
       mode: (mode) => {
-        if (st.selected) { for (const x of linked(st.selected)) { st.modes.set(x, mode); st.on.add(x); } redraw(); return; }
+        if (st.selected) { change(st.selected, (l) => ({ ...l, mode, hex: l.hex ?? st.all, to: mode === 'grad' ? l.to ?? '#ffb020' : l.to })); return; }
         st.allMode = mode;
-        for (const id of st.on) st.modes.set(id, mode);
+        for (const id of st.on) if (!splitKey(id).part && !splitKey(id).zone) st.looks.set(id, { ...lookOf(st, id), mode });
         redraw();
       },
+      keep: () => { if (st.selected) change(st.selected, (l) => ({ ...l, hex: null })); },
+      at: (n) => { if (st.selected) change(st.selected, (l) => ({ ...l, at: n, mode: 'grad', hex: l.hex ?? st.all })); },
+      to: (hex) => { if (st.selected) change(st.selected, (l) => ({ ...l, to: hex, mode: 'grad', hex: l.hex ?? st.all })); },
+      mat: (i, n) => { if (st.selected) change(st.selected, (l) => ({ ...l, mats: l.mats.map((x, j) => (j === i ? n : x)) })); },
+      preset: (name) => {
+        const p = MATERIAL_PRESETS.find((x) => x.key === name);
+        if (p && st.selected) change(st.selected, (l) => ({ ...l, mats: [...p.mats] }));
+      },
+      part: (part) => { if (st.selected) select(moveKey(st.selected, { part })); },
+      zone: (zone) => { if (st.selected) select(moveKey(st.selected, { zone })); },
       all: () => { st.selected = null; redraw(); },
       toggle: () => { if (st.selected) toggle(st.selected); },
     },
-    every: (on) => { st.on = new Set(on ? st.layers.map((l) => l.id) : []); redraw(); },
+    every: (on) => { st.on = new Set(on ? [...st.layers.map((l) => l.id), ...[...st.looks.keys()].filter((k) => k.includes('@') || k.includes('~'))] : []); redraw(); },
     apply: () => void apply(key, st),
     getTool: () => void getTool(key, st),
   });
@@ -192,7 +221,7 @@ async function getTool(key: number, st: PaintState): Promise<void> {
 }
 
 async function apply(key: number, st: PaintState): Promise<void> {
-  const want = wanted(st);
+  const want = wantedValues(st);
   if (st.busy || !Object.keys(want).length) return;
   st.busy = true;
   draw(key, st);

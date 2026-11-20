@@ -925,7 +925,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     studioGemMaterials(colors) { studioMaterialGems = colors; },
     studioPaintMaterials(paints) {
       studioMaterialPaints = paints;
-      for (const [name, material] of materials) { const p = paints?.[name]; material.userData.paint?.(p ? p.slice(0, 3) : null, p ? p[3] : 0); }
+      for (const [name, material] of materials) { const p = paints?.[name]; material.userData.paint?.(p ?? null); }
     },
     studioEffectsVisible(visible) { lib.group.visible = !!visible; },
  animations: list.map((x) => ({ ...x, loop: loops.has(x.name), duration: clips.get(x.name).duration })),
@@ -938,7 +938,7 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
         for (const [name, material] of materials) material.userData.gem?.(studioMaterialGems[name] ?? null, blend);
       }
       // a material made after the paint came (an item put on since) takes it too
-      if (studioMaterialPaints) for (const [name, material] of materials) { const p = studioMaterialPaints[name]; material.userData.paint?.(p ? p.slice(0, 3) : null, p ? p[3] : 0); }
+      if (studioMaterialPaints) for (const [name, material] of materials) { const p = studioMaterialPaints[name]; material.userData.paint?.(p ?? null); }
       mixer.update(dt); for (const w of worn.values()) w.companion?.mixer.update(dt); for (const c of companions) c.mixer.update(dt);
       // A later event with the same model in the same animation takes over (Ringmaster's box: built, then broken).
       for (const p of props) p.at = currentName === p.sequence && current ? current.time - p.frame / 30 : -1;

@@ -10,6 +10,11 @@
 //! of the hero shader for the body's textures. The repaint is the shell's image codec (`Repaint`).
 //! A build is seconds of work: the shell runs it off the main thread, and a rebuild after a Dota
 //! update is `due` and then `rebuild_now`.
+//!
+//! A model layer can be finer than one colour (paint_recipe.rs): a part of the model, a colour zone
+//! of its texture, and the material. The material is the hero shader's masks: those of the
+//! materials drawn from a painted texture are read out, set where the recipe says, and built
+//! again by the compiler from their channels, as a material of the hero shader packs them.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -20,20 +25,20 @@ use serde_json::{json, Map, Value};
 
 use crate::ability_sounds_service::Compile;
 use crate::generated_pak::{files_json, swap_pak, write_pak};
+use crate::hero_paint_parts::{materials_by_color, parts_view};
 use crate::i18n::t;
 use crate::installer::Installer;
 use crate::library::Library;
-use crate::recolor::Rgb;
+use crate::paint_recipe::{parse_look, part_of, split_key, Recipe};
 use crate::recolor_layers::{
     hero_abilities, hero_layers, hero_model_folder, item_model_paths, model_color_textures, with_children, with_shares,
     RecolorLayer, WornItem,
 };
-use crate::recolor_modes::{parse_paint, rgb_of_hex};
 use crate::resource_compiler::{CompileJob, SourceFile};
 use crate::vpk::{Entry, Index};
 
-/// A PNG in the chosen colour and mode; the shell's image codec in the app, a fake in tests.
-pub type Repaint<'a> = &'a dyn Fn(&[u8], Rgb, &str) -> Result<Vec<u8>, String>;
+/// A PNG painted by a recipe; the shell's image codec in the app, a fake in tests.
+pub type Repaint<'a> = &'a dyn Fn(&[u8], &Recipe) -> Result<Vec<u8>, String>;
 
 /// A compressed picture read out as a PNG by ValveResourceFormat (its program, the texture).
 pub type Decode<'a> = &'a mut dyn FnMut(&str, &[u8]) -> Result<Vec<u8>, String>;
@@ -81,10 +86,58 @@ fn latin1(b: &[u8]) -> String {
     b.iter().map(|&c| c as char).collect()
 }
 
+/// A compressed picture still to do: the game's file, what it gets, and the masks of the materials
+/// drawn from it when the recipe sets a material (path, file, which: 1 or 2).
+struct Picture {
+    path: String,
+    file: Vec<u8>,
+    recipe: Recipe,
+    masks: Vec<(String, Vec<u8>, u8)>,
+}
+
+impl Picture {
+    /// The files it should come back as.
+    fn outputs(&self) -> Vec<&str> {
+        let own = self.recipe.has_color().then_some(self.path.as_str());
+        own.into_iter().chain(self.masks.iter().map(|m| m.0.as_str())).collect()
+    }
+}
+
 /// What a build made: the files that took the colour, and the compressed pictures still to do.
 struct Built {
     entries: IndexMap<String, Entry>,
-    compressed: Vec<(String, Vec<u8>, Rgb, &'static str)>,
+    compressed: Vec<Picture>,
+}
+
+/// The inputs of the hero shader a mask is packed from, channel by channel, and a short name for each.
+const MASK_INPUTS: [[(&str, &str); 4]; 2] = [
+    [
+        ("TextureDetailMask", "detail"),
+        ("TextureDiffuseWarpMask", "warp"),
+        ("TextureMetalnessMask", "metal"),
+        ("TextureSelfIllumMask", "illum"),
+    ],
+    [
+        ("TextureSpecularMask", "spec"),
+        ("TextureRimMask", "rim"),
+        ("TextureTintByBaseMask", "tint"),
+        ("TextureSpecularExponent", "exp"),
+    ],
+];
+
+/// A model layer's textures and their copies: the textures in the same folder that are the same
+/// part (one name, another hash), each once, in the order met.
+fn with_copies(files: &[String], by_part: &IndexMap<(String, String), Vec<String>>) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    for f in files {
+        let key = (crate::hero_paint_parts::dir_of(f).to_string(), part_of(f));
+        for p in std::iter::once(f).chain(by_part.get(&key).into_iter().flatten()) {
+            if !out.contains(p) {
+                out.push(p.clone());
+            }
+        }
+    }
+    out
 }
 
 /// The service the paint:* channels call.
@@ -198,6 +251,29 @@ impl HeroPaintService {
                 .filter(|p| index.read(p).ok().flatten().is_some())
                 .collect();
         }
+        // a model's texture has copies of the same name for other materials of the item: the
+        // armory's and the dissolve's (an arcana's landing_page_*_dissolve materials drew its shoulders
+        // from one the build had left as the game has it)
+        let models: Vec<&mut RecolorLayer> =
+            all.iter_mut().filter(|l| l.kind == "body" || l.kind == "itemModel").collect();
+        if !models.is_empty() {
+            let dirs: std::collections::HashSet<String> = models
+                .iter()
+                .flat_map(|l| l.files.iter().map(|f| crate::hero_paint_parts::dir_of(f).to_string()))
+                .collect();
+            let mut by_part: IndexMap<(String, String), Vec<String>> = IndexMap::new();
+            for p in
+                paths.iter().filter(|p| p.ends_with(".vtex_c") && dirs.contains(crate::hero_paint_parts::dir_of(p)))
+            {
+                by_part
+                    .entry((crate::hero_paint_parts::dir_of(p).to_string(), part_of(p)))
+                    .or_default()
+                    .push(p.to_string());
+            }
+            for l in models {
+                l.files = with_copies(&l.files, &by_part);
+            }
+        }
         Ok(all)
     }
 
@@ -224,30 +300,58 @@ impl HeroPaintService {
     ) -> Result<Built, String> {
         let index = self.pak01()?;
         let mut built = Built { entries: IndexMap::new(), compressed: Vec::new() };
+        // what each file gets; a later layer's wins, as an item's own colour over the body's
+        let mut plans: IndexMap<String, Recipe> = IndexMap::new();
         for layer in self.layers(lib, vanilla, hero, worn)? {
-            let Some((hex, mode)) = colors.get(&layer.id).and_then(parse_paint) else { continue };
-            let color = rgb_of_hex(&hex);
+            let model = layer.kind == "body" || layer.kind == "itemModel";
             for p in &layer.files {
-                let Some(file) = index.read(p).ok().flatten() else { continue };
-                let made = (|| -> Result<(), String> {
-                    if p.ends_with(".vpcf_c") {
-                        let o = crate::recolor::Options { own: Some(true), ..Default::default() };
-                        let (out, n) = crate::recolor::recolor_resource(&file, color, &o)?;
-                        if n.changed > 0 {
-                            built.entries.insert(p.clone(), crate::vpk::entry_at(p, out.into()));
-                        }
-                    } else if let Some(png) = crate::vtex::png_from_vtex(&file) {
-                        let mut out = file[..file.len() - png.len()].to_vec();
-                        out.extend(repaint(png, color, mode)?);
-                        built.entries.insert(p.clone(), crate::vpk::entry_at(p, out.into()));
-                    } else {
-                        built.compressed.push((p.clone(), file.clone(), color, mode));
-                    }
-                    Ok(())
-                })();
-                if let Err(e) = made {
-                    log(format!("hero paint: {p} left as it is: {e}"));
+                let r = Recipe::of(colors, &layer.id, &if model { part_of(p) } else { String::new() });
+                if !r.is_empty() {
+                    plans.insert(p.clone(), r);
                 }
+            }
+        }
+        let with_mats: Vec<String> = plans.iter().filter(|(_, r)| r.has_mats()).map(|(p, _)| p.clone()).collect();
+        let mats = if with_mats.is_empty() { IndexMap::new() } else { materials_by_color(&index, &with_mats) };
+        for (p, recipe) in plans {
+            let Some(file) = index.read(&p).ok().flatten() else { continue };
+            let made = (|| -> Result<(), String> {
+                if p.ends_with(".vpcf_c") {
+                    let Some((color, _)) = recipe.base.color else { return Ok(()) };
+                    let o = crate::recolor::Options { own: Some(true), ..Default::default() };
+                    let (out, n) = crate::recolor::recolor_resource(&file, color, &o)?;
+                    if n.changed > 0 {
+                        built.entries.insert(p.clone(), crate::vpk::entry_at(&p, out.into()));
+                    }
+                } else if let Some(png) = crate::vtex::png_from_vtex(&file) {
+                    if recipe.has_color() {
+                        let mut out = file[..file.len() - png.len()].to_vec();
+                        out.extend(repaint(png, &recipe)?);
+                        built.entries.insert(p.clone(), crate::vpk::entry_at(&p, out.into()));
+                    }
+                } else {
+                    let mut masks: Vec<(String, Vec<u8>, u8)> = Vec::new();
+                    for m in mats.get(&p).into_iter().flatten() {
+                        for (kind, mp) in [(1u8, &m.masks1), (2u8, &m.masks2)] {
+                            let Some(mp) = mp.as_ref().filter(|mp| !masks.iter().any(|x| &x.0 == *mp)) else {
+                                continue;
+                            };
+                            if let Some(f) = index.read(mp).ok().flatten() {
+                                masks.push((mp.clone(), f, kind));
+                            }
+                        }
+                    }
+                    if recipe.has_mats() && masks.is_empty() {
+                        log(format!("hero paint: {p}: no material with masks is drawn from it, its material stays"));
+                    }
+                    if recipe.has_color() || !masks.is_empty() {
+                        built.compressed.push(Picture { path: p.clone(), file, recipe, masks });
+                    }
+                }
+                Ok(())
+            })();
+            if let Err(e) = made {
+                log(format!("hero paint: {p} left as it is: {e}"));
             }
         }
         Ok(built)
@@ -255,11 +359,7 @@ impl HeroPaintService {
 
     /// The compressed pictures, read out, repainted and compiled again; none without both tools,
     /// and then why, in words for the player.
-    fn pictures(
-        list: &[(String, Vec<u8>, Rgb, &'static str)],
-        tools: &mut Tools,
-        log: &mut dyn FnMut(String),
-    ) -> (Vec<Entry>, Option<String>) {
+    fn pictures(list: &[Picture], tools: &mut Tools, log: &mut dyn FnMut(String)) -> (Vec<Entry>, Option<String>) {
         let (Some(exe), Some(compile)) = (tools.vrf.clone(), tools.compile.as_mut()) else {
             if list.is_empty() {
                 return (vec![], None);
@@ -282,8 +382,16 @@ impl HeroPaintService {
             let mut compile_list: Vec<String> = Vec::new();
             // a model's texture comes back under a name of the compiler's: put it under the game's
             let mut textures: IndexMap<String, String> = IndexMap::new();
-            for (p, file, color, mode) in list {
-                let png = (tools.repaint)(&(tools.decode)(&exe, file)?, *color, mode)?;
+            // a material's mask comes back under the name of its first channel: put it under the game's
+            let mut masks: IndexMap<String, String> = IndexMap::new();
+            for pic in list {
+                let decoded = (tools.decode)(&exe, &pic.file)?;
+                Self::masks_of(pic, &decoded, &exe, &mut *tools.decode, &mut masks, &mut files, &mut compile_list)?;
+                if !pic.recipe.has_color() {
+                    continue;
+                }
+                let p = &pic.path;
+                let png = (tools.repaint)(&decoded, &pic.recipe)?;
                 if p.starts_with("panorama/images/") {
                     let source = match p.strip_suffix("_png.vtex_c") {
                         Some(s) => format!("{s}.png"),
@@ -324,6 +432,8 @@ impl HeroPaintService {
             };
             let own =
                 regex::Regex::new(r"^materials/d2mm_paint/(t\d+)_png_[0-9a-f]+\.vtex_c$").expect("a fixed pattern");
+            let mask = regex::Regex::new(r"^materials/d2mm_paint/(m\d+_(?:detail|spec))_png_[0-9a-f]+\.vtex_c$")
+                .expect("a fixed pattern");
             Ok(out
                 .into_iter()
                 .filter_map(|e| {
@@ -331,7 +441,10 @@ impl HeroPaintService {
                     if let Some(c) = own.captures(&p) {
                         return textures.get(&c[1]).map(|to| crate::vpk::entry_at(to, e.data.clone()));
                     }
-                    list.iter().any(|l| l.0 == p).then_some(e)
+                    if let Some(c) = mask.captures(&p) {
+                        return masks.get(&c[1]).map(|to| crate::vpk::entry_at(to, e.data.clone()));
+                    }
+                    list.iter().any(|l| l.path == p).then_some(e)
                 })
                 .collect())
         })();
@@ -343,6 +456,44 @@ impl HeroPaintService {
                 (vec![], Some(e))
             }
         }
+    }
+
+    /// A picture's masks, set by its recipe and staged as a material of the hero shader that packs
+    /// them again from their channels: `masks` gets the name the compiler will give each.
+    fn masks_of(
+        pic: &Picture,
+        decoded: &[u8],
+        exe: &str,
+        decode: Decode,
+        masks: &mut IndexMap<String, String>,
+        files: &mut Vec<SourceFile>,
+        compile_list: &mut Vec<String>,
+    ) -> Result<(), String> {
+        if pic.masks.is_empty() {
+            return Ok(());
+        }
+        let (color, cw, _) = crate::png_paint::decode_rgba(decoded)?;
+        for (path, file, kind) in &pic.masks {
+            if masks.values().any(|m| m == path) {
+                continue;
+            }
+            let (mut px, mw, mh) = crate::png_paint::decode_rgba(&decode(exe, file)?)?;
+            crate::paint_recipe::edit_mask(&mut px, mw as usize, *kind, &color, cw as usize, &pic.recipe);
+            let n = masks.len();
+            let inputs = &MASK_INPUTS[(*kind as usize).clamp(1, 2) - 1];
+            let mut vmat = format!("Layer0\n{{\n\tshader \"hero.vfx\"\n\tF_MASKS_{kind} 1\n");
+            for (ch, (input, short)) in inputs.iter().enumerate() {
+                let source = format!("materials/d2mm_paint/m{n}_{short}.png");
+                files.push(SourceFile { path: source.clone(), data: crate::png_paint::channel_png(&px, mw, mh, ch)? });
+                vmat.push_str(&format!("\t{input} \"{source}\"\n"));
+            }
+            vmat.push_str("}\n");
+            let name = format!("materials/d2mm_paint/m{n}.vmat");
+            files.push(SourceFile { path: name.clone(), data: vmat.into_bytes() });
+            compile_list.push(name);
+            masks.insert(format!("m{n}_{}", inputs[0].1), path.clone());
+        }
+        Ok(())
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -375,7 +526,7 @@ impl HeroPaintService {
         let vpk = crate::vpk::build(&list);
         let count = entries.len();
         // pictures the tools could not build again stay as the game has them; the window says how many
-        let left = compressed.iter().filter(|c| !entries.contains_key(&c.0)).count();
+        let left = compressed.iter().filter(|c| c.outputs().iter().any(|o| !entries.contains_key(*o))).count();
         let mut g = Map::new();
         g.insert("paint".into(), json!(hero));
         g.insert("label".into(), json!(label));
@@ -414,6 +565,15 @@ impl HeroPaintService {
         let mut worn: Vec<Value> = worn_of(items).into_iter().map(Value::String).collect();
         worn.extend(g.and_then(|g| g.get("items")).and_then(Value::as_array).cloned().unwrap_or_default());
         let layers = self.layers(lib, vanilla, hero, &worn_of(&Value::Array(worn)))?;
+        let model_files: Vec<String> = layers
+            .iter()
+            .filter(|l| l.kind == "body" || l.kind == "itemModel")
+            .flat_map(|l| l.files.iter().cloned())
+            .collect();
+        let mats = match self.pak01() {
+            Ok(ix) if !model_files.is_empty() => materials_by_color(&ix, &model_files),
+            _ => IndexMap::new(),
+        };
         let views: Vec<Value> = with_shares(&layers)
             .into_iter()
             .map(|s| {
@@ -441,6 +601,9 @@ impl HeroPaintService {
                 }
                 if l.kind == "item" || l.kind == "effects" {
                     v.insert("particles".into(), json!(l.files.iter().take(400).collect::<Vec<_>>()));
+                }
+                if l.kind == "body" || l.kind == "itemModel" {
+                    v.insert("parts".into(), parts_view(&l.files, &mats));
                 }
                 Value::Object(v)
             })
@@ -475,7 +638,7 @@ impl HeroPaintService {
             .as_object()
             .into_iter()
             .flatten()
-            .filter(|(_, v)| parse_paint(v).is_some())
+            .filter(|(k, v)| split_key(k).is_some() && parse_look(v).is_some())
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
         if picked.is_empty() {
@@ -486,6 +649,20 @@ impl HeroPaintService {
             None => hero.to_string(),
         };
         self.put(inst, lib, vanilla, (hero, &label, &picked), false, &worn_of(items), tools, log)
+    }
+
+    /// The model's colour textures named in `files` as small pictures with their colour zones
+    /// (hero_paint_parts.rs); `decode` reads out a compressed one.
+    pub fn part_pictures(
+        &self,
+        files: &Value,
+        decode: &mut crate::hero_paint_parts::DecodeOne<'_>,
+        log: &mut dyn FnMut(String),
+    ) -> Value {
+        let Ok(index) = self.pak01() else { return json!({}) };
+        let files: Vec<String> =
+            files.as_array().into_iter().flatten().filter_map(Value::as_str).map(str::to_string).collect();
+        crate::hero_paint_parts::part_pictures(&index, &files, decode, log)
     }
 
     /// After a Dota update: the records among `ids` to build again, which the app does with
@@ -547,16 +724,46 @@ pub fn vrf_png(exe: &str, vtex: &[u8], tmp: &Path, run: crate::rank_look_service
 mod tests {
     use super::*;
 
-    fn one_picture() -> Vec<(String, Vec<u8>, Rgb, &'static str)> {
-        vec![("materials/models/heroes/axe/axe_color_psd_1.vtex_c".into(), vec![1, 2, 3], [1.0, 0.0, 0.0], "tint")]
+    fn one_picture() -> Vec<Picture> {
+        vec![Picture {
+            path: "materials/models/heroes/axe/axe_color_psd_1.vtex_c".into(),
+            file: vec![1, 2, 3],
+            recipe: Recipe::plain([1.0, 0.0, 0.0], "tint"),
+            masks: vec![],
+        }]
     }
 
     fn quiet(_: String) {}
 
+    // The armory drew an arcana's shoulders from a copy of their texture the build had not painted.
+    #[test]
+    fn a_texture_brings_its_copies_of_the_same_name() {
+        let mut by_part = IndexMap::new();
+        by_part.insert(
+            ("materials/a/".to_string(), "x_shoulders_color".to_string()),
+            vec![
+                "materials/a/x_shoulders_color_tga_1.vtex_c".to_string(),
+                "materials/a/x_shoulders_color_tga_2.vtex_c".to_string(),
+            ],
+        );
+        let files = vec![
+            "materials/a/x_shoulders_color_tga_1.vtex_c".to_string(),
+            "materials/a/x_belt_color_tga_3.vtex_c".to_string(),
+        ];
+        assert_eq!(
+            with_copies(&files, &by_part),
+            vec![
+                "materials/a/x_shoulders_color_tga_1.vtex_c".to_string(),
+                "materials/a/x_shoulders_color_tga_2.vtex_c".to_string(),
+                "materials/a/x_belt_color_tga_3.vtex_c".to_string(),
+            ]
+        );
+    }
+
     // Players saw only "none of the files took the colour" while the log said Workshop Tools were missing.
     #[test]
     fn a_picture_left_unpainted_says_why() {
-        let repaint = |png: &[u8], _: Rgb, _: &str| Ok(png.to_vec());
+        let repaint = |png: &[u8], _: &Recipe| Ok(png.to_vec());
         let mut decode = |_: &str, f: &[u8]| Ok(f.to_vec());
 
         let mut tools = Tools { vrf: Some("vrf.exe".into()), repaint: &repaint, decode: &mut decode, compile: None };

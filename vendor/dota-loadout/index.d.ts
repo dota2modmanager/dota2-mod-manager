@@ -8,8 +8,8 @@ export interface Hero {
  studioEffects(patch:Partial<EffectPatch>, descriptors?:SceneManifest['materials'], preserveHero?:boolean):Promise<unknown>;
  studioGemEffects(palette:Record<string,{rgb:number[];own:boolean;bake:boolean}>):void;
  studioGemMaterials(colors:Record<string,string>):void;
- /** per material: [hue 0-1, saturation, value, mode 1-4] of the recolour window, or none */
- studioPaintMaterials(paints:Record<string,[number,number,number,number]>|null):void;
+ /** per material: a tone [hue 0-1, saturation, value, mode] and a material [metalness, gloss, shine, rim] per colour zone of the recolour window, or none */
+ studioPaintMaterials(paints:Record<string,{tones:number[][];mats:number[][];tos?:number[][]}>|null):void;
  studioEffectsVisible(value:boolean):void;
  update(dt:number,camera:THREE.Camera):void;
 }

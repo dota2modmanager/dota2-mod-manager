@@ -42,8 +42,15 @@ pub fn data_tree(file: Option<&[u8]>) -> Option<Map<String, Value>> {
     if !resource::blocks(file).ok()?.iter().any(|b| b.name == "DATA") {
         return None;
     }
-    let kv = kv3::read(resource::data_block(file).ok()?).ok()?;
-    match kv_json(&kv, Some(&kv.root)) {
+    let block = resource::data_block(file).ok()?;
+    // a resource compiled years ago may keep the older KV3 (a snapshot's DATA: a weapon's glowing edge)
+    let tree = if crate::kv3_legacy::is_legacy(block) {
+        crate::kv3_legacy::read_json(block).ok()?
+    } else {
+        let kv = kv3::read(block).ok()?;
+        kv_json(&kv, Some(&kv.root))
+    };
+    match tree {
         Value::Object(m) => Some(m),
         _ => None,
     }
