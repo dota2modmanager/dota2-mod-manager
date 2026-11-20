@@ -13,6 +13,7 @@ pub mod hero_paint_service;
 pub mod hero_portrait_service;
 pub mod hud_scale;
 pub mod hud_scale_service;
+pub mod icon_paint;
 pub mod map_base;
 pub mod map_build;
 pub mod map_decor;
