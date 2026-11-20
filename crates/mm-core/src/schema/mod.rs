@@ -14,6 +14,7 @@ pub mod schema_deploy;
 pub mod schema_harvest;
 pub mod schema_merge;
 pub mod schema_service;
+pub mod stock_portraits;
 
 use std::path::Path;
 

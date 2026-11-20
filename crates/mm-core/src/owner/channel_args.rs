@@ -354,6 +354,7 @@ pub fn window_settings() -> &'static HashMap<&'static str, Check> {
             ("autoPack", bool_()),
             ("modPreview3d", bool_()),
             ("everyoneWearsMine", bool_()),
+            ("heroPortraitsStock", bool_()),
             ("everyoneExcluded", list(str_(64, 0), 300)),
             ("heroPedestals", custom(hero_pedestals)),
             ("heroPedestalHeights", custom(hero_pedestal_heights)),

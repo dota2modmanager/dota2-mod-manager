@@ -135,6 +135,7 @@ pub struct Inputs {
     mods_off: bool,
     schema_patch: bool,
     everyone: bool,
+    stock_portraits: bool,
     excluded: HashSet<String>,
     picks: usize,
     records: Vec<Value>,
@@ -153,6 +154,7 @@ impl Inputs {
             mods_off: ctx.mods_off(),
             schema_patch: ctx.on("schemaPatch"),
             everyone: ctx.on("everyoneWearsMine"),
+            stock_portraits: ctx.on("heroPortraitsStock"),
             excluded,
             picks: ctx.picks_on(),
             records: ctx.lib.list().to_vec(),
@@ -328,7 +330,10 @@ impl SchemaService {
     ) -> Result<Making, String> {
         let Job { game, base, inputs, table, files, .. } = job;
         let records = &inputs.records;
-        let built = table.build(&base.0, game, records, bases, progress, log)?;
+        let mut built = table.build(&base.0, game, records, bases, progress, log)?;
+        if inputs.stock_portraits {
+            crate::schema::stock_portraits::keep_stock_portraits(&mut built)?;
+        }
         if !inputs.schema_patch {
             let ix =
                 crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;

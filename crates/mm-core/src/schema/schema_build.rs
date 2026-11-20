@@ -54,6 +54,23 @@ pub struct TablePatch {
 
 #[cfg(test)]
 impl TablePatch {
+    /// A patch of a block and its files, the rest left empty.
+    pub fn of(block: &[u8], assets: Vec<Entry>) -> Self {
+        TablePatch {
+            id: String::new(),
+            block: block.to_vec(),
+            assets: Some(assets),
+            source: String::new(),
+            own: None,
+            added: None,
+            unplaced: None,
+            item: None,
+            item_id: None,
+            based: false,
+            fx: false,
+        }
+    }
+
     /// An item pick worn as an item, with no model of its own, for tests of the picks' files.
     pub(crate) fn worn_pick(id: &str, block: &[u8], based: bool) -> Self {
         TablePatch {
