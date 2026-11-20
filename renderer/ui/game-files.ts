@@ -19,6 +19,11 @@ import { refreshCosmeticSlots } from '../core/installed.ts';
 import { refreshPatchState } from './statusbar.ts';
 import { toast } from './toast.ts';
 
+/** Whether the game reads the item table now. While it does not, what works through it (the
+ * game's own looks: weather, couriers, loading screens...) is drawn greyed, as not active yet, and
+ * a click on it asks for the table first (decision 2026-11-20). */
+export const tableOn = (): boolean => Boolean(state.settings?.schemaPatch);
+
 /** True when the game will read the item table: allowed already, or allowed just now. */
 export async function allowItemTable(): Promise<boolean> {
   if (state.settings?.schemaPatch) return true;

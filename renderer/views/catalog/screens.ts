@@ -31,9 +31,10 @@ import { showScreen } from '../../catalog/screen/root.tsx';
 import type { ScreenActions, ToolbarModel } from '../../catalog/screen/model.ts';
 import type { CosmeticItem } from '../../catalog/cosmetic/CosmeticCard.tsx';
 import { slotLooks } from '../../catalog/cosmetic/slot-looks.ts';
+import { tableOn } from '../../ui/game-files.ts';
 import type { Mod } from '../../catalog/types.ts';
 import { applyFilters, authorsOf, categoryMods, collectSlots, cosmeticFavValue, favoriteCosmetics, favoriteMods, filterCosmetics,
-  isGroupedCategory, searchCosmetics, tagLabel, visibleCategories, type Look } from './lists.ts';
+  isGroupedCategory, isItemCosmeticSlot, searchCosmetics, tagLabel, visibleCategories, type Look } from './lists.ts';
 import { view } from './state.ts';
 
 const NOTHING = () => L`Ничего не найдено — сбрось фильтры`;
@@ -47,6 +48,7 @@ const cosmeticItems = (list: Look[], withCat = false): CosmeticItem[] => list.ma
   picked: pickedIn(slot)?.itemId === o.id,
   fallbackIcon: cosmeticMeta(slot).icon,
   catName: withCat ? catName(COSMETIC_PREFIX + slot) : undefined,
+  muted: !isItemCosmeticSlot(slot) && !tableOn(),
 }));
 
 export async function renderFavorites(actions: ScreenActions): Promise<void> {

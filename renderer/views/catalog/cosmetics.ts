@@ -17,16 +17,18 @@ import { cosmeticFavValue, findCosmetic, isItemCosmeticSlot, slotData, type Look
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
 import { installing, screen } from './state.ts';
 import { catalogOnShow } from '../../core/router.ts';
-import { allowItemTable } from '../../ui/game-files.ts';
+import { allowItemTable, tableOn } from '../../ui/game-files.ts';
 
 let open: Look | null = null;
 sharesOverlay(() => { open = null; });
 
-export function openCosmeticWindow(slot: string, itemId: string, from: Element | null): void {
+export async function openCosmeticWindow(slot: string, itemId: string, from: Element | null): Promise<void> {
   const o = findCosmetic(slot, itemId);
   if (!o) return;
   // a hero's item, found by the search or in favourites: the builder's window, with it typed in
   if (isItemCosmeticSlot(slot)) { openItemSlotModal(slot, from, { query: o.name }); return; }
+  // a greyed look (the item table is off) asks for the table first, and opens once it is on
+  if (!tableOn() && !await allowItemTable()) return;
   takeOverlay();
   open = { slot, o };
   openOverlay(drawCosmeticModal, from);

@@ -8,6 +8,7 @@
 import { $ } from '../core/dom.ts';
 import { COSMETIC_PREFIX, RAIL_SECTIONS } from '../core/constants.ts';
 import { state } from '../core/store.ts';
+import { tableOn } from '../ui/game-files.ts';
 import { registerView, switchView, catalogOnShow } from '../core/router.ts';
 import { enterSection, sectionOnShow } from './catalog/sections.ts';
 import { pickedIn } from '../core/installed.ts';
@@ -78,7 +79,7 @@ function itemsRail(): RailModel {
     .filter((x) => !isItemCosmeticSlot(x.slot)) // the builder's slots have one entry of their own
     .map((s) => {
       const id = COSMETIC_PREFIX + s.slot;
-      return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)) };
+      return { id, icon: catIcon(id), name: catName(id), dot: Boolean(pickedIn(s.slot)), muted: !tableOn() };
     });
   if (looks.length) sections.push({ label: L`Виды из игры`, items: looks });
   return { active: state.activeCategory, sections };
@@ -144,7 +145,7 @@ const actions: ScreenActions = {
     if (state.activeCategory === 'favorites' || view.filters.favOnly) renderCatalog();
     else renderRail();
   },
-  openCosmetic: (slot, id, card) => openCosmeticWindow(slot, id, card),
+  openCosmetic: (slot, id, card) => { void openCosmeticWindow(slot, id, card); },
   cosmeticFavChanged: () => actions.favChanged(),
   cosmeticFilter: ({ search, ...patch }) => {
     Object.assign(view.filters, patch);

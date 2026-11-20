@@ -43,3 +43,11 @@
 
 /* "…and N more" under a search grid that was cut short */
 .search-more { color: var(--text-faint); font-size: 12.5px; padding: 14px 2px 0; text-align: center; }
+
+/* A look the game's item table has to be on for, while it is off (ui/game-files.ts tableOn): drawn
+   as not active yet, greyed and dimmed as a disabled control is, and still clickable, because the
+   click is what asks for the table. Hover brings it half back, so it reads as something to press. */
+.card.muted .card-media, .card.muted .card-body { opacity: var(--disabled-opacity); filter: grayscale(1); }
+.card.muted:hover .card-media, .card.muted:hover .card-body { opacity: 0.75; }
+.rail-item.muted { opacity: var(--disabled-opacity); }
+.rail-item.muted:hover, .rail-item.muted.active { opacity: 0.8; }
