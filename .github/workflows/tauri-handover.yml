@@ -126,8 +126,11 @@ jobs:
           $p.WaitForExit()
           if ($p.ExitCode -ne 0) { throw "the uninstaller exited with $($p.ExitCode)" }
           $exe = "$env:DIR\Dota 2 Mod Manager.exe"
-          for ($i = 0; $i -lt 60 -and (Test-Path $exe); $i++) { Start-Sleep -Seconds 1 }
+          # uninstall.exe reruns itself from TEMP and exits at once, and its hook drops the d2mm://
+          # key after the files: wait for both, or the check races the uninstaller (2026-11-20)
+          $link = 'HKCU:\Software\Classes\d2mm'
+          for ($i = 0; $i -lt 60 -and ((Test-Path $exe) -or (Test-Path $link)); $i++) { Start-Sleep -Seconds 1 }
           if (Test-Path $exe) { throw "the uninstaller left $exe behind" }
-          if (Test-Path 'HKCU:\Software\Classes\d2mm') { throw 'd2mm:// still points at the removed app' }
+          if (Test-Path $link) { throw 'd2mm:// still points at the removed app' }
           if (-not (Test-Path "$env:APPDATA\Dota 2 Mod Manager\handover-mark.txt")) { throw 'a silent removal took userData' }
           'removed, userData kept'
