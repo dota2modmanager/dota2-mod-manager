@@ -2,6 +2,53 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.6.0
+
+### Hero paint by part
+
+- Paint a hero part by part: every texture of the body and of each worn item is a part with its
+  own colour. Inside a part, nine colour zones (dark, grey and metal, and seven hues) take colours
+  of their own, with soft borders so a gradient does not break into patches.
+- Material: metalness, gloss, shine and rim light, or one of five ready materials (as in the game,
+  matte, gloss, metal, chrome).
+- Every icon a cosmetic draws for an ability takes the paint now: Phoenix's TI10 Fire Spirits and
+  41 other immortal icons that kept their colours, and an icon you picked by hand in Ability icons.
+
+### Hero builder
+
+- Wear a slot empty: the Empty card after the stock item takes that part off the hero.
+- Undress: a button next to Dress all takes off what Dress all put on. What you picked by hand
+  stays.
+- An effect picked in an ability effects slot brings its own icon and music, not the worn item's
+  (Tinker's March of the Machines with the Interstellar Astrarium).
+- Stock hero portraits, in Settings: an arcana or persona from the builder keeps Valve's portrait
+  in the pick grid, the top bar and the scoreboard. The look in the match stays.
+- With the item table off, an arcana whose base is downloaded is built from the base alone, and it
+  no longer waits for the table.
+
+### Catalog and authors
+
+- Publish a mod from My mods: a mod made with the app's tools, or a file of your own, opens in the
+  Author's desk as a draft with its name, category and file filled in. A pack of your own mods can
+  go too. A mod needs real work of yours in it: a recolour in one click does not count.
+- The Author's desk history says why a mod was turned down and how often an accepted one is
+  downloaded.
+- All mods by this author: a button in a mod's window opens everything its author made, in every
+  category.
+- A category shows the catalog's note about it.
+- Catalog tools for Windows and Linux download again, and new catalog categories show in the menu.
+- A setting turns off the 3D preview in a mod's window, for the picture as before.
+
+### Fixes
+
+- The app starts on a Windows without the newer common controls library (the TaskDialogIndirect
+  error). If a start still fails, a window says why, and the reason is saved to a file in TEMP.
+- After a Dota patch, a HUD mod is built again for the new interface instead of switched off.
+- The AppImage starts on Linux without WebKitGTK installed (Arch with Hyprland crashed before the
+  window opened).
+- A mod made in the app names the VPK in its archive pakNN_dir.vpk, so unpacking it by hand works.
+- The 3D preview reads the game's older particle files too.
+
 ## 4.5.0
 
 ### A pedestal for every hero
