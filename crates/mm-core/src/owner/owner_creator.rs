@@ -1,4 +1,4 @@
-//! The author's drafts: the drafts, one saved, a style's VPK or picture
+//! The author's drafts: the drafts, one saved, one started from a mod in My mods, a style's VPK or picture
 //! picked, one deleted, one written out as an archive for the catalog's maintainer, and one sent
 //! to the catalog's upload API. The thinking is in creator.rs and creator_upload.rs; this asks
 //! the user for the files and where to save, and puts the request on the network.
@@ -16,6 +16,7 @@ pub const CHANNELS: &[&str] = &[
     "creator:history",
     "creator:save",
     "creator:attach",
+    "creator:fromRecord",
     "creator:remove",
     "creator:export",
     "creator:upload",
@@ -24,6 +25,15 @@ pub const CHANNELS: &[&str] = &[
 /// The previews the window drew, one per style, as the upload and the archive take them.
 fn previews(v: &Value) -> Vec<Option<Vec<u8>>> {
     v.as_array().map(|a| a.iter().map(|p| crate::owner::bytes_of(p).ok().flatten()).collect()).unwrap_or_default()
+}
+
+/// A mod someone may send to the catalog from My mods: one this app's tools made, or a file of
+/// theirs nothing recognised. A catalog mod is its author's to publish, and a cursor set or a
+/// pack is not a mod the catalog takes. (The window offers the same: record-actions.ts.)
+fn publishable(rec: &Value) -> bool {
+    let made = rec.get("generated").is_some_and(crate::js::truthy)
+        || rec.get("categoryId").and_then(Value::as_str) == Some("imported");
+    made && rec.get("kind").and_then(Value::as_str) != Some("pack") && !crate::cursors::is_cursor_record(Some(rec))
 }
 
 pub fn handle(o: &Owner, channel: &str, args: &[Value]) -> Option<R> {
@@ -105,6 +115,23 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 store.attach(&id, &arg(args, 1), if vpk { "vpk" } else { "picture" }, std::path::Path::new(&from))?;
             Ok(json!({ "draft": store.shown(&d) }))
         })(),
+        "creator:fromRecord" => (|| {
+            let c = o.core();
+            let rec = c.library.find(&a0).cloned().ok_or_else(|| t("Мод не найден", &[]))?;
+            if !publishable(&rec) {
+                return Err(t("Этот мод уже из каталога: публикует его автор", &[]));
+            }
+            let vpk = crate::owner::owner_mods::single_vpk(&c.installer, &rec)?;
+            drop(c);
+            let category = crate::js::string(rec.get("categoryId").unwrap_or(&Value::Null));
+            let fields = json!({
+                "name": crate::js::string(rec.get("name").unwrap_or(&Value::Null)),
+                // "imported" is this app's shelf for unknown files, not a catalog category
+                "category": if category == "imported" { String::new() } else { category },
+            });
+            let d = store.draft_around(&fields, &vpk)?;
+            Ok(json!({ "draft": store.shown(&d) }))
+        })(),
         "creator:remove" => store.remove(&id).map(|_| json!({})),
         "creator:export" => (|| {
             let previews = previews(&arg(args, 1));
@@ -135,4 +162,21 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         })(),
         _ => Err(format!("no handler for {channel}")),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_a_mod_made_here_or_brought_in_by_hand_is_offered_to_the_catalog() {
+        let made = json!({ "categoryId": "hero-items", "generated": { "set": "pudge" }, "files": [] });
+        assert!(publishable(&made));
+        assert!(publishable(&json!({ "categoryId": "imported", "fileRef": "glow.vpk" })));
+        assert!(!publishable(&json!({ "categoryId": "heroes", "fileRef": "Pudge Red" })), "a catalog mod");
+        assert!(!publishable(&json!({ "categoryId": "imported", "kind": "pack" })));
+        let cursor = json!({ "categoryId": "cursors", "generated": { "cursor": {} },
+            "files": [{ "root": "cursor", "relPath": "arrow.cur" }] });
+        assert!(!publishable(&cursor));
+    }
 }

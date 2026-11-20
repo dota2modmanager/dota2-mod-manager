@@ -158,6 +158,7 @@
       list: () => mm.invoke('creator:list'),
       save: (id, fields) => mm.invoke('creator:save', id, fields),
       attach: (id, style, kind) => mm.invoke('creator:attach', id, style, kind),
+      fromRecord: (id) => mm.invoke('creator:fromRecord', id),
       remove: (id) => mm.invoke('creator:remove', id),
       export: (id, previews) => mm.invoke('creator:export', id, previews),
       accept: () => mm.invoke('creator:accept'),

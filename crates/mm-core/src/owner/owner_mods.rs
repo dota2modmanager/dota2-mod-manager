@@ -354,6 +354,16 @@ fn count_install(o: &Owner, cat: &str, name: &str, style: Option<&Value>) {
     c.download_stats.track(&keys);
 }
 
+/// A record as one self-contained VPK, its lifted item blocks put back: what it is on its own,
+/// away from this game's merged table.
+pub(crate) fn single_vpk(inst: &crate::installer::Installer, rec: &Value) -> Result<Vec<u8>, String> {
+    let deltas: Option<Vec<Vec<u8>>> = rec
+        .get("schema")
+        .and_then(Value::as_array)
+        .map(|d| d.iter().map(|b| text(b.get("block")).chars().map(|c| c as u8).collect()).collect());
+    inst.merge_to_single_vpk(&files(rec), deltas.as_deref())
+}
+
 fn export_single(o: &Owner, id: &Value) -> Value {
     let Some(rec) = o.core().library.find(id).cloned() else { return not_found() };
     let run = || -> Result<Value, String> {
@@ -364,11 +374,7 @@ fn export_single(o: &Owner, id: &Value) -> Value {
             if cursor {
                 c.installer.cursor_zip(&text(rec.get("id")), &text(rec.get("name")), &files(&rec))?
             } else {
-                let deltas: Option<Vec<Vec<u8>>> = rec
-                    .get("schema")
-                    .and_then(Value::as_array)
-                    .map(|d| d.iter().map(|b| text(b.get("block")).chars().map(|c| c as u8).collect()).collect());
-                c.installer.merge_to_single_vpk(&files(&rec), deltas.as_deref())?
+                single_vpk(&c.installer, &rec)?
             }
         };
         let safe = safe_name(&text(rec.get("name")));

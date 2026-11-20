@@ -635,6 +635,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("fx:preview", vec![str_(300, 1), effect_edits()]),
             ("fx:install", vec![str_(300, 1), effect_edits(), optional(bool_())]),
             ("creator:remove", vec![ID()]),
+            ("creator:fromRecord", vec![ID()]),
             ("creator:export", vec![ID(), optional(list(optional(bytes(8.0 * MB)), 3))]),
             ("creator:upload", vec![ID(), optional(list(optional(bytes(8.0 * MB)), 3))]),
             (

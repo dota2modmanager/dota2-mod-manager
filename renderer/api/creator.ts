@@ -60,6 +60,8 @@ export interface CreatorApi {
   save: (id: string | null, fields: CreatorFields) => Promise<Reply<{ draft: CreatorDraft }>>;
   /** a style's VPK or picture, picked in a dialog */
   attach: (id: string, style: number, kind: 'vpk' | 'picture') => Promise<Reply<{ draft?: CreatorDraft; cancelled?: true }>>;
+  /** a new draft around a mod in My mods that this app made or the user brought in, its VPK in style 1 */
+  fromRecord: (id: string) => Promise<Reply<{ draft: CreatorDraft }>>;
   remove: (id: string) => Promise<Reply<object>>;
   /** the draft as PreMod's archive, saved where the user says; previews are each style's picture as 854x480 WebP */
   export: (id: string, previews: (Uint8Array | null)[]) => Promise<Reply<{ path?: string; size?: number; cancelled?: true }>>;
