@@ -281,6 +281,10 @@ pub fn list_mods(inst: &Installer, lib: &mut Library, deps: ListingDeps) -> (Val
             if behind.contains(&id) {
                 row.insert("updateAvailable".into(), json!(true));
             }
+            // the user's own mod: "ok", or what it lacks before it can go to the catalog
+            if let Some(verdict) = crate::tools::own_work::own_work(&rec) {
+                row.insert("publish".into(), json!(verdict.err().unwrap_or_else(|| "ok".into())));
+            }
             Value::Object(row)
         })
         .collect();

@@ -27,15 +27,6 @@ fn previews(v: &Value) -> Vec<Option<Vec<u8>>> {
     v.as_array().map(|a| a.iter().map(|p| crate::owner::bytes_of(p).ok().flatten()).collect()).unwrap_or_default()
 }
 
-/// A mod someone may send to the catalog from My mods: one this app's tools made, or a file of
-/// theirs nothing recognised. A catalog mod is its author's to publish, and a cursor set or a
-/// pack is not a mod the catalog takes. (The window offers the same: record-actions.ts.)
-fn publishable(rec: &Value) -> bool {
-    let made = rec.get("generated").is_some_and(crate::js::truthy)
-        || rec.get("categoryId").and_then(Value::as_str) == Some("imported");
-    made && rec.get("kind").and_then(Value::as_str) != Some("pack") && !crate::cursors::is_cursor_record(Some(rec))
-}
-
 pub fn handle(o: &Owner, channel: &str, args: &[Value]) -> Option<R> {
     CHANNELS.contains(&channel).then(|| Ok(answer(o, channel, args)))
 }
@@ -120,8 +111,10 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         "creator:fromRecord" => (|| {
             let c = o.core();
             let rec = c.library.find(&a0).cloned().ok_or_else(|| t("Мод не найден", &[]))?;
-            if !publishable(&rec) {
-                return Err(t("Этот мод уже из каталога: публикует его автор", &[]));
+            match crate::tools::own_work::own_work(&rec) {
+                None => return Err(t("Этот мод уже из каталога: публикует его автор", &[])),
+                Some(Err(why)) => return Err(why),
+                Some(Ok(())) => {}
             }
             let vpk = crate::owner::owner_mods::single_vpk(&c.installer, &rec)?;
             drop(c);
@@ -164,21 +157,4 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         })(),
         _ => Err(format!("no handler for {channel}")),
     })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn only_a_mod_made_here_or_brought_in_by_hand_is_offered_to_the_catalog() {
-        let made = json!({ "categoryId": "hero-items", "generated": { "set": "pudge" }, "files": [] });
-        assert!(publishable(&made));
-        assert!(publishable(&json!({ "categoryId": "imported", "fileRef": "glow.vpk" })));
-        assert!(!publishable(&json!({ "categoryId": "heroes", "fileRef": "Pudge Red" })), "a catalog mod");
-        assert!(!publishable(&json!({ "categoryId": "imported", "kind": "pack" })));
-        let cursor = json!({ "categoryId": "cursors", "generated": { "cursor": {} },
-            "files": [{ "root": "cursor", "relPath": "arrow.cur" }] });
-        assert!(!publishable(&cursor));
-    }
 }

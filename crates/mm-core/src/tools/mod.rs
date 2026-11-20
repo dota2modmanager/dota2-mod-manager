@@ -2,6 +2,7 @@
 
 pub mod creator;
 pub mod creator_upload;
+pub mod own_work;
 pub mod resource_compiler;
 pub mod run_process;
 pub mod toolchain;
