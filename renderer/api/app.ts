@@ -36,6 +36,8 @@ export interface StoredSettings {
   modPreview3d?: boolean;
   /** everybody playing a hero the item builder dressed wears the same look (crates/mm-core/src/item_builder/item_builder_everyone.rs) */
   everyoneWearsMine: boolean;
+  /** the hero pictures in the pick grid as Valve drew them, whatever arcana or persona is worn (crates/mm-core/src/schema/stock_portraits.rs) */
+  heroPortraitsStock?: boolean;
   /** the heroes it leaves alone, by id: every other hero built is dressed, as the game's limit allows (crates/mm-core/src/item_builder/item_builder_everyone_budget.rs) */
   everyoneExcluded: string[];
   /** the heroes the last build left out to stay under that limit */

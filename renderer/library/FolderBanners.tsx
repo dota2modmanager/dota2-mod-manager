@@ -77,8 +77,18 @@ function LaunchLang({ lang, followed }: { lang: string; followed: boolean }) {
  * carry a "pre-patch" mark in the list. Three by name, the rest counted. */
 function touchedText(touched: RepairState['touched']): string {
   const off = touched?.off || [];
-  const mods = (touched?.mods || []).filter((n) => !off.includes(n));
-  return offText(off) + markedText(mods);
+  const carried = touched?.carried || [];
+  const mods = (touched?.mods || []).filter((n) => !off.includes(n) && !carried.includes(n));
+  return carriedText(carried) + offText(off) + markedText(mods);
+}
+
+/* A HUD built again on the patched game (looks/hud_repatch.rs): the game's new layout, the mod's styles. */
+function carriedText(carried: string[]): string {
+  if (!carried.length) return '';
+  const names = carried.map((n) => `«${n}»`).join(', ');
+  return carried.length === 1
+    ? L`. Мод ${names} перенесён на новый интерфейс игры: разметка теперь игровая, стили и картинки мода на месте`
+    : L`. Моды ${names} перенесены на новый интерфейс игры: разметка теперь игровая, стили и картинки модов на месте`;
 }
 
 /* A HUD that brings back the game's old interface stops the patched Dota at start (7.42:

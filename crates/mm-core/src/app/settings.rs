@@ -36,6 +36,7 @@ pub fn defaults() -> Map<String, Value> {
         "schemaStamp": null,
         "lastPreset": null,
         "everyoneWearsMine": false,
+        "heroPortraitsStock": false,
         "everyoneExcluded": [],
         "everyoneLeftOut": [],
         "schemaPending": false,

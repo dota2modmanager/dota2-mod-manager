@@ -62,6 +62,8 @@ window.api.patch.onRepair((st) => {
   // a HUD the patch made unable to start the game was switched off (game_repair.rs): the cards
   // and the list say so, and away from My mods a toast does, since Dota would not start with it
   const off = st.touched?.off || [];
+  const carried = st.touched?.carried || [];
+  if (carried.length && state.view !== 'library') toast(L`Dota обновилась. HUD перенесён на новый интерфейс игры: ${carried.join(', ')}`, 'ok', 10000);
   if (off.length) {
     void refreshInstalledIndex().then(() => { if (state.view === 'library') render(); });
     if (state.view !== 'library') toast(L`Dota обновилась. Выключено: ${off.join(', ')}. Этот мод возвращает прежний интерфейс игры, и с ним Dota не запускается`, 'warn', 12000);

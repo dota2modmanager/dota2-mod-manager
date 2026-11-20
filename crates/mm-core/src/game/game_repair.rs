@@ -192,32 +192,40 @@ impl GameRepair {
             _ => json!(id),
         };
         let mods: Vec<Value> = ids.iter().map(|id| name_of(id)).collect();
-        let off: Vec<Value> =
-            self.switch_off_crashing(ctx, impact, &mods_of(&ids), diag).iter().map(|id| name_of(id)).collect();
+        let (off, carried) = self.switch_off_crashing(ctx, impact, &mods_of(&ids), diag);
+        let off: Vec<Value> = off.iter().map(|id| name_of(id)).collect();
+        let carried: Vec<Value> = carried.iter().map(|id| name_of(id)).collect();
         let mut out = json!({ "build": reached.get("to").cloned().unwrap_or(Value::Null), "mods": mods });
         if !off.is_empty() {
             out["off"] = json!(off);
         }
+        if !carried.is_empty() {
+            out["carried"] = json!(carried);
+        }
         Some(out)
     }
 
-    /// Switch off the mods whose old interface files would stop Dota from starting, and say which.
+    /// Carry the mods whose old interface files would stop Dota from starting over to the patched
+    /// game, and switch off those with nothing left once that is done; say which went which way.
     ///
     /// A mod that puts back an older copy of Panorama's layout or scripts (a HUD) leaves the
     /// patched game unable to load its interface: on 7.42 (2026-11-18) Dota stopped at start with
     /// "Unable to load layout file hud/hud_reborn.xml" for everyone with such a HUD on, and the
-    /// way out was to find and remove the mod by hand. Pictures, sounds and styles from before a
-    /// patch only look old, so those mods stay on with their mark.
+    /// way out was to find and remove the mod by hand. 4.3 switched such a mod off; now its pak is
+    /// built again on the new game's files first (looks/hud_repatch.rs), so the HUD stays on with
+    /// its styles and pictures. Pictures, sounds and styles from before a patch only look old, so
+    /// those mods stay on with their mark.
     fn switch_off_crashing(
         &self,
         ctx: &mut Ctx,
         impact: &Impact,
         ids: &[String],
         diag: &mut dyn FnMut(String),
-    ) -> Vec<String> {
+    ) -> (Vec<String>, Vec<String>) {
         let mods = impact_mods(ctx.lib.list(), &|r| ctx.inst.lang_file_on_disk(r).unwrap_or_default());
         let marks = impact.note.marked(&mods);
         let mut off = Vec::new();
+        let mut carried = Vec::new();
         for id in ids {
             let Some(mark) = marks.get(id) else { continue };
             if !breaks_start(mark) {
@@ -233,6 +241,14 @@ impl GameRepair {
             if rec.get("enabled") == Some(&Value::Bool(false)) {
                 continue;
             }
+            match carry_over(ctx, impact, &rec, mark) {
+                Ok(true) => {
+                    carried.push(id.clone());
+                    continue;
+                }
+                Ok(false) => {}
+                Err(e) => diag(format!("update impact: could not carry {id} over to the patched game: {e}")),
+            }
             let files = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null));
             let done = crate::file_tx::FileTx::run(ctx.inst.journal_dir.as_deref(), ctx.inst.tx_log(), |tx| {
                 ctx.inst.set_enabled(&files, false, Some(id))?;
@@ -246,7 +262,10 @@ impl GameRepair {
         if !off.is_empty() {
             diag(format!("update impact: switched off {} mod(s) with pre-patch interface files", off.len()));
         }
-        off
+        if !carried.is_empty() {
+            diag(format!("update impact: carried {} mod(s) over to the patched game's interface", carried.len()));
+        }
+        (off, carried)
     }
 
     /// Repair after a patch, or say to wait: for Dota to close (`running`), or for Steam's file
@@ -366,6 +385,32 @@ fn mods_of(ids: &[&String]) -> Vec<String> {
 /// Panorama's layouts (`.vxml_c`) and scripts (`.vjs_c`), which the game will not start without
 /// in a shape it expects. Its styles and images are left: an old one looks wrong, it does not stop
 /// the game.
+/// The record's pak built again on the patched game (looks/hud_repatch.rs) and put in its place:
+/// true when something of the mod is left to keep on, false when nothing is.
+fn carry_over(ctx: &mut Ctx, impact: &Impact, rec: &Value, mark: &Value) -> Result<bool, String> {
+    let game = impact.note.game.as_ref().ok_or("no game folder")?;
+    let pak01 = crate::vpk_shared::shared_index(&game.join("dota").join("pak01_dir.vpk")).map_err(|e| e.to_string())?;
+    let pak = crate::overlays::files_of(rec.get("files").unwrap_or(&Value::Null))
+        .into_iter()
+        .find(|f| f.root == "lang" && f.rel_path.to_lowercase().ends_with("_dir.vpk"))
+        .ok_or("the mod has no pak of its own")?;
+    let dir = ctx.inst.lang_file_on_disk(&pak.rel_path)?;
+    let buf = std::fs::read(&dir).map_err(|e| e.to_string())?;
+    let entries = crate::vpk::read_entries(&buf, &dir, None).map_err(|e| e.to_string())?;
+    let changed: Vec<String> =
+        mark.get("changed").and_then(Value::as_array).into_iter().flatten().map(crate::js::string).collect();
+    let (kept, _) = crate::hud_repatch::repatch_entries(entries, &changed, &|p| pak01.read(p).ok().flatten());
+    if kept.is_empty() {
+        return Ok(false);
+    }
+    let files = crate::generated_pak::swap_pak(ctx.inst, rec, &crate::vpk::build(&kept), false)?;
+    let id = rec.get("id").cloned().unwrap_or(Value::Null);
+    ctx.lib
+        .update(&id, &json!({ "files": crate::generated_pak::files_json(&files) }), None)
+        .map_err(|e| e.to_string())?;
+    Ok(true)
+}
+
 pub fn breaks_start(mark: &Value) -> bool {
     mark.get("changed").and_then(Value::as_array).into_iter().flatten().filter_map(Value::as_str).any(|p| {
         let p = p.to_ascii_lowercase();
