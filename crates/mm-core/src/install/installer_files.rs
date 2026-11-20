@@ -1,5 +1,4 @@
 //! The language folder's own vocabulary, shared by the installer and the modules behind it.
-//! 
 
 use regex::Regex;
 use std::sync::OnceLock;

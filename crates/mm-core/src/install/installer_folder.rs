@@ -1,6 +1,5 @@
 //! The language folder as a whole: the "mods off" switch, the note of which files are ours, the
 //! leftovers of a change the app died in, and the files nobody installed through the app.
-//! 
 
 use regex::Regex;
 use serde::Serialize;
