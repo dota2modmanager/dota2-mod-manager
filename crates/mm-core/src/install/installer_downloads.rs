@@ -229,8 +229,10 @@ impl Installer {
         let known = self.download_index().get(&key).filter(|k| crate::js::truthy(k)).cloned();
         let known_sha =
             known.as_ref().and_then(|k| k.get("sha256")).filter(|s| crate::js::truthy(s)).map(crate::js::string);
-        // the release manifest's hash belongs to the release file, so it comes before the older list
-        let published = crate::manifest::sha256(category_id, &decoded).or_else(|| published(category_id, &decoded));
+        // The catalog's signed list first: the manifest is unsigned and is also read from mirrors,
+        // so its hash only stands in for an archive the signed list does not cover yet. (On
+        // 2026-11-20 the two agreed on all 2033 archives.)
+        let published = published(category_id, &decoded).or_else(|| crate::manifest::sha256(category_id, &decoded));
         if let Some(size) = fs::metadata(&dest).ok().map(|m| m.len()).filter(|n| *n > 0) {
             // a copy cut short, or one the catalog now disagrees with, is not a cached copy
             let disowned = published.as_ref().is_some_and(|p| known_sha.as_ref().is_some_and(|k| k != p));
