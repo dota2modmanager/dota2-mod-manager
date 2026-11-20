@@ -65,9 +65,20 @@ impl<T: UploadTransport + ?Sized> UploadTransport for std::sync::Arc<T> {
     }
 }
 
-/// A zip holding exactly the one .vpk the upload API unpacks and checks.
+/// A zip holding exactly the one .vpk the upload API unpacks and checks, under a name the game
+/// loads (see `pak_name`).
 pub fn vpk_archive(name: &str, vpk: &[u8]) -> Result<Vec<u8>, String> {
-    crate::safe_zip::write_zip(&[(format!("{name}.vpk"), vpk.to_vec())])
+    crate::safe_zip::write_zip(&[(pak_name(name), vpk.to_vec())])
+}
+
+/// The file name a mod's VPK gets inside its archive: `pakNN_dir.vpk`, as every catalog archive and
+/// h6rd/PreMod name it. The game loads only that form, so a VPK named after the mod did nothing for
+/// whoever unpacked it by hand. NN comes from the name, in the mods' slots 30 to 99, so the same
+/// mod packs to the same bytes every time (PreMod draws it at random).
+pub fn pak_name(name: &str) -> String {
+    use sha2::Digest;
+    let h = sha2::Sha256::digest(name.as_bytes());
+    format!("pak{:02}_dir.vpk", 30 + u16::from_be_bytes([h[0], h[1]]) % 70)
 }
 
 fn s(v: &Value, key: &str) -> String {
@@ -599,7 +610,7 @@ mod tests {
         let listed: Value = serde_json::from_slice(part(&body, &boundary, "styles")).unwrap();
         assert_eq!(listed[1], json!({ "label": "Night", "colors": ["#ff8f8f", "#8fd3ff"] }));
         assert_eq!(part(&body, &boundary, "preview2"), b"RIFF1111WEBP");
-        for (field, inside) in [("modZip", "Blue Glow.vpk"), ("modZip2", "Blue Glow Style 2.vpk")] {
+        for (field, inside) in [("modZip", pak_name("Blue Glow")), ("modZip2", pak_name("Blue Glow Style 2"))] {
             let mut zip = zip::ZipArchive::new(std::io::Cursor::new(part(&body, &boundary, field).to_vec())).unwrap();
             assert_eq!(zip.len(), 1, "{field} holds exactly one file");
             let mut entry = zip.by_index(0).unwrap();
