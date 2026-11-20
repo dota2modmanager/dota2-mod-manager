@@ -92,13 +92,25 @@ export function heroMaterial(m, texture, time, light, cube = null) {
     }
   };
   if (m.specGem) uniforms.uSpecColor.value.copy(srgb(m.specGem));
-  // The recolour window paints the colour texture the way its build will (src/recolor-modes.ts):
-  // mode 0 off, 1 tint, 2 hue only, 3 whole, 4 rainbow over the texture. The target is HSV.
-  uniforms.uPaintMode = { value: 0 };
-  uniforms.uPaintHsv = { value: new THREE.Vector3() };
-  material.userData.paint = (hsv, mode) => {
-    uniforms.uPaintMode.value = hsv ? mode : 0;
-    if (hsv) uniforms.uPaintHsv.value.set(hsv[0], hsv[1], hsv[2]);
+  // The recolour window paints the colour texture the way its build will (paint_recipe.rs): each
+  // pixel by the zones its own colour is in, softly at their borders (paintWeights), a tone per zone
+  // [h, s, v, mode] (mode 0 off, 1 tint, 2 hue only, 3 whole, 4 rainbow, 5 gradient map to the
+  // zone's light colour; 8 more where the zone asked for it, greys too) and a material per zone
+  // [metalness, gloss, shine, rim] in 0-1, -1 for the material's own, and the detail's strength
+  // (its mask) per zone the same way.
+  uniforms.uPaintTone = { value: Array.from({ length: 9 }, () => new THREE.Vector4()) };
+  uniforms.uPaintTo = { value: Array.from({ length: 9 }, () => new THREE.Vector4(0, 0, 0, 0.5)) };
+  uniforms.uPaintMat = { value: Array.from({ length: 9 }, () => new THREE.Vector4(-1, -1, -1, -1)) };
+  uniforms.uPaintDetail = { value: Array.from({ length: 9 }, () => -1) };
+  material.userData.paint = (p) => {
+    for (let z = 0; z < 9; z++) {
+      const t = p?.tones?.[z], m = p?.mats?.[z];
+      if (t) uniforms.uPaintTone.value[z].set(t[0], t[1], t[2], t[3]); else uniforms.uPaintTone.value[z].set(0, 0, 0, 0);
+      if (m) uniforms.uPaintMat.value[z].set(m[0], m[1], m[2], m[3]); else uniforms.uPaintMat.value[z].set(-1, -1, -1, -1);
+      uniforms.uPaintDetail.value[z] = m?.[4] ?? -1;
+      const to = p?.tos?.[z];
+      uniforms.uPaintTo.value[z].set(to?.[0] ?? 0, to?.[1] ?? 0, to?.[2] ?? 0, to?.[3] ?? 0.5);
+    }
   };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
@@ -109,7 +121,7 @@ uniform sampler2D tExponent, tMasks, tSpec, tDetail, tFresnel, tDiffuseWarp; uni
 uniform float uMetalness, uPreviewLighting;
 uniform mat3 uToSource;${useCube ? '\nuniform samplerCube tCube;' : ''}
 uniform float uGlowMix; uniform vec3 uGlowTint;
-uniform float uPaintMode; uniform vec3 uPaintHsv;
+uniform vec4 uPaintTone[9], uPaintMat[9]; uniform float uPaintDetail[9]; uniform vec4 uPaintTo[9];
 uniform sampler2D tTintMask, tTintLookup; uniform vec3 uTint, uTintCycle;
 vec3 paintHsv(vec3 c) {
   vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -122,14 +134,35 @@ vec3 paintRgb(vec3 c) {
   vec3 p = abs(fract(c.xxx + vec3(1.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
   return c.z * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), c.y);
 }
-vec3 studioPaint(vec3 linear, vec2 uv) {
-  if (uPaintMode < 0.5) return linear;
+// how much a pixel's own colour is in each zone, softly at the borders (paint_recipe.rs zone_weights)
+void paintWeights(vec3 linear, out float w[9]) {
   vec3 hsv = paintHsv(pow(max(linear, vec3(0.0)), vec3(1.0 / 2.2)));
-  vec3 t = uPaintHsv, next;
-  if (uPaintMode > 2.5 && uPaintMode < 3.5) next = vec3(t.x, t.y, min(1.0, hsv.z * t.z));
+  float dark = 1.0 - smoothstep(0.15, 0.25, hsv.z);
+  float grey = (1.0 - dark) * (1.0 - smoothstep(0.12, 0.24, hsv.y));
+  float hue = 1.0 - dark - grey, h = hsv.x;
+  float a0 = smoothstep(0.017, 0.067, h), a1 = smoothstep(0.085, 0.135, h), a2 = smoothstep(0.165, 0.215, h),
+    a3 = smoothstep(0.425, 0.475, h), a4 = smoothstep(0.505, 0.555, h), a5 = smoothstep(0.695, 0.745, h), a6 = smoothstep(0.895, 0.945, h);
+  w[0] = dark; w[1] = grey; w[2] = hue * (1.0 - a0 + a6); w[3] = hue * (a0 - a1); w[4] = hue * (a1 - a2);
+  w[5] = hue * (a2 - a3); w[6] = hue * (a3 - a4); w[7] = hue * (a4 - a5); w[8] = hue * (a5 - a6);
+}
+vec3 studioPaint(vec3 linear, vec2 uv, int zone) {
+  vec4 tone = uPaintTone[zone];
+  if (tone.w < 0.5) return linear;
+  bool forced = tone.w > 7.5;
+  float mode = forced ? tone.w - 8.0 : tone.w;
+  vec3 own = pow(max(linear, vec3(0.0)), vec3(1.0 / 2.2));
+  if (mode > 4.5) {
+    // a gradient map: the pixel's brightness between the zone's colour and its light one
+    vec4 light = uPaintTo[zone];
+    float lum = smoothstep(light.w - 0.2, light.w + 0.2, dot(own, vec3(0.299, 0.587, 0.114)));
+    return pow(mix(paintRgb(tone.xyz), light.rgb, lum), vec3(2.2));
+  }
+  vec3 hsv = paintHsv(own);
+  vec3 t = tone.xyz, next;
+  if ((mode > 2.5 && mode < 3.5) || (forced && hsv.y < 0.1)) next = vec3(t.x, t.y, min(1.0, hsv.z * t.z));
   else if (hsv.y < 0.1) return linear;
-  else if (uPaintMode < 1.5) next = vec3(t.x, min(1.0, hsv.y * t.y), min(1.0, hsv.z * t.z));
-  else if (uPaintMode < 2.5) next = vec3(t.x, hsv.y, hsv.z);
+  else if (mode < 1.5) next = vec3(t.x, min(1.0, hsv.y * t.y), min(1.0, hsv.z * t.z));
+  else if (mode < 2.5) next = vec3(t.x, hsv.y, hsv.z);
   else next = vec3(fract(t.x + (fract(uv.x) + fract(uv.y)) * 0.5), max(hsv.y, 0.6), min(1.0, hsv.z * max(t.z, 0.5) * 1.2));
   return pow(paintRgb(next), vec3(2.2));
 }
@@ -142,7 +175,26 @@ vec4 heroRaw1 = ${m.masks ? 'heroMasks' : 'vec4(0.0)'}, heroRaw2 = ${m.specular 
 heroMasks = vec4(heroRaw1.r, ${m.selfIllum ? 'heroRaw1.a' : '0.0'}, heroRaw2.g, heroRaw1.g);
 heroSpec = vec4(heroRaw2.r, heroRaw1.b, heroRaw2.b, heroRaw2.a);` : ''}
 vec4 heroDetailTex = texture2D(tDetail, vMapUv * uDetailScale + fract(uDetailScroll * uTime));
-diffuseColor.rgb = studioPaint(diffuseColor.rgb, vMapUv);
+// the recolour: each zone's paint and material by how much of the pixel is in it
+float heroW[9];
+paintWeights(diffuseColor.rgb, heroW);
+vec3 heroOwnColor = diffuseColor.rgb, heroPainted = vec3(0.0);
+float heroMetal = 0.0, heroMetalSet = 0.0, heroShine = 0.0, heroRim = 0.0, heroDetailOwn = 0.0, heroGloss = 0.0, heroGlossSet = 0.0;
+for (int z = 0; z < 9; z++) {
+  float wz = heroW[z];
+  if (wz < 0.001) continue;
+  vec4 pm = uPaintMat[z];
+  heroPainted += wz * studioPaint(heroOwnColor, vMapUv, z);
+  heroMetal += wz * (pm.x >= 0.0 ? pm.x : heroSpec.g); heroMetalSet += pm.x >= 0.0 ? wz : 0.0;
+  heroShine += wz * (pm.z >= 0.0 ? pm.z : heroSpec.r);
+  heroRim += wz * (pm.w >= 0.0 ? pm.w : heroMasks.b);
+  heroDetailOwn += wz * (uPaintDetail[z] >= 0.0 ? uPaintDetail[z] : heroMasks.r);
+  heroGloss += pm.y >= 0.0 ? wz * pm.y : 0.0; heroGlossSet += pm.y >= 0.0 ? wz : 0.0;
+}
+diffuseColor.rgb = heroPainted;
+// the recolour's metalness is the game's: the reflection in place of the colour, not tinted by it
+float heroMetalTint = 1.0 - heroMetalSet;
+heroSpec.g = heroMetal; heroSpec.r = heroShine; heroMasks.b = heroRim; heroMasks.r = heroDetailOwn;
 ${m.tintMask ? `vec4 heroTintRaw = texture2D(tTintMask, vMapUv); float heroTintMask = max(heroTintRaw.r, max(heroTintRaw.g, heroTintRaw.b));` : 'float heroTintMask = 0.0;'}
 ${m.tint && m.tintMask ? 'diffuseColor.rgb *= mix(vec3(1.0), uTint, heroTintMask);' : ''}
 ${m.tintCycle && m.tintLookup ? `{
@@ -156,7 +208,7 @@ ${m.tintCycle && m.tintLookup ? `{
 }` : ''}
 vec3 heroBase = diffuseColor.rgb, heroV = normalize(vViewPosition), heroR = reflect(-heroV, normal);
 vec4 heroWarp = texture2D(tFresnel, vec2(clamp(dot(normal, heroV), 0.0, 1.0), 0.5));
-float heroDetail = heroMasks.r * uDetailBlend, heroNL = dot(normal, uLightDir), heroExponent = uSpecExponent * ${m.exponent ? 'texture2D(tExponent, vMapUv).r' : m.normal ? 'texture2D(normalMap, vNormalMapUv).b' : '1.0'};
+float heroDetail = heroMasks.r * uDetailBlend, heroNL = dot(normal, uLightDir), heroExponent = uSpecExponent * (heroGloss + (1.0 - heroGlossSet) * ${m.exponent ? 'texture2D(tExponent, vMapUv).r' : m.normal ? 'texture2D(normalMap, vNormalMapUv).b' : '1.0'});
 vec3 heroDetailColor = heroDetailTex.rgb * uDetailTint;
 ${bakedGlow && m.detailMode === 2 ? 'heroDetailColor = mix(heroDetailColor, max(heroDetailColor.r, max(heroDetailColor.g, heroDetailColor.b)) * uGlowTint, uGlowMix);' : ''}
 ${DETAIL_ALBEDO[m.detailMode] ?? 'vec3 heroAlbedo = heroBase + heroDetailColor * heroDetail;'}
@@ -174,7 +226,7 @@ float previewExponent = mix(heroExponent, max(heroExponent, 5.0), dielectricPrev
 float previewGain = mix(uSpecScale, min(uSpecScale, 0.65), dielectricPreview);
 vec3 heroSpecular = clamp(heroNL, 0.0, 1.0) * pow(max(dot(uLightDir, heroR), 0.001), previewExponent) * uLightColor * previewGain * heroSpec.r * mix(heroBase, uSpecColor, heroSpec.b) * max(heroWarp.b, heroSpec.g);
 vec3 heroLit = mix(heroAlbedo * heroDiffuse + heroSpecular, heroSpecular, heroSpec.g * uMetalness) + heroMasks.b * uRimColor * uAmbientTint * max(dot(normal, uUp), 0.0) * heroWarp.r;
-${useCube ? `heroLit += textureCube(tCube, uToSource * inverseTransformDirection(heroR, viewMatrix)).rgb * uCubeScale * ${m.cubeByMetalness ? 'heroSpec.g' : 'heroSpec.r * mix(heroWarp.b, 1.0, heroSpec.g)'} * mix(vec3(1.0), heroBase, max(heroSpec.b, heroSpec.g));` : ''}
+${useCube ? `heroLit += textureCube(tCube, uToSource * inverseTransformDirection(heroR, viewMatrix)).rgb * uCubeScale * ${m.cubeByMetalness ? 'heroSpec.g' : 'heroSpec.r * mix(heroWarp.b, 1.0, heroSpec.g)'} * mix(vec3(1.0), heroBase, max(heroSpec.b, heroSpec.g * heroMetalTint));` : ''}
 ${m.unlit ? 'outgoingLight = heroBase + heroDetailColor * heroDetail;' : DETAIL_OUT[m.detailMode] ?? 'outgoingLight = mix(heroLit, heroAlbedo, clamp(heroDetailTex.a * heroDetail + heroMasks.g, 0.0, 1.0));'}
 ${bakedGlow ? `vec3 paintedGlow = ${m.additive ? 'outgoingLight' : 'heroAlbedo'};
 outgoingLight += (max(paintedGlow.r, max(paintedGlow.g, paintedGlow.b)) * uGlowTint - paintedGlow) * uGlowMix * ${m.additive ? '1.0' : 'heroMasks.g'};` : ''}

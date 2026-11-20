@@ -5,6 +5,7 @@
 //!   keep   greys stay; the rest take the hue alone
 //!   full   every pixel takes the hue and the colour's saturation, greys too
 //!   rgb    greys stay; the hue runs once round the wheel across the texture
+//!   grad   a gradient map: dark to the colour, light to a second one (paint_recipe.rs)
 //!
 //! A layer's colour travels as '#rrggbb' or '#rrggbb:mode'; the plain form is tint.
 
@@ -14,12 +15,12 @@ use serde_json::Value;
 use crate::recolor::Rgb;
 
 /// The modes in the order the window offers them.
-pub const PAINT_MODES: [&str; 4] = ["tint", "keep", "full", "rgb"];
+pub const PAINT_MODES: [&str; 5] = ["tint", "keep", "full", "rgb", "grad"];
 
 /// A layer's colour and mode out of '#rrggbb[:mode]'; None for anything else.
 pub fn parse_paint(value: &Value) -> Option<(String, &'static str)> {
     let s = value.as_str()?;
-    let c = Regex::new(r"(?i)^(#[0-9a-f]{6})(?::(tint|keep|full|rgb))?$").expect("a fixed pattern").captures(s)?;
+    let c = Regex::new(r"(?i)^(#[0-9a-f]{6})(?::(tint|keep|full|rgb|grad))?$").expect("a fixed pattern").captures(s)?;
     let mode = c.get(2).map(|m| m.as_str().to_ascii_lowercase());
     let mode = PAINT_MODES.iter().find(|&&m| Some(m) == mode.as_deref()).copied().unwrap_or("tint");
     Some((c[1].to_ascii_lowercase(), mode))
@@ -75,35 +76,4 @@ pub fn paint_pixel(from: Rgb, target: Rgb, mode: &str, u: f64, v: f64) -> Option
         "rgb" => from_hsv([(th + (u % 1.0 + v % 1.0) * 0.5) % 1.0, s.max(0.6), 1f64.min(val * tv.max(0.5) * 1.2)]),
         _ => from_hsv([th, 1f64.min(s * ts), 1f64.min(val * tv)]),
     })
-}
-
-/// A bitmap moved to the colour in place, four bytes a pixel; `bgra` says red and blue are
-/// swapped. Answers how many pixels changed.
-pub fn paint_pixels(pixels: &mut [u8], width: usize, color: Rgb, mode: &str, bgra: bool) -> usize {
-    let (r, b) = if bgra { (2, 0) } else { (0, 2) };
-    let target = hsv(color);
-    let w = width.max(1);
-    let height = ((pixels.len() / 4) / w).max(1);
-    let clamp = |x: f64| if x.is_nan() { 0 } else { x.clamp(0.0, 255.0) as u8 };
-    let mut changed = 0;
-    let mut i = 0;
-    while i + 3 < pixels.len() {
-        if pixels[i + 3] != 0 {
-            let at = i / 4;
-            let px = [pixels[i + r] as f64, pixels[i + 1] as f64, pixels[i + b] as f64];
-            let u = ((at % width.max(1)) as f64 + 0.5) / width as f64;
-            let v = ((at / width.max(1)) as f64 + 0.5) / height as f64;
-            if let Some(to) = paint_pixel(px, target, mode, u, v) {
-                let to = to.map(clamp);
-                if !(to[0] == pixels[i + r] && to[1] == pixels[i + 1] && to[2] == pixels[i + b]) {
-                    pixels[i + r] = to[0];
-                    pixels[i + 1] = to[1];
-                    pixels[i + b] = to[2];
-                    changed += 1;
-                }
-            }
-        }
-        i += 4;
-    }
-    changed
 }

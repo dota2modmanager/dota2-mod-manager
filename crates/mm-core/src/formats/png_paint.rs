@@ -1,8 +1,6 @@
 //! A picture moved to a colour (src/services.ts electronRepaint): the PNG decoded, its pixels
 //! painted by crates/mm-core/src/looks/recolor_modes.rs, and written back as a PNG.
 
-use crate::recolor::Rgb;
-
 /// The PNG's pixels as RGBA, with its width.
 pub fn decode_rgba(png: &[u8]) -> Result<(Vec<u8>, u32, u32), String> {
     let mut dec = png::Decoder::new(std::io::Cursor::new(png));
@@ -74,11 +72,25 @@ pub fn shrink(png: &[u8], max: u32) -> Option<Vec<u8>> {
     Some(out)
 }
 
-/// Fits `hero_paint_service::Repaint`.
-pub fn repaint(png: &[u8], color: Rgb, mode: &str) -> Result<Vec<u8>, String> {
+/// Fits `hero_paint_service::Repaint`: the picture by a recipe, its zones each in their colour.
+pub fn repaint(png: &[u8], recipe: &crate::paint_recipe::Recipe) -> Result<Vec<u8>, String> {
     let (mut px, w, h) = decode_rgba(png)?;
-    crate::recolor_modes::paint_pixels(&mut px, w as usize, color, mode, false);
+    crate::paint_recipe::paint_texture(&mut px, w as usize, recipe);
     encode_rgba(&px, w, h)
+}
+
+/// One channel of an RGBA picture as a grey PNG: a mask's channel, for the compiler to pack again.
+pub fn channel_png(rgba: &[u8], width: u32, height: u32, channel: usize) -> Result<Vec<u8>, String> {
+    let grey: Vec<u8> = rgba.as_chunks::<4>().0.iter().map(|p| p[channel]).collect();
+    let mut out = Vec::new();
+    {
+        let mut enc = png::Encoder::new(&mut out, width, height);
+        enc.set_color(png::ColorType::Grayscale);
+        enc.set_depth(png::BitDepth::Eight);
+        let mut w = enc.write_header().map_err(|e| e.to_string())?;
+        w.write_image_data(&grey).map_err(|e| e.to_string())?;
+    }
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -92,9 +104,12 @@ mod tests {
         let (back, w, h) = decode_rgba(&png).unwrap();
         assert_eq!((w, h), (2, 1));
         assert_eq!(back, px);
-        let out = repaint(&png, [0.0, 0.0, 255.0], "tint").unwrap();
+        let out = repaint(&png, &crate::paint_recipe::Recipe::plain([0.0, 0.0, 255.0], "tint")).unwrap();
         let (painted, _, _) = decode_rgba(&out).unwrap();
         assert_eq!(painted[7], 0, "a clear pixel stays clear");
+        let grey = channel_png(&px, 2, 1, 0).unwrap();
+        let (g, _, _) = decode_rgba(&grey).unwrap();
+        assert_eq!((g[0], g[4]), (200, 0), "a channel comes out as grey");
     }
 
     #[test]

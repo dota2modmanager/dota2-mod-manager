@@ -34,6 +34,7 @@ pub const CHANNELS: &[&str] = &[
     "rank:install",
     "paint:state",
     "paint:icons",
+    "paint:parts",
     "paint:install",
 ];
 
@@ -351,6 +352,24 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
             let base = table(&mut c).map(|b| b.0.clone()).unwrap_or_default();
             let svc = crate::hero_paint_service::HeroPaintService::new(c.game(), lang());
             spread(svc.state(&c.library, &base, &s(0), &a(1), has_vrf))
+        }
+        "paint:parts" => {
+            let (game, exe) = {
+                let c = o.core();
+                (c.game(), vrf(&c))
+            };
+            let svc = crate::hero_paint_service::HeroPaintService::new(game, lang());
+            let tmp = std::env::temp_dir();
+            let mut decode = |f: &[u8]| match &exe {
+                Some(exe) => crate::hero_paint_service::vrf_png(&exe.to_string_lossy(), f, &tmp, &mut run_tool),
+                None => Err("no ValveResourceFormat".to_string()),
+            };
+            let mut lines = Vec::new();
+            let out = svc.part_pictures(&a(0), &mut decode, &mut |m| lines.push(m));
+            for l in lines {
+                o.diag(&l);
+            }
+            out
         }
         "paint:install" => installed(o, |c, log| {
             let base = table(c).map(|b| b.0.clone()).unwrap_or_default();

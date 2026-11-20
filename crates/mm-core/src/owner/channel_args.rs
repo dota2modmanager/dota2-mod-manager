@@ -744,6 +744,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("icons:clear", vec![str_(40, 2)]),
             ("paint:state", vec![str_(40, 2), optional(list(str_(12, 0), 24))]),
             ("paint:icons", vec![list(str_(100, 0), 60)]),
+            ("paint:parts", vec![list(str_(200, 1), 32)]),
             (
                 "paint:install",
                 vec![str_(40, 2), json(64 * 1024), optional(str_(80, 0)), optional(list(str_(12, 0), 24))],

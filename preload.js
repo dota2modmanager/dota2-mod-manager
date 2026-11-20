@@ -203,6 +203,7 @@ contextBridge.exposeInMainWorld('api', {
   paint: {
     state: (hero, items) => ipcRenderer.invoke('paint:state', hero, items),
     icons: (abilities) => ipcRenderer.invoke('paint:icons', abilities),
+    parts: (files) => ipcRenderer.invoke('paint:parts', files),
     install: (hero, colors, label, items) => ipcRenderer.invoke('paint:install', hero, colors, label, items),
   },
   map: {
