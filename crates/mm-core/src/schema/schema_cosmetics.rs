@@ -355,6 +355,9 @@ pub fn pick_cosmetic(
             rec["id"].clone()
         }
     };
+    if lib.find(&id).is_some_and(|r| r.get(DRESSED_ALL).is_some()) {
+        lib.drop_fields(&id, &[DRESSED_ALL], None).map_err(io)?;
+    }
     // a persona is worn with its own items alone: the hero's plain picks go off
     if is_selector_slot(slot) {
         for r in displaced(lib.list()) {
@@ -412,6 +415,13 @@ pub fn dress_all(lib: &mut Library, text: &[u8], keep_worn: bool, seed: u64) -> 
             done.kept += 1;
             continue;
         }
+        let before: HashSet<String> = lib
+            .list()
+            .iter()
+            .filter(|r| str_of(r, "categoryId") == Some("cosmetic") && on(r))
+            .map(|r| crate::js::string(&r["id"]))
+            .collect();
+        let existed: HashSet<String> = lib.list().iter().map(|r| crate::js::string(&r["id"])).collect();
         if let Some(set) = look.set {
             put_set(lib, text, set, 0.0)?;
         }
@@ -423,9 +433,54 @@ pub fn dress_all(lib: &mut Library, text: &[u8], keep_worn: bool, seed: u64) -> 
                 done.immortals += 1;
             }
         }
+        // what the button put on, so undress_all takes off that and nothing the player chose:
+        // "new" for a row it made, true for one of the player's old picks it turned back on
+        let put: Vec<(Value, bool)> = lib
+            .list()
+            .iter()
+            .filter_map(|r| {
+                let id = crate::js::string(&r["id"]);
+                let made = !existed.contains(&id);
+                // a row it made and then covered (a set's piece under the arcana) goes too
+                let mine = str_of(r, "categoryId") == Some("cosmetic")
+                    && str_of(r, "slot").is_some_and(|s| s.starts_with(&prefix))
+                    && (made || (on(r) && !before.contains(&id)));
+                mine.then(|| (r["id"].clone(), made))
+            })
+            .collect();
+        for (id, made) in put {
+            let mark = if made { json!("new") } else { json!(true) };
+            lib.update(&id, &json!({ DRESSED_ALL: mark }), None).map_err(io)?;
+        }
         done.heroes += 1;
     }
     Ok(done)
+}
+
+/// The mark [`dress_all`] leaves on what it put on. A pick the player makes in the slot clears it.
+pub const DRESSED_ALL: &str = "dressedAll";
+
+/// Take off what [`dress_all`] put on and the player has not changed since, the rest stays. A row
+/// the button made goes away, so a few hundred of them do not linger in My mods; an old pick of
+/// the player's it turned back on goes off again and stays there. The heroes it undressed.
+pub fn undress_all(lib: &mut Library) -> Result<usize, String> {
+    let marked: Vec<Value> = lib.list().iter().filter(|r| r.get(DRESSED_ALL).is_some()).cloned().collect();
+    let mut heroes = HashSet::new();
+    for r in &marked {
+        if on(r) {
+            let slot = str_of(r, "slot").unwrap_or("");
+            heroes.insert(slot.split(':').nth(1).unwrap_or(slot).to_string());
+        }
+        if r[DRESSED_ALL] == "new" {
+            lib.remove_record(&r["id"], None).map_err(io)?;
+        } else {
+            if on(r) {
+                lib.set_enabled(&r["id"], false, None).map_err(io)?;
+            }
+            lib.drop_fields(&r["id"], &[DRESSED_ALL], None).map_err(io)?;
+        }
+    }
+    Ok(heroes.len())
 }
 
 /// One set put on, the hero's other picks of its slots off: pick_set once the set is found.

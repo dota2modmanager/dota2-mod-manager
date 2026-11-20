@@ -132,6 +132,7 @@
       pickSet: (setId, style) => mm.invoke('cosmetics:pickSet', setId, style),
       wearLook: (hero, picks) => mm.invoke('cosmetics:wearLook', hero, picks),
       dressAll: (keepWorn) => mm.invoke('cosmetics:dressAll', keepWorn),
+      undressAll: () => mm.invoke('cosmetics:undressAll'),
     },
     // the 3D preview: the hero's models out of the game, or a catalog mod's files over them
     preview3d: {
