@@ -15,8 +15,13 @@ export type NotePart =
 type Notes = Record<string, { enabled?: boolean; text?: string } | undefined>;
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", apos: "'", nbsp: ' ' };
-const plain = (html: string): string =>
-  html.replace(/<[^>]*>/g, '').replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (_, e: string) => ENTITIES[e] ?? '');
+/** Words only: entities decoded first, then tags cut until none are left (one pass leaves "<script"
+ *  behind "<scr<b>ipt"), then any stray bracket dropped, so nothing that reads as a tag survives. */
+const plain = (html: string): string => {
+  let s = html.replace(/&(amp|lt|gt|quot|#39|apos|nbsp);/g, (_, e: string) => ENTITIES[e] ?? '');
+  for (let before = ''; before !== s;) { before = s; s = s.replace(/<[^<>]*>/g, ''); }
+  return s.replace(/[<>]/g, '');
+};
 
 /** Where a link in a note goes: a catalog category by its id, or an https page, or nowhere. */
 function target(href: string): { cat?: string; url?: string } {

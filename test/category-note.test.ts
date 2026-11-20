@@ -16,6 +16,7 @@ test('a note is cut into text, code and links, and no markup survives', () => {
     { kind: 'text', text: 'x' },
     { kind: 'text', text: '&' },
   ]);
+  assert.deepEqual(noteParts('a <scr<b>ipt>alert(1)</script> &lt;script&gt; b'), [{ kind: 'text', text: 'a alert(1)  b' }]);
   assert.deepEqual(noteParts('<a href="https://example.com/a?category=x&mod=y">mod</a>'), [
     { kind: 'link', text: 'mod', url: 'https://example.com/a?category=x&mod=y' },
   ]);
