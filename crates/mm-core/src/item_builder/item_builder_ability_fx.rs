@@ -58,14 +58,24 @@ fn js_number(v: Option<&String>) -> f64 {
     v.map_or(f64::NAN, |s| crate::js::to_number(&serde_json::Value::String(s.clone())))
 }
 
+/// Whether a sound event is the ability's: `Hero_Tinker.March_of_the_Machines` is
+/// `tinker_march_of_the_machines`'s, by what follows the event's hero.
+fn sound_of(event: &str, ability: &str) -> bool {
+    let event = event.to_lowercase();
+    let tail = event.split('.').nth(1).unwrap_or("");
+    tail.len() >= 4 && ability.to_lowercase().ends_with(&format!("_{tail}"))
+}
+
 /// The visuals with only the modifiers ability effects slot `n` takes, in the first style, their
-/// style mark gone.
+/// style mark gone. A sound the item gives that same ability goes too, marked or not: the
+/// Interstellar Astrarium marks its March of the Machines icon and particle for the slot and not
+/// its music, so the march went silent in the slot (Discord, after 4.5.0).
 pub fn fx_visuals(visuals: &[u8], n: u64) -> Result<Vec<u8>, KvError> {
     static HEAD: OnceLock<Regex> = OnceLock::new();
     static STYLE: OnceLock<Regex> = OnceLock::new();
     let head = re(&HEAD, r#"(?i-u)^"asset_modifier\d*""#);
     let style = re(&STYLE, r#"(?i-u)[\t\n\x0B\x0C\r \xA0]*"style"[\t\n\x0B\x0C\r \xA0]+"[^"]*""#);
-    let mut kept = Vec::new();
+    let mut mods = Vec::new();
     for c in kv::children(visuals, kv::block_bounds(visuals, 0)?)? {
         let Some(body) = c.body else { continue };
         if !is_modifier_key(c.key) {
@@ -77,8 +87,25 @@ pub fn fx_visuals(visuals: &[u8], n: u64) -> Result<Vec<u8>, KvError> {
                 f.insert(kv::latin1(x.key).to_lowercase(), kv::latin1(v));
             }
         }
+        mods.push((c, f));
+    }
+    // the abilities whose icon the item marks for this slot
+    let abilities: Vec<String> = mods
+        .iter()
+        .filter(|(_, f)| js_number(f.get(TAG)) == n as f64 && f.get("type").is_some_and(|t| t == "ability_icon"))
+        .filter_map(|(_, f)| f.get("asset").cloned())
+        .collect();
+    let mut kept = Vec::new();
+    for (c, f) in mods {
         let style_n = js_number(f.get("style"));
-        if js_number(f.get(TAG)) != n as f64 || (if style_n.is_nan() { 0.0 } else { style_n }) != 0.0 {
+        if (if style_n.is_nan() { 0.0 } else { style_n }) != 0.0 {
+            continue;
+        }
+        let marked = js_number(f.get(TAG)) == n as f64;
+        let its_sound = !f.contains_key(TAG)
+            && f.get("type").is_some_and(|t| t == "sound")
+            && f.get("asset").is_some_and(|e| abilities.iter().any(|a| sound_of(e, a)));
+        if !marked && !its_sound {
             continue;
         }
         let text = &visuals[c.start..c.end];
@@ -262,4 +289,35 @@ pub fn merge_fx_patches<T: FxJoin>(list: Vec<T>, is_fx: impl Fn(&T) -> bool) -> 
         *had.source_mut() = src;
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The Interstellar Astrarium's head as the game writes it: icon and particle marked for slot 2,
+    /// its music not.
+    const ASTRARIUM: &[u8] = br#""visuals"
+{
+    "asset_modifier" { "type" "particle" "asset" "particles/units/heroes/hero_tinker/tinker_machine.vpcf" "modifier" "particles/cosmic_mom.vpcf" "apply_when_equipped_in_ability_effects_slot" "2" }
+    "asset_modifier" { "type" "ability_icon" "asset" "tinker_march_of_the_machines" "modifier" "tinker/tinker_cosmic/march" "apply_when_equipped_in_ability_effects_slot" "2" }
+    "asset_modifier" { "type" "sound" "asset" "Hero_Tinker.March_of_the_Machines" "modifier" "Hero_Tinker.March_of_the_Machines.Cosmic" }
+    "asset_modifier" { "type" "sound" "asset" "Hero_Tinker.Laser" "modifier" "Hero_Tinker.Laser.Cosmic" }
+}"#;
+
+    #[test]
+    fn the_abilitys_own_sound_goes_into_the_slot_unmarked() {
+        let out = String::from_utf8_lossy(&fx_visuals(ASTRARIUM, 2).unwrap()).into_owned();
+        assert!(out.contains("March_of_the_Machines.Cosmic"), "the march's music: {out}");
+        assert!(out.contains("tinker/tinker_cosmic/march"));
+        assert!(!out.contains("Laser.Cosmic"), "another ability's sound is not the slot's: {out}");
+        assert!(fx_visuals(ASTRARIUM, 3).map(|v| !has_modifiers(&v)).unwrap(), "slot 3 takes nothing");
+    }
+
+    #[test]
+    fn a_sound_is_an_abilitys_by_what_follows_the_hero() {
+        assert!(sound_of("Hero_Tinker.March_of_the_Machines", "tinker_march_of_the_machines"));
+        assert!(!sound_of("Hero_Tinker.Laser", "tinker_march_of_the_machines"));
+        assert!(!sound_of("Hero_Tinker", "tinker_march_of_the_machines"));
+    }
 }
