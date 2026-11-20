@@ -33,6 +33,8 @@ import type { CosmeticItem } from '../../catalog/cosmetic/CosmeticCard.tsx';
 import { slotLooks } from '../../catalog/cosmetic/slot-looks.ts';
 import { tableOn } from '../../ui/game-files.ts';
 import type { Mod } from '../../catalog/types.ts';
+import { authorMods } from '../../catalog/author-mods.ts';
+import { downloadsOf, formatCount } from '../../core/download-counts.ts';
 import { applyFilters, authorsOf, categoryMods, collectSlots, cosmeticFavValue, favoriteCosmetics, favoriteMods, filterCosmetics,
   isGroupedCategory, isItemCosmeticSlot, searchCosmetics, tagLabel, visibleCategories, type Look } from './lists.ts';
 import { view } from './state.ts';
@@ -91,6 +93,28 @@ export async function renderHome(actions: ScreenActions): Promise<void> {
     preview: c.preview ? `${RAW_BASE}/assets/previews/categories/${encodeURIComponent(c.preview)}` : null,
   }));
   await paint(() => showScreen({ kind: 'home', recent, recentTotal, tiles }, actions));
+}
+
+/* One author's mods from every category (catalog/author-mods.ts), with what they add up to: the
+ * count and the downloads, the two numbers an author and a fan both ask about. */
+export async function renderAuthor(name: string, actions: ScreenActions): Promise<void> {
+  const all = authorMods(name, visibleCategories().map((c): [string, Mod[]] => [c.id, categoryMods(c.id)]));
+  const mods = applyFilters(all);
+  const downloads = all.reduce((n, m) => n + downloadsOf(m._cat || '', m), 0);
+  const stats = [`${all.length} ${plural(all.length, 'мод', 'мода', 'модов')}`];
+  if (downloads > 0) stats.push(L`Скачиваний: ${formatCount(downloads)}`);
+  await paint(() => showScreen({
+    kind: 'list',
+    key: `author:${name}`,
+    title: name,
+    back: 'home',
+    accent: searchAccent(),
+    toolbar: all.length ? toolbarModel(mods.length, { installable: all.some(canBeInstalled), all }) : null,
+    meta: all.length ? stats.join(' · ') : undefined,
+    note: all.length ? undefined : L`В каталоге нет модов этого автора`,
+    mods: all.length ? { heading: false, mods, withCat: true, emptyText: NOTHING() } : null,
+    cosmetics: null,
+  }, actions));
 }
 
 /* Everything the catalog lists as recently added, as a grid with the toolbar: the strip on the

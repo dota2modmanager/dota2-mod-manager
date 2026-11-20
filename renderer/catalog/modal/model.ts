@@ -70,4 +70,6 @@ export interface ModModalActions {
   bindGuides: (el: HTMLElement) => void;
   /** this category narrowed to the author's mods */
   showAuthor: (name: string) => void;
+  /** the author's page: their mods from every category */
+  authorPage: (name: string) => void;
 }

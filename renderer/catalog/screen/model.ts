@@ -69,6 +69,8 @@ export type ScreenModel =
     /** a way back: to the whole heroes category, or to the front page */
     back?: 'heroes' | 'home';
     toolbar: ToolbarModel | null;
+    /** a quiet line beside the title: what the screen adds up to */
+    meta?: string;
     note?: string;
     /** a tool the app has in it, first in the grid (the arcana's, among the tools) */
     lead?: ArcanaCardModel[] | null;

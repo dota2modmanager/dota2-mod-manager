@@ -24,7 +24,8 @@ import { modStage } from '../../catalog/modal/stage.ts';
 import { creatorOf } from '../../catalog/modal/creator-of.ts';
 import { doInstall, installPack, onInstalling, packMemberName } from './install.ts';
 import { closeOverlay, openOverlay, sharesOverlay, takeOverlay } from './overlay.ts';
-import { installing, remember, screen, view } from './state.ts';
+import { installing, remember, screen, startFilters, view } from './state.ts';
+import { AUTHOR_PREFIX } from '../../catalog/author-mods.ts';
 import { modIssue } from '../../ui/notice.ts';
 import { catalogOnShow, switchView } from '../../core/router.ts';
 import { modStates } from '../../catalog/modal/status.ts';
@@ -193,6 +194,12 @@ function drawModal(): void {
     },
     bindCredits: (el) => bindCreditChips(el, credits, (url: string) => window.api.misc.openExternal(url)),
     bindGuides: (el) => bindGuides(el),
+    authorPage: (name) => {
+      state.activeCategory = AUTHOR_PREFIX + name;
+      view.filters = startFilters();
+      closeOverlay();
+      void screen.redraw();
+    },
     showAuthor: (name) => {
       view.filters.author = name;
       remember({ author: name });

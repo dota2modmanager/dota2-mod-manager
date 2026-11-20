@@ -683,6 +683,8 @@ const EN = {
   'Распаковать в папку': 'Unpack into a folder',
   'Опубликовать в каталог': 'Publish to the catalog',
   'Открыть заявку на GitHub': 'Open the submission on GitHub',
+  'Все моды автора': 'All mods by this author',
+  'В каталоге нет модов этого автора': 'The catalog has no mods by this author',
   '«{0}»: распакован, файлов — {1} ({2} MB)': '“{0}” unpacked: {1} files ({2} MB)',
   'Сохранить курсор архивом': 'Save the cursor as an archive',
   'Разобрать по героям': 'Split by hero',

@@ -414,6 +414,7 @@
 }
 .view-title { font-size: 24px; font-weight: 800; }
 .view-title .accent { color: var(--primary-soft); }
+.view-meta { font-size: var(--text-sm); color: var(--text-muted); }
 .view-header .spacer { flex: 1; }
 
 /* ============ Status bar ============ */
