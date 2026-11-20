@@ -26,6 +26,8 @@ import { showScreen } from '../catalog/screen/root.tsx';
 import type { ScreenActions } from '../catalog/screen/model.ts';
 import { renderRail as drawRail, type RailModel } from '../catalog/rail/Rail.tsx';
 import { bannerLayer } from '../catalog/layers.ts';
+import { categoryNote } from '../catalog/category-note.ts';
+import { catalogConstants } from '../catalog/data.ts';
 import type { Mod } from '../catalog/types.ts';
 import { pickStyle } from '../catalog/looks.ts';
 import type { ModLink } from '../api/content.ts';
@@ -190,8 +192,35 @@ async function renderCatalog(): Promise<void> {
   // pressing problem than whatever the network wanted to say
   const banners = bannerLayer();
   banners.replaceChildren();
+  showCategoryNote(banners, active);
   showNoticeBanner(banners);
   showNoGameBanner(banners);
+}
+
+/* The catalog maintainer's note on the category on screen (catalog/category-note.ts), quiet and
+ * under any notice: it is advice about these mods, not news. Drawn from parts as text, never as
+ * the note's own HTML; a link to another category opens it here. */
+function showCategoryNote(banners: HTMLElement, cat: string): void {
+  const parts = categoryNote(catalogConstants().categoryNotes, cat);
+  if (!parts) return;
+  const el = document.createElement('div');
+  el.className = 'banner note';
+  el.innerHTML = '<span class="ms">info</span><div class="banner-body"></div>';
+  const body = el.querySelector('.banner-body') as HTMLElement;
+  for (const p of parts) {
+    if (p.kind === 'text') { body.append(p.text); continue; }
+    if (p.kind === 'code') { const c = document.createElement('code'); c.textContent = p.text; body.append(c); continue; }
+    const a = document.createElement('a');
+    a.href = '#';
+    a.textContent = p.text;
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (p.cat) void pickCategory(p.cat);
+      else if (p.url) void window.api.misc.openExternal(p.url);
+    });
+    body.append(a);
+  }
+  banners.append(el);
 }
 
 /* A notice that arrived from the network (see ui/notice.ts). Drawn after the screen, the same way

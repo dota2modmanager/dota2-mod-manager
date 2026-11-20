@@ -259,3 +259,7 @@ html[lang="ru"] body.dropping::after {
 .banner.off > .ms { color: var(--danger); }
 .banner.info { background: var(--primary-dim); border: 1px solid var(--primary); color: var(--text-muted); }
 .banner.info > .ms { color: var(--primary-soft); }
+.banner.note { border: 1px solid var(--border); color: var(--text-muted); }
+.banner.note > .ms { color: var(--text-muted); }
+.banner.note code { font-size: 0.92em; padding: 0 var(--space-1); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); }
+.banner.note a { color: var(--primary-soft); }
