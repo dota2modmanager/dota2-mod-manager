@@ -78,7 +78,8 @@ await page.goto('http://looks.local/');
 const W = 512;
 const H = 340;
 fs.mkdirSync(OUT, { recursive: true });
-const list = fs.existsSync(LIST) ? JSON.parse(fs.readFileSync(LIST, 'utf8')) : {};
+let list = {};
+try { list = JSON.parse(fs.readFileSync(LIST, 'utf8')); } catch { /* the first run: no list yet */ }
 for (const [name, b64] of glb) {
   const uri = await page.evaluate(async ({ b64, W, H }) => {
     const THREE = await import('three');
