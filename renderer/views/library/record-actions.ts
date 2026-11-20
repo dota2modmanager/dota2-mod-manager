@@ -35,14 +35,13 @@ async function moveRecord(id: string, dir: number) {
 }
 
 /* A mod made with the app's tools, or a file of the user's own, put on the author's desk with its
- * VPK already in place: before this the author saved it to disk and picked it again in the form. */
-export function publishable(rec: LibRecord): boolean {
-  return (Boolean(rec.generated) || rec.categoryId === 'imported') && rec.kind !== 'pack' && !isCursorRec(rec);
-}
-
+ * VPK already in place: before this the author saved it to disk and picked it again in the form.
+ * The core says which are the user's and whether there is enough of their own work in it
+ * (rec.publish); one that falls short says what it lacks instead of opening an empty promise. */
 async function publishRecord(id: string) {
   const rec = recById(id);
   if (!rec) return;
+  if (rec.publish !== 'ok') { toast(rec.publish || '', 'warn', 8000); return; }
   const r = await window.api.creator.fromRecord(id);
   if (r.error) toast(`${catalogName(rec.name)}: ${r.error}`, 'error', 6000);
   else await openCreator(null, r.draft.id);
@@ -222,7 +221,7 @@ export function menuFor(id: string): MenuItem[] | null {
       label: isCursorRec(rec) ? L`Сохранить курсор архивом` : L`Сохранить одним файлом`, icon: 'save', onPick: () => exportRecord(rec.id),
     },
     langDir(rec) && { label: L`Распаковать в папку`, icon: 'folder_open', onPick: () => unpackRecord(rec.id) },
-    langDir(rec) && publishable(rec) && { label: L`Опубликовать в каталог`, icon: 'publish', onPick: () => publishRecord(rec.id) },
+    langDir(rec) && Boolean(rec.publish) && { label: L`Опубликовать в каталог`, icon: 'publish', onPick: () => publishRecord(rec.id) },
     (rec.subjects || 0) >= 2 && { label: L`Разобрать по героям`, icon: 'call_split', onPick: () => splitRecord(rec.id) },
     langDir(rec) && !rec.noItemIcons && (rec.categoryId === 'heroes' || rec.categoryId === 'imported') && { label: L`Убрать иконки предметов`, icon: 'hide_image', onPick: () => dropItemIcons(rec.id) },
     rec.prePatch && { label: L`Убрать метку «до патча»`, icon: 'done', onPick: () => clearPrePatch(rec.id) },

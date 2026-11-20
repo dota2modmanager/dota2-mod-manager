@@ -1,4 +1,9 @@
 [
+["Для каталога здесь мало своей работы: {0}","Too little of your own work here for the catalog: {0}"],
+["перекрась хотя бы {0} части в {1} разных цвета","paint at least {0} parts in {1} different colours"],
+["замени звуки хотя бы у {0} событий","give at least {0} events sounds of your own"],
+["поменяй у эффекта хотя бы {0} настройки","change at least {0} settings of the effect"],
+["это выбор из того, что уже есть в игре, а не свой мод","this is a pick from what the game already has, not a mod of your own"],
 ["Этот мод уже из каталога: публикует его автор","This mod is already in the catalog: its author publishes it"],
 ["Не найдена папка игры","The game folder was not found"],
 ["Выбери папку game внутри dota 2 beta","Pick the \"game\" folder inside \"dota 2 beta\""],

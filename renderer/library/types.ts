@@ -70,6 +70,8 @@ export interface LibRecord {
   prePatch?: { since: string | null; changed: number; removed: number; changedPaths?: string[]; removedPaths?: string[] };
   /** the catalog has a newer version of this mod than the one installed (crates/mm-core/src/install/mod_update.rs) */
   updateAvailable?: boolean;
+  /** the user's own mod (crates/mm-core/src/tools/own_work.rs): "ok" to send to the catalog, or what it lacks */
+  publish?: string;
   /** a copy of the pumpkin's mod this install did not earn, kept off (crates/mm-core/src/game/scream_guard.rs) */
   cheat?: boolean;
   fileRef?: string;
