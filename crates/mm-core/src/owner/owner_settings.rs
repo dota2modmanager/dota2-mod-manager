@@ -92,6 +92,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
                     arg(args, 0).as_str(),
                     Some(
                         "everyoneWearsMine"
+                            | "heroPortraitsStock"
                             | "everyoneExcluded"
                             | "heroPedestals"
                             | "heroPedestalHeights"

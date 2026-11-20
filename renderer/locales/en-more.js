@@ -432,5 +432,7 @@ const EN = {
   "Ноги героя проваливаются в пьедестал или висят над ним: подвинь пьедестал. Каждому герою — своя высота.": "The hero's feet sink into the pedestal or hang above it: move the pedestal. Every hero has a height of its own.",
   "Высота пьедестала": "Pedestal height",
   "Сбросить": "Reset",
+  "Обычные портреты героев": "Stock hero portraits",
+  "Аркана или личность в конструкторе меняет портрет героя в сетке выбора, на верхней панели и в таблице счёта. Включи, и портреты останутся как у Valve, а сам образ в матче не изменится.": "An arcana or a persona from the item builder changes the hero's portrait in the pick grid, the top bar and the scoreboard. Turn this on to keep Valve's portraits. The look in the match stays the same.",
 };
 window.EN_MORE = EN;

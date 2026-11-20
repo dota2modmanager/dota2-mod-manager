@@ -36,6 +36,8 @@ export interface SettingsModel {
   countDownloads: boolean;
   autoPack: boolean;
   preview3d: boolean;
+  /** hero pictures as Valve drew them, whatever the hero wears */
+  stockPortraits: boolean;
   /** the item builder's look on everybody playing the hero */
   everyone: EveryoneModel;
   beta: { eligible: boolean; on: boolean };
@@ -65,6 +67,7 @@ export interface SettingsActions extends CompilerActions {
   countDownloads: () => void;
   autoPack: () => void;
   preview3d: () => void;
+  stockPortraits: () => void;
   everyone: () => void;
   /** a hero excluded from the look on everybody, or let back in */
   everyoneHero: (id: string) => void;
@@ -186,6 +189,10 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
               <Toggle id="autoPackToggle" on={m.autoPack} label={L`Общий пак, когда кончаются слоты`} onClick={actions.autoPack} />
             </Row>
             <GameFilesRows everyone={m.everyone} onEveryone={actions.everyone} onHero={actions.everyoneHero} />
+            <Row label={L`Обычные портреты героев`}
+              hint={L`Аркана или личность в конструкторе меняет портрет героя в сетке выбора, на верхней панели и в таблице счёта. Включи, и портреты останутся как у Valve, а сам образ в матче не изменится.`}>
+              <Toggle id="stockPortraitsToggle" on={m.stockPortraits} label={L`Обычные портреты героев`} onClick={actions.stockPortraits} />
+            </Row>
             <GridRows />
           </Section>
 
