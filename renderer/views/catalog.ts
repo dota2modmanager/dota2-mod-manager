@@ -6,7 +6,8 @@
  * (mod-window.ts), installing (install.ts) and the free looks (cosmetics.ts). What they draw with
  * is catalog/, in React. */
 import { $ } from '../core/dom.ts';
-import { COSMETIC_PREFIX, RAIL_SECTIONS } from '../core/constants.ts';
+import { COSMETIC_PREFIX } from '../core/constants.ts';
+import { railSections } from '../catalog/rail-sections.ts';
 import { state } from '../core/store.ts';
 import { tableOn } from '../ui/game-files.ts';
 import { registerView, switchView, catalogOnShow } from '../core/router.ts';
@@ -61,9 +62,8 @@ function catalogRail(): RailModel {
     { id: 'all', icon: 'apps', name: L`Все категории` },
     { id: 'favorites', icon: 'favorite', name: L`Избранное`, count: favCount, fav: true },
   ] }];
-  for (const [label, ids] of RAIL_SECTIONS as [string, string[]][]) {
-    const present = ids.filter((id) => cats.has(id));
-    if (present.length) sections.push({ label: tr(label), items: present.map((id) => ({ id, icon: catIcon(id), name: catName(id) })) });
+  for (const [label, ids] of railSections(cats)) {
+    sections.push({ label: tr(label), items: ids.map((id) => ({ id, icon: catIcon(id), name: catName(id) })) });
   }
   return { active: state.activeCategory, sections };
 }
