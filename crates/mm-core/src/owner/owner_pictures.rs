@@ -114,10 +114,12 @@ fn icons(o: &Owner, names: &Value, quick: bool) -> Value {
     if !for_icons.is_empty() {
         let mut log = |m: String| lines.lock().unwrap_or_else(|e| e.into_inner()).push(m);
         let from_game = game_icons.get_many(game.as_deref(), tool.as_deref(), &for_icons, &mut log);
-        // the full-size picture is the game's or nobody's: the tile's own answer stands in for it
+        // An item's picture is the game's (game_icons.rs, and the few drawn from their models that
+        // the window ships), never the wiki's: the wiki only stands in for a hero or a kind of mod
+        // in the library ("hero:", "generic:").
         let left: Vec<String> = for_icons
             .iter()
-            .filter(|n| !from_game.contains_key(*n) && !n.starts_with(crate::game_icons::FULL_SIZE))
+            .filter(|n| !from_game.contains_key(*n) && (n.starts_with("hero:") || n.starts_with("generic:")))
             .cloned()
             .collect();
         let left = if quick {

@@ -105,6 +105,11 @@ fn run(args: &[String]) -> Result<Value, String> {
             }
             Ok(json!(written))
         }
+        // the looks the game keeps no picture of, with their models: tools/mods/look-pictures.mjs
+        "looks-without-pictures" => {
+            let none = mm_core::looks_without_pictures(Path::new(arg(1)?))?;
+            Ok(json!(none.into_iter().map(|(name, model)| json!({ "name": name, "model": model })).collect::<Vec<_>>()))
+        }
         // the files the sandbox copies out of the real game (sandbox_assets.rs)
         "sandbox-assets" => {
             sandbox_assets::run(Path::new(arg(1)?), Path::new(arg(2)?), Path::new(arg(3)?), Path::new(arg(4)?))

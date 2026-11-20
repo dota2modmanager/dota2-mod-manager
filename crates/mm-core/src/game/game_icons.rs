@@ -52,8 +52,206 @@ fn safe_name(image_path: &str) -> String {
     format!("{}.png", &hex[..16])
 }
 
+/// The texture a picture is in: an item's picture under panorama/images, or, for a loading screen
+/// whose table names the screen itself rather than a picture, that texture.
 fn texture_path(image_path: &str) -> String {
-    format!("panorama/images/{image_path}_png.vtex_c")
+    if image_path.ends_with(".vtex") {
+        format!("panorama/images/{image_path}_c")
+    } else {
+        format!("panorama/images/{image_path}_png.vtex_c")
+    }
+}
+
+/// Where an item's picture is, when the path the table names is not in the pak: the table has a
+/// few with a digit too many ("herald_khorne_head1" for "herald_khorne_head"), and the stock
+/// siege creeps have no picture of their own, where the stock creeps of their side do.
+fn picture_at(pak: Option<&crate::vpk::Index>, image: &str) -> Option<String> {
+    let Some(pak) = pak else { return Some(image.to_string()) };
+    let mut tries = vec![image.to_string()];
+    if image.ends_with(|c: char| c.is_ascii_digit()) {
+        tries.push(image[..image.len() - 1].to_string());
+    }
+    if let Some((dir, _)) = image.rsplit_once('/') {
+        if let Some(folder) = dir.rsplit('/').next() {
+            tries.push(format!("{dir}/{folder}"));
+        }
+    }
+    if image.contains("_siege_creeps") {
+        tries.push(image.replace("_siege_creeps", "_creeps"));
+    }
+    tries.into_iter().find(|t| pak.has(&texture_path(t)))
+}
+
+/// Item name -> its picture's path, for every item that has one in the game.
+///
+/// The names are the table's bytes read as latin1, and the window asks by the name it shows,
+/// the same bytes read as UTF-8: "Odogaron Cape β" was asked for as one and kept as the other,
+/// and two dozen looks came out without a picture. Both spellings are kept.
+fn picture_index(
+    text: &[u8],
+    items: &[crate::schema::SchemaItem],
+    pak: Option<&crate::vpk::Index>,
+) -> HashMap<String, String> {
+    let stand_in = Regex::new(r"(?i)(^|/)testitem_slot_empty$").unwrap();
+    let mut map: HashMap<String, String> = HashMap::new();
+    for it in items {
+        if it.image.is_empty() || it.name.is_empty() || stand_in.is_match(&it.image) {
+            continue;
+        }
+        if let Some(at) = picture_at(pak, &it.image.to_lowercase()) {
+            map.insert(it.name.clone(), at);
+        }
+    }
+    // a loading screen with the empty slot's picture: the screen itself, which its visuals name
+    let screen = Regex::new(r#"(?i)"asset"\s+"([^"]+\.vtex)""#).unwrap();
+    for it in items.iter().filter(|i| i.prefab == "loading_screen") {
+        if map.contains_key(&it.name) {
+            continue;
+        }
+        let block = String::from_utf8_lossy(&text[it.start..it.end.min(text.len())]);
+        // its picture where the game has one beside the screen ("econ/loading_screens/<name>"), else the screen
+        let found = screen
+            .captures_iter(&block)
+            .map(|c| c[1].to_lowercase())
+            .flat_map(|t| {
+                let folder = t.strip_prefix("loadingscreens/").and_then(|r| r.split('/').next()).map(str::to_string);
+                folder.map(|f| format!("econ/loading_screens/{f}")).into_iter().chain([t])
+            })
+            .find(|t| pak.is_none_or(|p| p.has(&texture_path(t))));
+        if let Some(t) = found {
+            map.insert(it.name.clone(), t);
+        }
+    }
+    // a set the game shows with the empty slot's picture shows its first piece's
+    for it in items {
+        if it.name.is_empty() || map.contains_key(&it.name) || it.bundle_items.is_empty() {
+            continue;
+        }
+        if let Some(piece) = it.bundle_items.iter().find_map(|n| map.get(n).cloned()) {
+            map.insert(it.name.clone(), piece);
+        }
+    }
+    // and a piece with the empty slot's picture shows its set's
+    for it in items {
+        for piece in &it.bundle_items {
+            if map.contains_key(piece) {
+                continue;
+            }
+            if let Some(set) = map.get(&it.name).cloned() {
+                map.insert(piece.clone(), set);
+            }
+        }
+    }
+    // A screen of a series with no picture of its own ("Battle Pass 2022 Versus Screen II") shows
+    // the one of its series whose name it shares the most words with.
+    for it in items.iter().filter(|i| matches!(i.prefab.as_str(), "versus_screen" | "loading_screen")) {
+        if map.contains_key(&it.name) {
+            continue;
+        }
+        let words: Vec<&str> = it.name.split(' ').collect();
+        let shared = |other: &str| words.iter().zip(other.split(' ')).take_while(|(a, b)| *a == b).count();
+        let best = items
+            .iter()
+            .filter(|o| o.prefab == it.prefab && o.name != it.name && map.contains_key(&o.name))
+            .map(|o| (shared(&o.name), &o.name))
+            .filter(|(n, _)| *n >= 3)
+            .max_by_key(|(n, _)| *n);
+        if let Some(p) = best.and_then(|(_, n)| map.get(n).cloned()) {
+            map.insert(it.name.clone(), p);
+        }
+    }
+    // A worn piece the game has neither a picture nor a model of (Pudgette's arms name both and
+    // ship neither; an ambient effect is only a particle) shows the hero's stock piece of that
+    // slot, else the hero. One with a model is drawn from it and shipped with the window
+    // (tools/mods/look-pictures.mjs).
+    let hero_of = Regex::new(r#"(?i)"used_by_heroes"\s*\{\s*"(npc_dota_hero_\w+)""#).unwrap();
+    let hero = |it: &crate::schema::SchemaItem| {
+        hero_of.captures(&String::from_utf8_lossy(&text[it.start..it.end.min(text.len())])).map(|c| c[1].to_lowercase())
+    };
+    let modelled = |it: &crate::schema::SchemaItem| {
+        !it.model.is_empty() && pak.is_none_or(|p| p.has(&format!("{}_c", it.model.to_lowercase())))
+    };
+    for it in items.iter().filter(|i| i.prefab == "wearable" && !i.slot.is_empty()) {
+        if it.name.is_empty() || map.contains_key(&it.name) || modelled(it) {
+            continue;
+        }
+        let Some(h) = hero(it) else { continue };
+        let stock = items
+            .iter()
+            .filter(|o| o.prefab == "default_item" && o.slot == it.slot && hero(o).as_deref() == Some(h.as_str()))
+            .find_map(|o| map.get(&o.name).cloned());
+        let portrait = format!("heroes/{h}");
+        if let Some(p) = stock.or_else(|| pak.is_none_or(|p| p.has(&texture_path(&portrait))).then_some(portrait)) {
+            map.insert(it.name.clone(), p);
+        }
+    }
+    let shown: Vec<(String, String)> = map
+        .iter()
+        .filter_map(|(n, p)| {
+            let u = crate::schema::to_utf8(n);
+            (u != *n).then(|| (u, p.clone()))
+        })
+        .collect();
+    map.extend(shown);
+    map
+}
+
+/// The slots of the Items screens, as the table names them (an item's slot, or its prefab).
+const ITEMS_SLOTS: &[&str] = &[
+    "courier",
+    "ward",
+    "loading_screen",
+    "hud_skin",
+    "music",
+    "announcer",
+    "terrain",
+    "weather",
+    "mega_kills",
+    "versus_screen",
+    "streak_effect",
+    "multikill_banner",
+    "radiantcreeps",
+    "direcreeps",
+    "radianttowers",
+    "diretowers",
+    "radiantsiegecreeps",
+    "diresiegecreeps",
+    "tormentor",
+    "cursor_pack",
+    "emblem",
+];
+
+/// The looks of the Items screens and the item builder the game keeps no picture of, each with
+/// the model it is worn as ("" when it has none). tools/mods/look-pictures.mjs draws these from
+/// their models, and the window ships the pictures (renderer/ui/shipped-looks.json).
+pub fn looks_without_pictures(game: &Path) -> Result<Vec<(String, String)>, String> {
+    let (text, _) = crate::schema::read_game_schema(game).map_err(|e| e.to_string())?;
+    let items = crate::schema::list_items(&text).map_err(|e| e.to_string())?;
+    let pak = crate::vpk_shared::shared_index(&GameIcons::pak(game)).map_err(|e| e.to_string())?;
+    let map = picture_index(&text, &items, Some(&pak));
+    let mut names: Vec<String> = items
+        .iter()
+        .filter(|i| ITEMS_SLOTS.contains(&i.slot.as_str()) || ITEMS_SLOTS.contains(&i.prefab.as_str()))
+        .map(|i| crate::schema::to_utf8(&i.name))
+        .collect();
+    for s in crate::item_builder_slots::item_slots(&text).map_err(|e| e.to_string())? {
+        names.extend(s.options.iter().map(|o| o.name.clone()));
+    }
+    names.sort();
+    names.dedup();
+    let model = Regex::new(r#"(?i)"model_player"\s+"([^"]+\.vmdl)""#).unwrap();
+    Ok(names
+        .into_iter()
+        .filter(|n| !map.contains_key(n))
+        .map(|n| {
+            let worn = items
+                .iter()
+                .find(|i| crate::schema::to_utf8(&i.name) == n)
+                .and_then(|i| model.captures(&String::from_utf8_lossy(&text[i.start..i.end])).map(|c| c[1].to_string()))
+                .unwrap_or_default();
+            (n, worn)
+        })
+        .collect())
 }
 
 impl GameIcons {
@@ -134,22 +332,8 @@ impl GameIcons {
                 return None;
             }
         };
-        let stand_in = Regex::new(r"(?i)(^|/)testitem_slot_empty$").unwrap();
-        let mut map = HashMap::new();
-        for it in &items {
-            if !it.image.is_empty() && !it.name.is_empty() && !stand_in.is_match(&it.image) {
-                map.insert(it.name.clone(), it.image.clone());
-            }
-        }
-        // a set the game shows with the empty slot's picture shows its first piece's
-        for it in &items {
-            if it.name.is_empty() || map.contains_key(&it.name) || it.bundle_items.is_empty() {
-                continue;
-            }
-            if let Some(piece) = it.bundle_items.iter().find_map(|n| map.get(n).cloned()) {
-                map.insert(it.name.clone(), piece);
-            }
-        }
+        let pak = crate::vpk_shared::shared_index(&Self::pak(game)).ok();
+        let map = picture_index(&text, &items, pak.as_deref());
         log(format!("game icons: {} items know where their picture is", map.len()));
         if let Some(now) = &stamp {
             let marker = self.root.join("stamp");
@@ -378,6 +562,10 @@ impl GameIcons {
 }
 
 #[cfg(test)]
+#[path = "game_icons_index_tests.rs"]
+mod index_tests;
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -485,4 +673,17 @@ fn icons_on_the_real_game() {
     };
     println!("tile {:?}, full {:?}", size(&tile[&name]), size(full.values().next().unwrap()));
     let _ = std::fs::remove_dir_all(&ud);
+}
+
+/// MM_GAME: the looks the game has no picture for, with their models.
+#[cfg(test)]
+#[test]
+#[ignore]
+fn looks_without_a_picture_in_the_real_game() {
+    let game = PathBuf::from(std::env::var("MM_GAME").unwrap());
+    let none = looks_without_pictures(&game).unwrap();
+    println!("{} without a picture:", none.len());
+    for (n, model) in &none {
+        println!("  {n}  :: {model}");
+    }
 }

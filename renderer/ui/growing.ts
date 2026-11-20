@@ -31,8 +31,9 @@ function scroller(el: HTMLElement): HTMLElement | null {
 /**
  * How many of `total` to draw, and the marker to put after them.
  * @param resetKey  a different list (another category, another search): back to the first page
+ * @param ahead     how far ahead the next page joins, for a list of tall cards that a fling crosses fast
  */
-export function useGrowing(total: number, resetKey: unknown): { limit: number; marker: RefObject<HTMLDivElement | null>; more: boolean } {
+export function useGrowing(total: number, resetKey: unknown, ahead: string = AHEAD): { limit: number; marker: RefObject<HTMLDivElement | null>; more: boolean } {
   const [limit, setLimit] = useState(PAGE);
   const [key, setKey] = useState(resetKey);
   if (key !== resetKey) { setKey(resetKey); setLimit(PAGE); }
@@ -46,10 +47,10 @@ export function useGrowing(total: number, resetKey: unknown): { limit: number; m
       if (!entries.some((e) => e.isIntersecting)) return;
       // a transition: the page joins across frames rather than in one long task
       startTransition(() => setLimit((n) => Math.min(total, n + PAGE)));
-    }, { root: scroller(el), rootMargin: AHEAD });
+    }, { root: scroller(el), rootMargin: ahead });
     seen.observe(el);
     return () => seen.disconnect();
-  }, [more, total, limit]);
+  }, [more, total, limit, ahead]);
 
   return { limit: Math.min(limit, total), marker, more };
 }
