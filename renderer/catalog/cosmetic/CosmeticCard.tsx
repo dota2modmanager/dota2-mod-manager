@@ -20,6 +20,8 @@ export interface CosmeticItem {
   fallbackIcon: string;
   /** the slot's name, on lists that mix several (favourites, search) */
   catName?: string;
+  /** a look that needs the item table, which is off: greyed until it is on (ui/game-files.ts) */
+  muted?: boolean;
 }
 
 /** A look's picture, re-read when it arrives. */
@@ -52,7 +54,7 @@ export function CosmeticCard({ item, index, onOpen, onFavChanged }: Props) {
   };
   const favLabel = fav ? L`Убрать из избранного` : L`В избранное`;
   return (
-    <div className={`card ${item.picked ? 'installed' : ''}`} data-cos={item.slot} data-cos-id={item.id}
+    <div className={`card ${item.picked ? 'installed' : ''}${item.muted ? ' muted' : ''}`} data-cos={item.slot} data-cos-id={item.id}
       style={{ '--i': Math.min(index, 28) } as CSSProperties} onClick={(e) => onOpen(item.slot, item.id, e.currentTarget)}>
       <div className="card-media">
         <span className={`card-thumb ${icon === undefined ? 'loading' : ''}`} data-name={item.name} data-owned="react" ref={thumb}>
