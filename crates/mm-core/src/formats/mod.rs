@@ -4,7 +4,6 @@ pub mod cursor_files;
 pub mod glb_embed;
 pub mod kv;
 pub mod kv3;
-pub mod kv3_legacy;
 pub mod kv3_zstd;
 pub mod lz4;
 pub mod material;

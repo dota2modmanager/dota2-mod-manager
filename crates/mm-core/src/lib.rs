@@ -40,7 +40,7 @@ pub(crate) use catalog::{
 };
 pub use catalog::{Catalog, RAW_BASE};
 pub(crate) use formats::{
-    cursor_files, glb_embed, kv3_legacy, lz4, material, meshopt, panorama_files, picture_shrink, png_paint, png_strip,
+    cursor_files, glb_embed, lz4, material, meshopt, panorama_files, picture_shrink, png_paint, png_strip,
 };
 pub use formats::{kv, kv3, pak_stamp, resource, safe_zip, vpk, vpk_analyze, vpk_pack, vpk_shared, vtex};
 pub use game::game_icons::looks_without_pictures;
