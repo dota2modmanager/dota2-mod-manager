@@ -211,8 +211,8 @@ fn webview_switch(name: &std::ffi::OsStr) -> bool {
     name.to_str().is_some_and(|n| n.to_ascii_uppercase().starts_with("WEBVIEW2_"))
 }
 
-/// From the AppImage on a host that has its own WebKitGTK, start once more on the host's
-/// libraries (mm_core::host_env::host_libs_plan, #761). Replaces this process, so the AppImage
+/// From the AppImage, start once more with the host's libraries ahead of the image's
+/// (mm_core::host_env::host_libs_plan, #761, #797). Replaces this process, so the AppImage
 /// runtime keeps its image mounted for the same pid; if that fails, the app runs on the bundle.
 #[cfg(target_os = "linux")]
 fn host_libs_once() {
