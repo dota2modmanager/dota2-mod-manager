@@ -157,7 +157,7 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
     // the hero's own item first: choosing it is how a pick comes off
     options: (st.view === 'replacement'
       ? replacementOptions([{ id: '', name: L`Стандартный предмет`, tags: [] }, ...data.options], st.selectedId, st.query)
-      : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...emptyOption(data), ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
+      : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...emptyOption(data) as typeof data.options, ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
       id: o.id, name: o.name, picked: st.view === 'replacement' ? o.id === st.targetItemId : o.id === st.selectedId,
       on: st.view !== 'replacement' && (o.id ? live?.itemId === o.id : !live), ...facts(o),
       ...('note' in o && o.note ? { note: o.note } : {}),
