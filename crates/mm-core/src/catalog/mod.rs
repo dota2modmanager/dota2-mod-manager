@@ -10,6 +10,7 @@ pub mod download_stats;
 pub mod feature_gate;
 pub mod fingerprints;
 pub mod icon_match;
+pub mod manifest;
 pub mod mod_preview;
 pub mod mod_preview_pick;
 pub mod net_fetch;
@@ -179,6 +180,17 @@ impl Catalog {
         Ok(consistent)
     }
 
+    /// The releases' manifest, best effort: an app that cannot get it still has the old files tree.
+    fn refresh_manifest(&self, net: &Net) {
+        if let Ok(text) = manifest::fetch_text(net) {
+            if let Ok(parsed) = manifest::Manifest::parse(&text) {
+                // a cache we cannot write is still a manifest we can use now
+                let _ = write(&self.cache_path(manifest::CACHE_FILE), &text);
+                manifest::remember(parsed);
+            }
+        }
+    }
+
     pub fn refresh(&self, net: &Net) -> Result<(), String> {
         for name in DATA_FILES {
             let text = self.fetch_signed(net, name)?;
@@ -189,6 +201,8 @@ impl Catalog {
             Ok(()) => {}
             Err(_) => *self.hashes.lock().unwrap_or_else(|e| e.into_inner()) = None,
         }
+        // where the releases put each archive; without it downloads fall back to the old files tree
+        self.refresh_manifest(net);
         write(
             &self.cache_path("meta.json"),
             crate::js::stringify(&json!({ "fetchedAt": crate::js::json_number((self.now)()) }), ""),
@@ -198,6 +212,7 @@ impl Catalog {
     /// The three files as the window is handed them; a catalog that could not be fetched is not
     /// no catalog, so a failed refresh over a cache says why it is old instead of failing.
     pub fn load(&self, net: &Net, force_refresh: bool) -> Result<Value, String> {
+        manifest::load_cached(&self.cache_path(manifest::CACHE_FILE));
         let _turn = self.turn.lock().unwrap_or_else(|e| e.into_inner());
         let mut stale = None;
         if force_refresh || !self.has_cache() {
