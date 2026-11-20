@@ -13,7 +13,7 @@
  *                                  with every effect the item builder can put on it
  *
  * The layout mirrors a real Steam library, because the app derives things from it: the game
- * path ends in ...\dota 2 beta\game (src/steam.ts) and src/gamelang.ts walks three levels up
+ * path ends in ...\dota 2 beta\game (crates/mm-core/src/game/steam.rs) and crates/mm-core/src/game/gamelang.rs walks three levels up
  * looking for appmanifest_570.acf.
  *
  * Nothing here changes app code. The app is pointed at the sandbox purely through
@@ -143,7 +143,7 @@ const BRANCHSPECIFIC = `"GameInfo"
 }
 `;
 
-// Valve's shape for a language folder (mirrors gameinfoStub in src/gamelang.ts).
+// Valve's shape for a language folder (mirrors gameinfoStub in crates/mm-core/src/game/gamelang.rs).
 const LANG_GAMEINFO = (suffix) => `"GameInfo"
 {
 	LayeredOnMod	dota
@@ -248,7 +248,7 @@ function item() {
 }
 
 // Minimal but structurally real items_game.txt, used only when the real game is not
-// installed. Enough for src/schema.ts to parse, find an items block and patch a base item, and
+// installed. Enough for crates/mm-core/src/schema/schema_deploy.rs to parse, find an items block and patch a base item, and
 // for the Items screen to list one slot of the game's looks (the HUD) with something to pick, so
 // the end-to-end run on CI can type into a slot's search as it does on a developer's machine.
 const FALLBACK_SCHEMA = `"items_game"
@@ -494,7 +494,7 @@ const readIfThere = (file) => {
 
 /* The Steam account the sandbox library belongs to.
  *
- * src/gamelang.ts takes -language from the launch options of whoever is logged in, looking first
+ * crates/mm-core/src/game/gamelang.rs takes -language from the launch options of whoever is logged in, looking first
  * at the Steam root the game path implies (sandbox/ here) and, on Windows, going on to
  * Program Files\Steam when that root has no account. With no account of its own, a sandbox run
  * on a machine where Dota starts with -language dutch (Minify sets exactly that) installed into
@@ -587,7 +587,7 @@ function status() {
   if (!fs.existsSync(SANDBOX)) return;
   log('game      ', fs.existsSync(path.join(GAME, 'dota')) ? GAME : '(missing)');
   log('pristine  ', fs.existsSync(PRISTINE) ? 'yes' : 'no');
-  // pak01_* is Valve's voice-over, not a mod - same exclusion langFolders() in src/gamelang.ts makes
+  // pak01_* is Valve's voice-over, not a mod - same exclusion langFolders() in crates/mm-core/src/game/gamelang.rs makes
   const isMod = (f) => /^pak\d+_dir\.vpk(\.off|\.moff)?$/i.test(f) && !/^pak01_/i.test(f);
   log('mods in dota_russian:', count(path.join(GAME, 'dota_russian'), { test: isMod }));
   log('downloaded mods:     ', count(MODS, /\.(vpk|zip)$/i));

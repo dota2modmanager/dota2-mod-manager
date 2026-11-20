@@ -1,4 +1,4 @@
-//! An arcana as a mod, built from the game's own files (issue #118), replacing src/arcana.ts: the
+//! An arcana as a mod, built from the game's own files (issue #118): the
 //! arcana's models under the hero's own names, playing without the item what they played with it;
 //! a particle the hero already creates, taken from the arcana's version, with the arcana's own
 //! particles hung on it as children; its portraits and ability icons and its versions of other
@@ -137,7 +137,7 @@ pub struct Form {
     pub attachment: String,
 }
 
-/// One arcana the app can build (src/arcana-sets.ts ARCANA_SETS).
+/// One arcana the app can build (data/arcana-sets.json).
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct ArcanaSet {
     pub recolor: String,

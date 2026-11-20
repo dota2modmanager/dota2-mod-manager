@@ -1,4 +1,4 @@
-//! The build half of src/item-builder-personas.ts: which picks a persona on leaves out, the
+//! Personas in the item builder: which picks a persona on leaves out, the
 //! records a build takes with a persona's picks written over its stock items, and a persona slot's
 //! files over the persona's base. (The slots the builder offers are item_builder_slots.rs.)
 //!
@@ -22,7 +22,7 @@ pub const SELECTOR: &str = "persona_selector";
 /// What a pick left out because of a persona says.
 pub const PLAIN: &str = "the hero has a persona on";
 
-/// A base with the files the store had for it, and the paths they fill (src/arcana-bases.ts).
+/// A base with the files the store had for it, and the paths they fill (arcana/arcana_bases.rs).
 pub struct ReadyBase {
     pub base: ArcanaBase,
     pub entries: Vec<Entry>,

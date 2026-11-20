@@ -1,5 +1,5 @@
-//! Towers and trees from the game's own looks, per side, built in the app (src/map-looks-service.ts,
-//! issues #446, #421). The window picks a look for Radiant and one for Dire; the pak comes out of
+//! Towers and trees from the game's own looks, per side, built in the app (issues
+//! #446, #421). The window picks a look for Radiant and one for Dire; the pak comes out of
 //! the player's pak01 (tower_looks.rs, tree_sets.rs) and goes into My mods as one record per kind,
 //! marked `generated` with what it was built from. Choosing again builds it again in its slot, and
 //! a Dota update that reached it builds it again from the new files.

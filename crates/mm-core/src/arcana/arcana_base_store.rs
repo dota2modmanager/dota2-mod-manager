@@ -1,4 +1,4 @@
-//! The arcana bases brought down from their repository and kept on disk (src/arcana-base-store.ts),
+//! The arcana bases brought down from their repository and kept on disk,
 //! so a build reads them like it reads pak01.
 //!
 //! The repository's manifest.json lists every file of every base with git's hash of it, and

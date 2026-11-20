@@ -1,5 +1,5 @@
-//! Everything the 3D preview's loadout runtime needs for a set of effects and models
-//! (src/loadout-resources.ts), shared by the hero and the recolour views: the effects' snapshots,
+//! Everything the 3D preview's loadout runtime needs for a set of effects and models,
+//! shared by the hero and the recolour views: the effects' snapshots,
 //! materials, sprite sheets and drawn models, and each model's GLB with the game's own material
 //! inputs in its extras.
 

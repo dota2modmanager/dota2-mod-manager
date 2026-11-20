@@ -1,8 +1,8 @@
-/* The author's desk (src/ipc-creator.ts): drafts of mods for the catalog, and the hand-off to the
+/* The author's desk (crates/mm-core/src/owner/owner_creator.rs): drafts of mods for the catalog, and the hand-off to the
  * catalog's upload API. */
 import type { Reply } from './reply.ts';
 
-/** An author's draft of a mod for the catalog (src/creator.ts), as the form shows it. */
+/** An author's draft of a mod for the catalog (crates/mm-core/src/tools/creator.rs), as the form shows it. */
 export interface CreatorDraft {
   id: string;
   name: string;
@@ -28,7 +28,7 @@ export interface CreatorDraft {
   pictures: (string | null)[];
   /** what is still missing before it can be sent, in words */
   missing: string[];
-  /** what the catalog's upload rules refuse in it (src/creator-premod.ts), in words */
+  /** what the catalog's upload rules refuse in it (crates/mm-core/src/tools/creator.rs), in words */
   problems: string[];
 }
 
@@ -38,7 +38,7 @@ export type CreatorFields = Partial<Pick<CreatorDraft,
   | 'extraMode' | 'extraOrigin' | 'extraName' | 'extraUrl' | 'video' | 'tags' | 'replaces'>>
   & { styles?: { label: string; colors?: string[] }[] };
 
-/** The upload terms, as the app records them (src/creator.ts). */
+/** The upload terms, as the app records them (crates/mm-core/src/tools/creator.rs). */
 export interface CreatorConsent { accepted: boolean; version: string; at: string | null }
 
 /** One submission in the catalog's history for the upload key's owner. */
@@ -53,7 +53,7 @@ export interface CreatorHistoryItem {
   url?: string;
 }
 
-/** The author's drafts (src/ipc-creator.ts). */
+/** The author's drafts (crates/mm-core/src/owner/owner_creator.rs). */
 export interface CreatorApi {
   list: () => Promise<Reply<{ drafts: CreatorDraft[]; consent: CreatorConsent; uploader: boolean }>>;
   /** a new draft (id null), or one's fields changed */

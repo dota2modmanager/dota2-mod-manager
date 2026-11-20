@@ -1,4 +1,4 @@
-//! A texture's sprite-sheet sequences (src/loadout-sheet.ts): VTEX sprite-sheet metadata, laid out
+//! A texture's sprite-sheet sequences: VTEX sprite-sheet metadata, laid out
 //! as ValveResourceFormat's Texture.GetSpriteSheetData reads it (MIT,
 //! https://github.com/ValveResourceFormat/ValveResourceFormat). The exporter writes the frames as
 //! PNGs; this keeps the authored sequence ids and frame times for them.

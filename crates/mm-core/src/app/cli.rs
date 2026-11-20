@@ -1,4 +1,4 @@
-//! The command line (issue #436, src/cli.ts): put a preset on, list the mods, or switch them all
+//! The command line (issue #436): put a preset on, list the mods, or switch them all
 //! off, with no window. For scripts, LAN setups and Steam Deck desktop mode.
 //!
 //!   dota2-mod-manager --apply "d2mm://preset/..."   install the preset's mods and put it on

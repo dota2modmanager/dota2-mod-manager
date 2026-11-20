@@ -1,4 +1,4 @@
-//! Kinetic gems on any item, replacing src/item-builder-kinetic.ts: the game's animation gems
+//! Kinetic gems on any item: the game's animation gems
 //! (Fishstick, Rampant, Twister), which the table's "asset_modifiers" section names with an
 //! activity (or ALL) and the modifier the hero's animations for it are marked with. A gem rides in
 //! the pick's effect string as `kinetic-<name>`; it goes in the table for hero demo, and in the

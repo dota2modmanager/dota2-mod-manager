@@ -1,4 +1,4 @@
-//! A wearable's model without its cloth, replacing src/model-cloth.ts. Copied under a stock path
+//! A wearable's model without its cloth. Copied under a stock path
 //! of a hero whose own cloth has a local force other than 1 (Centaur's 1.5), a wearable's cloth
 //! trails behind him; such a copy goes in with m_pFeModel null and the rest of PHYS as it was.
 

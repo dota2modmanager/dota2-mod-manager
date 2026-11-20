@@ -24,7 +24,7 @@
  *   node tools/release/rollback.mjs sign                                      sign the file as it stands
  *
  * A block goes under `blocks`, which copies before BLOCKS_SINCE never read (see
- * src/remote-config.ts), and comes with a notice for the same versions and days, so the people
+ * crates/mm-core/src/catalog/remote_config.rs), and comes with a notice for the same versions and days, so the people
  * it affects are told why. The beta list goes under `beta` and holds hashes rather than ids,
  * because this file is public and a list of a dozen people's Discord accounts is not ours to
  * publish. Anything that writes the file signs it when CATALOG_KEY points at the private key,
@@ -56,7 +56,7 @@ const verify = (bytes, sig, key) => rule('verify', binFile(bytes), sig, key);
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const CONFIG = path.join(root, 'config', 'app.json');
 
-const README = 'What the app reads after it has shipped: src/remote-config.js. Everything here is '
+const README = 'What the app reads after it has shipped: crates/mm-core/src/catalog/remote_config.rs. Everything here is '
   + 'optional; an empty file means the app behaves exactly as built. Switch names the app honours: '
   + `${SWITCHABLE.join(', ')}. "features" switches one off in every version. "blocks" switch one off `
   + `for a range of versions until a day, and only copies from ${BLOCKS_SINCE} read them. A notice needs `

@@ -1,5 +1,5 @@
 /* The item builder's sets, a tab of the hero's window (views/item-hero.ts): a hero's list of them,
- * and one set, every piece of it put on in one write (src/item-builder.ts itemSets). Drawn by
+ * and one set, every piece of it put on in one write (crates/mm-core/src/item_builder/mod.rs). Drawn by
  * catalog/builder/SetsPane.tsx; the rest of the builder is views/item-builder.ts.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece

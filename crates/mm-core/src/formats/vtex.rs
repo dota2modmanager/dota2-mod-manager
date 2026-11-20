@@ -1,4 +1,4 @@
-//! The picture inside a compiled Source 2 texture, when it is already a picture (src/vtex.ts).
+//! The picture inside a compiled Source 2 texture, when it is already a picture.
 //! Most panorama images are compiled with the format left as PNG: the .vtex_c is a small resource
 //! header with the untouched PNG appended, and the header's first field is where it starts. A
 //! block-compressed texture answers None rather than a guess.
@@ -23,7 +23,7 @@ pub fn png_from_vtex(buf: &[u8]) -> Option<&[u8]> {
     (end + 8 == png.len()).then_some(png)
 }
 
-// The few panorama images that are not a PNG inside (src/vtex.ts rgbaFromVtex): DXT1 or DXT5 of
+// The few panorama images that are not a PNG inside: DXT1 or DXT5 of
 // one mip with nothing packed around it, the newest heroes' portraits among them, their colour
 // stored as scaled YCoCg. Anything else answers None. The arithmetic is the TypeScript's, in f64
 // and in the same order, so both give the same pixels.

@@ -1,4 +1,4 @@
-//! The one door every foreign archive comes through, replacing src/safe-zip.ts.
+//! The one door every foreign archive comes through.
 //!
 //! A zip describes itself in its own headers, so a hostile one can claim whatever it likes:
 //! a bomb that honestly unpacks to gigabytes, or an entry named "../../../Windows/x.dll".
@@ -18,7 +18,7 @@ use crate::i18n::t;
 
 const MB: u64 = 1024 * 1024;
 
-/// The budgets an archive is held to (the same numbers as src/safe-zip.ts, measured on real archives).
+/// The budgets an archive is held to (measured on real archives).
 #[derive(Debug, Clone, Copy)]
 pub struct Limits {
     pub archive_bytes: u64,
@@ -220,7 +220,7 @@ impl OpenedZip {
     }
 }
 
-/// sha1 as lowercase hex, the hash src/overlays.ts records every write by.
+/// sha1 as lowercase hex, the hash install/overlays.rs records every write by.
 pub fn sha1_hex(data: &[u8]) -> String {
     use sha1::Digest;
     sha1::Sha1::digest(data).iter().map(|b| format!("{b:02x}")).collect()

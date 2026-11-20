@@ -1,5 +1,5 @@
-//! The models of a hero as the item builder dresses it, for the 3D preview in the hero's window
-//! (src/hero-preview.ts): the body, and for each slot the item picked there, or the stock item
+//! The models of a hero as the item builder dresses it, for the 3D preview in the hero's window:
+//! the body, and for each slot the item picked there, or the stock item
 //! where none is. `plan` reads all of it out of the game's files and the table; `models` exports
 //! what the plan names and hands the window each model's bytes with its pictures inside.
 

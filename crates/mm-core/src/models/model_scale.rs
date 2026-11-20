@@ -1,5 +1,5 @@
-//! A compiled model made bigger about its origin, and how much bigger one model is than another;
-//! replacing src/model-scale.ts, which says why a persona's items need it.
+//! A compiled model made bigger about its origin, and how much bigger one model is than another,
+//! and why a persona's items need it.
 //!
 //! Scaled: the vertices' positions, the translation of each bone's inverse bind pose, the
 //! skeleton's bone positions, and the bounds, hitboxes and attachment offsets. A meshopt-compressed

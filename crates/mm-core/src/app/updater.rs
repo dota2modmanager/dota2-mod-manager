@@ -1,4 +1,4 @@
-//! Where an installed copy looks for a new version, and on which channel (src/updater.ts).
+//! Where an installed copy looks for a new version, and on which channel.
 //!
 //! Two feeds: GitHub is the origin, the project's bucket a copy tried only after GitHub fails,
 //! and each four-hourly round starts at GitHub again. Two channels: everybody reads `latest`, the

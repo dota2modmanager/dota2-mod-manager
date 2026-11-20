@@ -1,4 +1,4 @@
-//! A VPK index opened once for everything that reads the same file in a row (src/vpk-shared.ts).
+//! A VPK index opened once for everything that reads the same file in a row.
 //! Every pick of the item builder reads its models out of the game's pak01, and so do its sounds
 //! and portraits. The index is large in memory, so it is let go 30 seconds after it was last
 //! asked for; a changed file (size or time) is opened anew.

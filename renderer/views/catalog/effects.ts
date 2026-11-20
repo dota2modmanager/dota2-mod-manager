@@ -1,5 +1,5 @@
 /* The effect editor's window, opened from the Workshop. The files are changed in the main process
- * (src/effect-edit-service.ts): what plays here comes back from there after each change, a moment
+ * (crates/mm-core/src/looks/effect_edit_service.rs): what plays here comes back from there after each change, a moment
  * later, so what is drawn is what would be built. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { toast } from '../../ui/toast.ts';

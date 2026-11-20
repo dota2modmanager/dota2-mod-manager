@@ -1,5 +1,5 @@
-//! What a mod actually replaces, asked of the game instead of guessed from folder names
-//! (src/mod-id.ts). The item table says where each cosmetic's model lives (`model_player`) and
+//! What a mod actually replaces, asked of the game instead of guessed from folder names.
+//! The item table says where each cosmetic's model lives (`model_player`) and
 //! who wears it (`used_by_heroes`), so a mod that overrides that path replaces that item, by
 //! name. Without a game path there is no answer and the caller keeps the guess.
 

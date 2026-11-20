@@ -1,5 +1,5 @@
 /* Pictures of the game's own map props, out of their models: a tree set has no item and no picture
- * of its own, only its models, so the window draws the set's main model (src/hero-preview.ts model)
+ * of its own, only its models, so the window draws the set's main model (crates/mm-core/src/models/hero_preview.rs model)
  * standing in a soft light, three quarters on, and keeps the frame. One renderer draws them all,
  * one at a time, and each picture is kept for the session, as effect-thumb.ts does for effects. */
 import * as THREE from 'three';

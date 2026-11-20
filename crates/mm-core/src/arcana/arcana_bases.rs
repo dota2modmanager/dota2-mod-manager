@@ -1,4 +1,4 @@
-//! Arcana bases (src/arcana-bases.ts): an arcana rebuilt by hand so it works as the hero's own
+//! Arcana bases: an arcana rebuilt by hand so it works as the hero's own
 //! look. Which base a set of picks puts on, and how its files share the hero with the user's
 //! other picks: a pick of another item wins over the base, a pick of one of the set's own parts
 //! leaves the base's paths to the base.
@@ -41,7 +41,7 @@ pub fn choose_bases<'a>(picks: &[BasePick], bases: &'a [ArcanaBase]) -> Vec<&'a 
     out
 }
 
-/// Where a build reads bases from (src/arcana-base-store.ts): the files of one that is here, and
+/// Where a build reads bases from (arcana/arcana_base_store.rs): the files of one that is here, and
 /// a wish for one (fetched or refreshed in the background).
 pub trait BaseSource {
     fn entries(&self, id: &str) -> Option<Vec<Entry>>;
@@ -76,7 +76,7 @@ pub fn without_base_files(item_id: &str, assets: Vec<Entry>, ready: &[ReadyBase]
 }
 
 /// A base's files with each model numbered as the game's model at its path
-/// (src/model-attachments.ts entriesAttachedAs): online the server tells attachments by number.
+/// (models/model_attachments.rs): online the server tells attachments by number.
 pub fn entries_attached_as(entries: Vec<Entry>, read: &dyn Fn(&str) -> Option<Vec<u8>>) -> Vec<Entry> {
     entries
         .into_iter()

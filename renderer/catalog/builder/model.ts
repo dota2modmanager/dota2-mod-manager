@@ -26,7 +26,7 @@ interface OptionCard extends Rarity {
   name: string;
   picked: boolean;
   on: boolean;
-  /** what is known to go wrong with it in the game, or that nobody has checked (src/arcana-notes.ts) */
+  /** what is known to go wrong with it in the game, or that nobody has checked (crates/mm-core/src/arcana/arcana_notes.rs) */
   note?: { status: 'issues' | 'broken' | 'untested'; text: string };
 }
 
@@ -157,7 +157,7 @@ export interface HeroModalModel {
   hero: string;
   /** the hero's portrait from hero selection, for the stage while the 3D view is off */
   portrait: string | null;
-  /** its main attribute, for the colour under its name (src/item-builder-details.ts) */
+  /** its main attribute, for the colour under its name (crates/mm-core/src/item_builder/item_builder_details.rs) */
   attr: string;
   tab: HeroTab;
   slots: SlotRow[];

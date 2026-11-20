@@ -1,4 +1,4 @@
-/* What My mods is drawn from: the records main lists (mods:list, src/ipc-library.ts), the files
+/* What My mods is drawn from: the records main lists (mods:list, crates/mm-core/src/owner/owner_library.rs), the files
  * found in the mods folder that no record owns, and what the app did about the last Dota patch. */
 
 export interface LibFile {
@@ -6,12 +6,12 @@ export interface LibFile {
   relPath: string;
 }
 
-/** A fingerprint match: which catalog mod a file is (src/fingerprints.ts), best first. */
+/** A fingerprint match: which catalog mod a file is (crates/mm-core/src/catalog/fingerprints.rs), best first. */
 export type Match = { categoryId: string; name: string; styleLabel?: string | null }[];
 
 /** Two mods can carry the same file, and the one loaded first wins it. */
 export interface Cover {
-  /** the winner's record id or foreign-file key (src/installer-slots.ts coverage) */
+  /** the winner's record id or foreign-file key (crates/mm-core/src/install/installer_slots.rs coverage) */
   key?: string;
   name: string;
   files: number;
@@ -40,7 +40,7 @@ export interface LibRecord {
   categoryId: string;
   /** a cosmetic pick's slot in the item schema */
   slot?: string;
-  /** the item a cosmetic pick dresses the slot in, and its effects, comma separated (src/item-builder.ts) */
+  /** the item a cosmetic pick dresses the slot in, and its effects, comma separated (crates/mm-core/src/item_builder/mod.rs) */
   itemId?: string;
   effectId?: string;
   targetItemId?: string;
@@ -55,22 +55,22 @@ export interface LibRecord {
   packName?: string;
   /** the shared pack the app folds mods into when the pak slots run out */
   auto?: boolean;
-  /** the part of the load order a mod keeps to (src/slot-zones.ts) */
+  /** the part of the load order a mod keeps to (crates/mm-core/src/install/slot_zones.rs) */
   zone?: unknown;
   /** how many heroes an import skins: two or more can be split */
   subjects?: number;
-  /** its item pictures were taken out (src/installer-repack.ts dropItemIcons) */
+  /** its item pictures were taken out (crates/mm-core/src/install/installer_repack.rs dropItemIcons) */
   noItemIcons?: boolean;
   schemaCount?: number;
   schemaLive?: boolean;
   coveredBy?: Cover[];
   staleMap?: boolean;
-  /** a Dota update changed files this mod replaces since it was installed (src/update-impact.ts) */
+  /** a Dota update changed files this mod replaces since it was installed (crates/mm-core/src/game/update_impact.rs) */
   /** the paths are the first hundred of each kind, for the window the pill opens (views/library/pre-patch.ts) */
   prePatch?: { since: string | null; changed: number; removed: number; changedPaths?: string[]; removedPaths?: string[] };
-  /** the catalog has a newer version of this mod than the one installed (src/mod-update.ts) */
+  /** the catalog has a newer version of this mod than the one installed (crates/mm-core/src/install/mod_update.rs) */
   updateAvailable?: boolean;
-  /** a copy of the pumpkin's mod this install did not earn, kept off (src/scream-guard.ts) */
+  /** a copy of the pumpkin's mod this install did not earn, kept off (crates/mm-core/src/game/scream_guard.rs) */
   cheat?: boolean;
   fileRef?: string;
   preview?: string;
@@ -96,7 +96,7 @@ export interface ExternalFile {
   [key: string]: unknown;
 }
 
-/** What the app did about the last Dota patch (src/patch-repair.js). */
+/** What the app did about the last Dota patch (crates/mm-core/src/game/game_repair.rs). */
 export interface RepairState {
   state: 'idle' | 'waiting' | 'failed' | 'done' | string;
   error?: string;

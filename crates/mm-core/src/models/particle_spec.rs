@@ -1,5 +1,5 @@
 //! The particles an item or a hero shows on its loadout, read out of the game for the 3D preview,
-//! and the attachment points they hang on, replacing src/particle-spec.ts. Answers are the JSON
+//! and the attachment points they hang on. Answers are the JSON
 //! the window gets.
 //!
 //! A particle system (.vpcf_c) is a KV3 tree: emitters, initializers, operators, renderers, the

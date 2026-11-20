@@ -1,6 +1,6 @@
 /* The item builder in the catalog: a hero's items, each built from one of its wearables with an
  * effect on top. The hub lists heroes, and a hero opens its window (views/item-hero.ts): its slots,
- * its sets, and here what one slot offers, its wearables and the effects on top. What a pick does to the game is src/item-builder.ts; this
+ * its sets, and here what one slot offers, its wearables and the effects on top. What a pick does to the game is crates/mm-core/src/item_builder/mod.rs; this
  * is the screen.
  *
  * Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece
@@ -49,7 +49,7 @@ export function itemCosmeticSlots(): CosmeticSlot[] {
   return cosmeticSlotList().filter((s) => s.kind === 'item-effect' || String(s.slot || '').startsWith('item:'));
 }
 
-/** A hero's sets: none with a persona on, whose own items are all it wears (src/item-builder-personas.ts). */
+/** A hero's sets: none with a persona on, whose own items are all it wears (crates/mm-core/src/item_builder/item_builder_personas.rs). */
 export const heroSets = (heroName: string): CosmeticSet[] => (cosmeticSlotList().some((s) => s.heroLabel === heroName && s.persona && !s.persona.part && pickedIn(s.slot))
   ? [] : (state.cosmeticSets || []).filter((s) => s.heroLabel === heroName));
 
@@ -82,7 +82,7 @@ export const catalogActions = (): ScreenActions => (cat as BuilderCtx).actions;
 
 // ---------- a slot: its wearables, the effects on top, and the button that puts them on ----------
 
-/** `donor`: the item of the slot whose effect the chosen one wears, '' for none (src/item-builder-donor.ts) */
+/** `donor`: the item of the slot whose effect the chosen one wears, '' for none (crates/mm-core/src/item_builder/item_builder_donor.rs) */
 export interface SlotState { slot: string; selectedId: string; effectIds: string[]; donor: string; style: number; targetItemId: string; query: string; view: SlotView; busy: boolean }
 
 /**
@@ -115,7 +115,7 @@ export function tryOnPick(st: SlotState | null) {
   return { itemId: st.selectedId, effectId, ...(st.targetItemId ? { targetItemId: st.targetItemId } : {}) };
 }
 
-/** An effect of the game's own (Ethereal Flame and the like), src/item-builder-unusual.ts. */
+/** An effect of the game's own (Ethereal Flame and the like), crates/mm-core/src/item_builder/unusual_effects.rs. */
 const GAME_EFFECT = /^unusual-\d+$/;
 const GROUPS: EffectGroup[] = ['kinetic', 'unusual', 'seasonal', 'courier'];
 

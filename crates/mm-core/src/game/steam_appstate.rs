@@ -1,4 +1,4 @@
-//! What Steam's own manifest says about Dota right now (src/steam-appstate.ts, issue #427).
+//! What Steam's own manifest says about Dota right now (issue #427).
 //! Pressing Play while Steam is still downloading an update queues the update first; and a repair
 //! written while Steam checks or updates the files is overwritten by the next file it writes.
 //! steamapps/appmanifest_570.acf says both, in one field.

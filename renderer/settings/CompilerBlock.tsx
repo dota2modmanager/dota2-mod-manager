@@ -1,5 +1,5 @@
 /* resourcecompiler.exe in Settings: which one runs, picking another, and on Linux the Wine it runs
- * under. The program's path is picked in a dialog of the main process (src/ipc-compiler.ts); this
+ * under. The program's path is picked in a dialog of the main process (crates/mm-core/src/owner/owner_compiler.rs); this
  * only shows what main says and asks it. */
 import { useState } from 'react';
 import { Swap } from '../motion/Swap.tsx';

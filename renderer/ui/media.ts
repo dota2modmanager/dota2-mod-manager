@@ -30,7 +30,7 @@ export function isMedia(src: string | null | undefined): boolean { return isVide
 
 /**
  * The address a picture or clip starts from. The main process answers for catalog pictures
- * (src/preview-cache.ts) but a clip has to stream, so the window asks for it itself, and it asks
+ * (crates/mm-core/src/catalog/preview_cache.rs) but a clip has to stream, so the window asks for it itself, and it asks
  * the mirror first: a blocked GitHub hangs instead of failing, and nothing here would move on.
  */
 export function firstSrc<T extends string | null>(url: T): T | string {

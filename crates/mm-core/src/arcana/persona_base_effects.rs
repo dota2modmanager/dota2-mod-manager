@@ -1,5 +1,5 @@
-//! What of a persona's base the build takes: its persona's own effects, not another item's
-//! (src/persona-base-effects.ts). An effect folder under particles/econ/items/ that none of the
+//! What of a persona's base the build takes: its persona's own effects, not another item's.
+//! An effect folder under particles/econ/items/ that none of the
 //! persona's own items names is another item's: its files go, and so does a particle that leads
 //! into it.
 

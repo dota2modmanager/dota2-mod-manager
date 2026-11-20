@@ -10,7 +10,7 @@ export type Reply<T extends object = object> = T & { ok?: boolean; error?: strin
 /** A channel that opens a system dialog: closing it is an answer too. */
 export type Dialog<T extends object = object> = Reply<T> & { cancelled?: boolean };
 
-/** Files taken in by an import (src/import.ts): what came in, and what did not. */
+/** Files taken in by an import (crates/mm-core/src/install/import.rs): what came in, and what did not. */
 export interface ImportReply {
   cancelled?: boolean;
   error?: string;

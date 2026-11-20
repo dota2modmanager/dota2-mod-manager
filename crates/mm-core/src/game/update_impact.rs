@@ -1,4 +1,4 @@
-//! Which installed mods a Dota update reached (src/update-impact.ts). A note of Valve's CRC for
+//! Which installed mods a Dota update reached. A note of Valve's CRC for
 //! every path an installed mod replaces is taken while the game is unchanged; after an update the
 //! note is compared with the new pak01 index. A mod stays marked until its own file changes or it
 //! is removed.

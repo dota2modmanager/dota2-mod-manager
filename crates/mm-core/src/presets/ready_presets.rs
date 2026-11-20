@@ -1,4 +1,4 @@
-//! The ready-made presets (src/ready-presets.ts): config/presets.json on main, fetched and checked
+//! The ready-made presets: config/presets.json on main, fetched and checked
 //! the way the remote config is and kept between starts, so the list is there offline once seen.
 //! No file, no network, a bad signature or malformed JSON leave the last good list, or none.
 

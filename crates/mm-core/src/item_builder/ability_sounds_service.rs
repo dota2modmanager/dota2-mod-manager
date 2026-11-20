@@ -1,5 +1,5 @@
 //! The window's half of a sound of the user's own on a hero's sound event
-//! (src/ability-sounds-service.ts, issue #423; the events themselves are ability_sounds.rs). One
+//! (issue #423; the events themselves are ability_sounds.rs). One
 //! record in My mods per hero, since a hero's sounds are one events file and two paks of it would
 //! hide each other; each sound can be taken off on its own, and taking off the last removes the
 //! record.

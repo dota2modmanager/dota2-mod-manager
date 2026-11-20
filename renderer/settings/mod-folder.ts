@@ -1,5 +1,5 @@
-/* The mods folder kept in Settings (src/settings.ts langFolderLock), written and moved into at once
- * by the main process (src/ipc-settings.ts). Apart from the row that draws it, so the window's one
+/* The mods folder kept in Settings (crates/mm-core/src/app/settings.rs langFolderLock), written and moved into at once
+ * by the main process (crates/mm-core/src/owner/owner_settings.rs). Apart from the row that draws it, so the window's one
  * list of the settings it writes (test/window-guard.test.ts) reads it. */
 import { state } from '../core/store.ts';
 

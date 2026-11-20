@@ -1,5 +1,5 @@
 //! An effect of the game changed by hand: its size, how many particles it makes, how long they
-//! live, how fast they leave, and its colour; replacing src/effect-edit.ts.
+//! live, how fast they leave, and its colour.
 //!
 //! Each of these is a handful of numbers in a particle system's KV3 tree. A number in the file is
 //! either plain, or a parameter that says how it is made, and a literal or a random range can be

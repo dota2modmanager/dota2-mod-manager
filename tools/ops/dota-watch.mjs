@@ -67,7 +67,7 @@ export function readCatalogPaths(json) {
 
 /**
  * Catalog mods the update reached, busiest first. A file Valve ships for the first time under a
- * mod's path counts as changed, as it does in the app (src/update-impact.ts).
+ * mod's path counts as changed, as it does in the app (crates/mm-core/src/game/update_impact.rs).
  */
 export function catalogImpact(catalog, diff) {
   const changed = new Set([...diff.modified, ...diff.added]);
@@ -101,7 +101,7 @@ export function renderMarkdown(r, impact = null, { top = 12, mods = 40 } = {}) {
   L.push('### What the app depends on', '');
   const sp = r.watch.searchPaths;
   if (sp.gone.length || sp.came.length) {
-    L.push('- **The search paths in `gameinfo.gi` changed.** The patch copies this block (`src/patcher-gameinfo.ts`); the app rebuilds it on the next start, check that the result still mounts the language folder:', '');
+    L.push('- **The search paths in `gameinfo.gi` changed.** The patch copies this block (`crates/mm-core/src/game/patcher_gameinfo.rs`); the app rebuilds it on the next start, check that the result still mounts the language folder:', '');
     L.push('```diff', ...sp.gone.map((l) => `- ${l}`), ...sp.came.map((l) => `+ ${l}`), '```');
   } else L.push('- Search paths in `gameinfo.gi`: unchanged');
   const ek = r.watch.engineKeys;

@@ -1,4 +1,4 @@
-//! Another item's effect on the one worn (issue #383), replacing src/item-builder-donor.ts: the
+//! Another item's effect on the one worn (issue #383): the
 //! donor's asset modifiers of the kinds an effect is made of (its particles, and the icon and sound
 //! of an ability it restyles) worn beside the item's own. The donor rides in the pick's effect
 //! string as `from-<id>`. Text is items_game's latin1 bytes.

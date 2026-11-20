@@ -131,7 +131,7 @@ export function promptDialog(message: string, { placeholder = '', value = '', ok
 // ---------- the Source 2 toolchain, offered once ----------
 
 /* Dota keeps most of what it draws in compiled Source 2 formats. The app reads the easy half
- * itself - almost every item icon is a PNG sitting inside its .vtex_c (see src/vtex.ts) - but
+ * itself - almost every item icon is a PNG sitting inside its .vtex_c (see crates/mm-core/src/formats/vtex.rs) - but
  * the pictures inside a mod are real compiled textures, and those need the program Valve's
  * own format was reverse-engineered into.
  *

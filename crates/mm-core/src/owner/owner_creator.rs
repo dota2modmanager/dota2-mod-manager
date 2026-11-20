@@ -1,4 +1,4 @@
-//! The author's drafts (src/ipc-creator.ts): the drafts, one saved, a style's VPK or picture
+//! The author's drafts: the drafts, one saved, a style's VPK or picture
 //! picked, one deleted, one written out as an archive for the catalog's maintainer, and one sent
 //! to the catalog's upload API. The thinking is in creator.rs and creator_upload.rs; this asks
 //! the user for the files and where to save, and puts the request on the network.

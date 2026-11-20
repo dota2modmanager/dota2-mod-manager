@@ -1,4 +1,4 @@
-//! Writing a mod into the game folder and taking it out again, replacing src/installer-write.ts:
+//! Writing a mod into the game folder and taking it out again:
 //! a catalog archive unpacked into the language folder, a tool into the app's own folder, a
 //! mod's files switched on and off, and removed with Valve's own put back where a font or
 //! cursor sat. Whatever touches several files runs as one change (file_tx.rs).

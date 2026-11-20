@@ -29,7 +29,7 @@ const BASELINE = path.join(root, '.github', 'typecheck-baseline.json');
 
 /**
  * tsc's own output, as counts per file.
- * A line looks like: src/foo.js(12,34): error TS2339: Property 'x' does not exist...
+ * A line looks like: renderer/foo.ts(12,34): error TS2339: Property 'x' does not exist...
  * Windows prints the same path with backslashes, so they are flattened to one shape.
  * @param {string} output
  * @returns {{ total: number, files: Record<string, number> }}

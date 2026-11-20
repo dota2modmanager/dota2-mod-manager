@@ -1,5 +1,5 @@
 //! The map without its decor: grass, flowers, ferns and critters, or stones, bones, debris and the
-//! stains on the ground, gone from the map, as a record in My mods (src/map-decor.ts).
+//! stains on the ground, gone from the map, as a record in My mods.
 //!
 //! The list is the map's own, read each time it is built: every material the map names, and every
 //! material of each model it names, out of the map in force (a whole-map terrain's in the language

@@ -1,4 +1,4 @@
-//! The app's own log (src/app-log.ts): a small file every install keeps, so a support report does
+//! The app's own log: a small file every install keeps, so a support report does
 //! not depend on reproducing the problem live. Past a megabyte the file moves aside to app.log.1
 //! and a new one starts. Nothing here fails: logging is never the reason the app stops.
 //!

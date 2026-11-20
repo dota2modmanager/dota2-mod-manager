@@ -1,5 +1,5 @@
 //! Bytes under a folder: the number Settings shows beside each cache, and the one the removal
-//! window shows beside the app's data (src/folder-size.ts). It counts what it can read and skips
+//! window shows beside the app's data. It counts what it can read and skips
 //! what it cannot, a file gone between the listing and the look included.
 
 use std::path::Path;

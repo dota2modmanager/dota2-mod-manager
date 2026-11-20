@@ -22,10 +22,10 @@ type PanelFold = 'topFolded' | 'bottomFolded' | 'railFolded';
 // Scale of the content — the catalog, the library, the settings — in percent. It is CSS zoom
 // on the content itself, deliberately not a window zoom: the panels have their own scale, and
 // a window zoom lands a frame after the CSS does, which made the whole layout shudder while
-// the wheel was turning. Ctrl +/-/0 come from src/main-window.ts (there they also block Electron's own
+// the wheel was turning. Ctrl +/-/0 come from crates/mm-core/src/app/main_window.rs (there they also block Electron's own
 // zoom accelerators); Ctrl + wheel and the slider in Settings land here.
 const SCALE_MIN = 70;
-const SCALE_MAX = 250; // src/main-window.ts ZOOM_MAX
+const SCALE_MAX = 250; // crates/mm-core/src/app/main_window.rs ZOOM_MAX
 export const clampScale = (pct: unknown): number => Math.min(SCALE_MAX, Math.max(SCALE_MIN, Math.round(Number(pct) / 5) * 5));
 export const currentScalePct = (): number => Math.round((Number(state.settings?.uiScale) || 1) * 100);
 

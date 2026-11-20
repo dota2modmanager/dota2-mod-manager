@@ -1,4 +1,4 @@
-//! A hero recoloured part by part, as one record in My mods (src/hero-paint-service.ts, issue
+//! A hero recoloured part by part, as one record in My mods (issue
 //! #422; what the parts are is recolor_layers.rs). The window lists the hero's layers and sends a
 //! colour for each one that is on; the pak is built from the game's own pak01, a file at a time,
 //! and goes early in the load order with the hero items, so it wins over a catalog mod of the hero.

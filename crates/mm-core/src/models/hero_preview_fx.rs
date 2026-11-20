@@ -1,4 +1,4 @@
-//! The particles of a hero's 3D preview, out of the game's files alone (src/hero-preview-fx.ts):
+//! The particles of a hero's 3D preview, out of the game's files alone:
 //! each worn part's, the body's and the hero's own. They need no exported model, so they are
 //! gathered before the models export; a part is named by its place in the plan's parts, and
 //! `for_parts` moves each to its place among those that exported.
@@ -23,7 +23,7 @@ pub struct FxPart {
     pub replacements: Option<IndexMap<String, String>>,
 }
 
-/// What of the plan the particles read (src/hero-preview.ts plan).
+/// What of the plan the particles read (models/hero_preview.rs plan).
 pub struct FxPlan<'a> {
     pub body: String,
     pub body_fx: Vec<String>,

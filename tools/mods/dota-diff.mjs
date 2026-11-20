@@ -10,7 +10,7 @@
  *
  * That repository has, per build:
  *   game/dota/steam.inf              the build number;
- *   game/dota/gameinfo.gi            the search paths the patch copies (src/patcher.ts);
+ *   game/dota/gameinfo.gi            the search paths the patch copies (crates/mm-core/src/game/patcher.rs);
  *   game/dota/pak01_dir.txt          every file in Valve's pak01 with its CRC and size, which is the
  *                                    whole content diff in one file (~390k lines);
  *   game/bin/win64/*_strings.txt     strings out of the binaries; engine2's list of search-path
@@ -329,7 +329,7 @@ export function render(r, { top = 15 } = {}) {
   L.push('What the app has to act on');
   const sp = r.watch.searchPaths;
   if (sp.gone.length || sp.came.length) {
-    L.push('  ! gameinfo.gi search paths changed. The patch copies this block: check src/patcher-gameinfo.ts');
+    L.push('  ! gameinfo.gi search paths changed. The patch copies this block: check crates/mm-core/src/game/patcher_gameinfo.rs');
     for (const l of sp.gone) L.push(`      - ${l}`);
     for (const l of sp.came) L.push(`      + ${l}`);
   } else L.push('  ok gameinfo.gi search paths unchanged');

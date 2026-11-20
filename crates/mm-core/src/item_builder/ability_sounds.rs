@@ -1,4 +1,4 @@
-//! A sound of the user's own on one of a hero's sound events, replacing src/ability-sounds.ts: the
+//! A sound of the user's own on one of a hero's sound events: the
 //! hero's events file out of the game, each chosen event made to play the user's sound instead of
 //! Valve's or on top of it, written back as the KV3 text Valve's resourcecompiler reads.
 //!

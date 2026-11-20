@@ -1,5 +1,4 @@
-//! A model put under another model's path that numbers its sequences as that one does,
-//! replacing src/model-sequences.ts.
+//! A model put under another model's path that numbers its sequences as that one does.
 //!
 //! Online the server picks a unit's animation in its own copy of the plain model and sends the
 //! client a number: the place of the sequence in the model's name list (ASEQ

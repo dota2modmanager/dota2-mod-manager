@@ -1,4 +1,4 @@
-//! Presets as a link (src/preset-link.ts): "d2mm://preset/<code>", where <code> is the whole
+//! Presets as a link: "d2mm://preset/<code>", where <code> is the whole
 //! preset squeezed into a pasteable string: short keys, mods as bare arrays, raw deflate,
 //! base64url. Only catalog mods and free cosmetic picks travel this way; a mod the receiver
 //! cannot fetch goes as a .d2mm file (`preset_share.rs`).

@@ -1,4 +1,4 @@
-//! Which hero a name means, replacing src/hero-names.ts: the game's folder id (queenofpain), what
+//! Which hero a name means: the game's folder id (queenofpain), what
 //! an author typed (queen_of_pain, qop) and what people read ("Queen of Pain").
 
 use std::collections::HashMap;

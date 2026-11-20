@@ -4,7 +4,7 @@
  * redder than they are anything else. On Techies' cart, whose gem is gold: the bright, saturated
  * pixels of the gem's own hue, the orange of the pigs' armour left out. Those take the chosen hue,
  * their saturation and brightness scaled by the chosen colour's, the way written colours move in
- * the mod (src/recolor.ts, shade); the dark armour and the green of the wings stay where they are.
+ * the mod (crates/mm-core/src/looks/recolor.rs, shade); the dark armour and the green of the wings stay where they are.
  * Scaling channel by channel, as the game does to the gem itself, turned the dark red of the
  * armour blue: its blue channel was multiplied by 5.5. */
 import { useEffect, useState, useSyncExternalStore } from 'react';
@@ -12,10 +12,10 @@ import { cosmeticIcon, cosmeticIconKnown, loadCosmeticIcons, subscribeIcon } fro
 
 export type Rgb = [number, number, number];
 
-/** The colour of the gem Terrorblade's arcana comes with, Reflection's Shade (src/recolor.ts). */
+/** The colour of the gem Terrorblade's arcana comes with, Reflection's Shade (crates/mm-core/src/looks/recolor.rs). */
 export const GEM: Rgb = [255, 60, 40];
 
-/** Each arcana's own gem (src/recolor.ts RECOLOR_SETS), the colour its picture is drawn in. */
+/** Each arcana's own gem (crates/mm-core/src/looks/recolor.rs), the colour its picture is drawn in. */
 export const GEMS: Record<string, Rgb> = {
   'terrorblade-arcana': GEM, 'techies-arcana': [255, 175, 0],
   // the immortals have no gem: the commonest colour of their effects stands in for one
@@ -125,7 +125,7 @@ export interface ArcanaPicture { picture: string | null; name: string }
 let asked: Promise<Map<string, ArcanaPicture>> | null = null;
 
 /**
- * An arcana's own picture out of the game (src/arcana-service.ts), asked for once unless `known`
+ * An arcana's own picture out of the game (crates/mm-core/src/arcana/arcana_service.rs), asked for once unless `known`
  * already has it. Techies' is block-compressed, which the main process does not decode on its own:
  * that one comes through the item pictures' loader by the item's name, from the toolchain or the wiki.
  */

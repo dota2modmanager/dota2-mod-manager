@@ -1,5 +1,5 @@
-//! The rank medal and the Dota Plus hero levels the player sees on their own screen
-//! (src/rank-look.ts): a medal and stars of their choosing, and a level from 1 to 30 for any hero.
+//! The rank medal and the Dota Plus hero levels the player sees on their own screen:
+//! a medal and stars of their choosing, and a level from 1 to 30 for any hero.
 //!
 //! The medal is a picture a style puts on a panel by class, so the two styles that carry those
 //! rules are read back as CSS and get a copy of each rule with the chosen picture at the end. A
@@ -211,7 +211,7 @@ pub fn with_script(layout: &[u8]) -> Result<Vec<u8>, String> {
     crate::resource::replace(layout, "LaCo", 0, &next).map_err(|e| e.0)
 }
 
-/// The levels script after its first lines (src/rank-look-script.ts). Checked out with Windows
+/// The levels script after its first lines. Checked out with Windows
 /// line ends on Windows, and the script is written with Unix ones.
 const SCRIPT_BODY: &str = include_str!("rank_look_script.js");
 

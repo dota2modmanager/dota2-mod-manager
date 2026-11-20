@@ -1,4 +1,4 @@
-//! The arcana bases as the owner's builds read them (src/services.ts createBaseStore): a base on
+//! The arcana bases as the owner's builds read them (formats/png_paint.rs): a base on
 //! disk is read without any lock, one that is not is brought down on a thread of its own, and
 //! when one lands the item table is built again, and the arcana window's Terrorblade too once the
 //! table is done, if it was built whole from Valve's files.

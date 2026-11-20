@@ -1,4 +1,4 @@
-//! Room on the disk, checked before a mod is written (issue #426), replacing src/disk-space.ts.
+//! Room on the disk, checked before a mod is written (issue #426).
 //! A disk that fills up halfway through a pak leaves the change to roll back and the user with
 //! an error about a file they never heard of; asking first says what is wrong in megabytes.
 

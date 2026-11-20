@@ -1,4 +1,4 @@
-//! An effect made to spread over a wearable's surface, replacing src/particle-surface.ts.
+//! An effect made to spread over a wearable's surface.
 //!
 //! The game's unusual effects start with C_INIT_CreateOnModel reading the model's mesh, which it
 //! keeps only for the hero's own body: on a wearable the same system piles up at the model's

@@ -1,5 +1,5 @@
-//! A pak the app built itself, written into the mods folder like an installed one
-//! (src/generated-pak.ts): a numbered pak in the early part of the load order, and on a rebuild the
+//! A pak the app built itself, written into the mods folder like an installed one:
+//! a numbered pak in the early part of the load order, and on a rebuild the
 //! new one in the slot the old one had.
 
 use serde_json::{json, Value};

@@ -1,6 +1,5 @@
 //! The language folder as a whole: the "mods off" switch, the note of which files are ours, the
 //! leftovers of a change the app died in, and the files nobody installed through the app.
-//! Replacing src/installer-folder.ts, which says why each rule is the way it is.
 
 use regex::Regex;
 use serde::Serialize;
@@ -15,7 +14,7 @@ use crate::installer_files::{is_official_lang_file, staged_re, MASTER_MARK, MAST
 use crate::minify::{is_minify_file, is_minify_pak};
 use crate::vpk_analyze::{analyze_vpk_paths, describe_analysis, name_from_analysis, subject_heroes, Analysis};
 
-/// Where fonts and cursors live under the game folder (src/overlays.ts).
+/// Where fonts and cursors live under the game folder (install/overlays.rs).
 pub const FONTS_SUBDIR: [&str; 3] = ["dota", "panorama", "fonts"];
 pub const CURSOR_SUBDIR: [&str; 3] = ["dota", "resource", "cursor"];
 
@@ -108,7 +107,7 @@ pub fn folder_version(dir: &Path) -> Vec<(String, u64, u128)> {
 type CursorSeen = std::sync::Mutex<Option<(PathBuf, Vec<(String, u64, u128)>, Option<ForeignItem>)>>;
 static CURSOR_SEEN: CursorSeen = std::sync::Mutex::new(None);
 
-/// What the game's own item table says a path list is (src/mod-id.ts).
+/// What the game's own item table says a path list is (install/mod_id.rs).
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct Guess {
     pub items: Vec<String>,

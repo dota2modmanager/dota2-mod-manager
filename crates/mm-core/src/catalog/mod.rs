@@ -1,4 +1,4 @@
-//! The catalog (src/catalog.ts): mods.json, constants.json and guides.json from the Dota2PornFx
+//! The catalog: mods.json, constants.json and guides.json from the Dota2PornFx
 //! repository, each checked against its author's signature, the last good copy kept on disk, and
 //! the archive hashes the catalog publishes beside them.
 

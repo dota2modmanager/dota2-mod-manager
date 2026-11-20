@@ -1,4 +1,4 @@
-//! The 3D preview in the item builder's hero window (src/ipc-preview3d.ts): the hero's body and
+//! The 3D preview in the item builder's hero window: the hero's body and
 //! each slot's model as GLB bytes, an effect's particle system for its picture, a map prop alone.
 //! The exports run in the toolchain's own process, a few at a time, and are kept per game build;
 //! the work runs without the state's lock, which it holds only to read what it needs.

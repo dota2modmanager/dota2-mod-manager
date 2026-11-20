@@ -1,6 +1,5 @@
 //! Mod deltas and the merge: which item blocks a mod changed, those blocks spliced into the game's
-//! current table, and the result checked before anything is written. Rewritten from
-//! src/schema-merge.ts. Text is bytes (latin1 in the TypeScript), so a block lifted here splices
+//! current table, and the result checked before anything is written. Text is bytes (latin1 in the TypeScript), so a block lifted here splices
 //! back into either side's copy unchanged.
 
 use std::collections::HashMap;
@@ -257,7 +256,7 @@ fn is_digits(key: &[u8]) -> bool {
     !key.is_empty() && key.iter().all(u8::is_ascii_digit)
 }
 
-/// The table's items by id, the first of an id winning (src/schema-items.ts itemsById).
+/// The table's items by id, the first of an id winning (schema/mod.rs).
 pub struct ItemsById(HashMap<String, (usize, usize)>);
 
 impl ItemsById {

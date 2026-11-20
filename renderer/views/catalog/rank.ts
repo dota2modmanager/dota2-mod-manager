@@ -1,5 +1,5 @@
 /* The rank medal and hero levels of the player's own screen: the card first among the ranks and
- * its window. The pak is built in the main process (src/rank-look-service.ts) and is a mod in My
+ * its window. The pak is built in the main process (crates/mm-core/src/arcana/rank_look_service.rs) and is a mod in My
  * mods like any other, one at a time. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';

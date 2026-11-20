@@ -1,6 +1,5 @@
 //! The installer: everything that writes a mod into the game folder or takes it out again.
-//! Replacing src/installer.ts piece by piece; the work behind it lives in files of its own, as
-//! there (installer_slots.rs is the load order).
+//! The work behind it lives in files of its own (installer_slots.rs is the load order).
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -16,10 +15,10 @@ pub struct Installer {
     pub game: Option<PathBuf>,
     /// e.g. "russian"
     pub lang_suffix: String,
-    /// where a change's journal goes (src/file-tx.ts FileTx.journalDir)
+    /// where a change's journal goes (install/file_tx.rs FileTx.journalDir)
     pub journal_dir: Option<PathBuf>,
     pub log: Log,
-    /// asks the game which of its own items a path list replaces (src/mod-id.ts); none without a game
+    /// asks the game which of its own items a path list replaces (install/mod_id.rs); none without a game
     pub identify: Option<Identify>,
     /// the app's own folder: downloads, tools, backups, packs and cursors live under it
     pub user_data: PathBuf,
@@ -79,7 +78,7 @@ impl Installer {
         Ok(game.clone())
     }
 
-    /// Called before writing into the folder (src/gamelang.ts lays down English's layer file).
+    /// Called before writing into the folder (game/gamelang.rs down English's layer file).
     pub fn ensure_lang_folder(&self) -> Result<PathBuf, String> {
         crate::gamelang::ensure_lang_folder(&self.require_game_folder()?, &self.lang_suffix).map_err(|e| e.to_string())
     }
@@ -124,7 +123,7 @@ impl Installer {
 }
 
 /// A folder holds the game: its own pak01, or its executable. A run held to a sandbox knows
-/// no game outside it (src/write-jail.ts).
+/// no game outside it (app/write_jail.rs).
 pub fn validate_game_path(p: &Path) -> bool {
     if p.as_os_str().is_empty() || !crate::write_jail::inside(p) {
         return false;

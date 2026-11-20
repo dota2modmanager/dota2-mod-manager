@@ -1,5 +1,5 @@
-//! A request across the mirror chain (src/net-fetch.ts) and a file brought to disk through it
-//! (src/net-download.ts): each mirror of a URL in turn, a failure noted against its host, the
+//! A request across the mirror chain and a file brought to disk through it:
+//! each mirror of a URL in turn, a failure noted against its host, the
 //! first good answer taken; a download resumed from its `.part`, checked against the hash the
 //! catalog published, and a mirror whose bytes do not match treated as a mirror that failed.
 //!

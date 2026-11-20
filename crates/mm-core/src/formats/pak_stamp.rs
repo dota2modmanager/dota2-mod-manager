@@ -1,6 +1,5 @@
 //! Whether the game's pak01 changed: a listing of its files' stats, which the app asks for before it
-//! trusts anything it keeps of the game (the item table, the pictures, the 3D models). Replacing
-//! src/pak-stamp.ts.
+//! trusts anything it keeps of the game (the item table, the pictures, the 3D models).
 //!
 //! The game has 679 pak01 files, and a stat of each is 20 to 80 ms when the disk is busy. An update
 //! rewrites pak01_dir.vpk, which indexes every other pak, so while it stands as it was the others do

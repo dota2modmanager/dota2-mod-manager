@@ -1,5 +1,5 @@
-//! The support report and the channels beside it (src/ipc-diagnostics.ts, the rest of
-//! src/ipc-settings.ts): the zip a user sends when something does not work, the errors the window
+//! The support report and the channels beside it (the rest of
+//! owner/owner_settings.rs): the zip a user sends when something does not work, the errors the window
 //! reports on its own, the catalog as the window loads it, the Discord sign-in, and the proxy test.
 //!
 //! The report is gathered under the lock and written without it. What only the window's process

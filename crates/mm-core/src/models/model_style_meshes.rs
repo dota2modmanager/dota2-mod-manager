@@ -1,4 +1,4 @@
-//! Which of an exported model's style meshes the preview draws (src/model-style-meshes.ts).
+//! Which of an exported model's style meshes the preview draws.
 //!
 //! Source 2 exports bodygroup alternatives as independent glTF nodes, and the exporter does not
 //! carry the game's bodygroup visibility into glTF: *_copy, *_alt and the first-style mesh can

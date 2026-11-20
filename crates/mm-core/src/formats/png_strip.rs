@@ -1,4 +1,4 @@
-//! A cube map's six faces as one strip, for the 3D preview's hero shader (src/png-strip.ts), which
+//! A cube map's six faces as one strip, for the 3D preview's hero shader, which
 //! reads a cube from a row of six square faces (vendor/dota-loadout/src/viewer.js cubeOf).
 //! ValveResourceFormat writes a cube texture as six PNGs, name_rt, _lf, _bk, _ft, _up and _dn: the
 //! cube's faces in their order, +X, -X, +Y, -Y, +Z, -Z in the game's axes. Without them a metal

@@ -1,4 +1,4 @@
-//! The search-path patch on disk, replacing the file half of src/patcher.ts: registers an extra
+//! The search-path patch on disk: registers an extra
 //! content folder ahead of the game's own (the only way to override what the engine reads
 //! through the MOD path, items_game.txt above all), signs the patched file into
 //! dota.signatures, keeps the originals and puts them back. The text work is

@@ -1,6 +1,6 @@
 /* A picture in the colour its layer is getting, so the colour is seen before the pak is built.
  *
- * Drawn by the rule the build itself uses on an icon (src/recolor.ts shade, src/recolor-modes.ts
+ * Drawn by the rule the build itself uses on an icon (crates/mm-core/src/looks/recolor.rs shade, crates/mm-core/src/looks/recolor_modes.rs
  * paint_texture in paint_recipe.rs): in the plain mode a grey pixel stays, every other takes the chosen hue, its
  * saturation and brightness scaled by the colour's; the other modes are paint-mode.ts. What the
  * window shows is then what the game will. */

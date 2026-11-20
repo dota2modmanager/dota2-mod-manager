@@ -1,19 +1,19 @@
-/* The effect editor's channels (src/ipc-effects.ts). */
+/* The effect editor's channels (crates/mm-core/src/owner/owner_tools.rs). */
 import type { LibRecord } from '../library/types.ts';
 import type { ParticleDef, LoadoutResources } from './preview3d.ts';
 import type { Reply } from './reply.ts';
 
-/** One effect's changes (src/effect-edit.ts): percent of what the file says, and a colour. */
+/** One effect's changes (crates/mm-core/src/looks/effect_edit.rs): percent of what the file says, and a colour. */
 export interface EffectEdit { size?: number; count?: number; life?: number; speed?: number; tint?: string }
 /** A whole effect's changes, by system path; '*' goes on every system of it. */
 export type EffectEdits = Record<string, EffectEdit>;
 
-/** One line of a hero's effects (src/effect-finder.ts). */
+/** One line of a hero's effects (crates/mm-core/src/looks/effect_finder.rs). */
 export interface EffectGroup { id: string; kind: 'ability' | 'effects' | 'items'; ability: string | null; name: string | null; paths: string[] }
 /** An ability a search found. */
 export interface AbilityHit { hero: string; ability: string; name: string }
 
-/** The effect editor (src/effect-edit-service.ts). */
+/** The effect editor (crates/mm-core/src/looks/effect_edit_service.rs). */
 export interface FxApi {
   /** the effects with these words in their path, the abilities with them in their name, and the effects changed so far */
   search: (query: string) => Promise<Reply<{ paths: string[]; abilities: AbilityHit[]; saved: { path: string; name: string }[] }>>;

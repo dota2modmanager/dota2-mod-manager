@@ -1,6 +1,6 @@
 /* The item builder's sets window narrowed and sorted (issue #526): by name, newest, oldest or
  * rarest, and by rarity, release year, event and having styles. What a set carries is
- * src/item-builder-details.ts; the window is catalog/builder/SetsModal.tsx. */
+ * crates/mm-core/src/item_builder/item_builder_details.rs; the window is catalog/builder/SetsModal.tsx. */
 import type { CosmeticSet } from '../types.ts';
 
 export interface SetFilters {

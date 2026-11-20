@@ -1,6 +1,6 @@
-//! The signature list, dota.signatures (src/patcher.ts explains the patch): the hashes the client
+//! The signature list, dota.signatures (game/patcher.rs explains the patch): the hashes the client
 //! checks gameinfo_branchspecific.gi against, Valve's own entry for it, and the one line this app
-//! appends after the DIGEST and takes off again. Replacing src/patcher-signatures.ts.
+//! appends after the DIGEST and takes off again.
 //!
 //! Texts here are the files as latin1: one char per byte.
 

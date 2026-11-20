@@ -1,4 +1,4 @@
-//! Everything about presets that needs the running app's state (src/presets-service.ts):
+//! Everything about presets that needs the running app's state:
 //! receiving a .d2mm or a link as a wish list, applying a preset, which preset you are in, and
 //! packing a received preset's mods. The plan of what travels is `preset_plan.rs`.
 //!

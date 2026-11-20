@@ -1,5 +1,5 @@
 //! Models out of the installed game as glTF, for a 3D preview of a hero in the chosen items
-//! (src/model-glb.ts, issue #417).
+//! (issue #417).
 //!
 //! The Source 2 toolchain (toolchain.rs) turns a compiled model straight out of pak01 into a GLB
 //! with its textures as PNG files beside it, and with the clips asked for. Most of an export is
@@ -187,7 +187,7 @@ pub fn cube_at(root: &Path, texture: &str) -> Option<PathBuf> {
 }
 
 /// A sheet's frames as the toolchain writes them (name_seqN_frame.png or name_seqN.png), by
-/// sequence then frame, keyed `texture#seq=N&frame=F` (src/sprite-frames.ts); 128 MB at most.
+/// sequence then frame, keyed `texture#seq=N&frame=F`; 128 MB at most.
 pub fn sprite_frames(root: &Path, texture: &str) -> Vec<(String, PathBuf)> {
     let base = base_of(root, texture);
     let (Some(dir), Some(stem)) = (base.parent(), base.file_name()) else { return vec![] };

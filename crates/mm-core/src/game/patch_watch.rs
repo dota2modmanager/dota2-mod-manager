@@ -1,5 +1,5 @@
-//! Noticing that Dota was patched, or its files checked by Steam, while the app is open
-//! (src/patch-watch.ts). What to do about it is the caller's (src/game-upkeep.ts).
+//! Noticing that Dota was patched, or its files checked by Steam, while the app is open.
+//! What to do about it is the caller's (game/game_upkeep.rs).
 //!
 //! Two of Valve's files tell the build: dota/steam.inf's ClientVersion, bumped by every patch, and
 //! the signature list, digested with the app's own line taken out so that applying the patch never

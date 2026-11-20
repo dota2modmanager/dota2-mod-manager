@@ -1,5 +1,5 @@
 //! Mods already installed: the master switch, one mod's switch, the load order, and removal one at
-//! a time and in batches (src/ipc-library.ts).
+//! a time and in batches.
 //!
 //! Removing or switching a selection builds the item table once at the end, not once per mod: a
 //! build reads the game's 50 MB table and writes a pak, and thirty mods paid for it thirty times.
@@ -135,7 +135,7 @@ fn set_enabled(o: &Owner, id: &Value, enabled: bool) -> Value {
     }
     let mut c = o.core();
     let Some(rec) = c.library.find(id).cloned() else { return not_found() };
-    // a copy of the pumpkin's mod this install did not earn stays off (src/scream-guard.ts)
+    // a copy of the pumpkin's mod this install did not earn stays off (game/scream_guard.rs)
     if enabled && rec.get("cheat").is_some_and(crate::js::truthy) {
         return json!({ "error": t("Жульничество наказуемо гадостью", &[]) });
     }

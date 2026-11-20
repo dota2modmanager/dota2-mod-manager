@@ -1,4 +1,4 @@
-//! The game's anti-cheat notice, in words that say what to do (src/notice-text.ts). A localization
+//! The game's anti-cheat notice, in words that say what to do. A localization
 //! file in the language folder the game mounts, inside the app's own pak: chat_<lang>.txt is read
 //! after dota_<lang>.txt, so the pak carries the chat file the game would have read anyway, with
 //! the four strings added at the end. The pak is never listed or counted as a slot.
@@ -31,7 +31,7 @@ fn marker_body() -> Vec<u8> {
     crate::js::stringify(&v, "  ").into_bytes()
 }
 
-/// The four strings per language (src/notice-texts.ts NOTICE_TEXTS), in the module's order.
+/// The four strings per language in the module's order.
 pub fn notice_texts() -> &'static IndexMap<String, IndexMap<String, String>> {
     static T: OnceLock<IndexMap<String, IndexMap<String, String>>> = OnceLock::new();
     T.get_or_init(|| {

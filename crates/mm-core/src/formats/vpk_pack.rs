@@ -1,4 +1,4 @@
-//! Packing a folder of loose game files into a mod, replacing src/vpk-pack.ts: where the content
+//! Packing a folder of loose game files into a mod: where the content
 //! starts under the folder an author points at, and one self-contained VPK of everything under it.
 
 use std::fs;

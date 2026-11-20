@@ -1,4 +1,4 @@
-//! Cancel on the item table's bar (src/build-undo.ts, issue #425): the build stops, and the change
+//! Cancel on the item table's bar (issue #425): the build stops, and the change
 //! that started it goes back too. The app keeps a picture of the library as of the last table
 //! written (`mark`), and Cancel puts the records the table reads back the way that picture has
 //! them: a pick taken off again, a switched mod switched back, a look put back on.

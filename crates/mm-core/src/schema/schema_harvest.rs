@@ -1,4 +1,4 @@
-//! A mod's own item tables (src/schema-harvest.ts): the blocks it changed, lifted out on install
+//! A mod's own item tables: the blocks it changed, lifted out on install
 //! and kept on its record; the whole-game tables it shipped, dropped; a pack of several heroes,
 //! split into one mod per hero with the blocks about its own files; and the one-time sweep of mods
 //! installed before any of this existed.

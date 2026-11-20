@@ -1,7 +1,6 @@
-//! The two gameinfo files (src/patcher.ts explains the patch): the SearchPaths block read out of
+//! The two gameinfo files (game/patcher.rs explains the patch): the SearchPaths block read out of
 //! gameinfo.gi with our folder added, that block spliced into gameinfo_branchspecific.gi, and the
-//! same file taken back to what Valve shipped, byte for byte. Replacing src/patcher-gameinfo.ts,
-//! which says why each step is the way it is.
+//! same file taken back to what Valve shipped, byte for byte.
 //!
 //! Texts here are the files as latin1: one char per byte.
 

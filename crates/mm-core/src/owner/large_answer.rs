@@ -1,4 +1,4 @@
-//! An answer too big for one message (src/large-answer.ts). A model of 787 MB once ended the
+//! An answer too big for one message. A model of 787 MB once ended the
 //! Electron main process with nothing to catch, so the big pieces of an answer stay here: the
 //! answer names each one, and the window fetches it in slices.
 

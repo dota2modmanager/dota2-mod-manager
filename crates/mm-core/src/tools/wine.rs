@@ -1,5 +1,5 @@
 //! Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe,
-//! Valve's compiler from the Workshop Tools (src/wine.ts, resource_compiler.rs).
+//! Valve's compiler from the Workshop Tools (resource_compiler.rs).
 //!
 //! The app keeps a Wine prefix of its own in userData/wine rather than borrowing ~/.wine: a prefix
 //! only ours can be deleted and made again without asking anybody. It is made once, by the first

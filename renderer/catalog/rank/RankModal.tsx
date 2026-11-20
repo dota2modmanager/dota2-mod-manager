@@ -1,6 +1,6 @@
 /* The window for the rank medal and hero levels of the player's own screen: a medal (or the
  * player's own), then a level from 1 to 30 for every hero or for some, each with the badge tier it
- * earns, then the build. The pictures are the game's own (src/rank-look-service.ts). The mod
+ * earns, then the build. The pictures are the game's own (crates/mm-core/src/arcana/rank_look_service.rs). The mod
  * window's markup and classes (.modal-body, .style-btn), so it reads as one of them. */
 import type { RankLook, RankMedal } from '../../api/content.ts';
 
@@ -38,7 +38,7 @@ const TIERS: Record<string, string[]> = {
 const TIER_NAMES = () => TIERS[window.I18N_LANG] ?? TIERS.en;
 const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
 const TOPS = { 5000: 'a', 100: 'b', 10: 'c' } as const;
-/** The first level of each badge tier, as src/rank-look.ts TIER_FROM has them (#549). */
+/** The first level of each badge tier, as crates/mm-core/src/arcana/rank_look.rs TIER_FROM has them (#549). */
 const TIER_FROM = [1, 6, 12, 18, 25, 30];
 const tierOf = (level: number) => Math.max(0, TIER_FROM.filter((from) => level >= from).length - 1);
 const picture = (m: RankMedal) => (m.tier === 8 && m.top ? `rank8${TOPS[m.top]}` : `rank${m.tier}`);

@@ -1,4 +1,4 @@
-//! Hero grids for the pick screen out of this patch's numbers (src/hero-grid.ts, issue #428).
+//! Hero grids for the pick screen out of this patch's numbers (issue #428).
 //!
 //! The game keeps the grids in Steam's folder for the account, not in the game:
 //! userdata/<account>/570/remote/cfg/hero_grid_config.json. That makes them safe in any mode: no

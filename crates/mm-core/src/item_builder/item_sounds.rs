@@ -1,5 +1,4 @@
-//! An item's sounds and voice, as a mod gives them to a hero who does not own the item, replacing
-//! src/item-sounds.ts.
+//! An item's sounds and voice, as a mod gives them to a hero who does not own the item.
 //!
 //! Which sound plays is the server's choice, made from what it knows the player owns; the client
 //! only gets the name of the event to play, and plays what its own soundevents files say that event

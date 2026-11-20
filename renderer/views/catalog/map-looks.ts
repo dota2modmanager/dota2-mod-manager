@@ -1,6 +1,6 @@
 /* Towers and trees out of the game's own looks (issues #446, #421): the card first in each of the
  * two categories and its window. What the window offers comes from the main process
- * (src/map-looks-service.ts); what it builds is a mod in My mods like any other. */
+ * (crates/mm-core/src/looks/map_looks_service.rs); what it builds is a mod in My mods like any other. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';
 import { switchView } from '../../core/router.ts';

@@ -1,4 +1,4 @@
-//! The in-game HUD laid out by hand, as a record in My mods (src/hud-scale-service.ts; the CSS is
+//! The in-game HUD laid out by hand, as a record in My mods (the CSS is
 //! hud_scale.rs). One record. The style it starts from is the one in force: a HUD mod's copy when
 //! one is switched on (first in the load order wins), else the game's own. The layout goes at the
 //! end of its CSS and the style is written again (panorama_files.rs); the pak goes early in the

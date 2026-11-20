@@ -96,7 +96,7 @@ function prefetchSlot(slots: CosmeticSlot[], tab: string): void {
 /** What the 3D preview shows for the hero: each slot's stock item and what is picked on it. */
 function heroPreview(slots: CosmeticSlot[], active: SlotState | null) {
   const hero = slots.find((s) => s.heroIds?.length)?.heroIds?.[0];
-  // a persona's slots too: picked, it is the body, and its slots dress it (src/hero-preview.ts); not
+  // a persona's slots too: picked, it is the body, and its slots dress it (crates/mm-core/src/models/hero_preview.rs); not
   // the ability effects slots, whose stock item has no model and whose picks bring none
   const dressed = slots.filter((s) => s.targetId && !s.abilityFx);
   if (!hero || !dressed.length) return null;

@@ -17,7 +17,7 @@ export function notesHtml(md: string): string {
   for (const raw of String(md).split('\n')) {
     const line = raw.trim();
     if (!line) { closeList(); para = false; continue; }
-    // a version's own heading, when the notes run over several (src/release-notes.ts)
+    // a version's own heading, when the notes run over several (crates/mm-core/src/app/app_info.rs)
     if (/^##\s/.test(line)) { closeList(); para = false; out.push(`<h3 class="notes-version">${inline(line.replace(/^#+\s*/, ''))}</h3>`); continue; }
     if (line.startsWith('###')) { closeList(); para = false; out.push(`<h4>${inline(line.replace(/^#+\s*/, ''))}</h4>`); continue; }
     if (line.startsWith('- ')) { para = false; (list = list || []).push(`<li>${inline(line.slice(2))}</li>`); continue; }

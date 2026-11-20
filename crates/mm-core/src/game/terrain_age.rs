@@ -1,5 +1,5 @@
 //! Terrains that replace the whole map, and whether the game's own map has moved on since
-//! (src/terrain-age.ts, issue #122). A whole-map terrain installs as <language>/maps/dota.vpk and
+//! (issue #122). A whole-map terrain installs as <language>/maps/dota.vpk and
 //! is Valve's map as it was the day it was built; the date its file carries in the archive stands
 //! in for that build. A terrain built before the game's current map is marked, and switched off
 //! once when the game's map changes.

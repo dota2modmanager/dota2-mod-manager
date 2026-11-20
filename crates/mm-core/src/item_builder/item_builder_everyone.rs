@@ -1,5 +1,4 @@
-//! Everybody playing a hero wears the user's look for it, not only the user; replacing
-//! src/item-builder-everyone.ts, which says why at length.
+//! Everybody playing a hero wears the user's look for it, not only the user.
 //!
 //! A hero the build dresses (a pick, or a base's part, at one of his stock paths) is worn by
 //! everybody exactly as the user's is, slot by slot: every other wearable of his goes under the

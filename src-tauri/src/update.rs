@@ -1,5 +1,5 @@
 //! Tauri's updater (tauri-plugin-updater) behind mm_core::updater::UpdaterLike, as
-//! electron-updater is behind src/updater.ts: the owner's driver (mm_core::owner_update) aims it
+//! electron-updater is behind crates/mm-core/src/app/updater.rs: the owner's driver (mm_core::owner_update) aims it
 //! at a feed and a channel and hears back what it found. A version is fetched as soon as it is
 //! found and waits here until the window's "restart" (update:install) installs it.
 //!

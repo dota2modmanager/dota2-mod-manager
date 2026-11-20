@@ -1,8 +1,8 @@
-/* The recolour window's channels (src/ipc-paint.ts, src/hero-paint-service.ts). */
+/* The recolour window's channels (crates/mm-core/src/owner/owner_tools.rs, crates/mm-core/src/looks/hero_paint_service.rs). */
 import type { LibRecord } from '../library/types.ts';
 import type { Reply } from './reply.ts';
 
-/** One part of a hero that takes a colour of its own (src/recolor-layers.ts). */
+/** One part of a hero that takes a colour of its own (crates/mm-core/src/looks/recolor_layers.rs). */
 export interface PaintLayer {
   id: string; kind: 'ability' | 'abilityIcon' | 'effects' | 'portrait' | 'body' | 'item' | 'itemModel'; name: string | null; files: number;
   /** an effect layer's particles, compiled paths: the 3D preview tints those it plays */
@@ -28,7 +28,7 @@ export interface PaintPart {
 /** A part's texture as a small picture, and the colour zones in it: [zone, share 0-1, its mean colour]. */
 export interface PaintPartPicture { picture: string; zones: [string, number, string][] }
 
-/** A hero recoloured part by part (src/hero-paint-service.ts). */
+/** A hero recoloured part by part (crates/mm-core/src/looks/hero_paint_service.rs). */
 export interface PaintApi {
   /** the hero's layers, and the colour of each on now */
   state: (hero: string, items?: string[]) => Promise<Reply<{ layers: PaintLayer[]; installed: { id: string; layers: Record<string, string>; enabled: boolean } | null; vrf: boolean }>>;

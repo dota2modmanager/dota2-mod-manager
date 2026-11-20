@@ -1,5 +1,5 @@
-//! Which material set an item's visuals wear its model in, replacing src/item-skin.ts
-//! (src/model-skin.ts, here model_skin.rs, makes a model wear it). Text is items_game's latin1 bytes.
+//! Which material set an item's visuals wear its model in
+//! (models/model_skin.rs makes a model wear it). Text is items_game's latin1 bytes.
 
 use regex::bytes::Regex;
 use std::sync::OnceLock;
@@ -7,7 +7,7 @@ use std::sync::OnceLock;
 use crate::kv::{self, latin1, KvError};
 
 /// A path as the item builder compares it: lower case, forward slashes, no leading slash
-/// (normalizeAssetPath in src/item-builder-assets.ts).
+/// (normalizeAssetPath in item_builder/item_builder_assets.rs).
 pub fn normalize_asset_path(p: &str) -> String {
     p.to_lowercase().replace('\\', "/").trim_start_matches('/').to_string()
 }

@@ -1,4 +1,4 @@
-//! What each channel may be handed, checked before its handler runs (src/channel-args.ts). The
+//! What each channel may be handed, checked before its handler runs. The
 //! values that arrive over IPC are whatever the page sent, and the handlers behind these channels
 //! write the game folder, open folders, launch programs and change the settings. So a call whose
 //! arguments do not fit is refused before the handler sees it: a string where a string goes, an

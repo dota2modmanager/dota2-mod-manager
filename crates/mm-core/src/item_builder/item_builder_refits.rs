@@ -1,4 +1,4 @@
-//! Refits, replacing src/item-builder-refits.ts: an item's model made again to fit a body another
+//! Refits: an item's model made again to fit a body another
 //! item gives the hero (Faceless Void's arcana, Drow's). The build gives a pick the refit any other
 //! pick makes of its model, and lets a pick's own model keep its stock path over another pick's
 //! swap of the stock model there.

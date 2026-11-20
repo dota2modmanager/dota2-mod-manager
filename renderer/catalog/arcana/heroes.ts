@@ -1,4 +1,4 @@
-/* The arcanas the window builds (src/arcana-service.ts WINDOWS), by the words the window shows:
+/* The arcanas the window builds (crates/mm-core/src/arcana/arcana_service.rs WINDOWS), by the words the window shows:
  * the card's name among the tools and the hero under the item's name. */
 export const ARCANA_WORDS: Record<string, { card: () => string; hero: () => string }> = {
   'terrorblade-arcana': { card: () => L`Аркана Террорблейда`, hero: () => L`Террорблейд` },

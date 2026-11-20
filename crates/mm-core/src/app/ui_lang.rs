@@ -1,5 +1,5 @@
 //! The window's language on the very first start, before the person has picked one: the
-//! system's (src/ui-lang.ts). Russian also covers the languages whose speakers usually read it
+//! system's. Russian also covers the languages whose speakers usually read it
 //! here; anything the app has no translation for stays English.
 
 /// The languages a system names that get the Russian window.

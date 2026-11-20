@@ -1,4 +1,4 @@
-//! The fingerprint index (src/fingerprints.ts): fp -> catalog mod identity, cached in userData,
+//! The fingerprint index: fp -> catalog mod identity, cached in userData,
 //! so a foreign VPK in the game folder can be named as a specific catalog mod, and font mods are
 //! known by the hash of every file they put in panorama/fonts. Fetching it moves with the network.
 

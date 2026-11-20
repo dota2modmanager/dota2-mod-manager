@@ -72,7 +72,7 @@ function drawCosmeticModal(): void {
 /**
  * Put a look on (or take the live one off) and repaint whatever is on screen.
  * @param remove  true = back to what the game gives
- * @param effectId  the effects on a hero's item, comma separated (src/item-builder.ts effectKey)
+ * @param effectId  the effects on a hero's item, comma separated (crates/mm-core/src/item_builder/mod.rs effectKey)
  */
 export async function pickCosmetic(slot: string, o: CosmeticOption, remove: boolean, effectId = '', targetItemId = ''): Promise<void> {
   const effect = isItemCosmeticSlot(slot) ? String(effectId || '') : '';

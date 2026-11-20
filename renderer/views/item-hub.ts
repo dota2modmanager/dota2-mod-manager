@@ -120,7 +120,7 @@ export async function renderItemCosmeticHub(): Promise<void> {
 }
 
 // A hero's portrait from hero selection, upright as the game's own grid shows them, read out of the
-// installed game (src/game-icons.ts heroPortraits): the game keeps them as plain PNG, so this
+// installed game (crates/mm-core/src/game/game_icons.rs heroPortraits): the game keeps them as plain PNG, so this
 // needs no toolchain and no network. Keyed by the label the hub shows. They used to ship inside
 // the app, 132 of Valve's pictures in a GPL repository.
 const heroPortraits = new Map<string, string | null>();

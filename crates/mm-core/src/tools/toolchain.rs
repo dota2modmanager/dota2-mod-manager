@@ -1,5 +1,4 @@
-//! Tools the app can borrow, fetched only when something needs them (src/toolchain.ts,
-//! src/toolchain-bucket.ts).
+//! Tools the app can borrow, fetched only when something needs them.
 //!
 //! Reading a Dota item icon or a mod's own texture means decoding Source 2 formats, and the
 //! program that does that weighs fifty megabytes, so it is downloaded on demand into the app's

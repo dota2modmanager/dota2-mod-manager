@@ -1,7 +1,7 @@
 /* Which note about Minify fits this machine, decided apart from the markup so it can be
  * tested without a window (test/minify-notice.test.ts). The words live in library/FolderBanners.tsx.
  *
- * src/minify.ts answers whose mods the game reads right now: 'ours', 'minify', 'both',
+ * crates/mm-core/src/game/minify.rs answers whose mods the game reads right now: 'ours', 'minify', 'both',
  * 'neither' or 'unknown'. 'neither' covers three different machines, and the banner used to
  * say the same sentence to all of them:
  *   - the game reads our folder, which simply holds none of our mods yet;
@@ -13,7 +13,7 @@
  * folder", a guess the banner is not allowed to make.
  */
 
-/** The minify block of the settings (src/minify.ts readMinify). */
+/** The minify block of the settings (crates/mm-core/src/game/minify.rs readMinify). */
 export interface MinifyState {
   present?: boolean;
   mounts?: boolean;
@@ -35,7 +35,7 @@ interface MinifyNotice {
 }
 
 /**
- * @param m       the minify block of the settings (src/minify.ts readMinify)
+ * @param m       the minify block of the settings (crates/mm-core/src/game/minify.rs readMinify)
  * @param ourMods how many mods this app has installed
  */
 export function minifyNotice(m: MinifyState | null | undefined, ourMods = 0): MinifyNotice | null {

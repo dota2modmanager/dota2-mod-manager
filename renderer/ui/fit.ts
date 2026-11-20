@@ -1,4 +1,4 @@
-/* The window's own share of the scale. The layout is drawn for a 1440x900 window (src/main-window.ts
+/* The window's own share of the scale. The layout is drawn for a 1440x900 window (crates/mm-core/src/app/main_window.rs
  * sizes the first window that way); a maximized one used to show the same layout in its corner
  * with the rest of the screen empty. Now a bigger window adds a little: a third of how much bigger
  * it is, so full HD maximized reads 10% larger, not the 30% that made it look blown up.

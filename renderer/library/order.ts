@@ -29,7 +29,7 @@ export function pakFileName(rec: LibRecord): string | null {
 /** A record's place in the load order, and whether it stands at an end of its own zone. */
 export interface Place {
   index: number;
-  /** the "load earlier" and "load later" moves stop at the ends of a mod's zone (src/slot-zones.ts) */
+  /** the "load earlier" and "load later" moves stop at the ends of a mod's zone (crates/mm-core/src/install/slot_zones.rs) */
   zoneFirst: boolean;
   zoneLast: boolean;
 }

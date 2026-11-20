@@ -2,9 +2,9 @@
  * changed, read off the game at that size, and how a change moves it. A panel keeps the corner the
  * game aligns it to while it scales, and what is inside the bottom bar goes with the bar. The
  * abilities stand in the bar's own row: larger, they widen it both ways and push what is beside them.
- * src/hud-scale.ts lists the same ids, and a test keeps the two in step. */
+ * crates/mm-core/src/looks/hud_scale.rs lists the same ids, and a test keeps the two in step. */
 
-/** What was changed on one panel (src/hud-scale.ts). */
+/** What was changed on one panel (crates/mm-core/src/looks/hud_scale.rs). */
 export interface HudPart { id: string; scale?: number; x?: number; y?: number; opacity?: number; tint?: string; hidden?: boolean }
 
 /** A panel at rest. */

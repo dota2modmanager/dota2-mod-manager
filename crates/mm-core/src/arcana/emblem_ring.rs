@@ -1,5 +1,5 @@
 //! An emblem draws on the ring under the selected hero, and Dota hides that ring unless
-//! r_draw_selected_ring is 1 (src/emblem-ring.ts). While an emblem is on, the line is kept in the
+//! r_draw_selected_ring is 1. While an emblem is on, the line is kept in the
 //! game's autoexec.cfg under a comment of ours; only our two lines are ever touched.
 
 use std::path::Path;

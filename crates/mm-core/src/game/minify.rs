@@ -1,6 +1,5 @@
 //! Living beside Dota2-Minify, another mod manager: the pak slots it writes, how its own VPKs are
-//! marked, what its config says, and whose mods the game mounts. Replacing src/minify.ts, which
-//! says why each rule is the way it is.
+//! marked, what its config says, and whose mods the game mounts.
 
 use regex::Regex;
 use serde::Serialize;

@@ -1,4 +1,4 @@
-//! MM_SHOT and MM_EVAL under Tauri (src/dev-harness.ts takeShot): the window walked to a state
+//! MM_SHOT and MM_EVAL under Tauri: the window walked to a state
 //! by switches, a script run in the finished page, and its answer written beside MM_SHOT.
 //!
 //! tools/dev/e2e.mjs drives every launch this way, and release.yml runs it against the installed

@@ -1,7 +1,7 @@
 /* The window asking people to support the project: a star on GitHub first, because it is one
  * click, then a word about us somewhere, and why each one matters to us.
  *
- * It opens on its own from the third launch (src/support-prompt.ts decides when) and from
+ * It opens on its own from the third launch (crates/mm-core/src/app/support_prompt.rs decides when) and from
  * Settings at any time. On its own, its two closing buttons wait a few seconds before they
  * work: long enough for the eye to land on the text, short enough not to feel like a penalty.
  * Either action counts as an answer, so somebody who starred the project is not asked again.

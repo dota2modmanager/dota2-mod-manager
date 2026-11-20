@@ -1,4 +1,4 @@
-//! The mod doctor (src/mod-doctor.ts, issue #118): what is wrong with a mod, found in its files and
+//! The mod doctor (issue #118): what is wrong with a mod, found in its files and
 //! the game's, before anybody starts the game to see it.
 //!
 //! Every check is a bug that reached the game once and took a person playing it to find: a model

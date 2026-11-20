@@ -1,4 +1,4 @@
-/* How many times each catalog mod was downloaded (src/download-stats.ts counts them), for the
+/* How many times each catalog mod was downloaded (crates/mm-core/src/catalog/download_stats.rs counts them), for the
  * number on a card and the "most popular first" sort.
  *
  * Asked once when a card first wants a number, and again after an install so the user's own

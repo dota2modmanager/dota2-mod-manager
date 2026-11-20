@@ -1,6 +1,6 @@
 /* A main menu background of the user's own (issue #418): the card first among the backgrounds and
  * its window. The file is turned into a WebM here (catalog/background/encode.ts) and handed over;
- * the pak is made in the main process (src/menu-background-service.ts) and is a mod in My mods like
+ * the pak is made in the main process (crates/mm-core/src/looks/menu_background_service.rs) and is a mod in My mods like
  * any other, one at a time. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';

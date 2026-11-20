@@ -1,5 +1,5 @@
 /* Writes manifest.json and manifest.json.sig into a checkout of the bases' repository
-   (src/arcana-base-store.ts): each base under src/<id>/ with git's hash of each of its files, the
+   (crates/mm-core/src/arcana/arcana_base_store.rs): each base under src/<id>/ with git's hash of each of its files, the
    VPK of them left out, and the signature of exactly those bytes.
 
    The app takes no other list of the bases, and takes this one only with a good signature against

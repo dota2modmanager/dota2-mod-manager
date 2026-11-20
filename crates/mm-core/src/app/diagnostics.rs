@@ -1,5 +1,5 @@
-//! A support report a user can send instead of a round of screenshots (src/diagnostics.ts,
-//! src/diagnostics-files.ts, src/diagnostics-render.ts): Dota's own path and language settings,
+//! A support report a user can send instead of a round of screenshots: Dota's own path
+//! and language settings,
 //! the app's settings and installed mods, the patch and item-table state, a listing of the mod
 //! folder's pak files, and the app's own recent log, with what the app itself thinks is wrong.
 //!

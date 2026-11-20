@@ -1,4 +1,4 @@
-//! How a preset travels to somebody else (src/preset-plan.ts). A mod the catalog can hand the
+//! How a preset travels to somebody else. A mod the catalog can hand the
 //! receiver goes as its identity, a few bytes; one it cannot goes as its own bytes, packed into
 //! the file; one with neither is named and left out. This is where that is decided, for the share
 //! dialog's plan, for a link, and for the card that says what installing a received preset would do.

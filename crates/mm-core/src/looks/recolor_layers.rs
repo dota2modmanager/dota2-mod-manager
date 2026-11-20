@@ -1,4 +1,4 @@
-//! A hero in colours of the user's choosing, part by part (src/recolor-layers.ts, issue #422):
+//! A hero in colours of the user's choosing, part by part (issue #422):
 //! each ability's effect and its icon, the hero's other effects, his icons and portrait, his body,
 //! and the effects and models of the items picked for him. Each part is a layer with its own
 //! colour and switch.

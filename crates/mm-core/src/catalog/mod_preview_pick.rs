@@ -1,5 +1,5 @@
-//! Which picture a mod gives, and whether it is worth showing (src/mod-preview-pick.ts; the
-//! picture is made and cached by mod_preview.rs).
+//! Which picture a mod gives, and whether it is worth showing (the picture is
+//! made and cached by mod_preview.rs).
 //!
 //! What to show: art drawn to be looked at (panorama) beats a model's texture, which is a UV
 //! layout and reads as a coloured smear; the two are kept apart as "art" and "texture" so the

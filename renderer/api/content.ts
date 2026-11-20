@@ -1,4 +1,4 @@
-/* The content channels (src/ipc-game.ts, ipc-presets.ts, ipc-settings.ts): the catalog, the item
+/* The content channels (crates/mm-core/src/owner/owner_game.rs, ipc-presets.ts, ipc-settings.ts): the catalog, the item
  * schema and the free cosmetics it enables, the pictures, the Source 2 toolchain, what the network
  * told the app, and presets. */
 import type { CatalogData } from '../catalog/data.ts';
@@ -7,7 +7,7 @@ import type { HudPart } from '../catalog/hud/parts.ts';
 import type { LibRecord, RepairState } from '../library/types.ts';
 import type { Dialog, Reply } from './reply.ts';
 
-/** One mod of a preset as sharing it would carry it (src/presets-service.ts planShape). */
+/** One mod of a preset as sharing it would carry it (crates/mm-core/src/presets/presets_service.rs). */
 /** A pedestal the hero builder offers: its model and the item that brings it (none: a plain one). */
 export interface PedestalOption { model: string; itemId: string | null; name: string; image: string | null }
 
@@ -33,7 +33,7 @@ export interface CatalogApi {
   onModLink: (cb: (link: ModLink | null) => void) => void;
 }
 
-/** What a d2mm://mod/ link names (src/deep-links.ts parses it). */
+/** What a d2mm://mod/ link names (crates/mm-core/src/catalog/deep_links.rs parses it). */
 export interface ModLink {
   cat: string;
   name: string;
@@ -41,7 +41,7 @@ export interface ModLink {
   style: string | null;
 }
 
-/** The schema patch's state: whether our line is in gameinfo, and what else is (src/schema-service.ts). */
+/** The schema patch's state: whether our line is in gameinfo, and what else is (crates/mm-core/src/schema/schema_service.rs). */
 export interface PatchState {
   conflicts?: { mods: string[] }[];
   foreign?: string | null;
@@ -49,7 +49,7 @@ export interface PatchState {
   [key: string]: unknown;
 }
 
-/** One line of Settings' "Repair the app" (src/app-repair.ts). */
+/** One line of Settings' "Repair the app" (crates/mm-core/src/owner/owner_game.rs). */
 export interface RepairStep { id: 'game' | 'files' | 'caches'; ok: boolean; text: string; mods?: string[] }
 
 export interface PatchApi {
@@ -67,7 +67,7 @@ export interface PatchApi {
   onRepair: (cb: (st: RepairState) => void) => void;
 }
 
-/** A tool as src/toolchain.ts state() describes it; `available` is false where this machine has no build of it. */
+/** A tool as crates/mm-core/src/tools/toolchain.rs state() describes it; `available` is false where this machine has no build of it. */
 interface ToolState { name: string; ready: boolean; available: boolean; installedBytes: number; downloadBytes: number; [key: string]: unknown }
 
 export interface ToolsApi {
@@ -76,7 +76,7 @@ export interface ToolsApi {
   remove: (name: string) => Promise<Reply<{ tools: ToolState[] }>>;
 }
 
-/** resourcecompiler.exe as src/resource-compiler.ts state() describes it. */
+/** resourcecompiler.exe as crates/mm-core/src/tools/resource_compiler.rs state() describes it. */
 export interface CompilerState {
   exe: string | null; chosen: boolean; needsWine: boolean; wine: string | null; prefixReady: boolean; ready: boolean;
   /** the last check of this compiler: an empty model compiled, and how long it took */
@@ -138,7 +138,7 @@ export interface CosmeticsApi {
   dressAll: (keepWorn?: boolean) => Promise<Reply<{ heroes: number; kept: number; arcanas: number; immortals: number }>>;
 }
 
-/** The whole arcana, or only its colour over one the player has (src/arcana-service.ts). */
+/** The whole arcana, or only its colour over one the player has (crates/mm-core/src/arcana/arcana_service.rs). */
 export type ArcanaMode = 'mod' | 'recolor';
 
 /** One arcana the window builds: whether the game has its files, its picture, the one built before. */
@@ -156,7 +156,7 @@ export interface ArcanaWindow {
 export interface GemArt { image: string; mask: string | null }
 export interface GemColor { key: string; name: string; rgb: [number, number, number]; picture?: string }
 
-/** The arcanas built out of the game's own files, in a colour of the user's (src/arcana-service.ts). */
+/** The arcanas built out of the game's own files, in a colour of the user's (crates/mm-core/src/arcana/arcana_service.rs). */
 export interface ArcanaApi {
   /** every arcana the window builds, and the game's prismatic gems to offer as colours */
   state: () => Promise<Reply<{ arcanas: ArcanaWindow[]; gems: GemColor[]; gemArt: GemArt | null }>>;
@@ -164,14 +164,14 @@ export interface ArcanaApi {
   install: (set: string, color: [number, number, number], mode: ArcanaMode) => Promise<Reply<{ record: LibRecord }>>;
 }
 
-/** A look a side of the map can take: a tower item or a tree set (src/map-looks-service.ts). */
+/** A look a side of the map can take: a tower item or a tree set (crates/mm-core/src/looks/map_looks_service.rs). */
 /** One look a side can take, and the model it puts on each side, which the window draws where the game has no picture of it. */
 export interface MapOption { id: string; name: string; sides: ('radiant' | 'dire')[]; models: Partial<Record<'radiant' | 'dire', string>> }
 
 /** Towers or trees. */
 export type MapKind = 'towers' | 'trees';
 
-/** Towers and trees from the game's own looks, per side (src/map-looks-service.ts). */
+/** Towers and trees from the game's own looks, per side (crates/mm-core/src/looks/map_looks_service.rs). */
 export interface MapLooksApi {
   /** the looks of each kind, and the record built before for each */
   state: () => Promise<Reply<{
@@ -185,7 +185,7 @@ export interface MapLooksApi {
   install: (kind: MapKind, radiant: string | null, dire: string | null) => Promise<Reply<{ record: LibRecord }>>;
 }
 
-/** The in-game HUD laid out by hand (src/hud-scale-service.ts). */
+/** The in-game HUD laid out by hand (crates/mm-core/src/looks/hud_scale_service.rs). */
 export interface HudApi {
   /** the layout on now, and the HUD mod it would go on (null: the game's own) */
   state: () => Promise<Reply<{ installed: { id: string; parts: HudPart[]; base: string; enabled: boolean } | null; hudMod: string | null }>>;
@@ -201,7 +201,7 @@ export interface RankLook { medal: RankMedal | null; levels: Record<string, numb
 /** The Optimization window: its own file, renderer/api/decor.ts. */
 export type { DecorApi, DecorGroup, DecorSample, GroundLayer } from './decor.ts';
 
-/** The rank medal and hero levels of the player's own screen (src/rank-look-service.ts). */
+/** The rank medal and hero levels of the player's own screen (crates/mm-core/src/arcana/rank_look_service.rs). */
 export interface RankApi {
   /** the look on now, the heroes of this patch, and whether ValveResourceFormat is downloaded */
   state: () => Promise<Reply<{ installed: { id: string; look: RankLook; enabled: boolean } | null; heroes: { id: string; name: string }[]; vrf: boolean }>>;
@@ -211,7 +211,7 @@ export interface RankApi {
   install: (look: RankLook) => Promise<Reply<{ record: LibRecord }>>;
 }
 
-/** The main menu's background of the user's own (src/menu-background-service.ts). */
+/** The main menu's background of the user's own (crates/mm-core/src/looks/menu_background_service.rs). */
 export interface BackgroundApi {
   /** the background on now, if any */
   state: () => Promise<Reply<{ installed: { id: string; source: string; dim: number; blur: number; enabled: boolean } | null }>>;
@@ -258,7 +258,7 @@ export interface PresetRecord {
   absent?: { name: string; categoryId?: string }[];
   /** what a link could carry of it */
   link?: { count: number; skipped: unknown[] };
-  /** the looks it puts on, slot by slot (src/library.ts picksOn) */
+  /** the looks it puts on, slot by slot (crates/mm-core/src/install/library.rs picksOn) */
   picks?: { slot: string; itemId: string; name: string; effectId: string }[];
   /** a received preset, waiting to be installed */
   wanted?: unknown;
@@ -266,7 +266,7 @@ export interface PresetRecord {
   status?: { installed: number; download: number; embedded: number; free?: number; unavailable: string[] };
 }
 
-/** A ready-made preset as src/ipc-presets.ts answers it. */
+/** A ready-made preset as crates/mm-core/src/owner/owner_presets.rs answers it. */
 export interface ReadyPresetRecord {
   id: string;
   name: string;

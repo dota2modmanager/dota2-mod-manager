@@ -17,8 +17,8 @@ renderer/          the window: TypeScript and React, built by Vite into out/rend
 crates/mm-cli/     the same Rust functions from the command line, for the tests and the tools
 ```
 
-Many Rust files name the TypeScript they were ported from, as `(src/gamelang.ts)` or
-`src/services.ts electronRepaint`. That code left the tree in 4.0. It is at the tag `v3.8.0`:
+The core was TypeScript until 4.0. "The TypeScript" in a Rust comment means that code: what it
+wrote to disk, older copies still read, so the Rust keeps its formats. It is at the tag `v3.8.0`:
 `git show v3.8.0:src/gamelang.ts`.
 
 The renderer can do nothing on its own. It has no file access and no network beyond what

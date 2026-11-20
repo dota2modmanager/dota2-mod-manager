@@ -1,5 +1,5 @@
-//! The built item table written into the game (src/schema.ts `deploySteps`, `undeploy`,
-//! `sweepUnfinished`, `isDeployed`): the game's own table with the patches spliced in, checked,
+//! The built item table written into the game (`deploy`, `undeploy`,
+//! `sweep_unfinished`, `is_deployed`): the game's own table with the patches spliced in, checked,
 //! packed with the files the patches bring, and swapped into the mods folder in one rename.
 //! Always built from the installed game, so a Dota update is repaired by building again.
 //!

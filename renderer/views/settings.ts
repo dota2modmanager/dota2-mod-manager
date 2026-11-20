@@ -4,7 +4,7 @@
  *
  * What is deliberately not here: anything about Dota's own languages or the folder mods go into.
  * The folder follows the game's audio language and the app arranges that itself (keepModFolder in
- * src/game-upkeep.ts). Dota's text language is the user's, chosen when they installed the game, and no mod
+ * crates/mm-core/src/game/game_upkeep.rs). Dota's text language is the user's, chosen when they installed the game, and no mod
  * depends on it. Where mods can go missing is news, not a setting, so it is a banner in My mods.
  *
  * The one import from another screen is loadCatalog, for the button that fetches the catalog

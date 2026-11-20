@@ -7,7 +7,7 @@
  * Both the library and the cosmetics screen draw these tiles, which is why this sits apart
  * from either of them.
  */
-// Item pictures come from the main process as data URIs (src/icons.ts). A slot can hold two
+// Item pictures come from the main process as data URIs (crates/mm-core/src/catalog/wiki_icons.rs). A slot can hold two
 // thousand items, so only what is actually on screen is ever asked for: an observer collects
 // the tiles that scroll into view and fetches them in small batches.
 import SHIPPED_LOOKS from './shipped-looks.json' with { type: 'json' };
@@ -94,7 +94,7 @@ async function loadChunk(chunk: string[], onEach: (names: string[]) => void): Pr
   // A mod that replaces a hero's animated portrait has the best picture of itself in that
   // clip, and only this side can open it: decoding video is what a browser does, and this
   // app is one. The main process hands over the bytes and keeps the frame that comes back
-  // (see src/mod-preview.ts), so a mod is decoded once and is a cached picture ever after.
+  // (see crates/mm-core/src/catalog/mod_preview.rs), so a mod is decoded once and is a cached picture ever after.
   // Until then the tile shows whatever else was found, and swaps when the frame lands.
   for (const clip of decode || []) {
     const src = await frameFromVideo(clip);

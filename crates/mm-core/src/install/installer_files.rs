@@ -1,5 +1,4 @@
 //! The language folder's own vocabulary, shared by the installer and the modules behind it.
-//! Replacing src/installer-files.ts, which says why each one is what it is.
 
 use regex::Regex;
 use std::sync::OnceLock;

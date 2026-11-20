@@ -1,4 +1,4 @@
-//! How many times each catalog mod was downloaded (src/download-stats.ts), counted by the
+//! How many times each catalog mod was downloaded, counted by the
 //! catalog's own counter, a Cloudflare Worker its author runs.
 //!
 //! The numbers come down as one public file, fetched at most every five minutes and kept on disk,

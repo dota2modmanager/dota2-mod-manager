@@ -1,4 +1,4 @@
-//! Combined packs: several mods merged into one pak slot, and taken apart again (src/ipc-packs.ts).
+//! Combined packs: several mods merged into one pak slot, and taken apart again.
 //! A pack holds a member list of its own, and every change to it rebuilds and redeploys its archive.
 
 use serde_json::{json, Value};
@@ -55,7 +55,7 @@ fn master_after_deploy(inst: &Installer) {
 }
 
 /// Rebuild a pack's deployed VPK, keep its files and members, and put the pack's and the master
-/// switch's off state back (src/services.ts deployAndApply): the conflicts the merge found.
+/// switch's off state back (formats/png_paint.rs): the conflicts the merge found.
 pub fn deploy_and_apply(c: &mut Core, pack: &Value) -> Result<Value, String> {
     let Core { installer, library, .. } = c;
     deploy_into(installer, library, pack)

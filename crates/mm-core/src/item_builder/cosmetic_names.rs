@@ -1,5 +1,4 @@
-//! Display names out of Valve's installed localization, replacing the pure part of
-//! src/cosmetic-names.ts: a localization file's tokens, and the table of a cosmetic's schema name
+//! Display names out of Valve's installed localization: a localization file's tokens, and the table of a cosmetic's schema name
 //! to its name in another language (by its item_name token, never guessed from the English).
 
 use indexmap::IndexMap;

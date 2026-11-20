@@ -1,5 +1,5 @@
-//! The small studios the app builds mods in (src/ipc-hud.ts, ipc-decor.ts, ipc-background.ts,
-//! ipc-pumpkin.ts, ipc-grid.ts, ipc-looks.ts): each a state to draw and an install that puts one
+//! The small studios the app builds mods in (the map decor, the menu
+//! background, the pumpkin, the hero grids, the map looks): each a state to draw and an install that puts one
 //! generated record in My mods. The building itself lives in the services named below.
 
 use std::cell::Cell;
@@ -183,7 +183,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
     }
 }
 
-/// The hero grids in Dota's own file, over OpenDota's numbers (src/hero-grids.ts).
+/// The hero grids in Dota's own file, over OpenDota's numbers.
 fn grids(o: &Owner) -> crate::hero_grid::HeroGrids {
     let c = o.core();
     let game = c.game();
@@ -200,7 +200,7 @@ fn grids(o: &Owner) -> crate::hero_grid::HeroGrids {
 
 const PUMPKIN_HOST: &str = "https://pumpkin.dota2modmanager.com";
 
-/// The pumpkin's code, and its prize taken in as an ordinary import (src/pumpkin.ts).
+/// The pumpkin's code, and its prize taken in as an ordinary import (looks/pumpkin.rs).
 fn pumpkin(o: &Owner, channel: &str, typed: &Value) -> Value {
     let rebuild = Cell::new(false);
     let mut lines = Vec::new();

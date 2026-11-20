@@ -1,4 +1,4 @@
-/* The HUD editor (issue #420): the card first among the HUDs and its window. The style is built in the main process (src/hud-scale-service.ts) and is a mod in My
+/* The HUD editor (issue #420): the card first among the HUDs and its window. The style is built in the main process (crates/mm-core/src/looks/hud_scale_service.rs) and is a mod in My
  * mods like any other, one at a time. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';

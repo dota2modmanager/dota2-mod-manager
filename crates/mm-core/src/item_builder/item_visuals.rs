@@ -1,6 +1,5 @@
 //! What an item does to the game, read from its block in items_game ("visuals"), and what a mod
 //! built from the game's own files has to do to show it on a hero who does not own the item.
-//! Replaces src/item-visuals.ts.
 
 use serde::Serialize;
 use std::collections::HashMap;

@@ -32,7 +32,7 @@ const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const sections = (rel) => [...read(rel).matchAll(new RegExp(`^## (${VERSION})\\s*$`, 'gm'))].map((m) => m[1]);
 
 test('the version in package.json has a section in both changelogs', () => {
-  /* Both, not either. src/release-notes.ts serves CHANGELOG.ru.md to a Russian UI and falls
+  /* Both, not either. crates/mm-core/src/app/app_info.rs serves CHANGELOG.ru.md to a Russian UI and falls
    * back to the English one, so a missing Russian section is invisible to anybody developing in
    * English and is the only thing a Russian user sees. */
   const v = version();
@@ -79,7 +79,7 @@ test('the version is one CI can turn into a tag', () => {
 });
 
 test('the lookups that read a section find a beta by its own heading', () => {
-  /* release.yml's awk and the app's "What's new" (src/release-notes.ts) both look for
+  /* release.yml's awk and the app's "What's new" (crates/mm-core/src/app/app_info.rs) both look for
    * "## <version>" followed by anything that cannot continue a version. Until 2026-09-26 that was "anything but a digit or a
    * dot", so "## 2.8.0" also matched the heading "## 2.8.0-beta.1", and the right section came first
    * only while the newest was on top: a beta section left above the release would have gone out as

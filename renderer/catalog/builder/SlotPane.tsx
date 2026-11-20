@@ -12,7 +12,7 @@ import type { SlotPaneActions, SlotPaneModel, SlotView } from './model.ts';
 import type { EffectGroup } from './logic.ts';
 import { BuilderFoot, CosThumb, EmptySearch, FxThumb, PickerSearch } from './parts.tsx';
 
-/** The words on an item's note tag (src/arcana-notes.ts); the note itself is its tooltip, and the
+/** The words on an item's note tag (crates/mm-core/src/arcana/arcana_notes.rs); the note itself is its tooltip, and the
  *  chosen item's note is spelled out under its name at the foot, beside the button that puts it on. */
 const NOTE_TAG = { issues: () => L`Есть баги`, broken: () => L`Сломана`, untested: () => L`Не проверено` } as const;
 

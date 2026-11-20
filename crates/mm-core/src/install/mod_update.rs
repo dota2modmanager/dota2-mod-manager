@@ -1,5 +1,5 @@
 //! A catalog mod brought to the version the catalog has now, in the place it already had
-//! (src/mod-update.ts, issue #171). A catalog mod whose installed fingerprint is not among the
+//! (issue #171). A catalog mod whose installed fingerprint is not among the
 //! ones the catalog lists for it today was replaced upstream.
 
 use std::path::Path;

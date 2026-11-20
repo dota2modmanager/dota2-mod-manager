@@ -1,5 +1,4 @@
-//! Binary KV3, replacing src/kv3.ts, src/kv3-cells.ts, src/kv3-blobs.ts and src/kv3-write.ts:
-//! the format Source 2 compiles particles, materials and models into. Read far enough to find
+//! Binary KV3: the format Source 2 compiles particles, materials and models into. Read far enough to find
 //! every value, change a number where it lies, give a blob new bytes, and write the block back;
 //! or write a whole block anew from its tree.
 //!
@@ -1085,7 +1084,7 @@ fn raw_number(ty: u8, r: &[u8]) -> f64 {
     b.read_cell(c)
 }
 
-// --- writing a block anew from its tree (src/kv3-write.ts) ---
+// --- writing a block anew from its tree ---
 
 const ARRAYS: [u8; 4] = [8, 10, 24, 25];
 

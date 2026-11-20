@@ -1,5 +1,5 @@
-//! Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop,
-//! replacing src/import.ts. A Skinchanger pack unzips to a whole game tree with the archive
+//! Taking in a mod the user already has: a .vpk, a .zip, a folder, or bytes off a drop.
+//! A Skinchanger pack unzips to a whole game tree with the archive
 //! several folders down; a Dota2Changer mod arrives as an index plus data volumes, folded into
 //! one file on the way in; an author's working folder holds no archive and is packed.
 

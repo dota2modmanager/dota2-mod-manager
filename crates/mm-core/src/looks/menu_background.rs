@@ -1,4 +1,4 @@
-//! The main menu background of the user's own (src/menu-background.ts, issue #418): a WebM behind
+//! The main menu background of the user's own (issue #418): a WebM behind
 //! the menu, dimmed and blurred as they chose, in a pak made out of the game's own layouts.
 //!
 //! The manager panel of the menu's background is told to show the last match's background, and

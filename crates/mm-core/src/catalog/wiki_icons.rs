@@ -1,4 +1,4 @@
-//! Pictures off the Dota wikis (src/icons.ts and src/icon-wiki.ts), for cosmetics the game keeps
+//! Pictures off the Dota wikis, for cosmetics the game keeps
 //! no usable picture of and for mods the app can only name by their hero. Fandom hosts a PNG for
 //! most cosmetics under a name built from the item's own and answers only a browser's agent;
 //! Liquipedia, asked only when Fandom has nothing at all, wants an agent naming the project and
@@ -46,7 +46,7 @@ enum Found {
     Liquipedia(String),
 }
 
-/// The stand-ins for a kind of content the app cannot name more closely (src/icons.ts GENERIC_PAGES).
+/// The stand-ins for a kind of content the app cannot name more closely.
 const GENERIC_PAGES: &[(&str, &str)] = &[("pack", "DAC Compendium 2015 Emoticon Pack"), ("cursor", "Cursor Pack")];
 
 /// Pictures off the wikis, cached in userData/icons.

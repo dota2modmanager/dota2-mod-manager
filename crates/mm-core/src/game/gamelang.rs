@@ -1,6 +1,5 @@
 //! Which dota_<lang> folder the game actually mounts, what Steam says about the game's language,
-//! and the folders made and moved when it changes. Replacing src/gamelang.ts, src/gamelang-steam.ts
-//! and src/gamelang-folders.ts. The rule itself is written down at the top of src/gamelang.ts and
+//! and the folders made and moved when it changes. The rule itself is written down here and
 //! in the vault (VPK Format): four voice languages, three of them with a folder that mounts, the
 //! folder named by the AUDIO language, a `-language` launch option winning outright.
 

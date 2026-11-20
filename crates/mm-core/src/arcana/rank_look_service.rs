@@ -1,5 +1,5 @@
-//! The rank medal and hero levels of the player's own screen as one record in My mods
-//! (src/rank-look-service.ts); what goes into it is `rank_look`. The two styles' CSS is read out
+//! The rank medal and hero levels of the player's own screen as one record in My mods;
+//! what goes into it is `rank_look`. The two styles' CSS is read out
 //! of the copy in force (a mod's when one carries them, else the game's), the medal's rules go at
 //! its end, and the styles and the levels script are written without Valve's compiler; the
 //! layouts get the script's include.

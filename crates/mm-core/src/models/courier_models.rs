@@ -1,4 +1,4 @@
-//! A courier look's models under the Default Courier's paths (src/courier-models.ts). The server
+//! A courier look's models under the Default Courier's paths. The server
 //! sets a courier's model from its own item table, where Default Courier is the donkey; under the
 //! donkey's paths the courier's own model is what the client loads for it. Also the patch of a
 //! look in a slot with no free item of its own.

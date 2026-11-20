@@ -1,7 +1,7 @@
-//! The author's drafts (src/creator.ts, issue #236): a mod being made for the catalog, kept on
+//! The author's drafts (issue #236): a mod being made for the catalog, kept on
 //! the author's disk until it is ready, and then either written out as the archive the catalog's
-//! own packer makes (src/creator-premod.ts) for the catalog's maintainer, or sent to the catalog's
-//! upload API (src/creator-upload.ts) as the form that API takes.
+//! own packer makes for the catalog's maintainer, or sent to the catalog's
+//! upload API (tools/creator_upload.rs) as the form that API takes.
 //!
 //! A draft is a folder under userData/creator/<id>/: draft.json and the files it names, copied in
 //! so the draft survives the originals being moved. Each style is a look of the mod with its own

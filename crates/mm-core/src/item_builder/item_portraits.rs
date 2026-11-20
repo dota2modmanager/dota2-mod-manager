@@ -1,5 +1,5 @@
 //! A hero's HUD portrait and minimap icon as the item builder's picks make them, written once for
-//! the whole build (src/item-portraits.ts): the portrait settings of an arcana's model written under
+//! the whole build: the portrait settings of an arcana's model written under
 //! the plain model's path, and the plain icon's sprite cut where the item's is. Both files are
 //! the game's with those entries changed, and only when something changed.
 

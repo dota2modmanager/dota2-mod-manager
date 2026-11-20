@@ -272,7 +272,7 @@ export async function loadCatalog(force = false): Promise<void> {
   }
 }
 
-// ---------- a d2mm://mod/ link (src/deep-links.ts) ----------
+// ---------- a d2mm://mod/ link (crates/mm-core/src/catalog/deep_links.rs) ----------
 
 /* A link to one mod, from the site or a chat: the catalog opens on the mod's category with the
  * mod's window on top, on the look the link names. When the link is what started the app, it

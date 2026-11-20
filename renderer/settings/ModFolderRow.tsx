@@ -1,4 +1,4 @@
-/* Which dota_<lang> folder the mods live in (src/settings.ts langFolderLock). By default they
+/* Which dota_<lang> folder the mods live in (crates/mm-core/src/app/settings.rs langFolderLock). By default they
  * follow the game, and a `-language` in Steam's launch options moves them into its folder at the
  * next start. Somebody who sets English there for the Workshop Tools and plays in Russian had every
  * mod moved and renumbered each time; kept here, they stay where they are. */

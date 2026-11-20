@@ -1,4 +1,4 @@
-//! What the hero preview dresses the hero in, read off items_game (src/hero-preview-picks.ts):
+//! What the hero preview dresses the hero in, read off items_game:
 //! each item's model and the body it swaps in, its material set, second models and body groups,
 //! the effects a style swaps, the stock head, and a persona's slots.
 

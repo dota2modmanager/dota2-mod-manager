@@ -1,4 +1,4 @@
-//! The item builder's sets, replacing src/item-builder-sets.ts: what a set of the game's puts on,
+//! The item builder's sets: what a set of the game's puts on,
 //! and what the game says about it (rarity, release date, event).
 //!
 //! Written by h6rd (https://github.com/h6rd) in #117, developed further with TheFleece

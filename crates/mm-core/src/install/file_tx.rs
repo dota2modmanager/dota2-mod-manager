@@ -1,7 +1,6 @@
 //! All of it, or none of it: the writes of one change to the game folder, each recording how to undo
 //! itself before it is taken, in memory and in a journal on the disk, so a failure or a killed
-//! process puts the folder back. Replacing src/file-tx.ts and src/file-tx-journal.ts, which tell
-//! why each step is shaped the way it is.
+//! process puts the folder back.
 //!
 //! The journal is the TypeScript one, line for line: a journal left by either is recovered by the
 //! other.
@@ -250,7 +249,7 @@ fn absolute(p: &Path) -> PathBuf {
     std::path::absolute(p).unwrap_or_else(|_| p.to_path_buf())
 }
 
-/// One change to the folder. Library writes join it by being handed it (src/library.ts joined the
+/// One change to the folder. Library writes join it by being handed it (install/library.rs the
 /// open one); a rollback leaves the caller to read its own state back.
 pub struct FileTx {
     pub id: String,

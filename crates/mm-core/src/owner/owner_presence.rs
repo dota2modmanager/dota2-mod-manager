@@ -1,4 +1,4 @@
-//! The user's Discord status while the app is open (src/presence-status.ts createPresenceStatus):
+//! The user's Discord status while the app is open (app/presence_status.rs):
 //! the screen the window names and how many mods are on, said again when either changes, and torn
 //! down when the setting turns it off. The connection is started by the shell, so an owner without
 //! one (a test's) says nothing.

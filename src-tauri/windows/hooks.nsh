@@ -1,5 +1,5 @@
 ; The Tauri installer's hooks (tauri.conf.json bundle.windows.nsis.installerHooks): the removal
-; questions build/installer.nsh asks for the Electron build, asked the same way.
+; questions the Electron build asked (build/installer.nsh at tag v3.8.0), asked the same way.
 ;
 ; The uninstaller runs the app once with --uninstall. Its window asks what goes along with the
 ; program, does what was ticked, and answers with the exit code:
@@ -86,7 +86,7 @@ Var d2mmWipeData
     ; keeps its Restart Manager session in $R0 (and uses $R1-$R3, $0-$3), so the folder is read
     ; from $INSTDIR after it, never from $R0.
     !insertmacro CheckIfAppIsRunning "$INSTDIR\${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
-    ; Its own uninstaller, told it is an update (build/installer.nsh asks nothing then and keeps
+    ; Its own uninstaller, told it is an update (the Electron build asks nothing then and keeps
     ; the shortcuts and the app's data), run in place so it waits for it to finish.
     ${If} ${FileExists} "$INSTDIR\${D2MM_ELECTRON_UNINSTALLER}"
       ExecWait '"$INSTDIR\${D2MM_ELECTRON_UNINSTALLER}" /S --updated /KEEP_APP_DATA _?=$INSTDIR'

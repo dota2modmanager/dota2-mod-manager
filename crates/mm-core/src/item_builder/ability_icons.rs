@@ -1,5 +1,5 @@
-//! A hero's ability icons picked one by one from the icons his own cosmetics already ship
-//! (src/ability-icons.ts). What there is to pick is read off the item table: an asset modifier of
+//! A hero's ability icons picked one by one from the icons his own cosmetics already ship.
+//! What there is to pick is read off the item table: an asset modifier of
 //! type ability_icon, "asset" the ability and "modifier" the picture it shows instead, under
 //! panorama/images/spellicons. Only items whose used_by_heroes names the hero count, and the shared
 //! sets of the table's asset_modifiers section for an ability in his script.

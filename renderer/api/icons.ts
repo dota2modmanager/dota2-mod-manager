@@ -1,4 +1,4 @@
-/* window.api.icons: a hero's ability icons picked from his own cosmetics' (src/ipc-icons.ts). */
+/* window.api.icons: a hero's ability icons picked from his own cosmetics' (crates/mm-core/src/owner/owner_tools.rs). */
 import type { Reply } from './reply.ts';
 import type { LibRecord } from '../library/types.ts';
 

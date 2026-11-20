@@ -1,4 +1,4 @@
-//! A picture for every tile (src/ipc-game.ts, the cosmetics and preview channels). A tile asks
+//! A picture for every tile (owner/owner_game.rs, the cosmetics and preview channels). A tile asks
 //! with a chain of sources, best first ("modart:pak54_dir.vpk|hero:Brewmaster"), and gets the
 //! first that has one: the mod's own files, then the game's own pictures, then the wiki. A clip
 //! a mod carries is decoded by the window, which already has the decoder; its bytes go there and

@@ -1,5 +1,5 @@
 /* The arcanas built out of the game's own files (issue #118): their cards among the tools and their
- * window. What the window shows comes from the main process (src/arcana-service.ts); what it
+ * window. What the window shows comes from the main process (crates/mm-core/src/arcana/arcana_service.rs); what it
  * builds is a mod in My mods like any other, so switching it off and the load order are there. */
 import { refreshInstalledIndex } from '../../core/installed.ts';
 import { state as store } from '../../core/store.ts';
