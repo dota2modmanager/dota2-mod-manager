@@ -19,19 +19,29 @@ use std::process::Command;
 /// a program the app starts, an update of itself included, decides that for itself.
 const ABOUT_THE_IMAGE: &[&str] = &["APPDIR", "APPIMAGE", "ARGV0", "OWD", HOST_LIBS_MARK];
 
-/* The libraries the app itself runs on (#761). The AppImage is built on Ubuntu 24.04 and carries
- * that machine's WebKitGTK, GTK, GLib, ICU, libsystemd and half of Wayland (libwayland-egl and
- * -server, not -client, which comes from the host). On EndeavourOS with KDE on Wayland that mix
- * drew a black window, or one without its menu, and deleting usr/lib from the unpacked image put
- * it right: everything the bundle carries, the host had, in versions made to work together.
+/* The libraries the app itself runs on (#761, #797). The AppImage is built on Ubuntu 24.04 and
+ * carries that machine's WebKitGTK, GTK, GLib, ICU, libsystemd, libelf, libzstd and half of
+ * Wayland (libwayland-egl and -server, not -client, which comes from the host). The host's GPU
+ * driver never comes from the image: Mesa is loaded from the host, and on a rolling distribution
+ * it was built against newer copies of the libraries the image puts first. On EndeavourOS with
+ * KDE on Wayland that mix drew a black window, or one without its menu, and deleting usr/lib from
+ * the unpacked image put it right. On Arch with Hyprland and Intel Xe (#797, 4.0 to 4.5.0) GTK
+ * could not set up GL and the app died with a segfault before its window opened.
  *
- * So when the host has its own WebKitGTK 4.1, the app starts once more with the host's library
- * folders ahead of the image's in LD_LIBRARY_PATH. The image's binaries name their folder in
- * RUNPATH, which LD_LIBRARY_PATH goes before, so whatever the host has comes from the host and
- * whatever it lacks still comes from the image. GTK's module lookups pointed into the image go
- * too, or the host's GTK would load loaders and modules built against the image's GLib.
- * A host without WebKitGTK 4.1 (Ubuntu and Mint as installed) runs on the bundle as before, and
- * D2MM_BUNDLED_LIBS=1 asks for the bundle on any host. */
+ * So from the AppImage the app starts once more with the host's library folders ahead of the
+ * image's in LD_LIBRARY_PATH. The image's binaries name their folder in RUNPATH, which
+ * LD_LIBRARY_PATH goes before, so whatever the host has comes from the host and whatever it lacks
+ * still comes from the image. 4.3.0 to 4.5.0 did this only when the host had its own WebKitGTK
+ * 4.1; #797's machine had none, so it kept the whole bundle, Mesa and all. A host without WebKitGTK
+ * now runs the image's WebKitGTK and JavaScriptCore on the host's GTK, GLib and the rest: the
+ * AppImage needs glibc 2.39 (linux.yml), so the host is at least as new as Ubuntu 24.04, and a
+ * library keeps its soname only while it stays compatible with older callers. ICU changes its
+ * soname every release, so libicu*.so.74 still comes from the image.
+ *
+ * GTK's module lookups that point into the image go only where the host has that library itself,
+ * or the host's GTK would load loaders and modules built against the image's GLib, while the
+ * image's GTK on a host without one still finds its own. D2MM_BUNDLED_LIBS=1 asks for the bundle
+ * on any host. */
 
 /// Set on the second start, so the app starts again only once.
 pub const HOST_LIBS_MARK: &str = "D2MM_HOST_LIBS";
@@ -39,18 +49,17 @@ pub const HOST_LIBS_MARK: &str = "D2MM_HOST_LIBS";
 pub const BUNDLED_LIBS: &str = "D2MM_BUNDLED_LIBS";
 /// Where distributions keep 64-bit shared libraries: Debian and Ubuntu, Fedora, Arch.
 const HOST_LIB_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/lib/x86_64-linux-gnu", "/usr/lib64", "/usr/lib"];
-/// The library that says the host can run the app on its own stack.
-const WEBKIT: &str = "libwebkit2gtk-4.1.so.0";
-/// linuxdeploy's GTK hook points these into the image.
-const BUNDLE_LOOKUPS: &[&str] = &[
-    "GTK_PATH",
-    "GTK_EXE_PREFIX",
-    "GTK_DATA_PREFIX",
-    "GIO_MODULE_DIR",
-    "GDK_PIXBUF_MODULE_FILE",
-    "GTK_IM_MODULE_FILE",
-    "GI_TYPELIB_PATH",
-    "GSETTINGS_SCHEMA_DIR",
+/// What linuxdeploy's GTK hook points into the image, and the library that reads it: dropped when
+/// the host has that library, kept for the image's copy when it does not.
+const BUNDLE_LOOKUPS: &[(&str, &str)] = &[
+    ("GTK_PATH", "libgtk-3.so.0"),
+    ("GTK_EXE_PREFIX", "libgtk-3.so.0"),
+    ("GTK_DATA_PREFIX", "libgtk-3.so.0"),
+    ("GTK_IM_MODULE_FILE", "libgtk-3.so.0"),
+    ("GDK_PIXBUF_MODULE_FILE", "libgdk_pixbuf-2.0.so.0"),
+    ("GIO_MODULE_DIR", "libgio-2.0.so.0"),
+    ("GSETTINGS_SCHEMA_DIR", "libgio-2.0.so.0"),
+    ("GI_TYPELIB_PATH", "libgio-2.0.so.0"),
 ];
 
 /// The environment to start the app again with, on the host's libraries, or None to run on as
@@ -67,13 +76,18 @@ where
     if get(HOST_LIBS_MARK).is_some() || get(BUNDLED_LIBS) == Some("1") {
         return None;
     }
-    if !HOST_LIB_DIRS.iter().any(|d| exists(&format!("{d}/{WEBKIT}"))) {
+    let host: Vec<&str> = HOST_LIB_DIRS.iter().copied().filter(|d| exists(d)).collect();
+    // no folder of the usual kind (NixOS and the like): nothing to put first
+    if host.is_empty() {
         return None;
     }
-    let mut path: Vec<&str> = HOST_LIB_DIRS.iter().copied().filter(|d| exists(d)).collect();
+    let host_has = |lib: &str| host.iter().any(|d| exists(&format!("{d}/{lib}")));
+    let mut path = host.clone();
     path.extend(get("LD_LIBRARY_PATH").unwrap_or("").split(':').filter(|e| !e.is_empty()));
     let mut out = vec![("LD_LIBRARY_PATH".to_string(), Some(path.join(":")))];
-    out.extend(BUNDLE_LOOKUPS.iter().filter(|k| get(k).is_some()).map(|k| (k.to_string(), None)));
+    out.extend(
+        BUNDLE_LOOKUPS.iter().filter(|(k, lib)| get(k).is_some() && host_has(lib)).map(|(k, _)| (k.to_string(), None)),
+    );
     out.push((HOST_LIBS_MARK.to_string(), Some("1".into())));
     Some(out)
 }
@@ -227,9 +241,22 @@ mod tests {
         assert!(changes([("APPDIR", "/"), ("PATH", "/usr/bin")]).is_empty());
     }
 
-    /// The host as EndeavourOS has it (#761): Arch keeps everything in /usr/lib, /usr/lib64 links there.
+    /// The host as EndeavourOS has it (#761): Arch keeps everything in /usr/lib, /usr/lib64 links
+    /// there, and WebKitGTK 4.1 is installed.
     fn arch(p: &str) -> bool {
-        matches!(p, "/usr/lib" | "/usr/lib64" | "/usr/lib/libwebkit2gtk-4.1.so.0" | "/usr/lib64/libwebkit2gtk-4.1.so.0")
+        let p = p.strip_prefix("/usr/lib64").map(|rest| format!("/usr/lib{rest}")).unwrap_or(p.to_string());
+        matches!(
+            p.as_str(),
+            "/usr/lib"
+                | "/usr/lib/libwebkit2gtk-4.1.so.0"
+                | "/usr/lib/libgtk-3.so.0"
+                | "/usr/lib/libgdk_pixbuf-2.0.so.0"
+        )
+    }
+
+    /// The host as #797 has it: Arch with Hyprland, GTK 3 there for other programs, no WebKitGTK.
+    fn arch_without_webkit(p: &str) -> bool {
+        arch(p) && !p.ends_with("libwebkit2gtk-4.1.so.0")
     }
 
     fn image() -> Vec<(String, String)> {
@@ -243,10 +270,14 @@ mod tests {
         ]
     }
 
+    fn plan_get(plan: &[(String, Option<String>)], k: &str) -> Option<Option<String>> {
+        plan.iter().find(|(n, _)| n == k).map(|(_, v)| v.clone())
+    }
+
     #[test]
     fn a_host_with_its_own_webkit_runs_the_app_on_its_own_libraries() {
         let plan = host_libs_plan(image(), arch).expect("starts again");
-        let get = |k: &str| plan.iter().find(|(n, _)| n == k).map(|(_, v)| v.clone());
+        let get = |k: &str| plan_get(&plan, k);
         // the host's folders first, the image's after them for what the host lacks
         assert_eq!(get("LD_LIBRARY_PATH"), Some(Some(format!("/usr/lib64:/usr/lib:{APPDIR}/usr/lib/:{APPDIR}/lib/"))));
         assert_eq!(get("GTK_PATH"), Some(None));
@@ -257,9 +288,40 @@ mod tests {
     }
 
     #[test]
-    fn the_bundle_stays_when_the_host_has_no_webkit_or_the_app_already_started_again() {
-        // Ubuntu and Mint as installed: no WebKitGTK 4.1, the image's is the only one
-        assert!(host_libs_plan(image(), |p| p == "/usr/lib/x86_64-linux-gnu" || p == "/usr/lib").is_none());
+    fn a_host_without_webkit_still_puts_its_own_libraries_first() {
+        // #797: 4.5.0 kept the whole bundle here, and the host's Mesa ran on the image's libelf,
+        // libzstd and libsystemd until GTK gave up on GL and the app crashed
+        let plan = host_libs_plan(image(), arch_without_webkit).expect("starts again");
+        let get = |k: &str| plan_get(&plan, k);
+        assert_eq!(get("LD_LIBRARY_PATH"), Some(Some(format!("/usr/lib64:/usr/lib:{APPDIR}/usr/lib/:{APPDIR}/lib/"))));
+        assert_eq!(get("GTK_PATH"), Some(None));
+        assert_eq!(get(HOST_LIBS_MARK), Some(Some("1".into())));
+        // Ubuntu and Mint as installed have no WebKitGTK 4.1 either; same versions, same plan
+        let ubuntu = |p: &str| {
+            p == "/usr/lib/x86_64-linux-gnu" || p == "/usr/lib" || p == "/usr/lib/x86_64-linux-gnu/libgtk-3.so.0"
+        };
+        let plan = host_libs_plan(image(), ubuntu).expect("starts again");
+        assert_eq!(
+            plan_get(&plan, "LD_LIBRARY_PATH"),
+            Some(Some(format!("/usr/lib/x86_64-linux-gnu:/usr/lib:{APPDIR}/usr/lib/:{APPDIR}/lib/")))
+        );
+    }
+
+    #[test]
+    fn the_images_gtk_keeps_its_own_modules_where_the_host_has_no_gtk() {
+        // a bare window-manager install with no GTK 3: the image's GTK and gdk-pixbuf load, and
+        // without these they would look for their loaders in Ubuntu's folders on an Arch host
+        let plan = host_libs_plan(image(), |p| p == "/usr/lib").expect("starts again");
+        assert_eq!(plan_get(&plan, "GTK_PATH"), None);
+        assert_eq!(plan_get(&plan, "GDK_PIXBUF_MODULE_FILE"), None);
+        // the host has GTK but not gdk-pixbuf: only GTK's own lookups go
+        let plan = host_libs_plan(image(), |p| p == "/usr/lib" || p == "/usr/lib/libgtk-3.so.0").expect("starts again");
+        assert_eq!(plan_get(&plan, "GTK_PATH"), Some(None));
+        assert_eq!(plan_get(&plan, "GDK_PIXBUF_MODULE_FILE"), None);
+    }
+
+    #[test]
+    fn the_bundle_stays_when_asked_or_the_app_already_started_again() {
         let mut again = image();
         again.push((HOST_LIBS_MARK.into(), "1".into()));
         assert!(host_libs_plan(again, arch).is_none());
@@ -268,6 +330,8 @@ mod tests {
         assert!(host_libs_plan(asked, arch).is_none());
         // a build that is not the AppImage
         assert!(host_libs_plan(image().into_iter().filter(|(k, _)| k != "APPDIR"), arch).is_none());
+        // a host with none of the usual library folders (NixOS): nothing of its own to put first
+        assert!(host_libs_plan(image(), |_| false).is_none());
     }
 
     #[test]
