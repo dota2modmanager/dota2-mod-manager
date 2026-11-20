@@ -80,3 +80,20 @@ fn on_the_real_table() {
         .collect();
     println!("{} items in {:?}: {names:#?}", over.len(), t.elapsed());
 }
+
+#[test]
+fn the_slots_icon_and_sound_go_over_the_worn_items() {
+    // Rollermawster on the head swaps March of the Machines' icon and sound; the slot's pick does too
+    let fx = br#""5002" { "prefab" "default_item" "visuals" {
+        "asset_modifier" { "type" "ability_icon" "asset" "tinker_march_of_the_machines" "modifier" "tinker/cosmic/march" }
+        "asset_modifier" { "type" "sound" "asset" "Hero_Tinker.March_of_the_Machines" "modifier" "Hero_Tinker.March_of_the_Machines.Cosmic" }
+    } }"#;
+    let head = br#""7143" { "prefab" "wearable" "visuals" {
+        "asset_modifier" { "type" "ability_icon" "asset" "tinker_march_of_the_machines" "modifier" "tinker/rollermawster/march" }
+        "asset_modifier" { "type" "sound" "asset" "Hero_Tinker.March_of_the_Machines.Cast" "modifier" "Hero_Tinker.March_of_the_Machines.Cast.Rollermawster" }
+    } }"#;
+    let taken = fx_particles(fx).unwrap();
+    let out = String::from_utf8_lossy(&without_particles(head, &taken).unwrap().unwrap()).into_owned();
+    assert!(!out.contains("tinker/rollermawster/march"), "the head's icon gives way: {out}");
+    assert!(out.contains("Cast.Rollermawster"), "a sound of another event stays: {out}");
+}
