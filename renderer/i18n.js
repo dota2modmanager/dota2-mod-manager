@@ -226,7 +226,7 @@ const EN = {
   '{0} из {1} {2}': '{0} of {1} {2}',
   'Надеть весь набор': 'Equip the whole set',
   'старая карта': 'old map',
-  'до патча': 'pre-patch',
+  'до патча': 'pre-patch', '. Мод {0} перенесён на новый интерфейс игры: разметка теперь игровая, стили и картинки мода на месте': ". {0} was carried over to the game's new interface: the layout is now the game's, the mod's styles and pictures stay", '. Моды {0} перенесены на новый интерфейс игры: разметка теперь игровая, стили и картинки модов на месте': ". {0} were carried over to the game's new interface: the layout is now the game's, the mods' styles and pictures stay", 'Dota обновилась. HUD перенесён на новый интерфейс игры: {0}': "Dota updated. HUD carried over to the game's new interface: {0}",
   'новая версия': 'new version',
   'Автор выложил новую версию мода. Обнови его правой кнопкой: файл скачается заново, а место в порядке загрузки и включённость останутся.': 'The author has published a new version of this mod. Update it from the right-click menu: the file is downloaded again, and its place in the load order and its switch stay as they are.',
   'Обновить до новой версии': 'Update to the new version',
