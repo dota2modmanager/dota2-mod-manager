@@ -104,14 +104,14 @@ async function loadHistory(show: boolean): Promise<void> {
 
 const put = (d: CreatorDraft) => { m = { ...m, drafts: [d, ...m.drafts.filter((x) => x.id !== d.id)] }; };
 
-/** The window, on the list of drafts. */
-export async function openCreator(from: Element | null): Promise<void> {
+/** The window, on the list of drafts, or on one of them. */
+export async function openCreator(from: Element | null, draftId: string | null = null): Promise<void> {
   const r = await window.api.creator.list();
   if (r.error) { toast(r.error, 'error'); return; }
   takeOverlay();
   open = true;
   m = {
-    drafts: r.drafts, open: null, busy: false, consent: r.consent, uploader: r.uploader,
+    drafts: r.drafts, open: r.drafts.some((d) => d.id === draftId) ? draftId : null, busy: false, consent: r.consent, uploader: r.uploader,
     historyOpen: false, historyItems: [], historyLoading: false, historyError: '',
   };
   openOverlay(draw, from);

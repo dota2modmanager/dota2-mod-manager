@@ -337,6 +337,12 @@ fn normalize(raw: Value) -> Value {
 }
 
 /// The drafts under userData/creator, and the archive one of them becomes.
+/// A style's file in its draft's folder: kind, style and a few random digits, so a file picked
+/// again never collides with the one it replaces.
+fn file_name(kind: &str, style: usize, ext: &str) -> String {
+    format!("{kind}-{style}-{}{ext}", &uuid::Uuid::new_v4().simple().to_string()[..6])
+}
+
 pub struct Creator {
     root: PathBuf,
     last: Mutex<f64>,
@@ -503,8 +509,7 @@ impl Creator {
             return Err(t("Картинка должна быть PNG, JPG, WebP, GIF или видео MP4/WebM", &[]));
         }
         let ext = if kind == "vpk" { ".vpk".to_string() } else { node_extname(&from_s).to_lowercase() };
-        let hex: String = uuid::Uuid::new_v4().simple().to_string()[..6].to_string();
-        let name = format!("{kind}-{i}-{hex}{ext}");
+        let name = file_name(kind, i, &ext);
         let folder = self.folder(id)?;
         let old = field(&d["styles"][i], kind).clone();
         std::fs::copy(from, folder.join(&name)).map_err(|e| e.to_string())?;
@@ -512,6 +517,19 @@ impl Creator {
             let _ = std::fs::remove_file(folder.join(string(&old)));
         }
         d["styles"][i][kind] = json!(name);
+        self.write(d)
+    }
+
+    /// A new draft around a VPK the app already holds: a mod made with its own tools, published
+    /// from My mods without the author hunting for the file. `fields` prefill the form.
+    pub fn draft_around(&self, fields: &Value, vpk: &[u8]) -> Result<Value, String> {
+        if vpk.get(..4).is_none_or(|h| u32::from_le_bytes([h[0], h[1], h[2], h[3]]) != crate::vpk::SIGNATURE) {
+            return Err(t("Это не VPK-файл", &[]));
+        }
+        let mut d = self.save(None, fields)?;
+        let name = file_name("vpk", 0, ".vpk");
+        std::fs::write(self.folder(&string(field(&d, "id")))?.join(&name), vpk).map_err(|e| e.to_string())?;
+        d["styles"][0]["vpk"] = json!(name);
         self.write(d)
     }
 
@@ -767,6 +785,20 @@ mod tests {
     fn style_file(f: &Fixture, id: &str, index: usize, kind: &str) -> PathBuf {
         let d = f.creator.list().into_iter().find(|d| d["id"] == id).unwrap();
         f.creator.folder(id).unwrap().join(d["styles"][index][kind].as_str().unwrap())
+    }
+
+    #[test]
+    fn a_mod_from_my_mods_starts_a_draft_with_its_vpk_in_style_one() {
+        let f = Fixture::new();
+        let bytes = std::fs::read(&f.vpk).unwrap();
+        let d = f.creator.draft_around(&json!({ "name": "Pudge Red", "category": "hero-items" }), &bytes).unwrap();
+        assert_eq!((d["name"].as_str(), d["category"].as_str()), (Some("Pudge Red"), Some("hero-items")));
+        let id = d["id"].as_str().unwrap();
+        assert_eq!(std::fs::read(style_file(&f, id, 0, "vpk")).unwrap(), bytes);
+        assert!(!Creator::missing(&f.creator.list()[0]).iter().any(|m| m.contains("VPK")));
+
+        assert_eq!(f.creator.draft_around(&json!({}), b"not a vpk").unwrap_err(), t("Это не VPK-файл", &[]));
+        assert_eq!(f.creator.list().len(), 1, "a refused file leaves no empty draft behind");
     }
 
     #[test]
