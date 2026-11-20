@@ -35,6 +35,7 @@ export interface SettingsModel {
   /** installs of catalog mods are counted by the catalog's download counter */
   countDownloads: boolean;
   autoPack: boolean;
+  preview3d: boolean;
   /** the item builder's look on everybody playing the hero */
   everyone: EveryoneModel;
   beta: { eligible: boolean; on: boolean };
@@ -63,6 +64,7 @@ export interface SettingsActions extends CompilerActions {
   presence: () => void;
   countDownloads: () => void;
   autoPack: () => void;
+  preview3d: () => void;
   everyone: () => void;
   /** a hero excluded from the look on everybody, or let back in */
   everyoneHero: (id: string) => void;
@@ -242,6 +244,10 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
                   }}><span className="ms">download</span>{L`Скачать`}</button>}
               </Row>
             )}
+            <Row label={L`3D-превью в окне мода`}
+              hint={L`Мод героя или предмета показывается на герое в 3D. Выключено — в окне мода картинка, как раньше.`}>
+              <Toggle id="preview3dToggle" on={m.preview3d} label={L`3D-превью в окне мода`} onClick={actions.preview3d} />
+            </Row>
             <PreviewCacheRow ready={!!m.vrf?.ready} game={m.dotaValid} />
             {m.compiler && <CompilerRows c={m.compiler} actions={actions} />}
           </Section>

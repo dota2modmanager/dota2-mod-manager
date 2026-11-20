@@ -15,8 +15,10 @@ export const PROPS_STAGED: readonly string[] = ['wards', 'creeps', 'towers', 'ro
  * `props` for a mod of the world. */
 export interface ModStage { category: string; file: string; hint: string; props?: boolean }
 
-/** A mod's stage, or null for one that is no hero's, or that installs from a link. */
-export function modStage(categoryId: string, mod: Mod, file: string | null | undefined): ModStage | null {
+/** A mod's stage, or null for one that is no hero's, that installs from a link, or when the player
+ * turned the 3D off in Settings (`on` false): the window then shows the mod's picture alone. */
+export function modStage(categoryId: string, mod: Mod, file: string | null | undefined, on = true): ModStage | null {
+  if (!on) return null;
   const props = PROPS_STAGED.includes(categoryId);
   if ((!STAGED.includes(categoryId) && !props) || !file || !/\.(zip|vpk)$/i.test(file) || mod.type === 'pack') return null;
   if (props) return { category: categoryId, file, hint: mod.name, props: true };

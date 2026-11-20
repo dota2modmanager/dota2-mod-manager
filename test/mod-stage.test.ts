@@ -18,6 +18,7 @@ test('a hero mod and a hero item mod are staged; the rest of the catalog is not'
   assert.equal(modStage('heroes', io, 'https://example.com/io'), null, 'a link installs nothing the stage could read');
   assert.equal(modStage('heroes', { ...io, type: 'pack' }, io.file), null);
   assert.equal(modStage('heroes', io, null), null);
+  assert.equal(modStage('heroes', io, io.file, false), null, 'the 3D turned off in Settings: the picture alone');
 });
 
 test('the hero stands in its own slots in their stock items', () => {
