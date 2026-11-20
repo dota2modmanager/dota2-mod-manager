@@ -682,6 +682,7 @@ const EN = {
   'Сохранить одним файлом': 'Save as one file',
   'Распаковать в папку': 'Unpack into a folder',
   'Опубликовать в каталог': 'Publish to the catalog',
+  'Открыть заявку на GitHub': 'Open the submission on GitHub',
   '«{0}»: распакован, файлов — {1} ({2} MB)': '“{0}” unpacked: {1} files ({2} MB)',
   'Сохранить курсор архивом': 'Save the cursor as an archive',
   'Разобрать по героям': 'Split by hero',

@@ -48,6 +48,9 @@
 .creator-history-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .creator-history-status { display: inline-flex; align-items: center; gap: var(--space-1); font-size: var(--text-xs); color: var(--text-muted); white-space: nowrap; }
 .creator-history-status .ms { font-size: 16px; }
+.creator-history-item.link { cursor: pointer; }
+.creator-history-item.link:hover, .creator-history-item.link:focus-visible { border-color: var(--border-strong); }
+.creator-history-text .text-meta .ms { font-size: 14px; vertical-align: -2px; margin-right: 2px; }
 .creator-history-item.accepted .creator-history-status { color: var(--success); }
 .creator-history-item.rejected .creator-history-status { color: var(--danger); }
 .creator-history-reason { font-size: var(--text-sm); color: var(--text-muted); margin-top: var(--space-1); }

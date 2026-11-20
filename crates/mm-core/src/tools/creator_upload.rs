@@ -299,6 +299,83 @@ pub fn history<T: UploadTransport + ?Sized>(net: &T, token: &str, api: &str) -> 
         .unwrap_or_default()
 }
 
+/// The catalog's submissions: each upload becomes a pull request here, and a moderator who turns
+/// one down says why in a comment on it rather than in the upload record.
+const SUBMISSIONS_PR: &str = "https://github.com/h6rd/Dota2PornFxData/pull/";
+const SUBMISSIONS_API: &str = "https://api.github.com/repos/h6rd/Dota2PornFxData/issues/";
+/// Pull requests asked about in one load at most: GitHub answers 60 an hour without a key.
+const NOTES_PER_LOAD: usize = 6;
+const NOTE_CHARS: usize = 600;
+
+/// The pull request a history item links to, when it is one of the catalog's submissions.
+fn submission_pr(url: &str) -> Option<u64> {
+    url.strip_prefix(SUBMISSIONS_PR)?.split(['/', '#', '?']).next()?.parse().ok()
+}
+
+/// What the moderator wrote: the last comment a person left, the bots' reports (VPK Inspector,
+/// publish preview) skipped, its hidden markers dropped and kept to a few lines.
+pub fn moderator_note(comments: &Value) -> Option<String> {
+    let body = comments
+        .as_array()?
+        .iter()
+        .rev()
+        .find(|c| c["user"]["type"].as_str() != Some("Bot"))
+        .and_then(|c| c["body"].as_str())?;
+    let mut text = String::new();
+    let mut rest = body;
+    while let Some(at) = rest.find("<!--") {
+        text.push_str(&rest[..at]);
+        rest = rest[at..].find("-->").map_or("", |end| &rest[at + end + 3..]);
+    }
+    text.push_str(rest);
+    let text = text.trim();
+    let short: String = text.chars().take(NOTE_CHARS).collect();
+    match short.len() < text.len() {
+        true => Some(format!("{}…", short.trim_end())),
+        false => (!short.is_empty()).then_some(short),
+    }
+}
+
+/// The history, a turned-down submission with no reason in its record given the moderator's
+/// comment as `note`. A rejection is final, so what its pull request said is kept in `cache` and
+/// asked for once; a few new ones per load keep the app inside GitHub's limit.
+pub fn with_notes<T: UploadTransport + ?Sized>(net: &T, mut items: Vec<Value>, cache: &Path) -> Vec<Value> {
+    let mut known: serde_json::Map<String, Value> = std::fs::read(cache)
+        .ok()
+        .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+        .and_then(|v| v.as_object().cloned())
+        .unwrap_or_default();
+    let (mut asked, mut learned) = (0, false);
+    for item in &mut items {
+        let rejected = item["status"].as_str().is_some_and(|s| s.eq_ignore_ascii_case("rejected"));
+        let reason = item["reason"].as_str().is_some_and(|r| !r.trim().is_empty());
+        let Some(pr) = item["url"].as_str().and_then(submission_pr).filter(|_| rejected && !reason) else {
+            continue;
+        };
+        let key = pr.to_string();
+        if !known.contains_key(&key) {
+            if asked == NOTES_PER_LOAD {
+                continue;
+            }
+            asked += 1;
+            let url = format!("{SUBMISSIONS_API}{pr}/comments?per_page=100");
+            let answer =
+                net.direct("GET", &url, &[("accept", "application/vnd.github+json")], None, HISTORY_TIMEOUT_MS);
+            let Ok((200..=299, body)) = answer else { continue };
+            let Ok(comments) = serde_json::from_slice::<Value>(&body) else { continue };
+            known.insert(key.clone(), json!(moderator_note(&comments).unwrap_or_default()));
+            learned = true;
+        }
+        if let Some(note) = known[&key].as_str().filter(|n| !n.is_empty()) {
+            item["note"] = json!(note);
+        }
+    }
+    if learned {
+        let _ = std::fs::write(cache, Value::Object(known).to_string());
+    }
+    items
+}
+
 /// The key the token file is encrypted with. tools/release/uploader-token.mjs derives the same one.
 fn key() -> [u8; 32] {
     use sha2::Digest;
@@ -503,6 +580,47 @@ mod tests {
         let err = submit_mod(&fake, &draft(json!({})), &[style("", 1, "RIFF....WEBP")], "d2pfx_x", "https://api.test")
             .unwrap_err();
         assert_eq!(err, "connection refused");
+    }
+
+    #[test]
+    fn the_moderators_comment_is_the_last_one_a_person_left() {
+        let comments = json!([
+            { "user": { "type": "Bot" }, "body": "<!-- vpk-inspector-report --> ## VPK Inspector" },
+            { "user": { "type": "User" }, "body": "<!-- x -->кроме иконки есть еще файлы. залью сам" },
+            { "user": { "type": "Bot" }, "body": "<!-- publish-preview-report --> ## Publish preview" },
+        ]);
+        assert_eq!(moderator_note(&comments).as_deref(), Some("кроме иконки есть еще файлы. залью сам"));
+        assert_eq!(moderator_note(&json!([{ "user": { "type": "Bot" }, "body": "report" }])), None);
+        let long = json!([{ "user": { "type": "User" }, "body": "a".repeat(NOTE_CHARS + 10) }]);
+        assert_eq!(moderator_note(&long).unwrap().chars().count(), NOTE_CHARS + 1);
+        assert_eq!(submission_pr("https://github.com/h6rd/Dota2PornFxData/pull/736"), Some(736));
+        assert_eq!(submission_pr("https://github.com/someone/else/pull/736"), None);
+    }
+
+    #[test]
+    fn a_rejection_with_no_reason_gets_the_note_once_and_the_rest_are_left_alone() {
+        let dir = std::env::temp_dir().join(format!("mm-notes-{}", uuid::Uuid::new_v4().simple()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let cache = dir.join("notes.json");
+        let items = || {
+            vec![
+                json!({ "name": "Armlet", "status": "rejected", "url": "https://github.com/h6rd/Dota2PornFxData/pull/736" }),
+                json!({ "name": "Said", "status": "rejected", "reason": "Wrong category", "url": "https://github.com/h6rd/Dota2PornFxData/pull/7" }),
+                json!({ "name": "Fine", "status": "accepted", "url": "https://github.com/h6rd/Dota2PornFxData/pull/8" }),
+            ]
+        };
+        let fake = Fake::answer(200, r#"[{"user":{"type":"User"},"body":"залью сам"}]"#);
+        let out = with_notes(&fake, items(), &cache);
+        assert_eq!(out[0]["note"], "залью сам");
+        assert!(out[1].get("note").is_none() && out[2].get("note").is_none());
+        let calls = fake.calls();
+        assert_eq!(calls.len(), 1, "only the rejection with no reason is asked about");
+        assert_eq!(calls[0].url, "https://api.github.com/repos/h6rd/Dota2PornFxData/issues/736/comments?per_page=100");
+
+        let offline = Fake::broken("offline");
+        assert_eq!(with_notes(&offline, items(), &cache)[0]["note"], "залью сам", "kept from the first load");
+        assert!(offline.calls().is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

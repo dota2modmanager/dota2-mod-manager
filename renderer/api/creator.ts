@@ -50,6 +50,8 @@ export interface CreatorHistoryItem {
   kind?: string;
   createdAt?: string;
   reason?: string;
+  /** what the moderator wrote on the pull request of a turned-down mod whose record gives no reason */
+  note?: string;
   url?: string;
 }
 
