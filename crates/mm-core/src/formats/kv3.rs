@@ -4,7 +4,7 @@
 //!
 //! Every lane is read in order and must end exactly where the data does, which is how a file this
 //! misreads is refused instead of patched. The layout follows ValveResourceFormat's BinaryKV3.cs
-//! (MIT), versions 1 to 5.
+//! (MIT), versions 1 to 5, and the older `VKV\x03` before them as version 0 (kv3/legacy.rs).
 
 use super::kv3_zstd::before_v5;
 pub use super::kv3_zstd::{zstd, zstd_pack};
@@ -13,6 +13,8 @@ use serde_json::{json, Value as Json};
 use std::collections::HashMap;
 
 use crate::lz4;
+mod legacy;
+pub use legacy::read;
 
 #[derive(Debug, Clone, thiserror::Error)]
 #[error("kv3: {0}")]
@@ -469,8 +471,7 @@ impl Walk<'_> {
                 .max(0) as usize;
                 let mut members = IndexMap::with_capacity(n.min(1 << 16));
                 for _ in 0..n {
-                    let (ty, tat, tf) = self.read_type()?;
-                    let name = self.string()?;
+                    let (ty, tat, tf, name) = self.member()?;
                     let v = self.value(ty, Some(tat), self.main, &name, &format!("{path}.{name}"), tf)?;
                     members.insert(name, v);
                 }
@@ -482,7 +483,7 @@ impl Walk<'_> {
 }
 
 /// Read a KV3 block (a resource's DATA block, magic included).
-pub fn read(block: &[u8]) -> Result<Block, Kv3Error> {
+fn read_newer(block: &[u8]) -> Result<Block, Kv3Error> {
     let magic = u32_at(block, 0).map_err(|_| Kv3Error("not a binary KV3 block".into()))?;
     let version = magic & 0xff;
     if magic & 0xffff_ff00 != MAGIC || !(1..=5).contains(&version) {
@@ -849,7 +850,7 @@ impl Block {
     }
 
     /// The block with the buffers and blobs as they are now, compressed the way it came.
-    pub fn encode(&mut self) -> Result<Vec<u8>, Kv3Error> {
+    fn encode_newer(&mut self) -> Result<Vec<u8>, Kv3Error> {
         // one zstd frame for the buffer and the blobs: `write` writes such a block anew
         if self.method == ZSTD && self.version < 5 {
             return err("a zstd block before version 5 is written with kv3::write");
