@@ -162,8 +162,11 @@ pub struct PreviewStore {
     warming: Mutex<bool>,
 }
 
-fn http_date(t: SystemTime) -> String {
-    chrono::DateTime::<chrono::Utc>::from(t).format("%a, %d %b %Y %H:%M:%S GMT").to_string()
+pub(crate) fn http_date(t: SystemTime) -> String {
+    jiff::Timestamp::try_from(t)
+        .unwrap_or(jiff::Timestamp::UNIX_EPOCH)
+        .strftime("%a, %d %b %Y %H:%M:%S GMT")
+        .to_string()
 }
 
 impl PreviewStore {

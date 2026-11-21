@@ -21,7 +21,7 @@ const PATHS_SHOWN: usize = 100;
 
 /// The time now as `Date.toISOString` writes it.
 pub fn iso_now() -> String {
-    chrono::Utc::now().format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string()
+    jiff::Timestamp::now().strftime("%Y-%m-%dT%H:%M:%S%.3fZ").to_string()
 }
 
 /// Which mods a Dota update reached, by id (UpdateImpact::marked).

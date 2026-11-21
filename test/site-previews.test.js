@@ -7,6 +7,7 @@ test('only the /mods/ pictures the page data names are fetched, each once', asyn
   const { picturesIn } = await import('../tools/catalog/site-previews.mjs');
   const heroes = [{ mods: [{ image: { src: '/mods/b.webp', w: 1 } }, { image: { src: '/mods/a.webp' } }] }];
   const cats = { x: [{ image: { src: '/mods/a.webp' } }, { image: { src: '/mods/t/a.webp' } },
-    { image: { src: 'https://elsewhere/a.webp' } }, { image: { src: '/mods/..' } }, { src: '/other/c.webp' }] };
+    { image: { src: 'https://elsewhere/a.webp' } }, { image: { src: '/mods/..' } }, { src: '/other/c.webp' },
+    { image: { src: '/mods/..\\..\\x.webp' } }, { image: { src: '/mods/C:x.webp' } }] };
   assert.deepEqual(picturesIn(heroes, cats), ['a.webp', 'b.webp']);
 });
