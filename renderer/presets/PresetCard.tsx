@@ -2,12 +2,12 @@
  * so the card leads with a row of covers and a line of counts: forty heroes, three terrains, one
  * cursor. The full list is one click away and grouped, rather than a paragraph of proper nouns in
  * the way of everybody who does not need it. */
-import { catalogName } from '../ui/catalog-name.ts';
-import { Fragment, useState, type CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { motion } from 'motion/react';
 import { Thumb } from '../library/Thumb.tsx';
 import { foldAway, travel } from '../motion/list.ts';
 import { Swap } from '../motion/Swap.tsx';
+import { PresetInside } from './PresetInside.tsx';
 import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from './model.ts';
 
 /* A card moves like a row of My mods: a card saved above it or deleted beside it makes it travel to
@@ -55,22 +55,7 @@ function PresetBody({ p }: { p: OwnPreset }) {
       <div className="preset-cats">
         {b.cats.map((c) => <span key={c.id} className="preset-cat"><span className="ms">{c.icon}</span>{c.name}<b>{c.n}</b></span>)}
       </div>
-      <details className="preset-all">
-        <summary><span className="ms">expand_more</span>{L`Что внутри`}</summary>
-        {b.groups.map((g) => (
-          <div key={g.id} className="preset-group">
-            <div className="preset-group-head"><span className="ms">{g.icon}</span>{g.name}<span className="preset-group-n">{g.n}</span></div>
-            <div className="preset-group-names">
-              {g.names.map((n, i) => (
-                <Fragment key={i}>
-                  {i > 0 && ' · '}
-                  {n.absent ? <span className="preset-name-absent" title={n.name}>{catalogName(n.name)}</span> : <span title={n.name}>{catalogName(n.name)}</span>}
-                </Fragment>
-              ))}
-            </div>
-          </div>
-        ))}
-      </details>
+      <PresetInside inside={b.inside} />
     </>
   );
 }

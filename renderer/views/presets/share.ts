@@ -87,13 +87,18 @@ export function shareDialog(plan: SharePlan): Promise<ShareOptions | null> {
   });
 }
 
+/** Where the preset stands with the community presets: none in this build, not signed in, ready
+ * to publish, or published already. */
+export type CommunityShare = 'off' | 'signed-out' | 'ready' | 'published';
+export type ShareChoice = { action: 'file' } | { action: 'publish'; about: string } | { action: 'unpublish' } | null;
+
 /* One door to sharing, with both ways behind it and the difference between them stated
  * rather than implied. A link is a few hundred characters and installs from the catalog on
  * the other end; it cannot carry a mod the catalog does not have. The file carries anything,
  * and can run to hundreds of megabytes. Two equal buttons on the card made that a guess -
  * here the link is offered first, already made, and the file is one line below it.
  */
-export function shareSheet(preset: { name: string }, link: ShareLink | null, picture?: () => Promise<Blob>): Promise<'file' | null> {
+export function shareSheet(preset: { name: string }, link: ShareLink | null, picture?: () => Promise<Blob>, community: CommunityShare = 'off'): Promise<ShareChoice> {
   const skipped = link?.skipped || [];
   return new Promise((resolve) => {
     const overlay = document.createElement('div');
@@ -102,13 +107,23 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null, pic
       <div class="confirm-box share-box">
         <div class="share-title">${L`Поделиться пресетом «${esc(preset.name)}»`}</div>
 
+        ${community !== 'off' && link?.web ? `
+          <div class="share-way share-app">
+            <div class="share-way-head"><span class="ms">public</span>${L`В приложении`}</div>
+            ${community === 'published' ? `
+              <div class="share-hint">${L`Пресет уже опубликован: его видят все в разделе «Пресеты сообщества».`}</div>
+              <button class="btn btn-danger" id="shareUnpublishBtn"><span class="ms">cloud_off</span>${L`Снять с публикации`}</button>` : `
+              <textarea class="input" id="shareAbout" rows="2" maxlength="500" placeholder="${L`Пара слов о пресете (необязательно)`}"></textarea>
+              <button class="btn btn-primary" id="sharePublishBtn"><span class="ms">publish</span>${community === 'signed-out' ? L`Войти через Discord и опубликовать` : L`Опубликовать`}</button>
+              <div class="share-hint">${skipped.length
+                ? L`Все найдут его в «Пресетах сообщества» и поставят в одно нажатие. Свои моды (${skipped.length}) не попадут — только моды из каталога.`
+                : L`Все найдут его в «Пресетах сообщества» и поставят в одно нажатие.`}</div>`}
+          </div>` : ''}
+
         <div class="share-way">
           <div class="share-way-head"><span class="ms">link</span>${L`Ссылка`}</div>
           ${link?.web ? `
-            <div class="share-copy">
-              <input class="input mono" id="shareUrl" readonly value="${esc(link.web)}">
-              <button class="btn btn-primary" id="shareCopyBtn"><span class="ms">content_copy</span>${L`Скопировать`}</button>
-            </div>
+            <button class="btn${community === 'off' ? ' btn-primary' : ''}" id="shareCopyBtn"><span class="ms">content_copy</span>${L`Скопировать ссылку`}</button>
             <div class="share-hint">${skipped.length
               ? L`Донесёт ${link.count} из каталога. Свои моды (${skipped.length}) в неё не влезут — для них файл.`
               : L`Открывается в менеджере и ставит моды из каталога.`}</div>` : `
@@ -135,13 +150,16 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null, pic
     document.body.appendChild(overlay);
 
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') done(null); };
-    const done = (v: 'file' | null) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
+    const done = (v: ShareChoice) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(v); };
     overlay.addEventListener('click', (e) => { if (e.target === overlay) done(null); });
     overlay.querySelector('[data-c="no"]')?.addEventListener('click', () => done(null));
-    overlay.querySelector('#shareFileBtn')?.addEventListener('click', () => done('file'));
+    overlay.querySelector('#shareFileBtn')?.addEventListener('click', () => done({ action: 'file' }));
+    overlay.querySelector('#sharePublishBtn')?.addEventListener('click', () => done({
+      action: 'publish', about: (overlay.querySelector('#shareAbout') as HTMLTextAreaElement).value.trim(),
+    }));
+    overlay.querySelector('#shareUnpublishBtn')?.addEventListener('click', () => done({ action: 'unpublish' }));
     overlay.querySelector('#shareCopyBtn')?.addEventListener('click', (e) => {
       navigator.clipboard.writeText(link?.web || '');
-      (overlay.querySelector('#shareUrl') as HTMLInputElement).select();
       flashCopied(e.currentTarget as CopyButton);
     });
     overlay.querySelector('#sharePicBtn')?.addEventListener('click', async (e) => {

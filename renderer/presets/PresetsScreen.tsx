@@ -8,6 +8,7 @@ import { pane } from '../core/router.ts';
 import { bindContextMenu } from '../ui/menu.ts';
 import type { PresetsActions, PresetsModel } from './model.ts';
 import { OwnPresetCard, ReadyPresetCard, SharedPresetCard } from './PresetCard.tsx';
+import { CommunitySection } from './CommunitySection.tsx';
 
 function PresetsScreen({ m, actions }: { m: PresetsModel; actions: PresetsActions }) {
   const name = useRef<HTMLInputElement>(null);
@@ -55,6 +56,7 @@ function PresetsScreen({ m, actions }: { m: PresetsModel; actions: PresetsAction
           </div>
         </>
       )}
+      {m.community && <CommunitySection c={m.community} actions={actions} />}
     </>
   );
 }

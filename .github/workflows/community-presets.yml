@@ -1,0 +1,81 @@
+name: Community presets
+
+# Rebuilds index.json in the community-presets branch: every published preset with its votes.
+# The presets worker (tools/ops/presets-worker) writes presets/ and votes/ and asks for a run after
+# each write; the schedule catches anything a dispatch missed. The first manual run creates the
+# branch.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions: {}
+
+concurrency:
+  # one run at a time; a burst of votes leaves one queued run, which counts them all
+  group: community-presets
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the index script (trusted, from main)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          path: main
+          fetch-depth: 1
+          sparse-checkout: tools/ops/presets-worker
+          persist-credentials: false
+
+      - name: Checkout the presets branch, or start it
+        run: |
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if git ls-remote --exit-code --heads "$url" community-presets >/dev/null; then
+            git clone --depth 1 --branch community-presets "$url" data
+          else
+            git init -b community-presets data
+            git -C data remote add origin "$url"
+            mkdir -p data/presets data/votes
+            touch data/presets/.keep data/votes/.keep
+            echo '[]' > data/hidden.json
+            printf '%s\n' '# Community presets' '' \
+              'Presets people published from Dota 2 Mod Manager, and their votes. Written by the presets' \
+              'worker (tools/ops/presets-worker on main) and indexed by the community-presets workflow.' \
+              'Do not edit by hand, except hidden.json: a preset id listed there is left out of the index.' > data/README.md
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24'
+
+      - name: Build index.json
+        run: node main/tools/ops/presets-worker/index.mjs data
+
+      - name: Commit and push
+        working-directory: data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "index.json is up to date"
+            exit 0
+          fi
+          git commit -q -m "Rebuild index.json"
+          # the worker may have written in between: take its commits and count again
+          for attempt in 1 2 3; do
+            if git push origin HEAD:community-presets; then exit 0; fi
+            git fetch -q --depth 20 origin community-presets
+            git reset -q --hard origin/community-presets
+            node ../main/tools/ops/presets-worker/index.mjs .
+            git add -A
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Rebuild index.json"
+          done
+          exit 1

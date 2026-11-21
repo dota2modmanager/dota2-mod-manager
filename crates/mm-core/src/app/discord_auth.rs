@@ -206,13 +206,24 @@ fn avatar_data_uri(net: &Net, cdn: &str, user: &Value) -> Value {
 
 /// Opens the browser (`open`), waits for the redirect, and answers who signed in: id, name, avatar.
 pub fn sign_in(net: &Net, at: &Endpoints, open: &dyn Fn(&str) -> Result<(), String>) -> Result<Value, String> {
+    let token = access_token(at, open)?;
+    account(net, at, &token)
+}
+
+/// The browser half of signing in: Discord's access token, for the caller to use and drop. The
+/// community presets hand it to their worker once (presets/presets_api.rs).
+pub fn access_token(at: &Endpoints, open: &dyn Fn(&str) -> Result<(), String>) -> Result<String, String> {
     if !is_configured() {
         return Err(t("Вход через Discord пока не настроен в этой сборке", &[]));
     }
     let state = uuid::Uuid::new_v4().simple().to_string();
     let listener = listen(at.port)?;
     open(&authorize_url(&at.authorize, &state, at.port))?;
-    let token = await_token(listener, &state, at.timeout)?;
+    await_token(listener, &state, at.timeout)
+}
+
+/// Who a token belongs to: id, name, avatar.
+pub fn account(net: &Net, at: &Endpoints, token: &str) -> Result<Value, String> {
     let auth = format!("Bearer {token}");
     let (status, body) = net
         .direct("GET", &format!("{}/users/@me", at.api), &[("authorization", &auth)], None, 15000)

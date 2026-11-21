@@ -19,12 +19,15 @@ import { confirmDialog, promptDialog } from '../ui/dialog.ts';
 import { paint } from '../ui/transitions.ts';
 import { recThumb } from '../library/thumbs.ts';
 import type { LibRecord } from '../library/types.ts';
+import type { Thumb } from '../library/model.ts';
 import { showPresets } from '../presets/PresetsScreen.tsx';
 import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from '../presets/model.ts';
 import type { PresetRecord, ReadyPresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
 import { recPreviewUrl } from '../ui/thumb.ts';
 import { isVideo } from '../ui/media.ts';
+import { insideModel, lookEntry } from './presets/inside.ts';
+import { communityActions, communityModel, communityShare, loadCommunity, publishPreset, unpublishPreset } from './presets/community.ts';
 
 type Preset = PresetRecord;
 
@@ -79,7 +82,11 @@ function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
       strip: all.slice(0, STRIP),
       rest: all.length - Math.min(all.length, STRIP),
       cats: ordered.map(([id, list]) => cat(id, list.length)),
-      groups: ordered.map(([id, list]) => ({ ...cat(id, list.length), names: list })),
+      inside: insideModel([
+        ...recs.map((r) => ({ kind: 'mod' as const, categoryId: r.categoryId || 'other', data: { name: r.name, thumb: recThumb(r) } })),
+        ...absent.map((a) => ({ kind: 'mod' as const, categoryId: a.categoryId || 'other', data: { name: a.name, thumb: { icon: catIcon(a.categoryId || 'other') } as Thumb, absent: true } })),
+        ...picks.map((pick) => lookEntry(pick.slot, pick.name)),
+      ]),
     },
   };
 }
@@ -131,11 +138,19 @@ async function renderPresets(fresh = false): Promise<void> {
   ]);
   byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
   if (fresh) key++;
+  // the fresh list lands later; it repaints only a screen still open
+  await loadCommunity(() => { if (state.view === 'presets') draw(); });
+  await draw();
+}
+
+/** The screen again from what was read last: a vote or a sign-in changes nothing else on it. */
+async function draw(): Promise<void> {
   // a ready preset taken is one of yours as well: renamed, shared or deleted from your list
   await paint(() => showPresets({
     key,
     presets: presets.map((p) => (p.wanted ? sharedCard(p) : ownCard(p, byId))),
     ready: ready.map(readyCard),
+    community: communityModel(presets),
   }, actions));
 }
 
@@ -150,7 +165,10 @@ async function share(id: string) {
     .filter((u): u is string => Boolean(u) && !isVideo(u!));
   const card = ownCard(preset, byId);
   const picture = link.web ? () => import('./presets/picture.ts').then((m) => m.presetPicture({ name: preset.name, count: card.count, covers, link: link.web! })) : undefined;
-  if (await shareSheet(preset, link.error ? null : link, picture) !== 'file') return;
+  const choice = await shareSheet(preset, link.error ? null : link, picture, communityShare(preset));
+  if (choice?.action === 'publish') { await publishPreset(preset, renderPresets, choice.about); return; }
+  if (choice?.action === 'unpublish') { await unpublishPreset(preset.source!.published!, renderPresets); return; }
+  if (choice?.action !== 'file') return;
   const plan = await window.api.presets.exportPlan(id);
   if (plan.error) { toast(plan.error, 'error', 6000); return; }
   if (!plan.entries.length) { toast(L`В пресете нет модов`, 'warn'); return; }
@@ -223,6 +241,10 @@ const actions: PresetsActions = {
     await renderPresets();
   },
   remove: (id) => { remove(presets.find((x) => x.id === id)); },
+  community: communityActions(draw, async () => {
+    await refreshInstalledIndex();
+    await renderPresets();
+  }),
   menu: (id) => {
     const p = presets.find((x) => x.id === id);
     if (!p) return null;
@@ -240,6 +262,9 @@ const actions: PresetsActions = {
         if (r.error) { toast(r.error, 'error', 6000); return; }
         await renderPresets();
       } },
+      p.source?.published
+        ? { label: L`Снять с публикации в сообществе`, icon: 'cloud_off', onPick: () => unpublishPreset(p.source!.published!, renderPresets) }
+        : { label: L`Опубликовать в сообществе`, icon: 'public', onPick: () => publishPreset(p, renderPresets) },
       { separator: true },
       { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => remove(p) },
     ];

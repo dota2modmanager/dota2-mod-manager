@@ -258,6 +258,15 @@
       takeReady: (id) => mm.invoke('presets:takeReady', id),
       onLink: (cb) => mm.on('preset-link', cb),
     },
+    community: {
+      list: (refresh) => mm.invoke('community:list', refresh),
+      signIn: () => mm.invoke('community:signIn'),
+      signOut: () => mm.invoke('community:signOut'),
+      publish: (presetId, about) => mm.invoke('community:publish', presetId, about),
+      unpublish: (id) => mm.invoke('community:unpublish', id),
+      vote: (id, value) => mm.invoke('community:vote', id, value),
+      take: (id) => mm.invoke('community:take', id),
+    },
     account: {
       signIn: () => mm.invoke('account:signIn'),
       signOut: () => mm.invoke('account:signOut'),

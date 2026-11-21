@@ -9,6 +9,23 @@ interface PresetCategory {
   n: number;
 }
 
+/** One thing a preset holds, as "Что внутри" draws it: its picture, its name, where it goes. */
+export interface InsideItem {
+  name: string;
+  thumb: Thumb;
+  /** the slot it goes in, for a hero's item */
+  hint?: string;
+  /** named by the build, not installed right now */
+  absent?: boolean;
+}
+
+/** "Что внутри": catalog mods and looks by category, a hero's items under that hero (presets/inside.ts). */
+export interface InsideModel {
+  groups: (PresetCategory & { items: InsideItem[] })[];
+  /** hero by token; the window looks up the name and the portrait */
+  heroes: { hero: string; items: InsideItem[] }[];
+}
+
 /**
  * A preset the user saved. It describes the build, not the part of it installed today: a member
  * that is not installed is still drawn, as what it is (absent), rather than dropped.
@@ -29,7 +46,7 @@ export interface OwnPreset {
     /** how many did not fit in the strip */
     rest: number;
     cats: PresetCategory[];
-    groups: (PresetCategory & { names: { name: string; absent: boolean }[] })[];
+    inside: InsideModel;
   } | null;
 }
 
@@ -58,10 +75,49 @@ export interface ReadyPreset {
   taken: { on: boolean } | null;
 }
 
+/** A preset somebody published: what it holds, who made it and what people thought of it. */
+export interface CommunityPreset {
+  id: string;
+  name: string;
+  about: string;
+  author: string;
+  /** when it was published, as the window's language writes a date */
+  date: string;
+  created: string;
+  up: number;
+  down: number;
+  /** your vote: 1, -1, or 0 */
+  vote: number;
+  mine: boolean;
+  count: string;
+  strip: Thumb[];
+  rest: number;
+  cats: PresetCategory[];
+  inside: InsideModel;
+  /** taken already: installed and on, installed, or still waiting to be installed */
+  taken: 'on' | 'own' | 'wanted' | null;
+  /** what a search may match, folded (presets/community.ts) */
+  haystack: string;
+  /** needs the game's item table (items_game) for some of its looks */
+  table: boolean;
+}
+
+export interface CommunityModel {
+  /** signed in to vote and publish, and as whom */
+  user: { name: string } | null;
+  presets: CommunityPreset[];
+  /** the list could not be refreshed, and this is the last one kept */
+  error: string | null;
+  /** the refresh is still on its way */
+  loading: boolean;
+}
+
 export interface PresetsModel {
   key: number;
   presets: (OwnPreset | SharedPreset)[];
   ready: ReadyPreset[];
+  /** null when this build shows no community presets */
+  community: CommunityModel | null;
 }
 
 export interface PresetsActions {
@@ -72,5 +128,13 @@ export interface PresetsActions {
   resolve: (id: string) => Promise<void>;
   takeReady: (id: string) => Promise<void>;
   remove: (id: string) => void;
+  community: {
+    signIn: () => Promise<void>;
+    signOut: () => void;
+    vote: (id: string, pressed: 1 | -1) => void;
+    take: (id: string) => Promise<void>;
+    unpublish: (id: string) => void;
+    refresh: () => void;
+  };
   menu: (id: string) => { label?: string; icon?: string; separator?: boolean; danger?: boolean; onPick?: () => void }[] | null;
 }
