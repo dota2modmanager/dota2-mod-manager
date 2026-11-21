@@ -17,6 +17,7 @@ export const ui = {
 
     'nav.docs': 'Docs',
     'nav.facts': 'Facts',
+    'nav.map': 'Downloads map',
     'nav.transparency': 'Transparency',
     'nav.status': 'Status',
     'nav.changes': "What's new",
@@ -89,6 +90,7 @@ export const ui = {
 
     'nav.docs': 'Документация',
     'nav.facts': 'Цифры и факты',
+    'nav.map': 'Карта загрузок',
     'nav.transparency': 'Прозрачность',
     'nav.status': 'Статус',
     'nav.changes': 'Что нового',

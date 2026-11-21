@@ -1649,6 +1649,40 @@ article.lost { position: relative; }
   .hw-blood i::after { display: none; }
 }
 
+/* ---------- the downloads map (/map/) ----------
+ *
+ * The page is a doc page whose picture needs the full width, so it lifts the doc's measure and
+ * keeps the text under it at the doc's own. Land is a dim dot grid and cities are the one
+ * bright thing on it; the bars below repeat the numbers for anyone who cannot hover a dot. */
+.doc.geo { max-width: var(--wrap); }
+.geo > :is(h1, .lead, .doc-note, .geo-source) { max-width: 72ch; }
+.geo-map { margin: 28px 0 0; }
+.geo-map svg { display: block; width: 100%; height: auto; }
+.geo-map .geo-near { display: none; }
+@media (max-width: 700px) { .geo-map .geo-wide { display: none; } .geo-map .geo-near { display: block; } }
+.geo-cell circle { fill: color-mix(in srgb, var(--text) 16%, transparent); }
+.geo-dots circle {
+  fill: color-mix(in srgb, var(--primary) 70%, transparent);
+  stroke: var(--surface); stroke-width: 0.12;
+}
+.geo-dots circle:hover { fill: var(--primary); }
+.geo-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 36px 48px; margin-top: 28px; }
+.doc .geo-lists h2 { margin-top: 0; }
+.geo-lists section { padding: 0; }
+.geo-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.geo-bars li {
+  position: relative; display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 7px 12px; border-radius: var(--radius-xs); overflow: hidden;
+}
+.geo-bar { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.geo-bar rect { fill: color-mix(in srgb, var(--primary) 26%, transparent); }
+.geo-bars li { isolation: isolate; }
+.geo-name { color: var(--text); min-width: 0; }
+.geo-name small { margin-left: 8px; color: var(--text-faint); font-size: 0.86em; }
+.geo-num { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.geo-rest .geo-name { color: var(--text-dim); }
+.geo-source { color: var(--text-faint); font-size: 15px; margin-top: 2em; }
+
 /* ---------- a touch screen is spared ----------
  *
  * Nothing here runs by itself on a phone. Every effect below is light that turns forever or a
