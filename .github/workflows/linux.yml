@@ -157,8 +157,9 @@ jobs:
           fi
           export HOME="$RUNNER_TEMP/deb-home"
           mkdir -p "$HOME"
-          touch "$RUNNER_TEMP/deb-started"
-          xvfb-run -a "$exe" > deb-start.log 2>&1 &
+          # its own session bus: the single-instance plugin finds other copies by a D-Bus name,
+          # and a start that finds the name taken hands its arguments over and exits quietly
+          ( dbus-run-session -- xvfb-run -a "$exe"; echo "exited with $?" ) > deb-start.log 2>&1 &
           pid=$!
           log="$HOME/.local/share/com.dota2modmanager.app/logs/app.log"
           for _ in $(seq 1 60); do
@@ -177,8 +178,6 @@ jobs:
             # which half failed: the bundler's mark in the binary, or where the log went
             grep -ao '__TAURI_BUNDLE_TYPE_VAR_[A-Z]*' "$exe" | sort | uniq -c || true
             find "$HOME" -maxdepth 6 | head -40
-            echo "app.log written anywhere since the start:"
-            sudo find / -xdev -name app.log -newer "$RUNNER_TEMP/deb-started" 2>/dev/null || true
             cat deb-start.log
             echo "::error::the app from the .deb did not know it came from a package"; exit 1
           fi
