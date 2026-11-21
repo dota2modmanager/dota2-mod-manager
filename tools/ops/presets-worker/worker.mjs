@@ -255,6 +255,13 @@ async function votesOf(gh, key) {
 }
 
 const PRESET_ID = /^[0-9a-f]{16}-[0-9a-z]{6}$/;
+/** 32 characters, so a random byte's low five bits pick one evenly: `% 36` favoured the first four. */
+const TAIL_ALPHABET = '0123456789abcdefghijklmnopqrstuv';
+
+/** Six random characters after the author's key: the rest of a preset's id. */
+export function randomTail(random = (n) => crypto.getRandomValues(new Uint8Array(n))) {
+  return [...random(6)].map((x) => TAIL_ALPHABET[x & 31]).join('');
+}
 
 async function session(env, request, now) {
   const b = await body(request);
@@ -281,7 +288,7 @@ async function publish(env, gh, user, request, now) {
   if (checked.error) return fail(400, checked.error);
   const mine = (await gh.list('presets')).filter((f) => f.startsWith(`${user.key}-`));
   if (mine.length >= LIMITS.presetsPerAuthor) return fail(429, 'too many presets');
-  const id = `${user.key}-${[...crypto.getRandomValues(new Uint8Array(6))].map((x) => '0123456789abcdefghijklmnopqrstuvwxyz'[x % 36]).join('')}`;
+  const id = `${user.key}-${randomTail()}`;
   const record = JSON.stringify({
     v: 1, id, name, about, code: b.code, mods: checked.mods,
     author: { key: user.key, name: user.name }, created: new Date(now).toISOString(),
@@ -344,7 +351,9 @@ export default {
       if (method === 'POST' && pathname === '/votes') return await vote(gh, user, request);
       return fail(404, 'not found');
     } catch (e) {
-      return fail(502, String(e?.message || e));
+      // what went wrong is for the worker's log (observability is on), not for the caller
+      console.error(e);
+      return fail(502, 'upstream error');
     }
   },
 };

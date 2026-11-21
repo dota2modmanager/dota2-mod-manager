@@ -180,3 +180,15 @@ test('the index counts votes, leaves out the hidden, the broken and the renamed,
   assert.equal(index.presets[1].record, input.presets[a].record, 'the signed record goes through untouched');
   assert.equal(JSON.stringify(buildIndex(input)), JSON.stringify(index));
 });
+
+test("a preset id's random tail is even across its alphabet", async () => {
+  const { randomTail } = await load('worker.mjs');
+  // every byte value once per character: each of the 32 characters must come up equally often
+  const counts = new Map();
+  for (let b = 0; b < 256; b++) {
+    for (const ch of randomTail(() => new Uint8Array(6).fill(b))) counts.set(ch, (counts.get(ch) || 0) + 1);
+  }
+  assert.equal(counts.size, 32);
+  assert.deepEqual(new Set(counts.values()), new Set([48]));
+  assert.match(randomTail(), /^[0-9a-v]{6}$/);
+});

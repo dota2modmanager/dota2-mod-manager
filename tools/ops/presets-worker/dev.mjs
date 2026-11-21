@@ -23,15 +23,35 @@ const base = `http://127.0.0.1:${port}`;
 fs.mkdirSync(path.join(dir, 'presets'), { recursive: true });
 fs.mkdirSync(path.join(dir, 'votes'), { recursive: true });
 
+/** A file's text, or null when there is none; read once rather than checked and then read. */
+function readText(file) {
+  try {
+    return fs.readFileSync(file, 'utf8');
+  } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'EISDIR') return null;
+    throw e;
+  }
+}
+
 const keyFile = path.join(dir, '.signing.json');
-if (!fs.existsSync(keyFile)) {
+function devKeys() {
+  const kept = readText(keyFile);
+  if (kept) return JSON.parse(kept);
   const { privateKey, publicKey } = crypto.generateKeyPairSync('ed25519');
-  fs.writeFileSync(keyFile, JSON.stringify({
+  const made = {
     signing: privateKey.export({ format: 'der', type: 'pkcs8' }).toString('base64'),
     public: publicKey.export({ format: 'der', type: 'spki' }).toString('base64'),
-  }));
+  };
+  try {
+    // 'wx': a second copy started at the same moment keeps the first one's key
+    fs.writeFileSync(keyFile, JSON.stringify(made), { flag: 'wx' });
+    return made;
+  } catch (e) {
+    if (e.code === 'EEXIST') return JSON.parse(readText(keyFile));
+    throw e;
+  }
 }
-const keys = JSON.parse(fs.readFileSync(keyFile, 'utf8'));
+const keys = devKeys();
 const env = {
   GITHUB_TOKEN: 'dev', SESSION_SECRET: 'dev-session-secret', USER_SECRET: 'dev-user-secret', SIGNING_KEY: keys.signing,
   GITHUB_API: `${base}/gh`, DISCORD_API: `${base}/discord`,
@@ -51,16 +71,21 @@ function github(req, res, url, body) {
   const file = path.join(dir, rel);
   if (!file.startsWith(dir)) return send(res, 400, {});
   if (req.method === 'GET') {
-    if (fs.existsSync(file) && fs.statSync(file).isDirectory()) {
-      return send(res, 200, fs.readdirSync(file).map((name) => ({ type: 'file', name })));
-    }
-    if (!fs.existsSync(file)) return send(res, 404, {});
-    const text = fs.readFileSync(file, 'utf8');
+    let names = null;
+    try {
+      names = fs.readdirSync(file);
+    } catch { /* not a folder: a file, or nothing */ }
+    if (names) return send(res, 200, names.map((name) => ({ type: 'file', name })));
+    const text = readText(file);
+    if (text === null) return send(res, 404, {});
     return send(res, 200, { sha: sha(text), content: Buffer.from(text).toString('base64') });
   }
   const b = JSON.parse(body || '{}');
-  const cur = fs.existsSync(file) ? sha(fs.readFileSync(file, 'utf8')) : undefined;
+  const text = readText(file);
+  const cur = text === null ? undefined : sha(text);
   if (cur !== (b.sha || undefined)) return send(res, 409, {});
+  // one process, one request at a time between the read and the write: the sha check above is
+  // the contents API's, not a lock, and a stand-in for one machine needs no more
   if (req.method === 'PUT') fs.writeFileSync(file, Buffer.from(b.content, 'base64'));
   if (req.method === 'DELETE') fs.rmSync(file, { force: true });
   return send(res, 200, {});
@@ -90,7 +115,9 @@ http.createServer(async (req, res) => {
     }), env);
     return send(res, r.status, await r.text());
   } catch (e) {
-    return send(res, 500, { error: String(e?.message || e) });
+    // the reason goes to this console, not to whoever asked
+    console.error(e);
+    return send(res, 500, { error: 'internal error' });
   }
 }).listen(port, '127.0.0.1', () => {
   console.log(`presets worker on ${base}, branch in ${dir}`);
