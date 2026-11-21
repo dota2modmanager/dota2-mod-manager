@@ -2,6 +2,38 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.7.0
+
+### Likes and follows
+
+- Like a mod in its window. The card shows how many people liked it, next to the download count.
+- Follow an author from the mod window or the author's page. When the app starts, it tells you
+  about new mods from the authors you follow.
+- Both need a Discord sign-in through the catalog's own service, which keeps your likes and
+  follows. Anybody else sees only the totals.
+
+### Your own sounds
+
+- A sound you put in place of a game sound now goes into the game's own sound file, and the
+  game's list of sound events is left alone. A mod that carried that list crashed the game once
+  Valve changed it. Sounds you made before get rebuilt this way at the next update.
+- The sound window warns you when a game file plays in other events too, since your sound
+  replaces it there as well.
+
+### Linux
+
+- .deb and .rpm packages that run on your system's WebKitGTK. They update through your package
+  manager. The AppImage stays for other distributions.
+- Without the GStreamer plugins the app no longer crashes. It turns videos and sounds off in the
+  window and tells you which packages to install.
+- On Linux the update could fetch the Windows installer, because every copy counted as portable.
+  It now fetches the right build.
+
+### Fixes
+
+- Dress all heroes no longer starts an endless rebuild, and each slot keeps one row.
+- The Chinese translation covers the pedestal controls and the error messages.
+
 ## 4.6.0
 
 ### Hero paint by part
