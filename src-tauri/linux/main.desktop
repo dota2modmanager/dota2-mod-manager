@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name={{name}}
+Comment=Mods for Dota 2, without the file juggling
+Exec="/usr/bin/{{exec}}" %u
+Icon={{icon}}
+StartupWMClass=dota2-mod-manager
+Categories=Game;
+Terminal=false
+MimeType=x-scheme-handler/d2mm;application/x-d2mm;

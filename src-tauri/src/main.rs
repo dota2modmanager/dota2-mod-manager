@@ -186,6 +186,10 @@ fn flag(args: &[String], name: &str) -> Option<String> {
 
 /// Where the build's own files are (the changelogs, the counter's token): a checkout's repository
 /// in a debug build, the bundled copy in an install.
+/// A file beside the app's resources that a distribution's package leaves: its package manager
+/// updates the app, and the app's own updater would install a .deb over a pacman package.
+const PACKAGE_MANAGER_MARK: &str = "package-manager";
+
 fn app_root(app: &tauri::App) -> PathBuf {
     if cfg!(debug_assertions) {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf()
@@ -334,7 +338,11 @@ fn main() {
                     first_run,
                     // a packaged build updates itself; a checkout's build and a sandbox run do not
                     // (crates/mm-core/src/owner/mod.rs: the updater keeps its cache outside any sandbox)
-                    updates: !cfg!(debug_assertions) && flag(&argv, "write-jail").is_none(),
+                    // and a copy a distribution's package manager installed (the AUR package
+                    // leaves the mark) is updated by that manager
+                    updates: !cfg!(debug_assertions)
+                        && flag(&argv, "write-jail").is_none()
+                        && !app_root(app).join(PACKAGE_MANAGER_MARK).exists(),
                 },
             )));
             app.manage(Owner(owner.clone()));
@@ -354,7 +362,14 @@ fn main() {
                     };
                     owner.0.get().diag(&format!("libraries: {on}"));
                 }
-                if let (Some(exe), Some(home)) = (exe, std::env::var_os("HOME")) {
+                // a .deb or .rpm brings its own entry in /usr/share/applications (linux/main.desktop),
+                // and a second one in the home folder would show the app twice in the menu
+                use tauri::utils::config::BundleType;
+                let packaged = matches!(tauri::utils::platform::bundle_type(), Some(BundleType::Deb | BundleType::Rpm));
+                if packaged {
+                    owner.0.get().diag("installed from a system package, the menu entry is the package's");
+                }
+                if let (false, Some(exe), Some(home)) = (packaged, exe, std::env::var_os("HOME")) {
                     let icon = app_root(app).join("build").join("icon.png");
                     let o = owner.0.get().clone();
                     mm_core::deep_links::install_desktop_entry(

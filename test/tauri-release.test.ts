@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
-import { electronFeed, tauriFeed, releaseUrl, SETUP, APPIMAGE } from '../tools/release/tauri-release.mjs';
+import { electronFeed, tauriFeed, releaseUrl, SETUP, APPIMAGE, DEB, RPM } from '../tools/release/tauri-release.mjs';
 
 test('latest.yml names the Tauri installer the way electron-builder names its own', () => {
   const bytes = Buffer.from('an installer');
@@ -28,7 +28,7 @@ test('latest.json carries each signed platform, pointing at its file on the rele
     version: '3.9.0',
     notes: 'What changed',
     date: '2026-11-14T10:00:00.000Z',
-    signatures: { [SETUP]: 'sig-windows\n', [APPIMAGE]: 'sig-linux' },
+    signatures: { [SETUP]: 'sig-windows\n', [APPIMAGE]: 'sig-linux', [DEB]: 'sig-deb', [RPM]: 'sig-rpm' },
     url: (file) => releaseUrl('3.9.0', file),
   }));
   assert.deepEqual(feed, {
@@ -38,6 +38,9 @@ test('latest.json carries each signed platform, pointing at its file on the rele
     platforms: {
       'windows-x86_64': { signature: 'sig-windows', url: `https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v3.9.0/${SETUP}` },
       'linux-x86_64': { signature: 'sig-linux', url: `https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v3.9.0/${APPIMAGE}` },
+      // an installed .deb or .rpm finds its own package, not the AppImage the plugin falls back to
+      'linux-x86_64-deb': { signature: 'sig-deb', url: `https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v3.9.0/${DEB}` },
+      'linux-x86_64-rpm': { signature: 'sig-rpm', url: `https://github.com/dota2modmanager/dota2-mod-manager/releases/download/v3.9.0/${RPM}` },
     },
   });
 });

@@ -264,7 +264,10 @@ jobs:
         env:
           UPLOADER_APP_TOKEN: ${{ secrets.UPLOADER_APP_TOKEN }}
 
-      - name: Build and upload the AppImage to the draft
+      # The AppImage, and the .deb and .rpm that run on the distribution's own WebKitGTK (#797).
+      # The updater installs a package update with pkexec, and finds it in latest.json under
+      # linux-x86_64-deb and -rpm (tools/release/tauri-release.mjs).
+      - name: Build and upload the AppImage and the system packages to the draft
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
@@ -273,13 +276,20 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: |
           set -euo pipefail
-          npx tauri build --bundles appimage --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          npx tauri build --bundles appimage,deb,rpm --config '{"bundle":{"createUpdaterArtifacts":true}}'
+          # the updater checks every package it installs against this key, whether or not the
+          # bundler signed the package itself
+          for pkg in target/release/bundle/deb/*.deb target/release/bundle/rpm/*.rpm; do
+            [ -f "$pkg.sig" ] || npx tauri signer sign "$pkg"
+          done
           (cd "$RUNNER_TEMP" && "$GITHUB_WORKSPACE"/target/release/bundle/appimage/*.AppImage --appimage-extract > /dev/null)
           node tools/release/glibc-floor.mjs "$RUNNER_TEMP/squashfs-root" 2.39
           node tools/release/tauri-release.mjs linux dist "${TAG#v}"
           cat dist/latest-linux.yml
           gh release upload "$TAG" --repo "$REPO" --clobber \
-            dist/Dota-2-Mod-Manager.AppImage dist/Dota-2-Mod-Manager.AppImage.sig dist/latest-linux.yml
+            dist/Dota-2-Mod-Manager.AppImage dist/Dota-2-Mod-Manager.AppImage.sig dist/latest-linux.yml \
+            dist/Dota-2-Mod-Manager-amd64.deb dist/Dota-2-Mod-Manager-amd64.deb.sig \
+            dist/Dota-2-Mod-Manager-x86_64.rpm dist/Dota-2-Mod-Manager-x86_64.rpm.sig
 
       # The same look the Windows job takes at itself. latest-linux.yml is what an installed
       # AppImage reads to find out there is a newer one. The tag endpoint does not return a
@@ -291,11 +301,13 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           names=$(gh api "repos/$REPO/releases" --jq ".[] | select(.tag_name == \"$TAG\") | .assets[].name")
-          for want in Dota-2-Mod-Manager.AppImage Dota-2-Mod-Manager.AppImage.sig latest-linux.yml; do
+          for want in Dota-2-Mod-Manager.AppImage Dota-2-Mod-Manager.AppImage.sig latest-linux.yml \
+              Dota-2-Mod-Manager-amd64.deb Dota-2-Mod-Manager-amd64.deb.sig \
+              Dota-2-Mod-Manager-x86_64.rpm Dota-2-Mod-Manager-x86_64.rpm.sig; do
             echo "$names" | grep -qx "$want" \
               || { echo "::error::$want is missing from the draft"; exit 1; }
           done
-          echo "the AppImage and its update file are on the draft"
+          echo "the AppImage, the packages and their update files are on the draft"
 
   # Every file on the draft, fingerprinted and signed for, before anything tries it.
   #

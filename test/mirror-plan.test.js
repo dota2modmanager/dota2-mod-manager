@@ -109,6 +109,8 @@ test('a beta shares the folder with the release, and never its file names', () =
     'Dota-2-Mod-Manager-Setup-beta.exe',
     'Dota-2-Mod-Manager-Portable-beta.exe',
     'Dota-2-Mod-Manager-beta.AppImage',
+    'Dota-2-Mod-Manager-amd64-beta.deb',
+    'Dota-2-Mod-Manager-x86_64-beta.rpm',
   ]);
   assert.equal(beta.uploads.filter((u) => u.retarget).length, 2, 'both feeds have to ask for the -beta copies');
   assert.equal(beta.uploads.find((u) => u.name === 'beta.json').json, 'beta', 'and so does the Tauri one');
@@ -130,12 +132,17 @@ test('a release carries the beta feed too, and it costs two files rather than a 
     'Dota-2-Mod-Manager-Setup.exe -> Dota-2-Mod-Manager-Setup.exe',
     'Dota-2-Mod-Manager-Portable.exe -> Dota-2-Mod-Manager-Portable.exe',
     'Dota-2-Mod-Manager.AppImage -> Dota-2-Mod-Manager.AppImage',
+    'Dota-2-Mod-Manager-amd64.deb -> Dota-2-Mod-Manager-amd64.deb',
+    'Dota-2-Mod-Manager-x86_64.rpm -> Dota-2-Mod-Manager-x86_64.rpm',
     'latest.yml -> beta.yml',
     'latest-linux.yml -> beta-linux.yml',
     'latest.json -> latest.json',
     'latest.json -> beta.json',
   ]);
   assert.equal(out.uploads.filter((u) => /\.(exe|AppImage)$/.test(u.name)).length, 3, 'one copy of each binary, not two');
+  // a release from before the packages has none, and the mirror goes on without them
+  assert.deepEqual(out.uploads.filter((u) => u.optional).map((u) => u.name), ['Dota-2-Mod-Manager-amd64.deb', 'Dota-2-Mod-Manager-x86_64.rpm']);
+  assert.ok(releasePlan('2.7.0-beta.1').uploads.some((u) => u.name === 'Dota-2-Mod-Manager-amd64-beta.deb' && u.optional));
 });
 
 test("a beta's feed asks for the beta's own files, and the checksums are left alone", () => {

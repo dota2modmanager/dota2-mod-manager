@@ -16,7 +16,7 @@
  * Usage:
  *   node tools/release/tauri-release.mjs windows <dist> <version>   Setup.exe and its .sig, Portable.exe, latest.yml, portable.yml
  *   node tools/release/tauri-release.mjs windows-feeds <dist> <version>  latest.yml and portable.yml again, for exes signed after the build
- *   node tools/release/tauri-release.mjs linux <dist> <version>     the AppImage and its .sig, latest-linux.yml
+ *   node tools/release/tauri-release.mjs linux <dist> <version>     the AppImage, the .deb and the .rpm with their .sig files, latest-linux.yml
  *   node tools/release/tauri-release.mjs feeds <dir> <version> [notes.md]
  *                                                           latest.json and beta.json from the .sig files in <dir>
  */
@@ -33,8 +33,16 @@ export const REPO = 'dota2modmanager/dota2-mod-manager';
 export const SETUP = 'Dota-2-Mod-Manager-Setup.exe';
 export const PORTABLE = portableManifest.FILE;
 export const APPIMAGE = 'Dota-2-Mod-Manager.AppImage';
-/** tauri-plugin-updater's names for the two platforms a release carries */
-const PLATFORMS = { [SETUP]: 'windows-x86_64', [APPIMAGE]: 'linux-x86_64' };
+/* The system packages: they run on the distribution's own WebKitGTK and GTK, where the AppImage
+ * carries Ubuntu's and mixes them with the host's (#761, #797). */
+export const DEB = 'Dota-2-Mod-Manager-amd64.deb';
+export const RPM = 'Dota-2-Mod-Manager-x86_64.rpm';
+/**
+ * tauri-plugin-updater's names for what a release carries. The plugin looks for
+ * `{os}-{arch}-{bundle}` first and `{os}-{arch}` after it, so an installed .deb has to find its own
+ * entry: given the AppImage it refuses the file as not a .deb, and never updates.
+ */
+const PLATFORMS = { [SETUP]: 'windows-x86_64', [APPIMAGE]: 'linux-x86_64', [DEB]: 'linux-x86_64-deb', [RPM]: 'linux-x86_64-rpm' };
 
 const root = path.resolve(import.meta.dirname, '../..');
 
@@ -146,11 +154,13 @@ function windowsFeeds(dist, version) {
 }
 
 function linux(dist, version) {
-  const bundle = path.join(root, 'target', 'release', 'bundle', 'appimage');
-  const image = only(bundle, '.AppImage');
-  copy(image, path.join(dist, APPIMAGE));
-  copy(`${image}.sig`, path.join(dist, `${APPIMAGE}.sig`));
-  verified(path.join(dist, APPIMAGE), path.join(dist, `${APPIMAGE}.sig`));
+  const bundles = path.join(root, 'target', 'release', 'bundle');
+  const files = [[only(path.join(bundles, 'appimage'), '.AppImage'), APPIMAGE], [only(path.join(bundles, 'deb'), '.deb'), DEB], [only(path.join(bundles, 'rpm'), '.rpm'), RPM]];
+  for (const [built, name] of files) {
+    copy(built, path.join(dist, name));
+    copy(`${built}.sig`, path.join(dist, `${name}.sig`));
+    verified(path.join(dist, name), path.join(dist, `${name}.sig`));
+  }
   fs.writeFileSync(path.join(dist, 'latest-linux.yml'), electronFeed({ file: APPIMAGE, bytes: fs.readFileSync(path.join(dist, APPIMAGE)), version }));
 }
 
