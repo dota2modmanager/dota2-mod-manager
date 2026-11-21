@@ -545,6 +545,16 @@ All three are accepted in `osv-scanner.toml` until 2027-01-08.
 
 *Check:* `osv-scanner.toml`, `cargo tree -i zbus@5 --target all`.
 
+### chrono in the lockfile, built by nothing
+
+`chrono` (RUSTSEC-2026-0543) is unmaintained, with no known flaw. The core used it for five dates
+and now uses `jiff`. It stays in `Cargo.lock` only as an optional dependency of `serde_with`, which
+`tauri-utils` brings with its default features: no build of the app compiles it.
+
+Accepted in `osv-scanner.toml` until 2027-01-08.
+
+*Check:* `cargo tree -i chrono --target all -e all` prints nothing.
+
 ### The installer is not signed
 
 Windows SmartScreen says "unknown publisher" on first run. SignPath Foundation, which signs open
