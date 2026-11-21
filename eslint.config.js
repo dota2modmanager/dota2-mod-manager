@@ -115,8 +115,8 @@ module.exports = [
     rules,
   },
   {
-    // the preset bot runs in Cloudflare's runtime, which has the web's streams as globals
-    files: ['tools/catalog/preset-bot/**/*.mjs'],
+    // the preset bot and the presets worker run in Cloudflare's runtime, which has the web's streams as globals
+    files: ['tools/catalog/preset-bot/**/*.mjs', 'tools/ops/presets-worker/**/*.mjs'],
     languageOptions: { ecmaVersion: 2024, sourceType: 'module', globals: { ...NODE, DecompressionStream: 'readonly' } },
     rules,
   },

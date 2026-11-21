@@ -199,3 +199,76 @@
 }
 .preset-thumb-absent .ms { font-size: var(--icon-md); }
 .preset-name-absent { color: var(--text-faint); text-decoration: line-through; }
+
+/* ---------- community presets (presets/CommunitySection.tsx) ---------- */
+.community { margin-top: var(--space-5); }
+.community-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.community-head .group-title { margin: 0; }
+.community-account { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.community-user { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text-muted); }
+.community-user .ms { font-size: 15px; color: var(--primary-soft); }
+.community-intro { font-size: 12.5px; color: var(--text-muted); margin-bottom: var(--space-3); }
+.community-tools { display: flex; gap: 10px; align-items: center; margin-bottom: var(--space-3); flex-wrap: wrap; }
+.community-search { flex: 1; min-width: 220px; max-width: 460px; }
+.community-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.community-by { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.community-by .ms { font-size: 14px; }
+.community-votes { display: inline-flex; gap: 2px; }
+.community-thumb {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: none;
+  color: var(--text-muted); font-size: 12px; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.community-thumb .ms { font-size: 15px; }
+.community-thumb:hover:not(:disabled) { color: var(--text); border-color: var(--border-strong); }
+.community-thumb.on { color: var(--primary); border-color: var(--primary); background: var(--primary-dim); }
+.community-thumb.down.on { color: var(--danger); border-color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.community-thumb:disabled { cursor: default; opacity: 0.6; }
+.community-more { margin: var(--space-3) auto 0; display: flex; gap: 6px; }
+.community-empty { margin-top: var(--space-3); }
+
+/* ---------- what is inside, as pictures (presets/PresetInside.tsx) ---------- */
+.inside { display: flex; flex-direction: column; gap: 14px; margin-top: 10px; }
+.inside-group .preset-group-head { margin-bottom: 8px; }
+/* a catalog mod: its cover and its name under it */
+.inside-mods { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.inside-mod { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.inside-mod-pic {
+  width: 100%; aspect-ratio: 16 / 10; border-radius: var(--radius-xs); background: var(--bg-elev);
+  overflow: hidden; display: flex; align-items: center; justify-content: center; object-fit: cover;
+}
+.inside-mod-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.inside-mod-name { font-size: 11.5px; color: var(--text-muted); line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* a hero: portrait and name, then their items in the order they sit on the body */
+.inside-heroes { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+.inside-hero { background: var(--bg-elev); border-radius: var(--radius-sm); padding: 8px 10px; min-width: 0; }
+.inside-hero-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.inside-hero-pic {
+  width: 44px; height: 25px; border-radius: 4px; object-fit: cover; flex: none;
+  display: inline-flex; align-items: center; justify-content: center; background: var(--surface); color: var(--text-faint);
+}
+.inside-hero-pic .ms { font-size: 15px; }
+.inside-hero-name { font-weight: 600; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inside-items { display: flex; flex-wrap: wrap; gap: 4px; }
+.inside-item { width: 44px; }
+.inside-item-pic {
+  width: 44px; height: 30px; border-radius: 4px; background: var(--surface); overflow: hidden;
+  display: flex; align-items: center; justify-content: center; object-fit: cover;
+}
+.inside-item-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.inside-item-pic .thumb-glyph, .inside-mod-pic .thumb-glyph { font-size: 16px; color: var(--text-faint); }
+/* the item's name is its tooltip: forty names under forty icons is the wall this replaced */
+.inside-item-name { display: none; }
+.is-absent { opacity: 0.45; }
+.is-absent .inside-mod-name { text-decoration: line-through; }
+.inside-more { margin-top: 8px; }
+/* the share window's first way: publish to the community presets, here in the app */
+.share-app textarea.input { width: 100%; resize: vertical; min-height: 52px; font: inherit; font-size: 13px; }
+.share-app .btn { margin-top: var(--space-2); }
+.inside-cats { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+.inside-cats .inside-mods { grid-template-columns: repeat(auto-fill, 112px); }
+.inside-cats .inside-group { flex: 0 1 auto; max-width: 100%; }
+.community-table { font-family: var(--font-mono, monospace); font-size: 11px; }

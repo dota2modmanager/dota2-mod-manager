@@ -89,7 +89,8 @@ pub(crate) use owner::{
     owner_studios, owner_support, owner_tools,
 };
 pub(crate) use presets::{
-    preset_install, preset_link, preset_plan, preset_share, presets_service, ready_presets, ready_presets_format,
+    community_presets, preset_install, preset_link, preset_plan, preset_share, presets_api, presets_service,
+    ready_presets, ready_presets_format,
 };
 pub(crate) use schema::{
     build_undo, item_files, item_files_service, item_in_body, item_replacement, schema_build, schema_cosmetics,

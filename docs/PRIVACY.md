@@ -64,6 +64,8 @@ the host it is sent to.
 | `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `crates/mm-core/src/game/game_icons.rs` |
 | `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `crates/mm-core/src/catalog/download_stats.rs` |
 | `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `crates/mm-core/src/app/discord_auth.rs` |
+| `raw.githubusercontent.com` (the `community-presets` branch), or a mirror above | The list of community presets, when the Presets screen is open | `crates/mm-core/src/presets/community_presets.rs` |
+| `presets.dota2modmanager.com` | **Only** if you sign in to the community presets, publish one or vote | `crates/mm-core/src/presets/presets_api.rs` |
 
 **A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
 default. When it is set, the catalog, the fingerprint map, mod archives, the remote config, the
@@ -99,6 +101,20 @@ internet. Discord then shows it to the people who can see your profile, the way 
 you play. It is on unless you switch it off in Settings, and switching it off closes the
 connection. The code is `crates/mm-core/src/app/discord_presence.rs`.
 
+## Community presets
+
+Looking at and installing community presets needs no account and sends nothing about you: the
+list is one public file. Publishing and voting need the Discord sign-in, and then:
+
+- The Discord token goes to the presets service (`presets.dota2modmanager.com`) once, which asks
+  Discord who you are and drops it. The service keeps nothing between requests.
+- What becomes **public**, in the `community-presets` branch of the repository: each preset you
+  publish with its name, description and your Discord display name, and your votes. You are known
+  there by a keyed hash of your Discord id, the same in every file, and not by the id itself.
+- What the app keeps in `community-session.json`: the service's session (a month long), your
+  display name and your votes. Signing out of the community presets deletes it.
+- Your own preset can be taken down from the app at any time; git history keeps earlier versions.
+
 ## Preset links
 
 A shared preset link carries the preset after the `#` in the address. Browsers never send that
@@ -118,6 +134,7 @@ Nothing leaves that folder unless you send it.
 |---|---|
 | `settings.json` | Your preferences: game path, language, scale, theme, favourites, and the Discord name if you signed in |
 | `manifest.json` | Which mods you installed and which presets you saved |
+| `community-presets.json`, `community-session.json` | The last list of community presets, and your session with the presets service if you signed in to it |
 | `downloads/` | The mod archives you downloaded, kept so a reinstall needs no network |
 | `logs/` | What the app did, on your disk only |
 | `catalog-cache/`, `icons/`, `fingerprints.json`, `download-counts.json` | Copies of public data, so the app works offline |
