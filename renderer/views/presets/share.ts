@@ -105,13 +105,14 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null, pic
         <div class="share-way">
           <div class="share-way-head"><span class="ms">link</span>${L`Ссылка`}</div>
           ${link?.web ? `
-            <div class="share-copy">
-              <input class="input mono" id="shareUrl" readonly value="${esc(link.web)}">
-              <button class="btn btn-primary" id="shareCopyBtn"><span class="ms">content_copy</span>${L`Скопировать`}</button>
-            </div>
-            <div class="share-hint">${skipped.length
-              ? L`Донесёт ${link.count} из каталога. Свои моды (${skipped.length}) в неё не влезут — для них файл.`
-              : L`Открывается в менеджере и ставит моды из каталога.`}</div>` : `
+            <button class="btn btn-primary" id="shareCopyBtn"><span class="ms">content_copy</span>${L`Скопировать ссылку`}</button>
+            <div class="share-hint">${L`Открывается в менеджере и ставит моды из каталога: ${link.count} ${plural(link.count, 'мод', 'мода', 'модов')}.`}</div>
+            ${skipped.length ? `
+              <div class="share-warn">
+                <div><span class="ms">warning</span>${L`Этих модов нет в каталоге, ссылка их не донесёт:`}</div>
+                <div class="share-warn-names">${skipped.slice(0, 8).map((n) => esc(String(n))).join(' · ')}${skipped.length > 8 ? ` ${L`и ещё ${skipped.length - 8}`}` : ''}</div>
+                <div class="share-hint">${L`Свой мод сначала отправь в каталог: «Мастерская» → «Кабинет автора». После модерации ссылка донесёт и его. Или сохрани пресет файлом.`}</div>
+              </div>` : ''}` : `
             <div class="share-hint">${L`В пресете только свои моды — ссылка их не донесёт.`}</div>`}
         </div>
 
@@ -140,8 +141,8 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null, pic
     overlay.querySelector('[data-c="no"]')?.addEventListener('click', () => done(null));
     overlay.querySelector('#shareFileBtn')?.addEventListener('click', () => done('file'));
     overlay.querySelector('#shareCopyBtn')?.addEventListener('click', (e) => {
+      // the address itself is hundreds of characters of code: copied, never shown
       navigator.clipboard.writeText(link?.web || '');
-      (overlay.querySelector('#shareUrl') as HTMLInputElement).select();
       flashCopied(e.currentTarget as CopyButton);
     });
     overlay.querySelector('#sharePicBtn')?.addEventListener('click', async (e) => {
