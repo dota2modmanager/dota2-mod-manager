@@ -356,5 +356,14 @@
 ["Общий пак", "Shared pack"],
 ["Матч, пинги и чат", "Match, pings and chat"],
 ["Меню и лобби", "Menu and lobby"],
-["Руны, курьер и общие звуки", "Runes, courier and other sounds"]
+["Руны, курьер и общие звуки", "Runes, courier and other sounds"],
+["Вход отменён", "Sign-in cancelled"],
+["Войти могут только участники сервера D2PFX в Discord", "Only members of the D2PFX Discord server can sign in"],
+["Вход не удался ({0})", "Sign-in failed ({0})"],
+["Сначала войди через Discord", "Sign in with Discord first"],
+["Вход истёк: войди через Discord ещё раз", "Your sign-in has expired: sign in with Discord again"],
+["Сервис каталога ответил {0} {1}", "The catalog service answered {0} {1}"],
+["Сервис каталога выдал не тот токен", "The catalog service returned an invalid token"],
+["Такое имя сервис не примет", "The service would not accept that name"],
+["Лайки пока выключены", "Likes are not switched on yet"]
 ]

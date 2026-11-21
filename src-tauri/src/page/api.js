@@ -262,6 +262,11 @@
       signIn: () => mm.invoke('account:signIn'),
       signOut: () => mm.invoke('account:signOut'),
     },
+    // likes and follows, through the catalog's account service (crates/mm-core/src/catalog/social.rs)
+    social: {
+      state: () => mm.invoke('social:state'),
+      mark: (kind, name, on) => mm.invoke('social:mark', kind, name, on),
+    },
     // the beta channel: shown only to an account the signed list names (crates/mm-core/src/catalog/beta.rs)
     beta: {
       state: () => mm.invoke('beta:state'),

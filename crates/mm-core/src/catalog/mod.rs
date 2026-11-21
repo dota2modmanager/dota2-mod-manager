@@ -17,6 +17,7 @@ pub mod net_fetch;
 pub mod net_mirrors;
 pub mod preview_cache;
 pub mod remote_config;
+pub mod social;
 pub mod wiki_icons;
 
 use std::path::{Path, PathBuf};

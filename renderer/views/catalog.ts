@@ -31,7 +31,7 @@ import { catalogConstants } from '../catalog/data.ts';
 import type { Mod } from '../catalog/types.ts';
 import { pickStyle } from '../catalog/looks.ts';
 import type { ModLink } from '../api/content.ts';
-import { buildModIndex, cosmeticSlotList, favoriteCosmetics, favoriteMods, findLinkedMod, isItemCosmeticSlot, visibleCategories } from './catalog/lists.ts';
+import { buildModIndex, categoryMods, cosmeticSlotList, favoriteCosmetics, favoriteMods, findLinkedMod, isItemCosmeticSlot, visibleCategories } from './catalog/lists.ts';
 import { renderAuthor, renderCategory, renderCosmeticCategory, renderFavorites, renderHome, renderRecent, renderSearchResults } from './catalog/screens.ts';
 import { AUTHOR_PREFIX } from '../catalog/author-mods.ts';
 import { openModWindow } from './catalog/mod-window.ts';
@@ -47,6 +47,7 @@ import { openDecor } from './catalog/decor.ts';
 import { openCreator } from './creator.ts';
 import { remember, screen, startFilters, view } from './catalog/state.ts';
 import { onDownloadCounts } from '../core/download-counts.ts';
+import { tellFollowNews } from '../catalog/follow-news.ts';
 
 // one pane, two tabs (views/catalog/sections.ts)
 registerView('catalog', () => { enterSection('catalog'); return renderCatalog(); });
@@ -272,6 +273,16 @@ function showNoGameBanner(banners: HTMLElement): void {
 // ---------- loading ----------
 
 const CATALOG_MAX_AGE = 30 * 60 * 1000;
+// the new mods of followed authors are told once a start, not after every refresh
+let followNewsTold = false;
+
+/** An author's page, from anywhere in the window. */
+async function openAuthorPage(name: string): Promise<void> {
+  if (state.view !== 'catalog') await switchView('catalog');
+  state.activeCategory = AUTHOR_PREFIX + name;
+  view.filters = startFilters();
+  renderCatalog();
+}
 
 export async function loadCatalog(force = false): Promise<void> {
   if (force) toast(L`Обновляю каталог…`);
@@ -282,6 +293,11 @@ export async function loadCatalog(force = false): Promise<void> {
   if (!cat.error) buildModIndex();
   if (catalogOnShow()) renderCatalog();
   window.dispatchEvent(new Event('mm:catalog')); // Home shows its newest mods (views/home.ts)
+  if (!cat.error && !followNewsTold) {
+    followNewsTold = true;
+    const all = visibleCategories().flatMap((c) => categoryMods(c.id).map((m) => ({ ...m, _cat: c.id }) as Mod));
+    void tellFollowNews(all, (name) => void openAuthorPage(name));
+  }
   if (!cat.error && waitingLink) {
     const link = waitingLink;
     waitingLink = null;

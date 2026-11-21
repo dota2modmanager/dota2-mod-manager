@@ -1,0 +1,62 @@
+/* Likes and follows (core/social.ts). The heart beside a mod's name is the user's own favourite and
+   wears the rose accent; a like is public and counted, so it wears the theme's lavender and carries
+   its number, and the two never read as one button drawn twice. */
+
+/* the window's like: a pill beside the heart, as tall as it */
+.like-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 34px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+}
+.like-btn .ms { font-size: 18px; transition: transform var(--dur-base) var(--ease-spring); }
+.like-btn:hover { color: var(--primary); border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+.like-btn.on { color: var(--primary); background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+.like-btn.on .ms { font-variation-settings: 'FILL' 1; }
+.like-btn:active .ms { transform: scale(0.86); }
+
+/* on a card: how many liked it, as quiet as how many downloaded it, side by side at the far end */
+.like-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+.like-count .ms { font-size: 13px; }
+.like-count.on { color: var(--primary); }
+.like-count.on .ms { font-variation-settings: 'FILL' 1; }
+.like-count + .dl-count { margin-left: var(--space-2); }
+/* both numbers stay on the line: the category gives up its end to them instead */
+.card-meta:has(.like-count) { flex-wrap: nowrap; }
+.card-meta:has(.like-count) > :not(.like-count):not(.dl-count) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-meta:has(.like-count) > .like-count, .card-meta:has(.like-count) > .dl-count { flex-shrink: 0; }
+
+/* following an author: the creator block's small button, lit while it is on */
+.follow-btn.on { color: var(--primary); background: var(--primary-dim); border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
+.follow-btn.on .ms { font-variation-settings: 'FILL' 1; }
+.follow-btn .follow-n { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.follow-btn.on .follow-n { color: inherit; opacity: 0.8; }
+.view-header .follow-btn { margin-left: auto; }
+/* the creator block: who and the follow on the first line, the ways to their mods under them.
+   Without a follow button the ways stay on the one line, as before */
+.mod-creator-actions { display: contents; }
+.mod-creator:has(.follow-btn) { flex-wrap: wrap; row-gap: var(--space-2); }
+.mod-creator:has(.follow-btn) .mod-creator-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); flex-basis: 100%; padding-left: calc(40px + var(--space-3)); }
+.mod-creator:has(.follow-btn) .mod-creator-actions:empty { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .like-btn .ms { transition: none; }
+  .like-btn:active .ms { transform: none; }
+}
