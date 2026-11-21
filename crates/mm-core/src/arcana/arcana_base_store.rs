@@ -289,10 +289,12 @@ impl BaseStore {
     }
 
     /// Bring a base down, or its newer version, once a run; whether the disk changed, for the
-    /// caller to build again.
+    /// caller to build again. Only the call that changed it says so: every build asks for its
+    /// bases, and a base that said "changed" to each of them built the table again forever
+    /// (reported 2026-11-21).
     pub fn want(&mut self, id: &str, fetch: Fetch, now: f64, log: &mut dyn FnMut(String)) -> bool {
-        if let Some(&known) = self.asked.get(id) {
-            return known;
+        if self.asked.contains_key(id) {
+            return false;
         }
         if self.failed_at.get(id).is_some_and(|&t| now - t < RETRY_MS) {
             return false;
@@ -311,6 +313,35 @@ impl BaseStore {
                 log(format!("arcana bases: {id} could not be brought down: {e}"));
                 false
             }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct Dir(PathBuf);
+    impl Drop for Dir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn a_base_that_landed_asks_for_one_build_not_one_after_every_build() {
+        let dir = Dir(std::env::temp_dir().join(format!("mm-bases-{}", std::process::id())));
+        let data = b"a model".to_vec();
+        let mut store = BaseStore::new(&dir.0);
+        let mut files = IndexMap::new();
+        files.insert("models/x.vmdl_c".to_string(), blob_sha(&data));
+        store.listing = Some(IndexMap::from([("base".to_string(), files)]));
+        let fetch = move |_: &str, _: bool| -> Result<Got, String> { Ok(Got { status: 200, body: data.clone() }) };
+        let mut log = |_: String| {};
+        assert!(store.want("base", &fetch, 0.0, &mut log), "the first build brings it down and builds again");
+        assert!(store.entries("base").is_some());
+        for _ in 0..3 {
+            assert!(!store.want("base", &fetch, 0.0, &mut log), "the builds after it ask for nothing more");
         }
     }
 }

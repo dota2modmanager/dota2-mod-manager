@@ -155,3 +155,39 @@ fn looks_on_the_real_table() {
         eprintln!("{hero}: {set}\n    {}", over.join(" | "));
     }
 }
+
+/// Axe's set, and an immortal weapon that goes on over the set's blade.
+const OVER: &[u8] = br#""items_game"
+{
+    "items"
+    {
+        "100" { "name" "Axe Default Head" "prefab" "default_item" "item_slot" "head" "model_player" "models/heroes/axe/axe_helm.vmdl" "used_by_heroes" { "npc_dota_hero_axe" "1" } }
+        "110" { "name" "Axe Default Weapon" "prefab" "default_item" "item_slot" "weapon" "model_player" "models/heroes/axe/axe_weapon.vmdl" "used_by_heroes" { "npc_dota_hero_axe" "1" } }
+        "200" { "name" "Horned Helm" "prefab" "wearable" "item_slot" "head" "model_player" "models/items/axe/horned/horned.vmdl" "used_by_heroes" { "npc_dota_hero_axe" "1" } }
+        "300" { "name" "Red Blade" "prefab" "wearable" "item_slot" "weapon" "model_player" "models/items/axe/red/red.vmdl" "used_by_heroes" { "npc_dota_hero_axe" "1" } }
+        "310" { "name" "Blade of the Immortal" "prefab" "wearable" "item_slot" "weapon"
+			"item_rarity" "immortal"
+            "model_player" "models/items/axe/imm/imm.vmdl" "used_by_heroes" { "npc_dota_hero_axe" "1" } }
+        "900" { "name" "Axe Red Set" "prefab" "bundle" "used_by_heroes" { "npc_dota_hero_axe" "1" } "bundle" { "Horned Helm" "1" "Red Blade" "1" } }
+    }
+}
+"#;
+
+#[test]
+fn a_set_piece_an_immortal_covers_is_not_left_in_my_mods() {
+    let (_dir, mut lib) = library("over");
+    let d = dress_all(&mut lib, OVER, true, 5).unwrap();
+    assert_eq!(d.immortals, 1);
+    let rows: Vec<String> = lib
+        .list()
+        .iter()
+        .filter(|r| str_of(r, "categoryId") == Some("cosmetic"))
+        .map(|r| crate::js::string(&r["itemId"]))
+        .collect();
+    // one row a slot: the set's blade under the immortal read as a second weapon
+    let mut sorted = rows.clone();
+    sorted.sort();
+    assert_eq!(sorted, ["200", "310"], "rows: {rows:?}");
+    assert_eq!(undress_all(&mut lib).unwrap(), 1);
+    assert!(lib.list().is_empty(), "the undo leaves nothing behind");
+}

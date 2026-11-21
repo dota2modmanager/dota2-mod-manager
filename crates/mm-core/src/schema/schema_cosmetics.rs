@@ -435,19 +435,29 @@ pub fn dress_all(lib: &mut Library, text: &[u8], keep_worn: bool, seed: u64) -> 
         }
         // what the button put on, so undress_all takes off that and nothing the player chose:
         // "new" for a row it made, true for one of the player's old picks it turned back on
+        let mut covered = Vec::new();
         let put: Vec<(Value, bool)> = lib
             .list()
             .iter()
             .filter_map(|r| {
                 let id = crate::js::string(&r["id"]);
                 let made = !existed.contains(&id);
-                // a row it made and then covered (a set's piece under the arcana) goes too
                 let mine = str_of(r, "categoryId") == Some("cosmetic")
                     && str_of(r, "slot").is_some_and(|s| s.starts_with(&prefix))
                     && (made || (on(r) && !before.contains(&id)));
+                // a row it made and covered at once (a set's piece under the arcana) is not kept:
+                // switched off beside the piece over it, it read as two items in one slot
+                // (reported 2026-11-21)
+                if mine && made && !on(r) {
+                    covered.push(r["id"].clone());
+                    return None;
+                }
                 mine.then(|| (r["id"].clone(), made))
             })
             .collect();
+        for id in covered {
+            lib.remove_record(&id, None).map_err(io)?;
+        }
         for (id, made) in put {
             let mark = if made { json!("new") } else { json!(true) };
             lib.update(&id, &json!({ DRESSED_ALL: mark }), None).map_err(io)?;
