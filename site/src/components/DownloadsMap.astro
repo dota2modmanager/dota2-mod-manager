@@ -1,0 +1,160 @@
+---
+/**
+ * The downloads map: where the catalog's mods are downloaded, by city and by country.
+ *
+ * Land is the grid baked by tools/land-grid.mjs: each row's runs become rectangles filled with
+ * a one-dot-per-cell pattern, so a few hundred rectangles draw some 6,700 dots. Cities sit on
+ * the same grid (equirectangular, one unit per cell), with the area of a dot following its
+ * downloads, so a city with four times the downloads has twice the radius. Every dot carries
+ * its name and count as a native tooltip; the lists below the map carry the same numbers for
+ * anyone who cannot hover, and for screen readers, which skip the picture.
+ */
+import land from '../data/land-grid.json';
+import { downloadsGeo } from '../lib/geo';
+import { geo as words } from '../i18n/geo';
+import type { Lang } from '../i18n/ui';
+
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const page = words[lang];
+const locale = lang === 'ru' ? 'ru-RU' : 'en-US';
+const nf = new Intl.NumberFormat(locale);
+const pr = new Intl.PluralRules(locale);
+const agree = (n: number, forms: readonly [string, string, string]) => {
+  const form = pr.select(n);
+  return `${nf.format(n)} ${form === 'one' ? forms[0] : form === 'few' ? forms[1] : forms[2]}`;
+};
+const regions = new Intl.DisplayNames([locale], { type: 'region' });
+const country = (code: string) => {
+  try {
+    return regions.of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
+
+const data = await downloadsGeo();
+const lead = page.lead
+  .replace('{total}', agree(data.total, page.words.downloads))
+  .replace('{countries}', agree(data.countries.length, page.words.countries))
+  .replace('{cities}', agree(data.cities.length, page.words.cities));
+const source = page.source.replaceAll('~/', lang === 'en' ? '/' : `/${lang}/`);
+
+const W = land.cols;
+const H = land.runs.length;
+/** Land runs inside a box of cells, as one path. */
+const landIn = (x0: number, y0: number, x1: number, y1: number) =>
+  land.runs
+    .map((row, y) =>
+      y < y0 || y >= y1
+        ? ''
+        : row
+            .map(([a, len]) => [Math.max(a, x0), Math.min(a + len, x1)])
+            .filter(([a, b]) => b > a)
+            .map(([a, b]) => `M${a} ${y}h${b - a}v1h-${b - a}z`)
+            .join(''),
+    )
+    .join('');
+
+const top = data.cities[0]?.downloads ?? 1;
+// biggest last, so a capital is drawn over the towns around it instead of under them
+const dots = data.cities
+  .map((c) => ({
+    ...c,
+    x: (c.lon + 180) / land.step,
+    y: (land.north - c.lat) / land.step,
+    r: 0.4 + 2.4 * Math.sqrt(c.downloads / top),
+  }))
+  .filter((d) => d.y >= 0 && d.y <= H)
+  .reverse();
+
+/* A phone gets the same map cut to Europe and Asia, where nearly every dot is: the whole world
+   at 360 pixels wide drew Moscow and Minsk as one smudge. The lists still name every country. */
+const cell = (lon: number, lat: number) => [(lon + 180) / land.step, (land.north - lat) / land.step];
+const [nx0, ny0] = cell(-12, 72);
+const [nx1, ny1] = cell(150, -12);
+/* Each map draws only what falls inside it: a dot past the edge of the phone's crop would be
+   clipped by the SVG, which the layout test rightly counts as cut off. */
+const within = (x0: number, y0: number, x1: number, y1: number) =>
+  dots.filter((d) => d.x - d.r >= x0 && d.x + d.r <= x1 && d.y - d.r >= y0 && d.y + d.r <= y1);
+const views = [
+  { cls: 'geo-wide', box: `0 0 ${W} ${H}`, pid: 'geo-cell', land: landIn(0, 0, W, H), dots: within(0, 0, W, H) },
+  {
+    cls: 'geo-near',
+    box: `${nx0} ${ny0} ${nx1 - nx0} ${ny1 - ny0}`,
+    pid: 'geo-cell-near',
+    land: landIn(nx0, ny0, nx1, ny1),
+    dots: within(nx0, ny0, nx1, ny1),
+  },
+];
+
+const SHOWN = 12;
+const countries = data.countries.slice(0, SHOWN);
+const rest = data.countries.slice(SHOWN);
+const restSum = rest.reduce((n, [, d]) => n + d, 0);
+const topCountry = countries[0]?.[1] ?? 1;
+const cities = data.cities.slice(0, SHOWN);
+// bars are SVG rather than a width in style="": the site's CSP refuses inline styles
+const share = (n: number, max: number) => Math.max(1, Math.round((n / max) * 100));
+---
+
+<article class="doc wrap geo">
+  <h1>{page.h1}</h1>
+  <p class="lead">{lead}</p>
+
+  <figure class="geo-map">
+    {views.map((v) => (
+      <svg class={v.cls} viewBox={v.box} role="img" aria-label={page.mapLabel} preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <pattern id={v.pid} class="geo-cell" width="1" height="1" patternUnits="userSpaceOnUse">
+            <circle cx="0.5" cy="0.5" r="0.3" />
+          </pattern>
+        </defs>
+        <path class="geo-land" d={v.land} fill={`url(#${v.pid})`} />
+        <g class="geo-dots">
+          {v.dots.map((d) => (
+            <circle cx={d.x.toFixed(2)} cy={d.y.toFixed(2)} r={d.r.toFixed(2)}>
+              <title>{`${d.name}, ${country(d.country)}: ${nf.format(d.downloads)}`}</title>
+            </circle>
+          ))}
+        </g>
+      </svg>
+    ))}
+  </figure>
+
+  <div class="geo-lists">
+    <section aria-labelledby="geo-countries">
+      <h2 id="geo-countries">{page.countriesHeading}</h2>
+      <ol class="geo-bars">
+        {countries.map(([code, n]) => (
+          <li>
+            <svg class="geo-bar" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><rect width={share(n, topCountry)} height="1" /></svg>
+            <span class="geo-name">{country(code)}</span>
+            <span class="geo-num">{nf.format(n)}</span>
+          </li>
+        ))}
+        {rest.length > 0 && (
+          <li class="geo-rest">
+            <span class="geo-name">{`${page.others} (${nf.format(rest.length)})`}</span>
+            <span class="geo-num">{nf.format(restSum)}</span>
+          </li>
+        )}
+      </ol>
+    </section>
+    <section aria-labelledby="geo-cities">
+      <h2 id="geo-cities">{page.citiesHeading}</h2>
+      <ol class="geo-bars geo-cities">
+        {cities.map((c) => (
+          <li>
+            <svg class="geo-bar" viewBox="0 0 100 1" preserveAspectRatio="none" aria-hidden="true"><rect width={share(c.downloads, top)} height="1" /></svg>
+            <span class="geo-name">{c.name}<small>{country(c.country)}</small></span>
+            <span class="geo-num">{nf.format(c.downloads)}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  </div>
+
+  <p class="geo-source" set:html={source} />
+  {data.snapshot && <p class="doc-note">{page.snapshot.replace('{date}', data.snapshot)}</p>}
+</article>

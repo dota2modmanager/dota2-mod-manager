@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import DownloadsMap from '../../components/DownloadsMap.astro';
+import { geo } from '../../i18n/geo';
+
+const page = geo.ru;
+---
+
+<Base title={page.title} description={page.description} path="/map/">
+  <DownloadsMap lang="ru" />
+</Base>

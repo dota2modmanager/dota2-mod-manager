@@ -40,6 +40,9 @@ the catalog's author runs as a Cloudflare Worker, the same one the catalog site 
   numbers still come down.
 - **What the counter sees.** The key above, and what any host sees of any request, your IP
   among it. What the Worker keeps is up to the catalog's author; the app sends it nothing more.
+  It publishes downloads totalled by country and by city (Cloudflare places each request), with
+  no address or key in those totals; the site's [downloads map](https://dota2modmanager.com/map/)
+  draws them.
 - **If it is down.** Nothing changes: an install never waits for the counter, and a request
   that fails is dropped, not retried.
 
