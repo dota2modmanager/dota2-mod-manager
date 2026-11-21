@@ -354,12 +354,15 @@ mod tests {
             crate::js::string(&made["id"])
         };
         let map = add(json!({ "map": ["dusk"] }));
-        let axe = add(json!({ "sounds": "axe", "edits": [] }));
-        add(json!({ "sounds": "lina", "edits": [] }));
+        let axe = add(json!({ "sounds": "axe", "edits": [], "rule": 2 }));
+        add(json!({ "sounds": "lina", "edits": [], "rule": 2 }));
+        // built by the old rule, with the events file in the pak: owed at the next update, reached or not
+        let old = add(json!({ "sounds": "pudge", "edits": [] }));
         assert_eq!(super::MapMake::due(&lib, &[map.clone(), axe.clone()]), Some(map.clone()));
         assert_eq!(super::MapMake::due(&lib, std::slice::from_ref(&axe)), None);
-        assert_eq!(AbilitySoundsService::due(&lib, &[map, axe.clone()]), vec![(axe, "axe".to_string())]);
-        assert!(AbilitySoundsService::due(&lib, &[]).is_empty());
+        let pudge = (old, "pudge".to_string());
+        assert_eq!(AbilitySoundsService::due(&lib, &[map, axe.clone()]), vec![(axe, "axe".to_string()), pudge.clone()]);
+        assert_eq!(AbilitySoundsService::due(&lib, &[]), vec![pudge]);
         let _ = std::fs::remove_dir_all(ud);
     }
 

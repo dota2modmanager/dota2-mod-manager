@@ -45,6 +45,7 @@ export const eventLabel = (name: string) => name.replace(/^Hero_[A-Za-z]+\./, ''
 export function SoundModal({ m, actions }: { m: SoundModalModel; actions: SoundModalActions }) {
   const q = m.filter.trim().toLowerCase();
   const shown = m.events.filter((e) => !q || e.name.toLowerCase().includes(q));
+  const shares = m.events.find((e) => e.name === m.event)?.shares || 0;
   const has = new Set(m.edits.map((e) => e.event));
   return (
     <div className="modal-body sound-own">
@@ -89,6 +90,9 @@ export function SoundModal({ m, actions }: { m: SoundModalModel; actions: SoundM
             <button className={`style-btn ${m.mode === 'replace' ? 'active' : ''}`} onClick={() => actions.mode('replace')}>{L`Вместо звука игры`}</button>
             <button className={`style-btn ${m.mode === 'layer' ? 'active' : ''}`} onClick={() => actions.mode('layer')}>{L`Поверх звука игры`}</button>
           </div>
+          {m.mode === 'replace' && shares > 0 && (
+            <p className="text-meta sound-shares">{L`Этот файл игры звучит ещё в событиях: ${shares}. Новый звук заменит его и там`}</p>
+          )}
           <label className="sound-volume">
             <span>{L`Громкость`} {Math.round(m.volume * 100)}%</span>
             <input type="range" className="scale-range" min={5} max={100} step={5} value={Math.round(m.volume * 100)} onChange={(e) => actions.volume(Number(e.currentTarget.value) / 100)} />
