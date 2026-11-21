@@ -258,7 +258,7 @@ fn main() {
     let portable = std::env::current_exe()
         .ok()
         .filter(|_| !cfg!(debug_assertions))
-        .and_then(|exe| mm_core::portable_update::portable_dir_of(&exe));
+        .and_then(|exe| mm_core::portable_update::portable_dir_of(&exe, cfg!(windows)));
     mm_core::portable_update::set_portable_dir(portable.clone());
 
     let context = tauri::generate_context!();
