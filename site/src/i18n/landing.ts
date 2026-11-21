@@ -27,7 +27,10 @@ export interface Landing {
   /** The download button and the three files behind it. */
   dlInstaller: { title: string; note: string };
   dlPortable: { title: string; note: string };
-  dlLinux: { title: string; note: string };
+  dlLinux: { title: string };
+  dlDeb: { title: string; note: string };
+  dlRpm: { title: string; note: string };
+  dlAppImage: { title: string; note: string };
   dlAll: string;
   dlMirror: string;
   /** Under each number. {word} is filled from statWords so the noun matches the count. */
@@ -146,7 +149,10 @@ export const landing: Record<'en' | 'ru', Landing> = {
     download: 'Download',
     dlInstaller: { title: 'Windows installer', note: 'Installs, adds a shortcut, updates itself' },
     dlPortable: { title: 'Windows portable', note: 'One file, runs from anywhere, nothing installed' },
-    dlLinux: { title: 'Linux AppImage', note: 'chmod +x and run it' },
+    dlLinux: { title: 'Linux' },
+    dlDeb: { title: '.deb', note: 'Ubuntu, Debian' },
+    dlRpm: { title: '.rpm', note: 'Fedora, openSUSE' },
+    dlAppImage: { title: 'AppImage', note: 'any other' },
     dlAll: 'All files, checksums and release notes on GitHub',
     dlMirror: 'GitHub down? Our mirror:',
     source: 'Source code',
@@ -302,7 +308,10 @@ export const landing: Record<'en' | 'ru', Landing> = {
     download: 'Скачать',
     dlInstaller: { title: 'Windows, установщик', note: 'Поставит, сделает ярлык, обновляется сам' },
     dlPortable: { title: 'Windows, портативная', note: 'Один файл, запускается откуда угодно' },
-    dlLinux: { title: 'Linux, AppImage', note: 'chmod +x и запускай' },
+    dlLinux: { title: 'Linux' },
+    dlDeb: { title: '.deb', note: 'Ubuntu, Debian' },
+    dlRpm: { title: '.rpm', note: 'Fedora, openSUSE' },
+    dlAppImage: { title: 'AppImage', note: 'любой другой' },
     dlAll: 'Все файлы, хеши и список изменений на GitHub',
     dlMirror: 'GitHub лежит? Наше зеркало:',
     source: 'Исходный код',

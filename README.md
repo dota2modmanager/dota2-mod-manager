@@ -99,7 +99,7 @@ The mod manager and modding toolkit for Dota 2: install mods from the community 
 <tr><td><b>Combined packs</b></td><td>Merge several mods into one pak slot, and take them apart again</td></tr>
 <tr><td><b>Your own files</b></td><td>Import a <code>.vpk</code>, or adopt what somebody else's tool left in the folder. The app fingerprints it against the catalog and tells you what it is</td></tr>
 <tr><td><b>Auto-updates</b></td><td>The app checks GitHub Releases and installs new versions itself</td></tr>
-<tr><td><b>Windows and Linux</b></td><td>Both ship with every release: an installer and a portable build for Windows, an AppImage for Linux. Steam is found wherever your distribution keeps it, flatpak included</td></tr>
+<tr><td><b>Windows and Linux</b></td><td>Both ship with every release: an installer and a portable build for Windows; a .deb, an .rpm and an AppImage for Linux. Steam is found wherever your distribution keeps it, flatpak included</td></tr>
 <tr><td><b>No account, nothing about you</b></td><td>Nothing about you is collected or sent. Installing a catalog mod adds one to its download count, and that can be switched off. Signing in with Discord is optional and only puts your name on a setup you share</td></tr>
 </table>
 </details>
@@ -149,9 +149,14 @@ We wrote it down while building a full custom Necrophos set this way. The guide 
 2. Run it. The app installs, creates a shortcut and starts
 3. It finds Dota on its own. No launch options, no Steam properties to edit
 
-**On Linux** the same app ships as an
-[AppImage](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager.AppImage):
-`chmod +x` it and run it.
+**On Linux** pick the package for your distribution. The packages run on your system's WebKitGTK
+and update through your package manager:
+
+- [.deb](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager-amd64.deb) for Ubuntu, Debian and Mint: `sudo apt install ./Dota-2-Mod-Manager-amd64.deb`
+- [.rpm](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager-x86_64.rpm) for Fedora and openSUSE: `sudo dnf install ./Dota-2-Mod-Manager-x86_64.rpm`
+- Arch: the AUR is closed to new accounts, so build the package from this repository:
+  `git clone https://github.com/dota2modmanager/dota2-mod-manager && cd dota2-mod-manager/packaging/aur && makepkg -si`
+- [AppImage](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager.AppImage) for anything else: `chmod +x` it and run it.
 
 > [!IMPORTANT]
 > Windows will call the publisher unknown, because the installer carries no paid signature.
