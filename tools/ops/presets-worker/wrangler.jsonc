@@ -1,5 +1,5 @@
 {
-  // Community presets. See worker.mjs for what it does and README.md for how it is set up.
+  // Community presets. See worker.mjs for what it does and which secrets it needs.
   "$schema": "../../site/node_modules/wrangler/config-schema.json",
   "name": "d2mm-presets",
   "main": "worker.mjs",

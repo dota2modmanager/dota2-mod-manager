@@ -24,7 +24,7 @@ use serde_json::{json, Value};
 use crate::js::slice_utf16;
 use crate::net_fetch::{FetchOptions, Net};
 
-/// The public half of the worker's SIGNING_KEY, SPKI DER in base64 (tools/ops/presets-worker/README.md).
+/// The public half of the worker's SIGNING_KEY, SPKI DER in base64 (tools/ops/presets-worker/worker.mjs).
 pub const COMMUNITY_PUBLIC_KEY: &str = "";
 /// The worker that writes the branch.
 pub const COMMUNITY_API: &str = "https://presets.dota2modmanager.com";

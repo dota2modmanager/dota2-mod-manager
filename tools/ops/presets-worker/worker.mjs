@@ -34,7 +34,7 @@
  *
  * Secrets: GITHUB_TOKEN (fine-grained, this repository only: Contents and Actions read and write),
  * SESSION_SECRET and USER_SECRET (random, 32 bytes each), SIGNING_KEY (ed25519, PKCS#8 in base64).
- * See README.md.
+ * Secrets are set with `npx wrangler secret put <NAME>` from this folder.
  */
 
 export const LIMITS = {
