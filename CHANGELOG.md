@@ -12,6 +12,13 @@ What changed in each release. The app updates itself, so you get all of this wit
 - Both need a Discord sign-in through the catalog's own service, which keeps your likes and
   follows. Anybody else sees only the totals.
 
+### Presets
+
+- *What's inside* on a preset card shows the catalog mods as pictures under their categories, and
+  each hero's items under the hero's portrait.
+- The share window lists the mods a link cannot carry because they are not in the catalog, and
+  says how to get your own mod there.
+
 ### Your own sounds
 
 - A sound you put in place of a game sound now goes into the game's own sound file, and the
