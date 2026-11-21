@@ -410,8 +410,14 @@ mod cloud_tests {
     #[test]
     fn the_account_service_is_an_https_origin_or_nothing() {
         let cloud = |v: Value| normalize(&json!({ "cloud": v }))["cloud"].clone();
-        assert_eq!(cloud(json!({ "api": "https://d2pfx-api.example.workers.dev" })), json!({ "api": "https://d2pfx-api.example.workers.dev" }));
-        assert_eq!(cloud(json!({ "api": "https://d2pfx-api.example.workers.dev/" }))["api"], "https://d2pfx-api.example.workers.dev");
+        assert_eq!(
+            cloud(json!({ "api": "https://d2pfx-api.example.workers.dev" })),
+            json!({ "api": "https://d2pfx-api.example.workers.dev" })
+        );
+        assert_eq!(
+            cloud(json!({ "api": "https://d2pfx-api.example.workers.dev/" }))["api"],
+            "https://d2pfx-api.example.workers.dev"
+        );
         for bad in [
             json!({ "api": "http://d2pfx-api.example.workers.dev" }),
             json!({ "api": "https://x.dev/api" }),

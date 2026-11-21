@@ -27,7 +27,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
             let Some(api) = api else {
                 return Ok(json!({ "error": crate::i18n::t("Лайки пока выключены", &[]) }));
             };
-            let kind = crate::social::Kind::parse(arg(args, 0).as_str().unwrap_or("")).ok_or("expected like or follow")?;
+            let kind =
+                crate::social::Kind::parse(arg(args, 0).as_str().unwrap_or("")).ok_or("expected like or follow")?;
             let name = crate::js::string(&arg(args, 1));
             let on = arg(args, 2) == Value::Bool(true);
             Ok(social.mark(&api, kind, &name, on).unwrap_or_else(|e| json!({ "error": e })))

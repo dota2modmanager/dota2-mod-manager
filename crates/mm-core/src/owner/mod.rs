@@ -33,9 +33,9 @@ pub mod owner_presence;
 pub mod owner_presets;
 pub mod owner_preview3d;
 pub mod owner_settings;
+pub mod owner_social;
 pub mod owner_start;
 pub mod owner_studios;
-pub mod owner_social;
 pub mod owner_support;
 pub mod owner_tools;
 pub mod owner_uninstall;
@@ -294,7 +294,8 @@ impl Owner {
             Box::new(move |m: &str| stats_log.push(m)),
         );
         let social_log = log.clone();
-        let social = crate::social::Social::new(&ud, net.clone(), Box::new(now), Box::new(move |m: &str| social_log.push(m)));
+        let social =
+            crate::social::Social::new(&ud, net.clone(), Box::new(now), Box::new(move |m: &str| social_log.push(m)));
         let game_now = Arc::new(std::sync::RwLock::new(made_for.0.clone()));
         let core = Core {
             user_data: ud.clone(),

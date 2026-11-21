@@ -153,10 +153,8 @@ impl Social {
         let token = self.token().ok_or_else(|| t("Сначала войди через Discord", &[]))?;
         let auth = format!("Bearer {token}");
         let headers = [("Authorization", auth.as_str()), ("X-D2PFX-Client", "app")];
-        let (status, body) = self
-            .net
-            .direct(method, &format!("{api}/{path}"), &headers, None, TIMEOUT_MS)
-            .map_err(|e| e.message)?;
+        let (status, body) =
+            self.net.direct(method, &format!("{api}/{path}"), &headers, None, TIMEOUT_MS).map_err(|e| e.message)?;
         if status == 401 {
             self.forget();
             return Err(t("Вход истёк: войди через Discord ещё раз", &[]));
@@ -171,7 +169,12 @@ impl Social {
 
     /// Sign in through the service: the browser, then the loopback, then who signed in. The
     /// session is kept only once the service has said who it belongs to.
-    pub fn sign_in(&self, api: &str, at: &Endpoints, open: &dyn Fn(&str) -> Result<(), String>) -> Result<Value, String> {
+    pub fn sign_in(
+        &self,
+        api: &str,
+        at: &Endpoints,
+        open: &dyn Fn(&str) -> Result<(), String>,
+    ) -> Result<Value, String> {
         let state = uuid::Uuid::new_v4().simple().to_string();
         let listener = discord_auth::listen(at.port)?;
         open(&login_url(api, &state, at.port))?;
@@ -224,7 +227,8 @@ impl Social {
             match self.net.direct("GET", &format!("{api}/api/counts"), &[], None, TIMEOUT_MS) {
                 Ok((200, body)) => {
                     let v: Value = serde_json::from_slice(&body).unwrap_or(Value::Null);
-                    let counts = json!({ "likes": clean_counts(v.get("likes")), "followers": clean_counts(v.get("followers")) });
+                    let counts =
+                        json!({ "likes": clean_counts(v.get("likes")), "followers": clean_counts(v.get("followers")) });
                     self.state().counts = Some(counts);
                 }
                 Ok((status, _)) => (self.log)(&format!("cloud counts: HTTP {status}")),
@@ -346,7 +350,8 @@ mod tests {
                 let n = sock.read(&mut buf).unwrap_or(0);
                 let req = String::from_utf8_lossy(&buf[..n]).to_string();
                 let line = req.lines().next().unwrap_or("").to_string();
-                let authed = req.contains(&format!("Bearer {token}")) && req.to_lowercase().contains("x-d2pfx-client: app");
+                let authed =
+                    req.contains(&format!("Bearer {token}")) && req.to_lowercase().contains("x-d2pfx-client: app");
                 seen.lock().unwrap().push(line.clone());
                 let (status, body) = match line.split(' ').take(2).collect::<Vec<_>>()[..] {
                     ["GET", "/api/counts"] => (200, format!(r#"{{"likes":{{"heroes/Jugg/Bare":{likes}}},"followers":{{"hrdq":3}}}}"#)),
@@ -378,7 +383,11 @@ mod tests {
                 use std::io::Write;
                 for _ in 0..100 {
                     if let Ok(mut s) = std::net::TcpStream::connect(("127.0.0.1", port)) {
-                        let _ = write!(s, "POST /token HTTP/1.1\r\nHost: x\r\nContent-Length: {}\r\n\r\n{body}", body.len());
+                        let _ = write!(
+                            s,
+                            "POST /token HTTP/1.1\r\nHost: x\r\nContent-Length: {}\r\n\r\n{body}",
+                            body.len()
+                        );
                         return;
                     }
                     std::thread::sleep(std::time::Duration::from_millis(20));
@@ -421,7 +430,11 @@ mod tests {
         assert_eq!(r["count"], json!(1.0));
         let snap = s.snapshot(Some(&api));
         assert_eq!(snap["likes"], json!(["heroes/Jugg/Bare"]));
-        assert_eq!(snap["counts"]["likes"]["heroes/Jugg/Bare"], json!(1.0), "the count after the like, not a minute later");
+        assert_eq!(
+            snap["counts"]["likes"]["heroes/Jugg/Bare"],
+            json!(1.0),
+            "the count after the like, not a minute later"
+        );
 
         s.sign_out(Some(&api));
         assert!(!s.signed_in());
