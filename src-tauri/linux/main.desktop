@@ -2,7 +2,7 @@
 Type=Application
 Name={{name}}
 Comment=Mods for Dota 2, without the file juggling
-Exec="/usr/bin/{{exec}}" %u
+Exec={{exec}} %u
 Icon={{icon}}
 StartupWMClass=dota2-mod-manager
 Categories=Game;

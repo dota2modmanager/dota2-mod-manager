@@ -143,8 +143,9 @@ jobs:
           desktop-file-validate "$entry"
           grep -q 'x-scheme-handler/d2mm' "$entry"
           grep -q 'application/x-d2mm' "$entry"
-          exe=$(sed -n 's/^Exec="\(.*\)" %u$/\1/p' "$entry")
-          test -x "$exe" || { echo "::error::the entry's Exec names no program: $exe"; exit 1; }
+          # the entry names the program as the menu runs it: by name, found on PATH
+          exe=$(command -v "$(sed -n 's/^Exec=\([^ ]*\) %u$/\1/p' "$entry")") \
+            || { echo "::error::the entry's Exec names no program on PATH"; exit 1; }
           export HOME="$RUNNER_TEMP/deb-home"
           mkdir -p "$HOME"
           xvfb-run -a "$exe" > deb-start.log 2>&1 &
