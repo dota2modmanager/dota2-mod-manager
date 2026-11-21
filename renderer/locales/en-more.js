@@ -446,6 +446,19 @@ const EN = {
   "Ты подписан": "Following",
   "Подписаться": "Follow",
   "Сервис каталога не ответил": "The catalog service did not answer",
-  "Этот файл игры звучит ещё в событиях: {0}. Новый звук заменит его и там": "This game file also plays in other events: {0}. The new sound replaces it there too"
+  "Этот файл игры звучит ещё в событиях: {0}. Новый звук заменит его и там": "This game file also plays in other events: {0}. The new sound replaces it there too",
+  "Вещи на героях": "Items on heroes",
+  "Вторая рука": "Off-hand",
+  "Ноги": "Legs",
+  "Персона": "Persona",
+  "Плечи": "Shoulders",
+  "Пояс": "Belt",
+  "Хвост": "Tail",
+  "Шея": "Neck",
+  "Шлем": "Helmet",
+  "Открывается в менеджере и ставит моды из каталога: {0} {1}.": "Opens in the manager and installs the catalog's mods: {0} {1}.",
+  "Показать всех героев (ещё {0})": "Show all heroes ({0} more)",
+  "Свой мод сначала отправь в каталог: «Мастерская» → «Кабинет автора». После модерации ссылка донесёт и его. Или сохрани пресет файлом.": "Send your own mod to the catalog first: Workshop → Author's desk. Once it passes moderation, the link carries it too. Or save the preset as a file.",
+  "Этих модов нет в каталоге, ссылка их не донесёт:": "These mods are not in the catalog, and the link cannot carry them:",
 };
 window.EN_MORE = EN;

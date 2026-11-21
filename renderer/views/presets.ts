@@ -19,12 +19,14 @@ import { confirmDialog, promptDialog } from '../ui/dialog.ts';
 import { paint } from '../ui/transitions.ts';
 import { recThumb } from '../library/thumbs.ts';
 import type { LibRecord } from '../library/types.ts';
+import type { Thumb } from '../library/model.ts';
 import { showPresets } from '../presets/PresetsScreen.tsx';
 import type { OwnPreset, PresetsActions, ReadyPreset, SharedPreset } from '../presets/model.ts';
 import type { PresetRecord, ReadyPresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
 import { recPreviewUrl } from '../ui/thumb.ts';
 import { isVideo } from '../ui/media.ts';
+import { insideModel, lookEntry } from './presets/inside.ts';
 
 type Preset = PresetRecord;
 
@@ -79,7 +81,11 @@ function ownCard(p: Preset, byId: Map<string, LibRecord>): OwnPreset {
       strip: all.slice(0, STRIP),
       rest: all.length - Math.min(all.length, STRIP),
       cats: ordered.map(([id, list]) => cat(id, list.length)),
-      groups: ordered.map(([id, list]) => ({ ...cat(id, list.length), names: list })),
+      inside: insideModel([
+        ...recs.map((r) => ({ kind: 'mod' as const, categoryId: r.categoryId || 'other', data: { name: r.name, thumb: recThumb(r) } })),
+        ...absent.map((a) => ({ kind: 'mod' as const, categoryId: a.categoryId || 'other', data: { name: a.name, thumb: { icon: catIcon(a.categoryId || 'other') } as Thumb, absent: true } })),
+        ...picks.map((pick) => lookEntry(pick.slot, pick.name)),
+      ]),
     },
   };
 }
