@@ -1,6 +1,6 @@
 //! The one thing the app can be told after it has shipped: a small signed file on main that can switch a feature off with a
 //! reason, put a dated notice in front of people, name the beta's testers, add hosts to the
-//! mirror chain and mark catalog mods that misbehave.
+//! mirror chain, mark catalog mods that misbehave and name the catalog's account service.
 //!
 //! Everything is default-safe: no file, no network, malformed JSON, a field of the wrong type, a
 //! bad signature all leave the app exactly as it is with everything on and nothing to say. A
@@ -125,7 +125,7 @@ pub fn normalize(raw: &Value) -> Value {
     let (mut notices, mut blocks, mut mirrors, mut issues) = (vec![], vec![], vec![], vec![]);
     let mut beta = Value::Null;
     let Some(raw) = obj(raw) else {
-        return json!({ "features": {}, "notices": [], "blocks": [], "beta": null, "mirrors": [], "issues": [] });
+        return json!({ "features": {}, "notices": [], "blocks": [], "beta": null, "mirrors": [], "issues": [], "cloud": null });
     };
     let list = |k: &str, max: usize| -> Vec<Value> {
         raw.get(k).and_then(Value::as_array).map(|a| a.iter().take(max).cloned().collect()).unwrap_or_default()
@@ -244,7 +244,25 @@ pub fn normalize(raw: &Value) -> Value {
         issues.push(issue);
     }
 
-    json!({ "features": features, "notices": notices, "blocks": blocks, "beta": beta, "mirrors": mirrors, "issues": issues })
+    json!({ "features": features, "notices": notices, "blocks": blocks, "beta": beta, "mirrors": mirrors, "issues": issues, "cloud": cloud_of(raw.get("cloud")) })
+}
+
+/// The catalog's account service (catalog/social.rs): an https origin and nothing else, or null.
+/// Until the config names one, sign-in goes straight to Discord and there are no likes.
+fn cloud_of(v: Option<&Value>) -> Value {
+    let base = str_of(v.and_then(obj).as_ref().and_then(|c| c.get("api")), 200);
+    let Ok(u) = url::Url::parse(&base) else { return Value::Null };
+    let bare = u.scheme() == "https"
+        && u.host_str().is_some()
+        && u.username().is_empty()
+        && u.password().is_none()
+        && u.path() == "/"
+        && u.query().is_none()
+        && u.fragment().is_none();
+    if !bare {
+        return Value::Null;
+    }
+    json!({ "api": u.origin().ascii_serialization() })
 }
 
 /// `YYYY-MM-DD` of a time in milliseconds, in UTC.
@@ -360,6 +378,11 @@ impl RemoteConfig {
         self.read()["mirrors"].clone()
     }
 
+    /// The account service's origin, when the config names one.
+    pub fn cloud_api(&self) -> Option<String> {
+        self.read()["cloud"]["api"].as_str().map(String::from)
+    }
+
     /// Catalog mods marked as misbehaving, still in date, the text in one language.
     pub fn issues(&self, lang: &str) -> Vec<Value> {
         let today = self.today();
@@ -377,5 +400,29 @@ impl RemoteConfig {
                 o
             })
             .collect()
+    }
+}
+
+#[cfg(test)]
+mod cloud_tests {
+    use super::*;
+
+    #[test]
+    fn the_account_service_is_an_https_origin_or_nothing() {
+        let cloud = |v: Value| normalize(&json!({ "cloud": v }))["cloud"].clone();
+        assert_eq!(cloud(json!({ "api": "https://d2pfx-api.example.workers.dev" })), json!({ "api": "https://d2pfx-api.example.workers.dev" }));
+        assert_eq!(cloud(json!({ "api": "https://d2pfx-api.example.workers.dev/" }))["api"], "https://d2pfx-api.example.workers.dev");
+        for bad in [
+            json!({ "api": "http://d2pfx-api.example.workers.dev" }),
+            json!({ "api": "https://x.dev/api" }),
+            json!({ "api": "https://x.dev/?a=1" }),
+            json!({ "api": "https://user@x.dev" }),
+            json!({ "api": 5 }),
+            json!("https://x.dev"),
+            Value::Null,
+        ] {
+            assert_eq!(cloud(bad.clone()), Value::Null, "{bad}");
+        }
+        assert_eq!(normalize(&json!([]))["cloud"], Value::Null);
     }
 }

@@ -11,6 +11,8 @@ import { PackList } from './PackList.tsx';
 import { catalogName, catalogLabel } from '../../ui/catalog-name.ts';
 import { ModStage } from './ModStage.tsx';
 import { Creator } from './Creator.tsx';
+import { LikeButton } from '../social/Social.tsx';
+import { likeKey } from '../../core/social.ts';
 
 export function ModModal({ m, actions }: { m: ModModalModel; actions: ModModalActions }) {
   const favLabel = m.fav ? L`Убрать из избранного` : L`В избранное`;
@@ -62,6 +64,7 @@ function Info({ m, actions, favLabel }: { m: ModModalModel; actions: ModModalAct
             aria-pressed={m.fav} title={favLabel} aria-label={favLabel} onClick={actions.toggleFav}>
             <span className="ms">{m.fav ? 'favorite' : 'favorite_border'}</span>
           </button>
+          {m.kind !== 'pack' && !m.mod._custom && <LikeButton k={likeKey(m.categoryId, m.mod)} />}
         </div>
         <div className="modal-sub">
           <span>{m.catName}</span>

@@ -64,6 +64,7 @@ the host it is sent to.
 | `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `crates/mm-core/src/game/game_icons.rs` |
 | `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `crates/mm-core/src/catalog/download_stats.rs` |
 | `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `crates/mm-core/src/app/discord_auth.rs` |
+| The catalog's account service | **Off** until the signed remote config names it (`cloud.api`). Then the Discord sign-in goes through it, and it keeps your likes and the authors you follow. The like and follower counts on the cards come from it too, without a sign-in | `config/app.json`, `crates/mm-core/src/catalog/social.rs` |
 
 **A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
 default. When it is set, the catalog, the fingerprint map, mod archives, the remote config, the
@@ -88,6 +89,28 @@ knows who made it. Everything else works without it.
   here for malware to lift later.
 - What is kept in `settings.json` afterwards: your Discord id, username, and the avatar as a small embedded picture rather than a link back to Discord. Signing
   out deletes them.
+- While the catalog's account service is on, the sign-in goes through it instead and keeps a
+  session token: see *Likes and follows* below.
+
+## Likes and follows
+
+The catalog's own service keeps likes on mods and follows of their authors. It belongs to the
+catalog's author, not to this project, and the app talks to it only once the signed remote config
+names it, so a release is not needed to switch it on or off. While it is off the app draws no like
+and no follow button and sends nothing.
+
+When it is on:
+
+- Signing in with Discord goes through that service. Your browser opens Discord there, Discord
+  tells the service who you are, and the service hands the app its own session token through
+  `127.0.0.1` on your computer. The app never sees a Discord token in this case.
+- The token is kept in `cloud-session` in the app's folder, so a like does not need a new sign-in
+  each time. Signing out deletes the file and ends the session on the service.
+- The service stores your Discord id with each mod you liked and each author you follow, and when
+  you did it. It publishes only the totals: how many liked a mod, how many follow an author. Who
+  liked what is not shown to anybody.
+- The app asks for the totals at most once a minute, and nothing about you goes with that request.
+- Taking a like or a follow back deletes it on the service.
 
 ## Your Discord status
 
@@ -118,6 +141,7 @@ Nothing leaves that folder unless you send it.
 |---|---|
 | `settings.json` | Your preferences: game path, language, scale, theme, favourites, and the Discord name if you signed in |
 | `manifest.json` | Which mods you installed and which presets you saved |
+| `cloud-session` | The catalog service's session token, only while you are signed in to it (see *Likes and follows*) |
 | `downloads/` | The mod archives you downloaded, kept so a reinstall needs no network |
 | `logs/` | What the app did, on your disk only |
 | `catalog-cache/`, `icons/`, `fingerprints.json`, `download-counts.json` | Copies of public data, so the app works offline |

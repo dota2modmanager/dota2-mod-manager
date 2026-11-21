@@ -30,6 +30,8 @@ import { Media } from './Media.tsx';
 import { ToolMeta } from './ToolMeta.tsx';
 import { useDownloads, useQueued, useTerrainMark } from './hooks.ts';
 import { formatCount } from '../../core/download-counts.ts';
+import { LikeCount, useLikeCount } from '../social/Social.tsx';
+import { likeKey } from '../../core/social.ts';
 import { CardShell } from './CardShell.tsx';
 import { CardName } from './CardName.tsx';
 
@@ -62,6 +64,7 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
   const queued = useQueued(entry?.key ?? null);
   const stale = useTerrainMark(cat, m);
   const downloads = useDownloads(cat, m);
+  const likes = useLikeCount(likeKey(cat, m));
 
   const isPack = m.type === 'pack';
   // a tool that is only a link says so under its name, in the row that also carries its pills
@@ -143,10 +146,11 @@ export function ModCard({ mod: m, index, withCat = false, moves = false, onOpen,
         <CardName>{catalogName(m.name)}</CardName>
         {cat === 'tools'
           ? <ToolMeta mod={m} installed={installed} />
-          : (withCat || author || downloads > 0) && (
+          : (withCat || author || downloads > 0 || likes > 0) && (
             <div className="card-meta">
               {withCat && <span>{catName(cat)}</span>}
               {author && <span className="author-chip"><span className="ms">person</span>{author}</span>}
+              <LikeCount k={likeKey(cat, m)} />
               {/* how many have it, quieter than who made it: no number at all until the counter answers */}
               {downloads > 0 && (
                 <span className="dl-count" title={L`Скачиваний: ${downloads}`} aria-label={L`Скачиваний: ${downloads}`}>

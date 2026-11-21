@@ -250,18 +250,22 @@ impl Net {
             let timeout = matches!(e, ureq::Error::Timeout(_));
             NetError { timeout, ..NetError::new(e.to_string()) }
         };
-        let res = if method == "POST" {
-            let mut req = agent.post(url).config().timeout_global(timeout).build();
-            for (k, v) in headers {
-                req = req.header(*k, *v);
-            }
-            req.send(body.unwrap_or_default()).map_err(err)?
-        } else {
-            let mut req = agent.get(url).config().timeout_global(timeout).build();
-            for (k, v) in headers {
-                req = req.header(*k, *v);
-            }
-            req.call().map_err(err)?
+        // a method with a body, and one without; an unknown method is refused, never sent as GET
+        macro_rules! with_headers {
+            ($req:expr) => {{
+                let mut req = $req.config().timeout_global(timeout).build();
+                for (k, v) in headers {
+                    req = req.header(*k, *v);
+                }
+                req
+            }};
+        }
+        let res = match method {
+            "POST" => with_headers!(agent.post(url)).send(body.unwrap_or_default()).map_err(err)?,
+            "PUT" => with_headers!(agent.put(url)).send(body.unwrap_or_default()).map_err(err)?,
+            "DELETE" => with_headers!(agent.delete(url)).call().map_err(err)?,
+            "GET" => with_headers!(agent.get(url)).call().map_err(err)?,
+            other => return Err(NetError::new(format!("unsupported method {other}"))),
         };
         let status = res.status().as_u16();
         let kind = res.headers().get("content-type").and_then(|v| v.to_str().ok()).map(str::to_string);

@@ -71,6 +71,8 @@ export type ScreenModel =
     toolbar: ToolbarModel | null;
     /** a quiet line beside the title: what the screen adds up to */
     meta?: string;
+    /** an author's page: following them, at the header's far end */
+    follow?: string;
     note?: string;
     /** a tool the app has in it, first in the grid (the arcana's, among the tools) */
     lead?: ArcanaCardModel[] | null;
