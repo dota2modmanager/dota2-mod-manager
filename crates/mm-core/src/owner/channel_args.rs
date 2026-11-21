@@ -465,8 +465,6 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "misc:cacheSize",
             "misc:clearCache",
             "misc:cacheList",
-            "pumpkin:prizeAgain",
-            "pumpkin:hasPrize",
             "diag:export",
             "uninstall:plan",
             "uninstall:cancel",

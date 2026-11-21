@@ -7,7 +7,6 @@ use std::sync::Arc;
 
 use serde_json::{json, Value};
 
-use crate::build_undo::touches_schema;
 use crate::file_tx::FileTx;
 use crate::i18n::t;
 use crate::installer::Installer;
@@ -485,7 +484,6 @@ fn list(o: &Owner) -> Value {
     let mut c = o.core();
     let ages = terrain_ages(&c);
     let marks = c.impact();
-    let key = c.settings.get("bloodKey").cloned().unwrap_or(Value::Null);
     let schema_on = c.settings.get("schemaPatch").is_some_and(crate::js::truthy);
     let stuck = serde_json::to_value(c.upkeep.repair.verify_stuck()).unwrap_or(Value::Null);
     let lang = c.installer.lang_folder().ok();
@@ -496,30 +494,7 @@ fn list(o: &Owner) -> Value {
         crate::update_impact::impact_mods(lib.list(), &|r| inst.lang_file_on_disk(r).unwrap_or_default())
     };
     let marked = |lib: &Library| Ok(marks.marked(&mods_of(lib)));
-    let mut off_schema = false;
     let (answer, after) = {
-        let mut guard = |lib: &mut Library| -> Result<(), String> {
-            let mut log = |m: String| lines.borrow_mut().push(m);
-            crate::scream_guard::guard(
-                lib,
-                &key,
-                &mut |rec| {
-                    let dir = files(rec)
-                        .into_iter()
-                        .find(|f| f.root == "lang" && f.rel_path.to_lowercase().ends_with("_dir.vpk"));
-                    let Some(dir) = dir else { return Some(Vec::new()) };
-                    let p = inst.lang_file_on_disk(&dir.rel_path).ok()?;
-                    crate::vpk::read_index_file(&p).and_then(|b| crate::vpk::list_paths(&b)).ok()
-                },
-                &mut |lib, rec| {
-                    switch_off(inst, lib, rec)?;
-                    off_schema |= touches_schema(rec);
-                    Ok(())
-                },
-                &mut log,
-            )
-            .map(|_| ())
-        };
         let mut diag = |m: String| lines.borrow_mut().push(m);
         crate::mods_listing::list_mods(
             inst,
@@ -528,7 +503,6 @@ fn list(o: &Owner) -> Value {
                 fingerprints,
                 terrain_ages: &ages,
                 marked: Some(&marked),
-                guard: Some(&mut guard),
                 notice_owned: owned,
                 schema_on,
                 verify_stuck: stuck,
@@ -564,9 +538,6 @@ fn list(o: &Owner) -> Value {
     drop(c);
     for l in lines.into_inner() {
         o.diag(&l);
-    }
-    if off_schema {
-        drop(o.refresh_schema_in_background());
     }
     answer
 }

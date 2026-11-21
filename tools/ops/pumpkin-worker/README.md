@@ -10,7 +10,7 @@ at the top of `worker.mjs`.
 | --- | --- | --- |
 | Worker | `d2mm-pumpkin` | custom domain `pumpkin.dota2modmanager.com` |
 | D1 | `d2mm-pumpkin` | `schema.sql`: spent tickets and handed-out keys |
-| R2 | `d2mm-pumpkin` | private, no public address: the prize and its picture |
+| R2 | `d2mm-pumpkin` | empty since 2026-11-21, no longer bound to the worker |
 | Secrets | `TICKET_SECRET`, `ADDR_SALT` | random, 32 bytes each |
 
 ## Setting it up again
@@ -20,19 +20,12 @@ From this folder, with wrangler logged in to the account that owns the domain:
 ```
 npx wrangler d1 create d2mm-pumpkin            # put the id in wrangler.jsonc
 npx wrangler d1 execute d2mm-pumpkin --remote --file schema.sql
-npx wrangler r2 bucket create d2mm-pumpkin
-npx wrangler r2 object put d2mm-pumpkin/necrophos-scream.vpk --file <the mod> --remote
-npx wrangler r2 object put d2mm-pumpkin/necrophos-scream.png --file <its picture> --remote
-npx wrangler r2 object put d2mm-pumpkin/necrophos-scream.russian.vpk --file <the mod with the Russian voice> --remote
 npx wrangler secret put TICKET_SECRET
 npx wrangler secret put ADDR_SALT
 npx wrangler deploy
 ```
 
-Replacing the prize is the `r2 object put` again under the same name; installs that already have
-it keep their copy.
-
-The app says `voice=russian` when the game speaks Russian, that is when Valve's Russian voice pack
-is in the folder it mounts (English speakers keep mods in `dota_russian` too, without it). Such an
-install gets `necrophos-scream.russian.vpk`; without that object, and for any other voice, it gets
-the plain one.
+Until 2026-11-21 the bucket held the prize, Necrophos Scream, with and without a Russian voice,
+and `GET /mod` handed it to the install that spent the key. Halloween over, the mod went to the
+catalog as one mod with two styles, the bucket was emptied, and `/mod` answers 410. The key still
+opens the bloody theme.

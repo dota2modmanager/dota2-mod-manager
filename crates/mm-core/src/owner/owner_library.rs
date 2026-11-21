@@ -135,10 +135,6 @@ fn set_enabled(o: &Owner, id: &Value, enabled: bool) -> Value {
     }
     let mut c = o.core();
     let Some(rec) = c.library.find(id).cloned() else { return not_found() };
-    // a copy of the pumpkin's mod this install did not earn stays off (game/scream_guard.rs)
-    if enabled && rec.get("cheat").is_some_and(crate::js::truthy) {
-        return json!({ "error": t("Жульничество наказуемо гадостью", &[]) });
-    }
     let Core { installer, library, .. } = &mut *c;
     // one change: the other set switched off, this one on, and both records
     let replaced = FileTx::run(installer.journal_dir.as_deref(), installer.tx_log(), |tx| {
@@ -211,9 +207,7 @@ fn set_enabled_many(o: &Owner, list: &Value, enabled: bool) -> Value {
         return stop;
     }
     let (changed, errors) = batch(o, list, |c, rec| {
-        if rec.get("enabled") == Some(&Value::Bool(enabled))
-            || (enabled && rec.get("cheat").is_some_and(crate::js::truthy))
-        {
+        if rec.get("enabled") == Some(&Value::Bool(enabled)) {
             return None;
         }
         let Core { installer, library, .. } = c;

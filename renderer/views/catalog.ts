@@ -326,7 +326,7 @@ export async function loadCatalog(force = false): Promise<void> {
  * arrives before the catalog does, so it waits for the list and opens once that is in. */
 let waitingLink: ModLink | null = null;
 
-async function openModLink(link: ModLink | null): Promise<void> {
+export async function openModLink(link: ModLink | null): Promise<void> {
   if (!link) { toast(L`Эта ссылка не ведёт на мод`, 'warn'); return; }
   if (!state.catalog || state.catalog.error) { waitingLink = link; return; }
   const mod = findLinkedMod(link.cat, link.name);

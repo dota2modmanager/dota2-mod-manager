@@ -26,8 +26,6 @@ pub fn iso_now() -> String {
 
 /// Which mods a Dota update reached, by id (UpdateImpact::marked).
 pub type Marked<'a> = dyn Fn(&Library) -> Result<IndexMap<String, Value>, String> + 'a;
-/// Switches off a copy of the pumpkin's mod nobody earned here (scream_guard::guard).
-pub type Guard<'a> = dyn FnMut(&mut Library) -> Result<(), String> + 'a;
 
 /// What the listing reads besides the installer and the library.
 pub struct ListingDeps<'a> {
@@ -35,8 +33,6 @@ pub struct ListingDeps<'a> {
     pub terrain_ages: &'a TerrainAges,
     /// which mods a Dota update reached, by id (UpdateImpact::marked); None marks none
     pub marked: Option<&'a Marked<'a>>,
-    /// switches off a copy of the pumpkin's mod nobody earned here
-    pub guard: Option<&'a mut Guard<'a>>,
     /// the files the notice text owns (NoticeText::owned_files)
     pub notice_owned: Vec<String>,
     /// whether the item-table patch is on (schema service state)
@@ -61,7 +57,7 @@ fn err_text(e: impl std::fmt::Display) -> String {
 
 /// The mods:list answer.
 pub fn list_mods(inst: &Installer, lib: &mut Library, deps: ListingDeps) -> (Value, After) {
-    let ListingDeps { fingerprints, terrain_ages, marked, guard, notice_owned, schema_on, verify_stuck, diag } = deps;
+    let ListingDeps { fingerprints, terrain_ages, marked, notice_owned, schema_on, verify_stuck, diag } = deps;
     // a mod still on the slot the notice text took moves off it
     match crate::slot_zones::vacate_app_pak(inst, lib) {
         Ok(true) => diag("a mod moved off the notice slot".into()),
@@ -85,11 +81,6 @@ pub fn list_mods(inst: &Installer, lib: &mut Library, deps: ListingDeps) -> (Val
         Ok(())
     })();
     let _ = sync; // no game path yet: nothing to sync
-    if let Some(g) = guard {
-        if let Err(e) = g(lib) {
-            diag(format!("scream guard: {e}"));
-        }
-    }
 
     // fingerprint -> a mod already in the library, so a byte-identical file is called a copy
     let mut installed_fps: HashMap<String, String> = HashMap::new();

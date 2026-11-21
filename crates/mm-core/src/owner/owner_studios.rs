@@ -2,9 +2,6 @@
 //! background, the pumpkin, the hero grids, the map looks): each a state to draw and an install that puts one
 //! generated record in My mods. The building itself lives in the services named below.
 
-use std::cell::Cell;
-use std::path::PathBuf;
-
 use serde_json::{json, Map, Value};
 
 use crate::i18n::t;
@@ -18,8 +15,6 @@ pub const CHANNELS: &[&str] = &[
     "background:state",
     "background:install",
     "pumpkin:redeem",
-    "pumpkin:prizeAgain",
-    "pumpkin:hasPrize",
     "grid:state",
     "grid:apply",
     "grid:remove",
@@ -135,8 +130,7 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 svc.install(installer, library, webm.as_deref(), (at(1), at(2), at(3)), log)
             })
         }
-        "pumpkin:redeem" | "pumpkin:prizeAgain" => pumpkin(o, channel, &a0),
-        "pumpkin:hasPrize" => json!(crate::pumpkin::Pumpkin::has_prize(&o.core().library)),
+        "pumpkin:redeem" => pumpkin(o, &a0),
         "grid:state" => grids(o).state(),
         "grid:apply" | "grid:remove" => {
             if (o.opts.dota_running)() {
@@ -200,58 +194,18 @@ fn grids(o: &Owner) -> crate::hero_grid::HeroGrids {
 
 const PUMPKIN_HOST: &str = "https://pumpkin.dota2modmanager.com";
 
-/// The pumpkin's code, and its prize taken in as an ordinary import (looks/pumpkin.rs).
-fn pumpkin(o: &Owner, channel: &str, typed: &Value) -> Value {
-    let rebuild = Cell::new(false);
+/// The pumpkin's key: it opens the bloody theme (looks/pumpkin.rs).
+fn pumpkin(o: &Owner, typed: &Value) -> Value {
     let mut lines = Vec::new();
     let out = {
         let mut c = o.core();
-        let base = c.game().and_then(|g| c.schema.vanilla(&g).ok());
-        // English speakers keep their mods in dota_russian too, without Valve's Russian voice in it
-        let voice = {
-            let game = c.settings.get("dotaGamePath").filter(|v| crate::js::truthy(v)).map(crate::js::string);
-            let suffix = c.settings.get("langSuffix").filter(|v| crate::js::truthy(v)).map(crate::js::string);
-            match (game, suffix) {
-                (Some(g), Some(s)) if crate::gamelang::voice_installed(std::path::Path::new(&g), &s) => Some(s),
-                _ => None,
-            }
-        };
         let net = c.net.clone();
-        let p = crate::pumpkin::Pumpkin { net: &net, host: PUMPKIN_HOST.into(), voice };
-        let Core { installer, library, settings, .. } = &mut *c;
-        let inst = &*installer;
-        let mut import = |paths: &[PathBuf], lib: &mut crate::library::Library| -> Value {
-            let r = crate::import::import_vpks(inst, paths, &mut |_, _| {}).and_then(|results| {
-                crate::adopt::register_import_results(
-                    inst,
-                    lib,
-                    base.as_ref().map(|b| b.0.as_slice()),
-                    &results,
-                    &mut |_, _| {},
-                )
-            });
-            match r {
-                Ok(v) => {
-                    if v.get("schema") == Some(&Value::Bool(true)) {
-                        rebuild.set(true);
-                    }
-                    v
-                }
-                Err(e) => json!({ "error": e }),
-            }
-        };
-        if channel == "pumpkin:redeem" {
-            let text = typed.as_str().map(|s| crate::js::slice_utf16(s, 80)).unwrap_or_default();
-            p.redeem(&json!(text), settings, library, &mut import, &mut |m| lines.push(m))
-        } else {
-            p.prize_again(settings, library, &mut import)
-        }
+        let p = crate::pumpkin::Pumpkin { net: &net, host: PUMPKIN_HOST.into() };
+        let text = typed.as_str().map(|s| crate::js::slice_utf16(s, 80)).unwrap_or_default();
+        p.redeem(&json!(text), &mut c.settings, &mut |m| lines.push(m))
     };
     for l in lines {
         o.diag(&l);
-    }
-    if rebuild.get() {
-        let _ = o.refresh_schema_in_background().recv();
     }
     out
 }
