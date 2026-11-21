@@ -2656,6 +2656,15 @@
     {
       "id": "backgrounds",
       "mods": [
+        {
+          "name": "Origami Tobiichi World End",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/origami-tobiichi-world-end.webp","width":854,"height":480},
+          "author": "MAKCIKOVICH",
+          "authorUrl": "https://steamcommunity.com/id/makcikovich/",
+          "date": 1795274794
+        },
         {"name":"Ahegao","styleLabel":null,"group":null,"image":{"src":"/mods/ahegao.webp","width":854,"height":480},"author":"Anonymous","authorUrl":null,"date":1795162294},
         {
           "name": "Arc Warden Dota 2",
@@ -3639,6 +3648,16 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Arc Warden Ultimatetaunt 2016",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/arc-warden-ultimatetaunt-2016.webp","width":854,"height":480},
+          "author": "зеркальная броня",
+          "authorUrl": "https://www.youtube.com/@yoshikawwa163/featured",
+          "date": 1795274794
+        },
+        {"name":"Axe Call H","styleLabel":null,"group":null,"image":{"src":"/mods/axe-call-h.webp","width":854,"height":480},"author":"XDremonioXD","authorUrl":null,"date":1795274794},
         {"name":"Pudge Hook","styleLabel":null,"group":null,"image":{"src":"/mods/pudge-hook.webp","width":854,"height":480},"author":"XDremonioXD","authorUrl":null,"date":1795226491},
         {
           "name": "Earthshaker Ukrainian Voice",
@@ -9089,7 +9108,7 @@
           "image": {"src":"/mods/viperr-announcer.webp","width":854,"height":480},
           "author": "samoredoto",
           "authorUrl": "https://t.me/samoredoto",
-          "date": 1795226491
+          "date": 1795274794
         },
         {
           "name": "Dark Willow",
