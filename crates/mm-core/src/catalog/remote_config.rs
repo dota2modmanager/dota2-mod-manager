@@ -267,7 +267,7 @@ fn cloud_of(v: Option<&Value>) -> Value {
 
 /// `YYYY-MM-DD` of a time in milliseconds, in UTC.
 pub fn day_of(ms: f64) -> String {
-    chrono::DateTime::from_timestamp_millis(ms as i64).map(|d| d.format("%Y-%m-%d").to_string()).unwrap_or_default()
+    jiff::Timestamp::from_millisecond(ms as i64).map(|d| d.strftime("%Y-%m-%d").to_string()).unwrap_or_default()
 }
 
 fn say(e: &Value, lang: &str) -> String {

@@ -45,7 +45,7 @@ sha2 = "0.11"
 ed25519-dalek = "3"
 # the upload token a release carries, encrypted at rest (tools/release/uploader-token.mjs)
 aes-gcm = "0.10"
-chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+jiff = "0.2"
 
 # how much Discord sent on its pipe, so one thread can read and write it (discord_presence.rs),
 # and the process table read in place, where starting tasklist.exe cost a quarter second (game_watch.rs)

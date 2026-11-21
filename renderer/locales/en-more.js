@@ -446,7 +446,7 @@ const EN = {
   "Ты подписан": "Following",
   "Подписаться": "Follow",
   "Сервис каталога не ответил": "The catalog service did not answer",
-  "{0} на {1} героях": "{0} on {1} heroes",
+  "Этот файл игры звучит ещё в событиях: {0}. Новый звук заменит его и там": "This game file also plays in other events: {0}. The new sound replaces it there too",
   "Вещи на героях": "Items on heroes",
   "Вторая рука": "Off-hand",
   "Ноги": "Legs",

@@ -39,8 +39,9 @@ export function picturesIn(...docs) {
     else if (v && typeof v === 'object') {
       for (const [k, x] of Object.entries(v)) {
         if (k === 'src' && typeof x === 'string') {
-          const m = /^\/mods\/([^/]+)$/.exec(x);
-          // a name that would leave the folder is not a picture of ours
+          const m = /^\/mods\/([^/\\:\0]+)$/.exec(x);
+          // a name that would leave the folder is not a picture of ours: no dot names, and no
+          // backslash or drive colon, which Windows reads as a path of its own
           if (m && m[1] !== '..' && m[1] !== '.') out.add(m[1]);
         } else walk(x);
       }
