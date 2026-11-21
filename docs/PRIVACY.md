@@ -67,7 +67,7 @@ the host it is sent to.
 | `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `crates/mm-core/src/game/game_icons.rs` |
 | `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `crates/mm-core/src/catalog/download_stats.rs` |
 | `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `crates/mm-core/src/app/discord_auth.rs` |
-| The catalog's account service | **Off** until the signed remote config names it (`cloud.api`). Then the Discord sign-in goes through it, and it keeps your likes and the authors you follow. The like and follower counts on the cards come from it too, without a sign-in | `config/app.json`, `crates/mm-core/src/catalog/social.rs` |
+| `d2pfx-api.hrdq.workers.dev`, the catalog's account service | **Off** until the signed remote config names it (`cloud.api`). Then the Discord sign-in goes through it, and it keeps your likes and the authors you follow. The like and follower counts on the cards come from it too, without a sign-in | `config/app.json`, `crates/mm-core/src/catalog/social.rs` |
 
 **A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
 default. When it is set, the catalog, the fingerprint map, mod archives, the remote config, the

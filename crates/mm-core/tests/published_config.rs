@@ -35,3 +35,18 @@ fn remote_config_is_signed() {
 fn ready_presets_are_signed() {
     assert_signed("presets.json");
 }
+
+/// A cloud address the app would drop (not https, a path, a typo in the key) turns likes and
+/// follows off for everyone without an error anybody sees, the same way a bad signature does.
+#[test]
+fn the_published_cloud_service_is_one_the_app_takes() {
+    let raw: serde_json::Value = serde_json::from_slice(&repo_file("app.json")).expect("app.json is JSON");
+    if raw.get("cloud").is_none() {
+        return;
+    }
+    let cloud = mm_core::remote_config::normalize(&raw)["cloud"].clone();
+    let api = cloud["api"]
+        .as_str()
+        .unwrap_or_else(|| panic!("config/app.json names a cloud the app refuses: {}", raw["cloud"]));
+    assert!(api.starts_with("https://"), "{api}");
+}
