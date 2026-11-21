@@ -18,6 +18,7 @@ import { CursorCard } from '../cursor/CursorCard.tsx';
 import { RankCard } from '../rank/RankCard.tsx';
 import { DecorCard } from '../decor/DecorCard.tsx';
 import { CreatorCard } from '../creator/CreatorCard.tsx';
+import { FollowButton } from '../social/Social.tsx';
 
 interface Props { model: ScreenModel; actions: ScreenActions }
 
@@ -61,6 +62,7 @@ function List({ model: m, actions }: { model: Extract<ScreenModel, { kind: 'list
         )}
         <h1 className="view-title">{m.title}{m.accent !== undefined && <> <span className="accent">{m.accent}</span></>}</h1>
         {m.meta && <span className="view-meta">{m.meta}</span>}
+        {m.follow && <FollowButton author={m.follow} />}
       </div>
       {m.toolbar && <Toolbar model={m.toolbar} actions={actions} />}
       {m.note && <div className="empty-note">{m.note}</div>}

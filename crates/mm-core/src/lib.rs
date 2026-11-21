@@ -36,7 +36,7 @@ pub(crate) use arcana::{
 pub use catalog::{beta, catalog_signature, deep_links, net_fetch, preview_cache, remote_config};
 pub(crate) use catalog::{
     download_stats, feature_gate, fingerprints, icon_match, manifest, mod_preview, mod_preview_pick, net_mirrors,
-    wiki_icons,
+    social, wiki_icons,
 };
 pub use catalog::{Catalog, RAW_BASE};
 pub(crate) use formats::{
@@ -86,7 +86,7 @@ pub use owner::{
 pub(crate) use owner::{
     large_answer, owner_app, owner_bases, owner_compiler, owner_creator, owner_foreign, owner_game, owner_library,
     owner_mod_look, owner_mods, owner_packs, owner_pictures, owner_presets, owner_preview3d, owner_settings,
-    owner_studios, owner_support, owner_tools,
+    owner_social, owner_studios, owner_support, owner_tools,
 };
 pub(crate) use presets::{
     preset_install, preset_link, preset_plan, preset_share, presets_service, ready_presets, ready_presets_format,

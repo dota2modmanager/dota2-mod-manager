@@ -65,7 +65,13 @@ fn sign_in(o: &Owner) -> Result<Value, String> {
     let net = o.core().net.clone();
     // the wait for the browser runs without the lock: it can take a minute
     let open = |url: &str| o.shell.request("shell.openExternal", vec![json!(url)]).map(|_| ());
-    let account = crate::discord_auth::sign_in(&net, &crate::discord_auth::Endpoints::default(), &open)?;
+    let at = crate::discord_auth::Endpoints::default();
+    // through the catalog's account service once the config names it: the same Discord account,
+    // and a session for likes and follows (catalog/social.rs)
+    let account = match crate::owner_social::service(o) {
+        (Some(api), social) => social.sign_in(&api, &at, &open)?,
+        (None, _) => crate::discord_auth::sign_in(&net, &at, &open)?,
+    };
     o.core().settings.set("account", account.clone()).map_err(|e| e.to_string())?;
     let _ = o.shell.request("win.show", vec![]);
     let _ = o.shell.request("win.focus", vec![]);

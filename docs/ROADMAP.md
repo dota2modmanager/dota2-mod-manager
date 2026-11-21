@@ -36,10 +36,9 @@ and a licence and copyright line in every source file.
 
 ## Later
 
-**An Arch package, when the AUR lets anybody in again.** `tools/release/gen-aur.js` already builds the
-PKGBUILD from a release. Registration at the AUR has been closed since late August 2026 while
-they deal with a wave of automated accounts, with no queue and no date, so this is ready and
-parked rather than next.
+**An Arch package in the AUR.** Releases carry a .deb and an .rpm that run on the distribution's
+own WebKitGTK, and `tools/release/gen-aur.js` builds `dota2-mod-manager-bin` from the .deb. What is
+left is publishing it, which needs an AUR account.
 
 **Linux caught up with Windows.** The AppImage has shipped since 2.4.0 and CI installs a mod
 through it on every change, but Windows has a year of people using it and Linux has months.

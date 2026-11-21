@@ -46,14 +46,15 @@ jobs:
         run: rustup toolchain install stable --profile minimal && rustup default stable
 
       # What Tauri needs to build on Linux (WebKitGTK, the tray, icons, patchelf for the bundle),
-      # and xvfb, xdg-utils and desktop-file-utils for the first start below. apt drops a silent
+      # and xvfb, xdg-utils and desktop-file-utils for the first start below, and what the .deb
+      # asks for beyond them (GStreamer's plugins) and rpm to read the .rpm. apt drops a silent
       # mirror after 30 s, the packages come from the cache when a mirror only trickles
       # (.github/actions/linux-libraries), and the step gives up at ten minutes.
       - name: System libraries
         timeout-minutes: 10
         uses: ./.github/actions/linux-libraries
         with:
-          packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb xdg-utils desktop-file-utils
+          packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf xvfb xdg-utils desktop-file-utils gstreamer1.0-plugins-base gstreamer1.0-plugins-good rpm
 
       # Not published: this proves the build works. release.yml builds the one people download.
       # its own release build, saved on main for the next merge
@@ -62,7 +63,7 @@ jobs:
           shared-key: release-ubuntu-24.04
           save-if: ${{ github.ref == 'refs/heads/main' }}
       - name: Build
-        run: npx tauri build --bundles appimage
+        run: npx tauri build --bundles appimage,deb,rpm
 
       # A runner has no FUSE to mount an AppImage with, so it is unpacked. AppRun is the program
       # the AppImage would have started.
@@ -106,7 +107,10 @@ jobs:
             sleep 1
           done
           sleep 3
+          # xvfb-run's pid is not the app's: stop the app too, or the next start below is handed
+          # over to it by the single-instance plugin and never runs
           kill "$pid" 2>/dev/null || true
+          pkill -f "$PWD/squashfs-root" || true
           ls -la "$HOME/.local/share/applications" || { cat first-start.log; exit 1; }
           fail=0
           for type in x-scheme-handler/d2mm application/x-d2mm; do
@@ -122,8 +126,84 @@ jobs:
             exit 1
           fi
 
+      # The .deb runs on the distribution's own WebKitGTK, GTK and GStreamer, which is what the
+      # AppImage cannot promise (#761, #797). Installed here the way a person installs it, apt
+      # pulling in what it depends on, then started once: the menu entry has to be valid and
+      # claim both types, the binary has to know it came from a package, and it must not write a
+      # second entry into the home folder.
+      - name: The .deb installs, starts, and leaves the menu entry to the package
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          deb=$(ls target/release/bundle/deb/*.deb | head -1)
+          dpkg-deb --info "$deb"
+          dpkg-deb --info "$deb" | grep -q 'gstreamer1.0-plugins-good'
+          # its dependencies came with the system libraries above: dpkg installs from the file
+          # alone, and refuses a package that asks for something Ubuntu does not have
+          sudo dpkg -i "$deb"
+          entry=$(dpkg -L "$(dpkg-deb --field "$deb" Package)" | grep '^/usr/share/applications/.*\.desktop$' | head -1)
+          cat "$entry"
+          desktop-file-validate "$entry"
+          grep -q 'x-scheme-handler/d2mm' "$entry"
+          grep -q 'application/x-d2mm' "$entry"
+          # the entry names the program as the menu runs it: by name, found on PATH, in quotes
+          # when the name has spaces (the .deb names it "Dota 2 Mod Manager")
+          name=$(sed -n 's/^Exec=\(.*\) %u$/\1/p' "$entry" | sed 's/^"\(.*\)"$/\1/')
+          exe=$(command -v "$name") \
+            || { echo "::error::the entry's Exec names no program on PATH"; exit 1; }
+          # a start while another copy runs only hands its arguments over
+          if pgrep -fa 'squashfs-root|Dota 2 Mod Manager'; then
+            echo "::error::another copy of the app is still running"; exit 1
+          fi
+          export HOME="$RUNNER_TEMP/deb-home"
+          mkdir -p "$HOME"
+          # its own session bus: the single-instance plugin finds other copies by a D-Bus name,
+          # and a start that finds the name taken hands its arguments over and exits quietly
+          ( dbus-run-session -- xvfb-run -a "$exe"; echo "exited with $?" ) > deb-start.log 2>&1 &
+          pid=$!
+          log="$HOME/.local/share/com.dota2modmanager.app/logs/app.log"
+          for _ in $(seq 1 60); do
+            grep -q 'installed from a system package' "$log" 2>/dev/null && break
+            sleep 1
+          done
+          app=$(pgrep -f "$exe" | head -1 || true)
+          if [ -n "$app" ] && ! grep -q 'installed from a system package' "$log" 2>/dev/null; then
+            echo "the app's open files:"; ls -l "/proc/$app/fd" 2>/dev/null | grep -v -e socket -e pipe -e anon_inode | tail -30 || true
+            echo "its threads:"; cat /proc/$app/task/*/comm 2>/dev/null | sort | uniq -c || true
+          fi
+          kill "$pid" 2>/dev/null || true
+          pkill -f "$exe" || true
+          cat "$log" 2>/dev/null || cat deb-start.log
+          if ! grep -q 'installed from a system package' "$log" 2>/dev/null; then
+            # which half failed: the bundler's mark in the binary, or where the log went
+            grep -ao '__TAURI_BUNDLE_TYPE_VAR_[A-Z]*' "$exe" | sort | uniq -c || true
+            find "$HOME" -maxdepth 6 | head -40
+            cat deb-start.log
+            echo "::error::the app from the .deb did not know it came from a package"; exit 1
+          fi
+          if [ -e "$HOME/.local/share/applications/dota2-mod-manager.desktop" ]; then
+            echo "::error::the app from the .deb wrote a second menu entry into the home folder"; exit 1
+          fi
+
+      - name: The .rpm names its dependencies
+        run: |
+          set -euo pipefail
+          rpm=$(ls target/release/bundle/rpm/*.rpm | head -1)
+          ls -l "$rpm"
+          rpm -qpR "$rpm"
+          rpm -qpR "$rpm" | grep -q 'gstreamer1-plugins-good'
+          rpm -qpl "$rpm" | grep -q '^/usr/share/applications/.*\.desktop$'
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: AppImage
           path: target/release/bundle/appimage/*.AppImage
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: Linux packages
+          path: |
+            target/release/bundle/deb/*.deb
+            target/release/bundle/rpm/*.rpm
           if-no-files-found: error

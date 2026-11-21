@@ -9,7 +9,7 @@
  * With immutable releases a published release cannot gain a file, so "every file" is decided once,
  * here, and the draft is held to it before anybody can see it.
  */
-const { betaName } = require('../catalog/mirror-plan.js');
+const { betaName, PACKAGES } = require('../catalog/mirror-plan.js');
 
 /** What electron-updater reads on each channel, what crates/mm-core/src/app/portable_update.rs reads, and what
  *  the Tauri builds' updater reads (tools/release/tauri-release.mjs). */
@@ -102,9 +102,12 @@ function mirrorExpectation({ stable, beta }) {
   const want = [];
   for (const name of ['latest.yml', 'latest-linux.yml', 'portable.yml', ...(tauri(stable) ? ['latest.json'] : [])]) want.push({ name, version: stable.version });
   for (const name of BINARIES) want.push({ name, size: sizeIn(stable, name) });
+  // the .deb and .rpm, where the release carries them (tools/catalog/mirror-plan.js PACKAGES)
+  const packagesOf = (rel) => PACKAGES.map(([name]) => name).filter((name) => sizeIn(rel, name) !== undefined);
+  for (const name of packagesOf(stable)) want.push({ name, size: sizeIn(stable, name) });
   const tester = beta || stable;
   for (const name of ['beta.yml', 'beta-linux.yml', ...(tauri(tester) ? ['beta.json'] : [])]) want.push({ name, version: tester.version });
-  if (beta) for (const name of BINARIES) want.push({ name: betaName(name), size: sizeIn(beta, name) });
+  if (beta) for (const name of [...BINARIES, ...packagesOf(beta)]) want.push({ name: betaName(name), size: sizeIn(beta, name) });
   return want;
 }
 

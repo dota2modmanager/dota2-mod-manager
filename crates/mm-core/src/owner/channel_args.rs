@@ -415,6 +415,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "account:signOut",
             "catalog:terrainAges",
             "catalog:downloadCounts",
+            "social:state",
             "mods:list",
             "mods:switchOffStaleTerrains",
             "mods:importDialog",
@@ -487,6 +488,10 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("presence:view", vec![str_(64, 0)]),
             ("support:choose", vec![one_of(&[Some("later"), Some("done")])]),
             ("catalog:load", vec![optional(bool_())]),
+            (
+                "social:mark",
+                vec![one_of(&[Some("like"), Some("follow")]), str_(crate::social::MAX_MOD_KEY, 1), bool_()],
+            ),
             (
                 "mods:install",
                 vec![shape(vec![

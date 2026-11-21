@@ -435,5 +435,17 @@ const EN = {
   "Обычные портреты героев": "Stock hero portraits",
   "Аркана или личность в конструкторе меняет портрет героя в сетке выбора, на верхней панели и в таблице счёта. Включи, и портреты останутся как у Valve, а сам образ в матче не изменится.": "An arcana or a persona from the item builder changes the hero's portrait in the pick grid, the top bar and the scoreboard. Turn this on to keep Valve's portraits. The look in the match stays the same.",
   "Видео и звуки в окне выключены: в системе нет плагинов GStreamer, без них WebKit падает. Поставь {0} и перезапусти приложение.": "Videos and sounds are off in the window: the GStreamer plugins are missing, and WebKit crashes without them. Install {0} and restart the app.",
+  "Новый мод от {0}: {1}": "New mod from {0}: {1}",
+  "Новых модов от тех, на кого ты подписан: {0}": "New mods from authors you follow: {0}",
+  "Убрать лайк": "Remove like",
+  "Нравится": "Like",
+  "Нравится (нужен вход через Discord)": "Like (needs a Discord sign-in)",
+  "Лайков: {0}": "Likes: {0}",
+  "Отписаться от {0}": "Unfollow {0}",
+  "Подписаться на {0}: о новых модах автора скажу при запуске": "Follow {0}: you will hear about the author's new mods when the app starts",
+  "Ты подписан": "Following",
+  "Подписаться": "Follow",
+  "Сервис каталога не ответил": "The catalog service did not answer",
+  "Этот файл игры звучит ещё в событиях: {0}. Новый звук заменит его и там": "This game file also plays in other events: {0}. The new sound replaces it there too"
 };
 window.EN_MORE = EN;

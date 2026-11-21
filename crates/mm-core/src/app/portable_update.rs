@@ -130,7 +130,14 @@ static PORTABLE: std::sync::OnceLock<Option<PathBuf>> = std::sync::OnceLock::new
 /// An installed copy always has the installer's uninstall.exe beside it; a bare one does not.
 /// (Electron's portable build unpacked itself into a temp folder and named the real one in
 /// PORTABLE_EXECUTABLE_DIR; the Tauri exe runs where it lies.)
-pub fn portable_dir_of(exe: &Path) -> Option<PathBuf> {
+///
+/// Only Windows has a portable build. On Linux nothing ever puts an uninstall.exe beside the
+/// binary, so the AppImage and the packages all read as portable, and an update fetched the
+/// Windows portable .exe beside them instead of going through the updater.
+pub fn portable_dir_of(exe: &Path, windows: bool) -> Option<PathBuf> {
+    if !windows {
+        return None;
+    }
     let dir = exe.parent()?;
     (!dir.join(UNINSTALLER).exists()).then(|| dir.to_path_buf())
 }
@@ -243,12 +250,14 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("mm-portable-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let exe = dir.join("Dota 2 Mod Manager.exe");
-        assert_eq!(portable_dir_of(&exe), Some(dir.clone()));
+        assert_eq!(portable_dir_of(&exe, true), Some(dir.clone()));
+        // the AppImage, the .deb and the .rpm are never portable, uninstaller or not
+        assert_eq!(portable_dir_of(&exe, false), None);
         let data = data_beside(&dir).unwrap();
         assert_eq!(data, dir.join(DATA_DIR));
         assert!(data.is_dir());
         std::fs::write(dir.join(UNINSTALLER), b"").unwrap();
-        assert_eq!(portable_dir_of(&exe), None);
+        assert_eq!(portable_dir_of(&exe, true), None);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

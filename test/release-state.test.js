@@ -147,6 +147,17 @@ test('the mirror owes the Tauri feeds only for a release that carries them', () 
   assert.ok(tauri.includes('latest.json') && tauri.includes('beta.json'));
 });
 
+test('the mirror holds the .deb and .rpm of a release that carries them, and asks no older one for them', () => {
+  const packages = ['Dota-2-Mod-Manager-amd64.deb', 'Dota-2-Mod-Manager-x86_64.rpm'];
+  const old = state.mirrorExpectation(state.channelHeads([rel('v4.6.0')])).map((w) => w.name);
+  assert.equal(old.some((n) => packages.includes(n)), false);
+  const withPackages = (tag) => rel(tag, { assets: [...rel(tag).assets, ...packages.map((name) => ({ name, size: 7 }))] });
+  const want = state.mirrorExpectation(state.channelHeads([withPackages('v4.7.0'), withPackages('v4.8.0-beta.1')]));
+  const by = Object.fromEntries(want.map((w) => [w.name, w]));
+  assert.equal(by['Dota-2-Mod-Manager-amd64.deb'].size, 7);
+  assert.equal(by['Dota-2-Mod-Manager-x86_64-beta.rpm'].size, 7);
+});
+
 test('a release from before Tauri is not held to the Tauri feeds, and a new one is', () => {
   const electron = ['latest.yml', 'latest-linux.yml', 'portable.yml', 'beta.yml', 'beta-linux.yml', ...state.BINARIES,
     'SHA256SUMS', 'SHA256SUMS.intoto.jsonl', 'dota2-mod-manager.cdx.json'];
