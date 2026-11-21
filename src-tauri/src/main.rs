@@ -374,6 +374,25 @@ fn main() {
             }
             let jailed = flag(&argv, "write-jail").is_some();
             let user_data_for_webview = user_data.clone();
+            // Linux: without GStreamer's plugins WebKit's page process aborts at the first video or
+            // sound, and the window freezes black (crates/mm-core/src/app/media_plugins.rs, #797)
+            let media_off: Vec<&str> = if cfg!(target_os = "linux") {
+                mm_core::media_plugins::missing_packages(
+                    |k| std::env::var(k).ok(),
+                    |p| std::path::Path::new(p).exists(),
+                )
+            } else {
+                Vec::new()
+            };
+            let mut script = init_script();
+            if !media_off.is_empty() {
+                owner
+                    .0
+                    .get()
+                    .diag(&format!("media: no {} for WebKit, videos and sounds are off", media_off.join(", ")));
+                script.push('\n');
+                script.push_str(&mm_core::media_plugins::page_script(&media_off));
+            }
             window::open(
                 app,
                 owner,
@@ -388,7 +407,8 @@ fn main() {
                         portable.is_some(),
                         jailed,
                     ),
-                    init_script: init_script(),
+                    init_script: script,
+                    media_off: !media_off.is_empty(),
                     // WebView2 keeps its cache beside the data too, not in %LOCALAPPDATA%
                     webview_data: portable.as_ref().map(|_| user_data_for_webview.join("webview")),
                 },

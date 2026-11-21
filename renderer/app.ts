@@ -97,6 +97,12 @@ async function offerToolchain(): Promise<void> {
   if (cfg.langMigration) {
     toast(L`Моды перенесены в dota_${cfg.langMigration.to} — папку, которую монтирует твоя озвучка. Перезапусти игру.`, 'warn', 9000);
   }
+  // Linux without GStreamer's plugins: the shell turned media off so WebKit does not crash
+  // (crates/mm-core/src/app/media_plugins.rs, #797); said on every start until they are installed
+  const mediaOff = window.__mmMediaOff;
+  if (mediaOff?.length) {
+    toast(L`Видео и звуки в окне выключены: в системе нет плагинов GStreamer, без них WebKit падает. Поставь ${mediaOff.join(' ')} и перезапусти приложение.`, 'warn', 15000);
+  }
 
   await refreshSidebarStatus();
   await refreshMasterSwitch();

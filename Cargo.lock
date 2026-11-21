@@ -1056,6 +1056,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "webkit2gtk",
  "windows-sys 0.61.2",
  "zbus 6.2.1",
 ]

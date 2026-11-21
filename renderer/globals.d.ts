@@ -11,6 +11,8 @@ declare global {
     ZH_CN_PLURAL: Record<string, string | undefined>;
     /** English singular and plural, keyed by the Russian "many" form plural() is given */
     EN_PLURAL: Record<string, [string, string] | undefined>;
+    /** Linux: the GStreamer packages missing, when the shell turned WebKit's media off */
+    __mmMediaOff?: string[];
   }
 
   /** L`Текст ${x}`: the English for a Russian source string, or the Russian when there is none. */
