@@ -157,6 +157,7 @@ jobs:
           fi
           export HOME="$RUNNER_TEMP/deb-home"
           mkdir -p "$HOME"
+          touch "$RUNNER_TEMP/deb-started"
           xvfb-run -a "$exe" > deb-start.log 2>&1 &
           pid=$!
           log="$HOME/.local/share/com.dota2modmanager.app/logs/app.log"
@@ -164,6 +165,11 @@ jobs:
             grep -q 'installed from a system package' "$log" 2>/dev/null && break
             sleep 1
           done
+          app=$(pgrep -f "$exe" | head -1 || true)
+          if [ -n "$app" ] && ! grep -q 'installed from a system package' "$log" 2>/dev/null; then
+            echo "the app's open files:"; ls -l "/proc/$app/fd" 2>/dev/null | grep -v -e socket -e pipe -e anon_inode | tail -30 || true
+            echo "its threads:"; cat /proc/$app/task/*/comm 2>/dev/null | sort | uniq -c || true
+          fi
           kill "$pid" 2>/dev/null || true
           pkill -f "$exe" || true
           cat "$log" 2>/dev/null || cat deb-start.log
@@ -171,6 +177,8 @@ jobs:
             # which half failed: the bundler's mark in the binary, or where the log went
             grep -ao '__TAURI_BUNDLE_TYPE_VAR_[A-Z]*' "$exe" | sort | uniq -c || true
             find "$HOME" -maxdepth 6 | head -40
+            echo "app.log written anywhere since the start:"
+            sudo find / -xdev -name app.log -newer "$RUNNER_TEMP/deb-started" 2>/dev/null || true
             cat deb-start.log
             echo "::error::the app from the .deb did not know it came from a package"; exit 1
           fi
