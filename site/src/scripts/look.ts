@@ -13,15 +13,26 @@
 export type Look = 'rainbow' | 'halloween';
 export const LOOKS: Look[] = ['rainbow', 'halloween'];
 
-/** Each event's look and the days it is worn, as [month, day], both ends included. */
-export const EVENTS: Array<{ look: Look; from: [number, number]; to: [number, number] }> = [
-  { look: 'halloween', from: [10, 15], to: [11, 10] },
+/** Each event's look and the days it is worn, as [month, day], both ends included. `off` puts an
+ *  event away without losing its dates: off, its look never comes round (`mm-look` still tries it),
+ *  and Halloween also keeps Axe in his cocoon, since the key he gives is for the pumpkin. */
+export const EVENTS: Array<{ look: Look; from: [number, number]; to: [number, number]; off?: boolean }> = [
+  { look: 'halloween', from: [10, 15], to: [11, 10], off: true },
 ];
+
+/** Whether an event is on this year at all, whatever the date. */
+export const eventOn = (look: Look): boolean => EVENTS.some((e) => e.look === look && !e.off);
+
+/** The days an event is on, as month * 100 + day, for the line in the head (lib/inline-scripts.ts). */
+export const eventDays = () => EVENTS.filter((e) => !e.off).map((e) => ({
+  look: e.look, from: e.from[0] * 100 + e.from[1], to: e.to[0] * 100 + e.to[1],
+}));
 
 /** The look of a day: an event's, when one is on, and the rainbow otherwise. */
 export function lookOn(date: Date): Look {
   const md = (date.getMonth() + 1) * 100 + date.getDate();
   for (const e of EVENTS) {
+    if (e.off) continue;
     const from = e.from[0] * 100 + e.from[1];
     const to = e.to[0] * 100 + e.to[1];
     if (from <= to ? md >= from && md <= to : md >= from || md <= to) return e.look;

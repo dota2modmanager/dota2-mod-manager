@@ -24,7 +24,7 @@
 import { state } from '../core/store.ts';
 import { RAW_BASE } from '../core/constants.ts';
 import { tokenMs } from '../core/css-time.ts';
-import { lookOn } from './season.ts';
+import { eventOn, lookOn } from './season.ts';
 import { dressHalloween } from './halloween.ts';
 import { pumpkinMascot } from './pumpkin-art.ts';
 
@@ -47,7 +47,9 @@ const KNOCKS = 20;
 const HUE_MS = 6000;
 
 const unlocked = () => state.settings?.secret === true;
-const bled = () => state.settings?.blood === true;
+// The bloody night is Halloween's and is put away with it (ui/season.ts `off`): out of the round,
+// and a window that was wearing it starts in the first hero's. The setting itself is kept.
+const bled = () => state.settings?.blood === true && eventOn('halloween');
 const themes = () => [...HEROES, ...(hasCustom() ? [CUSTOM] : []), ...(unlocked() ? [SECRET] : []), ...(bled() ? [BLOOD] : [])];
 /** the theme the window wears by name: the hero's, or 'secret' whatever look that has today */
 let current = HEROES[0];
