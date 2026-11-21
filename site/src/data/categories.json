@@ -3639,6 +3639,7 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {"name":"Pudge Hook","styleLabel":null,"group":null,"image":{"src":"/mods/pudge-hook.webp","width":854,"height":480},"author":"XDremonioXD","authorUrl":null,"date":1795226491},
         {
           "name": "Earthshaker Ukrainian Voice",
           "styleLabel": null,
@@ -8649,6 +8650,96 @@
       ]
     },
     {
+      "id": "item-icons",
+      "mods": [
+        {
+          "name": "Nyash Items Revived",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/nyash-items-revived.webp","width":854,"height":480},
+          "author": "c0nf1",
+          "authorUrl": "https://steamcommunity.com/id/c0nf1/",
+          "date": 1795226491
+        },
+        {
+          "name": "Armlet Fix",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/armlet-fix.webp","width":854,"height":480},
+          "author": "c0nf1",
+          "authorUrl": "https://steamcommunity.com/id/c0nf1/",
+          "date": 1795225728
+        },
+        {"name":"Allstars Items","styleLabel":null,"group":null,"image":{"src":"/mods/allstars-items.webp","width":993,"height":526},"author":null,"authorUrl":null,"date":1794152898},
+        {
+          "name": "Arcanas Items",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/arcanas-items.webp","width":993,"height":526},
+          "author": "lebensinhalt",
+          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
+          "date": 1794152898
+        },
+        {
+          "name": "Beer Bottle",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/beer-bottle.webp","width":854,"height":480},
+          "author": "hrdq",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
+          "date": 1794152898
+        },
+        {
+          "name": "Dark Items",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/dark-items.webp","width":993,"height":526},
+          "author": "lebensinhalt",
+          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
+          "date": 1794152898
+        },
+        {
+          "name": "Meme Media Items",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/meme-media-items.webp","width":993,"height":526},
+          "author": "NahuiToSay",
+          "authorUrl": "https://t.me/NahuiToSay",
+          "date": 1794152898
+        },
+        {"name":"Nyash Items","styleLabel":null,"group":null,"image":{"src":"/mods/nyash-items.webp","width":993,"height":526},"author":null,"authorUrl":null,"date":1794152898},
+        {
+          "name": "Purple Icons",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/purple-icons.webp","width":854,"height":480},
+          "author": "palekid666",
+          "authorUrl": "https://t.me/ubiycasmerty",
+          "date": 1794152898
+        },
+        {"name":"White Items","styleLabel":null,"group":null,"image":{"src":"/mods/white-items.webp","width":993,"height":526},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1794152898},
+        {
+          "name": "Whatsapp Tranquill",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/whatsapp-tranquill.webp","width":854,"height":480},
+          "author": "драг",
+          "authorUrl": "https://t.me/dragvpk",
+          "date": 1790528664
+        },
+        {"name":"Reflow Radiance","styleLabel":null,"group":null,"image":{"src":"/mods/reflow-radiance.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790171120},
+        {
+          "name": "Old Items",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/old-items.webp","width":854,"height":480},
+          "author": "lebensinhalt",
+          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
+          "date": 1788922344
+        }
+      ]
+    },
+    {
       "id": "ranks",
       "mods": [
         {"name":"Azur Lane Medals","styleLabel":null,"group":null,"image":{"src":"/mods/azur-lane-medals.webp","width":854,"height":480},"author":null,"authorUrl":null,"date":1794152898},
@@ -8837,87 +8928,6 @@
       ]
     },
     {
-      "id": "item-icons",
-      "mods": [
-        {
-          "name": "Armlet Fix",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/armlet-fix.webp","width":854,"height":480},
-          "author": "c0nf1",
-          "authorUrl": "https://steamcommunity.com/id/c0nf1/",
-          "date": 1795225728
-        },
-        {"name":"Allstars Items","styleLabel":null,"group":null,"image":{"src":"/mods/allstars-items.webp","width":993,"height":526},"author":null,"authorUrl":null,"date":1794152898},
-        {
-          "name": "Arcanas Items",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/arcanas-items.webp","width":993,"height":526},
-          "author": "lebensinhalt",
-          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
-          "date": 1794152898
-        },
-        {
-          "name": "Beer Bottle",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/beer-bottle.webp","width":854,"height":480},
-          "author": "hrdq",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199180038073",
-          "date": 1794152898
-        },
-        {
-          "name": "Dark Items",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/dark-items.webp","width":993,"height":526},
-          "author": "lebensinhalt",
-          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
-          "date": 1794152898
-        },
-        {
-          "name": "Meme Media Items",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/meme-media-items.webp","width":993,"height":526},
-          "author": "NahuiToSay",
-          "authorUrl": "https://t.me/NahuiToSay",
-          "date": 1794152898
-        },
-        {"name":"Nyash Items","styleLabel":null,"group":null,"image":{"src":"/mods/nyash-items.webp","width":993,"height":526},"author":null,"authorUrl":null,"date":1794152898},
-        {
-          "name": "Purple Icons",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/purple-icons.webp","width":854,"height":480},
-          "author": "palekid666",
-          "authorUrl": "https://t.me/ubiycasmerty",
-          "date": 1794152898
-        },
-        {"name":"White Items","styleLabel":null,"group":null,"image":{"src":"/mods/white-items.webp","width":993,"height":526},"author":"Миша Талант","authorUrl":"https://t.me/madberserker","date":1794152898},
-        {
-          "name": "Whatsapp Tranquill",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/whatsapp-tranquill.webp","width":854,"height":480},
-          "author": "драг",
-          "authorUrl": "https://t.me/dragvpk",
-          "date": 1790528664
-        },
-        {"name":"Reflow Radiance","styleLabel":null,"group":null,"image":{"src":"/mods/reflow-radiance.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1790171120},
-        {
-          "name": "Old Items",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/old-items.webp","width":854,"height":480},
-          "author": "lebensinhalt",
-          "authorUrl": "https://t.me/turnoffyourlebensinhalt",
-          "date": 1788922344
-        }
-      ]
-    },
-    {
       "id": "ranged-attack",
       "mods": [
         {"name":"Aghanim Ranged Attack","styleLabel":null,"group":null,"image":{"src":"/mods/aghanim-ranged-attack.webp","width":1280,"height":720},"author":null,"authorUrl":null,"date":1794152898},
@@ -9072,6 +9082,15 @@
     {
       "id": "announcers",
       "mods": [
+        {
+          "name": "Viperr Announcer",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/viperr-announcer.webp","width":854,"height":480},
+          "author": "samoredoto",
+          "authorUrl": "https://t.me/samoredoto",
+          "date": 1795226491
+        },
         {
           "name": "Dark Willow",
           "styleLabel": null,
