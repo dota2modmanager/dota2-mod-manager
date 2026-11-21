@@ -893,7 +893,8 @@ const { complete, shared, close, hint, last = false } = Astro.props;
     } else if (earned && (caught || !runs)) {
       // found them all (and caught Axe, once he runs): the page already wears the reward
       if (location.hash === '#all-eight') history.replaceState(null, '', location.pathname);
-      if (caught) offerKeyAgain();
+      // the key is for the pumpkin, so it is only offered again while Axe runs
+      if (caught && runs) offerKeyAgain();
     } else {
       // Not yet, or only last year's rainbow: the page keeps whatever it wears, and the hunt is
       // laid out from the start, since this year's has an order the old one did not.

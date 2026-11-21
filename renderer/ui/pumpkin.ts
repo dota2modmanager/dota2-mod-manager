@@ -17,6 +17,7 @@
 import { state } from '../core/store.ts';
 import { switchView } from '../core/router.ts';
 import { wearBlood } from './theme.ts';
+import { eventOn } from './season.ts';
 import { PUMPKIN_SVG } from './pumpkin-art.ts';
 import { crunch, kindle, hiss, opens } from './dread.ts';
 import type { RedeemAnswer } from '../api/app.ts';
@@ -128,6 +129,9 @@ function onEaten(): void {
 }
 
 export function initPumpkin(): void {
+  // Put away with Halloween (ui/season.ts): no pumpkin, rolled in or rolling. What people earned
+  // stays in their settings, so it is all back where they left it once Halloween is on again.
+  if (!eventOn('halloween')) return;
   if (state.settings?.pumpkin === true) show(false);
   document.addEventListener('mm-knocks', () => {
     if (button) return;
