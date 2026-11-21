@@ -294,8 +294,6 @@
     // the pumpkin's key and the mod it opens (crates/mm-core/src/owner/owner_studios.rs)
     pumpkin: {
       redeem: (key) => mm.invoke('pumpkin:redeem', key),
-      prizeAgain: () => mm.invoke('pumpkin:prizeAgain'),
-      hasPrize: () => mm.invoke('pumpkin:hasPrize'),
     },
     grids: {
       state: () => mm.invoke('grid:state'),

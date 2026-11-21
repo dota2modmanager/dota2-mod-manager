@@ -1,21 +1,16 @@
 //! The pumpkin's side of the key (renderer/ui/pumpkin.ts asks, tools/ops/pumpkin-worker
 //! answers). Each key the site hands out opens one pumpkin: the worker ties it to the first install
 //! name that brings it, a random name made here the first time it is needed and sent nowhere else.
-//! The key opens the bloody theme (settings `blood`) and a mod nobody else has yet, downloaded from
-//! the worker and taken in the way any dropped .vpk is. The key is kept, so the mod can be fetched
-//! again. Case, spaces and dashes do not count, and a key typed on a Russian layout or with
-//! Cyrillic look-alikes is read back as the Latin it meant.
-
-use std::path::PathBuf;
+//! The key opens the bloody theme (settings `blood`). Until Halloween 2026 was over it also brought
+//! a mod nobody else had, Necrophos Scream; that mod is in the catalog now, and the window sends
+//! whoever opens the pumpkin there. Case, spaces and dashes do not count, and a key typed on a
+//! Russian layout or with Cyrillic look-alikes is read back as the Latin it meant.
 
 use serde_json::{json, Value};
 
-use crate::library::Library;
 use crate::net_fetch::Net;
 use crate::settings::Settings;
 
-/// What the mod is called in the library.
-pub const PRIZE_NAME: &str = "Necrophos - Scream";
 /// Which night this install has been through: a new number makes everybody walk it again.
 pub const NIGHT_ROUND: i64 = 1;
 
@@ -78,29 +73,10 @@ pub fn begin_night_again(settings: &mut Settings) -> std::io::Result<bool> {
     Ok(true)
 }
 
-fn encode(s: &str) -> String {
-    // encodeURIComponent
-    let mut out = String::new();
-    for b in s.bytes() {
-        if b.is_ascii_alphanumeric() || b"-_.!~*'()".contains(&b) {
-            out.push(b as char);
-        } else {
-            out.push_str(&format!("%{b:02X}"));
-        }
-    }
-    out
-}
-
-/// What takes a downloaded .vpk in as a mod: the import's answer, `{imported: [{name, relPath}],
-/// errors: [{error}]}` or `{error}`, as the window's own import gives it.
-pub type Import<'a> = &'a mut dyn FnMut(&[PathBuf], &mut Library) -> Value;
-
 /// The pumpkin's side in the core, over the network and the worker's address.
 pub struct Pumpkin<'a> {
     pub net: &'a Net,
     pub host: String,
-    /// the language the game speaks in, when Valve's voice for it is on disk
-    pub voice: Option<String>,
 }
 
 const TIMEOUT: u64 = 120_000;
@@ -121,73 +97,8 @@ impl Pumpkin<'_> {
         Ok(id)
     }
 
-    /// Download the prize and take it in as a mod: the name of the record, or why not.
-    fn fetch_prize(
-        &self,
-        key: &str,
-        settings: &mut Settings,
-        lib: &mut Library,
-        import: Import,
-    ) -> Result<String, String> {
-        let q = format!("key={}&install={}", encode(key), Self::install(settings).map_err(|e| e.to_string())?);
-        let dir = crate::import::mkdtemp("mm-pumpkin-")?;
-        let voice =
-            self.voice.as_ref().filter(|v| !v.is_empty()).map(|v| format!("&voice={}", encode(v))).unwrap_or_default();
-        let (status, _, body) = self
-            .net
-            .direct_typed("GET", &format!("{}/mod?{q}{voice}", self.host), &[], None, TIMEOUT)
-            .map_err(|e| e.message)?;
-        if !(200..300).contains(&status) {
-            return Err(format!("HTTP {status}"));
-        }
-        let file = dir.0.join(format!("{PRIZE_NAME}.vpk"));
-        std::fs::write(&file, body).map_err(|e| e.to_string())?;
-        let answer = import(&[file], lib);
-        let Some(got) = answer.get("imported").and_then(Value::as_array).and_then(|a| a.first()).cloned() else {
-            let why = answer
-                .get("error")
-                .filter(|e| crate::js::truthy(e))
-                .or_else(|| {
-                    answer
-                        .get("errors")
-                        .and_then(|e| e.get(0))
-                        .and_then(|e| e.get("error"))
-                        .filter(|e| crate::js::truthy(e))
-                })
-                .map_or("not imported".into(), crate::js::string);
-            return Err(why);
-        };
-        // its picture, so the library shows what it is rather than a blank
-        if let Ok((status, kind, data)) =
-            self.net.direct_typed("GET", &format!("{}/mod/preview?{q}", self.host), &[], None, TIMEOUT)
-        {
-            if (200..300).contains(&status) {
-                let rel = got.get("relPath").cloned().unwrap_or(Value::Null);
-                let id = lib
-                    .list()
-                    .iter()
-                    .find(|r| r.get("files").and_then(|f| f.get(0)).and_then(|f| f.get("relPath")) == Some(&rel))
-                    .map(|r| r["id"].clone());
-                if let Some(id) = id {
-                    use base64::Engine as _;
-                    let kind = kind.filter(|k| !k.is_empty()).unwrap_or_else(|| "image/png".into());
-                    let url = format!("data:{kind};base64,{}", base64::engine::general_purpose::STANDARD.encode(&data));
-                    let _ = lib.update(&id, &json!({ "preview": url }), None);
-                }
-            }
-        }
-        Ok(got.get("name").map(crate::js::string).unwrap_or_default())
-    }
-
-    /// Spend a key on this install: the theme, then the mod. The window's answer.
-    pub fn redeem(
-        &self,
-        typed: &Value,
-        settings: &mut Settings,
-        lib: &mut Library,
-        import: Import,
-        log: &mut dyn FnMut(String),
-    ) -> Value {
+    /// Spend a key on this install: the theme. The window's answer.
+    pub fn redeem(&self, typed: &Value, settings: &mut Settings, log: &mut dyn FnMut(String)) -> Value {
         let text = if typed.is_null() { String::new() } else { crate::js::string(typed) };
         let tries = readings(&text);
         if tries.is_empty() {
@@ -217,13 +128,7 @@ impl Pumpkin<'_> {
             if (200..300).contains(&status) {
                 let _ = settings.set("blood", json!(true));
                 let _ = settings.set("bloodKey", json!(key));
-                return match self.fetch_prize(&key, settings, lib, import) {
-                    Ok(name) => json!({ "ok": true, "installed": name }),
-                    Err(e) => {
-                        log(format!("pumpkin: the prize did not land: {e}"));
-                        json!({ "ok": true, "installed": null, "installError": e })
-                    }
-                };
+                return json!({ "ok": true });
             }
             if status == 409 {
                 answer = json!({ "error": "used" });
@@ -232,22 +137,5 @@ impl Pumpkin<'_> {
             }
         }
         answer
-    }
-
-    /// The mod again, for an install that has spent its key and removed the mod since.
-    pub fn prize_again(&self, settings: &mut Settings, lib: &mut Library, import: Import) -> Value {
-        let Some(key) = settings.get("bloodKey").and_then(Value::as_str).filter(|k| !k.is_empty()).map(str::to_string)
-        else {
-            return json!({ "error": "no key" });
-        };
-        match self.fetch_prize(&key, settings, lib, import) {
-            Ok(name) => json!({ "ok": true, "installed": name }),
-            Err(e) => json!({ "error": e }),
-        }
-    }
-
-    /// Whether the prize is in the library now.
-    pub fn has_prize(lib: &Library) -> bool {
-        lib.list().iter().any(|r| r.get("name").and_then(Value::as_str) == Some(PRIZE_NAME))
     }
 }

@@ -12,7 +12,6 @@ pub mod patch_watch;
 pub mod patcher;
 pub mod patcher_gameinfo;
 pub mod patcher_signatures;
-pub mod scream_guard;
 pub mod steam;
 pub mod steam_appstate;
 pub mod terrain_age;

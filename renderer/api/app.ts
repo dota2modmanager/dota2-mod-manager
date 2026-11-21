@@ -166,13 +166,11 @@ interface MiscApi {
 
 /** What spending a key came to (crates/mm-core/src/looks/pumpkin.rs). */
 export type RedeemAnswer =
-  | { ok: true; installed: string | null; installError?: string }
+  | { ok: true }
   | { error: 'empty' | 'wrong' | 'used' | 'offline' | 'broken'; detail?: string };
 
 interface PumpkinApi {
   redeem: (key: string) => Promise<RedeemAnswer>;
-  prizeAgain: () => Promise<{ ok: true; installed: string } | { error: string }>;
-  hasPrize: () => Promise<boolean>;
 }
 
 interface UpdateApi {
