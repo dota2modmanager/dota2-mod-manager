@@ -143,8 +143,10 @@ jobs:
           desktop-file-validate "$entry"
           grep -q 'x-scheme-handler/d2mm' "$entry"
           grep -q 'application/x-d2mm' "$entry"
-          # the entry names the program as the menu runs it: by name, found on PATH
-          exe=$(command -v "$(sed -n 's/^Exec=\([^ ]*\) %u$/\1/p' "$entry")") \
+          # the entry names the program as the menu runs it: by name, found on PATH, in quotes
+          # when the name has spaces (the .deb names it "Dota 2 Mod Manager")
+          name=$(sed -n 's/^Exec=\(.*\) %u$/\1/p' "$entry" | sed 's/^"\(.*\)"$/\1/')
+          exe=$(command -v "$name") \
             || { echo "::error::the entry's Exec names no program on PATH"; exit 1; }
           export HOME="$RUNNER_TEMP/deb-home"
           mkdir -p "$HOME"
