@@ -98,7 +98,7 @@
 <tr><td><b>Объединённые паки</b></td><td>Слепи несколько модов в один слот и разбери обратно</td></tr>
 <tr><td><b>Свои файлы</b></td><td>Импортируй <code>.vpk</code> или подхвати то, что оставила в папке чужая программа. Приложение сверит отпечаток с каталогом и скажет, что это</td></tr>
 <tr><td><b>Автообновление</b></td><td>Приложение само смотрит GitHub Releases и ставит новые версии</td></tr>
-<tr><td><b>Windows и Linux</b></td><td>Оба в каждом релизе: установщик и портативная сборка под Windows, AppImage под Linux. Steam находится сам, включая flatpak</td></tr>
+<tr><td><b>Windows и Linux</b></td><td>Оба в каждом релизе: установщик и портативная сборка под Windows; .deb, .rpm и AppImage под Linux. Steam находится сам, включая flatpak</td></tr>
 <tr><td><b>Без аккаунта и слежки</b></td><td>Ничего о тебе не собирается и никуда не уходит. Установка мода из каталога прибавляет единицу к его счётчику скачиваний, и это можно выключить. Вход через Discord необязателен и нужен только чтобы подписать сборку, которой делишься</td></tr>
 </table>
 </details>
@@ -148,8 +148,14 @@ Valve, проверит результат доктором модов и отд
 2. Запусти. Приложение установится, создаст ярлык и откроется
 3. Путь к Доте найдётся сам. Никаких параметров запуска и правок свойств Steam
 
-**На Linux** это [AppImage](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager.AppImage):
-`chmod +x` и запускай.
+**На Linux** бери пакет под свой дистрибутив. Пакеты работают на системном WebKitGTK и
+обновляются через менеджер пакетов:
+
+- [.deb](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager-amd64.deb) для Ubuntu, Debian и Mint: `sudo apt install ./Dota-2-Mod-Manager-amd64.deb`
+- [.rpm](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager-x86_64.rpm) для Fedora и openSUSE: `sudo dnf install ./Dota-2-Mod-Manager-x86_64.rpm`
+- Arch: в AUR новых аккаунтов не пускают, поэтому собери пакет из репозитория:
+  `git clone https://github.com/dota2modmanager/dota2-mod-manager && cd dota2-mod-manager/packaging/aur && makepkg -si`
+- [AppImage](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager.AppImage) для всего остального: `chmod +x` и запускай.
 
 > [!IMPORTANT]
 > Windows скажет, что издатель неизвестен: у установщика нет платной подписи. Жми **Подробнее**,
