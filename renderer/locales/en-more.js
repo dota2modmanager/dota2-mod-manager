@@ -434,5 +434,6 @@ const EN = {
   "Сбросить": "Reset",
   "Обычные портреты героев": "Stock hero portraits",
   "Аркана или личность в конструкторе меняет портрет героя в сетке выбора, на верхней панели и в таблице счёта. Включи, и портреты останутся как у Valve, а сам образ в матче не изменится.": "An arcana or a persona from the item builder changes the hero's portrait in the pick grid, the top bar and the scoreboard. Turn this on to keep Valve's portraits. The look in the match stays the same.",
+  "Видео и звуки в окне выключены: в системе нет плагинов GStreamer, без них WebKit падает. Поставь {0} и перезапусти приложение.": "Videos and sounds are off in the window: the GStreamer plugins are missing, and WebKit crashes without them. Install {0} and restart the app.",
 };
 window.EN_MORE = EN;

@@ -11,6 +11,7 @@ pub mod folder_size;
 pub mod host_env;
 pub mod i18n;
 pub mod main_window;
+pub mod media_plugins;
 pub mod mod_doctor;
 pub mod notice_text;
 pub mod portable_update;

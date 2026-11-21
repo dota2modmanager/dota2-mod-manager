@@ -213,6 +213,8 @@ pub struct Open {
     pub quiet: bool,
     pub login_allowed: bool,
     pub init_script: String,
+    /// WebKit's media off: the machine lacks GStreamer's plugins (mm_core::media_plugins)
+    pub media_off: bool,
 }
 
 /// Open the window on the app's page, locked to it, with the tray beside it.
@@ -258,6 +260,20 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
         })
         .center()
         .build()?;
+    #[cfg(not(target_os = "linux"))]
+    let _ = o.media_off;
+    #[cfg(target_os = "linux")]
+    if o.media_off {
+        let _ = win.with_webview(|wv| {
+            use webkit2gtk::{SettingsExt, WebViewExt};
+            if let Some(s) = wv.inner().settings() {
+                s.set_enable_media(false);
+                s.set_enable_mediasource(false);
+                s.set_enable_media_stream(false);
+                s.set_enable_webaudio(false);
+            }
+        });
+    }
     let events = app.handle().clone();
     let w = win.clone();
     // Resized fires at every step of dragging an edge; the page hears only a change of state,

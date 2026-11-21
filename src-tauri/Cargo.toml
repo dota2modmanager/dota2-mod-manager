@@ -39,3 +39,6 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Securit
 zbus = "6.2"
 # the opener plugin's launchers, run with the host's environment from the AppImage (src/host_open.rs)
 open = "5.4"
+# WebKit's media switched off where GStreamer's plugins are missing (src/window.rs, #797); the
+# version wry pins
+webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
