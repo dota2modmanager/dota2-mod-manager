@@ -159,8 +159,13 @@ jobs:
           done
           kill "$pid" 2>/dev/null || true
           cat "$log" 2>/dev/null || cat deb-start.log
-          grep -q 'installed from a system package' "$log" \
-            || { echo "::error::the app from the .deb did not know it came from a package"; exit 1; }
+          if ! grep -q 'installed from a system package' "$log" 2>/dev/null; then
+            # which half failed: the bundler's mark in the binary, or where the log went
+            grep -ao '__TAURI_BUNDLE_TYPE_VAR_[A-Z]*' "$exe" | sort | uniq -c || true
+            find "$HOME" -maxdepth 6 | head -40
+            cat deb-start.log
+            echo "::error::the app from the .deb did not know it came from a package"; exit 1
+          fi
           if [ -e "$HOME/.local/share/applications/dota2-mod-manager.desktop" ]; then
             echo "::error::the app from the .deb wrote a second menu entry into the home folder"; exit 1
           fi
