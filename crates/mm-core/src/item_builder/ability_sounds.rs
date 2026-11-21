@@ -30,6 +30,8 @@ pub struct HeroEvent {
     #[serde(rename = "type")]
     pub ty: String,
     pub files: usize,
+    /// how many other events play one of its files: a sound put in their place is heard there too
+    pub shares: usize,
 }
 
 /// The hero's events file in pak01.
@@ -149,18 +151,129 @@ fn files_of(ev: Option<&T>) -> Vec<String> {
 
 /// The events a sound can be put on: those that play one. An event of ours made by a layer is left out.
 pub fn hero_events(kv: &Block) -> Vec<HeroEvent> {
+    let all = event_files(kv);
+    let mut uses: std::collections::HashMap<&str, Vec<&str>> = std::collections::HashMap::new();
+    for (name, files) in &all {
+        for f in files {
+            uses.entry(f.as_str()).or_default().push(name.as_str());
+        }
+    }
     let Value::Object(m) = &kv.root.value else { return vec![] };
-    m.iter()
-        .filter_map(|(name, ev)| {
-            let t = T::Node(ev.clone());
-            let files = files_of(Some(&t)).len();
-            (files > 0 && !name.contains(".d2mm_")).then(|| HeroEvent {
+    all.iter()
+        .filter(|(name, _)| !name.contains(".d2mm_"))
+        .map(|(name, files)| {
+            let mut others: Vec<&str> =
+                files.iter().flat_map(|f| uses[f.as_str()].iter().copied()).filter(|o| o != name).collect();
+            others.sort_unstable();
+            others.dedup();
+            HeroEvent {
                 name: name.clone(),
-                ty: ev.get("type").and_then(Node::as_str).unwrap_or("").to_string(),
-                files,
-            })
+                ty: m.get(name).and_then(|ev| ev.get("type")).and_then(Node::as_str).unwrap_or("").to_string(),
+                files: files.len(),
+                shares: others.len(),
+            }
         })
         .collect()
+}
+
+/// Every event that plays files, with them, as the events file names them.
+pub fn event_files(kv: &Block) -> IndexMap<String, Vec<String>> {
+    let Value::Object(m) = &kv.root.value else { return IndexMap::new() };
+    m.iter()
+        .map(|(name, ev)| (name.clone(), files_of(Some(&T::Node(ev.clone())))))
+        .filter(|(_, f)| !f.is_empty())
+        .collect()
+}
+
+/// A sound file of the game's as an events file names it, without its extension: where the user's
+/// sound goes in its place (`<stem>.wav` in, `<stem>.vsnd_c` out). None for a name that is not a
+/// plain path under sounds/.
+pub fn game_sound_stem(file: &str) -> Option<String> {
+    let f = file.replace('\\', "/").to_ascii_lowercase();
+    let f = ["vsnd", "wav", "mp3"]
+        .iter()
+        .find_map(|ext| f.strip_suffix(&format!(".{ext}")).map(str::to_string))
+        .unwrap_or(f);
+    let plain = f.starts_with("sounds/")
+        && !f.ends_with('/')
+        && f.split('/').all(|seg| !seg.is_empty() && seg != "." && seg != "..")
+        && f.bytes().all(|c| c.is_ascii_alphanumeric() || b"_-./".contains(&c));
+    plain.then_some(f)
+}
+
+/// What a hero's pak holds for the user's edits.
+///
+/// A sound put in place of an event's own goes in at the game's own file, and the events file is
+/// left as the game has it: a pak that carries an events file freezes it, and once Valve changes
+/// that file the old copy crashes the game on the sound (rotten's rule for the catalog, after a
+/// sound mod built here went up with one). An events file is written only for what has no file
+/// of the game's to take: a sound played on top of the game's, or an event whose files are not
+/// plain paths.
+#[derive(Debug, Default, PartialEq)]
+pub struct SoundPlan {
+    /// (the game's file, as game_sound_stem gives it; the user's sound; its volume), one per file
+    pub files: Vec<(String, String, f64)>,
+    /// the edits that still need the events file
+    pub events: Vec<SoundEdit>,
+    /// edits on events the game no longer has
+    pub gone: Vec<String>,
+    /// game files two edits wanted: the later edit has them
+    pub shared: Vec<String>,
+}
+
+impl PartialEq for SoundEdit {
+    fn eq(&self, o: &Self) -> bool {
+        self.event == o.event && self.mode == o.mode && self.volume == o.volume && self.sound == o.sound
+    }
+}
+
+/// The edits split by `sound_plan`'s rule over the game's events and their files.
+pub fn sound_plan(events: &IndexMap<String, Vec<String>>, edits: &[SoundEdit]) -> SoundPlan {
+    let mut plan = SoundPlan::default();
+    for e in edits {
+        let Some(files) = events.get(&e.event).filter(|f| !f.is_empty()) else {
+            plan.gone.push(e.event.clone());
+            continue;
+        };
+        let stems: Option<Vec<String>> = files.iter().map(|f| game_sound_stem(f)).collect();
+        let (true, Some(stems)) = (e.mode == "replace", stems) else {
+            plan.events.push(e.clone());
+            continue;
+        };
+        for stem in stems {
+            if let Some(at) = plan.files.iter().position(|(s, _, _)| *s == stem) {
+                plan.files.remove(at);
+                if !plan.shared.contains(&stem) {
+                    plan.shared.push(stem.clone());
+                }
+            }
+            plan.files.push((stem, e.sound.clone(), e.volume));
+        }
+    }
+    plan
+}
+
+/// A WAV played at `volume` (0..1) of its own loudness, for a sound that takes a game file's place
+/// and so has no event of ours to carry a volume. 16-bit PCM only, as wav_problem asks.
+pub fn wav_at_volume(wav: &[u8], volume: f64) -> Vec<u8> {
+    let mut out = wav.to_vec();
+    if !(0.0..1.0).contains(&volume) || wav.len() < 12 {
+        return out;
+    }
+    let mut at = 12usize;
+    while at + 8 <= out.len() {
+        let size = u32::from_le_bytes([out[at + 4], out[at + 5], out[at + 6], out[at + 7]]) as usize;
+        if &out[at..at + 4] == b"data" {
+            let end = (at + 8 + size).min(out.len());
+            for s in out[at + 8..end].as_chunks_mut::<2>().0 {
+                let v = (i16::from_le_bytes([s[0], s[1]]) as f64 * volume).round() as i16;
+                *s = v.to_le_bytes();
+            }
+            break;
+        }
+        at += 8 + size + (size & 1);
+    }
+    out
 }
 
 /// An event playing only `vsnd`, made from `template` (its type, level, mix group...).

@@ -445,6 +445,7 @@ const EN = {
   "Подписаться на {0}: о новых модах автора скажу при запуске": "Follow {0}: you will hear about the author's new mods when the app starts",
   "Ты подписан": "Following",
   "Подписаться": "Follow",
-  "Сервис каталога не ответил": "The catalog service did not answer"
+  "Сервис каталога не ответил": "The catalog service did not answer",
+  "Этот файл игры звучит ещё в событиях: {0}. Новый звук заменит его и там": "This game file also plays in other events: {0}. The new sound replaces it there too"
 };
 window.EN_MORE = EN;

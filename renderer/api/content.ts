@@ -229,7 +229,7 @@ export type SoundMode = 'replace' | 'layer';
 /** A sound of the user's on one event, as the hero's record keeps it. */
 export interface SoundEdit { event: string; mode: SoundMode; volume: number; sound: string; name: string }
 /** An event of a hero's that plays a sound. */
-export interface HeroEvent { name: string; type: string; files: number }
+export interface HeroEvent { name: string; type: string; files: number; /** other events that play one of its files */ shares?: number }
 
 export interface SoundsApi {
   /** every hero with an events file: the file's name, the hero's own id (for his portrait) and his name */
