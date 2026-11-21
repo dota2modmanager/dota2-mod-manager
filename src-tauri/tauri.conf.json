@@ -32,6 +32,16 @@
       "../package.json": "app/package.json",
       "../build/icon.png": "app/build/icon.png"
     },
+    "linux": {
+      "deb": {
+        "depends": ["gstreamer1.0-plugins-base", "gstreamer1.0-plugins-good"],
+        "desktopTemplate": "linux/main.desktop"
+      },
+      "rpm": {
+        "depends": ["gstreamer1-plugins-base", "gstreamer1-plugins-good"],
+        "desktopTemplate": "linux/main.desktop"
+      }
+    },
     "windows": {
       "nsis": {
         "installMode": "currentUser",

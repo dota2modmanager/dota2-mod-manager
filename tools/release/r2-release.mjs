@@ -132,6 +132,10 @@ async function publish(plan, releases) {
     const key = `${UPDATES}${u.name}`;
     const release = releases.get(u.version);
     const asset = release && (release.assets || []).find((a) => a.name === u.asset);
+    if (!asset && u.optional) {
+      console.log(`v${u.version} carries no ${u.asset}, nothing to copy`);
+      continue;
+    }
     try {
       if (!asset) throw new Error(`v${u.version} carries no ${u.asset}`);
       if (!/\.(yml|json)$/.test(u.name) && before.get(key) === asset.size) {

@@ -117,6 +117,15 @@ const BINARIES = [
   ['Dota-2-Mod-Manager-Portable.exe', 'application/octet-stream'],
   ['Dota-2-Mod-Manager.AppImage', 'application/octet-stream'],
 ];
+/**
+ * The Linux system packages (tools/release/tauri-release.mjs DEB, RPM). Only the Tauri feeds point
+ * at them, and a release made before them has none, so the mirror copies them when the release
+ * carries them and does not stop when it does not.
+ */
+const PACKAGES = [
+  ['Dota-2-Mod-Manager-amd64.deb', 'application/vnd.debian.binary-package'],
+  ['Dota-2-Mod-Manager-x86_64.rpm', 'application/x-rpm'],
+];
 
 const UPDATES = 'updates/';
 /** Where the bucket's updates/ is served from: the Tauri feeds name their files by full address. */
@@ -142,7 +151,7 @@ const betaName = (name) => name.replace(/(\.[^.]+)$/, `${BETA_MARK}$1`);
  * GitHub is unreachable moves on to the release rather than sitting on the beta it replaced.
  *
  * @param {string} version  2.7.0 or 2.7.0-beta.1
- * @returns {{beta: boolean, uploads: Array<{asset: string, name: string, type: string, retarget?: boolean}>}}
+ * @returns {{beta: boolean, uploads: Array<{asset: string, name: string, type: string, retarget?: boolean, optional?: boolean}>}}
  */
 function releasePlan(version) {
   const beta = /-/.test(version);
@@ -156,6 +165,7 @@ function releasePlan(version) {
         // the Tauri builds' feed for a tester, pointing at the mirror's -beta copies
         { asset: 'beta.json', name: 'beta.json', type: 'application/json', json: 'beta' },
         ...BINARIES.map(([asset, type]) => ({ asset, name: betaName(asset), type })),
+        ...PACKAGES.map(([asset, type]) => ({ asset, name: betaName(asset), type, optional: true })),
       ],
     };
   }
@@ -164,7 +174,9 @@ function releasePlan(version) {
     uploads: [
       ['latest.yml', 'text/yaml'], ['latest-linux.yml', 'text/yaml'], ['portable.yml', 'text/yaml'],
       ...BINARIES,
-    ].map(([asset, type]) => ({ asset, name: asset, type })).concat([
+    ].map(([asset, type]) => ({ asset, name: asset, type })).concat(
+      PACKAGES.map(([asset, type]) => ({ asset, name: asset, type, optional: true })),
+    ).concat([
       // the release, under the names the beta channel reads, pointing at the same binaries
       { asset: 'latest.yml', name: 'beta.yml', type: 'text/yaml' },
       { asset: 'latest-linux.yml', name: 'beta-linux.yml', type: 'text/yaml' },
@@ -251,5 +263,5 @@ function previewPaths(listing) {
 
 module.exports = {
   previewPaths, staleCopies, publishedHash, checkBody, budgetNote, fits, releasePlan, retargetFeed, retargetJson, staleReleaseFiles, currentPlan,
-  UPDATES, MIRROR, BETA_MARK, betaName,
+  UPDATES, MIRROR, BETA_MARK, betaName, PACKAGES,
 };
