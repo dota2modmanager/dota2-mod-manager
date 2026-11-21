@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { catalogName } from '../ui/catalog-name.ts';
 import { heroName } from '../ui/hero-name.ts';
+import { plural } from '../ui/format.ts';
 import { Thumb } from '../library/Thumb.tsx';
 import { tokenName } from './inside.ts';
 import type { InsideItem, InsideModel } from './model.ts';
@@ -73,7 +74,10 @@ export function PresetInside({ inside }: { inside: InsideModel }) {
             <div className="inside-group">
               <div className="preset-group-head">
                 <span className="ms">checkroom</span>{L`Вещи на героях`}
-                <span className="preset-group-n">{L`${items} на ${inside.heroes.length} героях`}</span>
+                {/* counts with their own words, so 1, 21 and 31 read right in every language (ui/format.ts plural) */}
+                <span className="preset-group-n">
+                  {`${items} ${plural(items, 'предмет', 'предмета', 'предметов')} · ${inside.heroes.length} ${plural(inside.heroes.length, 'герой', 'героя', 'героев')}`}
+                </span>
               </div>
               <div className="inside-heroes">
                 {heroes.map((h) => (
