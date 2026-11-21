@@ -26,7 +26,8 @@ test('the package runs on Arch\'s WebKitGTK and GStreamer, and leaves updates to
 test('.SRCINFO says what the PKGBUILD says', () => {
   const v = { version: '4.7.0', sha256: SUM };
   const info = srcinfo(v);
-  for (const dep of DEPENDS) assert.match(info, new RegExp(`^\\tdepends = ${dep.replace(/[.+]/g, '\\$&')}$`, 'm'));
+  const lines = info.split('\n');
+  for (const dep of DEPENDS) assert.ok(lines.includes(`\tdepends = ${dep}`), dep);
   assert.match(info, /^\tpkgver = 4\.7\.0$/m);
   assert.match(info, new RegExp(`^\\tsha256sums = ${SUM}$`, 'm'));
   assert.match(info, /^pkgname = dota2-mod-manager-bin$/m);
