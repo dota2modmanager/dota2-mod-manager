@@ -111,6 +111,7 @@ export async function renderAuthor(name: string, actions: ScreenActions): Promis
     accent: searchAccent(),
     toolbar: all.length ? toolbarModel(mods.length, { installable: all.some(canBeInstalled), all }) : null,
     meta: all.length ? stats.join(' · ') : undefined,
+    follow: name,
     note: all.length ? undefined : L`В каталоге нет модов этого автора`,
     mods: all.length ? { heading: false, mods, withCat: true, emptyText: NOTHING() } : null,
     cosmetics: null,

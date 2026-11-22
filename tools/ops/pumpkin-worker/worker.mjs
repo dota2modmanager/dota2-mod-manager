@@ -10,9 +10,8 @@
  *   POST /ticket                 the chase has started; a signed note of when
  *   POST /claim   {ticket}       the runner is caught; a fresh key, if the chase was real enough
  *   POST /redeem  {key, install} the app spends the key; tied to that install from then on
- *   GET  /mod?key=&install=      the prize itself, only to the install that spent the key
- *        &voice=russian          the prize with that voice-over, where the bucket has one
- *   GET  /mod/preview            its picture, for the window that offers it
+ *   GET  /mod, /mod/preview      410: the Halloween 2026 prize, Necrophos Scream, is in the
+ *                                catalog now; apps up to 4.7 still ask here for it
  *
  * What it can and cannot stop. The hunt runs in the visitor's browser, so nothing here can prove
  * a chase happened; a determined person reads the site's code and calls /claim. What it does stop
@@ -23,7 +22,7 @@
  * Addresses are never stored, only a keyed hash of them, which is enough to count by and useless
  * for anything else. Keys are stored as themselves: they are worthless the moment they are spent.
  *
- * Storage: D1 (schema.sql) for tickets and keys, a private R2 bucket for the prize. Secrets:
+ * Storage: D1 (schema.sql) for tickets and keys. Secrets:
  * TICKET_SECRET (signs tickets), ADDR_SALT (hashes addresses). See README.md.
  */
 
@@ -141,30 +140,6 @@ export async function redeem(env, req, now) {
   return json(req, row ? 409 : 404, { error: row ? 'used' : 'wrong' });
 }
 
-/** Voice-overs the prize comes with: a game that speaks Russian gets necrophos-scream.russian.vpk. */
-const VOICES = ['russian'];
-
-async function prize(env, req, url, name) {
-  const k = plainKey(url.searchParams.get('key'));
-  const install = url.searchParams.get('install');
-  if (!validInstall(install)) return json(req, 400, { error: 'wrong' });
-  const row = await env.DB.prepare('SELECT install FROM keys WHERE key = ?').bind(k).first();
-  if (!row || row.install !== install) return json(req, 403, { error: 'not-yours' });
-  const voice = url.searchParams.get('voice');
-  // an app too old to say its voice, or a voice with no pack yet, gets the plain prize
-  const voiced = VOICES.includes(voice) ? await env.PRIZE.get(name.replace(/\.vpk$/, `.${voice}.vpk`)) : null;
-  const obj = voiced || await env.PRIZE.get(name);
-  if (!obj) return json(req, 404, { error: 'missing' });
-  return new Response(obj.body, {
-    headers: {
-      'Content-Type': obj.httpMetadata?.contentType || 'application/octet-stream',
-      'Content-Length': String(obj.size),
-      'Cache-Control': 'private, no-store',
-      ...(obj.customMetadata?.sha256 ? { 'X-Sha256': obj.customMetadata.sha256 } : {}),
-    },
-  });
-}
-
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -174,8 +149,7 @@ export default {
       if (req.method === 'POST' && url.pathname === '/ticket') return json(req, 200, { ticket: await makeTicket(env, now) });
       if (req.method === 'POST' && url.pathname === '/claim') return await claim(env, req, now);
       if (req.method === 'POST' && url.pathname === '/redeem') return await redeem(env, req, now);
-      if (req.method === 'GET' && url.pathname === '/mod') return await prize(env, req, url, env.PRIZE_OBJECT || 'necrophos-scream.vpk');
-      if (req.method === 'GET' && url.pathname === '/mod/preview') return await prize(env, req, url, env.PRIZE_PREVIEW || 'necrophos-scream.png');
+      if (req.method === 'GET' && (url.pathname === '/mod' || url.pathname === '/mod/preview')) return json(req, 410, { error: 'in-catalog' });
       if (req.method === 'GET' && url.pathname === '/') return new Response('The pumpkin is listening.\n', { headers: { 'Content-Type': 'text/plain' } });
       return json(req, 404, { error: 'nothing here' });
     } catch (err) {

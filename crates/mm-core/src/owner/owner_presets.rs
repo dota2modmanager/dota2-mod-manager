@@ -276,8 +276,8 @@ fn export(o: &Owner, id: &Value, opts: &Value) -> Value {
     }
 }
 
-/// The preset as a link: its code, and what of it the link could not carry. The community
-/// presets publish this same code (owner_community.rs).
+/// The preset as a link: its code, and what of it the link could not carry. A community preset
+/// is published as this same code (owner_community.rs).
 pub fn share_link(o: &Owner, id: &Value) -> Value {
     let cat = catalog_index(o);
     let c = o.core();

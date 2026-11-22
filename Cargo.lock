@@ -1039,7 +1039,7 @@ dependencies = [
 
 [[package]]
 name = "dota2-mod-manager"
-version = "4.6.0"
+version = "4.7.0"
 dependencies = [
  "base64 0.23.1",
  "dirs 7.0.0",
@@ -2570,7 +2570,6 @@ version = "0.1.0"
 dependencies = [
  "aes-gcm",
  "base64 0.23.1",
- "chrono",
  "crc32fast",
  "ed25519-dalek",
  "flate2",
@@ -2578,6 +2577,7 @@ dependencies = [
  "hex",
  "icu_collator",
  "indexmap 2.14.2",
+ "jiff",
  "jpeg-encoder",
  "libm",
  "memchr",

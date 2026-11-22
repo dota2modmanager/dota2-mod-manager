@@ -260,8 +260,6 @@
     },
     community: {
       list: (refresh) => mm.invoke('community:list', refresh),
-      signIn: () => mm.invoke('community:signIn'),
-      signOut: () => mm.invoke('community:signOut'),
       publish: (presetId, about) => mm.invoke('community:publish', presetId, about),
       unpublish: (id) => mm.invoke('community:unpublish', id),
       vote: (id, value) => mm.invoke('community:vote', id, value),
@@ -270,6 +268,11 @@
     account: {
       signIn: () => mm.invoke('account:signIn'),
       signOut: () => mm.invoke('account:signOut'),
+    },
+    // likes and follows, through the catalog's account service (crates/mm-core/src/catalog/social.rs)
+    social: {
+      state: () => mm.invoke('social:state'),
+      mark: (kind, name, on) => mm.invoke('social:mark', kind, name, on),
     },
     // the beta channel: shown only to an account the signed list names (crates/mm-core/src/catalog/beta.rs)
     beta: {
@@ -298,8 +301,6 @@
     // the pumpkin's key and the mod it opens (crates/mm-core/src/owner/owner_studios.rs)
     pumpkin: {
       redeem: (key) => mm.invoke('pumpkin:redeem', key),
-      prizeAgain: () => mm.invoke('pumpkin:prizeAgain'),
-      hasPrize: () => mm.invoke('pumpkin:hasPrize'),
     },
     grids: {
       state: () => mm.invoke('grid:state'),

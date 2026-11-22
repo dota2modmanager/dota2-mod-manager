@@ -28,12 +28,20 @@ const MIRROR = 'https://cdn.dota2modmanager.com/updates';
 const spare = [
   { name: 'Windows', file: `${MIRROR}/Dota-2-Mod-Manager-Setup.exe` },
   { name: 'Portable', file: `${MIRROR}/Dota-2-Mod-Manager-Portable.exe` },
-  { name: 'Linux', file: `${MIRROR}/Dota-2-Mod-Manager.AppImage` },
+  { name: '.deb', file: `${MIRROR}/Dota-2-Mod-Manager-amd64.deb` },
+  { name: '.rpm', file: `${MIRROR}/Dota-2-Mod-Manager-x86_64.rpm` },
+  { name: 'AppImage', file: `${MIRROR}/Dota-2-Mod-Manager.AppImage` },
 ];
 const items = [
   { os: 'win', file: `${RELEASE}/Dota-2-Mod-Manager-Setup.exe`, ...copy.dlInstaller },
   { os: 'win', file: `${RELEASE}/Dota-2-Mod-Manager-Portable.exe`, ...copy.dlPortable },
-  { os: 'linux', file: `${RELEASE}/Dota-2-Mod-Manager.AppImage`, ...copy.dlLinux },
+];
+/* Linux is one row with its three files in it: three rows of their own made the menu taller than
+   the room above the hero's button on a phone, and its first row slid under the header. */
+const linux = [
+  { file: `${RELEASE}/Dota-2-Mod-Manager-amd64.deb`, ...copy.dlDeb },
+  { file: `${RELEASE}/Dota-2-Mod-Manager-x86_64.rpm`, ...copy.dlRpm },
+  { file: `${RELEASE}/Dota-2-Mod-Manager.AppImage`, ...copy.dlAppImage },
 ];
 ---
 
@@ -52,6 +60,10 @@ const items = [
         <span>{item.note}</span>
       </a>
     ))}
+    <div class="dl-item dl-linux" data-os="linux">
+      <b>{copy.dlLinux.title}</b>
+      <span>{linux.map((l, i) => <>{i > 0 && ' · '}<a role="menuitem" href={l.file} download>{l.title}</a> {l.note}</>)}</span>
+    </div>
     <a class="dl-all" href="https://github.com/dota2modmanager/dota2-mod-manager/releases/latest" rel="noopener">{copy.dlAll}</a>
     <p class="dl-spare">{copy.dlMirror} {spare.map((s, i) => <>{i > 0 && ', '}<a href={s.file} download>{s.name}</a></>)}</p>
   </div>
@@ -107,6 +119,9 @@ const items = [
   .dl-item b { display: block; font-size: 15px; font-weight: 600; }
   .dl-item span { font-size: 13px; color: var(--text-dim); }
   .dl-item:hover, .dl-item:focus-visible { background: var(--surface-high); text-decoration: none; }
+  .dl-linux:hover { background: none; }
+  .dl-linux a { color: var(--text); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+  .dl-linux a:hover, .dl-linux a:focus-visible { color: var(--primary); }
   /* The one that matches the machine reading the page, marked by the script below. */
   .dl-item.match b::after {
     content: '';

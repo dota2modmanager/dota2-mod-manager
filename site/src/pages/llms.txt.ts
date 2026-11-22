@@ -210,7 +210,7 @@ ${SITE}/docs/compare/.
 - Every number above is generated when the site is built. A version or a download count from a
   cached snapshot is probably stale; ${SITE}/facts/ is the page that carries the current ones.
 - It is not Windows-only. **Linux is supported**: every release since 2.4.0 carries an AppImage
-  next to the Windows installer, it is built and started against a game tree by CI on every
+  next to the Windows installer, and since 4.7.0 a .deb and an .rpm too, it is built and started against a game tree by CI on every
   change, and the catalog's own author runs it on Linux. Bugs there are fixed like any other.
 - The catalog is a separate project, D2PFX by h6rd, under the same licence. This app is its
   desktop client. That is an arrangement between two open-source projects, not a dependency on

@@ -40,6 +40,9 @@ the catalog's author runs as a Cloudflare Worker, the same one the catalog site 
   numbers still come down.
 - **What the counter sees.** The key above, and what any host sees of any request, your IP
   among it. What the Worker keeps is up to the catalog's author; the app sends it nothing more.
+  It publishes downloads totalled by country and by city (Cloudflare places each request), with
+  no address or key in those totals; the site's [downloads map](https://dota2modmanager.com/map/)
+  draws them.
 - **If it is down.** Nothing changes: an install never waits for the counter, and a request
   that fails is dropped, not retried.
 
@@ -64,8 +67,7 @@ the host it is sent to.
 | `dota2.fandom.com`, `liquipedia.net` | Item and hero pictures for the free-cosmetics screen, when the game's own files do not have one | `crates/mm-core/src/game/game_icons.rs` |
 | `d2pfx-counter.hrdqfck.workers.dev` | The catalog's download counter: the counts on the cards, and one hit per catalog install unless you switch counting off (see above). Through the download proxy when one is set | `crates/mm-core/src/catalog/download_stats.rs` |
 | `discord.com`, `cdn.discordapp.com` | **Only** if you press *Sign in with Discord*, and only to read your name and avatar | `crates/mm-core/src/app/discord_auth.rs` |
-| `raw.githubusercontent.com` (the `community-presets` branch), or a mirror above | The list of community presets, when the Presets screen is open | `crates/mm-core/src/presets/community_presets.rs` |
-| `presets.dota2modmanager.com` | **Only** if you sign in to the community presets, publish one or vote | `crates/mm-core/src/presets/presets_api.rs` |
+| `d2pfx-api.hrdq.workers.dev`, the catalog's account service | **Off** until the signed remote config names it (`cloud.api`). Then the Discord sign-in goes through it, and it keeps your likes and the authors you follow. The like and follower counts on the cards come from it too, without a sign-in | `config/app.json`, `crates/mm-core/src/catalog/social.rs` |
 
 **A download proxy, if you set one.** Settings has a field for an HTTP or HTTPS proxy, empty by
 default. When it is set, the catalog, the fingerprint map, mod archives, the remote config, the
@@ -90,6 +92,37 @@ knows who made it. Everything else works without it.
   here for malware to lift later.
 - What is kept in `settings.json` afterwards: your Discord id, username, and the avatar as a small embedded picture rather than a link back to Discord. Signing
   out deletes them.
+- While the catalog's account service is on, the sign-in goes through it instead and keeps a
+  session token: see *Likes and follows* below.
+
+## Likes and follows
+
+The catalog's own service keeps likes on mods and follows of their authors. It belongs to the
+catalog's author, not to this project, and the app talks to it only once the signed remote config
+names it, so a release is not needed to switch it on or off. While it is off the app draws no like
+and no follow button and sends nothing.
+
+When it is on:
+
+- Signing in with Discord goes through that service. Your browser opens Discord there, Discord
+  tells the service who you are, and the service hands the app its own session token through
+  `127.0.0.1` on your computer. The app never sees a Discord token in this case.
+- The token is kept in `cloud-session` in the app's folder, so a like does not need a new sign-in
+  each time. Signing out deletes the file and ends the session on the service.
+- The service stores your Discord id with each mod you liked and each author you follow, and when
+  you did it. It publishes only the totals: how many liked a mod, how many follow an author. Who
+  liked what is not shown to anybody.
+- The app asks for the totals at most once a minute, and nothing about you goes with that request.
+- Taking a like or a follow back deletes it on the service.
+
+Community presets live on the same service. Looking at them and installing one needs no sign-in:
+the list is public and nothing about you goes with it. Publishing and voting use the same session:
+
+- A preset you publish is public with its name, your description and your Discord display name.
+  The service keeps your Discord id with it, and with each vote, but shows neither.
+- What is published is the preset's link code: catalog mods and looks from the game, never files.
+- Taking your preset down deletes it with its votes. The catalog's moderators can hide a preset.
+- The app keeps the last list in `community-presets.json`, so it is there offline.
 
 ## Your Discord status
 
@@ -100,20 +133,6 @@ connection Discord opens for games (a named pipe on Windows, a socket on Linux),
 internet. Discord then shows it to the people who can see your profile, the way it shows any game
 you play. It is on unless you switch it off in Settings, and switching it off closes the
 connection. The code is `crates/mm-core/src/app/discord_presence.rs`.
-
-## Community presets
-
-Looking at and installing community presets needs no account and sends nothing about you: the
-list is one public file. Publishing and voting need the Discord sign-in, and then:
-
-- The Discord token goes to the presets service (`presets.dota2modmanager.com`) once, which asks
-  Discord who you are and drops it. The service keeps nothing between requests.
-- What becomes **public**, in the `community-presets` branch of the repository: each preset you
-  publish with its name, description and your Discord display name, and your votes. You are known
-  there by a keyed hash of your Discord id, the same in every file, and not by the id itself.
-- What the app keeps in `community-session.json`: the service's session (a month long), your
-  display name and your votes. Signing out of the community presets deletes it.
-- Your own preset can be taken down from the app at any time; git history keeps earlier versions.
 
 ## Preset links
 
@@ -134,7 +153,8 @@ Nothing leaves that folder unless you send it.
 |---|---|
 | `settings.json` | Your preferences: game path, language, scale, theme, favourites, and the Discord name if you signed in |
 | `manifest.json` | Which mods you installed and which presets you saved |
-| `community-presets.json`, `community-session.json` | The last list of community presets, and your session with the presets service if you signed in to it |
+| `cloud-session` | The catalog service's session token, only while you are signed in to it (see *Likes and follows*) |
+| `community-presets.json` | The last list of community presets |
 | `downloads/` | The mod archives you downloaded, kept so a reinstall needs no network |
 | `logs/` | What the app did, on your disk only |
 | `catalog-cache/`, `icons/`, `fingerprints.json`, `download-counts.json` | Copies of public data, so the app works offline |

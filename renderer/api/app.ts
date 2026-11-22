@@ -24,7 +24,11 @@ export interface StoredSettings {
   modLabels?: Record<string, string>;
   /** read through ui/chrome.ts readPanels, which fills in and clamps whatever is missing */
   panels: Partial<Panels> | null;
-  account: { id: string; username: string; avatar?: string | null } | null;
+  account: {
+    id: string; username: string; avatar?: string | null;
+    /** signed in through the catalog's account service: its frame for the server role, and the role's name */
+    cloud?: boolean; frame?: string | null; label?: string | null;
+  } | null;
   discordPresence: boolean;
   /** start with Windows and hide in the tray on close (crates/mm-core/src/app/tray.rs); on unless false */
   runInBackground?: boolean;
@@ -110,6 +114,16 @@ export interface AppSettings extends StoredSettings {
   slotMigration: unknown;
 }
 
+/** The service off (`enabled` false) until the signed remote config names it. Likes are by the
+ *  download counter's key (category/group/name), follows by the author's name. */
+export interface SocialState {
+  enabled: boolean;
+  signedIn: boolean;
+  likes: string[];
+  follows: string[];
+  counts: { likes: Record<string, number>; followers: Record<string, number> };
+}
+
 /** Which hero grids the app made: the kinds it can make, and what the account's file holds now. */
 export type GridKind = 'winrate' | 'attribute' | 'popular';
 export interface GridState { account: boolean; kinds: GridKind[]; statsAt: number | null }
@@ -152,13 +166,11 @@ interface MiscApi {
 
 /** What spending a key came to (crates/mm-core/src/looks/pumpkin.rs). */
 export type RedeemAnswer =
-  | { ok: true; installed: string | null; installError?: string }
+  | { ok: true }
   | { error: 'empty' | 'wrong' | 'used' | 'offline' | 'broken'; detail?: string };
 
 interface PumpkinApi {
   redeem: (key: string) => Promise<RedeemAnswer>;
-  prizeAgain: () => Promise<{ ok: true; installed: string } | { error: string }>;
-  hasPrize: () => Promise<boolean>;
 }
 
 interface UpdateApi {
@@ -186,6 +198,11 @@ export interface AppApi {
     onQuickExit: (cb: (exit: { seconds: number; suspects: { id: string; name: string }[] }) => void) => void;
   };
   account: { signIn: () => Promise<Reply<{ account: NonNullable<StoredSettings['account']> }>>; signOut: () => Promise<Reply> };
+  /** likes on mods and follows of authors, kept by the catalog's account service (crates/mm-core/src/catalog/social.rs) */
+  social: {
+    state: () => Promise<SocialState>;
+    mark: (kind: 'like' | 'follow', name: string, on: boolean) => Promise<Reply<{ on: boolean; count: number }>>;
+  };
   /** the beta channel: shown only to an account the signed list names (crates/mm-core/src/catalog/beta.rs) */
   beta: { state: () => Promise<{ eligible: boolean; on: boolean }>; set: (on: boolean) => Promise<{ eligible: boolean; on: boolean }> };
   presence: { view: (name: string) => Promise<void> };

@@ -1,7 +1,8 @@
-//! The community presets' channels: the list with your votes on it, signing in to the presets
-//! worker with Discord, publishing a preset of yours, taking it down, voting, and taking somebody
-//! else's preset in and putting it on. What a community preset is lives in
-//! crates/mm-core/src/presets/community_presets.rs, the worker's side of the wire in presets_api.rs.
+//! The community presets' channels: the list with your votes on it, publishing a preset of yours,
+//! taking one down, voting, and taking somebody else's preset in and putting it on. The presets
+//! live on the catalog's account service (presets/community_presets.rs); writing goes through the
+//! session likes use (catalog/social.rs), signed in from the title bar. Every call reaches the
+//! service off the lock.
 
 use serde_json::{json, Map, Value};
 
@@ -9,27 +10,41 @@ use crate::i18n::t;
 use crate::js::{string, truthy};
 use crate::library::Library;
 use crate::owner::{arg, Owner, R};
-use crate::presets_api::{self, Session};
+use crate::social::Refused;
 
-pub const CHANNELS: &[&str] = &[
-    "community:list",
-    "community:signIn",
-    "community:signOut",
-    "community:publish",
-    "community:unpublish",
-    "community:vote",
-    "community:take",
-];
+pub const CHANNELS: &[&str] =
+    &["community:list", "community:publish", "community:unpublish", "community:vote", "community:take"];
 
 pub fn handle(o: &Owner, channel: &str, args: &[Value]) -> Option<R> {
     CHANNELS.contains(&channel).then(|| Ok(answer(o, channel, args).unwrap_or_else(|e| json!({ "error": e }))))
 }
 
-fn session(o: &Owner) -> Session {
-    Session::new(&o.opts.user_data)
+/// The service's refusal said for people; the codes are its presets routes' own.
+fn said(r: Refused) -> String {
+    match r.code.as_deref() {
+        Some("account_too_new") => {
+            t("Аккаунт Discord слишком новый: оценивать и публиковать можно с аккаунта старше двух недель", &[])
+        }
+        Some("own_preset") => t("Свой пресет оценить нельзя", &[]),
+        Some("not_your_preset") => t("Это не твой пресет", &[]),
+        Some("no_such_preset") => t("Пресет уже снят с публикации", &[]),
+        Some("too_many_presets") => t("Опубликовано слишком много пресетов — сними старые", &[]),
+        Some("too_many_votes") => t("Слишком много оценок с одного аккаунта", &[]),
+        Some("bad_code" | "empty_preset") => t("В пресете нет модов, которые донесёт ссылка", &[]),
+        Some("too_many_mods") => t("Слишком много модов в пресете", &[]),
+        Some("bad_name") => t("Введи название пресета", &[]),
+        _ => r.message,
+    }
 }
 
-/// The list and the network, taken out from under the lock: a refresh is a fetch.
+/// The account service's address and its client; no address, no community presets.
+fn service(o: &Owner) -> Result<(String, std::sync::Arc<crate::social::Social>), String> {
+    match crate::owner_social::service(o) {
+        (Some(api), social) => Ok((api, social)),
+        (None, _) => Err(t("Пресеты сообщества пока выключены", &[])),
+    }
+}
+
 fn parts(
     o: &Owner,
 ) -> (std::sync::Arc<crate::community_presets::CommunityPresets>, std::sync::Arc<crate::net_fetch::Net>) {
@@ -38,60 +53,48 @@ fn parts(
 }
 
 fn answer(o: &Owner, channel: &str, args: &[Value]) -> Result<Value, String> {
-    let (com, net) = parts(o);
-    if channel != "community:list" && channel != "community:signOut" && !com.configured() {
-        return Err(t("Пресеты сообщества в этой сборке не подключены", &[]));
+    if channel == "community:list" {
+        return Ok(list(o, truthy(&arg(args, 0))));
     }
-    let api = com.at.api.clone();
-    let s = session(o);
+    if channel == "community:take" {
+        return Ok(take(o, &string(&arg(args, 0))));
+    }
+    let (api, social) = service(o)?;
+    let (com, _) = parts(o);
+    let id = string(&arg(args, 0));
     match channel {
-        "community:list" => Ok(list(o, truthy(&arg(args, 0)))),
-        "community:signIn" => {
-            // the wait for the browser runs without the lock: it can take a minute
-            let open = |url: &str| o.shell.request("shell.openExternal", vec![json!(url)]).map(|_| ());
-            let at = crate::discord_auth::Endpoints::default();
-            let token = crate::discord_auth::access_token(&at, &open)?;
-            let user = presets_api::sign_in(&net, &api, &s, &token)?;
-            // the app's own account as well, so the name in the title bar is the one presets carry
-            if let Ok(account) = crate::discord_auth::account(&net, &at, &token) {
-                let _ = o.core().settings.set("account", account);
-            }
-            if let Ok(votes) = presets_api::my_votes(&net, &api, &s) {
-                s.set_votes(&votes);
-            }
-            let _ = o.shell.request("win.show", vec![]);
-            let _ = o.shell.request("win.focus", vec![]);
-            Ok(json!({ "ok": true, "user": user }))
-        }
-        "community:signOut" => {
-            s.clear();
-            Ok(json!({ "ok": true }))
-        }
         "community:publish" => {
-            if s.get().is_none() {
-                return Err(t("Войди через Discord, чтобы публиковать и оценивать пресеты", &[]));
-            }
-            let id = arg(args, 0);
-            let link = crate::owner_presets::share_link(o, &id);
+            let link = crate::owner_presets::share_link(o, &arg(args, 0));
             if let Some(e) = link.get("error").filter(|e| truthy(e)) {
                 return Err(string(e));
             }
-            let name = o.core().library.get_preset(&id).map(|p| string(&p["name"])).unwrap_or_default();
+            let name = o.core().library.get_preset(&arg(args, 0)).map(|p| string(&p["name"])).unwrap_or_default();
             let about = arg(args, 1);
-            let about = if truthy(&about) { string(&about) } else { String::new() };
-            let published = presets_api::publish(&net, &api, &s, &name, &about, &string(&link["code"]))?;
-            // the preset remembers where it went, so its card can say so and offer to take it down
+            let body = json!({
+                "name": crate::js::slice_utf16(crate::js::trim(&name), crate::community_presets::MAX_NAME),
+                "about": if truthy(&about) { crate::js::slice_utf16(&string(&about), crate::community_presets::MAX_ABOUT) } else { String::new() },
+                "code": link["code"],
+            });
+            let r = social.request(&api, "POST", "api/presets", Some(&body)).map_err(said)?;
+            let published = r.get("id").and_then(Value::as_str).filter(|s| crate::community_presets::is_id(s));
+            let Some(published) = published.map(str::to_string) else {
+                return Err(t("Сервис каталога не ответил", &[]));
+            };
+            com.published(&published);
+            // the preset remembers where it went, so its card and the share window can say so
             let mut c = o.core();
-            if let Some(p) = c.library.get_preset(&id).cloned() {
+            if let Some(p) = c.library.get_preset(&arg(args, 0)).cloned() {
                 let mut source = p.get("source").filter(|s| s.is_object()).cloned().unwrap_or_else(|| json!({}));
                 source["published"] = json!(published);
-                let _ = c.library.update_preset(&id, &json!({ "source": source }), None);
+                let _ = c.library.update_preset(&arg(args, 0), &json!({ "source": source }), None);
             }
             Ok(json!({ "ok": true, "id": published, "count": link["count"], "skipped": link["skipped"] }))
         }
         "community:unpublish" => {
-            let id = string(&arg(args, 0));
-            presets_api::unpublish(&net, &api, &s, &id)?;
+            if !crate::community_presets::is_id(&id) {
+                return Err(t("Пресет уже снят с публикации", &[]));
+            }
+            social.request(&api, "DELETE", &format!("api/presets/{id}"), None).map_err(said)?;
             com.forget(&id);
             let mut c = o.core();
             let mine: Vec<Value> = c
@@ -103,21 +106,31 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Result<Value, String> {
                 .collect();
             for p in mine {
                 let mut source = p["source"].clone();
-                if let Some(o) = source.as_object_mut() {
-                    o.remove("published");
+                if let Some(s) = source.as_object_mut() {
+                    s.remove("published");
                 }
                 let _ = c.library.update_preset(&p["id"], &json!({ "source": source }), None);
             }
             Ok(json!({ "ok": true }))
         }
         "community:vote" => {
-            let id = string(&arg(args, 0));
+            if !crate::community_presets::is_id(&id) {
+                return Err(t("Пресет уже снят с публикации", &[]));
+            }
             let value = arg(args, 1).as_f64().unwrap_or(0.0).clamp(-1.0, 1.0).round() as i64;
-            let votes = presets_api::vote(&net, &api, &s, &id, value)?;
-            s.set_votes(&votes);
-            Ok(json!({ "ok": true, "votes": votes }))
+            let r = if value == 0 {
+                social.request(&api, "DELETE", &format!("api/presets/{id}/vote"), None)
+            } else {
+                social.request(&api, "PUT", &format!("api/presets/{id}/vote?value={value}"), None)
+            }
+            .map_err(said)?;
+            let n =
+                |k: &str| r.get(k).and_then(Value::as_f64).filter(|n| n.is_finite() && *n >= 0.0).unwrap_or(0.0) as u64;
+            let vote = r.get("vote").and_then(Value::as_i64).filter(|v| (-1..=1).contains(v)).unwrap_or(value);
+            com.counted(&id, n("likes"), n("dislikes"));
+            com.voted(&id, vote);
+            Ok(json!({ "ok": true, "vote": vote, "likes": n("likes"), "dislikes": n("dislikes") }))
         }
-        "community:take" => Ok(take(o, &string(&arg(args, 0)))),
         _ => Err(format!("no handler for {channel}")),
     }
 }
@@ -127,18 +140,18 @@ fn taken_from(lib: &Library, id: &str) -> Option<Value> {
     lib.list_presets().iter().find(|p| p.pointer("/source/community").and_then(Value::as_str) == Some(id)).cloned()
 }
 
-/// The list as the window draws it: each preset with your vote on it, whether it is yours, and
-/// the preset it became if you took it. `refresh` fetches the index and your votes first.
+/// The list as the window draws it: each preset with your vote, whether it is yours, and the
+/// preset it became if you took it. `refresh` asks the service for the list and for your part of it.
 fn list(o: &Owner, refresh: bool) -> Value {
+    let (api, social) = match service(o) {
+        Ok(s) => s,
+        Err(_) => return json!({ "enabled": false, "signedIn": false, "presets": [] }),
+    };
     let (com, net) = parts(o);
-    if !com.configured() {
-        return json!({ "configured": false, "presets": [], "user": Value::Null, "votes": {} });
-    }
-    let s = session(o);
     let mut error = Value::Null;
     let presets = if refresh {
-        com.refresh(&net, &mut |m| o.diag(m)).unwrap_or_else(|e| {
-            error = json!(if e.contains("JSON") {
+        com.refresh(&net, &api, &mut |m| o.diag(m)).unwrap_or_else(|e| {
+            error = json!(if e.starts_with("JSON") {
                 t("Список пресетов сообщества пришёл повреждённым", &[])
             } else {
                 t("Не удалось обновить пресеты сообщества — показан последний список", &[])
@@ -148,14 +161,18 @@ fn list(o: &Owner, refresh: bool) -> Value {
     } else {
         com.list()
     };
-    if refresh && s.get().is_some() {
-        if let Ok(v) = presets_api::my_votes(&net, &com.at.api, &s) {
-            s.set_votes(&v);
+    let signed = social.signed_in();
+    if !signed {
+        com.set_mine(None);
+    } else if refresh || com.mine().is_none() {
+        match social.request(&api, "GET", "api/presets/mine", None) {
+            Ok(v) => com.set_mine(Some(crate::community_presets::normalize_mine(&v))),
+            Err(e) => o.diag(&format!("community presets, mine: {}", e.message)),
         }
     }
-    let user = s.user();
-    let votes = s.votes();
-    let me = user.as_ref().and_then(|u| u.get("key")).and_then(Value::as_str).unwrap_or("").to_string();
+    let mine = com.mine().filter(|_| social.signed_in()).unwrap_or_else(|| json!({ "presets": [], "votes": {} }));
+    let own: Vec<&str> =
+        mine["presets"].as_array().map(|a| a.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
     let c = o.core();
     let out: Vec<Value> = presets
         .into_iter()
@@ -163,9 +180,8 @@ fn list(o: &Owner, refresh: bool) -> Value {
             let id = string(&p["id"]);
             let taken = taken_from(&c.library, &id);
             if let Some(m) = p.as_object_mut() {
-                m.remove("code");
-                m.insert("mine".into(), json!(!me.is_empty() && m["author"]["key"] == json!(me)));
-                m.insert("vote".into(), votes.get(&id).cloned().unwrap_or(json!(0)));
+                m.insert("mine".into(), json!(own.contains(&id.as_str())));
+                m.insert("vote".into(), mine["votes"].get(&id).cloned().unwrap_or(json!(0)));
                 m.insert(
                     "taken".into(),
                     taken.map_or(
@@ -177,7 +193,14 @@ fn list(o: &Owner, refresh: bool) -> Value {
             p
         })
         .collect();
-    json!({ "configured": true, "presets": out, "user": user, "votes": votes, "error": error })
+    json!({
+        "enabled": true,
+        "signedIn": social.signed_in(),
+        "canPublish": mine.get("canPublish").cloned().unwrap_or(Value::Bool(false)),
+        "moderator": mine.get("moderator").cloned().unwrap_or(Value::Bool(false)),
+        "presets": out,
+        "error": error,
+    })
 }
 
 /// Somebody's preset added as a received one and installed, or, taken before, put on again.
@@ -192,7 +215,7 @@ fn take(o: &Owner, id: &str) -> Value {
             Some(t) => t,
             None => {
                 let made = c.library.add_shared_preset(
-                    &json!({ "name": p["name"], "note": p["about"], "author": p["author"]["name"], "wanted": p["mods"] }),
+                    &json!({ "name": p["name"], "note": p["about"], "author": p["author"], "wanted": p["mods"] }),
                     None,
                 );
                 let made = match made {
@@ -216,48 +239,13 @@ fn take(o: &Owner, id: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::owner::{Options, Shell};
-    use std::sync::Arc;
-
-    struct Quiet;
-    impl Shell for Quiet {
-        fn event(&self, _: &str, _: Vec<Value>) {}
-        fn request(&self, _: &str, _: Vec<Value>) -> Result<Value, String> {
-            Ok(Value::Null)
-        }
-    }
-
-    fn owner() -> (Arc<Owner>, std::path::PathBuf) {
-        let ud = std::env::temp_dir().join(format!("mm-owner-community-{}", uuid::Uuid::new_v4().simple()));
-        std::fs::create_dir_all(&ud).unwrap();
-        std::fs::write(ud.join("settings.json"), "{}").unwrap();
-        let o = Owner::start(
-            Options {
-                user_data: ud.clone(),
-                app_version: "9.9.9".into(),
-                app_root: ud.clone(),
-                downloads: ud.clone(),
-                uninstall: false,
-                system_languages: None,
-                find_game: Box::new(|| None),
-                dota_running: Box::new(|| false),
-                now: crate::net_fetch::now_ms,
-            },
-            Arc::new(Quiet),
-        );
-        (o, ud)
-    }
 
     #[test]
-    fn a_build_without_a_key_says_so_and_lists_nothing() {
-        let (o, ud) = owner();
-        let r = answer(&o, "community:list", &[json!(false)]).unwrap();
-        // a debug run may be pointed at a local worker; the release default has no key yet
-        if crate::community_presets::COMMUNITY_PUBLIC_KEY.is_empty() && std::env::var("D2MM_COMMUNITY_KEY").is_err() {
-            assert_eq!(r["configured"], false);
-            assert!(answer(&o, "community:vote", &[json!("x"), json!(1)]).is_err());
-        }
-        assert!(r["presets"].as_array().is_some());
-        let _ = std::fs::remove_dir_all(&ud);
+    fn the_services_refusals_are_said_for_people() {
+        let r = |code: &str| Refused { status: 403, code: Some(code.into()), message: "general".into() };
+        assert!(said(r("account_too_new")).contains("Discord"));
+        assert_ne!(said(r("own_preset")), said(r("not_your_preset")));
+        assert_eq!(said(r("something_new")), "general");
+        assert_eq!(said(Refused { status: 0, code: None, message: "offline".into() }), "offline");
     }
 }

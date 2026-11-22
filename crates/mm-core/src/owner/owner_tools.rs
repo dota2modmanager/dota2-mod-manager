@@ -460,6 +460,7 @@ pub fn rebuild_generated(
     owed.extend(crate::map_make::MapMake::due(lib, ids));
     owed.extend(crate::map_decor::MapDecor::due(lib, ids));
     owed.extend(crate::ability_sounds_service::AbilitySoundsService::due(lib, ids).into_iter().map(|(id, _)| id));
+    owed.extend(crate::own_music_service::OwnMusic::due(lib, ids));
     for id in owed {
         if !done.contains(&id) && !later.contains(&id) {
             later.push(id);
@@ -535,6 +536,20 @@ pub fn build_later(c: &mut Core, ids: &[String], log: &mut dyn FnMut(String)) ->
                 Ok(_) => any = true,
                 Err(e) => log(format!("sounds: {hero}: could not build again after the update: {e}")),
             }
+        }
+    }
+    // the music's pak carries every music pack's events: frozen past an update, they are the
+    // game's old ones (own_music_service.rs)
+    if crate::own_music_service::OwnMusic::due(&c.library, ids).is_some() {
+        let svc = crate::own_music_service::OwnMusic::new(&c.user_data, game.clone());
+        let (rc, k) = (crate::owner_compiler::compiler(c), crate::owner_compiler::keeper(c));
+        let mut compile = |job: &crate::resource_compiler::CompileJob| {
+            rc.compile_together(job, k.as_ref(), &mut crate::run_process::run_low, &mut |_| {})
+        };
+        let Core { installer, library, .. } = c;
+        match svc.rebuild(installer, library, &mut compile, log) {
+            Ok(_) => any = true,
+            Err(e) => log(format!("music: could not build again after the update: {e}")),
         }
     }
     if any {

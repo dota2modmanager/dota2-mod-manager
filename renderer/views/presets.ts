@@ -26,8 +26,8 @@ import type { PresetRecord, ReadyPresetRecord } from '../api/content.ts';
 import { shareDialog, shareSheet } from './presets/share.ts';
 import { recPreviewUrl } from '../ui/thumb.ts';
 import { isVideo } from '../ui/media.ts';
-import { insideModel, lookEntry } from './presets/inside.ts';
 import { communityActions, communityModel, communityShare, loadCommunity, publishPreset, unpublishPreset } from './presets/community.ts';
+import { insideModel, lookEntry } from './presets/inside.ts';
 
 type Preset = PresetRecord;
 
@@ -138,8 +138,8 @@ async function renderPresets(fresh = false): Promise<void> {
   ]);
   byId = new Map<string, LibRecord>((installed as LibRecord[]).map((m) => [m.id, m]));
   if (fresh) key++;
-  // the fresh list lands later; it repaints only a screen still open
-  await loadCommunity(() => { if (state.view === 'presets') draw(); });
+  // the fresh community list lands later; it repaints only a screen still open
+  await loadCommunity(() => { if (state.view === 'presets') void draw(); });
   await draw();
 }
 
@@ -262,9 +262,9 @@ const actions: PresetsActions = {
         if (r.error) { toast(r.error, 'error', 6000); return; }
         await renderPresets();
       } },
-      p.source?.published
+      ...(communityShare(p) === 'off' ? [] : [communityShare(p) === 'published'
         ? { label: L`Снять с публикации в сообществе`, icon: 'cloud_off', onPick: () => unpublishPreset(p.source!.published!, renderPresets) }
-        : { label: L`Опубликовать в сообществе`, icon: 'public', onPick: () => publishPreset(p, renderPresets) },
+        : { label: L`Опубликовать в сообществе`, icon: 'public', onPick: () => publishPreset(p, renderPresets) }]),
       { separator: true },
       { label: L`Удалить`, icon: 'delete', danger: true, onPick: () => remove(p) },
     ];

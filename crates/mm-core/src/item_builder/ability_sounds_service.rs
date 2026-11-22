@@ -14,7 +14,8 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 
 use crate::ability_sounds::{
-    edited_events, events_file, hero_events, heroes_with_sounds, sound_hero, sound_path, wav_problem, SoundEdit,
+    edited_events, event_files, events_file, hero_events, heroes_with_sounds, sound_hero, sound_path, sound_plan,
+    wav_at_volume, wav_problem, SoundEdit,
 };
 use crate::generated_pak::{files_json, files_of, swap_pak, write_pak};
 use crate::i18n::t;
@@ -22,6 +23,10 @@ use crate::installer::Installer;
 use crate::library::Library;
 use crate::resource_compiler::{CompileJob, SourceFile};
 use crate::vpk::{Entry, Index};
+
+/// How the paks are built: 2 puts a sound in place of the game's own file and writes the events
+/// file only when it must. A record without it is built again at the next update.
+pub const RULE: u64 = 2;
 
 /// A compile of the caller's: the files it made, at their paths.
 pub type Compile<'a> = &'a mut dyn FnMut(&CompileJob) -> Result<Vec<Entry>, String>;
@@ -66,7 +71,8 @@ impl AbilitySoundsService {
             .unwrap_or_default()
     }
 
-    /// The hero's pak: his events with the user's sounds, and the sounds, compiled.
+    /// The hero's pak: the user's sounds compiled in place of the game's own files, and the events
+    /// file only for what has no file to take (ability_sounds.rs `SoundPlan`).
     fn build(
         &self,
         hero: &str,
@@ -74,38 +80,48 @@ impl AbilitySoundsService {
         compile: Compile,
         log: &mut dyn FnMut(String),
     ) -> Result<Vec<u8>, String> {
-        let (text, gone) = edited_events(&self.events_of(hero)?, hero, edits)?;
-        if let Some(first) = gone.first() {
-            log(format!("sounds: {hero}: {} events are not in the game any more, first {first}", gone.len()));
+        let kv = self.events_of(hero)?;
+        let plan = sound_plan(&event_files(&kv), edits);
+        if let Some(first) = plan.gone.first() {
+            log(format!("sounds: {hero}: {} events are not in the game any more, first {first}", plan.gone.len()));
         }
-        let mut sounds: Vec<&str> = Vec::new();
-        for e in edits {
-            if !sounds.contains(&e.sound.as_str()) {
-                sounds.push(&e.sound);
-            }
+        if let Some(first) = plan.shared.first() {
+            log(format!(
+                "sounds: {hero}: {} game files wanted by two sounds, the later kept, first {first}",
+                plan.shared.len()
+            ));
         }
+        let wav = |sound: &str| std::fs::read(self.store.join(format!("{sound}.wav"))).map_err(io);
         let mut files = Vec::new();
-        for sound in sounds {
-            let p = sound_path(hero, sound);
-            let p = p.strip_suffix(".vsnd").map(|s| format!("{s}.wav")).unwrap_or(p);
-            files.push(SourceFile {
-                path: p,
-                data: std::fs::read(self.store.join(format!("{sound}.wav"))).map_err(io)?,
-            });
+        let mut want: Vec<String> = Vec::new();
+        for (stem, sound, volume) in &plan.files {
+            files.push(SourceFile { path: format!("{stem}.wav"), data: wav_at_volume(&wav(sound)?, *volume) });
+            want.push(format!("{stem}.vsnd_c"));
         }
-        let wavs: Vec<String> = files.iter().map(|f| f.path.clone()).collect();
-        let ev = events_file(hero);
-        files.push(SourceFile { path: ev.strip_suffix("_c").unwrap_or(&ev).to_string(), data: text.into_bytes() });
+        if !plan.events.is_empty() {
+            let (text, _) = edited_events(&kv, hero, &plan.events)?;
+            let mut ours: Vec<&str> = Vec::new();
+            for e in &plan.events {
+                if !ours.contains(&e.sound.as_str()) {
+                    ours.push(&e.sound);
+                }
+            }
+            for sound in ours {
+                let p = sound_path(hero, sound);
+                let stem = p.strip_suffix(".vsnd").unwrap_or(&p).to_string();
+                files.push(SourceFile { path: format!("{stem}.wav"), data: wav(sound)? });
+                want.push(format!("{stem}.vsnd_c"));
+            }
+            let ev = events_file(hero);
+            files.push(SourceFile { path: ev.strip_suffix("_c").unwrap_or(&ev).to_string(), data: text.into_bytes() });
+            want.push(ev);
+        }
+        if files.is_empty() {
+            return Err(t("У героя нет такого звука", &[]));
+        }
         let id: String = format!("snd_{hero}").chars().take(64).collect();
         let job = CompileJob { compile: files.iter().map(|f| f.path.clone()).collect(), id, files };
         let out = compile(&job)?;
-        let mut want: Vec<String> = vec![ev];
-        for w in wavs {
-            let c = format!("{}.vsnd_c", w.strip_suffix(".wav").unwrap_or(&w));
-            if !want.contains(&c) {
-                want.push(c);
-            }
-        }
         let kept: Vec<Entry> = out.into_iter().filter(|e| want.contains(&e.path())).collect();
         if kept.len() != want.len() {
             return Err(t("resourcecompiler.exe не собрал звуки", &[]));
@@ -133,7 +149,7 @@ impl AbilitySoundsService {
         }
         let vpk = self.build(hero, &edits, compile, log)?;
         let name = t("Свои звуки: {0}", &[json!(crate::ability_sounds::sounds_label(hero))]);
-        let generated = json!({ "sounds": hero, "edits": edits });
+        let generated = json!({ "sounds": hero, "edits": edits, "rule": RULE });
         if let Some(old) = old {
             let files = swap_pak(inst, &old, &vpk, false)?;
             let fields = json!({
@@ -222,13 +238,17 @@ impl AbilitySoundsService {
         self.apply(inst, lib, hero, edits, compile, log)
     }
 
-    /// The records among `ids` that hold a hero's own sounds, with the hero: what a Dota update
-    /// that reached them leaves to build again.
+    /// The records that hold a hero's own sounds, with the hero, that a Dota update leaves to build
+    /// again: those among `ids` it reached, and any built before RULE, whose pak may still carry
+    /// an events file.
     pub fn due(lib: &Library, ids: &[String]) -> Vec<(String, String)> {
         lib.list()
             .iter()
-            .filter_map(|r| Some((crate::js::string(r.get("id")?), r["generated"]["sounds"].as_str()?.to_string())))
-            .filter(|(id, _)| ids.contains(id))
+            .filter_map(|r| {
+                let id = crate::js::string(r.get("id")?);
+                let hero = r["generated"]["sounds"].as_str()?.to_string();
+                (ids.contains(&id) || r["generated"]["rule"].as_u64() != Some(RULE)).then_some((id, hero))
+            })
             .collect()
     }
 

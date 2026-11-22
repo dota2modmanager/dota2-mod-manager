@@ -115,18 +115,20 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null, pic
               <button class="btn btn-danger" id="shareUnpublishBtn"><span class="ms">cloud_off</span>${L`Снять с публикации`}</button>` : `
               <textarea class="input" id="shareAbout" rows="2" maxlength="500" placeholder="${L`Пара слов о пресете (необязательно)`}"></textarea>
               <button class="btn btn-primary" id="sharePublishBtn"><span class="ms">publish</span>${community === 'signed-out' ? L`Войти через Discord и опубликовать` : L`Опубликовать`}</button>
-              <div class="share-hint">${skipped.length
-                ? L`Все найдут его в «Пресетах сообщества» и поставят в одно нажатие. Свои моды (${skipped.length}) не попадут — только моды из каталога.`
-                : L`Все найдут его в «Пресетах сообщества» и поставят в одно нажатие.`}</div>`}
+              <div class="share-hint">${L`Все найдут его в «Пресетах сообщества» и поставят в одно нажатие.`}</div>`}
           </div>` : ''}
 
         <div class="share-way">
           <div class="share-way-head"><span class="ms">link</span>${L`Ссылка`}</div>
           ${link?.web ? `
-            <button class="btn${community === 'off' ? ' btn-primary' : ''}" id="shareCopyBtn"><span class="ms">content_copy</span>${L`Скопировать ссылку`}</button>
-            <div class="share-hint">${skipped.length
-              ? L`Донесёт ${link.count} из каталога. Свои моды (${skipped.length}) в неё не влезут — для них файл.`
-              : L`Открывается в менеджере и ставит моды из каталога.`}</div>` : `
+            <button class="btn${community === 'off' || community === 'published' ? ' btn-primary' : ''}" id="shareCopyBtn"><span class="ms">content_copy</span>${L`Скопировать ссылку`}</button>
+            <div class="share-hint">${L`Открывается в менеджере и ставит моды из каталога: ${link.count} ${plural(link.count, 'мод', 'мода', 'модов')}.`}</div>
+            ${skipped.length ? `
+              <div class="share-warn">
+                <div><span class="ms">warning</span>${L`Этих модов нет в каталоге, ссылка их не донесёт:`}</div>
+                <div class="share-warn-names">${skipped.slice(0, 8).map((n) => esc(String(n))).join(' · ')}${skipped.length > 8 ? ` ${L`и ещё ${skipped.length - 8}`}` : ''}</div>
+                <div class="share-hint">${L`Свой мод сначала отправь в каталог: «Мастерская» → «Кабинет автора». После модерации ссылка донесёт и его. Или сохрани пресет файлом.`}</div>
+              </div>` : ''}` : `
             <div class="share-hint">${L`В пресете только свои моды — ссылка их не донесёт.`}</div>`}
         </div>
 
@@ -159,6 +161,7 @@ export function shareSheet(preset: { name: string }, link: ShareLink | null, pic
     }));
     overlay.querySelector('#shareUnpublishBtn')?.addEventListener('click', () => done({ action: 'unpublish' }));
     overlay.querySelector('#shareCopyBtn')?.addEventListener('click', (e) => {
+      // the address itself is hundreds of characters of code: copied, never shown
       navigator.clipboard.writeText(link?.web || '');
       flashCopied(e.currentTarget as CopyButton);
     });

@@ -38,3 +38,10 @@ reason = "Unmaintained, not vulnerable (zbus_names, merged into zbus 6). Linux o
 id = "RUSTSEC-2026-0372"
 ignoreUntil = 2027-01-08
 reason = "Unmaintained, not vulnerable (zvariant_derive, merged into zbus 6). Linux only, through zbus 5 in Tauri's notification, opener and single-instance plugins."
+
+# chrono is unmaintained, not vulnerable. The core moved to jiff; chrono stays in Cargo.lock only as
+# an optional dependency of serde_with (through tauri-utils), and no build compiles it.
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0543"
+ignoreUntil = 2027-01-08
+reason = "Unmaintained, not vulnerable. Nothing compiles it: the core uses jiff, and chrono is left in Cargo.lock as an unused optional dependency of serde_with through tauri-utils."

@@ -67,7 +67,7 @@ export function paintAccount(): void {
     if (r.error) toast(r.error, 'error', 7000);
     else toast(L`Привет, ${r.account.username}`);
     state.settings = await window.api.settings.get();
-    paintAccount();
+    document.dispatchEvent(new Event('mm:account'));
   });
   // the account's menu: the author's drafts (views/creator.ts), and signing out
   document.getElementById('tbUserBtn')?.addEventListener('click', (e) => {
@@ -80,10 +80,12 @@ export function paintAccount(): void {
         if (!await confirmDialog(L`Выйти из аккаунта «${acc?.username}»?`, { okLabel: L`Выйти`, danger: false })) return;
         await window.api.account.signOut();
         state.settings = await window.api.settings.get();
-        paintAccount();
+        document.dispatchEvent(new Event('mm:account'));
       } },
     ], r.left, r.bottom + 4);
   });
 }
 // drawn in whichever language was on when it was drawn (see applyLanguage in ui/language.ts)
 document.addEventListener('mm:language', () => paintAccount());
+// signed in from somewhere else in the window (core/social.ts: a like asks for an account)
+document.addEventListener('mm:account', () => paintAccount());

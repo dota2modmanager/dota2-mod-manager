@@ -25,10 +25,10 @@ export function CommunitySection({ c, actions }: { c: CommunityModel; actions: P
         <span className="text-meta">{c.loading ? L`обновляется…` : `${c.presets.length}`}</span>
         <div className="community-account">
           {c.user
-            ? <>
-              <span className="community-user" title={L`Ты вошёл через Discord: можно оценивать и публиковать`}><span className="ms">person</span>{c.user.name}</span>
-              <button className="btn btn-ghost btn-xs" id="communitySignOut" onClick={a.signOut}>{L`Выйти`}</button>
-            </>
+            // signing out is the title bar's, where the same session is shown
+            ? <span className="community-user" title={c.canVote ? L`Ты вошёл через Discord: можно оценивать и публиковать` : L`Аккаунт Discord слишком новый: оценивать и публиковать можно с аккаунта старше двух недель`}>
+              <span className="ms">person</span>{c.user.name}
+            </span>
             : <button className="btn btn-sm" id="communitySignIn" title={L`Чтобы ставить лайки и публиковать свои пресеты. Смотреть и устанавливать можно и без входа`}
               onClick={() => { a.signIn(); }}><span className="ms">login</span>{L`Войти через Discord`}</button>}
           <button className="btn btn-ghost btn-xs" id="communityRefresh" title={L`Обновить список`} disabled={c.loading} onClick={a.refresh}>
@@ -59,7 +59,7 @@ export function CommunitySection({ c, actions }: { c: CommunityModel; actions: P
       </div>
       {c.error && <div className="preset-warn"><span className="ms">cloud_off</span>{c.error}</div>}
       <div className="community-list">
-        {list.slice(0, shown).map((p, i) => <CommunityCard key={p.id} p={p} index={i} actions={actions} signedIn={!!c.user} />)}
+        {list.slice(0, shown).map((p, i) => <CommunityCard key={p.id} p={p} index={i} actions={actions} signedIn={!!c.user} canVote={c.canVote} moderator={c.moderator} />)}
       </div>
       {!list.length && (
         <div className="empty-state community-empty">
@@ -77,12 +77,16 @@ export function CommunitySection({ c, actions }: { c: CommunityModel; actions: P
   );
 }
 
-function CommunityCard({ p, index, actions, signedIn }: { p: CommunityPreset; index: number; actions: PresetsActions; signedIn: boolean }) {
+function CommunityCard({ p, index, actions, signedIn, canVote, moderator }: {
+  p: CommunityPreset; index: number; actions: PresetsActions; signedIn: boolean; canVote: boolean; moderator: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const a = actions.community;
   const votes = p.up + p.down;
   // a vote needs an account; pressing without one says how to get it rather than doing nothing
-  const thumbTitle = p.mine ? L`Свой пресет оценить нельзя` : signedIn ? '' : L`Войди через Discord, чтобы оценивать`;
+  const thumbTitle = p.mine ? L`Свой пресет оценить нельзя`
+    : !signedIn ? L`Войди через Discord, чтобы оценивать`
+      : !canVote ? L`Аккаунт Discord слишком новый: оценивать и публиковать можно с аккаунта старше двух недель` : '';
   return (
     <div className={`preset-card community-card${p.taken === 'on' ? ' is-active' : ''}`} style={{ '--i': index } as CSSProperties} data-community={p.id}>
       <div className="preset-head">
@@ -106,6 +110,11 @@ function CommunityCard({ p, index, actions, signedIn }: { p: CommunityPreset; in
             onClick={() => { setBusy(true); a.take(p.id).finally(() => setBusy(false)); }}>
             {p.taken === 'on' ? L`Применён` : p.taken === 'own' ? L`Применить` : <><span className="ms">download</span>{L`Установить`}</>}
           </button>}
+        {moderator && !p.mine && (
+          <button className="btn btn-sm btn-ghost" data-hide={p.id} title={L`Скрыть пресет из «Пресетов сообщества» как модератор`} onClick={() => a.unpublish(p.id)}>
+            <span className="ms">visibility_off</span>{L`Скрыть`}
+          </button>
+        )}
       </div>
       <div className="community-by text-meta">
         <span className="ms">person</span>{p.author || L`без имени`}{p.date && <> · {p.date}</>}{p.mine && <> · <b>{L`твой`}</b></>}

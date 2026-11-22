@@ -79,8 +79,8 @@ pub fn redact_home(dir: &str, home: Option<&str>) -> String {
 
 fn iso(ms: f64) -> String {
     let ms = ms.trunc() as i64;
-    chrono::DateTime::from_timestamp_millis(ms)
-        .map_or_else(|| "Invalid Date".into(), |t| t.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string())
+    jiff::Timestamp::from_millisecond(ms)
+        .map_or_else(|_| "Invalid Date".into(), |t| t.strftime("%Y-%m-%dT%H:%M:%S%.3fZ").to_string())
 }
 
 /// A folder's listing as the text file the report carries.
@@ -609,6 +609,20 @@ pub fn build_report(i: ReportInputs) -> (Value, IndexMap<String, String>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The four dates the core prints keep the shapes they had under chrono: what the window
+    /// parses, what a server reads in If-Modified-Since, and the day a config change is keyed on.
+    #[test]
+    fn dates_keep_their_printed_shapes() {
+        let ms = 1_763_731_200_123.0; // 2025-11-21T13:20:00.123Z, a Friday
+        assert_eq!(iso(ms), "2025-11-21T13:20:00.123Z");
+        assert_eq!(iso(1e18), "Invalid Date", "past the year 9999");
+        assert_eq!(crate::catalog::remote_config::day_of(ms), "2025-11-21");
+        let t = std::time::UNIX_EPOCH + std::time::Duration::from_millis(ms as u64);
+        assert_eq!(crate::catalog::preview_cache::http_date(t), "Fri, 21 Nov 2025 13:20:00 GMT");
+        let now = crate::install::mods_listing::iso_now();
+        assert!(now.len() == 24 && now.ends_with('Z') && now.as_bytes()[10] == b'T', "{now}");
+    }
 
     fn report(foreign: Value) -> Value {
         json!({

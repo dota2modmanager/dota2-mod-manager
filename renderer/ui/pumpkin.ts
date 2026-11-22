@@ -8,25 +8,26 @@
  * (settings `pumpkinLit`).
  *
  * Lit, it asks for a key. Keys come from the site, one per person, and each opens one pumpkin
- * (crates/mm-core/src/looks/pumpkin.rs, tools/ops/pumpkin-worker). The right one opens the bloody night, the tenth theme,
- * and brings a mod nobody else has yet into My mods. A key another pumpkin already ate is turned
- * away with that said plainly, since that is the one mistake people will make on purpose.
+ * (crates/mm-core/src/looks/pumpkin.rs, tools/ops/pumpkin-worker). The right one opens the bloody night, the tenth theme.
+ * Through Halloween 2026 it also brought a mod nobody else had; Necrophos Scream is in the catalog
+ * since, and the pumpkin opens it there. A key another pumpkin already ate is turned away with
+ * that said plainly, since that is the one mistake people will make on purpose.
  *
  * Its words are its own, in the three languages the window speaks, rather than in i18n.js.
  */
 import { state } from '../core/store.ts';
-import { switchView } from '../core/router.ts';
+import { openModLink } from '../views/catalog.ts';
 import { wearBlood } from './theme.ts';
+import { eventOn } from './season.ts';
 import { PUMPKIN_SVG } from './pumpkin-art.ts';
 import { crunch, kindle, hiss, opens } from './dread.ts';
-import type { RedeemAnswer } from '../api/app.ts';
 
 type Words = {
   label: string; coldLabel: string; close: string; coldTitle: string; coldText: string; coldHint: string; ate: string;
   title: string; text: string; placeholder: string; hint: string; open: string; chewing: string;
   wrong: string; empty: string; used: string; offline: string; broken: string;
-  litTitle: string; litText: string; litNoMod: string; show: string; retry: string; retried: string;
-  again: string; againText: string; wear: string; prizeBack: string; heart: string;
+  litTitle: string; litText: string; show: string;
+  again: string; againText: string; wear: string; heart: string;
 };
 
 const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
@@ -41,9 +42,9 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     used: 'Этот ключ уже съела другая тыква. Каждый ключ открывает одну тыкву: добудь свой на сайте.',
     offline: 'Тыква не докричалась до сайта. Проверь интернет и попробуй ещё раз.',
     broken: 'На той стороне что-то сломалось ({0}). Попробуй чуть позже.',
-    litTitle: 'Кровавая ночь твоя', litText: 'Тема уже надета, а в «Моих модах» тебя ждёт {0}: включи его, и Некрофос станет Криком. Пока его нет ни у кого, кроме тех, кто добрался сюда.',
-    litNoMod: 'Тема уже надета, а мод не скачался: {0}.', show: 'Показать мод', retry: 'Скачать мод', retried: 'Скачано',
-    again: 'Кровавая ночь уже твоя', againText: 'Она в круге героев: щёлкай по маскоту, пока он не станет кровавой тыквой.', wear: 'Надеть кровавую ночь', prizeBack: 'Вернуть мод',
+    litTitle: 'Кровавая ночь твоя', litText: 'Тема уже надета. А Некрофос-Крик, который тыква раздавала на Хеллоуин, теперь лежит в каталоге: с родным голосом или с русским.',
+    show: 'Открыть Крика',
+    again: 'Кровавая ночь уже твоя', againText: 'Она в круге героев: щёлкай по маскоту, пока он не станет кровавой тыквой.', wear: 'Надеть кровавую ночь',
     heart: 'Он тебя видел. Там, где на сайте ничего нет, найди его маску.',
   },
   en: {
@@ -57,9 +58,9 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     used: 'Another pumpkin already ate this key. Each key opens one pumpkin: get your own on the site.',
     offline: 'The pumpkin could not reach the site. Check your connection and try again.',
     broken: 'Something broke on the other side ({0}). Try again a little later.',
-    litTitle: 'The bloody night is yours', litText: 'The theme is on, and {0} is waiting in My mods: switch it on and Necrophos becomes Scream. Nobody has it yet except the people who made it this far.',
-    litNoMod: 'The theme is on, but the mod did not download: {0}.', show: 'Show the mod', retry: 'Download the mod', retried: 'Downloaded',
-    again: 'The bloody night is already yours', againText: 'It is in the round of heroes: click the mascot until it turns into a bloody pumpkin.', wear: 'Wear the bloody night', prizeBack: 'Get the mod back',
+    litTitle: 'The bloody night is yours', litText: 'The theme is on. Necrophos Scream, the mod the pumpkin gave out for Halloween, is in the catalog now, with the original voice or a Russian one.',
+    show: 'Open Scream',
+    again: 'The bloody night is already yours', againText: 'It is in the round of heroes: click the mascot until it turns into a bloody pumpkin.', wear: 'Wear the bloody night',
     heart: 'He saw you. Where there is nothing on the site, find his mask.',
   },
   'zh-CN': {
@@ -73,14 +74,19 @@ const WORDS: Record<'ru' | 'en' | 'zh-CN', Words> = {
     used: '这把钥匙已经被另一个南瓜吃掉了。每把钥匙只能打开一个南瓜：去网站拿你自己的。',
     offline: '南瓜联系不上网站。检查网络后再试一次。',
     broken: '对面出了点问题（{0}）。稍后再试。',
-    litTitle: '血腥之夜归你了', litText: '主题已经换上，{0} 正在“我的模组”里等你：启用它，死灵飞龙就会变成惊声尖叫。除了走到这一步的人，还没有人拥有它。',
-    litNoMod: '主题已经换上，但模组没有下载成功：{0}。', show: '查看模组', retry: '下载模组', retried: '已下载',
-    again: '血腥之夜已经是你的了', againText: '它在英雄轮换里：一直点击吉祥物，直到它变成血色南瓜。', wear: '换上血腥之夜', prizeBack: '找回模组',
+    litTitle: '血腥之夜归你了', litText: '主题已经换上。南瓜在万圣节送出的“死灵飞龙·惊声尖叫”现在已经在模组目录里了，可选原版语音或俄语语音。',
+    show: '打开惊声尖叫',
+    again: '血腥之夜已经是你的了', againText: '它在英雄轮换里：一直点击吉祥物，直到它变成血色南瓜。', wear: '换上血腥之夜',
     heart: '他看见你了。在网站上什么都没有的地方，找到他的面具。',
   },
 };
 const words = (): Words => WORDS[(window.I18N_LANG as 'ru' | 'en' | 'zh-CN') ?? 'en'] ?? WORDS.en;
 const fill = (s: string, v: string) => s.replace('{0}', v);
+
+/* The mod the pumpkin gave out for Halloween 2026, in the catalog since: the Russian voice for a
+   window that speaks Russian, the original for everybody else. */
+const PRIZE = { cat: 'heroes', name: 'Necrophos Scream' };
+const openPrize = () => openModLink({ ...PRIZE, style: window.I18N_LANG === 'ru' ? 'Russian voice' : 'Original voice' });
 
 /* The drawing is ui/pumpkin-art.ts; the light in its face flickers in styles/pumpkin.css. */
 const SVG = PUMPKIN_SVG;
@@ -128,6 +134,9 @@ function onEaten(): void {
 }
 
 export function initPumpkin(): void {
+  // Put away with Halloween (ui/season.ts): no pumpkin, rolled in or rolling. What people earned
+  // stays in their settings, so it is all back where they left it once Halloween is on again.
+  if (!eventOn('halloween')) return;
   if (state.settings?.pumpkin === true) show(false);
   document.addEventListener('mm-knocks', () => {
     if (button) return;
@@ -182,7 +191,7 @@ function keyWindow(): void {
   let busy = false;
 
   /** The key opened it; `fresh` when it happened this very moment. */
-  const opened = async (fresh: boolean, answer?: Extract<RedeemAnswer, { ok: true }>) => {
+  const opened = (fresh: boolean) => {
     box.classList.remove('cold');
     box.classList.add('lit', 'blood');
     if (fresh) { box.classList.add('burst'); opens(); }
@@ -194,13 +203,9 @@ function keyWindow(): void {
     extra.hidden = true;
     if (fresh) {
       title.textContent = w.litTitle;
-      text.textContent = answer?.installed ? fill(w.litText, answer.installed) : fill(w.litNoMod, answer?.installError || '?');
-      ok.textContent = answer?.installed ? w.show : w.retry;
-      ok.onclick = async (e) => {
-        e.preventDefault();
-        if (ok.textContent === w.show) { close(); void switchView('library'); return; }
-        await fetchAgain();
-      };
+      text.textContent = w.litText;
+      ok.textContent = w.show;
+      ok.onclick = (e) => { e.preventDefault(); close(); void openPrize(); };
       cancel.hidden = false;
       ok.focus();
       return;
@@ -209,28 +214,10 @@ function keyWindow(): void {
     text.textContent = w.againText;
     ok.textContent = w.wear;
     ok.onclick = (e) => { e.preventDefault(); wearBlood(); close(); };
-    if (!(await window.api.pumpkin.hasPrize())) {
-      extra.hidden = false;
-      extra.textContent = w.prizeBack;
-      extra.onclick = () => fetchAgain();
-    }
+    extra.hidden = false;
+    extra.textContent = w.show;
+    extra.onclick = () => { close(); void openPrize(); };
     ok.focus();
-  };
-
-  const fetchAgain = async () => {
-    if (busy) return;
-    busy = true;
-    const btn = extra.hidden ? ok : extra;
-    btn.disabled = true;
-    const was = btn.textContent;
-    btn.textContent = w.chewing;
-    const r = await window.api.pumpkin.prizeAgain();
-    busy = false;
-    btn.disabled = false;
-    if ('error' in r) { btn.textContent = was; error.textContent = fill(w.litNoMod, r.error); return; }
-    error.textContent = '';
-    btn.textContent = w.retried;
-    btn.disabled = true;
   };
 
   // cold: nothing to type, only the riddle; it turns into the key window if fed meanwhile
@@ -273,7 +260,7 @@ function keyWindow(): void {
       if (state.settings) { state.settings.blood = true; state.settings.secret = true; }
       dress();
       wearBlood();
-      void opened(true, answer);
+      opened(true);
       return;
     }
     error.textContent = answer.error === 'used' ? w.used
@@ -293,7 +280,7 @@ function keyWindow(): void {
     input.select();
   });
 
-  if (state.settings?.blood === true) void opened(false);
+  if (state.settings?.blood === true) opened(false);
   else if (!lit()) { asCold(); document.addEventListener('mm-pumpkin-lit', asKey); }
   else asKey();
 }

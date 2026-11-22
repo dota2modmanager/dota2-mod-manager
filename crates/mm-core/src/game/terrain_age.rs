@@ -8,7 +8,7 @@ use std::fs;
 use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 
-use chrono::{Duration, LocalResult, NaiveDate, TimeZone};
+use jiff::{civil, tz::TimeZone, SignedDuration};
 use serde_json::{json, Value};
 
 use crate::overlays::{files_of, LibFile};
@@ -54,22 +54,14 @@ fn from_dos(date: u16, time: u16) -> Option<f64> {
     let month0 = (i32::from((date >> 5) & 0x0f) - 1).max(0);
     let day = i64::from((date & 0x1f).max(1));
     let (h, mi, s) = (i64::from((time >> 11) & 0x1f), i64::from((time >> 5) & 0x3f), i64::from(time & 0x1f) * 2);
-    let first = NaiveDate::from_ymd_opt(year + month0 / 12, (month0 % 12) as u32 + 1, 1)?;
-    let at = first.and_hms_opt(0, 0, 0)?
-        + Duration::days(day - 1)
-        + Duration::hours(h)
-        + Duration::minutes(mi)
-        + Duration::seconds(s);
-    let local = match chrono::Local.from_local_datetime(&at) {
-        LocalResult::Single(t) => t,
-        LocalResult::Ambiguous(early, _) => early,
-        // a time the clocks skipped: read with the offset from before the change, as V8 does
-        LocalResult::None => match chrono::Local.from_local_datetime(&(at - Duration::hours(1))) {
-            LocalResult::Single(t) | LocalResult::Ambiguous(t, _) => t + Duration::hours(1),
-            LocalResult::None => return None,
-        },
-    };
-    Some(local.timestamp_millis() as f64)
+    let first = civil::date((year + month0 / 12) as i16, (month0 % 12) as i8 + 1, 1).at(0, 0, 0, 0);
+    let rolled =
+        SignedDuration::from_hours(24 * (day - 1) + h) + SignedDuration::from_mins(mi) + SignedDuration::from_secs(s);
+    let at = first.checked_add(rolled).ok()?;
+    // jiff's "compatible" reading is V8's: a repeated hour takes the earlier time, and a time the
+    // clocks skipped is read with the offset from before the change
+    let local = at.to_zoned(TimeZone::system()).ok()?;
+    Some(local.timestamp().as_millisecond() as f64)
 }
 
 fn u16_at(b: &[u8], i: usize) -> u16 {

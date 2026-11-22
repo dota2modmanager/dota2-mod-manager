@@ -4,6 +4,9 @@
 //! identify a user with nothing but a public client id. The token arrives in the URL fragment,
 //! which browsers do not send to the server, so the loopback page hands it back with a fetch. It
 //! is used once, to read the account's name and picture, and dropped: nothing long-lived is kept.
+//!
+//! The same loopback page also takes the catalog's account service back (catalog/social.rs), whose
+//! answer puts the app's state in the query and its own session token in the fragment.
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -28,16 +31,18 @@ pub fn is_configured() -> bool {
     !CLIENT_ID.is_empty()
 }
 
-// served on the loopback: pulls the token out of the fragment and posts it back to us
+// served on the loopback: posts the query and the fragment back to us, the token being in either
 const CALLBACK_PAGE: &str = r#"<!doctype html><meta charset="utf-8"><title>Dota 2 Mod Manager</title>
 <style>body{font:15px/1.6 system-ui,sans-serif;background:#0e0e14;color:#e8e6f0;display:grid;place-items:center;height:100vh;margin:0}
 .b{text-align:center;max-width:420px;padding:28px}.m{color:#a99ee0}</style>
 <div class="b"><h2 id="h">Готово</h2><p class="m" id="p">Можно закрыть эту вкладку и вернуться в Mod Manager.</p></div>
 <script>
-  var f = location.hash.slice(1);
-  if (!f) { document.getElementById('h').textContent = 'Не получилось';
-            document.getElementById('p').textContent = 'Ответ Discord пришёл без токена.'; }
-  else { fetch('/token', { method: 'POST', body: f }).catch(function () {}); }
+  var f = [location.search.slice(1), location.hash.slice(1)].filter(Boolean).join('&');
+  if (!/(^|&)(access_token|d2pfx_token)=/.test(f)) {
+    document.getElementById('h').textContent = 'Не получилось';
+    document.getElementById('p').textContent = 'Вход не прошёл. Вернись в Mod Manager: там написано, почему.';
+  }
+  fetch('/token', { method: 'POST', body: f }).catch(function () {});
 </script>"#;
 
 /// Where sign-in goes: the loopback port and Discord's two hosts. Tests point them elsewhere.
@@ -162,10 +167,11 @@ pub fn await_token(listener: TcpListener, state: &str, timeout: Duration) -> Res
                 if get("state").as_deref() != Some(state) {
                     return Err(t("Ответ Discord не совпал с запросом", &[]));
                 }
-                return match get("access_token").filter(|x| !x.is_empty()) {
+                return match get("access_token").or_else(|| get("d2pfx_token")).filter(|x| !x.is_empty()) {
                     Some(token) => Ok(token),
-                    None => Err(get("error_description")
-                        .filter(|x| !x.is_empty())
+                    None => Err(get("d2pfx_err")
+                        .map(|code| crate::social::sign_in_error(&code))
+                        .or_else(|| get("error_description").filter(|x| !x.is_empty()))
                         .unwrap_or_else(|| t("Discord не выдал токен", &[]))),
                 };
             }
@@ -195,7 +201,12 @@ fn avatar_data_uri(net: &Net, cdn: &str, user: &Value) -> Value {
     let Some(avatar) = user.get("avatar").filter(|a| crate::js::truthy(a)).map(crate::js::string) else {
         return Value::Null;
     };
-    match net.direct("GET", &format!("{cdn}/avatars/{id}/{avatar}.png?size=64"), &[], None, 15000) {
+    picture_data_uri(net, &format!("{cdn}/avatars/{id}/{avatar}.png?size=64"))
+}
+
+/// A picture on Discord's CDN, once, as a data URI; null when it cannot be had or is too big.
+pub fn picture_data_uri(net: &Net, url: &str) -> Value {
+    match net.direct("GET", url, &[], None, 15000) {
         Ok((status, body)) if (200..300).contains(&status) && body.len() <= AVATAR_MAX => {
             use base64::Engine;
             json!(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(body)))
@@ -206,24 +217,13 @@ fn avatar_data_uri(net: &Net, cdn: &str, user: &Value) -> Value {
 
 /// Opens the browser (`open`), waits for the redirect, and answers who signed in: id, name, avatar.
 pub fn sign_in(net: &Net, at: &Endpoints, open: &dyn Fn(&str) -> Result<(), String>) -> Result<Value, String> {
-    let token = access_token(at, open)?;
-    account(net, at, &token)
-}
-
-/// The browser half of signing in: Discord's access token, for the caller to use and drop. The
-/// community presets hand it to their worker once (presets/presets_api.rs).
-pub fn access_token(at: &Endpoints, open: &dyn Fn(&str) -> Result<(), String>) -> Result<String, String> {
     if !is_configured() {
         return Err(t("Вход через Discord пока не настроен в этой сборке", &[]));
     }
     let state = uuid::Uuid::new_v4().simple().to_string();
     let listener = listen(at.port)?;
     open(&authorize_url(&at.authorize, &state, at.port))?;
-    await_token(listener, &state, at.timeout)
-}
-
-/// Who a token belongs to: id, name, avatar.
-pub fn account(net: &Net, at: &Endpoints, token: &str) -> Result<Value, String> {
+    let token = await_token(listener, &state, at.timeout)?;
     let auth = format!("Bearer {token}");
     let (status, body) = net
         .direct("GET", &format!("{}/users/@me", at.api), &[("authorization", &auth)], None, 15000)

@@ -379,9 +379,6 @@ const EN = {
   'Разобрать': 'Split',
 
   // ---------- library: normal rows ----------
-  'Жульничество наказуемо гадостью': 'Cheating is punished with something nasty',
-  'Этот мод выдаётся одним ключом на одну установку, а здесь ключ не открывали. Мод выключен и не включится.':
-    'This mod comes with one key for one install, and no key was opened here. It is switched off and will not switch on.',
   'Выбрать мод': 'Select mod',
   'всегда активен': 'always on', 'Выключено мастер-переключателем внизу справа: включится вместе с ним': 'Off by the master switch at the bottom right: it comes back on with it',
   'Включить/выключить': 'Enable/disable',

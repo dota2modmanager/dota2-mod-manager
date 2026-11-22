@@ -28,12 +28,14 @@ import { catalog, catalogCategories, thumbOf, groupOf } from '../lib/catalog';
 import { categoryText } from '../i18n/categories';
 import { pathIn, type Lang } from '../i18n/ui';
 import { ruName } from '../i18n/hero-names';
+import { eventOn } from '../scripts/look';
 
 interface Props { lang: Lang }
 const { lang } = Astro.props;
-/* The last hero only runs once an app that can take what it gives is out (Hunt.astro). */
+/* The last hero only runs once an app that can take what it gives is out (Hunt.astro), and only
+   while Halloween is on: his key is for the pumpkin, which the app hides while it is put away. */
 const latest = await latestRelease();
-const lastRuns = !!latest && compareVersions(latest, '2.17.0') >= 0;
+const lastRuns = eventOn('halloween') && !!latest && compareVersions(latest, '2.17.0') >= 0;
 const c = landing[lang];
 
 /** Copy links are written as "~/docs/safe/" and get their language prefix here. */

@@ -134,6 +134,9 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> R {
         }
         "account:signOut" => {
             set(&mut o.core(), "account", Value::Null)?;
+            // the service's session too, off the lock: it is one request
+            let (api, social) = crate::owner_social::service(o);
+            social.sign_out(api.as_deref());
             // no account, nobody to check against the list: back to the channel everybody else reads
             crate::owner_update::recheck(o);
             Ok(json!({ "ok": true }))

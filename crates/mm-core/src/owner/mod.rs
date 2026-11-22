@@ -34,6 +34,7 @@ pub mod owner_presence;
 pub mod owner_presets;
 pub mod owner_preview3d;
 pub mod owner_settings;
+pub mod owner_social;
 pub mod owner_start;
 pub mod owner_studios;
 pub mod owner_support;
@@ -102,7 +103,7 @@ pub struct Core {
     pub catalog: Arc<crate::catalog::Catalog>,
     /// the ready-made presets, from the last good copy until the start's fetch lands
     pub ready: Arc<crate::ready_presets::ReadyPresets>,
-    /// the presets people published, from the last good copy until the Presets screen asks again
+    /// the presets people published, from the last list kept until the Presets screen asks again
     pub community: Arc<crate::community_presets::CommunityPresets>,
     /// the arcana bases the builds read, brought down when one is asked for (owner_bases.rs)
     pub bases: Arc<crate::owner_bases::OwnerBases>,
@@ -124,6 +125,8 @@ pub struct Core {
     pub notice: crate::notice_text::NoticeText,
     /// how many times each catalog mod was downloaded
     pub download_stats: Arc<crate::download_stats::DownloadStats>,
+    /// likes and follows, through the catalog's account service once the remote config names it
+    pub social: Arc<crate::social::Social>,
     /// whether the download counter may count (settings countDownloads), read off the settings' thread
     pub counting: Arc<AtomicBool>,
     /// which of the game's items a mod's models are (install/mod_id.rs), for the game in the settings
@@ -195,6 +198,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_preview3d::CHANNELS, crate::owner_preview3d::handle),
     (crate::owner_mod_look::CHANNELS, crate::owner_mod_look::handle),
     (crate::owner_creator::CHANNELS, crate::owner_creator::handle),
+    (crate::owner_social::CHANNELS, crate::owner_social::handle),
     (crate::owner_support::CHANNELS, crate::owner_support::handle),
     (crate::owner_uninstall::CHANNELS, crate::owner_uninstall::handle),
 ];
@@ -293,6 +297,9 @@ impl Owner {
             Box::new(now),
             Box::new(move |m: &str| stats_log.push(m)),
         );
+        let social_log = log.clone();
+        let social =
+            crate::social::Social::new(&ud, net.clone(), Box::new(now), Box::new(move |m: &str| social_log.push(m)));
         let game_now = Arc::new(std::sync::RwLock::new(made_for.0.clone()));
         let core = Core {
             user_data: ud.clone(),
@@ -307,7 +314,7 @@ impl Owner {
             net: net.clone(),
             catalog,
             ready: Arc::new(crate::ready_presets::ReadyPresets::new(&ud, None)),
-            community: Arc::new(crate::community_presets::CommunityPresets::new(&ud, Default::default())),
+            community: Arc::new(crate::community_presets::CommunityPresets::new(&ud)),
             bases: crate::owner_bases::OwnerBases::new(&ud, net.clone(), now, log.clone()),
             kept: crate::owner_tools::Kept::default(),
             game_icons: Arc::new(crate::game_icons::GameIcons::new(&ud)),
@@ -319,6 +326,7 @@ impl Owner {
             fingerprints: crate::fingerprints::Fingerprints::new(&ud),
             notice: crate::notice_text::NoticeText::default(),
             download_stats,
+            social,
             counting,
             mod_id,
             undo: crate::build_undo::BuildUndo::default(),

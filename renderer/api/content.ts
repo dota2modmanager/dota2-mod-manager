@@ -229,7 +229,7 @@ export type SoundMode = 'replace' | 'layer';
 /** A sound of the user's on one event, as the hero's record keeps it. */
 export interface SoundEdit { event: string; mode: SoundMode; volume: number; sound: string; name: string }
 /** An event of a hero's that plays a sound. */
-export interface HeroEvent { name: string; type: string; files: number }
+export interface HeroEvent { name: string; type: string; files: number; /** other events that play one of its files */ shares?: number }
 
 export interface SoundsApi {
   /** every hero with an events file: the file's name, the hero's own id (for his portrait) and his name */
@@ -309,13 +309,15 @@ export interface CommunityPresetRecord {
   id: string;
   name: string;
   about: string;
-  author: { key: string; name: string };
-  /** ISO time it was published */
-  created: string;
-  up: number;
-  down: number;
+  /** the Discord display name it was published under */
+  author: string;
+  /** unix seconds */
+  created: number;
+  updated: number;
+  likes: number;
+  dislikes: number;
   mods: CommunityMod[];
-  /** published by the account you are signed in with */
+  /** published by the account signed in */
   mine: boolean;
   /** your vote: 1, -1, or 0 for none */
   vote: number;
@@ -324,26 +326,26 @@ export interface CommunityPresetRecord {
 }
 
 export interface CommunityList {
-  /** false: this build has no key to check community presets with, and shows none */
-  configured: boolean;
+  /** false until the signed config names the catalog's account service */
+  enabled: boolean;
+  signedIn: boolean;
+  /** an account younger than two weeks may look but not publish or vote */
+  canPublish?: boolean;
+  moderator?: boolean;
   presets: CommunityPresetRecord[];
-  user: { key: string; name: string } | null;
-  votes: Record<string, number>;
   /** the refresh failed and this is the last list kept */
   error?: string | null;
 }
 
 export interface CommunityApi {
-  /** the published presets; refresh fetches the index and your votes first */
+  /** the published presets; refresh asks the service for the list and your part of it first */
   list: (refresh?: boolean) => Promise<CommunityList>;
-  /** sign in to the presets service with Discord, in the browser */
-  signIn: () => Promise<Reply<{ user: { key: string; name: string } }>>;
-  signOut: () => Promise<Reply<object>>;
   /** publish one of your presets; about: a few words for the people who will find it */
   publish: (presetId: string, about?: string) => Promise<Reply<{ id: string; count: number; skipped: unknown[] }>>;
+  /** take your own preset down, or, as a moderator, hide somebody else's */
   unpublish: (id: string) => Promise<Reply<object>>;
-  /** 1 like, -1 dislike, 0 take the vote back; answers all your votes */
-  vote: (id: string, value: number) => Promise<Reply<{ votes: Record<string, number> }>>;
+  /** 1 like, -1 dislike, 0 take the vote back; answers the counts after it */
+  vote: (id: string, value: number) => Promise<Reply<{ vote: number; likes: number; dislikes: number }>>;
   /** take a published preset in, install what is missing and put it on */
   take: (id: string) => Promise<Reply<{ installed: number; errors: string[] }>>;
 }

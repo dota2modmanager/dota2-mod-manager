@@ -83,6 +83,7 @@ export interface CommunityPreset {
   author: string;
   /** when it was published, as the window's language writes a date */
   date: string;
+  /** for the "newest" order: unix seconds as a sortable string */
   created: string;
   up: number;
   down: number;
@@ -103,8 +104,12 @@ export interface CommunityPreset {
 }
 
 export interface CommunityModel {
-  /** signed in to vote and publish, and as whom */
+  /** signed in to the catalog's account service, and as whom */
   user: { name: string } | null;
+  /** an account younger than two weeks may look but not vote or publish */
+  canVote: boolean;
+  /** may hide somebody else's preset */
+  moderator: boolean;
   presets: CommunityPreset[];
   /** the list could not be refreshed, and this is the last one kept */
   error: string | null;
@@ -116,7 +121,7 @@ export interface PresetsModel {
   key: number;
   presets: (OwnPreset | SharedPreset)[];
   ready: ReadyPreset[];
-  /** null when this build shows no community presets */
+  /** null while the catalog's account service is off */
   community: CommunityModel | null;
 }
 
@@ -130,7 +135,6 @@ export interface PresetsActions {
   remove: (id: string) => void;
   community: {
     signIn: () => Promise<void>;
-    signOut: () => void;
     vote: (id: string, pressed: 1 | -1) => void;
     take: (id: string) => Promise<void>;
     unpublish: (id: string) => void;

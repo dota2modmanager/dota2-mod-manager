@@ -415,6 +415,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "account:signOut",
             "catalog:terrainAges",
             "catalog:downloadCounts",
+            "social:state",
             "mods:list",
             "mods:switchOffStaleTerrains",
             "mods:importDialog",
@@ -425,8 +426,6 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "presets:list",
             "presets:importDialog",
             "presets:ready",
-            "community:signIn",
-            "community:signOut",
             "config:state",
             "patch:state",
             "patch:repairState",
@@ -466,8 +465,6 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             "misc:cacheSize",
             "misc:clearCache",
             "misc:cacheList",
-            "pumpkin:prizeAgain",
-            "pumpkin:hasPrize",
             "diag:export",
             "uninstall:plan",
             "uninstall:cancel",
@@ -489,6 +486,10 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("presence:view", vec![str_(64, 0)]),
             ("support:choose", vec![one_of(&[Some("later"), Some("done")])]),
             ("catalog:load", vec![optional(bool_())]),
+            (
+                "social:mark",
+                vec![one_of(&[Some("like"), Some("follow")]), str_(crate::social::MAX_MOD_KEY, 1), bool_()],
+            ),
             (
                 "mods:install",
                 vec![shape(vec![

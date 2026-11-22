@@ -74,8 +74,6 @@ export interface LibRecord {
   updateAvailable?: boolean;
   /** the user's own mod (crates/mm-core/src/tools/own_work.rs): "ok" to send to the catalog, or what it lacks */
   publish?: string;
-  /** a copy of the pumpkin's mod this install did not earn, kept off (crates/mm-core/src/game/scream_guard.rs) */
-  cheat?: boolean;
   fileRef?: string;
   preview?: string;
   [key: string]: unknown;

@@ -52,10 +52,14 @@ export const NIGHT_AGAIN = [
  * lookNow written small: `mm-look` if it names one, else the event of the day, else the rainbow.
  * It goes in the head ahead of the policy's <meta>, so it needs no hash; test/look.test.mjs runs
  * it against look.ts on every day of a year.
+ *
+ * EVENT_DAYS is look.ts eventDays() copied out (this file is read by plain node, which cannot
+ * follow look.ts's own imports): the events that are on, and none while Halloween is put away.
  */
+export const EVENT_DAYS: Array<{ look: string; from: number; to: number }> = [];
 export const EARLY_LOOK = [
   "try{if(localStorage.getItem('mm-rainbow')==='1'){",
   "var a=localStorage.getItem('mm-look'),d=new Date(),n=(d.getMonth()+1)*100+d.getDate();",
-  "var l=a==='rainbow'||a==='halloween'?a:n>=1015&&n<=1110?'halloween':'rainbow';",
+  `var l=a==='rainbow'||a==='halloween'?a:${EVENT_DAYS.map((e) => `n>=${e.from}&&n<=${e.to}?'${e.look}':`).join('')}'rainbow';`,
   'document.documentElement.classList.add(l)}}catch(e){}',
 ].join('');

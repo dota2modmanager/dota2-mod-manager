@@ -33,6 +33,15 @@ pub fn origin(v: &Value) -> serde_json::Map<String, Value> {
     ORIGIN.iter().filter_map(|k| v.get(*k).filter(|v| truthy(v)).map(|v| ((*k).to_string(), v.clone()))).collect()
 }
 
+/// Why the user's own music stays out of the catalog (own_music_service.rs): its pak carries every
+/// music pack's events, and only the app that built it rebuilds them after a Dota update.
+fn music_stays() -> String {
+    t(
+        "Своя музыка не уходит в каталог: она переписывает файлы событий всех музыкальных паков, и после обновления Доты чужая копия сломает игру. У тебя она пересобирается сама",
+        &[],
+    )
+}
+
 /// Whether a mod in My mods can go to the catalog as the user's work: None for one that is not
 /// theirs to send (a catalog mod or a shared preset's file is its author's, a cursor set is not a
 /// mod the catalog takes), Some(Ok) when it can, Some(Err) with what is missing, in words for the
@@ -78,6 +87,9 @@ pub fn own_work(rec: &Value, in_catalog: &mut dyn FnMut(&str) -> bool) -> Option
             thin(t("замени звуки хотя бы у {0} событий", &[json!(SOUND_EVENTS)]))
         };
     }
+    if truthy(field(generated, "music")) {
+        return Some(Err(music_stays()));
+    }
     if truthy(field(generated, "effect")) {
         let changes: usize = field(generated, "edits")
             .as_object()
@@ -102,6 +114,10 @@ fn pack_work(rec: &Value, in_catalog: &mut dyn FnMut(&str) -> bool) -> Option<Re
         .as_array()
         .map(|m| m.iter().filter(|m| m.get("enabled") != Some(&Value::Bool(false))).collect())
         .unwrap_or_default();
+    // the music cannot go in any pack: what keeps it working is this app rebuilding it
+    if on.iter().any(|m| truthy(field(field(m, "generated"), "music"))) {
+        return Some(Err(music_stays()));
+    }
     let verdicts: Vec<Option<Result<(), String>>> = on.iter().map(|m| own_work(m, in_catalog)).collect();
     if verdicts.iter().all(Option::is_none) {
         return None;
@@ -199,5 +215,12 @@ mod tests {
         let mut off = catalog.clone();
         off["enabled"] = json!(false);
         assert_eq!(pack(json!([sounds, off])), Some(Ok(())));
+        // the user's own music stays home, alone or inside a pack, unless it is switched off there
+        let music = json!({ "name": "Своя музыка", "generated": { "music": true, "songs": [{}, {}] } });
+        assert_eq!(own_work(&music, &mut |_| false), Some(Err(music_stays())));
+        assert_eq!(pack(json!([sounds, music])), Some(Err(music_stays())));
+        let mut quiet = music.clone();
+        quiet["enabled"] = json!(false);
+        assert_eq!(pack(json!([sounds, quiet])), Some(Ok(())));
     }
 }
