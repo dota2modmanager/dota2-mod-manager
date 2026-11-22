@@ -364,5 +364,6 @@
 ["Сервис каталога ответил {0} {1}", "The catalog service answered {0} {1}"],
 ["Сервис каталога выдал не тот токен", "The catalog service returned an invalid token"],
 ["Такое имя сервис не примет", "The service would not accept that name"],
-["Лайки пока выключены", "Likes are not switched on yet"]
+["Лайки пока выключены", "Likes are not switched on yet"],
+["Своя музыка не уходит в каталог: она переписывает файлы событий всех музыкальных паков, и после обновления Доты чужая копия сломает игру. У тебя она пересобирается сама", "Your own music stays out of the catalog: it rewrites the events files of every music pack, and after a Dota update a copy on someone else's machine would crash their game. Yours gets rebuilt on its own"]
 ]

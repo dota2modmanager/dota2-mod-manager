@@ -3,6 +3,14 @@
 //! the window made it (16-bit PCM WAV), so the record can be built again with nothing asked of the
 //! user. A build runs Valve's compiler over the songs and every music pack's events, as a sound of
 //! the user's own does (ability_sounds_service.rs).
+//!
+//! Unlike a hero's sounds, the music cannot keep out of the events files: a playlist of any length,
+//! played from its start, has no one game file to stand in for, and the game's loop points are cut
+//! to its own tracks. So the pak carries every pack's events, frozen at the build, and the record is
+//! built again from the game's current ones after each Dota update that reaches it
+//! (owner_tools.rs, rebuild_generated). For the same reason it never goes to the catalog
+//! (own_work.rs): a copy shared with nobody to rebuild it is what crashes a game after Valve's next
+//! change.
 
 use std::path::{Path, PathBuf};
 
@@ -22,6 +30,9 @@ use crate::vpk::Entry;
 pub const MAX_SONG: usize = 112 * 1024 * 1024;
 /// The most songs one record carries.
 pub const MAX_SONGS: usize = 60;
+/// The build's rule, kept on the record: one built before it was never rebuilt after a Dota
+/// update, so it is owed one at the next.
+pub const RULE: u64 = 1;
 
 fn io(e: std::io::Error) -> String {
     e.to_string()
@@ -160,6 +171,45 @@ impl OwnMusic {
         compile: Compile,
         log: &mut dyn FnMut(String),
     ) -> Result<Value, String> {
+        self.put(inst, lib, songs, places, false, compile, log)
+    }
+
+    /// The music record, by id, when a Dota update leaves it to build again: the update reached
+    /// it (`ids`), or it was built before RULE.
+    pub fn due(lib: &Library, ids: &[String]) -> Option<String> {
+        let r = record_of(lib)?;
+        let id = crate::js::string(r.get("id")?);
+        (ids.contains(&id) || r["generated"]["rule"].as_u64() != Some(RULE)).then_some(id)
+    }
+
+    /// The same songs built again over the game's current events files, after a Dota update. A
+    /// record the user switched off stays off.
+    pub fn rebuild(
+        &self,
+        inst: &Installer,
+        lib: &mut Library,
+        compile: Compile,
+        log: &mut dyn FnMut(String),
+    ) -> Result<Value, String> {
+        let Some(r) = record_of(lib) else { return Ok(Value::Null) };
+        let g = &r["generated"];
+        let songs = g["songs"].as_array().cloned().unwrap_or_default();
+        let places = Places { menu: g["menu"] != Value::Bool(false), game: g["game"] != Value::Bool(false) };
+        let off = r.get("enabled") == Some(&Value::Bool(false));
+        self.put(inst, lib, &songs, places, off, compile, log)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn put(
+        &self,
+        inst: &Installer,
+        lib: &mut Library,
+        songs: &[Value],
+        places: Places,
+        off: bool,
+        compile: Compile,
+        log: &mut dyn FnMut(String),
+    ) -> Result<Value, String> {
         let mut list: Vec<Value> = Vec::new();
         for s in songs.iter().take(MAX_SONGS) {
             let id = s["id"].as_str().unwrap_or_default();
@@ -191,11 +241,11 @@ impl OwnMusic {
         let ids: Vec<String> = list.iter().map(|s| s["id"].as_str().unwrap_or_default().to_string()).collect();
         let vpk = self.build(&ids, &fights, &roshan, places, compile, log)?;
         let name = t("Своя музыка: {0}", &[json!(list.len())]);
-        let generated = json!({ "music": true, "songs": list, "menu": places.menu, "game": places.game });
+        let generated = json!({ "music": true, "songs": list, "menu": places.menu, "game": places.game, "rule": RULE });
         let rec = if let Some(old) = old {
-            let files = swap_pak(inst, &old, &vpk, false)?;
+            let files = swap_pak(inst, &old, &vpk, off)?;
             let fields = json!({
-                "name": name, "files": files_json(&files), "generated": generated, "enabled": true,
+                "name": name, "files": files_json(&files), "generated": generated, "enabled": !off,
                 "updatedAt": crate::js::json_number(crate::library::now()),
             });
             lib.update(&old["id"], &fields, None).map_err(io)?.unwrap_or(Value::Null)
@@ -240,6 +290,22 @@ mod tests {
         assert!(svc.keep(b"OggS\x00\x02 not taken").is_err());
         svc.tidy(&[]);
         assert!(svc.kept(&a).is_none());
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn the_music_is_owed_a_build_when_an_update_reaches_it_or_it_predates_the_rule() {
+        let dir = std::env::temp_dir().join(format!("d2mm-music-due-{}", std::process::id()));
+        let mut lib = Library::new(&dir);
+        assert_eq!(OwnMusic::due(&lib, &[]), None, "no music, nothing owed");
+        let rec = lib.add(&json!({ "name": "Своя музыка" }), None).unwrap();
+        lib.update(&rec["id"], &json!({ "generated": { "music": true, "songs": [] } }), None).unwrap();
+        let id = crate::js::string(&rec["id"]);
+        assert_eq!(OwnMusic::due(&lib, &[]), Some(id.clone()), "built before the rule: never rebuilt yet");
+        lib.update(&rec["id"], &json!({ "generated": { "music": true, "songs": [], "rule": RULE } }), None).unwrap();
+        assert_eq!(OwnMusic::due(&lib, &[]), None);
+        assert_eq!(OwnMusic::due(&lib, &["other".into()]), None);
+        assert_eq!(OwnMusic::due(&lib, std::slice::from_ref(&id)), Some(id));
         let _ = std::fs::remove_dir_all(dir);
     }
 }
