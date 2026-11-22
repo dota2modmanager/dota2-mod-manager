@@ -1,5 +1,6 @@
-//! Presets: links, .d2mm files, the plan, ready-made sets.
+//! Presets: links, .d2mm files, the plan, ready-made sets, the ones the community publishes.
 
+pub mod community_presets;
 pub mod preset_install;
 pub mod preset_link;
 pub mod preset_plan;
