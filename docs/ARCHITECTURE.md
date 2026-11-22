@@ -43,15 +43,15 @@ else, and the window e2e fails on any refusal in the app's log.
 |---|---|---|
 | `app/` | 23 | The app itself: settings, language, its window and tray, updates, logs, support and Discord. |
 | `arcana/` | 12 | Arcanas, personas and their bases, gems and the rank look. |
-| `catalog/` | 16 | The mod catalog and everything fetched over the network: mirrors, the remote config, pictures, counters, links. |
+| `catalog/` | 17 | The mod catalog and everything fetched over the network: mirrors, the remote config, pictures, counters, links. |
 | `formats/` | 22 | File formats the game and the tools speak: KeyValues, VPK, compiled resources, textures, images, archives. |
 | `game/` | 20 | Dota on this machine: finding it, its language folders, gameinfo and signatures, watching it run and patch. |
 | `install/` | 23 | Putting mods into the game and keeping the record of them: the installer, the library, imports and removal. |
 | `item_builder/` | 33 | The item builder: what a pick writes, its effects, styles, sets, sounds and the look on everybody. |
 | `looks/` | 40 | Looks beyond items: the menu, the map, the HUD, cursors, recolours, effect edits. |
 | `models/` | 32 | Models, particles and the 3D preview. |
-| `owner/` | 30 | The state the window talks to: one owner of settings, the library and the services, and its channels. |
-| `presets/` | 8 | Presets: links, .d2mm files, the plan, ready-made sets. |
+| `owner/` | 32 | The state the window talks to: one owner of settings, the library and the services, and its channels. |
+| `presets/` | 9 | Presets: links, .d2mm files, the plan, ready-made sets, the ones the community publishes. |
 | `schema/` | 15 | The item table (items_game): reading, merging, building and deploying it, and undoing a build. |
 | `tools/` | 9 | Valve's tools and the programs the app runs: the resource compiler, Wine, Workshop Tools, the creator. |
 | `util/` | 4 | Small helpers shared by everything: JavaScript-compatible behaviour, memoising, bundled data. |
@@ -247,6 +247,16 @@ because it did: paths are matched against a strict pattern, a record that does n
 dropped whole rather than half trusted, and a buffer is validated as a VPK before it reaches the
 game folder.
 
+**To everybody.** A preset can be published to the community presets, which the Presets screen
+lists under the ready-made ones with a search, three orders (the Wilson lower bound of the share
+of likes, the most likes, the newest), an items_game filter, and likes and dislikes. They live on
+the catalog's account service, next to the likes and follows (`crates/mm-core/src/catalog/social.rs`):
+the same sign-in, the same session, the catalog's moderators. What is published is the link's own
+code, so a community preset holds catalog identities and looks, never files, and a preset taken
+from there is a received preset like a link's, resolved against the signed catalog.
+`crates/mm-core/src/presets/community_presets.rs` reads and keeps the list; the channels are
+`owner/owner_community.rs`.
+
 A single mod has a link of its own, `d2mm://mod/<category>/<name>[/<look>]`, each part
 URL-encoded (`crates/mm-core/src/catalog/deep_links.rs` parseModLink). It installs nothing either: the window opens the
 catalog on the mod's category with the mod's window on top, on the look the link names. A link
@@ -284,6 +294,7 @@ So each thing carries its own proof, and each has a different answer to a proof 
 | A mod archive | sha256 from the signed `mod-hashes.json` | drop that mirror's copy, delete the part file and ask the next mirror; refuse the mod only when every mirror fails the same check |
 | `config/app.json`, the switches and notices this project can change after a release | ed25519 signature by this project's own key, pinned in `crates/mm-core/src/catalog/remote_config.rs` | ignore the file, exactly as if it were unreachable |
 | `config/presets.json`, the ready-made presets the Presets screen offers | ed25519 signature by the same key, checked in `crates/mm-core/src/presets/ready_presets.rs` | keep the last good list, or show none |
+| The community presets, `GET /api/presets` on the catalog's account service | HTTPS straight to the service the signed config names, no mirror in between; a preset is only catalog identities and looks, resolved against the signed catalog when taken | keep the last list; a code that does not read is dropped |
 | The item builder's hero bases: `manifest.json` in `dota2modmanager/hero-base-fixes` | ed25519 signature by the bases' author, a key of its own pinned in `crates/mm-core/src/arcana/arcana_base_store.rs` | keep the last good list and the bases already here; a base not here yet is built from the game's files |
 | A hero base's file | git's hash of it, from that signed manifest | the base is not ready; asked for again in five minutes |
 | The Source 2 toolchain executable | version and sha256 pinned in `crates/mm-core/src/tools/toolchain.rs`, checked before anything is unpacked | do not unpack it; item icons fall back to the wiki |

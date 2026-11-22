@@ -75,10 +75,54 @@ export interface ReadyPreset {
   taken: { on: boolean } | null;
 }
 
+/** A preset somebody published: what it holds, who made it and what people thought of it. */
+export interface CommunityPreset {
+  id: string;
+  name: string;
+  about: string;
+  author: string;
+  /** when it was published, as the window's language writes a date */
+  date: string;
+  /** for the "newest" order: unix seconds as a sortable string */
+  created: string;
+  up: number;
+  down: number;
+  /** your vote: 1, -1, or 0 */
+  vote: number;
+  mine: boolean;
+  count: string;
+  strip: Thumb[];
+  rest: number;
+  cats: PresetCategory[];
+  inside: InsideModel;
+  /** taken already: installed and on, installed, or still waiting to be installed */
+  taken: 'on' | 'own' | 'wanted' | null;
+  /** what a search may match, folded (presets/community.ts) */
+  haystack: string;
+  /** needs the game's item table (items_game) for some of its looks */
+  table: boolean;
+}
+
+export interface CommunityModel {
+  /** signed in to the catalog's account service, and as whom */
+  user: { name: string } | null;
+  /** an account younger than two weeks may look but not vote or publish */
+  canVote: boolean;
+  /** may hide somebody else's preset */
+  moderator: boolean;
+  presets: CommunityPreset[];
+  /** the list could not be refreshed, and this is the last one kept */
+  error: string | null;
+  /** the refresh is still on its way */
+  loading: boolean;
+}
+
 export interface PresetsModel {
   key: number;
   presets: (OwnPreset | SharedPreset)[];
   ready: ReadyPreset[];
+  /** null while the catalog's account service is off */
+  community: CommunityModel | null;
 }
 
 export interface PresetsActions {
@@ -89,5 +133,12 @@ export interface PresetsActions {
   resolve: (id: string) => Promise<void>;
   takeReady: (id: string) => Promise<void>;
   remove: (id: string) => void;
+  community: {
+    signIn: () => Promise<void>;
+    vote: (id: string, pressed: 1 | -1) => void;
+    take: (id: string) => Promise<void>;
+    unpublish: (id: string) => void;
+    refresh: () => void;
+  };
   menu: (id: string) => { label?: string; icon?: string; separator?: boolean; danger?: boolean; onPick?: () => void }[] | null;
 }

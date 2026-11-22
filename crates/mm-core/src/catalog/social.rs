@@ -109,6 +109,15 @@ fn names(v: Option<&Value>, max: usize) -> Vec<Value> {
         .unwrap_or_default()
 }
 
+/// A call the service or the network refused: the HTTP status (0 when it never answered), the
+/// service's error code when it gave one, and the refusal in general words.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Refused {
+    pub status: u16,
+    pub code: Option<String>,
+    pub message: String,
+}
+
 #[derive(Default)]
 struct State {
     counts: Option<Value>,
@@ -150,19 +159,38 @@ impl Social {
 
     /// One call with the session. A 401 means the service ended it: the session is dropped.
     fn call(&self, api: &str, method: &str, path: &str) -> Result<Value, String> {
-        let token = self.token().ok_or_else(|| t("Сначала войди через Discord", &[]))?;
+        self.request(api, method, path, None).map_err(|r| match r.code {
+            Some(code) => t("Сервис каталога ответил {0} {1}", &[json!(r.status), json!(code)]),
+            None => r.message,
+        })
+    }
+
+    /// `call` with a JSON body, and the service's own error code kept apart, for a caller that
+    /// says each refusal in its own words (the community presets, owner_community.rs).
+    pub fn request(&self, api: &str, method: &str, path: &str, body: Option<&Value>) -> Result<Value, Refused> {
+        let plain = |message: String| Refused { status: 0, code: None, message };
+        let token = self.token().ok_or_else(|| plain(t("Сначала войди через Discord", &[])))?;
         let auth = format!("Bearer {token}");
-        let headers = [("Authorization", auth.as_str()), ("X-D2PFX-Client", "app")];
-        let (status, body) =
-            self.net.direct(method, &format!("{api}/{path}"), &headers, None, TIMEOUT_MS).map_err(|e| e.message)?;
+        let mut headers = vec![("Authorization", auth.as_str()), ("X-D2PFX-Client", "app")];
+        let payload = body.map(|b| b.to_string().into_bytes());
+        if payload.is_some() {
+            headers.push(("Content-Type", "application/json"));
+        }
+        let (status, answer) = self
+            .net
+            .direct(method, &format!("{api}/{path}"), &headers, payload.as_deref(), TIMEOUT_MS)
+            .map_err(|e| plain(e.message))?;
         if status == 401 {
             self.forget();
-            return Err(t("Вход истёк: войди через Discord ещё раз", &[]));
+            return Err(Refused {
+                status, ..plain(t("Вход истёк: войди через Discord ещё раз", &[]))
+            });
         }
-        let v: Value = serde_json::from_slice(&body).unwrap_or(Value::Null);
+        let v: Value = serde_json::from_slice(&answer).unwrap_or(Value::Null);
         if !(200..300).contains(&status) {
-            let code = v.get("error").and_then(Value::as_str).unwrap_or("");
-            return Err(t("Сервис каталога ответил {0} {1}", &[json!(status), json!(code)]));
+            let code = v.get("error").and_then(Value::as_str).unwrap_or("").to_string();
+            let message = t("Сервис каталога ответил {0} {1}", &[json!(status), json!(code)]);
+            return Err(Refused { status, code: Some(code), message });
         }
         Ok(v)
     }

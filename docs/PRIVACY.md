@@ -115,6 +115,15 @@ When it is on:
 - The app asks for the totals at most once a minute, and nothing about you goes with that request.
 - Taking a like or a follow back deletes it on the service.
 
+Community presets live on the same service. Looking at them and installing one needs no sign-in:
+the list is public and nothing about you goes with it. Publishing and voting use the same session:
+
+- A preset you publish is public with its name, your description and your Discord display name.
+  The service keeps your Discord id with it, and with each vote, but shows neither.
+- What is published is the preset's link code: catalog mods and looks from the game, never files.
+- Taking your preset down deletes it with its votes. The catalog's moderators can hide a preset.
+- The app keeps the last list in `community-presets.json`, so it is there offline.
+
 ## Your Discord status
 
 While the app is open, it tells the Discord client on your own computer what to put on your
@@ -145,6 +154,7 @@ Nothing leaves that folder unless you send it.
 | `settings.json` | Your preferences: game path, language, scale, theme, favourites, and the Discord name if you signed in |
 | `manifest.json` | Which mods you installed and which presets you saved |
 | `cloud-session` | The catalog service's session token, only while you are signed in to it (see *Likes and follows*) |
+| `community-presets.json` | The last list of community presets |
 | `downloads/` | The mod archives you downloaded, kept so a reinstall needs no network |
 | `logs/` | What the app did, on your disk only |
 | `catalog-cache/`, `icons/`, `fingerprints.json`, `download-counts.json` | Copies of public data, so the app works offline |

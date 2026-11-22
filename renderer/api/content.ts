@@ -264,7 +264,8 @@ export interface PresetRecord {
   picks?: { slot: string; itemId: string; name: string; effectId: string }[];
   /** a received preset, waiting to be installed */
   wanted?: unknown;
-  source?: { author?: string; note?: string };
+  /** published: its id among the community presets; community: the community preset it was taken from */
+  source?: { author?: string; note?: string; published?: string; community?: string };
   status?: { installed: number; download: number; embedded: number; free?: number; unavailable: string[] };
 }
 
@@ -296,4 +297,55 @@ export interface PresetsApi {
   /** a ready preset added, installed and applied */
   takeReady: (id: string) => Promise<Reply<{ installed: number; errors: string[] }>>;
   onLink: (cb: (res: unknown) => void) => void;
+}
+
+/** One mod of a community preset, as its code carries it: a catalog mod, or a look from the game. */
+export type CommunityMod =
+  | { kind?: 'catalog'; categoryId: string; name: string; styleLabel: string | null }
+  | { kind: 'cosmetic'; slot: string; itemId: string; name: string; effectId?: string };
+
+/** A preset somebody published, as crates/mm-core/src/owner/owner_community.rs answers it. */
+export interface CommunityPresetRecord {
+  id: string;
+  name: string;
+  about: string;
+  /** the Discord display name it was published under */
+  author: string;
+  /** unix seconds */
+  created: number;
+  updated: number;
+  likes: number;
+  dislikes: number;
+  mods: CommunityMod[];
+  /** published by the account signed in */
+  mine: boolean;
+  /** your vote: 1, -1, or 0 for none */
+  vote: number;
+  /** the preset of yours it became when you took it; wanted while it is not installed yet */
+  taken: { id: string; wanted: boolean } | null;
+}
+
+export interface CommunityList {
+  /** false until the signed config names the catalog's account service */
+  enabled: boolean;
+  signedIn: boolean;
+  /** an account younger than two weeks may look but not publish or vote */
+  canPublish?: boolean;
+  moderator?: boolean;
+  presets: CommunityPresetRecord[];
+  /** the refresh failed and this is the last list kept */
+  error?: string | null;
+}
+
+export interface CommunityApi {
+  /** the published presets; refresh asks the service for the list and your part of it first */
+  list: (refresh?: boolean) => Promise<CommunityList>;
+  /** publish one of your presets; about: a few words for the people who will find it */
+  publish: (presetId: string, about?: string) => Promise<Reply<{ id: string; count: number; skipped: unknown[] }>>;
+  /** take your own preset down, or, as a moderator, hide somebody else's */
+  unpublish: (id: string) => Promise<Reply<object>>;
+  /** 1 like, -1 dislike, 0 take the vote back; answers the counts after it */
+  vote: (id: string, value: number) => Promise<Reply<{ vote: number; likes: number; dislikes: number }>>;
+  /** take a published preset in, install what is missing and put it on */
+  take: (id: string) => Promise<Reply<{ installed: number; errors: string[] }>>;
 }

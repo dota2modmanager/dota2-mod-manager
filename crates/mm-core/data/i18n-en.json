@@ -365,5 +365,16 @@
 ["Сервис каталога выдал не тот токен", "The catalog service returned an invalid token"],
 ["Такое имя сервис не примет", "The service would not accept that name"],
 ["Лайки пока выключены", "Likes are not switched on yet"],
-["Своя музыка не уходит в каталог: она переписывает файлы событий всех музыкальных паков, и после обновления Доты чужая копия сломает игру. У тебя она пересобирается сама", "Your own music stays out of the catalog: it rewrites the events files of every music pack, and after a Dota update a copy on someone else's machine would crash their game. Yours gets rebuilt on its own"]
+["Своя музыка не уходит в каталог: она переписывает файлы событий всех музыкальных паков, и после обновления Доты чужая копия сломает игру. У тебя она пересобирается сама", "Your own music stays out of the catalog: it rewrites the events files of every music pack, and after a Dota update a copy on someone else's machine would crash their game. Yours gets rebuilt on its own"],
+["Пресет уже снят с публикации", "The preset has been unpublished"],
+["Список пресетов сообщества пришёл повреждённым", "The community presets list arrived damaged"],
+["Не удалось обновить пресеты сообщества — показан последний список", "Could not refresh community presets — showing the last list"],
+["Аккаунт Discord слишком новый: оценивать и публиковать можно с аккаунта старше двух недель", "This Discord account is too new: voting and publishing need an account older than two weeks"],
+["Свой пресет оценить нельзя", "You cannot vote on your own preset"],
+["Это не твой пресет", "This is not your preset"],
+["Опубликовано слишком много пресетов — сними старые", "Too many presets published — unpublish some old ones"],
+["Слишком много оценок с одного аккаунта", "Too many votes from one account"],
+["В пресете нет модов, которые донесёт ссылка", "The preset has no mods a link can carry"],
+["Пресеты сообщества пока выключены", "Community presets are off for now"],
+["Сервис каталога не ответил", "The catalog service did not answer"]
 ]

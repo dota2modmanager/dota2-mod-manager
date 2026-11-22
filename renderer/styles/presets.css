@@ -247,3 +247,38 @@
 .inside-cats .inside-mods { display: flex; flex-wrap: wrap; }
 .inside-cats .inside-mod { width: 112px; }
 .inside-cats .inside-group { flex: 0 1 auto; max-width: 100%; }
+
+/* ---------- community presets (presets/CommunitySection.tsx) ---------- */
+.community { margin-top: var(--space-5); }
+.community-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.community-head .group-title { margin: 0; }
+.community-account { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+.community-user { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text-muted); }
+.community-user .ms { font-size: 15px; color: var(--primary-soft); }
+.community-intro { font-size: 12.5px; color: var(--text-muted); margin-bottom: var(--space-3); }
+.community-tools { display: flex; gap: 10px; align-items: center; margin-bottom: var(--space-3); flex-wrap: wrap; }
+.community-search { flex: 1; min-width: 220px; max-width: 460px; }
+.community-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.community-by { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.community-by .ms { font-size: 14px; }
+.community-votes { display: inline-flex; gap: 2px; }
+.community-thumb {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: none;
+  color: var(--text-muted); font-size: 12px; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.community-thumb .ms { font-size: 15px; }
+.community-thumb:hover:not(:disabled) { color: var(--text); border-color: var(--border-strong); }
+.community-thumb.on { color: var(--primary); border-color: var(--primary); background: var(--primary-dim); }
+.community-thumb.down.on { color: var(--danger); border-color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.community-thumb:disabled { cursor: default; opacity: 0.6; }
+.community-more { margin: var(--space-3) auto 0; display: flex; gap: 6px; }
+.community-empty { margin-top: var(--space-3); }
+
+/* the share window's first way: publish to the community presets, here in the app */
+.share-app textarea.input { width: 100%; resize: vertical; min-height: 52px; font: inherit; font-size: 13px; }
+.share-app .btn { margin-top: var(--space-2); }
+.community-table { font-family: var(--font-mono, monospace); font-size: 11px; }

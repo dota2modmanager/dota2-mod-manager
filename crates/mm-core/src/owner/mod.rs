@@ -16,6 +16,7 @@ pub mod channel_args;
 pub mod large_answer;
 pub mod owner_app;
 pub mod owner_bases;
+pub mod owner_community;
 pub mod owner_compiler;
 pub mod owner_creator;
 pub mod owner_cursor_maker;
@@ -102,6 +103,8 @@ pub struct Core {
     pub catalog: Arc<crate::catalog::Catalog>,
     /// the ready-made presets, from the last good copy until the start's fetch lands
     pub ready: Arc<crate::ready_presets::ReadyPresets>,
+    /// the presets people published, from the last list kept until the Presets screen asks again
+    pub community: Arc<crate::community_presets::CommunityPresets>,
     /// the arcana bases the builds read, brought down when one is asked for (owner_bases.rs)
     pub bases: Arc<crate::owner_bases::OwnerBases>,
     /// the studios' services with indexes of their own (owner_tools.rs)
@@ -182,6 +185,7 @@ const GROUPS: &[Group] = &[
     (crate::owner_foreign::CHANNELS, crate::owner_foreign::handle),
     (crate::owner_packs::CHANNELS, crate::owner_packs::handle),
     (crate::owner_presets::CHANNELS, crate::owner_presets::handle),
+    (crate::owner::owner_community::CHANNELS, crate::owner::owner_community::handle),
     (crate::owner_studios::CHANNELS, crate::owner_studios::handle),
     (crate::owner::owner_music::CHANNELS, crate::owner::owner_music::handle),
     (crate::owner_compiler::CHANNELS, crate::owner_compiler::handle),
@@ -310,6 +314,7 @@ impl Owner {
             net: net.clone(),
             catalog,
             ready: Arc::new(crate::ready_presets::ReadyPresets::new(&ud, None)),
+            community: Arc::new(crate::community_presets::CommunityPresets::new(&ud)),
             bases: crate::owner_bases::OwnerBases::new(&ud, net.clone(), now, log.clone()),
             kept: crate::owner_tools::Kept::default(),
             game_icons: Arc::new(crate::game_icons::GameIcons::new(&ud)),
