@@ -247,12 +247,16 @@ jobs:
       - name: Rust toolchain
         run: rustup toolchain install stable --profile minimal && rustup default stable
 
-      # what Tauri builds against on Linux: WebKitGTK, the tray, icons
+      # what Tauri builds against on Linux: WebKitGTK, the tray, icons. This job runs only on tags,
+      # and a cache saved on one tag is not seen from the next, so it takes the packages linux.yml's
+      # build caches on main (the same ones and more). Without that, 4.8.0's first try spent its
+      # ten minutes fetching WebKitGTK from a slow mirror; twenty leave room when the cache misses.
       - name: System libraries
-        timeout-minutes: 10
+        timeout-minutes: 20
         uses: ./.github/actions/linux-libraries
         with:
           packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          cache-from: build
 
       - name: Give the build the download counter's token
         run: node tools/release/stats-token.mjs
@@ -516,6 +520,7 @@ jobs:
         uses: ./.github/actions/linux-libraries
         with:
           packages: xvfb libegl1 libegl-mesa0 libgles2 libgl1-mesa-dri
+          cache-from: build
       # A runner has no FUSE to mount an AppImage with, so it is unpacked. AppRun is the program
       # the AppImage would have started.
       - name: Download and unpack the AppImage from the draft
