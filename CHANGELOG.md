@@ -2,6 +2,35 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
+## 4.8.0
+
+### Community presets
+
+- A new section on the Presets screen lists the presets other people published. Search by name,
+  description, author or any mod inside, sort by top rated, most liked or newest, and show only
+  presets with or without looks that go in through items_game.
+- Each card shows what is inside before you install it: catalog mods as pictures under their
+  categories, and each hero's items under the hero's portrait. Install takes the mods from the
+  signed catalog, the same way a preset link does.
+- Like or dislike a preset. Pressing the same thumb again takes your vote back.
+- Publish your own preset from the share window or from its right-click menu, with a few words
+  about it, and take it down again from the same place.
+- Browsing and installing need no account. Voting and publishing use the Discord sign-in of the
+  catalog's service, the same one likes and follows use.
+
+### Your own music
+
+- Your own music is rebuilt after a Dota update, as your own sounds already were. Before, it
+  stayed on the old music events until you built it again.
+- Your own music cannot be sent to the catalog, alone or inside a pack, and the message says why.
+
+### Halloween
+
+- The event is over until next year: the pumpkin and the bloody night theme are hidden. What you
+  earned stays saved and comes back with the event.
+- Necrophos Scream, the mod the pumpkin gave out, is in the catalog now, with the original voice
+  or a Russian one. A copy you already have is no longer switched off.
+
 ## 4.7.0
 
 ### Likes and follows

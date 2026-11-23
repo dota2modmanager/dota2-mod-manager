@@ -1,6 +1,6 @@
 [package]
 name = "dota2-mod-manager"
-version = "4.7.0"
+version = "4.8.0"
 description = "Dota 2 Mod Manager"
 authors = ["TheFleece"]
 edition.workspace = true
