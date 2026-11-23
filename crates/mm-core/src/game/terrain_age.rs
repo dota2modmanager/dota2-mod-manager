@@ -60,7 +60,7 @@ fn from_dos(date: u16, time: u16) -> Option<f64> {
     let at = first.checked_add(rolled).ok()?;
     // jiff's "compatible" reading is V8's: a repeated hour takes the earlier time, and a time the
     // clocks skipped is read with the offset from before the change
-    let local = at.to_zoned(TimeZone::system()).ok()?;
+    let local = at.to_zoned_datetime(TimeZone::system()).ok()?;
     Some(local.timestamp().as_millisecond() as f64)
 }
 
