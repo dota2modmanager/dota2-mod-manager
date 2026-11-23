@@ -64,3 +64,25 @@ jobs:
       - name: Clippy on the shell
         if: runner.os == 'Windows'
         run: cargo clippy -p dota2-mod-manager --all-targets -- -D warnings
+
+  # release.yml's Windows build reads this. Release builds run only on tags, and a cache saved on
+  # a tag is seen by no other tag, so main keeps the release crates warm for them.
+  warm-release:
+    name: Warm the release build on windows-latest
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: release-windows
+      # the same compile as the release's, without the installer around it
+      - name: Build what the release builds
+        run: npx tauri build --no-bundle

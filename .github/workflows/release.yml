@@ -19,10 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
-      contents: read
       checks: read
       # whether the workflows the release relies on after publishing are switched on
       actions: read
+      # it opens the draft both builds upload into
+      contents: write
     outputs:
       beta: ${{ steps.kind.outputs.beta }}
     steps:
@@ -67,6 +68,48 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: node tools/release/release-preflight.mjs
 
+      # Make the release before anything is uploaded into it.
+      #
+      # On 2.2.0 the Electron build's uploader created one per artifact when it found none, two
+      # of them in the same second: the installer and latest.yml landed on one, the blockmap on
+      # the other. GitHub then answered /releases/latest with the release holding only the
+      # blockmap, so every installed copy looked for latest.yml, did not find it, and stopped
+      # updating. Every upload since goes into a release that already exists. It also puts the notes on the page at creation, which the
+      # edit afterwards could not do while two releases shared a tag.
+      #
+      # It opens as a draft. A draft is invisible to /releases/latest, so no installed copy can
+      # update to it, and the mirror and Discord hear nothing, until try-windows and try-linux
+      # have installed this very build and clicked a mod through it. publish then shows it to
+      # everybody at once.
+      # In the gate rather than the Windows build, so that build and linux both start from it
+      # side by side; linux used to wait the whole Windows build for this one step.
+      - name: Open the release with its notes
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          EXTRA: ${{ steps.kind.outputs.beta == 'true' && '--prerelease' || '' }}
+        run: |
+          awk -v v="${TAG#v}" '
+            $0 ~ "^## " v "([^-0-9A-Za-z.]|$)" { on = 1; next }
+            on && /^## / { exit }
+            on { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::warning::CHANGELOG.md has no section for $TAG - the release page will be empty"
+            printf '' > notes.md
+          fi
+          # SignPath asks for the term on every page people download from; the Discord post drops
+          # it again (SIGNING_POLICY in tools/release/release-state.js)
+          { echo; echo '[Code signing policy](https://dota2modmanager.com/code-signing/)'; } >> notes.md
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "release already exists, leaving it alone"
+          else
+            gh release create "$TAG" --repo "$REPO" --title "${TAG#v}" --notes-file notes.md --draft $EXTRA
+          fi
+
   build:
     needs: gate
     runs-on: windows-latest
@@ -88,44 +131,12 @@ jobs:
       - name: Rust toolchain
         run: rustup toolchain install stable --profile minimal && rustup default stable
 
-      # Make the release before anything is uploaded into it.
-      #
-      # On 2.2.0 the Electron build's uploader created one per artifact when it found none, two
-      # of them in the same second: the installer and latest.yml landed on one, the blockmap on
-      # the other. GitHub then answered /releases/latest with the release holding only the
-      # blockmap, so every installed copy looked for latest.yml, did not find it, and stopped
-      # updating. Every upload since goes into a release that already exists. It also puts the notes on the page at creation, which the
-      # edit afterwards could not do while two releases shared a tag.
-      #
-      # It opens as a draft. A draft is invisible to /releases/latest, so no installed copy can
-      # update to it, and the mirror and Discord hear nothing, until try-windows and try-linux
-      # have installed this very build and clicked a mod through it. publish then shows it to
-      # everybody at once.
-      - name: Open the release with its notes
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
-          EXTRA: ${{ needs.gate.outputs.beta == 'true' && '--prerelease' || '' }}
-        run: |
-          awk -v v="${TAG#v}" '
-            $0 ~ "^## " v "([^-0-9A-Za-z.]|$)" { on = 1; next }
-            on && /^## / { exit }
-            on { print }
-          ' CHANGELOG.md | sed -e '/./,$!d' > notes.md
-          if [ ! -s notes.md ]; then
-            echo "::warning::CHANGELOG.md has no section for $TAG - the release page will be empty"
-            printf '' > notes.md
-          fi
-          # SignPath asks for the term on every page people download from; the Discord post drops
-          # it again (SIGNING_POLICY in tools/release/release-state.js)
-          { echo; echo '[Code signing policy](https://dota2modmanager.com/code-signing/)'; } >> notes.md
-          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
-            echo "release already exists, leaving it alone"
-          else
-            gh release create "$TAG" --repo "$REPO" --title "${TAG#v}" --notes-file notes.md --draft $EXTRA
-          fi
+      # the crates as rust-cache.yml's warm-release builds them on main: a cache saved on a tag is
+      # seen by no other tag, so this one only reads, and the release no longer compiles cold
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: release-windows
+          save-if: false
 
       # the catalog download counter's token, from a secret into the build and never into git
       - name: Give the build the download counter's token
@@ -224,10 +235,10 @@ jobs:
           done
           echo "one release, still a draft, carrying the installer and the manifests"
 
-  # Linux ships from the same tag, and after the Windows job rather than beside it: the draft
-  # exists by then, and there is only something to upload into.
+  # Linux ships from the same tag, beside the Windows build: the gate opened the draft both upload
+  # into, and checksums waits for the two.
   linux:
-    needs: build
+    needs: gate
     if: startsWith(github.ref, 'refs/tags/')
     # the oldest runner, for the oldest glibc the bundled WebKitGTK asks for (linux.yml says why)
     runs-on: ubuntu-24.04
@@ -247,12 +258,22 @@ jobs:
       - name: Rust toolchain
         run: rustup toolchain install stable --profile minimal && rustup default stable
 
-      # what Tauri builds against on Linux: WebKitGTK, the tray, icons
+      # what Tauri builds against on Linux: WebKitGTK, the tray, icons. This job runs only on tags,
+      # and a cache saved on one tag is not seen from the next, so it takes the packages linux.yml's
+      # build caches on main (the same ones and more). Without that, 4.8.0's first try spent its
+      # ten minutes fetching WebKitGTK from a slow mirror; twenty leave room when the cache misses.
       - name: System libraries
-        timeout-minutes: 10
+        timeout-minutes: 20
         uses: ./.github/actions/linux-libraries
         with:
           packages: libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+          cache-from: build
+
+      # linux.yml's build saves its release crates on main under this key
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          shared-key: release-ubuntu-24.04
+          save-if: false
 
       - name: Give the build the download counter's token
         run: node tools/release/stats-token.mjs
@@ -516,6 +537,7 @@ jobs:
         uses: ./.github/actions/linux-libraries
         with:
           packages: xvfb libegl1 libegl-mesa0 libgles2 libgl1-mesa-dri
+          cache-from: build
       # A runner has no FUSE to mount an AppImage with, so it is unpacked. AppRun is the program
       # the AppImage would have started.
       - name: Download and unpack the AppImage from the draft

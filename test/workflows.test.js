@@ -131,9 +131,11 @@ test('release.yml shows a release to nobody until both builds on it installed a 
     const m = /(?:^|\n) {4}needs:\s*(\[[^\]]*\]|[\w-]+)/.exec(body);
     return m ? m[1].replace(/[[\]\s]/g, '').split(',') : [];
   };
-  assert.match(job('build'), /gh release create[^\n]*--draft/, 'the build job opens the release in public instead of as a draft');
+  assert.match(job('gate'), /gh release create[^\n]*--draft/, 'the gate opens the release in public instead of as a draft');
+  // the gate opens the draft, so the two builds start side by side instead of one after the other
+  for (const n of ['build', 'linux']) assert.deepEqual(needs(job(n)), ['gate'], `${n} waits for more than the gate`);
   // electron-builder published a release it had to create itself; the Tauri build only uploads
-  // into the draft the build job opened
+  // into the draft the gate opened
   assert.doesNotMatch(text, /electron-builder[^\n]*--publish/, 'electron-builder can publish the release itself');
   for (const n of ['build', 'linux']) assert.match(job(n), /npx tauri build[\s\S]*gh release upload "\$TAG"/, `${n} does not upload its Tauri build into the draft`);
   // Every file is fingerprinted and signed for before anything tries it (2026-09-16).
@@ -636,4 +638,72 @@ test('the Linux packages come from the Actions cache, so a mirror that only tric
   assert.match(action, /chown -R/, 'apt leaves root-owned files the cache cannot read back');
   const direct = workflows.filter((f) => /\bapt-get\b[^\n]*install/.test(read(f)));
   assert.deepEqual(direct, [], 'these still install from the mirror alone');
+});
+
+test('a job that runs only on tags takes the packages main has cached', () => {
+  /* A cache saved on a tag is seen by no other tag, so release.yml's Linux jobs never found their
+     own and fetched WebKitGTK from the mirror on every release: 4.8.0's first try ran out of its
+     ten minutes that way. They name linux.yml's build, which caches on main a superset of them. */
+  const action = fs.readFileSync(path.join(DIR, '..', 'actions', 'linux-libraries', 'action.yml'), 'utf8');
+  assert.match(action, /\n {2}cache-from:\r?\n/, 'the action takes no cache-from');
+  const keys = action.match(/key[s]?:[^\n]*apt-\$\{\{ runner\.os \}\}[^\n]*|^\s+apt-\$\{\{ runner\.os \}\}[^\n]*/gm) || [];
+  assert.ok(keys.length >= 4, `only ${keys.length} cache keys found`);
+  for (const k of keys) assert.match(k, /\{\{ inputs\.cache-from \|\| github\.job \}\}/, `a key ignores cache-from: ${k.trim()}`);
+  const main = jobsOf(read('linux.yml')).build;
+  assert.match(main, /uses: \.\/\.github\/actions\/linux-libraries/, "linux.yml's build no longer fills the cache");
+  assert.match(read('linux.yml'), /branches: \[main\]/, "linux.yml's build no longer runs on main");
+  const cached = new Set(/packages: ([^\n]*)/.exec(main)[1].trim().split(/\s+/));
+  const release = jobsOf(read('release.yml'));
+  let seen = 0;
+  for (const [id, job] of Object.entries(release)) {
+    if (!/linux-libraries/.test(job)) continue;
+    seen += 1;
+    assert.match(job, /\n\s*cache-from: build\n/, `release.yml's ${id} does not take main's cache`);
+  }
+  assert.ok(seen >= 2, `only ${seen} Linux jobs found in release.yml`);
+  const libs = /packages: ([^\n]*)\n\s*cache-from/.exec(release.linux)[1].trim().split(/\s+/);
+  assert.deepEqual(libs.filter((p) => !cached.has(p)), [], "release's build needs packages main does not cache");
+});
+
+test('a release waits for no build it does not need', () => {
+  /* Until 2026-11-23 a release took about forty minutes from the tag to Discord. The gate waited
+     eight or nine of them for linux.yml to build the AppImage again on the tag (the gate takes the
+     newest run of a check, and main's run on the same commit had already passed), and linux waited
+     the whole Windows build for the draft it uploads into. */
+  const linux = read('linux.yml');
+  const on = linux.split(/\njobs:\n/)[0];
+  assert.doesNotMatch(on, /\n\s+tags:/,'linux.yml builds the AppImage again on the tag, and the gate waits for that run');
+  assert.match(on, /branches: \[main\]/, "linux.yml no longer builds on main, where the gate finds the AppImage's check");
+  const name = /\n\s+name: ([^\n]+)/.exec(jobsOf(linux).build)[1].trim();
+  const required = JSON.parse(fs.readFileSync(path.join(DIR, '..', 'required-checks.json'), 'utf8')).release;
+  assert.ok(required.includes(name), `the release no longer waits for "${name}"`);
+  assert.doesNotMatch(linux, /\nconcurrency:/, "a merge could cancel main's run the gate waits for");
+});
+
+test('the release builds read the Rust crates main compiled for them', () => {
+  /* A cache saved on a tag is seen by no other tag, so a release job that saved its own would
+     never find it again: both release builds compiled every crate cold (Windows about thirteen
+     minutes, Linux nine). Each reads, and never saves, a key a job on main keeps warm. */
+  const release = jobsOf(read('release.yml'));
+  const cacheOf = (body) => {
+    const m = /Swatinem\/rust-cache@[0-9a-f]{40}[^\n]*\n\s+with:\n((?:\s+[\w-]+: [^\n]*\n)+)/.exec(body);
+    return m ? Object.fromEntries([...m[1].matchAll(/([\w-]+): ([^\n]*)/g)].map(([, k, v]) => [k, v.trim()])) : null;
+  };
+  const savers = {
+    'release-windows': jobsOf(read('rust-cache.yml'))['warm-release'],
+    'release-ubuntu-24.04': jobsOf(read('linux.yml')).build,
+  };
+  for (const [job, key] of [['build', 'release-windows'], ['linux', 'release-ubuntu-24.04']]) {
+    const cache = cacheOf(release[job]);
+    assert.ok(cache, `release.yml's ${job} reads no Rust cache`);
+    assert.equal(cache['shared-key'], key, `release.yml's ${job} reads a cache nothing on main saves`);
+    assert.equal(cache['save-if'], 'false', `release.yml's ${job} saves a cache no other tag can see`);
+    const saver = savers[key];
+    assert.ok(saver, `nothing on main saves ${key}`);
+    const saved = cacheOf(saver);
+    assert.equal(saved['shared-key'], key);
+    assert.ok(!saved['save-if'] || /refs\/heads\/main/.test(saved['save-if']), `${key} is not saved on main`);
+    assert.match(saver, /npx tauri build/, `${key} is warmed by a build that is not the release's`);
+  }
+  assert.match(read('rust-cache.yml'), /push:\n\s+branches: \[main\]/, 'rust-cache.yml does not run on main');
 });
