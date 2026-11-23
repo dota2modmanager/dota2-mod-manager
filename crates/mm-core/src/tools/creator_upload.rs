@@ -398,7 +398,7 @@ pub fn decode_embedded_token(raw: &[u8]) -> Option<String> {
     let mut sealed = raw[MAGIC.len() + IV_BYTES + TAG_BYTES..].to_vec();
     sealed.extend_from_slice(tag);
     let cipher = Aes256Gcm::new_from_slice(&key()).ok()?;
-    let plain = cipher.decrypt(Nonce::from_slice(iv), Payload { msg: &sealed, aad: b"" }).ok()?;
+    let plain = cipher.decrypt(&Nonce::try_from(iv).ok()?, Payload { msg: &sealed, aad: b"" }).ok()?;
     let token = String::from_utf8(plain).ok()?.trim().to_string();
     (!token.is_empty()).then_some(token)
 }
@@ -779,7 +779,8 @@ mod tests {
         use aes_gcm::{Aes256Gcm, KeyInit, Nonce};
         let iv = [7u8; IV_BYTES];
         let cipher = Aes256Gcm::new_from_slice(&key()).unwrap();
-        let sealed = cipher.encrypt(Nonce::from_slice(&iv), Payload { msg: token.as_bytes(), aad: b"" }).unwrap();
+        let sealed =
+            cipher.encrypt(&Nonce::try_from(&iv[..]).unwrap(), Payload { msg: token.as_bytes(), aad: b"" }).unwrap();
         let (data, tag) = sealed.split_at(sealed.len() - TAG_BYTES);
         let mut out = MAGIC.to_vec();
         out.extend_from_slice(&iv);
