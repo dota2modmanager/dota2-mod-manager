@@ -1,4 +1,4 @@
-; The installer template of @tauri-apps/cli 2.12.4 (tauri-bundler's installer.nsi), taken as it
+; The installer template of @tauri-apps/cli 2.12.6 (tauri-bundler's installer.nsi), taken as it
 ; ships, with one change: the uninstaller's "Delete app data" check box is gone (the note
 ; above DeleteAppDataCheckboxState). test/nsis-template.test.ts holds the CLI to that version:
 ; on a bump, take the new template again and make the same change.
