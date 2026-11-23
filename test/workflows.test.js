@@ -637,3 +637,28 @@ test('the Linux packages come from the Actions cache, so a mirror that only tric
   const direct = workflows.filter((f) => /\bapt-get\b[^\n]*install/.test(read(f)));
   assert.deepEqual(direct, [], 'these still install from the mirror alone');
 });
+
+test('a job that runs only on tags takes the packages main has cached', () => {
+  /* A cache saved on a tag is seen by no other tag, so release.yml's Linux jobs never found their
+     own and fetched WebKitGTK from the mirror on every release: 4.8.0's first try ran out of its
+     ten minutes that way. They name linux.yml's build, which caches on main a superset of them. */
+  const action = fs.readFileSync(path.join(DIR, '..', 'actions', 'linux-libraries', 'action.yml'), 'utf8');
+  assert.match(action, /\n {2}cache-from:\r?\n/, 'the action takes no cache-from');
+  const keys = action.match(/key[s]?:[^\n]*apt-\$\{\{ runner\.os \}\}[^\n]*|^\s+apt-\$\{\{ runner\.os \}\}[^\n]*/gm) || [];
+  assert.ok(keys.length >= 4, `only ${keys.length} cache keys found`);
+  for (const k of keys) assert.match(k, /\{\{ inputs\.cache-from \|\| github\.job \}\}/, `a key ignores cache-from: ${k.trim()}`);
+  const main = jobsOf(read('linux.yml')).build;
+  assert.match(main, /uses: \.\/\.github\/actions\/linux-libraries/, "linux.yml's build no longer fills the cache");
+  assert.match(read('linux.yml'), /branches: \[main\]/, "linux.yml's build no longer runs on main");
+  const cached = new Set(/packages: ([^\n]*)/.exec(main)[1].trim().split(/\s+/));
+  const release = jobsOf(read('release.yml'));
+  let seen = 0;
+  for (const [id, job] of Object.entries(release)) {
+    if (!/linux-libraries/.test(job)) continue;
+    seen += 1;
+    assert.match(job, /\n\s*cache-from: build\n/, `release.yml's ${id} does not take main's cache`);
+  }
+  assert.ok(seen >= 2, `only ${seen} Linux jobs found in release.yml`);
+  const libs = /packages: ([^\n]*)\n\s*cache-from/.exec(release.linux)[1].trim().split(/\s+/);
+  assert.deepEqual(libs.filter((p) => !cached.has(p)), [], "release's build needs packages main does not cache");
+});

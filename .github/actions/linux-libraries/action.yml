@@ -15,6 +15,12 @@ inputs:
   packages:
     description: Space-separated Ubuntu package names
     required: true
+  cache-from:
+    description: >-
+      The job whose cache to share, when it is not this one. A cache saved on a tag is seen by no
+      other tag, so a job that runs only on tags never finds its own and names a job on main.
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
@@ -25,10 +31,10 @@ runs:
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: ~/apt-archives
-        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}-
+        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-from || github.job }}-${{ steps.month.outputs.month }}-
         restore-keys: |
-          apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}-
-          apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-
+          apt-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-from || github.job }}-${{ steps.month.outputs.month }}-
+          apt-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-from || github.job }}-
     - id: fetch
       shell: bash
       env:
@@ -62,7 +68,7 @@ runs:
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: ~/apt-archives
-        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ github.job }}-${{ steps.month.outputs.month }}-${{ steps.fetch.outputs.has }}
+        key: apt-${{ runner.os }}-${{ runner.arch }}-${{ inputs.cache-from || github.job }}-${{ steps.month.outputs.month }}-${{ steps.fetch.outputs.has }}
     - shell: bash
       env:
         PACKAGES: ${{ inputs.packages }}
