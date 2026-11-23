@@ -3,7 +3,7 @@
 # Dota has a native Linux build, the mods are the same files in the same folders, and the only
 # Windows-shaped parts of the app were finding Steam and asking whether the game is running.
 # Both now have a Linux branch, and a branch nobody runs is a branch that rots, so this builds
-# the AppImage (the Tauri shell, src-tauri/) on every merge to main and on every release tag.
+# the AppImage (the Tauri shell, src-tauri/) on every merge to main.
 # Installing a mod through the window on Linux (e2e.yml) checks the same shell before the merge.
 #
 # Nothing here is published. The release still ships Windows only, because "supported" means
@@ -13,10 +13,11 @@ name: Linux
 
 on:
   # The AppImage is what a release ships, so it is built on main, where every release is tagged
-  # from, and the release gate waits for it there. Pull requests and the queue skip it.
+  # from, and the release gate waits for it there. Pull requests and the queue skip it. Not on
+  # tags: a tag's run was the same build again, and the gate takes the newest run of a check, so
+  # every release waited eight or nine minutes for it.
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
 
 
