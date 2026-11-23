@@ -2,7 +2,7 @@
 
 What changed in each release. The app updates itself, so you get all of this without reinstalling.
 
-## 4.8.0
+## 4.7.1
 
 ### Community presets
 
