@@ -1,7 +1,9 @@
 /* The map's ~21 000 objects merged into a few hundred, so turning the camera is not ~21 000 draw
  * calls a frame (10-15 FPS on a gaming card). Meshes merge when they wear the same material and
  * switch together: the same group of the Optimization window, or the same tree model. Each mesh
- * is baked into the map's space first, so the merged mesh needs no transform of its own. */
+ * is baked into the map's space first, so the merged mesh needs no transform of its own. A copy
+ * the map tints (its node's extras, map_scene.rs tint_nodes) keeps its tint as vertex colours, which
+ * three multiplies into the albedo as the game's shader does its per-copy tint. */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { kindOf, merge, type Geo, type Job, type Merged, type Part } from './merge-worker.ts';
@@ -128,6 +130,12 @@ function describe(g: THREE.BufferGeometry, pack: Pack): Geo {
   return { attrs, index, count };
 }
 
+/** The tint the map paints this copy of its model in, linear (its glTF node's extras), or none. */
+function tintOf(mesh: THREE.Mesh): [number, number, number] | undefined {
+  const t = (mesh.userData.tint ?? mesh.parent?.userData.tint) as unknown;
+  return Array.isArray(t) && t.length >= 3 && t.every((c) => typeof c === 'number') ? [t[0], t[1], t[2]] : undefined;
+}
+
 /**
  * The same as mergeMeshes, the merging done by a few workers side by side, off the window's
  * thread: merged on it, the map's ~21 000 meshes held the window for three and a half seconds.
@@ -138,6 +146,10 @@ export async function mergeMeshesAsync(meshes: THREE.Mesh[], keyOf: (m: THREE.Me
   const geoId = new Map<THREE.BufferGeometry, number>();
   const geos: THREE.BufferGeometry[] = [];
   const buckets = new Map<string, { key: string; material: THREE.Material; parts: Part[]; verts: number }>();
+  // every material a tinted copy wears draws with vertex colours, all its merged meshes with them
+  const tinted = new Set<THREE.Material>();
+  for (const mesh of meshes) if (!Array.isArray(mesh.material) && tintOf(mesh)) tinted.add(mesh.material);
+  for (const mat of tinted) { (mat as THREE.MeshStandardMaterial).vertexColors = true; mat.needsUpdate = true; }
   for (const mesh of meshes) {
     if (Array.isArray(mesh.material)) {
       parent.attach(mesh);
@@ -149,7 +161,8 @@ export async function mergeMeshesAsync(meshes: THREE.Mesh[], keyOf: (m: THREE.Me
     let g = geoId.get(mesh.geometry);
     if (g === undefined) { g = geos.length; geos.push(mesh.geometry); geoId.set(mesh.geometry, g); }
     const b = buckets.get(id) ?? { key, material: mesh.material, parts: [], verts: 0 };
-    b.parts.push({ geo: g, matrix: mesh.matrixWorld.elements.slice(), flip: mesh.matrixWorld.determinant() < 0 });
+    const tint = tinted.has(mesh.material) ? (tintOf(mesh) ?? [1, 1, 1]) : undefined;
+    b.parts.push({ geo: g, matrix: mesh.matrixWorld.elements.slice(), flip: mesh.matrixWorld.determinant() < 0, tint });
     b.verts += mesh.geometry.attributes.position?.count ?? 0;
     buckets.set(id, b);
     mesh.removeFromParent();
@@ -194,6 +207,10 @@ export async function mergeMeshesAsync(meshes: THREE.Mesh[], keyOf: (m: THREE.Me
     const geo = new THREE.BufferGeometry();
     for (const [name, a] of m.attrs) geo.setAttribute(name, new THREE.BufferAttribute(a.array, a.size));
     geo.setIndex(new THREE.BufferAttribute(m.index, 1));
+    // a material another merge tinted, here on copies with none: white, not three's black
+    if ((b.material as THREE.MeshStandardMaterial).vertexColors && !geo.attributes.color) {
+      geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3).fill(1), 3));
+    }
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(m.sphere[0], m.sphere[1], m.sphere[2]), m.sphere[3]);
     const mesh = new THREE.Mesh(geo, b.material);
     mesh.castShadow = !b.material.transparent;
