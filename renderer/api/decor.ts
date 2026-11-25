@@ -25,6 +25,10 @@ export interface TerrainPaint {
  * colours 0-255 sRGB, the rest the game's numbers. */
 export interface ZoneLight {
   color_day?: number[]; light_scale_day?: number; ambient_color_day?: number[]; ambient_scale_day?: number;
+  /** pitch, yaw, roll in degrees: where the sun shines to, and the light around comes from */
+  light_direction_day?: number[]; ambient_direction_day?: number[];
+  /** the light in the shadows: on what faces up, on what faces down, and their strengths */
+  shadow_color_day?: number[]; shadow_secondary_color_day?: number[]; shadow_scale_day?: number; shadow_ground_scale_day?: number;
   fog_color_day?: number[]; fog_start_day?: number; fog_end_day?: number; fog_height_day?: number; fog_hight_color_day?: number[];
   lightning_intensity_max?: number; lightning_period_min?: number; lightning_period_max?: number;
 }

@@ -7,7 +7,7 @@ import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import type { DecorGroup, DecorSample, GroundLayer } from '../../api/content.ts';
-import { lightMap } from './map-light.ts';
+import { lightMap, litShader } from './map-light.ts';
 import type { ZoneLight } from '../../api/decor.ts';
 import { hiddenPart, mapTrees, stemOf, treeModelOf, type SideModels, type Trees } from './map-trees.ts';
 import { mergeMeshesAsync } from './map-merge.ts';
@@ -58,13 +58,9 @@ function prepare(mat: THREE.Material): void {
   const m = mat as THREE.MeshStandardMaterial;
   // leaves and grass are cards with holes: cut where the picture is clear, so they sort right
   if (m.map && m.transparent) { m.transparent = false; m.alphaTest = 0.4; }
-  // a card seen from its back faces away from the light and draws black: some of its own colour
-  // as glow keeps a leaf a leaf from either side, as the game's foliage shader does
-  if (m.map && m.alphaTest > 0 && 'emissive' in m) {
-    m.emissiveMap = m.map;
-    // in the leaf's own colour: a white picture tinted green (the low-poly terrains' foliage) glowed white
-    m.emissive = m.color.clone().multiplyScalar(0.3);
-  }
+  // lit as the game lights its world (map-light.ts); a leaf seen from its back takes the shadows'
+  // light on that side, as the game's shader turns the normal to the viewer
+  if ('emissive' in m) m.onBeforeCompile = litShader;
 }
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */

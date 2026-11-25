@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import type { GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import type { GroundLayer } from '../../api/content.ts';
+import { litShader } from './map-light.ts';
 
 interface Layer { texture: number; tint: [number, number, number]; scale: number }
 
@@ -67,6 +68,7 @@ export async function paintGround(mat: THREE.MeshStandardMaterial, parser: GLTFP
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>\n${decl}\nuniform float uGround;\nvarying vec4 vBlend;\nvarying vec4 vPaint;`)
       .replace('#include <map_fragment>', `${blend}\ndiffuseColor.rgb *= ground * vPaint.rgb * uGround;`);
+    litShader(sh);
   };
   mat.customProgramCacheKey = () => `ground-${layers.length}`;
   mat.needsUpdate = true;
