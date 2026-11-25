@@ -322,12 +322,19 @@ pub fn weather_light(default_entities: &[Vec<u8>], particle: Option<&str>, zone_
     serde_json::json!({ "plain": plain, "weather": weather })
 }
 
-/// What the window's light reads of a zone (map-light.ts): the sun, the light around, the fog and the lightning.
-const LIGHT_KEYS: [&str; 12] = [
+/// What the window's light reads of a zone (map-light.ts): the sun and where it stands, the light
+/// around and in the shadows, the fog and the lightning.
+const LIGHT_KEYS: [&str; 18] = [
     "color_day",
     "light_scale_day",
+    "light_direction_day",
     "ambient_color_day",
     "ambient_scale_day",
+    "ambient_direction_day",
+    "shadow_color_day",
+    "shadow_secondary_color_day",
+    "shadow_scale_day",
+    "shadow_ground_scale_day",
     "fog_color_day",
     "fog_start_day",
     "fog_end_day",
