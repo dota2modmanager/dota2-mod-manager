@@ -626,6 +626,8 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("preview3d:model", vec![str_(200, 1)]),
             ("preview3d:pedestalPicture", vec![str_(200, 1)]),
             ("preview3d:keepPedestalPicture", vec![str_(200, 1), bytes(2.0 * MB)]),
+            ("preview3d:backdrop", vec![str_(200, 1)]),
+            ("preview3d:keepBackdrop", vec![str_(200, 1), bytes(2.0 * MB)]),
             ("sounds:hero", vec![str_(60, 1)]),
             ("sounds:remove", vec![str_(60, 1), str_(200, 1)]),
             (

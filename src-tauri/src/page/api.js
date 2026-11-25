@@ -144,6 +144,8 @@
       model: (file) => mm.invoke('preview3d:model', file).then(wholeAnswer),
       pedestalPicture: (model) => mm.invoke('preview3d:pedestalPicture', model),
       keepPedestalPicture: (model, webp) => mm.invoke('preview3d:keepPedestalPicture', model, webp),
+      backdrop: (image) => mm.invoke('preview3d:backdrop', image).then(wholeAnswer),
+      keepBackdrop: (image, webp) => mm.invoke('preview3d:keepBackdrop', image, webp),
       modHero: (category, file, hint) => mm.invoke('preview3d:modHero', category, file, hint),
       modModels: (category, file, hero, slots) => mm.invoke('preview3d:modModels', category, file, hero, slots).then(wholeAnswer),
       modProps: (category, file, index) => mm.invoke('preview3d:modProps', category, file, index).then(wholeAnswer),

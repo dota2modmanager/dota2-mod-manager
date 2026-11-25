@@ -1,6 +1,7 @@
 //! Models, particles and the 3D preview.
 
 pub mod courier_models;
+pub mod hero_backdrop;
 pub mod hero_companions;
 pub mod hero_particle_styles;
 pub mod hero_preview;

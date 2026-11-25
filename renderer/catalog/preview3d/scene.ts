@@ -104,6 +104,8 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     if(!options.isolated&&options.pedestal){source.addGlb(options.pedestal,{key:'pedestal',owner:'pedestal'});}
     else if(!options.isolated){const response=await fetch(new URL('./studio-pedestal.glb',import.meta.url),{signal});if(!response.ok)throw Error('Cannot load local pedestal');const pedestal=new Uint8Array(await response.arrayBuffer());check();source.addGlb(pedestal,{key:'pedestal',owner:'pedestal'});source.manifest.studioPedestal=true;}
     if(options.clip&&source.manifest.animations)source.manifest.animations.idle=options.clip;
+    // the game's hero page lays painted panels under the hero, not a colour (preview3d/backdrop.ts)
+    if(options.stage?.backdrop&&!options.isolated)void import('./backdrop.ts').then(m=>m.showBackdrop(host,options.stage!.backdrop!,signal)).catch(()=>{});
     if(options.stage?.background)host.style.setProperty('--stage-tint',`rgb(${options.stage.background.map(x=>Math.round(x*255)).join(',')})`);
     let textures=await loadoutTextures(textureSource,options.sprites??{},options.resources);check();
     let hasEffectModels = false;

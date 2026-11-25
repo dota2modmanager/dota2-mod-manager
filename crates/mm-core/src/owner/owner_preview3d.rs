@@ -22,6 +22,8 @@ pub const CHANNELS: &[&str] = &[
     "preview3d:model",
     "preview3d:pedestalPicture",
     "preview3d:keepPedestalPicture",
+    "preview3d:backdrop",
+    "preview3d:keepBackdrop",
     "decor:scene",
     "decor:map",
     "decor:ground",
@@ -447,6 +449,37 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 crate::hero_pedestals::keep_picture(&dir, &crate::js::string(&a0), &b.unwrap_or_default())
             });
             match kept {
+                Ok(()) => json!({ "ok": true }),
+                Err(e) => json!({ "error": e }),
+            }
+        }
+        // the painted picture behind a hero on the game's hero page: the window's small copy when
+        // it made one, else the game's 4K JPEG for it to shrink (hero_backdrop.rs)
+        "preview3d:backdrop" => {
+            let image = crate::js::string(&a0);
+            let Some(kept) = crate::hero_backdrop::kept_path(&o.core().user_data, &image) else { return Value::Null };
+            if let Ok(b) = std::fs::read(&kept) {
+                return json!({ "kept": format!("data:image/webp;base64,{}", base64::engine::general_purpose::STANDARD.encode(b)) });
+            }
+            let file = inputs(o).index.and_then(|i| i.read(&image).ok().flatten());
+            match file.as_deref().and_then(crate::hero_backdrop::jpeg_from_vtex) {
+                Some(jpeg) => pack(o, json!({ "jpeg": b64(jpeg) })),
+                None => Value::Null,
+            }
+        }
+        "preview3d:keepBackdrop" => {
+            let Some(kept) = crate::hero_backdrop::kept_path(&o.core().user_data, &crate::js::string(&a0)) else {
+                return json!({ "error": "not a backdrop" });
+            };
+            let wrote = crate::owner::bytes_of(&arg(args, 1)).and_then(|b| {
+                let b = b.unwrap_or_default();
+                if !b.starts_with(b"RIFF") {
+                    return Err("not a webp".to_string());
+                }
+                std::fs::create_dir_all(kept.parent().unwrap_or(&kept)).map_err(|e| e.to_string())?;
+                std::fs::write(&kept, b).map_err(|e| e.to_string())
+            });
+            match wrote {
                 Ok(()) => json!({ "ok": true }),
                 Err(e) => json!({ "error": e }),
             }
