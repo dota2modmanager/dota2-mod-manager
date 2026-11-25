@@ -1,6 +1,9 @@
 //! How the game stages a hero on its loadout, for the 3D preview:
 //! the loadout camera (loadout_camera_fullbody's one keyframe), the hero's LoadoutScale, and its
-//! light, ambient, background and pedestal from scripts/npc/portraits_showcase.txt.
+//! light, ambient, background and pedestal from the hero's portrait entry: the loadout page's own
+//! file (scripts/npc/portraits_full_body_loadout.txt) where it has the hero, else
+//! portraits_showcase.txt. `lighting` carries that entry's numbers as the game writes them, in the
+//! shape the viewer's applyLighting takes (vendor/dota-loadout/src/viewer.js).
 //!
 //! Positions and directions go to the window in the GLB's space: Source's (x forward, y left, z up,
 //! inches) turned into (y, z, x) metres.
@@ -61,7 +64,22 @@ fn path_key(k: &str) -> String {
     k.to_lowercase().replace('\\', "/")
 }
 
-/// The fields of the first of `keys` that portraits_showcase.txt has an entry for, or None.
+/// A block's values, those of blocks inside it under "block/key" ("cameras/default/PortraitFOV").
+fn fields_of(text: &[u8], body: kv::Bounds, prefix: &str, out: &mut HashMap<String, String>) -> bool {
+    let mut ok = true;
+    let walked = kv::each_child(text, body, |f| {
+        let key = format!("{prefix}{}", kv::latin1(f.key));
+        if let Some(v) = f.value {
+            out.insert(key, kv::latin1(v));
+        } else if let Some(inner) = f.body {
+            ok = fields_of(text, inner, &format!("{key}/"), out);
+        }
+        ok
+    });
+    ok && walked.is_ok()
+}
+
+/// The fields of the first of `keys` that a portraits file has an entry for, or None.
 pub fn showcase_entry(text: &[u8], keys: &[String]) -> Option<HashMap<String, String>> {
     let mut found: HashMap<String, HashMap<String, String>> = HashMap::new();
     let bounds = kv::block_bounds(text, 0).ok()?;
@@ -69,14 +87,7 @@ pub fn showcase_entry(text: &[u8], keys: &[String]) -> Option<HashMap<String, St
     kv::each_child(text, bounds, |c| {
         let Some(body) = c.body else { return true };
         let mut fields = HashMap::new();
-        if kv::each_child(text, body, |f| {
-            if let Some(v) = f.value {
-                fields.insert(kv::latin1(f.key), kv::latin1(v));
-            }
-            true
-        })
-        .is_err()
-        {
+        if !fields_of(text, body, "", &mut fields) {
             failed = true;
             return false;
         }
@@ -88,6 +99,14 @@ pub fn showcase_entry(text: &[u8], keys: &[String]) -> Option<HashMap<String, St
         return None;
     }
     keys.iter().find_map(|k| found.remove(&path_key(k)))
+}
+
+/// The portraits file to stage a hero by: the loadout page's own, or the showcase one for a hero it lacks.
+pub fn portraits(read: &dyn Fn(&str) -> Option<Vec<u8>>, keys: &[String]) -> Option<Vec<u8>> {
+    ["scripts/npc/portraits_full_body_loadout.txt", "scripts/npc/portraits_showcase.txt"]
+        .iter()
+        .filter_map(|f| read(f))
+        .find(|t| showcase_entry(t, keys).is_some())
 }
 
 fn or_one(v: f64) -> f64 {
@@ -129,7 +148,7 @@ fn is_model_path(m: &str) -> bool {
     })
 }
 
-/// The stage for a hero: `showcase` is portraits_showcase.txt, `script` the hero's script, `keys`
+/// The stage for a hero: `showcase` is the portraits file, `script` the hero's script, `keys`
 /// the entries to look for, the most particular first.
 pub fn hero_stage(showcase: Option<&[u8]>, script: Option<&[u8]>, keys: &[String]) -> Value {
     let scale = loadout_scale(script.unwrap_or(b""));
@@ -156,7 +175,31 @@ pub fn hero_stage(showcase: Option<&[u8]>, script: Option<&[u8]>, keys: &[String
         }
         _ => Value::Null,
     };
+    // the game's own numbers for the viewer: the loadout page's camera first (its hero window is
+    // DOTAUIEconSetPreview), then the portrait's default one
+    let cam = |k: &str| get(&format!("cameras/econ_set_preview/{k}")).or_else(|| get(&format!("cameras/default/{k}")));
+    let lighting = match (vec3(get("PortraitLightAngles")), vec3(get("PortraitLightColor"))) {
+        (Some(angles), Some(color)) => json!({
+            "light": { "angles": arr(angles), "color": arr(color), "scale": json_number(or_one(get("PortraitLightScale").map_or(f64::NAN, num))) },
+            "ambient": {
+                "angles": arr(ambient_angles.unwrap_or([-27.0, -114.0, 24.0])),
+                "color": arr(vec3(get("PortraitAmbientColor")).unwrap_or([79.0, 93.0, 93.0])),
+                "scale": json_number(or_one(get("PortraitAmbientScale").map_or(f64::NAN, num))),
+            },
+            "shadow": {
+                "color": arr(vec3(get("PortraitShadowColor")).unwrap_or([56.0, 56.0, 56.0])),
+                "scale": json_number(or_one(get("PortraitShadowScale").map_or(f64::NAN, num))),
+            },
+            "camera": {
+                "position": vec3(cam("PortraitPosition")).map_or(Value::Null, arr),
+                "angles": vec3(cam("PortraitAngles")).map_or(Value::Null, arr),
+                "fov": cam("PortraitFOV").map(num).filter(|f| f.is_finite() && *f > 0.0).map_or(Value::Null, |f| json!(json_number(f))),
+            },
+        }),
+        _ => Value::Null,
+    };
     json!({
+        "lighting": lighting,
         "scale": json_number(scale),
         "camera": arr(to_glb(LOADOUT_CAMERA, METRE)),
         "key": key,
@@ -164,4 +207,46 @@ pub fn hero_stage(showcase: Option<&[u8]>, script: Option<&[u8]>, keys: &[String
         "background": bg.map_or(Value::Null, arr),
         "pedestal": if is_model_path(model) { json!(model.to_lowercase()) } else { Value::Null },
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const ENTRY: &str = r#""Portraits"
+{
+	"npc_dota_hero_tidehunter"
+	{
+		"PortraitLightAngles"		"55.38 143.89 0"
+		"PortraitLightColor"		"234 243 254"
+		"PortraitLightScale"		"1.45"
+		"PortraitAmbientDirection"		"-27.23 -113.79 24.22"
+		"PortraitShadowColor"		"56 56 56"
+		"PortraitShadowScale"		"5"
+		"cameras"
+		{
+			"default" { "PortraitFOV"		"22.5" }
+			"econ_set_preview"
+			{
+				"PortraitPosition"		"955.45 -294.56 57"
+				"PortraitFOV"		"15"
+			}
+		}
+	}
+}"#;
+
+    #[test]
+    fn the_loadout_camera_and_light_reach_the_stage() {
+        let keys = ["npc_dota_hero_tidehunter".to_string()];
+        let e = showcase_entry(ENTRY.as_bytes(), &keys).unwrap();
+        assert_eq!(e.get("cameras/econ_set_preview/PortraitFOV").map(String::as_str), Some("15"));
+        let stage = hero_stage(Some(ENTRY.as_bytes()), None, &keys);
+        let l = &stage["lighting"];
+        assert_eq!(l["camera"]["fov"], json!(15));
+        assert_eq!(l["camera"]["position"], json!([955.45, -294.56, 57]));
+        assert_eq!(l["light"]["scale"], json!(1.45));
+        assert_eq!(l["shadow"]["scale"], json!(5));
+        // no light in the entry: the viewer keeps its own
+        assert!(hero_stage(Some(b"\"P\" { \"x\" { \"a\" \"1\" } }"), None, &["x".into()])["lighting"].is_null());
+    }
 }

@@ -203,6 +203,8 @@ void main() {
   // right-front: the light is turned by the same angle about the hero, the camera stays in front.
   applyLighting(l, hero) {
     const [cx, cy] = l.camera?.position || DEFAULT_LIGHTING.camera.position, facing = -THREE.MathUtils.radToDeg(Math.atan2(cy, cx));
+    // The portrait camera's field of view is Source's: horizontal at 4:3. The viewer frames vertically.
+    this.stageFov = l.camera?.fov ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(l.camera.fov) / 2) * 0.75)) : 0;
     this.toLight.copy(forward([l.light.angles[0], l.light.angles[1] + facing])).negate(); this.ambientDir.copy(forward([l.ambient.angles[0], l.ambient.angles[1] + facing]));
     this.light.uLightColor.value.copy(tint(l.light.color, l.light.scale)); this.light.uAmbientColor.value.copy(tint(l.ambient.color, l.ambient.scale));
     this.light.uAmbientTint.value.copy(tint(l.ambient.color, 1)); this.light.uShadowColor.value.copy(tint(l.shadow.color, l.shadow.scale));
@@ -221,7 +223,7 @@ void main() {
     const { clientWidth: w, clientHeight: h } = this.canvas; if (!w || !h) return;
     this.renderer.setSize(w, h, false); this.camera.aspect = w / h; const size = this.renderer.getDrawingBufferSize(new THREE.Vector2()); this.hdr.setSize(size.x, size.y); this.bloom?.setSize(size.x, size.y);
     if (this.soft) { this.soft.target.setSize(Math.ceil(size.x / 2), Math.ceil(size.y / 2)); SOFT.uSceneSize.value.copy(size); }
-    this.camera.fov = 30; this.camera.updateProjectionMatrix(); this.place();
+    this.camera.fov = this.stageFov || 30; this.camera.updateProjectionMatrix(); this.place();
   }
   place() {
     const { center, size, zoom } = this.view; if (!size) return;

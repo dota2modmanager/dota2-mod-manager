@@ -2,7 +2,17 @@
  * game's staging of the hero, and its particles and attachment points as the main process reads them. */
 
 /** How the game stages the hero on its loadout (crates/mm-core/src/models/hero_showcase.rs): GLB space, linear colours. */
+/** A hero's portrait entry as the game writes it (Source angles in degrees, colours 0-255), for the viewer's light. */
+export interface StageLighting {
+  light: { angles: [number, number, number]; color: [number, number, number]; scale: number };
+  ambient: { angles: [number, number, number]; color: [number, number, number]; scale: number };
+  shadow: { color: [number, number, number]; scale: number };
+  camera: { position: [number, number, number] | null; angles: [number, number, number] | null; fov: number | null };
+}
+
 export interface HeroStage {
+  /** the loadout page's light for this hero; absent, the viewer keeps its default */
+  lighting?: StageLighting | null;
   scale: number;
   camera: [number, number, number];
   key: { from: [number, number, number]; color: [number, number, number] } | null;
