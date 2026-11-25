@@ -24,6 +24,12 @@ export interface TerrainPaint {
 /** A lighting zone of the default map as the window's light reads it (crates/mm-core/src/looks/map_build.rs weather_lights):
  * colours 0-255 sRGB, the rest the game's numbers. */
 export interface ZoneLight {
+  /** each *_day number has its *_night twin, the light the zone turns to by night (map-light.ts) */
+  color_night?: number[]; light_scale_night?: number; ambient_color_night?: number[]; ambient_scale_night?: number;
+  light_direction_night?: number[]; ambient_direction_night?: number[];
+  shadow_color_night?: number[]; shadow_secondary_color_night?: number[]; shadow_scale_night?: number; shadow_ground_scale_night?: number;
+  fog_color_night?: number[]; fog_start_night?: number; fog_end_night?: number; fog_height_night?: number; fog_hight_color_night?: number[];
+  specular_color_night?: number[]; specular_independence_night?: number;
   color_day?: number[]; light_scale_day?: number; ambient_color_day?: number[]; ambient_scale_day?: number;
   /** pitch, yaw, roll in degrees: where the sun shines to, and the light around comes from */
   light_direction_day?: number[]; ambient_direction_day?: number[];

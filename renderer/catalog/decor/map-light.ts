@@ -19,6 +19,12 @@
  * barely touches the ground): the light's colour and intensity are taken as the shader's colour
  * and scale, and its falloff share as 1, which the entity does not set.
  *
+ * Day turns to night as the game's clock does (client.dll's light manager, read 2026-11-25): five
+ * minutes of each, the game starting by day, and each pair of a zone's numbers blended as
+ * day × f + night × (1 - f), f going to 1 by day and 0 by night at dota_tod_transition_speed (1 a
+ * second). Its slower twin (dota_tod_slow_transition_speed, 0.2) moves only the fog's height and
+ * the fog of war, which the window does not draw.
+ *
  * Colours are the zone's sRGB numbers in linear light, directions its pitch and yaw. A weather is
  * its own zone's numbers, the dark and the dusk the same light turned down. Without the shadows
  * the trees float and the river has no banks: they are what makes the map read. */
@@ -34,8 +40,10 @@ export interface MapLight {
   weather(look: ZoneLight | null, plain: ZoneLight | null): void;
   /** the clouds' picture (the map's light copy has it, map_scene.rs), or none */
   clouds(picture: THREE.Texture | null): void;
-  /** a frame, the camera where it is: whether the light changed (lightning, the clouds drifting) */
+  /** a frame, the camera where it is: whether the light changed (lightning, the clouds drifting, day turning to night) */
   tick(time: number, camera: THREE.Camera, target: THREE.Vector3): boolean;
+  /** whether the sun moved since last asked (day turning to night): the shadows are drawn again */
+  sunMoved(): boolean;
 }
 
 /** The Radiant forest's everyday zone, for a game whose map could not be read. */
@@ -45,6 +53,23 @@ const RADIANT: ZoneLight = {
   shadow_color_day: [230, 175, 177], shadow_secondary_color_day: [230, 175, 177], shadow_scale_day: 1, shadow_ground_scale_day: 1,
   fog_color_day: [149, 239, 255], fog_start_day: 1250, fog_end_day: 4500,
 };
+
+/** The game's day and night, each this many seconds (DOTA_DAY_LENGTH: five minutes of each). */
+export const DAY_SECONDS = 300;
+/** How fast the light turns from day to night and back: dota_tod_transition_speed, a share a second. */
+const TURN_SPEED = 1;
+
+/** Whether it is day at this many seconds into the game, which starts by day. */
+export const isDay = (time: number): boolean => Math.floor(time / DAY_SECONDS) % 2 === 0;
+
+/** A zone's day number and its night one, blended as the game does at f (1 the day, 0 the night). */
+function blend(day: number | undefined, night: number | undefined, f: number): number | undefined;
+function blend(day: number[] | undefined, night: number[] | undefined, f: number): number[] | undefined;
+function blend(day: number | number[] | undefined, night: number | number[] | undefined, f: number): number | number[] | undefined {
+  if (day === undefined || night === undefined || f >= 1) return day ?? night;
+  if (typeof day === 'number') return typeof night === 'number' ? day * f + night * (1 - f) : day;
+  return Array.isArray(night) ? day.map((v, i) => v * f + (night[i] ?? v) * (1 - f)) : day;
+}
 
 /** A zone's colour (0-255, sRGB) in linear light, times its scale. */
 const linear = (c: number[] | undefined, scale = 1): THREE.Color =>
@@ -196,6 +221,8 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
   let fog = { color: new THREE.Color(1, 1, 1), k: 1 };
   let flash = 0;
   let nextFlash = 0;
+  // the day's share of the light (1 the day, 0 the night), the frame it was moved at, and whether the sun moved
+  let f = 1, last = 0, sunMoved = false;
   // the map's small lights in the window's axes: [x, y, z, reach] in metres and colour × intensity;
   // which of them the shader has, and where the view's middle was when it got them
   let locals: { at: THREE.Vector4; colour: THREE.Color }[] = [];
@@ -209,7 +236,22 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     lit.uLocalCount.value = near.length;
   };
   const apply = () => {
-    const z = zone;
+    const at = zone;
+    const z: ZoneLight = {
+      ...at,
+      color_day: blend(at.color_day, at.color_night, f), light_scale_day: blend(at.light_scale_day, at.light_scale_night, f),
+      light_direction_day: blend(at.light_direction_day, at.light_direction_night, f),
+      ambient_color_day: blend(at.ambient_color_day, at.ambient_color_night, f), ambient_scale_day: blend(at.ambient_scale_day, at.ambient_scale_night, f),
+      ambient_direction_day: blend(at.ambient_direction_day, at.ambient_direction_night, f),
+      shadow_color_day: blend(at.shadow_color_day, at.shadow_color_night, f),
+      shadow_secondary_color_day: blend(at.shadow_secondary_color_day, at.shadow_secondary_color_night, f),
+      shadow_scale_day: blend(at.shadow_scale_day, at.shadow_scale_night, f),
+      shadow_ground_scale_day: blend(at.shadow_ground_scale_day, at.shadow_ground_scale_night, f),
+      fog_color_day: blend(at.fog_color_day, at.fog_color_night, f),
+      fog_start_day: blend(at.fog_start_day, at.fog_start_night, f), fog_end_day: blend(at.fog_end_day, at.fog_end_night, f),
+      specular_color_day: blend(at.specular_color_day, at.specular_color_night, f),
+      specular_independence_day: blend(at.specular_independence_day, at.specular_independence_night, f),
+    };
     const bright = k * (1 + flash);
     // the dark map: the sun falls and the light left turns bluer, as the game's night
     lit.uSun.value.copy(linear(z.color_day, z.light_scale_day ?? 5)).lerp(cool, (1 - k) * 0.5).multiplyScalar(bright);
@@ -264,7 +306,17 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       lit.uClouds.value = picture;
       lit.uCloudOn.value = picture ? 1 : 0;
     },
+    sunMoved() { const was = sunMoved; sunMoved = false; return was; },
     tick(time, camera, target) {
+      // day turning to night and back: the share walks to its end at the game's speed
+      const goal = isDay(time) ? 1 : 0, step = Math.max(0, time - last) * TURN_SPEED;
+      last = time;
+      let turned = false;
+      if (f !== goal) {
+        f = goal > f ? Math.min(goal, f + step) : Math.max(goal, f - step);
+        sunMoved = turned = true;
+        apply();
+      }
       lit.uFogFrom.value = Math.max(0, camera.position.distanceTo(target) - GAME_CAMERA);
       // the small lights nearest the view's middle, chosen again once it moved a few metres
       if (picked.distanceTo(target) > 4) pick(target);
@@ -276,14 +328,14 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       lit.uCloudOffset.value.set(...drift(zone.cloud1_direction, zone.cloud1_speed), ...drift(zone.cloud2_direction, zone.cloud2_speed));
       const clouds = lit.uCloudOn.value > 0;
       const strength = zone.lightning_intensity_max ?? 0;
-      if (strength <= 0 || (zone.lightning_period_max ?? 0) <= 0) return clouds;
+      if (strength <= 0 || (zone.lightning_period_max ?? 0) <= 0) return clouds || turned;
       if (!nextFlash) nextFlash = later(time);
       const was = flash;
       // a flash: up at once, down over a few frames
       if (time >= nextFlash) { flash = Math.min(2, strength); nextFlash = later(time); }
       else flash = Math.max(0, flash - 0.05);
       if (flash !== was) apply();
-      return clouds || flash !== was;
+      return clouds || turned || flash !== was;
     },
     fit(box) {
       box.getCenter(centre);
