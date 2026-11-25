@@ -19,6 +19,7 @@ import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime } from './map-water.ts';
+import { isWindy, windPictures, windShader, windTime } from './map-wind.ts';
 import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts';
 
 /** The game's own tree sets picked per side, and a catalog Trees mod. */
@@ -60,8 +61,9 @@ function prepare(mat: THREE.Material): void {
   // leaves and grass are cards with holes: cut where the picture is clear, so they sort right
   if (m.map && m.transparent) { m.transparent = false; m.alphaTest = 0.4; }
   // lit as the game lights its world (map-light.ts); a leaf seen from its back takes the shadows'
-  // light on that side, as the game's shader turns the normal to the viewer
-  if ('emissive' in m) m.onBeforeCompile = litShader;
+  // light on that side, as the game's shader turns the normal to the viewer; a tree's leaves sway
+  // in the wind as the game's vertex shader sways them (map-wind.ts)
+  if ('emissive' in m) m.onBeforeCompile = isWindy(m) ? (sh) => { windShader(sh, m); litShader(sh); } : litShader;
 }
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
@@ -121,6 +123,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const clock = new THREE.Clock();
   // the water's waves run while there is water to see: then every frame is drawn (the shadows stay as they are)
   let water = false;
+  // and so do the trees, while any material sways in the wind
+  let windy = false;
   // the map under the water (the game's refraction map), drawn again when the view moved
   const bedPass = waterBed();
   // the weather, made once the map's size is known; the ground's heights, the map's width
@@ -133,6 +137,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (effects?.tick(dt, camera, controls.target)) dirty = true;
     controls.update();
     if (water) { waterTime.value = clock.elapsedTime; dirty = true; }
+    if (windy) { windTime.value = clock.elapsedTime; dirty = true; }
     if (weather?.tick(clock.elapsedTime, controls.target, renderer.domElement.height, camera)) dirty = true;
     if (light.tick(clock.elapsedTime, camera, controls.target) || keepOnGround(heights, camera, controls.target, mapReach)) dirty = true;
     if (!dirty) return;
@@ -247,6 +252,10 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     for (const m of rest) for (const x of [m.material].flat()) if (isGround(x)) grounds.add(x as THREE.MeshStandardMaterial);
     // once every ground is painted, another map's ground (if one is picked) goes over them all
     void Promise.all([...grounds].map((g) => paintGround(g, gltf!.parser, changed))).then(() => { groundShown = null; apply(); });
+    // the swaying materials' wind masks and noise the light copy carries (map_scene.rs)
+    const swaying = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isWindy));
+    windy = swaying.size > 0;
+    void Promise.all([...swaying].map((m) => windPictures(m, gltf!.parser))).then(() => { dirty = true; });
     // the map's box before its meshes leave the tree the toolchain gave them
     box = new THREE.Box3().setFromObject(world);
     // everything else as one mesh per material and per group a slider takes away

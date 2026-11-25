@@ -6,7 +6,10 @@
  * normals its rotation, the rest come as they are; a part whose matrix mirrors it has its
  * triangles turned round, as a mirrored object shows them. A part with a tint of its own (the colour
  * the map paints that copy of a model) has it in every vertex's colour, and so does the rest of its
- * job, white.
+ * job, white. A job whose material sways in the wind has each vertex's height in its own model
+ * too (windZ, Source inches: the game's shader bends a tree by how high up a vertex is), its
+ * position's y before the matrix; a part the map baked into its place already (the merged
+ * aggregates, no matrix of their own) has none to go by and takes 0.
  *
  * What comes in a message is not trusted to name things: a kind picks its array out of a table of
  * its own (a switch, each constructor named), attributes go into a Map and back as a list of pairs, never as an object's properties
@@ -16,7 +19,8 @@ export type Kind = 'f32' | 'i8' | 'u8' | 'i16' | 'u16' | 'i32' | 'u32';
 export interface View { buf: number; kind: Kind; offset: number; stride: number; size: number; normalized: boolean; count: number }
 export interface Geo { attrs: Record<string, View>; index: { buf: number; kind: Kind; offset: number; length: number } | null; count: number }
 export interface Part { geo: number; matrix: number[]; flip: boolean; tint?: [number, number, number] }
-export interface Job { id: number; parts: Part[] }
+/** `wind`: the job's material sways (map-wind.ts), so each vertex keeps how high it stands in its model. */
+export interface Job { id: number; parts: Part[]; wind?: boolean }
 export interface Merged { id: number; attrs: [string, { array: Float32Array; size: number }][]; index: Uint32Array; sphere: [number, number, number, number] }
 
 /** A buffer read as the kind of numbers a view says, each constructor named here: none picked by the message's word. */
@@ -32,6 +36,8 @@ function typedView(kind: string, b: ArrayBuffer): ArrayLike<number> | null {
     default: return null;
   }
 }
+/** A Source inch in the map's metres (map-light.ts INCH; this file imports nothing). */
+const INCH = 0.0254;
 const SCALE: Record<Kind, number> = { f32: 1, i8: 127, u8: 255, i16: 32767, u16: 65535, i32: 1, u32: 1 };
 
 export function kindOf(a: ArrayLike<number>): Kind {
@@ -75,6 +81,7 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
   for (const [name, a] of Object.entries(first.attrs)) attrs.set(name, { array: new Float32Array(verts * a.size), size: a.size });
   const tints = job.parts.some((p) => p.tint) ? new Float32Array(verts * 3) : null;
   if (tints) attrs.set('color', { array: tints, size: 3 });
+  const heights = job.wind ? new Float32Array(verts) : null;
   const index = new Uint32Array(idx);
   let vAt = 0, iAt = 0;
   for (const p of job.parts) {
@@ -99,6 +106,9 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
           o[k + 1] = m[1] * x + m[5] * y + m[9] * z + m[13];
           o[k + 2] = m[2] * x + m[6] * y + m[10] * z + m[14];
         }
+        if (heights && (m[12] !== 0 || m[13] !== 0 || m[14] !== 0)) {
+          for (let i = 0; i < g.count; i++) heights[vAt + i] = at(i, 1) / INCH;
+        }
       } else if (name === 'normal') {
         const n = normalMatrix(m);
         for (let i = 0; i < g.count; i++) {
@@ -121,6 +131,7 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
     vAt += g.count;
     iAt += n;
   }
+  if (heights) attrs.set('windZ', { array: heights, size: 1 });
   // the bounding sphere here too: on the window's thread it was half a second over the whole map
   const p = attrs.get('position')?.array ?? new Float32Array(0);
   let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;

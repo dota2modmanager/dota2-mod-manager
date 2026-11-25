@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { kindOf, merge, type Geo, type Job, type Merged, type Part } from './merge-worker.ts';
+import { isWindy } from './map-wind.ts';
 
 /** Each triangle's second and third corners swapped: the same triangles, facing the other way. */
 export function flipWinding(geo: THREE.BufferGeometry): void {
@@ -173,7 +174,7 @@ export async function mergeMeshesAsync(meshes: THREE.Mesh[], keyOf: (m: THREE.Me
   const loads = Array.from({ length: Math.min(POOL, Math.max(1, list.length)) }, () => ({ jobs: [] as Job[], verts: 0 }));
   for (const i of order) {
     const w = loads.reduce((x, y) => (y.verts < x.verts ? y : x));
-    w.jobs.push({ id: i, parts: list[i].parts });
+    w.jobs.push({ id: i, parts: list[i].parts, wind: isWindy(list[i].material) });
     w.verts += list[i].verts;
   }
   const results = await Promise.all(loads.map(async (load) => {
@@ -181,7 +182,7 @@ export async function mergeMeshesAsync(meshes: THREE.Mesh[], keyOf: (m: THREE.Me
     const local = new Map<number, number>();
     const pack = new Pack();
     const sent: Geo[] = [];
-    const jobs = load.jobs.map((j) => ({ id: j.id, parts: j.parts.map((p) => {
+    const jobs = load.jobs.map((j) => ({ id: j.id, wind: j.wind, parts: j.parts.map((p) => {
       let n = local.get(p.geo);
       if (n === undefined) { n = sent.length; sent.push(describe(geos[p.geo], pack)); local.set(p.geo, n); }
       return { ...p, geo: n };
