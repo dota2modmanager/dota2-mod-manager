@@ -583,7 +583,8 @@ mod tests {
     #[test]
     fn a_blend_with_a_tint_mask_names_its_texture() {
         let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
-        let images = vec![json!({ "name": "sand_color_psd_1.vtex" }), json!({ "name": "sand_path002_mask_psd_52b589c0.vtex" })];
+        let images =
+            vec![json!({ "name": "sand_color_psd_1.vtex" }), json!({ "name": "sand_path002_mask_psd_52b589c0.vtex" })];
         let m = |on: i64| {
             json!({ "extras": { "vmat": { "IntParams": { "F_TINT_MASK": on },
                 "TextureParams": { "g_tTintMasks": "materials/sand_path002_mask_psd_52b589c0.vtex" } } } })
