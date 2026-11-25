@@ -226,8 +226,11 @@ pub fn item_particles(block: &[u8]) -> Vec<String> {
         if field(body, "style").is_some_and(|s| !s.is_empty() && s != b"0") {
             continue;
         }
+        // `spawn_in_alternate_loadout_only` systems belong to the loadout's alternate view
+        // (Terrorblade's demon form), not the hero page the preview shows.
         if field(body, "dire_only") == Some(b"1")
             || field(body, "flying_courier_only") == Some(b"1")
+            || field(body, "spawn_in_alternate_loadout_only") == Some(b"1")
             || field(body, "required_arcana_level").is_some_and(|v| !v.is_empty())
         {
             continue;
@@ -398,4 +401,30 @@ pub fn model_attachments(model: Option<&[u8]>) -> Vec<Value> {
         }
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::item_particles;
+
+    #[test]
+    fn the_alternate_loadouts_systems_stay_off_the_hero_page() {
+        let block = b"\"visuals\"
+{
+	\"asset_modifier0\"
+	{
+		\"type\"		\"particle_create\"
+		\"modifier\"		\"particles/a/demon.vpcf\"
+		\"spawn_in_loadout_only\"		\"1\"
+		\"spawn_in_alternate_loadout_only\"		\"1\"
+	}
+	\"asset_modifier1\"
+	{
+		\"type\"		\"particle_create\"
+		\"modifier\"		\"particles/a/feet.vpcf\"
+		\"spawn_in_loadout_only\"		\"1\"
+	}
+}";
+        assert_eq!(item_particles(block), vec!["particles/a/feet.vpcf"]);
+    }
 }
