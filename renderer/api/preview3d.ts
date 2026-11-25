@@ -10,7 +10,18 @@ export interface StageLighting {
   camera: { position: [number, number, number] | null; angles: [number, number, number] | null; fov: number | null };
 }
 
+/** Colours 0-255; `wash` is a colour laid over the picture at its alpha (0-1). */
+export interface StageBackdrop {
+  top: [number, number, number] | null;
+  bottom: [number, number, number] | null;
+  image: string | null;
+  wash: [number, number, number, number] | null;
+  opacity: number;
+}
+
 export interface HeroStage {
+  /** the painted panels behind the hero on the game's hero page (crates/mm-core/src/models/hero_backdrop.rs) */
+  backdrop?: StageBackdrop | null;
   /** the loadout page's light for this hero; absent, the viewer keeps its default */
   lighting?: StageLighting | null;
   scale: number;
@@ -67,6 +78,9 @@ export interface Preview3dApi {
   pedestalPicture: (model: string) => Promise<string | null>;
   /** keep a pedestal's picture the window drew, a WebP, for the next time */
   keepPedestalPicture: (model: string, webp: Uint8Array) => Promise<{ ok: true } | { error: string }>;
+  /** the picture behind a hero on the game's hero page: a small copy kept before, or the game's JPEG */
+  backdrop: (image: string) => Promise<{ kept: string } | { jpeg: Uint8Array } | null>;
+  keepBackdrop: (image: string, webp: Uint8Array) => Promise<{ ok: true } | { error: string }>;
   /** every clip of a body, without its pictures, as GLB bytes; null without the game or the toolchain */
   motions: (body: string) => Promise<Uint8Array | null>;
   /** the hero a catalog mod is for (its archive downloaded and unpacked the first time), by its files or else by `hint`, its name */

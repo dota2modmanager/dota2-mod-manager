@@ -188,6 +188,10 @@
 .preview3d-stage canvas { cursor: grab; outline: none; }
 .preview3d-stage canvas:active { cursor: grabbing; }
 .preview3d-stage canvas:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
+/* the game's hero page under the hero, composed by preview3d/backdrop.ts as a 16:9 screen with the hero in its
+   middle: shown that wide at the stage's height, centred, black beyond it as the page's edges are */
+.preview3d-stage.has-backdrop { background: none; }
+.preview3d-backdrop { position: absolute; inset: 0; pointer-events: none; background: var(--bd-image) center / auto 100% no-repeat, #000; }
 /* over the stage: what it plays and the way back; quiet, the hero is what is looked at */
 .preview3d-tools {
   position: absolute;
