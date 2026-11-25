@@ -53,8 +53,8 @@ function pointing(a: number[] | undefined): THREE.Vector3 {
   return new THREE.Vector3(n, up, x).normalize();
 }
 
-/** The game's light for every material of the map, shared: one change reaches them all. */
-const lit = {
+/** The game's light for every material of the map, shared: one change reaches them all (the water reads it too). */
+export const lit = {
   uSunDir: { value: pointing(RADIANT.light_direction_day) },
   uSun: { value: new THREE.Color() },
   uAmbientDir: { value: pointing(RADIANT.ambient_direction_day) },
@@ -62,6 +62,9 @@ const lit = {
   uShadeUp: { value: new THREE.Color() },
   uShadeDown: { value: new THREE.Color() },
   uAmbientShadow: { value: 0 },
+  /** the zone's specular colour (linear) and how little of it the sun's colour takes (0: all) */
+  uSpecColor: { value: new THREE.Color() },
+  uSpecIndependence: { value: 0 },
   uClouds: { value: null as THREE.Texture | null },
   uCloudOn: { value: 0 },
   uCloudScale: { value: 1 },
@@ -74,7 +77,7 @@ const lit = {
 };
 
 /** A Source inch in the window's metres (the map's export). */
-const INCH = 0.0254;
+export const INCH = 0.0254;
 /** How far the game's camera stands from what it looks at, in metres. */
 const GAME_CAMERA = 1200 * INCH;
 
@@ -154,7 +157,7 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
   renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  // three's own lights stay for the shadows and for the water, which keeps its own look (map-water.ts)
+  // three's own lights stay for the shadows (the sun) and for what draws outside the game's shader
   const skyColor = new THREE.Color(0xa9c1e0);
   const sky = new THREE.HemisphereLight(skyColor, 0x3a3128, 1.25);
   scene.add(sky);
@@ -184,6 +187,8 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     lit.uSunDir.value.copy(pointing(z.light_direction_day));
     lit.uAmbientDir.value.copy(pointing(z.ambient_direction_day));
     lit.uAmbientShadow.value = z.ambient_shadow_amount ?? 0;
+    lit.uSpecColor.value.copy(linear(z.specular_color_day ?? [81, 196, 232]));
+    lit.uSpecIndependence.value = z.specular_independence_day ?? 0;
     lit.uFogColor.value.copy(linear(z.fog_color_day ?? RADIANT.fog_color_day)).multiplyScalar(0.4 + 0.6 * k);
     lit.uFog.value.set((z.fog_start_day ?? 1250) * INCH, (z.fog_end_day ?? 4500) * INCH, z.fog_exponent ?? 2, z.fog_max_density ?? 1);
     lit.uCloudScale.value = (z.cloud_scale ?? 6500) * INCH;
