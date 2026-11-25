@@ -411,9 +411,57 @@ pub fn global_light(default_entities: &[Vec<u8>]) -> serde_json::Map<String, ser
     out
 }
 
+/// The map's small lights (env_deferred_light_client_only: lamps, braziers, the shrines' glow), each
+/// as [x, y, z, r, g, b, intensity, radius]: where it stands in inches, its colour 0-255 sRGB, how
+/// strong, how far it reaches in inches. The game adds each over what it reaches, after the sun
+/// (deferred_local_light.vfx); the window draws the ones near the camera.
+pub fn local_lights(default_entities: &[Vec<u8>]) -> Vec<[f64; 8]> {
+    let mut out = Vec::new();
+    for file in default_entities {
+        let Ok(data) = crate::resource::data(file, "DATA", 0) else { continue };
+        let Ok(kv) = kv3::read(data) else { continue };
+        for e in kv.root.get("m_entityKeyValues").map(|n| n.items()).unwrap_or(&[]) {
+            let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
+            if values.get("classname").and_then(kv3::Node::as_str) != Some("env_deferred_light_client_only") {
+                continue;
+            }
+            let v = look_json(&kv, values);
+            let list = |k: &str| -> Vec<f64> {
+                match v.get(k).and_then(numbers) {
+                    Some(serde_json::Value::Array(a)) => a.iter().filter_map(serde_json::Value::as_f64).collect(),
+                    Some(n) => n.as_f64().into_iter().collect(),
+                    None => Vec::new(),
+                }
+            };
+            // look_json leaves the place out (OWN): read off the node
+            let at: Vec<f64> = match values.get("origin").map(|n| &n.value) {
+                Some(kv3::Value::Array { items, .. }) => items.iter().filter_map(|i| kv.number_of(i)).collect(),
+                Some(kv3::Value::Str(t)) => t.split_whitespace().filter_map(|x| x.parse().ok()).collect(),
+                _ => Vec::new(),
+            };
+            let (colour, strength, reach) = (list("lightcolor"), list("intensity"), list("radius"));
+            if at.len() < 3 || colour.len() < 3 || reach.first().is_none_or(|r| *r <= 0.0) {
+                continue;
+            }
+            out.push([
+                at[0],
+                at[1],
+                at[2],
+                colour[0],
+                colour[1],
+                colour[2],
+                strength.first().copied().unwrap_or(1.0),
+                reach[0],
+            ]);
+        }
+    }
+    out
+}
+
 /// For the window: the everyday look of the Radiant's forest zone and each weather's look there,
 /// by the weather's key (map_decor.rs WEATHER_KEYS), each cut to what the window's light reads,
-/// with what the whole map shares (global_light) in each.
+/// with what the whole map shares (global_light) in each; the everyday one also carries the map's
+/// small lights (local_lights), which no weather changes.
 pub fn weather_lights(default_entities: &[Vec<u8>], keys: &[&str]) -> serde_json::Value {
     let global = global_light(default_entities);
     let cut = |v: &serde_json::Value| -> serde_json::Value {
@@ -428,7 +476,9 @@ pub fn weather_lights(default_entities: &[Vec<u8>], keys: &[&str]) -> serde_json
     for (i, key) in keys.iter().enumerate() {
         let v = weather_light(default_entities, WEATHERS.get(i).copied(), "RF");
         if i == 0 {
-            out.insert("plain".into(), cut(&v["plain"]));
+            let mut plain = cut(&v["plain"]);
+            plain["local_lights"] = serde_json::json!(local_lights(default_entities));
+            out.insert("plain".into(), plain);
         }
         if v["weather"].is_object() {
             out.insert((*key).to_string(), cut(&v["weather"]));
@@ -548,6 +598,24 @@ mod tests {
         let v = weather_light(&lumps, Some(WEATHERS[1]), "RF");
         eprintln!("{}", serde_json::to_string_pretty(&v).unwrap());
         assert!(v["plain"].is_object() && v["weather"].is_object());
+    }
+
+    /// The real map's small lights (MM_TEST_MAP is maps/dota.vpk): the 327 lamps and braziers, each
+    /// somewhere on the map with a colour and a reach.
+    #[test]
+    fn the_map_has_its_small_lights() {
+        let Ok(map) = std::env::var("MM_TEST_MAP") else { return };
+        let default_map = Index::open(std::path::Path::new(&map)).unwrap();
+        let lumps: Vec<Vec<u8>> = default_map
+            .paths()
+            .filter(|p| p.ends_with(".vents_c"))
+            .filter_map(|p| default_map.read(p).ok().flatten())
+            .collect();
+        let lights = local_lights(&lumps);
+        assert!(lights.len() > 300, "{}", lights.len());
+        assert!(lights.iter().all(|l| l[7] > 0.0 && l[0].abs() < 10000.0 && l[3].max(l[4]).max(l[5]) > 0.0));
+        let v = weather_lights(&lumps, &["snow"]);
+        assert_eq!(v["plain"]["local_lights"].as_array().map(Vec::len), Some(lights.len()));
     }
 
     /// The winter map built on the real game (MM_TEST_MAP is maps/dota.vpk): every file at the

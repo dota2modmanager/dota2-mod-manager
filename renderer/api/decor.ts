@@ -39,6 +39,9 @@ export interface ZoneLight {
    * inches, each layer's pitch-yaw-roll and inches a second), the specular power, the fog's shape */
   cloud_texture?: string; cloud_scale?: number; cloud1_direction?: number[]; cloud1_speed?: number; cloud2_direction?: number[]; cloud2_speed?: number;
   global_specular_power?: number; fog_exponent?: number; fog_max_density?: number;
+  /** the everyday zone only: the map's small lights (lamps, braziers), each [x, y, z, r, g, b, intensity, radius],
+   * place and reach in inches, colour 0-255 sRGB (map_build.rs local_lights) */
+  local_lights?: number[][];
 }
 
 /** The map without its decor, and the rest of Optimization. */

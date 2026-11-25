@@ -6,13 +6,18 @@
  *   light = sun × colour × light_scale
  *         + saturate(N · ambientDir) × ambient_colour × ambient_scale × mix(1, shadow × clouds, ambient_shadow_amount)
  *         + (1 - sun) × mix(shadow_secondary_colour, shadow_colour, N.up × 0.5 + 0.5) × shadow_scale
+ *         + Σ small lights: saturate(N · toward it) × smoothstep(saturate(1 - distance / radius)) × colour × intensity
  *   pixel = mix(albedo × light, fog colour, min(pow(saturate((distance - start) / (end - start)), exponent), max))
  *
  * as the game's deferred passes do it (deferred_global_light.vfx, deferred_post_process.vfx, read
  * 2026-11-25): the clouds are the global light's picture (env_global_light), cast down the sun's
  * way onto the ground in two layers that drift, the darker of the two; the fog is the fog
  * controller's, counted from where the game's camera would stand, so the map seen from afar is
- * not lost in it. Then the game's tonemap.
+ * not lost in it. Then the game's tonemap. The small lights are the map's lamps and braziers
+ * (env_deferred_light_client_only, deferred_local_light.vfx read the same day): the window takes
+ * the LOCAL nearest the middle of the view. Their reach is short (a lamp's 128 inches from 270 up
+ * barely touches the ground): the light's colour and intensity are taken as the shader's colour
+ * and scale, and its falloff share as 1, which the entity does not set.
  *
  * Colours are the zone's sRGB numbers in linear light, directions its pitch and yaw. A weather is
  * its own zone's numbers, the dark and the dusk the same light turned down. Without the shadows
@@ -74,7 +79,13 @@ export const lit = {
   uFog: { value: new THREE.Vector4(1e9, 2e9, 1, 0) },
   /** how much farther than the game's the camera stands, taken off the fog's distance */
   uFogFrom: { value: 0 },
+  /** the small lights near the view: where (metres) and how far each reaches, its colour × intensity (linear) */
+  uLocalAt: { value: Array.from({ length: 48 }, () => new THREE.Vector4()) },
+  uLocalColour: { value: Array.from({ length: 48 }, () => new THREE.Color()) },
+  uLocalCount: { value: 0 },
 };
+/** How many of the map's small lights the shader takes at once. */
+const LOCAL = 48;
 
 /** A Source inch in the window's metres (the map's export). */
 export const INCH = 0.0254;
@@ -101,6 +112,9 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
     .replace('#include <common>', `#include <common>
     uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor;
     uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom;
+    uniform vec4 uLocalAt[ ${LOCAL} ];
+    uniform vec3 uLocalColour[ ${LOCAL} ];
+    uniform int uLocalCount;
     uniform vec4 uCloudOffset, uFog;
     uniform sampler2D uClouds;
     varying vec3 vLitWorld;`)
@@ -120,6 +134,12 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
       float sun = saturate( dot( n, -uSunDir ) ) * shade;
       vec3 light = sun * uSun + saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
         + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 );
+      for ( int i = 0; i < ${LOCAL}; i++ ) {
+        if ( i >= uLocalCount ) break;
+        vec3 to = uLocalAt[ i ].xyz - vLitWorld;
+        float far = length( to ), reach = saturate( ( uLocalAt[ i ].w - far ) / uLocalAt[ i ].w );
+        light += saturate( dot( n, to / max( far, 1e-4 ) ) ) * reach * reach * ( 3.0 - 2.0 * reach ) * uLocalColour[ i ];
+      }
       outgoingLight = diffuseColor.rgb * light + totalEmissiveRadiance;
       float far = max( distance( vLitWorld, cameraPosition ) - uFogFrom, 0.0 );
       float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
@@ -176,6 +196,18 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
   let fog = { color: new THREE.Color(1, 1, 1), k: 1 };
   let flash = 0;
   let nextFlash = 0;
+  // the map's small lights in the window's axes: [x, y, z, reach] in metres and colour × intensity;
+  // which of them the shader has, and where the view's middle was when it got them
+  let locals: { at: THREE.Vector4; colour: THREE.Color }[] = [];
+  const picked = new THREE.Vector3(Infinity, 0, 0);
+  const pick = (target: THREE.Vector3) => {
+    picked.copy(target);
+    const near = locals
+      .map((l) => ({ l, d: Math.hypot(l.at.x - target.x, l.at.z - target.z) - l.at.w }))
+      .sort((a, b) => a.d - b.d).slice(0, LOCAL);
+    near.forEach(({ l }, i) => { lit.uLocalAt.value[i].copy(l.at); lit.uLocalColour.value[i].copy(l.colour); });
+    lit.uLocalCount.value = near.length;
+  };
   const apply = () => {
     const z = zone;
     const bright = k * (1 + flash);
@@ -211,6 +243,11 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     dim(next) { k = next; apply(); },
     weather(look, plain) {
       zone = look ?? plain ?? RADIANT;
+      locals = (plain?.local_lights ?? []).filter((l) => l.length >= 8).map((l) => ({
+        at: new THREE.Vector4(l[1] * INCH, l[2] * INCH, l[0] * INCH, l[7] * INCH),
+        colour: linear(l.slice(3, 6), l[6]),
+      }));
+      picked.set(Infinity, 0, 0);
       fog = look && plain
         ? { color: ratio(look.fog_color_day, plain.fog_color_day), k: Math.min(1.5, Math.max(0.35, share(look.fog_end_day, plain.fog_end_day))) }
         : { color: new THREE.Color(1, 1, 1), k: 1 };
@@ -229,6 +266,8 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     },
     tick(time, camera, target) {
       lit.uFogFrom.value = Math.max(0, camera.position.distanceTo(target) - GAME_CAMERA);
+      // the small lights nearest the view's middle, chosen again once it moved a few metres
+      if (picked.distanceTo(target) > 4) pick(target);
       // each layer of clouds drifts its own way at its own speed, in pictures a second
       const drift = (dir: number[] | undefined, speed: number | undefined): [number, number] => {
         const yaw = THREE.MathUtils.degToRad(dir?.[1] ?? 0), d = -((speed ?? 0) * time) / (zone.cloud_scale ?? 6500);
