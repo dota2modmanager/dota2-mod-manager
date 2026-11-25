@@ -22,8 +22,9 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 
 /// The light copy's file in the cache; its number goes up when what goes into it changes, so a
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
-/// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture).
-pub const LIGHT_FILE: &str = "world-6.glb";
+/// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
+/// 7: the swaying materials' wind masks and noise).
+pub const LIGHT_FILE: &str = "world-7.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -154,6 +155,37 @@ pub fn tint_mask(material: &Value, textures: &[Value], images: &[Value]) -> Opti
     })
 }
 
+/// The export's texture whose picture is this vtex (matched by file name), if the export kept it.
+fn texture_named(vtex: &str, textures: &[Value], images: &[Value]) -> Option<usize> {
+    let stem = |p: &str| p.rsplit('/').next().unwrap_or(p).to_lowercase();
+    let want = stem(vtex);
+    textures.iter().position(|t| {
+        t.get("source")
+            .and_then(idx)
+            .and_then(|i| images.get(i))
+            .and_then(|i| i.get("name"))
+            .and_then(Value::as_str)
+            .is_some_and(|n| stem(n) == want)
+    })
+}
+
+/// A swaying material's wind pictures (global_lit_simple.vfx under F_ENABLE_WIND): the mask whose
+/// red and green say how much of the slow and the quick sway each part takes (a trunk none, the
+/// leaves all), and the two-channel noise the sway is varied by. Each is the texture of the export
+/// that holds it, or None where the export left it out; None for a material that does not sway.
+pub fn wind_pictures(material: &Value, textures: &[Value], images: &[Value]) -> Option<(Option<usize>, Option<usize>)> {
+    let vmat = material.pointer("/extras/vmat")?;
+    if vmat.pointer("/IntParams/F_ENABLE_WIND").and_then(Value::as_i64) != Some(1) {
+        return None;
+    }
+    let of = |k: &str| {
+        vmat.pointer(&format!("/TextureParams/{k}"))
+            .and_then(Value::as_str)
+            .and_then(|v| texture_named(v, textures, images))
+    };
+    Some((of("g_tWindMask"), of("g_tWindNoise")))
+}
+
 /// A span of a view's bytes one accessor reads: view, offset, length, what it holds, its stride.
 type SpanKey = (usize, usize, u64, String, usize);
 
@@ -192,7 +224,13 @@ pub fn slim_glb(
     let mut layers_of: BTreeMap<usize, Vec<(usize, [f64; 3], f64)>> = BTreeMap::new();
     // and its tint mask, by the material's number
     let mut masks_of: BTreeMap<usize, usize> = BTreeMap::new();
+    // a swaying material's wind mask and noise, by the material's number
+    let mut winds_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
     for (mi, m) in materials.iter_mut().enumerate() {
+        if let Some((mask, noise)) = wind_pictures(m, &textures, &images) {
+            used_tex.extend(mask.iter().chain(noise.iter()));
+            winds_of.insert(mi, (mask, noise));
+        }
         let layers = blend_layers(m, &textures, &images);
         if !layers.is_empty() {
             used_tex.extend(layers.iter().map(|l| l.0));
@@ -400,6 +438,16 @@ pub fn slim_glb(
                 if let Some(n) = masks_of.get(mi).and_then(|t| tex_map.get(t)) {
                     e.insert("tintMask".into(), json!(n));
                 }
+            }
+        }
+    }
+    for (mi, (mask, noise)) in &winds_of {
+        if let Some(e) = materials[*mi].get_mut("extras").and_then(Value::as_object_mut) {
+            if let Some(n) = mask.and_then(|t| tex_map.get(&t)) {
+                e.insert("windMask".into(), json!(n));
+            }
+            if let Some(n) = noise.and_then(|t| tex_map.get(&t)) {
+                e.insert("windNoise".into(), json!(n));
             }
         }
     }
@@ -712,6 +760,27 @@ mod tests {
         };
         assert_eq!(tint_mask(&m(1), &textures, &images), Some(1));
         assert_eq!(tint_mask(&m(0), &textures, &images), None, "the mask is read only where the blend uses it");
+    }
+
+    #[test]
+    fn a_swaying_material_names_its_wind_mask_and_noise() {
+        let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
+        let images = vec![
+            json!({ "name": "armandpine_mask_psd_53929b27.vtex" }),
+            json!({ "name": "two_channel_noise_psd_93f8d443.vtex" }),
+        ];
+        let m = |on: i64| {
+            json!({ "extras": { "vmat": { "IntParams": { "F_ENABLE_WIND": on }, "TextureParams": {
+                "g_tWindMask": "materials/models/props_tree/armandpine/armandpine_mask_psd_53929b27.vtex",
+                "g_tWindNoise": "materials/dev/two_channel_noise_psd_93f8d443.vtex" } } } })
+        };
+        assert_eq!(wind_pictures(&m(1), &textures, &images), Some((Some(0), Some(1))));
+        assert_eq!(wind_pictures(&m(0), &textures, &images), None, "a material that does not sway has none");
+        assert_eq!(
+            wind_pictures(&m(1), &textures[..1], &images),
+            Some((Some(0), None)),
+            "a picture the export left out is none"
+        );
     }
 
     #[test]
