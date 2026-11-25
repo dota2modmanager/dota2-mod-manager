@@ -387,6 +387,26 @@ pub fn preview_crest_particles<'a>(
     roots.to_vec()
 }
 
+/// The asked slots, and the hero's stock slots the window leaves out. The item builder lists only
+/// the slots with something to pick, and the game still wears the stock item in the others:
+/// Terrorblade's Ambient Effects, which has no paid alternative, burn at his feet on the hero page.
+pub fn with_stock_slots(text: &[u8], hero: &str, slots: &[Value]) -> R<Vec<Value>> {
+    let short = hero.strip_prefix("npc_dota_hero_").unwrap_or(hero);
+    let asked: std::collections::HashSet<&str> =
+        slots.iter().filter_map(|s| s.get("slot").and_then(Value::as_str)).collect();
+    let mut out = slots.to_vec();
+    for s in crate::item_builder_slots::stock_item_slots(text).map_err(|e| e.to_string())? {
+        if s.persona.is_none()
+            && s.ability_fx.is_none()
+            && s.hero_ids.iter().any(|h| h == short)
+            && !asked.contains(s.slot.as_str())
+        {
+            out.push(json!({ "slot": s.slot, "stock": s.target_id }));
+        }
+    }
+    Ok(out)
+}
+
 /// The slots the preview dresses, with a persona's counted: a persona on is worn with its own
 /// items alone, so the plain slots go and each of its own is there; one off takes its own slots
 /// with it.
@@ -413,4 +433,29 @@ pub fn persona_preview_slots(text: &[u8], hero: &str, slots: &[Value], equipped:
         }
     }
     Ok(kept)
+}
+
+#[cfg(test)]
+mod stock_slot_tests {
+    use super::*;
+
+    /// Terrorblade with a stock head (a paid one to pick instead) and stock ambient effects (none).
+    const TABLE: &[u8] = br#""items_game"
+{
+    "items"
+    {
+        "478" { "name" "TB Head" "prefab" "default_item" "item_slot" "head" "model_player" "models/tb/head.vmdl" "used_by_heroes" { "npc_dota_hero_terrorblade" "1" } }
+        "540" { "name" "TB Ambient Effects" "prefab" "default_item" "item_slot" "ambient_effects" "used_by_heroes" { "npc_dota_hero_terrorblade" "1" } }
+        "900" { "name" "Paid Head" "prefab" "wearable" "item_slot" "head" "model_player" "models/tb/paid.vmdl" "used_by_heroes" { "npc_dota_hero_terrorblade" "1" } }
+    }
+}"#;
+
+    #[test]
+    fn a_stock_slot_with_nothing_to_pick_is_still_worn() {
+        let asked = vec![json!({ "slot": "item:terrorblade:head", "stock": "478" })];
+        let slots = with_stock_slots(TABLE, "npc_dota_hero_terrorblade", &asked).unwrap();
+        assert_eq!(slots[0], asked[0]);
+        assert_eq!(slots[1..], [json!({ "slot": "item:terrorblade:ambient_effects", "stock": "540" })]);
+        assert_eq!(with_stock_slots(TABLE, "npc_dota_hero_axe", &asked).unwrap(), asked);
+    }
 }
