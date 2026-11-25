@@ -33,7 +33,7 @@ function newSceneViewport(host: HTMLElement, label: string) {
     afterUpdate: () => {},
     viewer: new HeroViewer(canvas, {
       assets: 'file:///unused-local-assets/', controls: true, wheel: 'zoom',
-      framing: 'full', textureScale: 1, bloom: .35, softParticles: true,
+      framing: 'stage', textureScale: 1, bloom: .35, softParticles: true,
       onFrame: dt => controls.tick(dt),
       onAfterUpdate: () => viewport.afterUpdate(),
       // a hero or an item shows once the list beside it has stopped moving (ui/scroll-idle.ts)

@@ -121,24 +121,31 @@ fn arr(v: Vec3) -> Value {
     json!(v.iter().map(|x| json_number(*x)).collect::<Vec<_>>())
 }
 
+/// The hero's size on its loadout: its LoadoutScale, else its ModelScale (Viper has only that).
 fn loadout_scale(script: &[u8]) -> f64 {
     let s = kv::latin1(script);
+    ["loadoutscale", "modelscale"].iter().find_map(|k| key_number(&s, k)).unwrap_or(1.0)
+}
+
+/// The first `"Key" "number"` of a script, its key given in lower case.
+fn key_number(s: &str, key: &str) -> Option<f64> {
     let lower = s.to_ascii_lowercase();
+    let quoted = format!("\"{key}\"");
     let mut from = 0;
-    while let Some(at) = lower[from..].find("\"loadoutscale\"") {
-        let rest = &s[from + at + 14..];
+    while let Some(at) = lower[from..].find(&quoted) {
+        let rest = &s[from + at + quoted.len()..];
         let gap = rest.len() - rest.trim_start_matches(is_space).len();
         if gap > 0 {
             if let Some(body) = rest[gap..].strip_prefix('"') {
                 let digits: String = body.chars().take_while(|c| c.is_ascii_digit() || *c == '.').collect();
                 if !digits.is_empty() && body[digits.len()..].starts_with('"') {
-                    return or_one(num(&digits));
+                    return Some(or_one(num(&digits)));
                 }
             }
         }
         from += at + 1;
     }
-    1.0
+    None
 }
 
 fn is_model_path(m: &str) -> bool {
@@ -234,6 +241,25 @@ mod tests {
 		}
 	}
 }"#;
+
+    #[test]
+    fn a_hero_without_a_loadout_scale_stands_at_its_model_scale() {
+        assert_eq!(
+            loadout_scale(
+                b"\"ModelScale\"		\"0.740000\"
+\"SpectatorLoadoutScale\" \"0.65\""
+            ),
+            0.74
+        );
+        assert_eq!(
+            loadout_scale(
+                b"\"ModelScale\" \"0.81\"
+\"LoadoutScale\" \"0.9\""
+            ),
+            0.9
+        );
+        assert_eq!(loadout_scale(b""), 1.0);
+    }
 
     #[test]
     fn the_loadout_camera_and_light_reach_the_stage() {

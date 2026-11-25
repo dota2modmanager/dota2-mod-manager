@@ -39,7 +39,8 @@ const tint = (c, scale) => new THREE.Color().setRGB(...c.map((v) => v / 255), TH
 export class HeroViewer {
   // options: controls — true (drag anywhere), 'hero' (only a drag that starts on the hero; the rest
   // goes on to the page) or false; wheel — 'zoom', 'turn' or false; framing — 'hero' (the hero,
-  // with what fits of the pedestal) or 'full' (hero and pedestal whole); pixelRatio; textureScale (1, or
+  // with what fits of the pedestal), 'full' (hero and pedestal whole) or 'stage' (the loadout page's own
+  // camera where the lighting names it, else 'full'); pixelRatio; textureScale (1, or
   // 0.5 by default on phones and machines of 4 GB or less); bloom (its strength, 0.35, or false);
   // assets (where load('pudge') and wear('weapon', 6058) find them: loadout.nyan.cafe by default);
   // onProgress(loaded, total); onAnimation(name). Set paused to stand the hero and his effects still.
@@ -120,7 +121,7 @@ void main() {
     this.unload(); this.parked?.dispose(); this.parked = null;
     this.hero = hero; this.scene.add(hero.lib.group, hero.turntable);
     this.applyLighting(manifest.lighting || DEFAULT_LIGHTING, hero);
-    this.turn.angle = this.turn.target = this.turn.velocity = 0; this.view.zoom = this.view.zoomTarget = 1; this.view.pitch = 0;
+    this.turn.angle = this.turn.target = this.view.stage?.turn ?? 0; this.turn.velocity = 0; this.view.zoom = this.view.zoomTarget = 1; this.view.pitch = this.view.stage?.pitch ?? 0;
     this.fit();
     // Each kinetic gem with the activities it changes (those of the variants with its modifiers).
     const variants = manifest.animations?.variants || [];
@@ -199,12 +200,13 @@ void main() {
   play(name) { const d = this.hero?.play(name) ?? 0; this.options.onAnimation?.(name); return d; }
 
   // The loadout page's light: a key light casting shadows, a directional ambient and a colour for
-  // what lies in shadow. The page turns the hero to face its camera, which stands off to his
-  // right-front: the light is turned by the same angle about the hero, the camera stays in front.
+  // what lies in shadow. The page's camera stands off to the hero's right-front, and the page does not
+  // turn him to it: here the camera stays in front, so the light (and, framed as the page, the hero)
+  // turns by that angle about him.
   applyLighting(l, hero) {
     const [cx, cy] = l.camera?.position || DEFAULT_LIGHTING.camera.position, facing = -THREE.MathUtils.radToDeg(Math.atan2(cy, cx));
-    // The portrait camera's field of view is Source's: horizontal at 4:3. The viewer frames vertically.
-    this.stageFov = l.camera?.fov ? THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad(l.camera.fov) / 2) * 0.75)) : 0;
+    // The portrait camera's field of view is vertical (checked against the game's page, 2026-11-25).
+    this.stageFov = l.camera?.fov ?? 0;
     this.toLight.copy(forward([l.light.angles[0], l.light.angles[1] + facing])).negate(); this.ambientDir.copy(forward([l.ambient.angles[0], l.ambient.angles[1] + facing]));
     this.light.uLightColor.value.copy(tint(l.light.color, l.light.scale)); this.light.uAmbientColor.value.copy(tint(l.ambient.color, l.ambient.scale));
     this.light.uAmbientTint.value.copy(tint(l.ambient.color, 1)); this.light.uShadowColor.value.copy(tint(l.shadow.color, l.shadow.scale));
@@ -216,6 +218,18 @@ void main() {
     const frame = this.options.framing === 'hero' ? hero.heroBox : box, fsize = frame.getSize(new THREE.Vector3());
     this.view.center.copy(frame.getCenter(new THREE.Vector3())); this.view.size = fsize;
     if (this.options.framing === 'hero' && hero.heroBox !== box) { this.view.center.y -= fsize.y * 0.1; this.view.size = fsize.clone().setY(fsize.y * 1.2); }
+    // Desktop preview extension. Where the file gives the page's camera, the view is that camera:
+    // as far from the hero, as high, tilted as much, with its field of view, and the hero turned as much
+    // as the light. Nothing is fitted: what falls outside the panel is cut, as in the game.
+    this.view.stage = null;
+    const cam = l.camera;
+    if (cam?.position && cam?.angles && this.options.framing === 'stage') {
+      const [x, y, z] = cam.position, d = Math.hypot(x, y) * 0.0254, rad = THREE.MathUtils.degToRad;
+      const pitch = rad(((cam.angles[0] + 180) % 360 + 360) % 360 - 180), aside = rad(cam.angles[1]) - Math.atan2(-y, -x);
+      const distance = d / Math.cos(pitch);
+      this.view.center.set(-Math.sin(aside) * d, z * 0.0254 - Math.sin(pitch) * distance, 0);
+      this.view.stage = { distance, pitch, turn: rad(facing) };
+    }
   }
 
   // ---- camera: the framing at any shape of the canvas.
@@ -228,7 +242,8 @@ void main() {
   place() {
     const { center, size, zoom } = this.view; if (!size) return;
     const tanV = Math.tan(THREE.MathUtils.degToRad(this.camera.fov / 2)), tanH = tanV * this.camera.aspect;
-    const depth = Math.max(size.x, size.z) / 2, distance = Math.max((size.y * 0.62) / tanV, (Math.max(size.x, size.z) * 0.68) / tanH) + depth;
+    const depth = Math.max(size.x, size.z) / 2, distance = this.view.stage?.distance ?? Math.max((size.y * 0.62) / tanV, (Math.max(size.x, size.z) * 0.68) / tanH) + depth;
+    this.view.distance = distance;
     const pitch = this.view.pitch || 0; this.camera.position.set(center.x, center.y + Math.sin(pitch) * distance / zoom, center.z + Math.cos(pitch) * distance / zoom); this.camera.lookAt(center.x, center.y, center.z);
     this.camera.near = Math.max(0.05, distance / zoom / 50); this.camera.far = distance * 10; this.camera.updateProjectionMatrix(); this.camera.updateMatrixWorld();
     const view = this.camera.matrixWorldInverse;
@@ -453,6 +468,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
     worn.set(name, current);
     putOn(current);
   }
+  // Desktop preview extension: the hero at his LoadoutScale, as the loadout page shows him.
+  if (manifest.heroScale > 0) root.scale.multiplyScalar(manifest.heroScale);
   const turntable = new THREE.Group(); turntable.add(root); if (loaded.pedestal) turntable.add(loaded.pedestal.scene);
   // The hero's other forms and summons (Lone Druid's bear, Dragon Knight's dragon): whole models of
   // their own, each on its own clip held in place, put beside him once his pose is known (below).
