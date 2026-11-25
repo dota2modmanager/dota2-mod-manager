@@ -483,11 +483,9 @@ pub fn plan(text: &[u8], game: &Game, library: &[Value], name: &str, slots: &[Va
     });
     let idle = loadout::idle_sequence(&seqs).filter(|s| !s.is_empty()).unwrap_or_else(|| IDLE.into());
     let script = read(&format!("scripts/npc/heroes/{hero}.txt"));
-    let stage = crate::hero_showcase::hero_stage(
-        read("scripts/npc/portraits_showcase.txt").as_deref(),
-        script.as_deref(),
-        &[body.clone(), hero.clone()],
-    );
+    let keys = [body.clone(), hero.clone()];
+    let portraits = crate::hero_showcase::portraits(read, &keys);
+    let stage = crate::hero_showcase::hero_stage(portraits.as_deref(), script.as_deref(), &keys);
     let bindings: IndexMap<String, Value> = crate::unusual_effects::effects_of(text)
         .map_err(err)?
         .iter()

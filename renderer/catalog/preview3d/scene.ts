@@ -140,7 +140,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     };
     const load=async()=>{
       check();
-      const manifest = { ...source.manifest, models: { ...source.manifest.models }, attachments: { ...source.manifest.attachments }, materials: { ...source.manifest.materials }, terrorbladeWeaponOwners: weaponOwners(look) };
+      const manifest = { ...source.manifest, models: { ...source.manifest.models }, attachments: { ...source.manifest.attachments }, materials: { ...source.manifest.materials }, terrorbladeWeaponOwners: weaponOwners(look), lighting: options.stage?.lighting ?? undefined };
       for (const [owner, item] of overrides) {
         if (!item) { delete manifest.models[owner]; delete manifest.attachments[owner]; continue; }
         manifest.models[owner] = item.url(item.manifest.models[owner]);
