@@ -21,8 +21,9 @@ use crate::glb_embed::{read_glb, write_glb};
 use crate::png_paint::{decode_rgba, encode_rgba};
 
 /// The light copy's file in the cache; its number goes up when what goes into it changes, so a
-/// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers).
-pub const LIGHT_FILE: &str = "world-3.glb";
+/// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
+/// 4: the layers' blend softness and tint masks).
+pub const LIGHT_FILE: &str = "world-4.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -132,6 +133,27 @@ pub fn blend_layers(material: &Value, textures: &[Value], images: &[Value]) -> V
     out
 }
 
+/// A terrain blend's tint mask (multiblend.vfx g_tTintMasks under F_TINT_MASK): the texture of the
+/// export whose channel k picks, per pixel, between layer k's two tints (g_vColorTintB{k} at 0,
+/// g_vColorTint{k} at 1). None for a blend without one, or one the export left out.
+pub fn tint_mask(material: &Value, textures: &[Value], images: &[Value]) -> Option<usize> {
+    let vmat = material.pointer("/extras/vmat")?;
+    if vmat.pointer("/IntParams/F_TINT_MASK").and_then(Value::as_i64) != Some(1) {
+        return None;
+    }
+    let vtex = vmat.pointer("/TextureParams/g_tTintMasks").and_then(Value::as_str)?;
+    let stem = |p: &str| p.rsplit('/').next().unwrap_or(p).to_lowercase();
+    let want = stem(vtex);
+    textures.iter().position(|t| {
+        t.get("source")
+            .and_then(idx)
+            .and_then(|i| images.get(i))
+            .and_then(|i| i.get("name"))
+            .and_then(Value::as_str)
+            .is_some_and(|n| stem(n) == want)
+    })
+}
+
 /// A span of a view's bytes one accessor reads: view, offset, length, what it holds, its stride.
 type SpanKey = (usize, usize, u64, String, usize);
 
@@ -152,8 +174,9 @@ pub fn slim_glb(
     max_px: u32,
 ) -> Result<Vec<u8>, String> {
     const KEEP: [&str; 3] = ["POSITION", "NORMAL", "TEXCOORD_0"];
-    // a terrain blend's layer weights and its painted tint: without them the paths are gone
-    const KEEP_BLEND: [&str; 2] = ["_TEXCOORD_1", "_TEXCOORD_3"];
+    // a terrain blend's layer weights, how soft each layer's edge is and its painted tint:
+    // without them the paths are gone
+    const KEEP_BLEND: [&str; 3] = ["_TEXCOORD_1", "_TEXCOORD_2", "_TEXCOORD_3"];
     let accessors = arr(json, "accessors");
     let views = arr(json, "bufferViews");
     let textures = arr(json, "textures");
@@ -164,11 +187,17 @@ pub fn slim_glb(
     let mut materials = arr(json, "materials");
     // a terrain blend's four layers: (texture, tint, scale) each, by the material's number
     let mut layers_of: BTreeMap<usize, Vec<(usize, [f64; 3], f64)>> = BTreeMap::new();
+    // and its tint mask, by the material's number
+    let mut masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     for (mi, m) in materials.iter_mut().enumerate() {
         let layers = blend_layers(m, &textures, &images);
         if !layers.is_empty() {
             used_tex.extend(layers.iter().map(|l| l.0));
             layers_of.insert(mi, layers);
+            if let Some(t) = tint_mask(m, &textures, &images) {
+                used_tex.insert(t);
+                masks_of.insert(mi, t);
+            }
         }
         let mut out = Map::new();
         for k in ["name", "extras", "alphaMode", "alphaCutoff", "doubleSided"] {
@@ -365,6 +394,9 @@ pub fn slim_glb(
         if list.len() == layers.len() {
             if let Some(e) = materials[*mi].get_mut("extras").and_then(Value::as_object_mut) {
                 e.insert("layers".into(), json!(list));
+                if let Some(n) = masks_of.get(mi).and_then(|t| tex_map.get(t)) {
+                    e.insert("tintMask".into(), json!(n));
+                }
             }
         }
     }
@@ -546,6 +578,19 @@ mod tests {
         assert!(out.iter().all(|&b| b == 255));
         let (same, w, h) = shrink(vec![1, 2, 3, 4], 1, 1, 256);
         assert_eq!((same, w, h), (vec![1, 2, 3, 4], 1, 1));
+    }
+
+    #[test]
+    fn a_blend_with_a_tint_mask_names_its_texture() {
+        let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
+        let images =
+            vec![json!({ "name": "sand_color_psd_1.vtex" }), json!({ "name": "sand_path002_mask_psd_52b589c0.vtex" })];
+        let m = |on: i64| {
+            json!({ "extras": { "vmat": { "IntParams": { "F_TINT_MASK": on },
+                "TextureParams": { "g_tTintMasks": "materials/sand_path002_mask_psd_52b589c0.vtex" } } } })
+        };
+        assert_eq!(tint_mask(&m(1), &textures, &images), Some(1));
+        assert_eq!(tint_mask(&m(0), &textures, &images), None, "the mask is read only where the blend uses it");
     }
 
     #[test]
