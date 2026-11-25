@@ -2,11 +2,17 @@
  * (global_lit_simple.vfx, read from shaders_pc_dir.vpk) and the light of the map's zone
  * (ent_dota_lightinfo in default_ents, map_build.rs weather_lights):
  *
- *   sun   = saturate(N · -lightDir) × shadow
+ *   sun   = saturate(N · -lightDir) × shadow × clouds
  *   light = sun × colour × light_scale
- *         + saturate(N · ambientDir) × ambient_colour × ambient_scale
+ *         + saturate(N · ambientDir) × ambient_colour × ambient_scale × mix(1, shadow × clouds, ambient_shadow_amount)
  *         + (1 - sun) × mix(shadow_secondary_colour, shadow_colour, N.up × 0.5 + 0.5) × shadow_scale
- *   pixel = albedo × light
+ *   pixel = mix(albedo × light, fog colour, min(pow(saturate((distance - start) / (end - start)), exponent), max))
+ *
+ * as the game's deferred passes do it (deferred_global_light.vfx, deferred_post_process.vfx, read
+ * 2026-11-25): the clouds are the global light's picture (env_global_light), cast down the sun's
+ * way onto the ground in two layers that drift, the darker of the two; the fog is the fog
+ * controller's, counted from where the game's camera would stand, so the map seen from afar is
+ * not lost in it. Then the game's tonemap.
  *
  * Colours are the zone's sRGB numbers in linear light, directions its pitch and yaw. A weather is
  * its own zone's numbers, the dark and the dusk the same light turned down. Without the shadows
@@ -21,8 +27,10 @@ export interface MapLight {
   dim(k: number): void;
   /** a weather's zone over the everyday one, or none */
   weather(look: ZoneLight | null, plain: ZoneLight | null): void;
-  /** a frame: whether the light changed (lightning) */
-  tick(time: number): boolean;
+  /** the clouds' picture (the map's light copy has it, map_scene.rs), or none */
+  clouds(picture: THREE.Texture | null): void;
+  /** a frame, the camera where it is: whether the light changed (lightning, the clouds drifting) */
+  tick(time: number, camera: THREE.Camera, target: THREE.Vector3): boolean;
 }
 
 /** The Radiant forest's everyday zone, for a game whose map could not be read. */
@@ -53,26 +61,84 @@ const lit = {
   uAmbient: { value: new THREE.Color() },
   uShadeUp: { value: new THREE.Color() },
   uShadeDown: { value: new THREE.Color() },
+  uAmbientShadow: { value: 0 },
+  uClouds: { value: null as THREE.Texture | null },
+  uCloudOn: { value: 0 },
+  uCloudScale: { value: 1 },
+  uCloudOffset: { value: new THREE.Vector4() },
+  uFogColor: { value: new THREE.Color() },
+  /** start, end, exponent, the most it covers; in metres */
+  uFog: { value: new THREE.Vector4(1e9, 2e9, 1, 0) },
+  /** how much farther than the game's the camera stands, taken off the fog's distance */
+  uFogFrom: { value: 0 },
 };
+
+/** A Source inch in the window's metres (the map's export). */
+const INCH = 0.0254;
+/** How far the game's camera stands from what it looks at, in metres. */
+const GAME_CAMERA = 1200 * INCH;
 
 /** The game's world light in a standard material's shader, in place of three's: its shadows kept. */
 export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
   Object.assign(sh.uniforms, lit);
+  sh.vertexShader = sh.vertexShader
+    .replace('#include <common>', '#include <common>\nvarying vec3 vLitWorld;')
+    .replace('#include <project_vertex>', `#include <project_vertex>
+    {
+      vec4 at = vec4( transformed, 1.0 );
+      #ifdef USE_BATCHING
+      at = batchingMatrix * at;
+      #endif
+      #ifdef USE_INSTANCING
+      at = instanceMatrix * at;
+      #endif
+      vLitWorld = ( modelMatrix * at ).xyz;
+    }`);
   sh.fragmentShader = sh.fragmentShader
-    .replace('#include <common>', '#include <common>\nuniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown;')
+    .replace('#include <common>', `#include <common>
+    uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor;
+    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom;
+    uniform vec4 uCloudOffset, uFog;
+    uniform sampler2D uClouds;
+    varying vec3 vLitWorld;`)
     .replace('#include <opaque_fragment>', `{
       float shade = 1.0;
       #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0
       shade = receiveShadow ? getShadow( directionalShadowMap[ 0 ], directionalLightShadows[ 0 ].shadowMapSize, directionalLightShadows[ 0 ].shadowIntensity,
         directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;
       #endif
+      // the clouds, in the game's axes (the export turned Source's x, y, z into z, x, y), cast down the sun's way
+      if ( uCloudOn > 0.5 ) {
+        vec3 p = vLitWorld.zxy, l = uSunDir.zxy;
+        vec4 uv = ( p.xy + l.xy * p.z ).xyxy / uCloudScale + uCloudOffset;
+        shade *= saturate( min( texture2D( uClouds, uv.xy ).r, texture2D( uClouds, uv.zw ).g ) );
+      }
       vec3 n = inverseTransformDirection( normal, viewMatrix );
       float sun = saturate( dot( n, -uSunDir ) ) * shade;
-      vec3 light = sun * uSun + saturate( dot( n, uAmbientDir ) ) * uAmbient + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 );
+      vec3 light = sun * uSun + saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
+        + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 );
       outgoingLight = diffuseColor.rgb * light + totalEmissiveRadiance;
+      float far = max( distance( vLitWorld, cameraPosition ) - uFogFrom, 0.0 );
+      float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
+      outgoingLight = mix( outgoingLight, uFogColor, fog );
     }
-    #include <opaque_fragment>`);
+    #include <opaque_fragment>`)
+    // the fog is the game's, above, laid before the tonemap as the game lays it
+    .replace('#include <fog_fragment>', '');
 }
+
+/**
+ * The game's tonemap, from its post-process pass (deferred_post_process.vfx with D_TONEMAP, read
+ * from the shader's bytecode 2026-11-25): a curve that keeps the darks and mid-tones near where they
+ * are (0.18 comes out 0.16) and runs anything over about 0.85 to white.
+ */
+const GAME_TONEMAP = `vec3 CustomToneMapping( vec3 color ) {
+  color *= toneMappingExposure;
+  vec3 x = 0.6 * color;
+  return saturate( x * ( color * 9.48 + 2.12 ) / ( x * ( color * 0.72 + 5.92 ) + 1.9 ) );
+}`;
+THREE.ShaderChunk.tonemapping_pars_fragment = THREE.ShaderChunk.tonemapping_pars_fragment
+  .replace('vec3 CustomToneMapping( vec3 color ) { return color; }', GAME_TONEMAP);
 
 /** A zone's colour over the everyday one's, channel by channel, kept within reason: for the fog. */
 function ratio(a: number[] | undefined, b: number[] | undefined): THREE.Color {
@@ -83,9 +149,8 @@ function ratio(a: number[] | undefined, b: number[] | undefined): THREE.Color {
 const share = (a: number | undefined, b: number | undefined) => (a === undefined || b === undefined || b <= 0 ? 1 : a / b);
 
 export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): MapLight {
-  // the game's light runs well over one: a tonemap that keeps colours and bends the bright ones
-  // down rather than to white
-  renderer.toneMapping = THREE.NeutralToneMapping;
+  // the game's own tonemap over its light
+  renderer.toneMapping = THREE.CustomToneMapping;
   renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -118,6 +183,10 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     lit.uShadeDown.value.copy(linear(z.shadow_secondary_color_day ?? z.shadow_color_day, z.shadow_ground_scale_day ?? z.shadow_scale_day ?? 1)).multiplyScalar(0.4 + 0.6 * k);
     lit.uSunDir.value.copy(pointing(z.light_direction_day));
     lit.uAmbientDir.value.copy(pointing(z.ambient_direction_day));
+    lit.uAmbientShadow.value = z.ambient_shadow_amount ?? 0;
+    lit.uFogColor.value.copy(linear(z.fog_color_day ?? RADIANT.fog_color_day)).multiplyScalar(0.4 + 0.6 * k);
+    lit.uFog.value.set((z.fog_start_day ?? 1250) * INCH, (z.fog_end_day ?? 4500) * INCH, z.fog_exponent ?? 2, z.fog_max_density ?? 1);
+    lit.uCloudScale.value = (z.cloud_scale ?? 6500) * INCH;
     sun.intensity = 3.4 * bright;
     sky.intensity = 1.25 * (0.4 + 0.6 * k);
     // the shadows fall the way the zone's sun shines
@@ -144,16 +213,33 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       nextFlash = 0;
       apply();
     },
-    tick(time) {
+    clouds(picture) {
+      if (picture) {
+        picture.wrapS = picture.wrapT = THREE.RepeatWrapping;
+        picture.colorSpace = THREE.NoColorSpace;
+        picture.needsUpdate = true;
+      }
+      lit.uClouds.value = picture;
+      lit.uCloudOn.value = picture ? 1 : 0;
+    },
+    tick(time, camera, target) {
+      lit.uFogFrom.value = Math.max(0, camera.position.distanceTo(target) - GAME_CAMERA);
+      // each layer of clouds drifts its own way at its own speed, in pictures a second
+      const drift = (dir: number[] | undefined, speed: number | undefined): [number, number] => {
+        const yaw = THREE.MathUtils.degToRad(dir?.[1] ?? 0), d = -((speed ?? 0) * time) / (zone.cloud_scale ?? 6500);
+        return [Math.cos(yaw) * d, Math.sin(yaw) * d];
+      };
+      lit.uCloudOffset.value.set(...drift(zone.cloud1_direction, zone.cloud1_speed), ...drift(zone.cloud2_direction, zone.cloud2_speed));
+      const clouds = lit.uCloudOn.value > 0;
       const strength = zone.lightning_intensity_max ?? 0;
-      if (strength <= 0 || (zone.lightning_period_max ?? 0) <= 0) return false;
+      if (strength <= 0 || (zone.lightning_period_max ?? 0) <= 0) return clouds;
       if (!nextFlash) nextFlash = later(time);
       const was = flash;
       // a flash: up at once, down over a few frames
       if (time >= nextFlash) { flash = Math.min(2, strength); nextFlash = later(time); }
       else flash = Math.max(0, flash - 0.05);
       if (flash !== was) apply();
-      return flash !== was;
+      return clouds || flash !== was;
     },
     fit(box) {
       box.getCenter(centre);

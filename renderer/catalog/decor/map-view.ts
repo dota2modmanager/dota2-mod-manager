@@ -125,7 +125,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     controls.update();
     if (water) { waterTime.value = clock.elapsedTime; dirty = true; }
     if (weather?.tick(clock.elapsedTime, controls.target, renderer.domElement.height, camera)) dirty = true;
-    if (light.tick(clock.elapsedTime) || keepOnGround(heights, camera, controls.target, mapReach)) dirty = true;
+    if (light.tick(clock.elapsedTime, camera, controls.target) || keepOnGround(heights, camera, controls.target, mapReach)) dirty = true;
     if (!dirty) return;
     dirty = false;
     renderer.render(scene, camera);
@@ -181,6 +181,11 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     const world = gltf?.scene ?? null;
     if (disposed) return;
     if (!world) { onProgress(L`Не удалось загрузить карту`, true); return; }
+    // the clouds' picture the light copy carries (map_scene.rs): their shadows drift over the ground
+    const cloudsAt = (gltf!.parser.json as { extras?: { clouds?: number } }).extras?.clouds;
+    if (typeof cloudsAt === 'number') {
+      void gltf!.parser.getDependency('texture', cloudsAt).then((t: THREE.Texture) => { if (!disposed) { light.clouds(t); dirty = true; } }, () => {});
+    }
     const owner = new Map<string, DecorGroup>();
     for (const [g, s] of Object.entries(samples) as [DecorGroup, DecorSample][]) for (const m of s.materials ?? []) owner.set(m.toLowerCase(), g);
     const treeMeshes: THREE.Mesh[] = [];
