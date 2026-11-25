@@ -179,7 +179,9 @@ pub fn wind_pictures(material: &Value, textures: &[Value], images: &[Value]) -> 
         return None;
     }
     let of = |k: &str| {
-        vmat.pointer(&format!("/TextureParams/{k}")).and_then(Value::as_str).and_then(|v| texture_named(v, textures, images))
+        vmat.pointer(&format!("/TextureParams/{k}"))
+            .and_then(Value::as_str)
+            .and_then(|v| texture_named(v, textures, images))
     };
     Some((of("g_tWindMask"), of("g_tWindNoise")))
 }
@@ -774,7 +776,11 @@ mod tests {
         };
         assert_eq!(wind_pictures(&m(1), &textures, &images), Some((Some(0), Some(1))));
         assert_eq!(wind_pictures(&m(0), &textures, &images), None, "a material that does not sway has none");
-        assert_eq!(wind_pictures(&m(1), &textures[..1], &images), Some((Some(0), None)), "a picture the export left out is none");
+        assert_eq!(
+            wind_pictures(&m(1), &textures[..1], &images),
+            Some((Some(0), None)),
+            "a picture the export left out is none"
+        );
     }
 
     #[test]

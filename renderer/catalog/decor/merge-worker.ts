@@ -107,7 +107,8 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
           o[k + 2] = m[2] * x + m[6] * y + m[10] * z + m[14];
         }
         if (heights && (m[12] !== 0 || m[13] !== 0 || m[14] !== 0)) {
-          for (let i = 0; i < g.count; i++) heights[vAt + i] = at(i, 1) / INCH;
+          // written with set(), as the triangles are: no index the message gave goes in as a property
+          heights.set(Float32Array.from({ length: g.count }, (_, i) => at(i, 1) / INCH), vAt);
         }
       } else if (name === 'normal') {
         const n = normalMatrix(m);
