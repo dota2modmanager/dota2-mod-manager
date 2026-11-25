@@ -53,13 +53,6 @@ fn unit(v: Vec3) -> Vec3 {
     [v[0] / l, v[1] / l, v[2] / l]
 }
 
-/// The way Source angles (pitch down, yaw, roll) look. V8 takes its sines from glibc, so the last
-/// bit can differ from the window's on a rare angle: a light direction does not see it.
-pub fn forward(angles: Vec3) -> Vec3 {
-    let (p, y) = (angles[0] * std::f64::consts::PI / 180.0, angles[1] * std::f64::consts::PI / 180.0);
-    [libm::cos(p) * libm::cos(y), libm::cos(p) * libm::sin(y), -libm::sin(p)]
-}
-
 fn path_key(k: &str) -> String {
     k.to_lowercase().replace('\\', "/")
 }
@@ -165,7 +158,9 @@ pub fn hero_stage(showcase: Option<&[u8]>, script: Option<&[u8]>, keys: &[String
         |k: &str, mult: f64| vec3(get(k)).map(|n| [n[0] / 255.0 * mult, n[1] / 255.0 * mult, n[2] / 255.0 * mult]);
     let light_at = vec3(get("PortraitLightPosition"));
     let key_color = rgb("PortraitLightColor", or_one(get("PortraitLightScale").map_or(f64::NAN, num)));
-    let ambient_angles = vec3(get("PortraitAmbientDirection"));
+    // a direction toward the light, not angles: client.dll reads it with V_StringToVector (the
+    // shared template's "-27.23 -113.79 24.22" is a light from the hero's right, a little above)
+    let ambient_dir = vec3(get("PortraitAmbientDirection"));
     let ambient_color = rgb("PortraitAmbientColor", or_one(get("PortraitAmbientScale").map_or(f64::NAN, num)));
     let bg = vec3(get("PortraitBackgroundColor1"));
     let model = get("PortraitBackgroundModel").unwrap_or("");
@@ -174,12 +169,8 @@ pub fn hero_stage(showcase: Option<&[u8]>, script: Option<&[u8]>, keys: &[String
         (Some(at), Some(c)) => json!({ "from": arr(to_glb(unit([at[0], at[1], at[2] - 80.0]), 1.0)), "color": arr(c) }),
         _ => Value::Null,
     };
-    let ambient = match (ambient_angles, ambient_color) {
-        // the ambient direction is where it shines; it comes from the other way
-        (Some(a), Some(c)) => {
-            let f = forward(a);
-            json!({ "from": arr(to_glb([-f[0], -f[1], -f[2]], 1.0)), "color": arr(c) })
-        }
+    let ambient = match (ambient_dir, ambient_color) {
+        (Some(a), Some(c)) => json!({ "from": arr(to_glb(unit(a), 1.0)), "color": arr(c) }),
         _ => Value::Null,
     };
     // the game's own numbers for the viewer: the loadout page's camera first (its hero window is
@@ -189,7 +180,7 @@ pub fn hero_stage(showcase: Option<&[u8]>, script: Option<&[u8]>, keys: &[String
         (Some(angles), Some(color)) => json!({
             "light": { "angles": arr(angles), "color": arr(color), "scale": json_number(or_one(get("PortraitLightScale").map_or(f64::NAN, num))) },
             "ambient": {
-                "angles": arr(ambient_angles.unwrap_or([-27.0, -114.0, 24.0])),
+                "direction": arr(ambient_dir.unwrap_or([-27.23, -113.79, 24.22])),
                 "color": arr(vec3(get("PortraitAmbientColor")).unwrap_or([79.0, 93.0, 93.0])),
                 "scale": json_number(or_one(get("PortraitAmbientScale").map_or(f64::NAN, num))),
             },

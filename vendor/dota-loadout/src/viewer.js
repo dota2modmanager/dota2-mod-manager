@@ -24,7 +24,7 @@ export const DEFAULT_ASSETS = 'https://loadout.nyan.cafe/';
 const BLOOM = 0.35;
 // Light of the loadout page when a hero has no portrait of his own.
 const DEFAULT_LIGHTING = {
-  light: { angles: [50, 145, 0], color: [234, 243, 254], scale: 1.45 }, ambient: { angles: [-27, -114, 24], color: [79, 93, 93], scale: 5 },
+  light: { angles: [50, 145, 0], color: [234, 243, 254], scale: 1.45 }, ambient: { direction: [-27.23, -113.79, 24.22], color: [79, 93, 93], scale: 5 },
   shadow: { color: [56, 56, 56], scale: 5 }, camera: { position: [800, -370, 112] },
 };
 const DRAG = 0.008, WHEEL_TURN = 0.006, EASE = 10, GLIDE = 3.5;
@@ -34,6 +34,8 @@ const toSource = (m) => groupInverse.clone().multiply(m);
 const sourceRotation = new THREE.Matrix4().extractRotation(SOURCE_TO_GLTF);
 // A direction from the game's (pitch, yaw) in its space (x forward from the hero, z up).
 const forward = ([pitch, yaw]) => { const p = THREE.MathUtils.degToRad(pitch), y = THREE.MathUtils.degToRad(yaw); return new THREE.Vector3(Math.cos(p) * Math.cos(y), Math.cos(p) * Math.sin(y), -Math.sin(p)).applyMatrix4(sourceRotation); };
+// A direction the game writes as a vector in its space, turned by yaw degrees about its up axis.
+const along = ([x, y, z], yaw) => { const r = THREE.MathUtils.degToRad(yaw), c = Math.cos(r), s = Math.sin(r); return new THREE.Vector3(x * c - y * s, x * s + y * c, z).normalize().applyMatrix4(sourceRotation); };
 const tint = (c, scale) => new THREE.Color().setRGB(...c.map((v) => v / 255), THREE.SRGBColorSpace).multiplyScalar(scale);
 
 export class HeroViewer {
@@ -204,10 +206,12 @@ void main() {
   // turn him to it: here the camera stays in front, so the light (and, framed as the page, the hero)
   // turns by that angle about him.
   applyLighting(l, hero) {
+    // PortraitAmbientDirection is a vector toward the light (client.dll reads it so); older manifests
+    // carry it as angles.
     const [cx, cy] = l.camera?.position || DEFAULT_LIGHTING.camera.position, facing = -THREE.MathUtils.radToDeg(Math.atan2(cy, cx));
     // The portrait camera's field of view is vertical (checked against the game's page, 2026-11-25).
     this.stageFov = l.camera?.fov ?? 0;
-    this.toLight.copy(forward([l.light.angles[0], l.light.angles[1] + facing])).negate(); this.ambientDir.copy(forward([l.ambient.angles[0], l.ambient.angles[1] + facing]));
+    this.toLight.copy(forward([l.light.angles[0], l.light.angles[1] + facing])).negate(); this.ambientDir.copy(l.ambient.direction ? along(l.ambient.direction, facing) : forward([l.ambient.angles[0], l.ambient.angles[1] + facing]));
     this.light.uLightColor.value.copy(tint(l.light.color, l.light.scale)); this.light.uAmbientColor.value.copy(tint(l.ambient.color, l.ambient.scale));
     this.light.uAmbientTint.value.copy(tint(l.ambient.color, 1)); this.light.uShadowColor.value.copy(tint(l.shadow.color, l.shadow.scale));
     const { box } = hero, size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3()), r = Math.max(size.x, size.y, size.z) * 0.75 + 0.5;
