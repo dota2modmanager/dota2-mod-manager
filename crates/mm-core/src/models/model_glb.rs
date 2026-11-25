@@ -413,7 +413,10 @@ impl ModelGlb {
                 std::fs::create_dir_all(&raw).map_err(|e| e.to_string())?;
                 let world = raw.join("world.glb");
                 (self.run)(&exe, &crate::map_scene::export_args(&map.to_string_lossy(), &world.to_string_lossy()))?;
-                let bytes = crate::map_scene::slim(&world, 256)?;
+                // each copy's tint, from the map's world node beside the world
+                let node =
+                    crate::vpk::read_entry_file(&map, crate::map_scene::WORLD_NODE).ok().flatten().map(|(b, _)| b);
+                let bytes = crate::map_scene::slim(&world, node.as_deref(), 256)?;
                 let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
                 std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
                 std::fs::rename(&part, &light).map_err(|e| e.to_string())

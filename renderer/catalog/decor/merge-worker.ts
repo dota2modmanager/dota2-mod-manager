@@ -4,7 +4,9 @@
  * floats on the window's thread first was most of the three seconds the window froze. Each job is
  * one merged mesh, its parts a geometry and the matrix that places it: positions take the matrix,
  * normals its rotation, the rest come as they are; a part whose matrix mirrors it has its
- * triangles turned round, as a mirrored object shows them.
+ * triangles turned round, as a mirrored object shows them. A part with a tint of its own (the colour
+ * the map paints that copy of a model) has it in every vertex's colour, and so does the rest of its
+ * job, white.
  *
  * What comes in a message is not trusted to name things: a kind picks its array out of a table of
  * its own (a switch, each constructor named), attributes go into a Map and back as a list of pairs, never as an object's properties
@@ -13,7 +15,7 @@
 export type Kind = 'f32' | 'i8' | 'u8' | 'i16' | 'u16' | 'i32' | 'u32';
 export interface View { buf: number; kind: Kind; offset: number; stride: number; size: number; normalized: boolean; count: number }
 export interface Geo { attrs: Record<string, View>; index: { buf: number; kind: Kind; offset: number; length: number } | null; count: number }
-export interface Part { geo: number; matrix: number[]; flip: boolean }
+export interface Part { geo: number; matrix: number[]; flip: boolean; tint?: [number, number, number] }
 export interface Job { id: number; parts: Part[] }
 export interface Merged { id: number; attrs: [string, { array: Float32Array; size: number }][]; index: Uint32Array; sphere: [number, number, number, number] }
 
@@ -71,10 +73,16 @@ export function merge(buffers: ArrayBuffer[], geos: Geo[], job: Job): Merged {
   const first = geos[job.parts[0].geo];
   const attrs = new Map<string, { array: Float32Array; size: number }>();
   for (const [name, a] of Object.entries(first.attrs)) attrs.set(name, { array: new Float32Array(verts * a.size), size: a.size });
+  const tints = job.parts.some((p) => p.tint) ? new Float32Array(verts * 3) : null;
+  if (tints) attrs.set('color', { array: tints, size: 3 });
   const index = new Uint32Array(idx);
   let vAt = 0, iAt = 0;
   for (const p of job.parts) {
     const g = geos[p.geo], m = p.matrix;
+    if (tints) {
+      const [r, gr, b] = p.tint ?? [1, 1, 1];
+      for (let i = 0; i < g.count; i++) tints.set([r, gr, b], (vAt + i) * 3);
+    }
     for (const [name, out] of attrs) {
       const v = g.attrs[name];
       if (!v) continue;

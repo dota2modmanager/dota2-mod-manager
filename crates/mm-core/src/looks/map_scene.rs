@@ -22,8 +22,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 
 /// The light copy's file in the cache; its number goes up when what goes into it changes, so a
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
-/// 4: the layers' blend softness and tint masks).
-pub const LIGHT_FILE: &str = "world-4.glb";
+/// 4: the layers' blend softness and tint masks; 5: each copy's tint).
+pub const LIGHT_FILE: &str = "world-5.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -537,10 +537,88 @@ pub fn meshopt_compress(mut json: Value, bin: Vec<u8>) -> Result<(Value, Vec<u8>
     Ok((json, out))
 }
 
-/// The light copy of the toolchain's GLB at `world`, its pictures read beside it.
-pub fn slim(world: &Path, max_px: u32) -> Result<Vec<u8>, String> {
+/// The world node the map's static props are laid out in, inside the map's archive.
+pub const WORLD_NODE: &str = "maps/dota/worldnodes/n0.vwnod_c";
+
+/// A Source colour channel (0-1, sRGB) in linear light.
+fn to_linear(v: f64) -> f64 {
+    if v <= 0.04045 {
+        v / 12.92
+    } else {
+        ((v + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+/// Each copy's tint by the name the export gives its node, in the order the copies come: the map
+/// paints one rock model in a dozen greys and greens, one per copy, in its world node
+/// (`m_sceneObjects[].m_vTintColor`, 0-1, and each fragment of an aggregate,
+/// `m_aggregateSceneObjects[].m_aggregateMeshes[].m_vTintColor`, 0-255), and the export drops it.
+/// A node is named after its model's file (`n0_lr0_agg_prop_cliff_wall001_0`, one per fragment),
+/// a scene object's after its model and mesh set (`..._overlay0.meshset_0`). The colour's alpha is
+/// how strongly it tints; the tints come linear, white mixed in by that.
+pub fn instance_tints(vwnod: &[u8]) -> BTreeMap<String, Vec<[f64; 3]>> {
+    let mut out: BTreeMap<String, Vec<[f64; 3]>> = BTreeMap::new();
+    let Ok(data) = crate::resource::data(vwnod, "DATA", 0) else { return out };
+    let Ok(kv) = crate::kv3::read(data) else { return out };
+    let stem = |n: &crate::kv3::Node| -> Option<String> {
+        let path = n.get("m_renderableModel")?.as_str()?;
+        let file = path.rsplit('/').next()?;
+        Some(file.strip_suffix(".vmdl").unwrap_or(file).to_string())
+    };
+    let tint = |n: Option<&crate::kv3::Node>, scale: f64| -> [f64; 3] {
+        let items = n.map(|n| n.items()).unwrap_or(&[]);
+        let c = |i: usize| items.get(i).and_then(|x| kv.number_of(x)).map_or(1.0, |v| (v / scale).clamp(0.0, 1.0));
+        // the fourth number is how much of the tint the copy takes (a temple stair's dark green at 48
+        // of 255 leaves it a light grey), all of it where there is none
+        let amount = c(3);
+        [0, 1, 2].map(|i| 1.0 + (to_linear(c(i)) - 1.0) * amount)
+    };
+    for o in kv.root.get("m_sceneObjects").map(|n| n.items()).unwrap_or(&[]) {
+        if let Some(s) = stem(o) {
+            out.entry(s).or_default().push(tint(o.get("m_vTintColor"), 1.0));
+        }
+    }
+    for o in kv.root.get("m_aggregateSceneObjects").map(|n| n.items()).unwrap_or(&[]) {
+        let Some(s) = stem(o) else { continue };
+        let list = out.entry(s).or_default();
+        for m in o.get("m_aggregateMeshes").map(|n| n.items()).unwrap_or(&[]) {
+            list.push(tint(m.get("m_vTintColor"), 255.0));
+        }
+    }
+    out
+}
+
+/// The tints on the export's nodes, in their extras (`tint`), the k-th node of a name taking the
+/// k-th tint of its model; white is left off.
+pub fn tint_nodes(json: &mut Value, tints: &BTreeMap<String, Vec<[f64; 3]>>) {
+    let Some(nodes) = json.get_mut("nodes").and_then(Value::as_array_mut) else { return };
+    let mut seen: BTreeMap<String, usize> = BTreeMap::new();
+    for n in nodes.iter_mut() {
+        let Some(name) = n.get("name").and_then(Value::as_str).map(str::to_string) else { continue };
+        let k = seen.entry(name.clone()).or_default();
+        let at = *k;
+        *k += 1;
+        let model = name.split('.').next().unwrap_or(&name);
+        let Some(t) = tints.get(model).and_then(|l| l.get(at)) else { continue };
+        if t.iter().all(|c| *c >= 0.999) {
+            continue;
+        }
+        let Some(o) = n.as_object_mut() else { continue };
+        let extras = o.entry("extras").or_insert_with(|| json!({}));
+        if let Some(e) = extras.as_object_mut() {
+            e.insert("tint".into(), json!(t.map(|c| (c * 10000.0).round() / 10000.0)));
+        }
+    }
+}
+
+/// The light copy of the toolchain's GLB at `world`, its pictures read beside it, each copy of a
+/// model in the tint `vwnod` (the map's world node) gives it.
+pub fn slim(world: &Path, vwnod: Option<&[u8]>, max_px: u32) -> Result<Vec<u8>, String> {
     let buf = std::fs::read(world).map_err(|e| e.to_string())?;
-    let (json, bin) = read_glb(&buf)?;
+    let (mut json, bin) = read_glb(&buf)?;
+    if let Some(v) = vwnod {
+        tint_nodes(&mut json, &instance_tints(v));
+    }
     let dir = world.parent().map(Path::to_path_buf).unwrap_or_default();
     let picture = |uri: &str| -> Option<Vec<u8>> {
         let plain = crate::installer_downloads::decode_uri_component(uri)?;
@@ -555,6 +633,29 @@ pub fn slim(world: &Path, max_px: u32) -> Result<Vec<u8>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn each_copy_of_a_model_takes_its_own_tint() {
+        let tints: BTreeMap<String, Vec<[f64; 3]>> = [
+            ("n0_lr0_agg_rocks_0".to_string(), vec![[0.2, 0.3, 0.4], [1.0, 1.0, 1.0], [0.5, 0.5, 0.5]]),
+            ("overlay0".to_string(), vec![[0.1, 0.1, 0.1]]),
+        ]
+        .into();
+        let mut j = json!({ "nodes": [
+            { "name": "n0_lr0_agg_rocks_0" }, { "name": "n0_lr0_agg_rocks_0" }, { "name": "overlay0.meshset_0" },
+            { "name": "n0_lr0_agg_rocks_0", "extras": { "x": 1 } }, { "name": "dire_tree1.dire_tree1_model" } ] });
+        tint_nodes(&mut j, &tints);
+        assert_eq!(j["nodes"][0]["extras"]["tint"], json!([0.2, 0.3, 0.4]));
+        assert!(j["nodes"][1].get("extras").is_none(), "white is left off");
+        assert_eq!(j["nodes"][2]["extras"]["tint"], json!([0.1, 0.1, 0.1]), "a mesh set takes its object's tint");
+        assert_eq!(
+            j["nodes"][3]["extras"],
+            json!({ "x": 1, "tint": [0.5, 0.5, 0.5] }),
+            "the third copy, the third tint"
+        );
+        assert!(j["nodes"][4].get("extras").is_none());
+        assert!((to_linear(115.0 / 255.0) - 0.171).abs() < 0.001);
+    }
 
     #[test]
     fn a_grey_picture_takes_the_tint_of_its_layer() {
@@ -667,7 +768,7 @@ mod real {
     fn the_real_world_comes_out_light() {
         let Ok(p) = std::env::var("MM_TEST_WORLD") else { return };
         let t = std::time::Instant::now();
-        let out = super::slim(std::path::Path::new(&p), 256).expect("slim");
+        let out = super::slim(std::path::Path::new(&p), None, 256).expect("slim");
         eprintln!("light copy: {:.1} MB in {:?}", out.len() as f64 / 1e6, t.elapsed());
         if let Ok(to) = std::env::var("MM_TEST_WORLD_OUT") {
             std::fs::write(to, &out).unwrap();
