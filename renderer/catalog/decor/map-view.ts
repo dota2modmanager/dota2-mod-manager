@@ -140,6 +140,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (windy) { windTime.value = clock.elapsedTime; dirty = true; }
     if (weather?.tick(clock.elapsedTime, controls.target, renderer.domElement.height, camera)) dirty = true;
     if (light.tick(clock.elapsedTime, camera, controls.target) || keepOnGround(heights, camera, controls.target, mapReach)) dirty = true;
+    if (light.sunMoved()) renderer.shadowMap.needsUpdate = true;
     if (!dirty) return;
     dirty = false;
     if (water) { bedPass.draw(renderer, scene, camera, moved); moved = false; }

@@ -323,29 +323,47 @@ pub fn weather_light(default_entities: &[Vec<u8>], particle: Option<&str>, zone_
 }
 
 /// What the window's light reads of a zone (map-light.ts): the sun and where it stands, the light
-/// around and in the shadows, how much of the light around the shadows take, the fog and the lightning.
-const LIGHT_KEYS: [&str; 21] = [
+/// around and in the shadows, how much of the light around the shadows take, the fog and the lightning,
+/// each by day and by night (the game blends the two as its clock turns: map-light.ts).
+const LIGHT_KEYS: [&str; 38] = [
     "ambient_shadow_amount",
     "color_day",
+    "color_night",
     "light_scale_day",
+    "light_scale_night",
     "light_direction_day",
+    "light_direction_night",
     "ambient_color_day",
+    "ambient_color_night",
     "ambient_scale_day",
+    "ambient_scale_night",
     "ambient_direction_day",
+    "ambient_direction_night",
     "shadow_color_day",
+    "shadow_color_night",
     "shadow_secondary_color_day",
+    "shadow_secondary_color_night",
     "shadow_scale_day",
+    "shadow_scale_night",
     "shadow_ground_scale_day",
+    "shadow_ground_scale_night",
     "fog_color_day",
+    "fog_color_night",
     "fog_start_day",
+    "fog_start_night",
     "fog_end_day",
+    "fog_end_night",
     "fog_height_day",
+    "fog_height_night",
     "fog_hight_color_day",
+    "fog_hight_color_night",
     "lightning_intensity_max",
     "lightning_period_min",
     "lightning_period_max",
     "specular_color_day",
+    "specular_color_night",
     "specular_independence_day",
+    "specular_independence_night",
 ];
 
 /// The first entity of a class in the map's entity lumps, its values as JSON (look_json), or null.
@@ -665,6 +683,12 @@ mod tests {
         assert!(lights.iter().all(|l| l[7] > 0.0 && l[0].abs() < 10000.0 && l[3].max(l[4]).max(l[5]) > 0.0));
         let v = weather_lights(&lumps, &["snow"]);
         assert_eq!(v["plain"]["local_lights"].as_array().map(Vec::len), Some(lights.len()));
+        // the night's light too, which the window turns to as the game's clock does
+        eprintln!(
+            "night: {} {} {}",
+            v["plain"]["color_night"], v["plain"]["light_scale_night"], v["plain"]["ambient_color_night"]
+        );
+        assert!(v["plain"]["color_night"].as_array().is_some_and(|a| a.len() == 3));
         // and its standing effects: the river's flow among them, each with a place
         let fx = world_effects(&lumps);
         assert!(fx.len() > 800, "{}", fx.len());
