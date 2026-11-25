@@ -132,8 +132,9 @@ pub fn set_preview_ask(ask: PedestalAsk) {
     *PREVIEW_ASK.lock().unwrap_or_else(|e| e.into_inner()) = Some(ask);
 }
 
-/// The 3D preview's stage with the pedestal the build sews for `hero` (`stage.pedestal`, none
-/// leaves the window's own stand) and its height (`stage.pedestalLift`, the game's units): the one
+/// The 3D preview's stage with the pedestal the build sews for `hero` (`stage.pedestal`; with none
+/// of its own the game's base one, and none, the window's own stand, when the base is hidden)
+/// and its height (`stage.pedestalLift`, the game's units): the one
 /// chosen, else the one a pick worn (`slots` as the preview asks) brings in its style.
 pub fn stage_pedestal(
     stage: &mut Value,
@@ -171,7 +172,10 @@ pub fn stage_pedestal(
         Some(m) => Some(m.clone()),
         None => worn()?,
     };
-    stage["pedestalLift"] = serde_json::json!(ask.lifts.get(&short).copied().unwrap_or(0.0));
+    // none of its own: the one the game puts under every hero, unless the person hid it
+    let lift = if own.is_some() { ask.lifts.get(&short).copied().unwrap_or(0.0) } else { 0.0 };
+    let own = own.or_else(|| (!ask.hide_base).then(|| BASE_PEDESTAL.to_string()));
+    stage["pedestalLift"] = serde_json::json!(lift);
     stage["pedestal"] = own.map_or(Value::Null, Value::String);
     Ok(())
 }

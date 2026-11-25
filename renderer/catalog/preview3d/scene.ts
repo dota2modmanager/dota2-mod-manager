@@ -142,7 +142,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     };
     const load=async()=>{
       check();
-      const manifest = { ...source.manifest, models: { ...source.manifest.models }, attachments: { ...source.manifest.attachments }, materials: { ...source.manifest.materials }, terrorbladeWeaponOwners: weaponOwners(look), lighting: options.stage?.lighting ?? undefined };
+      const manifest = { ...source.manifest, models: { ...source.manifest.models }, attachments: { ...source.manifest.attachments }, materials: { ...source.manifest.materials }, terrorbladeWeaponOwners: weaponOwners(look), lighting: options.stage?.lighting ?? undefined, heroScale: options.isolated ? undefined : options.stage?.scale };
       for (const [owner, item] of overrides) {
         if (!item) { delete manifest.models[owner]; delete manifest.attachments[owner]; continue; }
         manifest.models[owner] = item.url(item.manifest.models[owner]);
@@ -164,7 +164,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     if(options.isolated&&live.hero){
       for(let i=0;i<90;i++)live.hero.update(1/60,live.camera);
       const box=loadoutParticleBounds(live.hero.lib.group);
-      if(!box.isEmpty()&&box.getSize(new Vector3()).length()<500){live.view.center.copy(box.getCenter(new Vector3()));live.view.size=box.getSize(new Vector3()).max(new Vector3(1,1,1));live.place();}
+      if(!box.isEmpty()&&box.getSize(new Vector3()).length()<500){live.view.stage=null;live.view.pitch=0;live.view.center.copy(box.getCenter(new Vector3()));live.view.size=box.getSize(new Vector3()).max(new Vector3(1,1,1));live.place();}
       await applyEffects(currentDefs);
     }
     const initial=loadoutView(live);if(options.viewState)restoreLoadoutView(live,options.viewState);

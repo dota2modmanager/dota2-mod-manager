@@ -14,10 +14,10 @@ export interface Hero {
  update(dt:number,camera:THREE.Camera):void;
 }
 export class HeroViewer {
- constructor(canvas:HTMLCanvasElement,options?:{assets?:string;controls?:boolean|'hero';wheel?:'zoom'|'turn'|false;framing?:'hero'|'full';pixelRatio?:number;textureScale?:number;bloom?:number|false;softParticles?:boolean;onFrame?:(dt:number)=>void;onAfterUpdate?:()=>void;onAnimation?:(name:string)=>void;beforeShow?:()=>Promise<void>});
+ constructor(canvas:HTMLCanvasElement,options?:{assets?:string;controls?:boolean|'hero';wheel?:'zoom'|'turn'|false;framing?:'hero'|'full'|'stage';pixelRatio?:number;textureScale?:number;bloom?:number|false;softParticles?:boolean;onFrame?:(dt:number)=>void;onAfterUpdate?:()=>void;onAnimation?:(name:string)=>void;beforeShow?:()=>Promise<void>});
  canvas:HTMLCanvasElement; camera:THREE.PerspectiveCamera; renderer:THREE.WebGLRenderer; scene:THREE.Scene; hero:Hero|null;
  paused:boolean; loading:number; readonly animations:Animation[];
- view:{center:THREE.Vector3;size?:THREE.Vector3;distance:number;zoom:number;zoomTarget:number;pitch:number};
+ view:{center:THREE.Vector3;size?:THREE.Vector3;distance:number;zoom:number;zoomTarget:number;pitch:number;stage?:{distance:number;pitch:number;turn:number}|null};
  turn:{angle:number;target:number;velocity:number};
  load(source:{manifest:SceneManifest;url:(path:string)=>string},prepare?:(hero:Hero)=>Promise<void>):Promise<unknown>;
  play(name:string):number; unload():void; park():void; fit():void; place():void; frame():void; dispose():void;
