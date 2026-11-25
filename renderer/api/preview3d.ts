@@ -55,6 +55,8 @@ export interface LoadoutResources {
   sheets: Record<string, { id: number; clamp: boolean; frames: { time: number; uv: number[]; crop: number[] }[] }[]>;
   missing: string[];
 }
+/** A hitbox of the hero's model: the bone it sits on and its corners in that bone's space (inches). */
+export interface HitBox { bone: string; min: [number, number, number]; max: [number, number, number] }
 export interface Attachment extends Partial<LoadoutAttachment> { name: string; bone: string; offset: [number, number, number]; rotation: [number, number, number, number] }
 
 /** A hero's other form or summon on the stage (crates/mm-core/src/models/hero_companions.rs). */
@@ -98,7 +100,7 @@ export type ModelsAnswer =
     | {
       ok: true; body: Uint8Array; clip: string | null; model: string; motions: Motion[]; stage: HeroStage; pedestal: Uint8Array | null;
       parts: { slot: string; name: string; glb: Uint8Array; attachments: Attachment[]; hidden: string[] }[]; missing: string[]; hidden: string[];
-      attachments: Attachment[]; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources;
+      attachments: Attachment[]; hitboxes?: Record<string, HitBox[]>; particles: { part: number; def: ParticleDef }[]; sprites: Record<string, Uint8Array>; resources?: LoadoutResources;
       /** his other forms and summons, stood beside him: the bear, the dragon, the spirits */
       companions?: Companion[];
     }

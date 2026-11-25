@@ -403,6 +403,36 @@ pub fn model_attachments(model: Option<&[u8]>) -> Vec<Value> {
     out
 }
 
+/// A model's hitbox sets by name, each box the bone it sits on and its corners in that bone's
+/// space (inches): where systems such as C_INIT_CreateOnModelAtHeight start their particles.
+pub fn model_hitbox_sets(model: Option<&[u8]>) -> Value {
+    let mut out = Map::new();
+    let Some(blocks) = model.and_then(|m| resource::blocks(m).ok()) else { return Value::Object(out) };
+    for i in 0..blocks.iter().filter(|b| b.name == "MDAT").count() {
+        let Some(tree) = model
+            .and_then(|m| resource::data(m, "MDAT", i).ok())
+            .and_then(|d| kv3::read(d).ok())
+            .map(|kv| kv_json(&kv, Some(&kv.root)))
+        else {
+            continue;
+        };
+        for set in tree.get("m_hitboxsets").and_then(Value::as_array).into_iter().flatten() {
+            let v = set.get("value").unwrap_or(set);
+            let Some(name) = set.get("key").or_else(|| v.get("m_name")).and_then(Value::as_str) else { continue };
+            let boxes: Vec<Value> = (v.get("m_HitBoxes").and_then(Value::as_array).into_iter().flatten())
+                .filter_map(|b| {
+                    let bone = b.get("m_sBoneName")?.as_str()?;
+                    Some(json!({ "bone": bone, "min": b.get("m_vMinBounds")?, "max": b.get("m_vMaxBounds")? }))
+                })
+                .collect();
+            if !boxes.is_empty() {
+                out.entry(name.to_lowercase()).or_insert(Value::Array(boxes));
+            }
+        }
+    }
+    Value::Object(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::item_particles;

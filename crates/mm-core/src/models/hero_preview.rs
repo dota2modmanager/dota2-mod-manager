@@ -169,8 +169,7 @@ pub struct Game<'a> {
     pub paths: &'a dyn Fn() -> Vec<String>,
 }
 
-/// What the preview shows of `name` in `slots`, with the library's installed cosmetics worn
-/// where the slots pick nothing.
+/// What the preview shows of `name` in `slots`, with the library's installed cosmetics worn where the slots pick nothing.
 pub fn plan(text: &[u8], game: &Game, library: &[Value], name: &str, slots: &[Value], log: &dyn Fn(&str)) -> R<Plan> {
     let hero = if name.starts_with("npc_dota_hero_") { name.to_string() } else { format!("npc_dota_hero_{name}") };
     let short = hero.strip_prefix("npc_dota_hero_").unwrap_or(&hero).to_string();
@@ -562,6 +561,7 @@ pub struct Shown {
     pub hidden: Vec<String>,
     /// the body's attachment points, and the particles: on the body (part -1) or on a part, by its place in `parts`
     pub attachments: Vec<Value>,
+    pub hitboxes: Value,
     pub particles: Vec<PlannedFx>,
     /// the particles' textures as PNG bytes, by the path they name
     pub sprites: IndexMap<String, Vec<u8>>,
@@ -883,6 +883,7 @@ impl HeroPreview {
             missing,
             hidden: p.hidden.clone(),
             attachments: model_attachments(read(&compiled(&p.body)).as_deref()),
+            hitboxes: crate::particle_spec::model_hitbox_sets(read(&compiled(&p.body)).as_deref()),
             particles,
             sprites,
             resources,

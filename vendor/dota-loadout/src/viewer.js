@@ -646,6 +646,8 @@ export async function buildHero(manifest, url, manager, time, light, textureScal
   const model = {
     bones: ((list) => (list.length ? list : [...new Set(Object.values(bones))].filter((b) => b.isBone)))(Object.values(bones).filter((b) => b.name.endsWith('_JNT'))),
     bone: (name) => bones[name.toLowerCase()] || null,
+    // The hero's hitbox sets by name: { bone, min, max } boxes in the bone's space (inches).
+    hitboxes: manifest.hitboxes || {},
     // A point in a bone's own space (inches), in the effects' space.
     boneLocal(name, pos) { const b = bones[name.toLowerCase()]; return b ? pos.clone().multiplyScalar(0.0254).applyMatrix4(b.matrixWorld).applyMatrix4(groupInverse) : pos.clone(); },
     boneMatrix: (b) => toSource(b.matrixWorld.clone()),
