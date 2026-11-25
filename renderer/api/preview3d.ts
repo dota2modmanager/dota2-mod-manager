@@ -5,7 +5,8 @@
 /** A hero's portrait entry as the game writes it (Source angles in degrees, colours 0-255), for the viewer's light. */
 export interface StageLighting {
   light: { angles: [number, number, number]; color: [number, number, number]; scale: number };
-  ambient: { angles: [number, number, number]; color: [number, number, number]; scale: number };
+  /** a direction toward the light, in Source axes (not angles: the game reads it as a vector) */
+  ambient: { direction: [number, number, number]; color: [number, number, number]; scale: number };
   shadow: { color: [number, number, number]; scale: number };
   camera: { position: [number, number, number] | null; angles: [number, number, number] | null; fov: number | null };
 }
