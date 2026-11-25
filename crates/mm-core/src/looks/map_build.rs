@@ -324,7 +324,7 @@ pub fn weather_light(default_entities: &[Vec<u8>], particle: Option<&str>, zone_
 
 /// What the window's light reads of a zone (map-light.ts): the sun and where it stands, the light
 /// around and in the shadows, how much of the light around the shadows take, the fog and the lightning.
-const LIGHT_KEYS: [&str; 19] = [
+const LIGHT_KEYS: [&str; 21] = [
     "ambient_shadow_amount",
     "color_day",
     "light_scale_day",
@@ -344,6 +344,8 @@ const LIGHT_KEYS: [&str; 19] = [
     "lightning_intensity_max",
     "lightning_period_min",
     "lightning_period_max",
+    "specular_color_day",
+    "specular_independence_day",
 ];
 
 /// The first entity of a class in the map's entity lumps, its values as JSON (look_json), or null.

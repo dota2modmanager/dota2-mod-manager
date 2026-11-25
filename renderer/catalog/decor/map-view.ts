@@ -18,7 +18,7 @@ import { forgetGrounds, groundLight, isGround, paintGround, setGround } from './
 import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
-import { isWater, waterOf, waterTime } from './map-water.ts';
+import { isWater, waterBed, waterOf, waterTime } from './map-water.ts';
 
 /** The game's own tree sets picked per side, and a catalog Trees mod. */
 /** `mod`: a catalog Trees mod's models by the game tree each stands in for (map-trees.ts) */
@@ -101,8 +101,10 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   // the shadows (a second pass over the whole map) are drawn again only when something switched.
   renderer.shadowMap.autoUpdate = false;
   let dirty = true;
-  const changed = () => { dirty = true; renderer.shadowMap.needsUpdate = true; };
-  controls.addEventListener('change', () => { dirty = true; });
+  // whether the view or the map changed since the water's bed was drawn (map-water.ts)
+  let moved = true;
+  const changed = () => { dirty = true; moved = true; renderer.shadowMap.needsUpdate = true; };
+  controls.addEventListener('change', () => { dirty = true; moved = true; });
   const size = () => {
     const w = host.clientWidth || 800, h = host.clientHeight || 600;
     renderer.setSize(w, h, false);
@@ -118,6 +120,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const clock = new THREE.Clock();
   // the water's waves run while there is water to see: then every frame is drawn (the shadows stay as they are)
   let water = false;
+  // the map under the water (the game's refraction map), drawn again when the view moved
+  const bedPass = waterBed();
   // the weather, made once the map's size is known; the ground's heights, the map's width
   let weather: MapWeather | null = null, weatherWanted: string | null = null, heights: Heights | null = null, mapReach = 1;
   renderer.setAnimationLoop(() => {
@@ -128,6 +132,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (light.tick(clock.elapsedTime, camera, controls.target) || keepOnGround(heights, camera, controls.target, mapReach)) dirty = true;
     if (!dirty) return;
     dirty = false;
+    if (water) { bedPass.draw(renderer, scene, camera, moved); moved = false; }
     renderer.render(scene, camera);
   });
 
@@ -285,6 +290,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       keys.dispose();
       forgetGrounds();
       renderer.setAnimationLoop(null);
+      bedPass.dispose();
       resize.disconnect();
       controls.dispose();
       scene.traverse((o) => {
