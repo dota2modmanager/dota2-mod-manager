@@ -458,6 +458,54 @@ pub fn local_lights(default_entities: &[Vec<u8>]) -> Vec<[f64; 8]> {
     out
 }
 
+/// The map's standing effects (dota_world_particle_system, info_particle_system: the river's flow
+/// and foam, fireflies, lamp flames, the lava), those that start on: each its system's path, where it
+/// stands in inches, how it is turned (pitch, yaw, roll in degrees) and the Optimization group that
+/// takes it away (map_optimize.rs map_particle_group).
+pub fn world_effects(default_entities: &[Vec<u8>]) -> Vec<serde_json::Value> {
+    let mut out = Vec::new();
+    for file in default_entities {
+        let Ok(data) = crate::resource::data(file, "DATA", 0) else { continue };
+        let Ok(kv) = kv3::read(data) else { continue };
+        for e in kv.root.get("m_entityKeyValues").map(|n| n.items()).unwrap_or(&[]) {
+            let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
+            let class = values.get("classname").and_then(kv3::Node::as_str);
+            if !matches!(class, Some("dota_world_particle_system" | "info_particle_system")) {
+                continue;
+            }
+            let on = values.get("start_active").and_then(|n| match &n.value {
+                kv3::Value::Other { value: Some(v), .. } => Some(*v != 0),
+                kv3::Value::Number { .. } => kv.number_of(n).map(|f| f != 0.0),
+                kv3::Value::Str(t) => Some(!matches!(t.as_str(), "0" | "false")),
+                _ => None,
+            });
+            if on == Some(false) {
+                continue;
+            }
+            let Some(fx) = values.get("effect_name").and_then(kv3::Node::as_str) else { continue };
+            let fx = fx.trim_start_matches("resource_name:").trim();
+            if fx.is_empty() {
+                continue;
+            }
+            let three = |k: &str| -> Vec<f64> {
+                match values.get(k).map(|n| &n.value) {
+                    Some(kv3::Value::Array { items, .. }) => items.iter().filter_map(|i| kv.number_of(i)).collect(),
+                    Some(kv3::Value::Str(t)) => t.split_whitespace().filter_map(|x| x.parse().ok()).collect(),
+                    _ => Vec::new(),
+                }
+            };
+            let (at, turn) = (three("origin"), three("angles"));
+            if at.len() < 3 {
+                continue;
+            }
+            let turn = if turn.len() >= 3 { turn } else { vec![0.0; 3] };
+            let group = crate::map_optimize::map_particle_group(fx);
+            out.push(serde_json::json!({ "fx": fx, "at": &at[..3], "turn": &turn[..3], "group": group }));
+        }
+    }
+    out
+}
+
 /// For the window: the everyday look of the Radiant's forest zone and each weather's look there,
 /// by the weather's key (map_decor.rs WEATHER_KEYS), each cut to what the window's light reads,
 /// with what the whole map shares (global_light) in each; the everyday one also carries the map's
@@ -478,6 +526,7 @@ pub fn weather_lights(default_entities: &[Vec<u8>], keys: &[&str]) -> serde_json
         if i == 0 {
             let mut plain = cut(&v["plain"]);
             plain["local_lights"] = serde_json::json!(local_lights(default_entities));
+            plain["world_effects"] = serde_json::json!(world_effects(default_entities));
             out.insert("plain".into(), plain);
         }
         if v["weather"].is_object() {
@@ -600,10 +649,10 @@ mod tests {
         assert!(v["plain"].is_object() && v["weather"].is_object());
     }
 
-    /// The real map's small lights (MM_TEST_MAP is maps/dota.vpk): the 327 lamps and braziers, each
+    /// The real map's small lights and standing effects (MM_TEST_MAP is maps/dota.vpk): the 327 lamps and braziers, each
     /// somewhere on the map with a colour and a reach.
     #[test]
-    fn the_map_has_its_small_lights() {
+    fn the_map_has_its_small_lights_and_effects() {
         let Ok(map) = std::env::var("MM_TEST_MAP") else { return };
         let default_map = Index::open(std::path::Path::new(&map)).unwrap();
         let lumps: Vec<Vec<u8>> = default_map
@@ -616,6 +665,11 @@ mod tests {
         assert!(lights.iter().all(|l| l[7] > 0.0 && l[0].abs() < 10000.0 && l[3].max(l[4]).max(l[5]) > 0.0));
         let v = weather_lights(&lumps, &["snow"]);
         assert_eq!(v["plain"]["local_lights"].as_array().map(Vec::len), Some(lights.len()));
+        // and its standing effects: the river's flow among them, each with a place
+        let fx = world_effects(&lumps);
+        assert!(fx.len() > 800, "{}", fx.len());
+        assert!(fx.iter().any(|f| f["fx"] == "particles/world_environmental_fx/map_riverflow_edges.vpcf"));
+        assert!(fx.iter().all(|f| f["at"].as_array().is_some_and(|a| a.len() == 3)));
     }
 
     /// The winter map built on the real game (MM_TEST_MAP is maps/dota.vpk): every file at the

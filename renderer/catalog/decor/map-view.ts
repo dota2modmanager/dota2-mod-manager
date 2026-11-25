@@ -19,6 +19,7 @@ import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime } from './map-water.ts';
+import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts';
 
 /** The game's own tree sets picked per side, and a catalog Trees mod. */
 /** `mod`: a catalog Trees mod's models by the game tree each stands in for (map-trees.ts) */
@@ -124,8 +125,12 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const bedPass = waterBed();
   // the weather, made once the map's size is known; the ground's heights, the map's width
   let weather: MapWeather | null = null, weatherWanted: string | null = null, heights: Heights | null = null, mapReach = 1;
+  // the map's standing effects (map-effects.ts), once the map is in and the core listed them
+  let effects: MapEffects | null = null, effectList: WorldEffect[] | null = null;
   renderer.setAnimationLoop(() => {
-    if (keys.step(clock.getDelta())) dirty = true;
+    const dt = clock.getDelta();
+    if (keys.step(dt)) dirty = true;
+    if (effects?.tick(dt, camera, controls.target)) dirty = true;
     controls.update();
     if (water) { waterTime.value = clock.elapsedTime; dirty = true; }
     if (weather?.tick(clock.elapsedTime, controls.target, renderer.domElement.height, camera)) dirty = true;
@@ -165,8 +170,14 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     void asked.then((m) => { onProgress(null); if (groundShown === key) void setGround(m, changed); });
   };
 
+  const startEffects = () => {
+    if (effects || !loaded || !effectList || disposed) return;
+    effects = mapEffects(scene, effectList);
+    effects.hide(removed);
+  };
   const apply = () => {
     for (const [g, list] of byGroup) for (const m of list) m.visible = !removed.has(g as DecorGroup);
+    effects?.hide(removed);
     trees?.show('own', looks.trees, looks.mod);
     if (trees) showGround();
     // the ground in the dusk or the dark, by the factor the build writes into the game (map_optimize.rs)
@@ -274,6 +285,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (disposed) return;
     onProgress(null);
     loaded = true;
+    startEffects();
     if (paintWanted) repaint();
     else apply();
   })();
@@ -283,10 +295,12 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     paint(p) { if (p === paintWanted) return; paintWanted = p; repaint(); },
     weather(key, lights) {
       light.weather(key ? lights?.[key] ?? null : null, lights?.plain ?? null);
+      if (!effectList && lights?.plain?.world_effects) { effectList = lights.plain.world_effects; startEffects(); }
       if (key !== weatherWanted) { weatherWanted = key; weather?.set(key); } changed(); },
     dispose() {
       disposed = true;
       weather?.dispose();
+      effects?.dispose();
       keys.dispose();
       forgetGrounds();
       renderer.setAnimationLoop(null);

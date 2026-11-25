@@ -814,7 +814,12 @@ const OP = {
   },
   // Control points for this system and its children.
   C_OP_SetSingleControlPointPosition(d) {
-    const cp = d.m_nCP1 ?? 1, pos = vector(d.m_vecCP1Pos, [128, 0, 0]), once = d.m_bSetOnce, world = d.m_bUseWorldLocation, head = d.m_nHeadLocation ?? 0; let done = false;
+    // The newer form names the point it is from (m_transformInput); with none (PT_TYPE_INVALID) the
+    // offset is where the point goes, in the world: the map's river edges hand their splashes a size
+    // in CP 1's x this way, and taken from CP 0 it was the map's coordinate, splashes a hundred metres wide.
+    const ti = d.m_transformInput, fromNone = ti && (ti.m_nType ?? 'PT_TYPE_INVALID') === 'PT_TYPE_INVALID';
+    const cp = d.m_nCP1 ?? 1, pos = vector(d.m_vecCP1Pos, [128, 0, 0]), once = d.m_bSetOnce, world = d.m_bUseWorldLocation || fromNone;
+    const head = ti && !fromNone ? ti.m_nControlPoint ?? 0 : d.m_nHeadLocation ?? 0; let done = false;
     // From the head point, unturned: the offset is as often a value as a place (Ravenblight's CP 2 =
     // 1, 0, 0 turns its gold on), and the hero's turn on the turntable is no turn of the game's.
     return (ps, dt, s) => { if (once && done) return; const v = pos(null, s).clone(); if (!world) v.add(s.cp(head).pos); s.setCP(cp, v); done = true; };

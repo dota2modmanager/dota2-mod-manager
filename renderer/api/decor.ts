@@ -42,6 +42,8 @@ export interface ZoneLight {
   /** the everyday zone only: the map's small lights (lamps, braziers), each [x, y, z, r, g, b, intensity, radius],
    * place and reach in inches, colour 0-255 sRGB (map_build.rs local_lights) */
   local_lights?: number[][];
+  /** the everyday zone only: the map's standing effects (map_build.rs world_effects), place in inches, turn in degrees */
+  world_effects?: { fx: string; at: number[]; turn: number[]; group?: string }[];
 }
 
 /** The map without its decor, and the rest of Optimization. */
