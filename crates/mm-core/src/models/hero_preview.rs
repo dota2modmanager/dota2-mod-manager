@@ -198,7 +198,7 @@ pub fn plan(text: &[u8], game: &Game, library: &[Value], name: &str, slots: &[Va
         .cloned()
         .collect();
     let equipped = picks::preview_equipment(text, &installed, slots)?;
-    let slots = picks::persona_preview_slots(text, &hero, slots, &equipped)?;
+    let slots = picks::persona_preview_slots(text, &hero, &picks::with_stock_slots(text, &hero, slots)?, &equipped)?;
     let crown = picks::monkey_king_crown(text, &hero, &equipped)?;
     let crown = (!crown.is_null()).then(|| Found {
         id: crate::js::string(&crown["id"]),
