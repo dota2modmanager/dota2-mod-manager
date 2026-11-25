@@ -260,6 +260,7 @@ fn mod_props(o: &Owner, args: &[Value]) -> Value {
         missing: vec![],
         hidden: vec![],
         attachments: crate::particle_spec::model_attachments(body_file.as_deref()),
+        hitboxes: crate::particle_spec::model_hitbox_sets(body_file.as_deref()),
         particles,
         sprites,
         resources,

@@ -159,6 +159,7 @@ pub(crate) fn shown(m: &crate::hero_preview::Shown) -> Value {
         "missing": m.missing,
         "hidden": m.hidden,
         "attachments": m.attachments,
+        "hitboxes": m.hitboxes,
         "particles": m.particles,
         "sprites": sprites,
         "resources": m.resources,

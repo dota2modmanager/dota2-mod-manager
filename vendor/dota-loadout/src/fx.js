@@ -611,12 +611,24 @@ Object.assign(INIT, {
       p.pos.copy(s.cp(cp).pos).addScaledVector(dir, r); p.prev.copy(p.pos); p.vel.addScaledVector(dir, lerp(v0, v1, rnd())); };
   },
   // On the model, at a height above the control point.
+  // A point in a box of the hitbox set it names (Terrorblade's feet fire: "feet", boxes halved),
+  // else on a bone, then lifted to the height over the height control point.
   C_INIT_CreateOnModelAtHeight(d) {
-    const cp = d.m_nControlPointNumber ?? 0, h = number(d.m_flDesiredHeight, 0);
-    return (p, s) => { const m = s.model; if (!m?.bones.length) return; const bone = m.bones[Math.floor(rnd() * m.bones.length)]; p.pos.copy(m.bonePosition(bone)); p.pos.z = s.cp(cp).pos.z + h(p, s); p.prev.copy(p.pos); };
+    const cp = d.m_nHeightCP ?? d.m_nControlPointNumber ?? 0, h = number(d.m_flDesiredHeight, 0), set = String(d.m_HitboxSetName ?? 'default').toLowerCase(), scale = vector(d.m_vecHitBoxScale, [1, 1, 1]), force = d.m_bForceZ !== false;
+    return (p, s) => { const m = s.model; if (!m) return; const boxes = m.hitboxes?.[set];
+      if (boxes?.length) { const b = boxes[Math.floor(rnd() * boxes.length)], k = scale(p, s), at = new THREE.Vector3();
+        for (let i = 0; i < 3; i++) { const c = (b.min[i] + b.max[i]) / 2, r = ((b.max[i] - b.min[i]) / 2) * k.getComponent(i); at.setComponent(i, c + (rnd() * 2 - 1) * r); }
+        p.pos.copy(m.boneLocal(b.bone, at)); }
+      else { if (!m.bones?.length) return; p.pos.copy(m.bonePosition(m.bones[Math.floor(rnd() * m.bones.length)])); }
+      if (force) p.pos.z = s.cp(cp).pos.z + h(p, s); p.prev.copy(p.pos); };
   },
-  // Rigid attachment to a control point: C_OP_MovementRigidAttachToCP carries the particles along.
-  C_INIT_SetRigidAttachment: () => () => {},
+  // Rigid attachment to a control point: the particle's place in the point's own space, which
+  // C_OP_MovementRigidAttachToCP then carries (particles.dll keeps it in PREV_XYZ; here p.rigid, so
+  // trails still read the last frame's place).
+  C_INIT_SetRigidAttachment(d) {
+    const cp = d.m_nControlPointNumber ?? 0, local = d.m_bLocalSpace !== false;
+    return (p, s) => { p.rigid = local ? p.pos.clone().applyMatrix4(s.cp(cp).matrix().invert()) : p.pos.clone().sub(s.cp(cp).pos); };
+  },
   // The radius of the object at a control point: the hero's model scale, 1 here (Terrorblade's blade
   // planes, drawn as models, are their own size; the default radius of 5 made them 30 m long).
   C_INIT_RadiusFromCPObject: () => (p) => { p.radius = 1; },
@@ -774,14 +786,19 @@ const OP = {
       if (!p.boneLocal) { p.boneLocal = p.pos.clone().applyMatrix4(now.clone().invert()); continue; }
       const k = f1 > f0 ? 1 - saturate(remap(p.nage, f0, f1)) : 1; const target = p.boneLocal.clone().applyMatrix4(now); const delta = target.sub(p.pos).multiplyScalar(k); p.pos.add(delta); p.prev.add(delta); } };
   },
-  // Particles placed from a bone's snapshot ride that bone; others move with the control point.
+  // Particles placed from a bone's snapshot ride that bone. Others are where particles.dll puts
+  // them: the control point's whole transform over the particle's offset in its space (the input
+  // field, PREV_XYZ: what C_INIT_SetRigidAttachment left there, else where the particle was born),
+  // scaled by a component of the scale point. Terrorblade's sword fire is born from a snapshot in the
+  // blade's own space at the world origin, and this lays it on the blade.
   C_OP_MovementRigidAttachToCP(d) {
-    const cp = d.m_nControlPointNumber ?? 0; let prev = null;
+    const cp = d.m_nControlPointNumber ?? 0, scp = d.m_nScaleControlPoint ?? -1, sf = d.m_nScaleCPField ?? 0, local = d.m_bOffsetLocal !== false;
     return (ps, dt, s) => {
-      const m = s.cp(cp).matrix(), lock = prev ? m.clone().multiply(prev.clone().invert()) : null; prev = m.clone();
+      const m = s.cp(cp).matrix(), at = s.cp(cp).pos, k = scp >= 0 ? (sf < 3 ? s.cp(scp).pos.getComponent(sf) : 0) : 1;
       for (const p of ps) {
         if (p.bone && s.model) { const now = s.model.boneMatrix(p.bone); if (p.boneLast) { const move = now.clone().multiply(p.boneLast.clone().invert()); p.pos.applyMatrix4(move); p.prev.applyMatrix4(move); } p.boneLast = now; continue; }
-        if (lock) { p.pos.applyMatrix4(lock); p.prev.applyMatrix4(lock); }
+        p.rigid ??= p.prev.clone(); p.prev.copy(p.pos);
+        p.pos.copy(p.rigid).multiplyScalar(k); if (local) p.pos.applyMatrix4(m); else p.pos.add(at);
       }
     };
   },

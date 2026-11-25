@@ -2,7 +2,7 @@
  * materials and HDR stay in that library; this module owns IPC data and React lifecycle only. */
 import { Mesh, Vector3 } from 'three';
 import { SceneSource, readGlb } from 'dota-loadout/studio';
-import type { Attachment, Companion, HeroStage, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
+import type { Attachment, Companion, HeroStage, HitBox, ParticleDef, LoadoutResources } from '../../api/preview3d.ts';
 import type { StudioView } from './studio-settings.ts';
 import { loadoutTextures } from './loadout-textures.ts';
 import { loadoutAttachments, loadoutEffects, ownerOf, visibleGlb } from './loadout-source.ts';
@@ -28,7 +28,7 @@ export interface HeroScene {
 }
 export interface SceneOptions {
   signal?:AbortSignal;viewState?:StudioView;still?:boolean;label?:string;clip?:string|null;
-  heroModel?:string; stage?:HeroStage;pedestal?:Uint8Array|null;attachments?:{body:Attachment[];parts:Attachment[][]};
+  heroModel?:string; stage?:HeroStage;pedestal?:Uint8Array|null;attachments?:{body:Attachment[];parts:Attachment[][]};hitboxes?:Record<string,HitBox[]>;
   gems?:readonly PreviewGem[];partSlots?:string[];paint?:PreviewPaint;
   particles?:{part:number;def:ParticleDef}[];sprites?:Record<string,Uint8Array>;resources?:LoadoutResources;
   hidden?:{body:string[];parts:string[][]};isolated?:boolean;onWarnings?:(warnings:string[])=>void;
@@ -142,7 +142,7 @@ export async function mountScene(host:HTMLElement,body:Uint8Array,parts:Uint8Arr
     };
     const load=async()=>{
       check();
-      const manifest = { ...source.manifest, models: { ...source.manifest.models }, attachments: { ...source.manifest.attachments }, materials: { ...source.manifest.materials }, terrorbladeWeaponOwners: weaponOwners(look), lighting: options.stage?.lighting ?? undefined, heroScale: options.isolated ? undefined : options.stage?.scale };
+      const manifest = { ...source.manifest, models: { ...source.manifest.models }, attachments: { ...source.manifest.attachments }, materials: { ...source.manifest.materials }, terrorbladeWeaponOwners: weaponOwners(look), lighting: options.stage?.lighting ?? undefined, heroScale: options.isolated ? undefined : options.stage?.scale, hitboxes: options.hitboxes ?? {} };
       for (const [owner, item] of overrides) {
         if (!item) { delete manifest.models[owner]; delete manifest.attachments[owner]; continue; }
         manifest.models[owner] = item.url(item.manifest.models[owner]);
