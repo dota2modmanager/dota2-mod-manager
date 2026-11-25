@@ -31,6 +31,12 @@ export interface ZoneLight {
   shadow_color_day?: number[]; shadow_secondary_color_day?: number[]; shadow_scale_day?: number; shadow_ground_scale_day?: number;
   fog_color_day?: number[]; fog_start_day?: number; fog_end_day?: number; fog_height_day?: number; fog_hight_color_day?: number[];
   lightning_intensity_max?: number; lightning_period_min?: number; lightning_period_max?: number;
+  /** how much of the light around the shadows and the clouds take (0: none) */
+  ambient_shadow_amount?: number;
+  /** what the whole map shares (map_build.rs global_light): the clouds (their picture's path, size in
+   * inches, each layer's pitch-yaw-roll and inches a second), the specular power, the fog's shape */
+  cloud_texture?: string; cloud_scale?: number; cloud1_direction?: number[]; cloud1_speed?: number; cloud2_direction?: number[]; cloud2_speed?: number;
+  global_specular_power?: number; fog_exponent?: number; fog_max_density?: number;
 }
 
 /** The map without its decor, and the rest of Optimization. */

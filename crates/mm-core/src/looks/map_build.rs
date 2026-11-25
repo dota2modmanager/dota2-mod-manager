@@ -323,8 +323,9 @@ pub fn weather_light(default_entities: &[Vec<u8>], particle: Option<&str>, zone_
 }
 
 /// What the window's light reads of a zone (map-light.ts): the sun and where it stands, the light
-/// around and in the shadows, the fog and the lightning.
-const LIGHT_KEYS: [&str; 18] = [
+/// around and in the shadows, how much of the light around the shadows take, the fog and the lightning.
+const LIGHT_KEYS: [&str; 19] = [
+    "ambient_shadow_amount",
     "color_day",
     "light_scale_day",
     "light_direction_day",
@@ -345,13 +346,81 @@ const LIGHT_KEYS: [&str; 18] = [
     "lightning_period_max",
 ];
 
+/// The first entity of a class in the map's entity lumps, its values as JSON (look_json), or null.
+fn entity_of(default_entities: &[Vec<u8>], class: &str) -> serde_json::Value {
+    for file in default_entities {
+        let Ok(data) = crate::resource::data(file, "DATA", 0) else { continue };
+        let Ok(kv) = kv3::read(data) else { continue };
+        for e in kv.root.get("m_entityKeyValues").map(|n| n.items()).unwrap_or(&[]) {
+            let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
+            if values.get("classname").and_then(kv3::Node::as_str) == Some(class) {
+                return look_json(&kv, values);
+            }
+        }
+    }
+    serde_json::Value::Null
+}
+
+/// A number the entity may keep as text ("120", "0 165 0"), as one number or a list of them.
+fn numbers(v: &serde_json::Value) -> Option<serde_json::Value> {
+    match v {
+        serde_json::Value::String(t) => {
+            let n: Vec<f64> = t.split_whitespace().filter_map(|x| x.parse().ok()).collect();
+            match n.len() {
+                0 => None,
+                1 => Some(serde_json::json!(n[0])),
+                _ => Some(serde_json::json!(n)),
+            }
+        }
+        serde_json::Value::Number(_) | serde_json::Value::Array(_) => Some(v.clone()),
+        _ => None,
+    }
+}
+
+/// What the whole map shares, from its global light (env_global_light) and fog (env_fog_controller):
+/// the clouds whose shadows drift over the ground (their picture's path, how large, which way and
+/// how fast each of the two layers goes), the specular power a zone of -1 takes, and the shape of
+/// the fog. Keys as the window reads them; what the map does not say is left out.
+pub fn global_light(default_entities: &[Vec<u8>]) -> serde_json::Map<String, serde_json::Value> {
+    let light = entity_of(default_entities, "env_global_light");
+    let fog = entity_of(default_entities, "env_fog_controller");
+    let mut out = serde_json::Map::new();
+    let pairs = [
+        (&light, "texturename", "cloud_texture"),
+        (&light, "cloudscale", "cloud_scale"),
+        (&light, "cloud1direction", "cloud1_direction"),
+        (&light, "cloud1speed", "cloud1_speed"),
+        (&light, "cloud2direction", "cloud2_direction"),
+        (&light, "cloud2speed", "cloud2_speed"),
+        (&light, "specularpower", "global_specular_power"),
+        (&fog, "fogexponent", "fog_exponent"),
+        (&fog, "fogmaxdensity", "fog_max_density"),
+    ];
+    for (from, key, name) in pairs {
+        let Some(v) = from.get(key) else { continue };
+        let v = if key == "texturename" { v.as_str().map(|t| serde_json::json!(t)) } else { numbers(v) };
+        if let Some(v) = v {
+            out.insert(name.into(), v);
+        }
+    }
+    if light.get("dota_no_clouds").and_then(serde_json::Value::as_bool) == Some(true) {
+        out.remove("cloud_texture");
+    }
+    out
+}
+
 /// For the window: the everyday look of the Radiant's forest zone and each weather's look there,
-/// by the weather's key (map_decor.rs WEATHER_KEYS), each cut to what the window's light reads.
+/// by the weather's key (map_decor.rs WEATHER_KEYS), each cut to what the window's light reads,
+/// with what the whole map shares (global_light) in each.
 pub fn weather_lights(default_entities: &[Vec<u8>], keys: &[&str]) -> serde_json::Value {
+    let global = global_light(default_entities);
     let cut = |v: &serde_json::Value| -> serde_json::Value {
-        serde_json::Value::Object(
-            LIGHT_KEYS.iter().filter_map(|k| v.get(*k).map(|x| ((*k).to_string(), x.clone()))).collect(),
-        )
+        let mut m: serde_json::Map<String, serde_json::Value> =
+            LIGHT_KEYS.iter().filter_map(|k| v.get(*k).map(|x| ((*k).to_string(), x.clone()))).collect();
+        for (k, x) in &global {
+            m.entry(k.clone()).or_insert_with(|| x.clone());
+        }
+        serde_json::Value::Object(m)
     };
     let mut out = serde_json::Map::new();
     for (i, key) in keys.iter().enumerate() {

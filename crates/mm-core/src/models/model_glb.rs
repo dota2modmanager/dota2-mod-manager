@@ -416,7 +416,12 @@ impl ModelGlb {
                 // each copy's tint, from the map's world node beside the world
                 let node =
                     crate::vpk::read_entry_file(&map, crate::map_scene::WORLD_NODE).ok().flatten().map(|(b, _)| b);
-                let bytes = crate::map_scene::slim(&world, node.as_deref(), 256)?;
+                // and the picture of the clouds the map's global light casts, from the game's files
+                let clouds = cloud_picture(&self.run, &exe, &game, &map, &raw.join("clouds")).unwrap_or_else(|e| {
+                    self.error("map 3d: the clouds", &e);
+                    None
+                });
+                let bytes = crate::map_scene::slim(&world, node.as_deref(), clouds.as_deref(), 256)?;
                 let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
                 std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
                 std::fs::rename(&part, &light).map_err(|e| e.to_string())
@@ -747,6 +752,35 @@ impl ModelGlb {
     pub fn clear(&self) {
         let _ = std::fs::remove_dir_all(&self.base);
     }
+}
+
+/// The picture of the clouds a map's global light casts (map_build.rs global_light), as a PNG:
+/// the toolchain writes it out of the game's files into `dir` (the texture has mips and a format
+/// of its own the core does not read). Ok(None) where the map has no clouds.
+fn cloud_picture(run: &Run, exe: &Path, game: &Path, map: &Path, dir: &Path) -> Result<Option<Vec<u8>>, String> {
+    let ix = crate::vpk::Index::open(map).map_err(|e| e.to_string())?;
+    let lumps: Vec<Vec<u8>> =
+        ix.paths().filter(|p| p.ends_with(".vents_c")).filter_map(|p| ix.read(p).ok().flatten()).collect();
+    let global = crate::map_build::global_light(&lumps);
+    let Some(name) = global.get("cloud_texture").and_then(serde_json::Value::as_str) else { return Ok(None) };
+    let name = name.replace('\\', "/").to_lowercase();
+    let stem = name.strip_suffix("_c").unwrap_or(&name);
+    let stem = stem.strip_suffix(".vtex").ok_or_else(|| format!("not a texture: {name}"))?;
+    if stem.contains("..") || stem.contains(':') {
+        return Err(format!("not a texture: {name}"));
+    }
+    let pak = game.join("dota").join("pak01_dir.vpk");
+    let file = format!("{stem}.vtex_c");
+    let args: Vec<String> = ["-i", &pak.to_string_lossy(), "-f", &file, "-o", &dir.to_string_lossy(), "-d"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    // the toolchain writes into a folder that is there, not one it would have to make
+    std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
+    run(exe, &args)?;
+    let png = dir.join(format!("{stem}.png"));
+    let bytes = std::fs::read(&png).map_err(|e| format!("{}: {e}", png.display()))?;
+    crate::map_scene::cloud_png(&bytes).map(Some).ok_or_else(|| format!("{} will not read", png.display()))
 }
 
 #[cfg(test)]

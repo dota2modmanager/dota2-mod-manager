@@ -22,8 +22,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 
 /// The light copy's file in the cache; its number goes up when what goes into it changes, so a
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
-/// 4: the layers' blend softness and tint masks; 5: each copy's tint).
-pub const LIGHT_FILE: &str = "world-5.glb";
+/// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture).
+pub const LIGHT_FILE: &str = "world-6.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -166,12 +166,15 @@ fn idx(v: &Value) -> Option<usize> {
 }
 
 /// The light copy of an exported world: `json` and `bin` of the toolchain's GLB, `picture` reading
-/// an image's file by its uri (beside the GLB).
+/// an image's file by its uri (beside the GLB). The picture of the map's clouds (a PNG), if given,
+/// goes inside as a texture of its own, named in the file's extras (`clouds`): map-light.ts casts
+/// their shadows over the ground with it.
 pub fn slim_glb(
     json: &Value,
     bin: &[u8],
     picture: &dyn Fn(&str) -> Option<Vec<u8>>,
     max_px: u32,
+    clouds: Option<&[u8]>,
 ) -> Result<Vec<u8>, String> {
     const KEEP: [&str; 3] = ["POSITION", "NORMAL", "TEXCOORD_0"];
     // a terrain blend's layer weights, how soft each layer's edge is and its painted tint:
@@ -418,6 +421,13 @@ pub fn slim_glb(
             o.remove("skin");
         }
     }
+    let mut extras = Map::new();
+    if let Some(png) = clouds {
+        let v = push_view(png, None, None);
+        out_img.push(json!({ "bufferView": v, "mimeType": "image/png" }));
+        out_tex.push(json!({ "source": out_img.len() - 1, "sampler": 0 }));
+        extras.insert("clouds".into(), json!(out_tex.len() - 1));
+    }
     let mut out = json!({
         "asset": { "version": "2.0", "generator": "dota2-mod-manager map_scene" },
         "scene": json.get("scene").cloned().unwrap_or(json!(0)),
@@ -429,6 +439,9 @@ pub fn slim_glb(
         "bufferViews": out_views,
         "buffers": [{ "byteLength": out_bin.len() }],
     });
+    if !extras.is_empty() {
+        out["extras"] = Value::Object(extras);
+    }
     if !out_tex.is_empty() {
         out["textures"] = json!(out_tex);
         out["images"] = json!(out_img);
@@ -613,7 +626,7 @@ pub fn tint_nodes(json: &mut Value, tints: &BTreeMap<String, Vec<[f64; 3]>>) {
 
 /// The light copy of the toolchain's GLB at `world`, its pictures read beside it, each copy of a
 /// model in the tint `vwnod` (the map's world node) gives it.
-pub fn slim(world: &Path, vwnod: Option<&[u8]>, max_px: u32) -> Result<Vec<u8>, String> {
+pub fn slim(world: &Path, vwnod: Option<&[u8]>, clouds: Option<&[u8]>, max_px: u32) -> Result<Vec<u8>, String> {
     let buf = std::fs::read(world).map_err(|e| e.to_string())?;
     let (mut json, bin) = read_glb(&buf)?;
     if let Some(v) = vwnod {
@@ -627,7 +640,14 @@ pub fn slim(world: &Path, vwnod: Option<&[u8]>, max_px: u32) -> Result<Vec<u8>, 
         }
         std::fs::read(dir.join(plain)).ok()
     };
-    slim_glb(&json, &bin, &picture, max_px)
+    slim_glb(&json, &bin, &picture, max_px, clouds)
+}
+
+/// The clouds' picture (a PNG the toolchain wrote) at most 512 pixels across.
+pub fn cloud_png(png: &[u8]) -> Option<Vec<u8>> {
+    let (rgba, w, h) = decode_rgba(png).ok()?;
+    let (rgba, w, h) = shrink(rgba, w, h, 512);
+    encode_rgba(&rgba, w, h).ok()
 }
 
 #[cfg(test)]
@@ -733,7 +753,7 @@ mod tests {
             asked.borrow_mut().push(u.to_string());
             (u == "color.png").then(|| color.clone())
         };
-        let out = slim_glb(&json, &bin, &picture, 2).unwrap();
+        let out = slim_glb(&json, &bin, &picture, 2, None).unwrap();
         let (j, b) = read_glb(&out).unwrap();
         let prim = &j["meshes"][0]["primitives"][0];
         assert_eq!(prim["attributes"].as_object().unwrap().keys().collect::<Vec<_>>(), vec!["POSITION"]);
@@ -768,7 +788,7 @@ mod real {
     fn the_real_world_comes_out_light() {
         let Ok(p) = std::env::var("MM_TEST_WORLD") else { return };
         let t = std::time::Instant::now();
-        let out = super::slim(std::path::Path::new(&p), None, 256).expect("slim");
+        let out = super::slim(std::path::Path::new(&p), None, None, 256).expect("slim");
         eprintln!("light copy: {:.1} MB in {:?}", out.len() as f64 / 1e6, t.elapsed());
         if let Ok(to) = std::env::var("MM_TEST_WORLD_OUT") {
             std::fs::write(to, &out).unwrap();
