@@ -71,8 +71,9 @@ function prepare(mat: THREE.Material): void {
     m.transparent = false; m.depthWrite = false;
     m.blending = THREE.CustomBlending; m.blendSrc = THREE.SrcAlphaFactor;
     m.blendDst = vmatInt(m, 'F_ADDITIVE_BLEND') === 1 ? THREE.OneFactor : THREE.OneMinusSrcAlphaFactor;
-    // the alpha under it stays: the river's bed keeps its depth there for the water's fog (map-water.ts)
-    m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor;
+    // its alpha goes over what is under it, as the game's does over the bed's water fog: under the
+    // river an overlay is drawn as deep as it covers (map-water.ts), so the Dire camp's marking fades
+    m.blendSrcAlpha = THREE.OneFactor; m.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
     m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -4;
   }
   // leaves and grass are cards with holes: cut where the picture is clear, so they sort right
@@ -82,9 +83,9 @@ function prepare(mat: THREE.Material): void {
   // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
   // tint to where the game lays it (map-tint.ts); a prop with a specular picture shines (map-spec.ts)
   if (!('emissive' in m)) return;
-  const windy = isWindy(m), masked = isMaskTinted(m), shiny = isShiny(m);
-  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh); };
-  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}`;
+  const windy = isWindy(m), masked = isMaskTinted(m), shiny = isShiny(m), overlay = isOverlay(m);
+  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh, overlay); };
+  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}-${overlay ? 'overlay' : ''}`;
 }
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */

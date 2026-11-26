@@ -123,8 +123,9 @@ export const INCH = 0.0254;
 /** How far the game's camera stands from what it looks at, in metres. */
 const GAME_CAMERA = 1200 * INCH;
 
-/** The game's world light in a standard material's shader, in place of three's: its shadows kept. */
-export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
+/** The game's world light in a standard material's shader, in place of three's: its shadows kept.
+ * `overlay`: an overlay's (map-view.ts), which keeps its alpha in the river's bed pass. */
+export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay = false): void {
   Object.assign(sh.uniforms, lit);
   sh.vertexShader = sh.vertexShader
     .replace('#include <common>', '#include <common>\nvarying vec3 vLitWorld;')
@@ -191,7 +192,10 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
       float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
       outgoingLight = mix( outgoingLight, uFogColor, fog * ( 1.0 - uPlain ) );
     }
-    #include <opaque_fragment>`)
+    #include <opaque_fragment>
+    // in the river's bed pass the alpha is the water fog only overlays add to (map-water.ts):
+    // the game's bed writes its own depth there, which the water here reads from the depth instead
+    ${overlay ? '' : 'if ( uPlain > 0.5 ) gl_FragColor.a = 0.0;'}`)
     // the fog is the game's, above, laid before the tonemap as the game lays it
     .replace('#include <fog_fragment>', '');
 }
