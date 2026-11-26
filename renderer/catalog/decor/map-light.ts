@@ -94,6 +94,8 @@ export const lit = {
   uAmbient: { value: new THREE.Color() },
   uShadeUp: { value: new THREE.Color() },
   uShadeDown: { value: new THREE.Color() },
+  /** the zone's shadow colour as it stands, without its scale (m_AmbientColor2): the river's murk takes it */
+  uShade: { value: new THREE.Color() },
   uAmbientShadow: { value: 0 },
   /** the zone's specular colour (linear) and how little of it the sun's colour takes (0: all) */
   uSpecColor: { value: new THREE.Color() },
@@ -103,7 +105,8 @@ export const lit = {
   uSpecPow: { value: 28 },
   uClouds: { value: null as THREE.Texture | null },
   uCloudOn: { value: 0 },
-  /** 1 while the bed under the water is drawn: the game's refraction pass lights it without shadows, clouds, small lights or fog */
+  /** 1 while the bed under the water is drawn: the game's refraction pass lights it with the sun, its shadows and
+   * the clouds', but without the occlusion, small lights, shine or fog (a frame of the game, 2026-11-26) */
   uPlain: { value: 0 },
   uCloudScale: { value: 1 },
   uCloudOffset: { value: new THREE.Vector4() },
@@ -176,8 +179,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
         directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;
       #endif
       // the clouds, in the game's axes (the export turned Source's x, y, z into z, x, y), cast down the sun's way
-      if ( uPlain > 0.5 ) shade = 1.0;
-      if ( uCloudOn > 0.5 && uPlain < 0.5 ) {
+      if ( uCloudOn > 0.5 ) {
         vec3 p = vLitWorld.zxy, l = uSunDir.zxy;
         vec4 uv = ( p.xy + l.xy * p.z ).xyxy / uCloudScale + uCloudOffset;
         shade *= saturate( min( texture2D( uClouds, uv.xy ).r, texture2D( uClouds, uv.zw ).g ) );
@@ -323,6 +325,7 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     lit.uAmbient.value.copy(linear(z.ambient_color_day, z.ambient_scale_day ?? 5)).multiplyScalar((0.4 + 0.6 * k) * WORLD_SHADE);
     lit.uShadeUp.value.copy(linear(z.shadow_color_day, z.shadow_scale_day ?? 1)).multiplyScalar((0.4 + 0.6 * k) * WORLD_SHADE);
     lit.uShadeDown.value.copy(linear(z.shadow_secondary_color_day ?? z.shadow_color_day, z.shadow_ground_scale_day ?? z.shadow_scale_day ?? 1)).multiplyScalar((0.4 + 0.6 * k) * WORLD_SHADE);
+    lit.uShade.value.copy(linear(z.shadow_color_day)).multiplyScalar(0.4 + 0.6 * k);
     lit.uSunDir.value.copy(pointing(z.light_direction_day));
     lit.uAmbientDir.value.copy(pointing(z.ambient_direction_day));
     lit.uAmbientShadow.value = z.ambient_shadow_amount ?? 0;
