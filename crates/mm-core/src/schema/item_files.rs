@@ -296,11 +296,13 @@ struct Unplaced {
     skin: f64,
     systems: Vec<String>,
     added: HashSet<String>,
+    /// its second models (Fluid Frenzy's shoulders wear their water as one): they go in beside it
+    extras: Vec<String>,
 }
 
 /// What putting an unplaced pick into a model the hero wears made: that model's path, the model,
-/// the effects' copies, and whether the pick's effects went in with it.
-type Hosted = (String, Vec<u8>, Vec<(String, Vec<u8>)>, bool);
+/// the effects' copies, whether the pick's effects went in with it, and whether its second models did.
+type Hosted = (String, Vec<u8>, Vec<(String, Vec<u8>)>, bool, bool);
 
 /// The compiled paths of the stock models a hero wears (not a rider's mount), lowercased: an
 /// unplaced pick can ride in one of them where the body will not take it.
@@ -346,9 +348,10 @@ fn unplaced_into(
         }
         _ => None,
     };
-    if crate::item_in_body::stays_apart(own_block.unwrap_or(&pick.block)) {
-        return Ok(None);
-    }
+    // one that would stay a wearable of its own (an arcana, an item that changes the motions) has
+    // no path to stay under here: its mesh goes in bare rather than not at all, its motions go on the
+    // body as any pick's do
+    let apart = crate::item_in_body::stays_apart(own_block.unwrap_or(&pick.block));
     let heroes = crate::item_builder_slots::item_heroes(&pick.block, 0).map_err(e)?;
     let [hero] = heroes.as_slice() else { return Ok(None) };
     let at = compiled(&model).to_lowercase();
@@ -369,14 +372,28 @@ fn unplaced_into(
     };
     for host_at in hosts {
         let Some(host) = current(&host_at) else { continue };
-        let sewn =
-            crate::item_in_body::sewn_into_body(&host, &item, pick.skin, &pick.systems, &pick.added, &token, read)?;
-        if let Some(s) = sewn {
-            return Ok(Some((host_at, s.body, s.files, true)));
+        let sewn = if apart {
+            None
+        } else {
+            crate::item_in_body::sewn_into_body(&host, &item, pick.skin, &pick.systems, &pick.added, &token, read)?
+        };
+        let (mut made, files, with_fx) = match sewn {
+            Some(s) => (s.body, s.files, true),
+            None => match crate::model_merge::merged_model(&host, &worn).ok().flatten() {
+                Some(joined) => (joined, Vec::new(), false),
+                None => continue,
+            },
+        };
+        let mut all_extras = true;
+        for extra in &pick.extras {
+            let joined =
+                read(&compiled(extra)).and_then(|x| crate::model_merge::merged_model(&made, &x).ok().flatten());
+            match joined {
+                Some(j) => made = j,
+                None => all_extras = false,
+            }
         }
-        if let Some(joined) = crate::model_merge::merged_model(&host, &worn).ok().flatten() {
-            return Ok(Some((host_at, joined, Vec::new(), false)));
-        }
+        return Ok(Some((host_at, made, files, with_fx, all_extras)));
     }
     Ok(None)
 }
@@ -490,6 +507,7 @@ pub fn item_files(
                 skin,
                 systems: systems.clone(),
                 added: added_all.clone(),
+                extras: extras.clone(),
             });
         }
         if let Some(own) = pick_own.filter(|_| !systems.is_empty() || skin != 0.0) {
@@ -643,7 +661,8 @@ pub fn item_files(
     }
     for pick in &unplaced {
         let now = |at: &str| current(&entries, at);
-        let Some((host_at, host, files, with_fx)) = unplaced_into(pick, table.as_deref(), &now, read)? else {
+        let Some((host_at, host, files, with_fx, with_extras)) = unplaced_into(pick, table.as_deref(), &now, read)?
+        else {
             continue;
         };
         for (p, d) in files {
@@ -651,7 +670,9 @@ pub fn item_files(
         }
         entries.insert(host_at.clone(), entry_at(&host_at, host.into()));
         if let Some(l) = left.iter_mut().find(|l| l.source == pick.source) {
-            l.what.retain(|w| w != "its model" && (!with_fx || w != "its effect"));
+            l.what.retain(|w| {
+                w != "its model" && (!with_fx || w != "its effect") && (!with_extras || w != "a second model")
+            });
         }
         left.retain(|l| !l.what.is_empty());
     }
@@ -773,6 +794,41 @@ mod tests {
         assert!(!mounts.is_empty(), "the rider has a mount");
         assert!(mounts.iter().all(|m| m.ends_with(".vmdl_c") && ix.read(m).unwrap().is_some()), "{mounts:?}");
         assert!(stock_mounts(&text, "npc_dota_hero_lina").unwrap().is_empty());
+    }
+
+    /// On the game's own files (MM_TEST_PAK01): Morphling's stock items have no model of their own,
+    /// so the whole of Fluid Frenzy, picked together, goes into his body: the head with its morph
+    /// and its sharks' own roots, the shoulders (a wearable that would stay apart) with their water,
+    /// a second model. Nothing is left out, and the body reads back whole.
+    #[test]
+    fn fluid_frenzy_goes_into_morphlings_body() {
+        let Ok(pak) = std::env::var("MM_TEST_PAK01") else { return };
+        let ix = crate::vpk::Index::open(std::path::Path::new(&pak)).unwrap();
+        let read = |p: &str| ix.read(p).ok().flatten();
+        let text = read(crate::schema::SCHEMA_REL).unwrap();
+        let picks: Vec<TablePatch> = crate::schema::items_of(&text)
+            .unwrap()
+            .iter()
+            .filter(|i| i.model.contains("/tritons_revenge_"))
+            .map(|i| {
+                let mut p = TablePatch::worn_pick(&i.id, &text[i.start..i.end], false);
+                p.unplaced = Some(true);
+                p
+            })
+            .collect();
+        assert_eq!(picks.len(), 5, "head, arms, misc, back, shoulders");
+        let made = item_files(&picks, &[], &read, None).unwrap();
+        let lost: Vec<_> =
+            made.left.iter().filter(|l| l.what.iter().any(|w| w == "its model" || w == "a second model")).collect();
+        assert!(lost.is_empty(), "{lost:?}");
+        let body_at = "models/heroes/morphling/morphling.vmdl_c";
+        let body = made.entries.iter().find(|e| e.path().to_lowercase() == body_at).expect("the body");
+        let stock = read(body_at).unwrap();
+        assert!(meshes(&body.data) > meshes(&stock) + 5, "{} meshes against {}", meshes(&body.data), meshes(&stock));
+        whole(&body.data);
+        if let Ok(out) = std::env::var("MM_BENCH_PAK") {
+            std::fs::write(out, crate::vpk::build(&made.entries)).unwrap();
+        }
     }
 
     /// A joined model reads back: every block a mesh row names is there and of its kind, and the
