@@ -287,6 +287,100 @@ fn sew_in(
     Ok(sewn.map(|s| (body_at, s)))
 }
 
+/// A pick whose slot's stock item has no model, kept for after the other picks (`item_files`).
+struct Unplaced {
+    block: Vec<u8>,
+    id: String,
+    item_id: Option<String>,
+    source: String,
+    skin: f64,
+    systems: Vec<String>,
+    added: HashSet<String>,
+}
+
+/// What putting an unplaced pick into a model the hero wears made: that model's path, the model,
+/// the effects' copies, and whether the pick's effects went in with it.
+type Hosted = (String, Vec<u8>, Vec<(String, Vec<u8>)>, bool);
+
+/// The compiled paths of the stock models a hero wears (not a rider's mount), lowercased: an
+/// unplaced pick can ride in one of them where the body will not take it.
+fn stock_models(table: &[u8], hero: &str) -> Result<Vec<String>, KvError> {
+    let mut out = Vec::new();
+    for item in crate::schema::items_of(table)?.iter() {
+        let stock = item.baseitem || item.prefab.eq_ignore_ascii_case("default_item");
+        if !stock || item.model.is_empty() || item.slot.eq_ignore_ascii_case("mount") {
+            continue;
+        }
+        if crate::item_builder_slots::item_heroes(table, item.start)?.iter().any(|h| h == hero) {
+            let at = compiled(&normalize_asset_path(&item.model)).to_lowercase();
+            if !out.contains(&at) {
+                out.push(at);
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// The model of a pick whose slot's stock item has none (Tidehunter's head and back, Brewmaster's
+/// head) put into a model its hero wears: the body first, then the hero's stock models (a body in a
+/// mesh layout model_merge.rs cannot join, Tidehunter's, leaves them). Sewn with its effects where
+/// it can be (item_in_body.rs), else joined bare with its effects left out (a model that moves by
+/// itself stands still in there). None where the pick is not one hero's, has to stay a wearable of
+/// its own (`stays_apart`: an arcana, an item that changes the motions) or no model takes it.
+fn unplaced_into(
+    pick: &Unplaced,
+    table: Option<&[u8]>,
+    current: &dyn Fn(&str) -> Option<Vec<u8>>,
+    read: &dyn Fn(&str) -> Option<Vec<u8>>,
+) -> Result<Option<Hosted>, String> {
+    let e = |x: KvError| x.to_string();
+    let fields = crate::schema::item_fields(&pick.block, 0).map_err(e)?;
+    let model = normalize_asset_path(fields.iter().find(|(k, _)| k == "model_player").map_or("", |(_, v)| v));
+    if model.is_empty() {
+        return Ok(None);
+    }
+    // what the item does is in its own entry: the pick's block went without the file swaps
+    let own_block = match (table, pick.item_id.as_deref()) {
+        (Some(t), Some(id)) => {
+            crate::schema_merge::items_by_id(t).map_err(e)?.find(t, id).map_err(e)?.map(|(s, end)| &t[s..end])
+        }
+        _ => None,
+    };
+    if crate::item_in_body::stays_apart(own_block.unwrap_or(&pick.block)) {
+        return Ok(None);
+    }
+    let heroes = crate::item_builder_slots::item_heroes(&pick.block, 0).map_err(e)?;
+    let [hero] = heroes.as_slice() else { return Ok(None) };
+    let at = compiled(&model).to_lowercase();
+    let Some(item) = current(&at) else { return Ok(None) };
+    let mut hosts: Vec<String> = body_path(read, hero).into_iter().collect();
+    if let Some(t) = table {
+        for h in stock_models(t, hero).map_err(e)? {
+            if !hosts.contains(&h) {
+                hosts.push(h);
+            }
+        }
+    }
+    let token = crate::item_in_body::pick_token(&pick.id, &at);
+    let worn = if pick.skin != 0.0 && !pick.skin.is_nan() {
+        crate::model_skin::with_skin(&item, pick.skin as usize).unwrap_or_else(|| item.clone())
+    } else {
+        item.clone()
+    };
+    for host_at in hosts {
+        let Some(host) = current(&host_at) else { continue };
+        let sewn =
+            crate::item_in_body::sewn_into_body(&host, &item, pick.skin, &pick.systems, &pick.added, &token, read)?;
+        if let Some(s) = sewn {
+            return Ok(Some((host_at, s.body, s.files, true)));
+        }
+        if let Some(joined) = crate::model_merge::merged_model(&host, &worn).ok().flatten() {
+            return Ok(Some((host_at, joined, Vec::new(), false)));
+        }
+    }
+    Ok(None)
+}
+
 fn compiled(p: &str) -> String {
     format!("{}_c", p.strip_suffix("_c").unwrap_or(p))
 }
@@ -312,6 +406,7 @@ pub fn item_files(
     // the stock paths an item sewn into its body left with nothing to draw
     let mut emptied: HashSet<String> = HashSet::new();
     let mut table: Option<Vec<u8>> = None;
+    let mut unplaced: Vec<Unplaced> = Vec::new();
     // the sprite sheet, portraits and soundevents of the item picks alone, in place of the table's copy
     let own: HashSet<String> = shared.map(|s| s.paths.iter().cloned().collect()).unwrap_or_default();
     for en in shared.map(|s| s.entries.as_slice()).unwrap_or(&[]) {
@@ -382,6 +477,20 @@ pub fn item_files(
                     }
                 }
             }
+        }
+        // a pick for a slot whose stock item has no model (Tidehunter's head and back, Brewmaster's
+        // head) has no path to go under: after the other picks, so none writes over it, its model
+        // goes into a model the hero wears instead of being left out
+        if patch.unplaced == Some(true) && pick_own.is_none() && !patch.based {
+            unplaced.push(Unplaced {
+                block: patch.block.clone(),
+                id: patch.id.clone(),
+                item_id: patch.item_id.clone(),
+                source: source.clone(),
+                skin,
+                systems: systems.clone(),
+                added: added_all.clone(),
+            });
         }
         if let Some(own) = pick_own.filter(|_| !systems.is_empty() || skin != 0.0) {
             let at = own.to_lowercase();
@@ -529,6 +638,23 @@ pub fn item_files(
     let current = |entries: &IndexMap<String, Entry>, at: &str| {
         entries.get(at).map(|en| en.data.to_vec()).or_else(|| under.get(at).cloned()).or_else(|| read(at))
     };
+    if !unplaced.is_empty() && table.is_none() {
+        table = read(crate::schema::SCHEMA_REL);
+    }
+    for pick in &unplaced {
+        let now = |at: &str| current(&entries, at);
+        let Some((host_at, host, files, with_fx)) = unplaced_into(pick, table.as_deref(), &now, read)? else {
+            continue;
+        };
+        for (p, d) in files {
+            entries.insert(p.to_lowercase(), entry_at(&p, d.into()));
+        }
+        entries.insert(host_at.clone(), entry_at(&host_at, host.into()));
+        if let Some(l) = left.iter_mut().find(|l| l.source == pick.source) {
+            l.what.retain(|w| w != "its model" && (!with_fx || w != "its effect"));
+        }
+        left.retain(|l| !l.what.is_empty());
+    }
     for (hero, motions) in &bodies {
         let at = body_path(read, hero)?;
         let Some(body) = current(&entries, &at) else { continue };
@@ -647,5 +773,67 @@ mod tests {
         assert!(!mounts.is_empty(), "the rider has a mount");
         assert!(mounts.iter().all(|m| m.ends_with(".vmdl_c") && ix.read(m).unwrap().is_some()), "{mounts:?}");
         assert!(stock_mounts(&text, "npc_dota_hero_lina").unwrap().is_empty());
+    }
+
+    fn meshes(model: &[u8]) -> usize {
+        let ctrl = crate::kv3::read(crate::resource::data(model, "CTRL", 0).unwrap()).unwrap();
+        ctrl.root.get("embedded_meshes").map_or(0, |m| m.items().len())
+    }
+
+    /// On the game's own files (MM_TEST_PAK01 = a pak01_dir.vpk): every head and back pick of
+    /// Tidehunter and head pick of Brewmaster, whose stock items there have no model, goes into a
+    /// model the hero wears (Tidehunter's body will not join, so one of his stock models) and is
+    /// not left out, but one model_merge.rs will not join, which is said to be.
+    #[test]
+    fn a_pick_with_no_stock_path_goes_into_a_model_the_hero_wears() {
+        let Ok(pak) = std::env::var("MM_TEST_PAK01") else { return };
+        let ix = crate::vpk::Index::open(std::path::Path::new(&pak)).unwrap();
+        let read = |p: &str| ix.read(p).ok().flatten();
+        let text = read(crate::schema::SCHEMA_REL).unwrap();
+        let items = crate::schema::items_of(&text).unwrap();
+        for (hero, slot, floor) in [
+            // how many of the game's own pass on 2026-11-26; the rest have morphs (most of Brewmaster's
+            // hats, his beard in them) or a mesh layout or skeleton model_merge.rs cannot join
+            ("npc_dota_hero_tidehunter", "head", 13),
+            ("npc_dota_hero_tidehunter", "back", 14),
+            ("npc_dota_hero_brewmaster", "head", 4),
+        ] {
+            let picks: Vec<_> = items
+                .iter()
+                .filter(|i| {
+                    i.prefab == "wearable"
+                        && i.slot.eq_ignore_ascii_case(slot)
+                        && !i.model.is_empty()
+                        && !crate::item_in_body::stays_apart(&text[i.start..i.end])
+                        && crate::item_builder_slots::item_heroes(&text, i.start).unwrap() == [hero]
+                })
+                .collect();
+            assert!(!picks.is_empty(), "{hero} has {slot} items");
+            let (mut placed, mut silent) = (Vec::new(), Vec::new());
+            for pick in &picks {
+                let mut patch = TablePatch::worn_pick(&pick.id, &text[pick.start..pick.end], false);
+                patch.unplaced = Some(true);
+                let made = item_files(&[patch], &[], &read, None).unwrap();
+                let hosted = made.entries.iter().any(|e| {
+                    let at = e.path().to_lowercase();
+                    at.ends_with(".vmdl_c") && read(&at).is_some_and(|stock| meshes(&e.data) > meshes(&stock))
+                });
+                let lost = made.left.iter().any(|l| l.what.iter().any(|w| w == "its model"));
+                // a model model_merge.rs will not join (morphs, another mesh layout, a skeleton it
+                // cannot take) stays left out, and the window says so
+                match (hosted, lost) {
+                    (true, false) => placed.push(pick.name.clone()),
+                    (false, true) => {}
+                    _ => silent.push(pick.name.clone()),
+                }
+            }
+            eprintln!("{hero} {slot}: {} of {} picks placed", placed.len(), picks.len());
+            assert!(silent.is_empty(), "{hero} {slot}: {silent:?}");
+            assert!(placed.len() >= floor, "{hero} {slot}: only {placed:?}");
+            // the look the complaint showed (Discord, 2026-11-25)
+            if hero == "npc_dota_hero_tidehunter" {
+                assert!(placed.iter().any(|n| n.starts_with("Maelrawn's abyssal Guard")), "{placed:?}");
+            }
+        }
     }
 }
