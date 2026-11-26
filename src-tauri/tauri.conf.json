@@ -19,7 +19,7 @@
   "bundle": {
     "active": true,
     "targets": ["nsis"],
-    "icon": ["../build/icon.png", "../build/icon.ico"],
+    "icon": ["../build/icon-256.png", "../build/icon.png", "../build/icon.ico"],
     "fileAssociations": [
       { "ext": ["d2mm"], "name": "Dota 2 Mod Manager preset", "mimeType": "application/x-d2mm", "role": "Editor" }
     ],
