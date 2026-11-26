@@ -127,6 +127,30 @@ fn strip_off(lower: &str) -> &str {
     lower.strip_suffix(".off").unwrap_or(lower)
 }
 
+/// A mod copied in by hand as `pakNN.vpk`, its name missing the `_dir`: the game does not take it
+/// for a pak of its own, and with one in the folder it stopped on "pakNN is corrupted" at start,
+/// file after file, until each was renamed (Discord, 2026-11-22 and 24). The number, and the
+/// suffix it is switched off with (`.off`, the master switch's), if any.
+fn missing_dir(name: &str) -> Option<(String, &'static str)> {
+    static RE: OnceLock<Regex> = OnceLock::new();
+    let re = RE.get_or_init(|| Regex::new(r"(?i)^pak(\d{2})\.vpk(\.off|\.moff)?$").unwrap());
+    let m = re.captures(name)?;
+    let off = match m.get(2).map(|s| s.as_str().to_lowercase()) {
+        Some(s) if s == ".off" => ".off",
+        Some(s) if s == MASTER_OFF => MASTER_OFF,
+        _ => "",
+    };
+    Some((m[1].to_string(), off))
+}
+
+/// Whether a file starts as a VPK's index does.
+fn is_vpk_index(p: &Path) -> bool {
+    use std::io::Read;
+    let mut head = [0u8; 4];
+    fs::File::open(p).and_then(|mut f| f.read_exact(&mut head)).is_ok()
+        && u32::from_le_bytes(head) == crate::vpk::SIGNATURE
+}
+
 /// What a path list is, as precisely as this machine allows: the game's names when it knows
 /// them, merged with the guess from the paths.
 pub fn describe_paths(inst: &Installer, paths: &[String], a: &Analysis) -> (String, Vec<String>, Option<Vec<String>>) {
@@ -409,6 +433,36 @@ impl Installer {
 
     /// Foreign content across every place a mod can live: the language folder, its maps/, and a
     /// cursor set. `scan_extras` false skips the last two.
+    /// Every `pakNN.vpk` in the language folder named as the game reads a pak, `pakNN_dir.vpk`
+    /// (`missing_dir`): only a real VPK, and only where that name is free in every state. The
+    /// names it gave, as (from, to).
+    pub fn fix_dir_names(&self) -> Vec<(String, String)> {
+        let Ok(lang) = self.lang_folder() else { return Vec::new() };
+        let names = names_in(&lang);
+        let taken: std::collections::HashSet<String> = names.iter().map(|n| n.to_lowercase()).collect();
+        let mut fixed = Vec::new();
+        for name in &names {
+            let Some((number, off)) = missing_dir(name) else { continue };
+            let from = lang.join(name);
+            if !is_file(&from) || !is_vpk_index(&from) {
+                continue;
+            }
+            let base = format!("pak{number}_dir.vpk");
+            if ["", ".off", MASTER_OFF].iter().any(|s| taken.contains(&format!("{base}{s}"))) {
+                continue;
+            }
+            let to = format!("{base}{off}");
+            match fs::rename(&from, lang.join(&to)) {
+                Ok(()) => {
+                    (self.log)(format!("named {name} as the game reads a pak: {to}"));
+                    fixed.push((name.clone(), to));
+                }
+                Err(e) => (self.log)(format!("could not name {name} as {to}: {e}")),
+            }
+        }
+        fixed
+    }
+
     pub fn external_files(&self, known_files: &[Value], scan_extras: bool) -> Result<Vec<ForeignItem>, String> {
         let Some(game) = self.game.as_ref().filter(|g| !g.as_os_str().is_empty()) else { return Ok(Vec::new()) };
         let str_of = |f: &Value, k: &str| f.get(k).map(crate::js::string).unwrap_or_default();
@@ -532,4 +586,43 @@ impl Installer {
 fn off_re() -> &'static Regex {
     static R: OnceLock<Regex> = OnceLock::new();
     R.get_or_init(|| Regex::new(r"(?i)\.off$").unwrap())
+}
+
+#[cfg(test)]
+mod dir_name_tests {
+    use super::*;
+
+    #[test]
+    fn a_pak_copied_in_without_its_dir_is_named_as_the_game_reads_it() {
+        let root = std::env::temp_dir().join(format!("mm-dir-names-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let lang = root.join("dota_russian");
+        fs::create_dir_all(&lang).unwrap();
+        let vpk = crate::vpk::build(&[crate::vpk::entry_at("materials/a.vmat_c", b"x".to_vec().into())]);
+        fs::write(lang.join("pak43.vpk"), &vpk).unwrap();
+        fs::write(lang.join("pak44.vpk.off"), &vpk).unwrap();
+        // the name it would take is a mod already there: left alone
+        fs::write(lang.join("pak45.vpk"), &vpk).unwrap();
+        fs::write(lang.join("pak45_dir.vpk"), &vpk).unwrap();
+        // not a VPK, and a data volume of a pak: left alone
+        fs::write(lang.join("pak46.vpk"), b"text").unwrap();
+        fs::write(lang.join("pak47_000.vpk"), &vpk).unwrap();
+        let inst = Installer::new(Some(root.clone()), "russian");
+        let mut fixed = inst.fix_dir_names();
+        fixed.sort();
+        assert_eq!(
+            fixed,
+            [
+                ("pak43.vpk".to_string(), "pak43_dir.vpk".to_string()),
+                ("pak44.vpk.off".into(), "pak44_dir.vpk.off".into())
+            ]
+        );
+        let mut left = names_in(&lang);
+        left.sort();
+        assert_eq!(
+            left,
+            ["pak43_dir.vpk", "pak44_dir.vpk.off", "pak45.vpk", "pak45_dir.vpk", "pak46.vpk", "pak47_000.vpk"]
+        );
+        let _ = fs::remove_dir_all(&root);
+    }
 }

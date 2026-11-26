@@ -1,8 +1,9 @@
 //! What My mods is drawn from: the answer to mods:list, which every screen
 //! asks for again after anything changes. A mod whose files were deleted from the game folder
 //! drops out of the library; a foreign file is named as a copy of a library mod or as a catalog
-//! mod; an import still called "pakNN" gets a real name once; every row says which switched-on
-//! mod hides its files; the item blocks stay behind; the ownership note is kept current.
+//! mod; an import still called "pakNN" gets a real name once; a pak copied in as pakNN.vpk gets its
+//! _dir; every row says which switched-on mod hides its files; the item blocks stay behind; the
+//! ownership note is kept current.
 
 use std::collections::{HashMap, HashSet};
 
@@ -106,6 +107,8 @@ pub fn list_mods(inst: &Installer, lib: &mut Library, deps: ListingDeps) -> (Val
     let mut external: Vec<Value> = Vec::new();
     let known = lib.known_files().unwrap_or_default();
     let can_match = fingerprints.has_data();
+    // a pak copied in by hand without its _dir stops the game at start: named right before it is listed
+    inst.fix_dir_names();
     if let Ok(found) = inst.external_files(&known, can_match) {
         for f in found {
             let mut v = serde_json::to_value(&f).unwrap_or(Value::Null);
