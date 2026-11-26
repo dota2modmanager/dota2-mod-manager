@@ -159,6 +159,22 @@ struct Set {
     dir_file: Option<PathBuf>,
     source_label: String,
     single: bool,
+    /// marked to load before the rest
+    priority: bool,
+}
+
+/// The mark Dota2PornFx's pack builder puts before the file of a mod that has to load before the
+/// others (its shaders, optimization, parts of the interface): its guide says to give such a file
+/// a lower number. Imported as one more mod in the 30s, it lost to the rest of the pack and did
+/// nothing (Discord, 2026-11-26). It goes to the slots that load first, and the name loses the mark.
+const LOADS_FIRST: char = '!';
+
+/// A file's name without the mark, and whether it had it.
+fn marked(file_name: &str) -> (&str, bool) {
+    match file_name.strip_prefix(LOADS_FIRST) {
+        Some(rest) => (rest, true),
+        None => (file_name, false),
+    }
 }
 
 fn dir_re() -> &'static Regex {
@@ -191,11 +207,13 @@ fn import_vpk_files(
         let src_dir = src.parent().map(Path::to_path_buf).unwrap_or_default();
         let m_dir = dir_re().captures(&file_name).map(|c| c[1].to_string());
         let m_part = part_re().captures(&file_name).map(|c| c[1].to_string());
+        // the set's own files keep their names on disk: only the mod's name loses the mark
         let base = m_dir
             .clone()
             .filter(|s| !s.is_empty())
             .or_else(|| m_part.clone().filter(|s| !s.is_empty()))
             .unwrap_or_else(|| file_name[..file_name.len() - 4].to_string());
+        let (_, priority) = marked(&file_name);
         let key = format!("{}|{}", src_dir.to_string_lossy().to_lowercase(), base.to_lowercase());
         let set = sets.entry(key).or_insert_with(|| Set {
             src_dir: src_dir.clone(),
@@ -203,6 +221,7 @@ fn import_vpk_files(
             dir_file: None,
             source_label: file_name.clone(),
             single: false,
+            priority,
         });
         if m_dir.is_some() {
             set.dir_file = Some(src.clone());
@@ -216,12 +235,13 @@ fn import_vpk_files(
     let total = sets.len();
     let mut done = 0;
     for set in sets.values() {
+        let name = marked(&set.base).0;
         let r = FileTx::run(inst.journal_dir.as_deref(), inst.tx_log(), |tx| -> Result<Value, String> {
             if set.single {
-                let pak = inst.allocate_pak(&mut used, false)?;
+                let pak = inst.allocate_pak(&mut used, set.priority)?;
                 copy_into(set.dir_file.as_ref().unwrap(), &lang.join(&pak), Some(tx)).map_err(io)?;
                 return Ok(
-                    json!({ "source": set.source_label, "name": set.base, "files": [{ "root": "lang", "relPath": pak }] }),
+                    json!({ "source": set.source_label, "name": name, "files": [{ "root": "lang", "relPath": pak }] }),
                 );
             }
             let dir_src = set.dir_file.clone().or_else(|| {
@@ -233,7 +253,7 @@ fn import_vpk_files(
                     json!({ "source": set.source_label, "error": t("нет {0}_dir.vpk рядом с data-частями", &[json!(set.base)]) }),
                 );
             };
-            let pak_dir = inst.allocate_pak(&mut used, false)?;
+            let pak_dir = inst.allocate_pak(&mut used, set.priority)?;
             let new_base = &pak_dir[..pak_dir.len() - "_dir.vpk".len()];
             let re = Regex::new(&format!(r"(?i)^{}_(\d{{3}})\.vpk$", regex::escape(&set.base))).unwrap();
             let mut parts: Vec<(String, String)> = crate::js::dir_names(&set.src_dir)
@@ -254,7 +274,7 @@ fn import_vpk_files(
                 if let Some(buf) = merged {
                     write_into(&buf, &lang.join(&pak_dir), Some(tx)).map_err(io)?;
                     return Ok(json!({
-                        "source": format!("{}_dir.vpk", set.base), "name": set.base, "merged": parts.len() + 1,
+                        "source": format!("{}_dir.vpk", set.base), "name": name, "merged": parts.len() + 1,
                         "files": [{ "root": "lang", "relPath": pak_dir }],
                     }));
                 }
@@ -266,7 +286,7 @@ fn import_vpk_files(
                 copy_into(&set.src_dir.join(f), &lang.join(&part), Some(tx)).map_err(io)?;
                 files.push(json!({ "root": "lang", "relPath": part }));
             }
-            Ok(json!({ "source": format!("{}_dir.vpk", set.base), "name": set.base, "files": files }))
+            Ok(json!({ "source": format!("{}_dir.vpk", set.base), "name": name, "files": files }))
         });
         results.push(r.unwrap_or_else(|e| json!({ "source": set.source_label, "error": e })));
         done += 1;
@@ -319,4 +339,33 @@ pub fn install_vpk_buffer(inst: &Installer, buf: &[u8]) -> Result<Vec<Value>, St
     let pak = inst.allocate_pak(&mut inst.used_pak_names()?, false)?;
     write_into(buf, &lang.join(&pak), None).map_err(io)?;
     Ok(vec![json!({ "root": "lang", "relPath": pak })])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_file_marked_to_load_first_takes_a_priority_slot() {
+        let root = std::env::temp_dir().join(format!("mm-import-mark-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let pack = root.join("d2pfxPack").join("mods");
+        fs::create_dir_all(&pack).unwrap();
+        let vpk_of = |p: &str| crate::vpk::build(&[crate::vpk::entry_at(p, b"x".to_vec().into())]);
+        fs::write(pack.join("!pak02_dir.vpk"), vpk_of("materials/shader.vmat_c")).unwrap();
+        fs::write(pack.join("pak13_dir.vpk"), vpk_of("panorama/layout/hud.vxml_c")).unwrap();
+        let game = root.join("game");
+        fs::create_dir_all(game.join("dota")).unwrap();
+        fs::write(game.join("dota").join("pak01_dir.vpk"), b"").unwrap();
+        let inst = Installer::new(Some(game.clone()), "russian");
+        let out =
+            import_vpks(&inst, &[pack.join("!pak02_dir.vpk"), pack.join("pak13_dir.vpk")], &mut |_, _| {}).unwrap();
+        let slot = |i: usize| out[i]["files"][0]["relPath"].as_str().unwrap().to_string();
+        let number = |s: &str| s.trim_start_matches("pak").trim_end_matches("_dir.vpk").parse::<u32>().unwrap();
+        assert!((2..=29).contains(&number(&slot(0))), "{out:?}");
+        assert!(number(&slot(1)) >= 30, "{out:?}");
+        assert_eq!(out[0]["name"], "pak02", "the mod's name loses the mark");
+        assert!(game.join("dota_russian").join(slot(0)).exists());
+        let _ = fs::remove_dir_all(&root);
+    }
 }
