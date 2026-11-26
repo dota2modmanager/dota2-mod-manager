@@ -322,8 +322,8 @@ fn stock_models(table: &[u8], hero: &str) -> Result<Vec<String>, KvError> {
 }
 
 /// The model of a pick whose slot's stock item has none (Tidehunter's head and back, Brewmaster's
-/// head) put into a model its hero wears: the body first, then the hero's stock models (a body in a
-/// mesh layout model_merge.rs cannot join, Tidehunter's, leaves them). Sewn with its effects where
+/// head) put into a model its hero wears: the body, morphs and all (model_merge.rs), and the hero's
+/// stock models only where the body will not take it. Sewn with its effects where
 /// it can be (item_in_body.rs), else joined bare with its effects left out (a model that moves by
 /// itself stands still in there). None where the pick is not one hero's, has to stay a wearable of
 /// its own (`stays_apart`: an arcana, an item that changes the motions) or no model takes it.
@@ -775,6 +775,55 @@ mod tests {
         assert!(stock_mounts(&text, "npc_dota_hero_lina").unwrap().is_empty());
     }
 
+    /// A joined model reads back: every block a mesh row names is there and of its kind, and the
+    /// morph its rules read has as many controllers as the rules ask for.
+    fn whole(model: &[u8]) {
+        let blocks = crate::resource::blocks(model).unwrap();
+        let ctrl = crate::kv3::read(crate::resource::data(model, "CTRL", 0).unwrap()).unwrap();
+        crate::kv3::read(crate::resource::data(model, "DATA", 0).unwrap()).unwrap();
+        fn walk(kv: &crate::kv3::Block, n: &crate::kv3::Node, out: &mut Vec<(String, f64)>) {
+            match &n.value {
+                crate::kv3::Value::Object(m) => {
+                    for (k, v) in m {
+                        match kv.number_of(v) {
+                            Some(x) if k.ends_with("Block") || k.ends_with("_block") || k == "m_nBlockIndex" => {
+                                out.push((k.clone(), x))
+                            }
+                            _ => walk(kv, v, out),
+                        }
+                    }
+                }
+                crate::kv3::Value::Array { items, .. } => items.iter().for_each(|x| walk(kv, x, out)),
+                _ => {}
+            }
+        }
+        for row in ctrl.root.get("embedded_meshes").unwrap().items() {
+            let mut refs = Vec::new();
+            walk(&ctrl, row, &mut refs);
+            for (k, at) in refs.into_iter().filter(|(_, at)| *at >= 0.0) {
+                let b = &blocks[at as usize];
+                let want: &[&str] = match k.as_str() {
+                    "m_nDataBlock" | "data_block" => &["MDAT"],
+                    "m_nMorphBlock" | "morph_block" => &["MRPH"],
+                    "vbib_block" | "m_nVBIBBlock" => &["VBIB", "MBUF"],
+                    _ => &["MVTX", "MIDX", "MBUF", "VBIB", "MADJ", "MSLT", "TBUF"],
+                };
+                assert!(want.contains(&b.name.as_str()), "{k} names a {}", b.name);
+                if b.name == "MRPH" {
+                    let m = crate::kv3::read(&model[b.at..b.at + b.size]).unwrap();
+                    let n = m.root.get("m_FlexControllers").unwrap().items().len() as f64;
+                    for rule in m.root.get("m_FlexRules").map(|r| r.items()).unwrap_or(&[]) {
+                        for op in rule.get("m_FlexOps").unwrap().items() {
+                            if op.get("m_OpCode").and_then(|c| c.as_str()) == Some("FLEX_OP_FETCH1") {
+                                assert!(m.number_of(op.get("m_Data").unwrap()).unwrap() < n);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fn meshes(model: &[u8]) -> usize {
         let ctrl = crate::kv3::read(crate::resource::data(model, "CTRL", 0).unwrap()).unwrap();
         ctrl.root.get("embedded_meshes").map_or(0, |m| m.items().len())
@@ -782,8 +831,7 @@ mod tests {
 
     /// On the game's own files (MM_TEST_PAK01 = a pak01_dir.vpk): every head and back pick of
     /// Tidehunter and head pick of Brewmaster, whose stock items there have no model, goes into a
-    /// model the hero wears (Tidehunter's body will not join, so one of his stock models) and is
-    /// not left out, but one model_merge.rs will not join, which is said to be.
+    /// model the hero wears, his body, morphs and all, and the file reads back whole.
     #[test]
     fn a_pick_with_no_stock_path_goes_into_a_model_the_hero_wears() {
         let Ok(pak) = std::env::var("MM_TEST_PAK01") else { return };
@@ -792,11 +840,10 @@ mod tests {
         let text = read(crate::schema::SCHEMA_REL).unwrap();
         let items = crate::schema::items_of(&text).unwrap();
         for (hero, slot, floor) in [
-            // how many of the game's own pass on 2026-11-26; the rest have morphs (most of Brewmaster's
-            // hats, his beard in them) or a mesh layout or skeleton model_merge.rs cannot join
-            ("npc_dota_hero_tidehunter", "head", 13),
-            ("npc_dota_hero_tidehunter", "back", 14),
-            ("npc_dota_hero_brewmaster", "head", 4),
+            // every one of the game's own on 2026-11-26
+            ("npc_dota_hero_tidehunter", "head", 19),
+            ("npc_dota_hero_tidehunter", "back", 16),
+            ("npc_dota_hero_brewmaster", "head", 10),
         ] {
             let picks: Vec<_> = items
                 .iter()
@@ -814,10 +861,20 @@ mod tests {
                 let mut patch = TablePatch::worn_pick(&pick.id, &text[pick.start..pick.end], false);
                 patch.unplaced = Some(true);
                 let made = item_files(&[patch], &[], &read, None).unwrap();
-                let hosted = made.entries.iter().any(|e| {
+                let host = made.entries.iter().find(|e| {
                     let at = e.path().to_lowercase();
                     at.ends_with(".vmdl_c") && read(&at).is_some_and(|stock| meshes(&e.data) > meshes(&stock))
                 });
+                let hosted = host.is_some();
+                if let Some(h) = host {
+                    assert_eq!(
+                        h.path().to_lowercase(),
+                        body_path(&read, hero).unwrap(),
+                        "{hero} {slot}: {}",
+                        pick.name
+                    );
+                    whole(&h.data);
+                }
                 let lost = made.left.iter().any(|l| l.what.iter().any(|w| w == "its model"));
                 // a model model_merge.rs will not join (morphs, another mesh layout, a skeleton it
                 // cannot take) stays left out, and the window says so
