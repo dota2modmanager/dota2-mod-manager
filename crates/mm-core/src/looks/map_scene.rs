@@ -23,8 +23,9 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// The light copy's file in the cache; its number goes up when what goes into it changes, so a
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
 /// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
-/// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise).
-pub const LIGHT_FILE: &str = "world-8.glb";
+/// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
+/// normal pictures).
+pub const LIGHT_FILE: &str = "world-9.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -153,6 +154,11 @@ pub fn tint_mask(material: &Value, textures: &[Value], images: &[Value]) -> Opti
             .and_then(Value::as_str)
             .is_some_and(|n| stem(n) == want)
     })
+}
+
+/// A material's int param from its vmat (F_NORMAL_MAP and the like), if it has it.
+fn vmat_int(material: &Value, key: &str) -> Option<i64> {
+    material.pointer(&format!("/extras/vmat/IntParams/{key}")).and_then(Value::as_i64)
 }
 
 /// The export's texture whose picture is this vtex (matched by file name), if the export kept it.
@@ -295,6 +301,14 @@ pub fn slim_glb(
         if base.is_none() && shader.contains("water") {
             pbr.insert("baseColorFactor".into(), json!([0.035, 0.12, 0.16, 0.8]));
             out.insert("alphaMode".into(), json!("BLEND"));
+        }
+        // a prop's normal picture (global_lit_simple.vfx under F_NORMAL_MAP): its rocks and planks
+        // take the light by their bumps; the window bends the normal by it (three, no tangents
+        // needed). A terrain blend and the water have pictures of their own.
+        let bumpy = vmat_int(m, "F_NORMAL_MAP") == Some(1) && !layers_of.contains_key(&mi) && !shader.contains("water");
+        if let Some(t) = m.pointer("/normalTexture/index").and_then(idx).filter(|_| bumpy) {
+            used_tex.insert(t);
+            out.insert("normalTexture".into(), json!({ "index": t }));
         }
         if let Some(t) = m.pointer("/pbrMetallicRoughness/baseColorTexture/index").and_then(idx) {
             used_tex.insert(t);
@@ -490,6 +504,16 @@ pub fn slim_glb(
         }
     }
     for m in materials.iter_mut() {
+        if let Some(t) = m.pointer("/normalTexture/index").and_then(idx) {
+            match tex_map.get(&t) {
+                Some(n) => m["normalTexture"] = json!({ "index": n }),
+                None => {
+                    if let Some(o) = m.as_object_mut() {
+                        o.remove("normalTexture");
+                    }
+                }
+            }
+        }
         let t = m.pointer("/pbrMetallicRoughness/baseColorTexture/index").and_then(idx);
         match t.and_then(|t| tex_map.get(&t)) {
             Some(n) => m["pbrMetallicRoughness"]["baseColorTexture"] = json!({ "index": n }),
@@ -819,6 +843,31 @@ mod tests {
             Some((Some(0), None)),
             "a picture the export left out is none"
         );
+    }
+
+    #[test]
+    fn a_bumpy_prop_keeps_its_normal_picture() {
+        let mut bin = Vec::new();
+        for f in [0f32, 0., 0., 1., 0., 0., 0., 1., 0.] {
+            bin.extend_from_slice(&f.to_le_bytes());
+        }
+        let json = json!({
+            "scene": 0, "scenes": [{ "nodes": [0] }], "nodes": [{ "mesh": 0 }],
+            "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0 }, "material": 0 }] }],
+            "materials": [{ "extras": { "vmat": { "ShaderName": "global_lit_simple.vfx", "IntParams": { "F_NORMAL_MAP": 1 } } },
+                "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 } }, "normalTexture": { "index": 1 } }],
+            "textures": [{ "source": 0, "sampler": 0 }, { "source": 1, "sampler": 0 }],
+            "images": [{ "uri": "color.png" }, { "uri": "normal.png" }],
+            "accessors": [{ "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" }],
+            "bufferViews": [{ "buffer": 0, "byteOffset": 0, "byteLength": 36 }],
+            "buffers": [{ "byteLength": 36 }],
+        });
+        let png = encode_rgba(&[128u8; 4 * 4 * 4], 4, 4).unwrap();
+        let out = slim_glb(&json, &bin, &|_: &str| Some(png.clone()), 2, None).unwrap();
+        let (j, _) = read_glb(&out).unwrap();
+        let n = j["materials"][0]["normalTexture"]["index"].as_u64().expect("the normal picture is kept");
+        assert_ne!(Some(n), j["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"]["index"].as_u64());
+        assert_eq!(j["textures"].as_array().unwrap().len(), 2);
     }
 
     #[test]
