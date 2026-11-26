@@ -25,8 +25,9 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
-/// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep).
-pub const LIGHT_FILE: &str = "world-12.glb";
+/// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep;
+/// 13: the glows' colour pictures).
+pub const LIGHT_FILE: &str = "world-13.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -155,6 +156,21 @@ pub fn tint_mask(material: &Value, textures: &[Value], images: &[Value]) -> Opti
             .and_then(Value::as_str)
             .is_some_and(|n| stem(n) == want)
     })
+}
+
+/// A glow's colour picture (global_lit_simple.vfx under F_TRANSLUCENT and F_ADDITIVE_BLEND, no
+/// overlay, with a scroll picture: the light in the Dire's lava pit). The export hands such a
+/// material its scroll picture (g_tScrollSpeed: green the speed, alpha the opacity) as its colour,
+/// so the colour itself (g_tColor, grey under the copy's orange tint) goes beside it. None otherwise.
+pub fn glow_colour(material: &Value, textures: &[Value], images: &[Value]) -> Option<usize> {
+    let vmat = material.pointer("/extras/vmat")?;
+    let on = |k: &str| vmat.pointer(&format!("/IntParams/{k}")).and_then(Value::as_i64) == Some(1);
+    if !on("F_TRANSLUCENT") || !on("F_ADDITIVE_BLEND") || on("F_OVERLAY") {
+        return None;
+    }
+    vmat.pointer("/TextureParams/g_tScrollSpeed")?;
+    let vtex = vmat.pointer("/TextureParams/g_tColor").and_then(Value::as_str)?;
+    texture_named(vtex, textures, images)
 }
 
 /// A prop's tint mask (global_lit_simple.vfx under F_TINT_MASK): the texture of the export whose
@@ -295,6 +311,8 @@ pub fn slim_glb(
     let mut winds_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
     // a prop's specular picture, by the material's number
     let mut speculars_of: BTreeMap<usize, usize> = BTreeMap::new();
+    // a glow's colour picture, by the material's number
+    let mut glows_of: BTreeMap<usize, usize> = BTreeMap::new();
     // a prop's tint mask, by the material's number
     let mut prop_masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     // the water's normal and noise, by the material's number
@@ -313,6 +331,10 @@ pub fn slim_glb(
         if let Some(t) = prop_mask {
             used_tex.insert(t);
             prop_masks_of.insert(mi, t);
+        }
+        if let Some(t) = glow_colour(m, &textures, &images) {
+            used_tex.insert(t);
+            glows_of.insert(mi, t);
         }
         if let Some(t) = prop_specular(m, &textures, &images) {
             used_tex.insert(t);
@@ -570,6 +592,11 @@ pub fn slim_glb(
     for (mi, t) in &speculars_of {
         if let (Some(e), Some(n)) = (materials[*mi].get_mut("extras").and_then(Value::as_object_mut), tex_map.get(t)) {
             e.insert("specular".into(), json!(n));
+        }
+    }
+    for (mi, t) in &glows_of {
+        if let (Some(e), Some(n)) = (materials[*mi].get_mut("extras").and_then(Value::as_object_mut), tex_map.get(t)) {
+            e.insert("glowColour".into(), json!(n));
         }
     }
     for (mi, t) in &prop_masks_of {
