@@ -24,8 +24,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
 /// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
-/// normal pictures).
-pub const LIGHT_FILE: &str = "world-9.glb";
+/// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks).
+pub const LIGHT_FILE: &str = "world-10.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -156,6 +156,19 @@ pub fn tint_mask(material: &Value, textures: &[Value], images: &[Value]) -> Opti
     })
 }
 
+/// A prop's tint mask (global_lit_simple.vfx under F_TINT_MASK): the texture of the export whose
+/// green picks, per pixel, between g_vColorTint2 (at 0) and g_vColorTint × the copy's tint (at 1),
+/// so a tree's leaves take the map's green and its trunk keeps its own. None for a material without
+/// one, a terrain blend (tint_mask) or one the export left out.
+pub fn prop_tint_mask(material: &Value, textures: &[Value], images: &[Value]) -> Option<usize> {
+    let vmat = material.pointer("/extras/vmat")?;
+    if vmat.pointer("/IntParams/F_TINT_MASK").and_then(Value::as_i64) != Some(1) {
+        return None;
+    }
+    let vtex = vmat.pointer("/TextureParams/g_tTintMask").and_then(Value::as_str)?;
+    texture_named(vtex, textures, images)
+}
+
 /// A material's int param from its vmat (F_NORMAL_MAP and the like), if it has it.
 fn vmat_int(material: &Value, key: &str) -> Option<i64> {
     material.pointer(&format!("/extras/vmat/IntParams/{key}")).and_then(Value::as_i64)
@@ -254,6 +267,8 @@ pub fn slim_glb(
     let mut masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     // a swaying material's wind mask and noise, by the material's number
     let mut winds_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
+    // a prop's tint mask, by the material's number
+    let mut prop_masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     // the water's normal and noise, by the material's number
     let mut waters_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
     for (mi, m) in materials.iter_mut().enumerate() {
@@ -266,6 +281,11 @@ pub fn slim_glb(
             waters_of.insert(mi, (normal, noise));
         }
         let layers = blend_layers(m, &textures, &images);
+        let prop_mask = if layers.is_empty() { prop_tint_mask(m, &textures, &images) } else { None };
+        if let Some(t) = prop_mask {
+            used_tex.insert(t);
+            prop_masks_of.insert(mi, t);
+        }
         if !layers.is_empty() {
             used_tex.extend(layers.iter().map(|l| l.0));
             layers_of.insert(mi, layers);
@@ -280,10 +300,21 @@ pub fn slim_glb(
                 out.insert(k.into(), v.clone());
             }
         }
+        // the export's colour is the tint of the copy that wears this material (a temple stair's
+        // grey green, the Dire banner's dark green): it goes over as that copy's tint (`copyTint`),
+        // which the window lays as the game does, over the whole model or only where a tint mask
+        // lets it (map-tint.ts: the banner's cloth stays red). Only its alpha stays a colour.
         let mut pbr = Map::new();
-        if let Some(f) = m.pointer("/pbrMetallicRoughness/baseColorFactor") {
-            pbr.insert("baseColorFactor".into(), f.clone());
+        let factor: Vec<f64> = m
+            .pointer("/pbrMetallicRoughness/baseColorFactor")
+            .and_then(Value::as_array)
+            .map(|a| a.iter().filter_map(Value::as_f64).collect())
+            .unwrap_or_default();
+        if let Some(a) = factor.get(3).filter(|a| **a < 1.0) {
+            pbr.insert("baseColorFactor".into(), json!([1, 1, 1, a]));
         }
+        let copy_tint = (factor.len() >= 3 && factor[..3].iter().any(|c| (c - 1.0).abs() > 1e-3))
+            .then(|| [factor[0], factor[1], factor[2]]);
         let base = m.pointer("/pbrMetallicRoughness/baseColorTexture/index").and_then(idx);
         let image = base
             .and_then(|t| textures.get(t))
@@ -293,8 +324,16 @@ pub fn slim_glb(
             .and_then(|i| i.get("name"))
             .and_then(Value::as_str)
             .unwrap_or("");
-        if let Some(t) = tint_of(m, image) {
+        // a masked tint is the window's to lay (map-tint.ts), only where the mask is; the export's
+        // colour of a material with a tint of its own is that tint again, not a copy's
+        let own_tint = tint_of(m, image);
+        if let Some(t) = own_tint.filter(|_| prop_mask.is_none()) {
             pbr.insert("baseColorFactor".into(), json!([t[0], t[1], t[2], 1]));
+        }
+        if let (Some(t), None) = (copy_tint, own_tint) {
+            if let Some(e) = out.entry("extras").or_insert_with(|| json!({})).as_object_mut() {
+                e.insert("copyTint".into(), json!(t.map(|c| (c * 10000.0).round() / 10000.0)));
+            }
         }
         // the game draws water with a shader of its own and no colour picture: give it the river's colour
         let shader = m.pointer("/extras/vmat/ShaderName").and_then(Value::as_str).unwrap_or("");
@@ -493,6 +532,11 @@ pub fn slim_glb(
             }
         }
     }
+    for (mi, t) in &prop_masks_of {
+        if let (Some(e), Some(n)) = (materials[*mi].get_mut("extras").and_then(Value::as_object_mut), tex_map.get(t)) {
+            e.insert("propTintMask".into(), json!(n));
+        }
+    }
     for (mi, (normal, noise)) in &waters_of {
         if let Some(e) = materials[*mi].get_mut("extras").and_then(Value::as_object_mut) {
             if let Some(n) = normal.and_then(|t| tex_map.get(&t)) {
@@ -677,8 +721,10 @@ fn to_linear(v: f64) -> f64 {
 /// (`m_sceneObjects[].m_vTintColor`, 0-1, and each fragment of an aggregate,
 /// `m_aggregateSceneObjects[].m_aggregateMeshes[].m_vTintColor`, 0-255), and the export drops it.
 /// A node is named after its model's file (`n0_lr0_agg_prop_cliff_wall001_0`, one per fragment),
-/// a scene object's after its model and mesh set (`..._overlay0.meshset_0`). The colour's alpha is
-/// how strongly it tints; the tints come linear, white mixed in by that.
+/// a scene object's after its model and mesh set (`..._overlay0.meshset_0`). The tints come linear
+/// and whole: the colour's alpha is how opaque a see-through copy is, and an opaque one's shader
+/// leaves it out (global_lit_simple.vfx, read 2026-11-26), so a temple stair's grey green at 48 of
+/// 255 is grey green.
 pub fn instance_tints(vwnod: &[u8]) -> BTreeMap<String, Vec<[f64; 3]>> {
     let mut out: BTreeMap<String, Vec<[f64; 3]>> = BTreeMap::new();
     let Ok(data) = crate::resource::data(vwnod, "DATA", 0) else { return out };
@@ -691,10 +737,7 @@ pub fn instance_tints(vwnod: &[u8]) -> BTreeMap<String, Vec<[f64; 3]>> {
     let tint = |n: Option<&crate::kv3::Node>, scale: f64| -> [f64; 3] {
         let items = n.map(|n| n.items()).unwrap_or(&[]);
         let c = |i: usize| items.get(i).and_then(|x| kv.number_of(x)).map_or(1.0, |v| (v / scale).clamp(0.0, 1.0));
-        // the fourth number is how much of the tint the copy takes (a temple stair's dark green at 48
-        // of 255 leaves it a light grey), all of it where there is none
-        let amount = c(3);
-        [0, 1, 2].map(|i| 1.0 + (to_linear(c(i)) - 1.0) * amount)
+        [0, 1, 2].map(|i| to_linear(c(i)))
     };
     for o in kv.root.get("m_sceneObjects").map(|n| n.items()).unwrap_or(&[]) {
         if let Some(s) = stem(o) {
@@ -761,197 +804,8 @@ pub fn cloud_png(png: &[u8]) -> Option<Vec<u8>> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn each_copy_of_a_model_takes_its_own_tint() {
-        let tints: BTreeMap<String, Vec<[f64; 3]>> = [
-            ("n0_lr0_agg_rocks_0".to_string(), vec![[0.2, 0.3, 0.4], [1.0, 1.0, 1.0], [0.5, 0.5, 0.5]]),
-            ("overlay0".to_string(), vec![[0.1, 0.1, 0.1]]),
-        ]
-        .into();
-        let mut j = json!({ "nodes": [
-            { "name": "n0_lr0_agg_rocks_0" }, { "name": "n0_lr0_agg_rocks_0" }, { "name": "overlay0.meshset_0" },
-            { "name": "n0_lr0_agg_rocks_0", "extras": { "x": 1 } }, { "name": "dire_tree1.dire_tree1_model" } ] });
-        tint_nodes(&mut j, &tints);
-        assert_eq!(j["nodes"][0]["extras"]["tint"], json!([0.2, 0.3, 0.4]));
-        assert!(j["nodes"][1].get("extras").is_none(), "white is left off");
-        assert_eq!(j["nodes"][2]["extras"]["tint"], json!([0.1, 0.1, 0.1]), "a mesh set takes its object's tint");
-        assert_eq!(
-            j["nodes"][3]["extras"],
-            json!({ "x": 1, "tint": [0.5, 0.5, 0.5] }),
-            "the third copy, the third tint"
-        );
-        assert!(j["nodes"][4].get("extras").is_none());
-        assert!((to_linear(115.0 / 255.0) - 0.171).abs() < 0.001);
-    }
-
-    #[test]
-    fn a_grey_picture_takes_the_tint_of_its_layer() {
-        let m = json!({ "extras": { "vmat": {
-            "TextureParams": { "g_tColor0": "materials/nature/sand_color.vtex", "g_tColor1": "materials/nature/grass_color.vtex" },
-            "VectorParams": { "g_vColorTint0": [1, 1, 1, 0], "g_vColorTint1": [0.5, 1, 0, 1] } } } });
-        let t = tint_of(&m, "grass_color.vtex").unwrap();
-        assert!((t[0] - 0.214).abs() < 0.01 && (t[1] - 1.0).abs() < 1e-9 && t[2] == 0.0);
-        assert_eq!(tint_of(&m, "sand_color.vtex"), None, "white is no tint");
-        let plain = json!({ "extras": { "vmat": { "TextureParams": { "g_tColor": "a/rock.vtex" }, "VectorParams": { "g_vColorTint": [0.2, 0.2, 0.2, 0] } } } });
-        assert!(tint_of(&plain, "rock.vtex").is_some());
-        assert_eq!(tint_of(&json!({}), "x"), None);
-    }
-
-    #[test]
-    fn a_picture_is_halved_until_it_fits() {
-        let px = vec![255u8; 8 * 4 * 4];
-        let (out, w, h) = shrink(px, 8, 4, 3);
-        assert_eq!((w, h), (2, 1));
-        assert_eq!(out.len(), 2 * 4);
-        assert!(out.iter().all(|&b| b == 255));
-        let (same, w, h) = shrink(vec![1, 2, 3, 4], 1, 1, 256);
-        assert_eq!((same, w, h), (vec![1, 2, 3, 4], 1, 1));
-    }
-
-    #[test]
-    fn a_blend_with_a_tint_mask_names_its_texture() {
-        let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
-        let images =
-            vec![json!({ "name": "sand_color_psd_1.vtex" }), json!({ "name": "sand_path002_mask_psd_52b589c0.vtex" })];
-        let m = |on: i64| {
-            json!({ "extras": { "vmat": { "IntParams": { "F_TINT_MASK": on },
-                "TextureParams": { "g_tTintMasks": "materials/sand_path002_mask_psd_52b589c0.vtex" } } } })
-        };
-        assert_eq!(tint_mask(&m(1), &textures, &images), Some(1));
-        assert_eq!(tint_mask(&m(0), &textures, &images), None, "the mask is read only where the blend uses it");
-    }
-
-    #[test]
-    fn a_swaying_material_names_its_wind_mask_and_noise() {
-        let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
-        let images = vec![
-            json!({ "name": "armandpine_mask_psd_53929b27.vtex" }),
-            json!({ "name": "two_channel_noise_psd_93f8d443.vtex" }),
-        ];
-        let m = |on: i64| {
-            json!({ "extras": { "vmat": { "IntParams": { "F_ENABLE_WIND": on }, "TextureParams": {
-                "g_tWindMask": "materials/models/props_tree/armandpine/armandpine_mask_psd_53929b27.vtex",
-                "g_tWindNoise": "materials/dev/two_channel_noise_psd_93f8d443.vtex" } } } })
-        };
-        assert_eq!(wind_pictures(&m(1), &textures, &images), Some((Some(0), Some(1))));
-        assert_eq!(wind_pictures(&m(0), &textures, &images), None, "a material that does not sway has none");
-        assert_eq!(
-            wind_pictures(&m(1), &textures[..1], &images),
-            Some((Some(0), None)),
-            "a picture the export left out is none"
-        );
-    }
-
-    #[test]
-    fn a_bumpy_prop_keeps_its_normal_picture() {
-        let mut bin = Vec::new();
-        for f in [0f32, 0., 0., 1., 0., 0., 0., 1., 0.] {
-            bin.extend_from_slice(&f.to_le_bytes());
-        }
-        let json = json!({
-            "scene": 0, "scenes": [{ "nodes": [0] }], "nodes": [{ "mesh": 0 }],
-            "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0 }, "material": 0 }] }],
-            "materials": [{ "extras": { "vmat": { "ShaderName": "global_lit_simple.vfx", "IntParams": { "F_NORMAL_MAP": 1 } } },
-                "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 } }, "normalTexture": { "index": 1 } }],
-            "textures": [{ "source": 0, "sampler": 0 }, { "source": 1, "sampler": 0 }],
-            "images": [{ "uri": "color.png" }, { "uri": "normal.png" }],
-            "accessors": [{ "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" }],
-            "bufferViews": [{ "buffer": 0, "byteOffset": 0, "byteLength": 36 }],
-            "buffers": [{ "byteLength": 36 }],
-        });
-        let png = encode_rgba(&[128u8; 4 * 4 * 4], 4, 4).unwrap();
-        let out = slim_glb(&json, &bin, &|_: &str| Some(png.clone()), 2, None).unwrap();
-        let (j, _) = read_glb(&out).unwrap();
-        let n = j["materials"][0]["normalTexture"]["index"].as_u64().expect("the normal picture is kept");
-        assert_ne!(Some(n), j["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"]["index"].as_u64());
-        assert_eq!(j["textures"].as_array().unwrap().len(), 2);
-    }
-
-    #[test]
-    fn the_water_names_its_normal_and_noise() {
-        let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
-        let images = vec![
-            json!({ "name": "water_river_normal_sharp_temp_normal_tga_4ab60bd5.vtex" }),
-            json!({ "name": "water_noise_000_tga_d68b7ee6.vtex" }),
-        ];
-        let m = |shader: &str| {
-            json!({ "extras": { "vmat": { "ShaderName": shader, "TextureParams": {
-                "g_tNormal": "materials/water/water_river_normal_sharp_temp_normal_tga_4ab60bd5.vtex",
-                "g_tNoise": "materials/water/water_noise_000_tga_d68b7ee6.vtex" } } } })
-        };
-        assert_eq!(water_pictures(&m("water_dota.vfx"), &textures, &images), Some((Some(0), Some(1))));
-        assert_eq!(water_pictures(&m("global_lit_simple.vfx"), &textures, &images), None, "only the water");
-    }
-
-    #[test]
-    fn the_light_copy_keeps_shapes_and_colour_and_drops_the_rest() {
-        // one triangle: positions (accessor 0), tangents (1), indices (2); a material with a colour and a normal picture
-        let mut bin = Vec::new();
-        for f in [0f32, 0., 0., 1., 0., 0., 0., 1., 0.] {
-            bin.extend_from_slice(&f.to_le_bytes());
-        }
-        for f in [1f32; 12] {
-            bin.extend_from_slice(&f.to_le_bytes());
-        }
-        for i in [0u16, 1, 2, 0] {
-            bin.extend_from_slice(&i.to_le_bytes());
-        }
-        let json = json!({
-            "scene": 0, "scenes": [{ "nodes": [0] }], "nodes": [{ "mesh": 0, "skin": 0 }], "skins": [{}],
-            "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0, "TANGENT": 1 }, "indices": 2, "material": 0 }] }],
-            "materials": [{ "name": "grass", "extras": { "vmat": { "Name": "materials/nature/card_grass.vmat" } },
-                "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "metallicRoughnessTexture": { "index": 1 } },
-                "normalTexture": { "index": 1 } }],
-            "textures": [{ "source": 0, "sampler": 0 }, { "source": 1, "sampler": 0 }],
-            "images": [{ "uri": "color.png" }, { "uri": "normal.png" }],
-            "accessors": [
-                { "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" },
-                { "bufferView": 1, "componentType": 5126, "count": 3, "type": "VEC4" },
-                { "bufferView": 2, "componentType": 5123, "count": 3, "type": "SCALAR" },
-            ],
-            "bufferViews": [
-                { "buffer": 0, "byteOffset": 0, "byteLength": 36 },
-                { "buffer": 0, "byteOffset": 36, "byteLength": 48 },
-                { "buffer": 0, "byteOffset": 84, "byteLength": 8 },
-            ],
-            "buffers": [{ "byteLength": 92 }],
-        });
-        let color = encode_rgba(&[10u8; 4 * 4 * 4], 4, 4).unwrap();
-        let asked = std::cell::RefCell::new(Vec::new());
-        let picture = |u: &str| {
-            asked.borrow_mut().push(u.to_string());
-            (u == "color.png").then(|| color.clone())
-        };
-        let out = slim_glb(&json, &bin, &picture, 2, None).unwrap();
-        let (j, b) = read_glb(&out).unwrap();
-        let prim = &j["meshes"][0]["primitives"][0];
-        assert_eq!(prim["attributes"].as_object().unwrap().keys().collect::<Vec<_>>(), vec!["POSITION"]);
-        assert_eq!(j["accessors"].as_array().unwrap().len(), 2, "the tangents' accessor is gone");
-        assert!(j["nodes"][0].get("skin").is_none() && j.get("skins").is_none());
-        assert_eq!(j["materials"][0]["extras"]["vmat"]["Name"], "materials/nature/card_grass.vmat");
-        assert!(j["materials"][0].get("normalTexture").is_none());
-        assert_eq!(j["images"].as_array().unwrap().len(), 1);
-        assert_eq!(*asked.borrow(), vec!["color.png".to_string()], "only the colour picture is read");
-        // the positions came across byte for byte
-        let pos = &j["bufferViews"][j["accessors"][prim["attributes"]["POSITION"].as_u64().unwrap() as usize]
-            ["bufferView"]
-            .as_u64()
-            .unwrap() as usize];
-        let m = &pos["extensions"]["EXT_meshopt_compression"];
-        assert_eq!(m["mode"], "ATTRIBUTES");
-        let (off, len) = (m["byteOffset"].as_u64().unwrap() as usize, m["byteLength"].as_u64().unwrap() as usize);
-        let back = crate::meshopt::decode_vertex_buffer(3, 12, &b[off..off + len]).unwrap();
-        assert_eq!(&back[..], &bin[..36]);
-        assert_eq!(j["extensionsRequired"][0], "EXT_meshopt_compression");
-        // the triangle came through its codec as the same three indices
-        let iv = &j["bufferViews"]
-            [j["accessors"][prim["indices"].as_u64().unwrap() as usize]["bufferView"].as_u64().unwrap() as usize];
-        assert_eq!(iv["extensions"]["EXT_meshopt_compression"]["mode"], "TRIANGLES");
-    }
-}
+#[path = "map_scene_tests.rs"]
+mod tests;
 
 #[cfg(test)]
 mod real {

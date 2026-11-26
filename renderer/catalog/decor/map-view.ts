@@ -19,6 +19,7 @@ import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
+import { isMaskTinted, tintPictures, tintShader } from './map-tint.ts';
 import { isWindy, windPictures, windShader, windTime } from './map-wind.ts';
 import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts';
 
@@ -62,8 +63,12 @@ function prepare(mat: THREE.Material): void {
   if (m.map && m.transparent) { m.transparent = false; m.alphaTest = 0.4; }
   // lit as the game lights its world (map-light.ts); a leaf seen from its back takes the shadows'
   // light on that side, as the game's shader turns the normal to the viewer; a tree's leaves sway
-  // in the wind as the game's vertex shader sways them (map-wind.ts)
-  if ('emissive' in m) m.onBeforeCompile = isWindy(m) ? (sh) => { windShader(sh, m); litShader(sh); } : litShader;
+  // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
+  // tint to where the game lays it (map-tint.ts)
+  if (!('emissive' in m)) return;
+  const windy = isWindy(m), masked = isMaskTinted(m);
+  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); litShader(sh); };
+  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}`;
 }
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
@@ -260,6 +265,9 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     const swaying = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isWindy));
     windy = swaying.size > 0;
     void Promise.all([...swaying].map((m) => windPictures(m, gltf!.parser))).then(() => { dirty = true; });
+    // the tint masks (map-tint.ts)
+    const masked = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isMaskTinted));
+    void Promise.all([...masked].map((m) => tintPictures(m, gltf!.parser))).then(() => { dirty = true; });
     // the map's box before its meshes leave the tree the toolchain gave them
     box = new THREE.Box3().setFromObject(world);
     // everything else as one mesh per material and per group a slider takes away

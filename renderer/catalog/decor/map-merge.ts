@@ -2,7 +2,7 @@
  * calls a frame (10-15 FPS on a gaming card). Meshes merge when they wear the same material and
  * switch together: the same group of the Optimization window, or the same tree model. Each mesh
  * is baked into the map's space first, so the merged mesh needs no transform of its own. A copy
- * the map tints (its node's extras, map_scene.rs tint_nodes) keeps its tint as vertex colours, which
+ * the map tints (its node's extras, map_scene.rs tint_nodes, or its material's copyTint) keeps its tint as vertex colours, which
  * three multiplies into the albedo as the game's shader does its per-copy tint. */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
@@ -131,9 +131,11 @@ function describe(g: THREE.BufferGeometry, pack: Pack): Geo {
   return { attrs, index, count };
 }
 
-/** The tint the map paints this copy of its model in, linear (its glTF node's extras), or none. */
+/** The tint the map paints this copy of its model in, linear: its glTF node's extras, else the
+ * tint the export gave the copy's material (map_scene.rs copyTint), or none. */
 function tintOf(mesh: THREE.Mesh): [number, number, number] | undefined {
-  const t = (mesh.userData.tint ?? mesh.parent?.userData.tint) as unknown;
+  const own = Array.isArray(mesh.material) ? undefined : (mesh.material.userData as { copyTint?: unknown }).copyTint;
+  const t = (mesh.userData.tint ?? mesh.parent?.userData.tint ?? own) as unknown;
   return Array.isArray(t) && t.length >= 3 && t.every((c) => typeof c === 'number') ? [t[0], t[1], t[2]] : undefined;
 }
 
