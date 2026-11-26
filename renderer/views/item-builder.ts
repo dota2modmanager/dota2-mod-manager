@@ -160,7 +160,8 @@ export function slotPane(st: SlotState, redraw: () => void): { m: SlotPaneModel;
       : byName([{ id: '', name: L`Стандартный`, tags: [] }, ...emptyOption(data) as typeof data.options, ...data.options], st.view === 'items' ? st.query : '')).map((o) => ({
       id: o.id, name: o.name, picked: st.view === 'replacement' ? o.id === st.targetItemId : o.id === st.selectedId,
       on: st.view !== 'replacement' && (o.id ? live?.itemId === o.id : !live), ...facts(o),
-      ...('note' in o && o.note ? { note: o.note } : {}),
+      // the notes say how a pick plays through the item table; built as files alone it is another look, unnoted
+      ...('note' in o && o.note && state.settings?.schemaPatch ? { note: o.note } : {}),
     })),
     optionsCount: data.options.length,
     styles: styles ? styles.map((name, index) => ({ index, name, picked: index === st.style })) : null,

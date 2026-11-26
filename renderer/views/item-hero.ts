@@ -238,7 +238,9 @@ function drawHero(key: number, st: HeroState): void {
     random: (from) => {
       const r = from.getBoundingClientRect();
       const wearRandom = (mode: Exclude<RandomMode, 'set'>, none: string) => void busy(async () => {
-        const picks = randomPicks(slots, wornPicks(slots), mode);
+        // a pick noted broken is broken through the item table; built as files alone nothing is noted
+        const noted = state.settings?.schemaPatch ? slots : slots.map((s) => ({ ...s, options: s.options.map(({ note: _, ...o }) => o) }));
+        const picks = randomPicks(noted, wornPicks(slots), mode);
         if (!picks) { toast(none, 'warn'); return; }
         const res = await window.api.cosmetics.wearLook(hero, picks);
         if (res.error) { toast(res.error, 'error'); return; }
