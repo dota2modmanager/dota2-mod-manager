@@ -19,6 +19,7 @@ import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
+import { isShiny, specPictures, specShader } from './map-spec.ts';
 import { isMaskTinted, tintPictures, tintShader } from './map-tint.ts';
 import { isWindy, windPictures, windShader, windTime } from './map-wind.ts';
 import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts';
@@ -64,11 +65,11 @@ function prepare(mat: THREE.Material): void {
   // lit as the game lights its world (map-light.ts); a leaf seen from its back takes the shadows'
   // light on that side, as the game's shader turns the normal to the viewer; a tree's leaves sway
   // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
-  // tint to where the game lays it (map-tint.ts)
+  // tint to where the game lays it (map-tint.ts); a prop with a specular picture shines (map-spec.ts)
   if (!('emissive' in m)) return;
-  const windy = isWindy(m), masked = isMaskTinted(m);
-  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); litShader(sh); };
-  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}`;
+  const windy = isWindy(m), masked = isMaskTinted(m), shiny = isShiny(m);
+  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh); };
+  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}`;
 }
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
@@ -268,6 +269,9 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     // the tint masks (map-tint.ts)
     const masked = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isMaskTinted));
     void Promise.all([...masked].map((m) => tintPictures(m, gltf!.parser))).then(() => { dirty = true; });
+    // the props' specular pictures (map-spec.ts)
+    const shiny = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isShiny));
+    void Promise.all([...shiny].map((m) => specPictures(m, gltf!.parser))).then(() => { dirty = true; });
     // the map's box before its meshes leave the tree the toolchain gave them
     box = new THREE.Box3().setFromObject(world);
     // everything else as one mesh per material and per group a slider takes away
