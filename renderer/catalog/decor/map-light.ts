@@ -3,9 +3,10 @@
  * (ent_dota_lightinfo in default_ents, map_build.rs weather_lights):
  *
  *   sun   = saturate(N · -lightDir) × shadow × clouds
- *   light = sun × colour × light_scale
- *         + saturate(N · ambientDir) × ambient_colour × ambient_scale × mix(1, shadow × clouds, ambient_shadow_amount)
- *         + (1 - sun) × mix(shadow_secondary_colour, shadow_colour, N.up × 0.5 + 0.5) × shadow_scale
+ *   open  = 1 - the ambient occlusion (map-ao.ts)
+ *   light = sun × colour × light_scale × (0.45 + 0.55 × open^1.85)
+ *         + open^2.1 × 1.5 × (saturate(N · ambientDir) × ambient_colour × ambient_scale × mix(1, shadow × clouds, ambient_shadow_amount)
+ *                             + (1 - sun) × mix(shadow_secondary_colour, shadow_colour, N.up × 0.5 + 0.5) × shadow_scale)
  *         + Σ small lights: saturate(N · toward it) × smoothstep(saturate((1 - distance / radius) / (1 - start_falloff))) × colour × intensity
  *   pixel = mix(albedo × light, fog colour, min(pow(saturate((distance - start) / (end - start)), exponent), max))
  *
@@ -115,12 +116,24 @@ export const lit = {
   uLocalAt: { value: Array.from({ length: 48 }, () => new THREE.Vector4()) },
   uLocalColour: { value: Array.from({ length: 48 }, () => new THREE.Color()) },
   uLocalCount: { value: 0 },
+  /** the map's ambient occlusion (map-ao.ts) at half the screen's size, whether there is one, a screen pixel */
+  uAO: { value: null as THREE.Texture | null },
+  uAOOn: { value: 0 },
+  uAOPixel: { value: new THREE.Vector2(1, 1) },
+  /** 1 while map-ao.ts draws the map's depth: a material stops once its pixel is known to be there */
+  uAOPass: { value: 0 },
 };
 /** How many of the map's small lights the shader takes at once. */
 const LOCAL = 48;
 
 /** A Source inch in the window's metres (the map's export). */
 export const INCH = 0.0254;
+/** How far south of the point it looks at the game's camera stands, in inches: its distance (dota_camera_distance 1134) × cos 60°. */
+const CAMERA_BACK = 567;
+/** What the game gives the world's sky and shadow light over the zone's scales (its global light
+ * buffer in four frames read in RenderDoc: an ambient scale of 5 came out 7.5 everywhere, the Dire's
+ * shadow scale of 2 came out 3; the heroes' own copy of the shadow's keeps the zone's number). */
+const WORLD_SHADE = 1.5;
 /** How far the game's camera stands from what it looks at, in metres. */
 const GAME_CAMERA = 1200 * INCH;
 
@@ -145,7 +158,9 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
     .replace('#include <common>', `#include <common>
     uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor, uSpecColor, uSpecDir;
     uniform float uSpecIndependence, uSpecPow;
-    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain;
+    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain, uAOOn, uAOPass;
+    uniform sampler2D uAO;
+    uniform vec2 uAOPixel;
     uniform vec4 uLocalAt[ ${LOCAL} ];
     uniform vec3 uLocalColour[ ${LOCAL} ];
     uniform int uLocalCount;
@@ -154,6 +169,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
     uniform sampler2D uClouds;
     varying vec3 vLitWorld;`)
     .replace('#include <opaque_fragment>', `{
+      if ( uAOPass > 0.5 ) { gl_FragColor = vec4( 0.0 ); return; }
       float shade = 1.0;
       #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0
       shade = receiveShadow ? getShadow( directionalShadowMap[ 0 ], directionalLightShadows[ 0 ].shadowMapSize, directionalLightShadows[ 0 ].shadowIntensity,
@@ -168,8 +184,10 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       }
       vec3 n = inverseTransformDirection( normal, viewMatrix );
       float sun = saturate( dot( n, -uSunDir ) ) * shade;
-      vec3 light = sun * uSun + saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
-        + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 );
+      // the occlusion takes the sky's and the shadow's light and part of the sun's (deferred_global_light.vfx)
+      float open = 1.0 - ( uAOOn > 0.5 && uPlain < 0.5 ? texture2D( uAO, gl_FragCoord.xy * uAOPixel ).r : 0.0 );
+      vec3 light = sun * uSun * ( 0.45 + 0.55 * pow( open, 1.85 ) ) + pow( open, 2.1 ) * ( saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
+        + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 ) );
       for ( int i = 0; i < ${LOCAL}; i++ ) {
         if ( i >= uLocalCount || uPlain > 0.5 ) break;
         vec3 to = uLocalAt[ i ].xyz - vLitWorld;
@@ -255,8 +273,9 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
   const looked = new THREE.Vector3(Infinity, 0, 0);
   const lookAt = (target: THREE.Vector3): boolean => {
     looked.copy(target);
-    // the window's x, z are Source's y, x (map-light.ts pointing)
-    const w = shares(places, target.z / INCH, target.x / INCH);
+    // the window's x, z are Source's y, x (map-light.ts pointing); the game weighs the zones where
+    // its camera stands, south of the point it looks at (a frame of the game read in RenderDoc)
+    const w = shares(places, target.z / INCH, target.x / INCH - CAMERA_BACK);
     if (w.length === weights.length && w.every((v, i) => Math.abs(v - weights[i]) < 0.01)) return false;
     weights = w;
     zone = blendZones(base, places, w);
@@ -301,9 +320,9 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     const bright = k * (1 + flash);
     // the dark map: the sun falls and the light left turns bluer, as the game's night
     lit.uSun.value.copy(linear(z.color_day, z.light_scale_day ?? 5)).lerp(cool, (1 - k) * 0.5).multiplyScalar(bright);
-    lit.uAmbient.value.copy(linear(z.ambient_color_day, z.ambient_scale_day ?? 5)).multiplyScalar(0.4 + 0.6 * k);
-    lit.uShadeUp.value.copy(linear(z.shadow_color_day, z.shadow_scale_day ?? 1)).multiplyScalar(0.4 + 0.6 * k);
-    lit.uShadeDown.value.copy(linear(z.shadow_secondary_color_day ?? z.shadow_color_day, z.shadow_ground_scale_day ?? z.shadow_scale_day ?? 1)).multiplyScalar(0.4 + 0.6 * k);
+    lit.uAmbient.value.copy(linear(z.ambient_color_day, z.ambient_scale_day ?? 5)).multiplyScalar((0.4 + 0.6 * k) * WORLD_SHADE);
+    lit.uShadeUp.value.copy(linear(z.shadow_color_day, z.shadow_scale_day ?? 1)).multiplyScalar((0.4 + 0.6 * k) * WORLD_SHADE);
+    lit.uShadeDown.value.copy(linear(z.shadow_secondary_color_day ?? z.shadow_color_day, z.shadow_ground_scale_day ?? z.shadow_scale_day ?? 1)).multiplyScalar((0.4 + 0.6 * k) * WORLD_SHADE);
     lit.uSunDir.value.copy(pointing(z.light_direction_day));
     lit.uAmbientDir.value.copy(pointing(z.ambient_direction_day));
     lit.uAmbientShadow.value = z.ambient_shadow_amount ?? 0;
