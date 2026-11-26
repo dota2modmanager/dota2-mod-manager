@@ -52,7 +52,13 @@ export interface ZoneLight {
   local_lights?: number[][];
   /** the everyday zone only: the map's standing effects (map_build.rs world_effects), place in inches, turn in degrees */
   world_effects?: { fx: string; at: number[]; turn: number[]; group?: string }[];
+  /** the map's zones for this look, each where it stands (x, y in inches), lit in full within its inner
+   * radius and not at all past its outer one (map_build.rs zone_places): the view takes the blend at its middle */
+  zones?: ZonePlace[];
 }
+
+/** One lighting zone of the map: RF, RB, DF or DT (map_build.rs zone_places). */
+export interface ZonePlace { zone: string; at: number[]; inner: number; outer: number; light: ZoneLight }
 
 /** The map without its decor, and the rest of Optimization. */
 export interface DecorApi {
