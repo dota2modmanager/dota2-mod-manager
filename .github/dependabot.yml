@@ -47,6 +47,23 @@ updates:
     commit-message:
       prefix: 'deps(rust)'
 
+  # The fuzz targets are a workspace of their own (fuzz/Cargo.toml) with their own Cargo.lock,
+  # which the entry above never touches. Left alone it kept crates the core had dropped, and
+  # Scorecard's OSV scan reads every lockfile, so it counted their advisories against the project
+  # (chrono, after #821). osv-scanner.toml does not cover a lockfile in another folder.
+  - package-ecosystem: cargo
+    directory: /fuzz
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      fuzz-dependencies:
+        patterns: ['*']
+        update-types: [minor, patch]
+    commit-message:
+      prefix: 'deps(fuzz)'
+
   - package-ecosystem: npm
     directory: /site
     schedule:
