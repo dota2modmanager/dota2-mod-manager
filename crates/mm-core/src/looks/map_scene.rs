@@ -26,8 +26,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
 /// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep;
-/// 13: the glows' colour pictures).
-pub const LIGHT_FILE: &str = "world-13.glb";
+/// 13: the glows' colour pictures; 14: no world layer the map starts with off).
+pub const LIGHT_FILE: &str = "world-14.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -844,13 +844,64 @@ pub fn tint_nodes(json: &mut Value, tints: &BTreeMap<String, Vec<[f64; 3]>>) {
     }
 }
 
+/// The world layer each model of the world node sits on, by the model's name (as
+/// [`instance_tints`] names it): `m_layerNames[m_nLayer]` of its scene object. Models of the
+/// layer the map always shows (`world_layer_base`) are left out.
+pub fn model_layers(vwnod: &[u8]) -> BTreeMap<String, String> {
+    let mut out = BTreeMap::new();
+    let Ok(data) = crate::resource::data(vwnod, "DATA", 0) else { return out };
+    let Ok(kv) = crate::kv3::read(data) else { return out };
+    let names: Vec<String> = kv
+        .root
+        .get("m_layerNames")
+        .map(|n| n.items())
+        .unwrap_or(&[])
+        .iter()
+        .map(|n| n.as_str().unwrap_or_default().to_string())
+        .collect();
+    for list in ["m_sceneObjects", "m_aggregateSceneObjects"] {
+        for o in kv.root.get(list).map(|n| n.items()).unwrap_or(&[]) {
+            let Some(path) = o.get("m_renderableModel").and_then(|n| n.as_str()) else { continue };
+            let Some(layer) = o.get("m_nLayer").and_then(|n| kv.number_of(n)) else { continue };
+            let Some(name) = names.get(layer as usize).filter(|_| layer > 0.0) else { continue };
+            let file = path.rsplit('/').next().unwrap_or(path);
+            out.insert(file.strip_suffix(".vmdl").unwrap_or(file).to_string(), name.clone());
+        }
+    }
+    out
+}
+
+/// The export's nodes whose model sits on a world layer in `hidden` left without their mesh, so
+/// the window draws nothing for them: the game keeps those layers off until something switches
+/// them on (map_build.rs hidden_layers).
+pub fn hide_layers(json: &mut Value, layers: &BTreeMap<String, String>, hidden: &BTreeSet<String>) {
+    let Some(nodes) = json.get_mut("nodes").and_then(Value::as_array_mut) else { return };
+    for n in nodes.iter_mut() {
+        let Some(name) = n.get("name").and_then(Value::as_str) else { continue };
+        let model = name.split('.').next().unwrap_or(name);
+        if layers.get(model).is_some_and(|l| hidden.contains(l)) {
+            if let Some(o) = n.as_object_mut() {
+                o.remove("mesh");
+            }
+        }
+    }
+}
+
 /// The light copy of the toolchain's GLB at `world`, its pictures read beside it, each copy of a
-/// model in the tint `vwnod` (the map's world node) gives it.
-pub fn slim(world: &Path, vwnod: Option<&[u8]>, clouds: Option<&[u8]>, max_px: u32) -> Result<Vec<u8>, String> {
+/// model in the tint `vwnod` (the map's world node) gives it, and nothing of the world layers in
+/// `hidden` (the ones the map starts with off).
+pub fn slim(
+    world: &Path,
+    vwnod: Option<&[u8]>,
+    hidden: &BTreeSet<String>,
+    clouds: Option<&[u8]>,
+    max_px: u32,
+) -> Result<Vec<u8>, String> {
     let buf = std::fs::read(world).map_err(|e| e.to_string())?;
     let (mut json, bin) = read_glb(&buf)?;
     if let Some(v) = vwnod {
         tint_nodes(&mut json, &instance_tints(v));
+        hide_layers(&mut json, &model_layers(v), hidden);
     }
     let dir = world.parent().map(Path::to_path_buf).unwrap_or_default();
     let picture = |uri: &str| -> Option<Vec<u8>> {
@@ -881,7 +932,7 @@ mod real {
     fn the_real_world_comes_out_light() {
         let Ok(p) = std::env::var("MM_TEST_WORLD") else { return };
         let t = std::time::Instant::now();
-        let out = super::slim(std::path::Path::new(&p), None, None, 256).expect("slim");
+        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), None, 256).expect("slim");
         eprintln!("light copy: {:.1} MB in {:?}", out.len() as f64 / 1e6, t.elapsed());
         if let Ok(to) = std::env::var("MM_TEST_WORLD_OUT") {
             std::fs::write(to, &out).unwrap();
