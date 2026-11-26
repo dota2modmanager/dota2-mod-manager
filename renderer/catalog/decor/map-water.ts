@@ -18,10 +18,21 @@
  * g_flWaterFogShadowFactor), and with the zone's pink shadow colour as AmbientColor2 the river
  * turns red, which the game's is not; the zone's ambient colour without its scale is taken instead,
  * the closest of the tries to a frame of the game. The reflection map's picture (× g_vFogColor ×
- * Reflectance) is unknown and left out. The game's normal and flow pictures are
- * not in the map's light copy yet, so the waves are made: a few moving ripples bend the normal.
- * Against a frame of the game the river's colour is off by 6 of 255 (the turquoise sheet before: 20). */
+ * Reflectance) is unknown and left out. Against a frame of the game the river's colour is off by 6
+ * of 255 (the turquoise sheet before: 20).
+ *
+ * The waves are the game's normal picture flowing (F_FLOW_NORMALS, read the same way 2026-11-26),
+ * P the pixel's place in inches, (x, -y), and the flow one colour over the whole river (TextureFlow):
+ *
+ *   t        = time × flow time scale / (2 × interval) + noise(P × noise scale).g × noise strength
+ *   phase k  = fract(t + ½ or t), its turn floor(...): picture at P / normal scale + turn × 0.311 (+ ½) + phase × flow × scroll
+ *   n.xy     = (picture A × |2 phase B - 1|^exp + picture B × |2 phase A - 1|^exp) × 2 - 1, × (|flow|² + 0.1) × bump
+ *
+ * so each picture fades out as it is about to jump back, and the noise keeps the stretches of the
+ * river from pulsing together. The material's scales are the shader's divisors (its 500 is a
+ * picture 500 inches wide). */
 import * as THREE from 'three';
+import type { GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { INCH, lit } from './map-light.ts';
 
 /** The seconds the waves have run, shared by every water. */
@@ -61,8 +72,21 @@ void main() {
   gl_Position = projectionMatrix * viewMatrix * at;
 }`;
 
+/** A flat normal and a calm noise, until the water's own pictures are in. */
+const pixel = (r: number, g: number, b: number) => {
+  const t = new THREE.DataTexture(new Uint8Array([r, g, b, 255]), 1, 1);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.needsUpdate = true;
+  return t;
+};
+const FLAT = pixel(128, 128, 255);
+const CALM = pixel(0, 0, 0);
+
 const FRAGMENT = `
 #define AMBIENT_SCALE 5.0
+uniform sampler2D uNormal, uNoise;
+uniform vec2 uFlow;
+uniform vec4 uFlowNums, uWaveNums;
 uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uSpecColor;
 uniform float uSpecIndependence;
 uniform sampler2D uBed, uBedDepth;
@@ -78,11 +102,18 @@ float eyeDepth( float z ) { return uNear * uFar / ( uFar - z * ( uFar - uNear ) 
 void main() {
   // the game's axes: the export turned Source's x, y, z into three's z, x, y
   vec3 p = vWorld.zxy, eye = cameraPosition.zxy;
-  vec2 wp = vWorld.xz;
-  float t = uTime;
-  vec2 bend = vec2(
-    sin( wp.x * 0.85 + t * 1.2 ) * 0.35 + sin( wp.y * 1.6 - t * 0.9 ) * 0.25 + sin( ( wp.x + wp.y ) * 3.3 + t * 2.3 ) * 0.15,
-    cos( wp.y * 1.05 + t * 1.0 ) * 0.35 + cos( wp.x * 1.9 - t * 1.5 ) * 0.25 + cos( ( wp.x - wp.y ) * 3.7 + t * 1.9 ) * 0.15 ) * 0.3;
+  // the waves: the normal picture flowing (uFlowNums: bump, time scale, interval, scroll;
+  // uWaveNums: noise scale, noise strength, normal scale, the fade's power)
+  vec2 at = vec2( p.x, -p.y ) / ${INCH};
+  vec2 scroll = uFlow * uFlowNums.w;
+  float t = uFlowNums.y * uTime / ( 2.0 * uFlowNums.z ) + texture2D( uNoise, at * uWaveNums.x ).y * uWaveNums.y;
+  vec2 base = at * uWaveNums.z;
+  float a = t + 0.5, fa = fract( a ), fb = fract( t );
+  vec2 pa = texture2D( uNormal, base + floor( a ) * 0.311 + 0.5 + fa * scroll ).xy;
+  vec2 pb = texture2D( uNormal, base + floor( t ) * 0.311 + fb * scroll ).xy;
+  vec2 bend = ( pb * pow( abs( 2.0 * fa - 1.0 ), uWaveNums.w ) + pa * pow( abs( 2.0 * fb - 1.0 ), uWaveNums.w ) ) * 2.0 - 1.0;
+  bend *= ( dot( uFlow, uFlow ) + 0.1 ) * uFlowNums.x;
+  if ( dot( bend, bend ) > 1.0 ) bend = normalize( bend );
   vec3 n = vec3( bend, sqrt( max( 1.0 - dot( bend, bend ), 0.0 ) ) );
 
   // how deep: where the bed lies below the water's plane, a share of the material's depth
@@ -123,6 +154,9 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
   const v = vmatOf(original) ?? {};
   const f = v.FloatParams ?? {}, vec = v.VectorParams ?? {};
   const dir = vec.g_vReflectionDir ?? [-0.256, -1, 0.349];
+  const flow = vec.TextureFlow ?? [0.5, 0.5];
+  // the material's scales are its pictures' sizes: the shader takes one over each
+  const per = (x: number | undefined, or: number) => 1 / (x || or);
   const m = new THREE.ShaderMaterial({
     uniforms: {
       ...lit,
@@ -138,6 +172,11 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
       uDepth: { value: (f.g_flWaterDepth ?? 35) * INCH },
       uForceFog: { value: v.IntParams?.F_FORCE_FOG_OVERRIDE ? 1 : 0 },
       uForceFogRange: { value: new THREE.Vector2(f.g_flForceFogOverrideMin ?? 0, f.g_flForceFogOverrideMax ?? 0) },
+      uNormal: { value: FLAT as THREE.Texture },
+      uNoise: { value: CALM as THREE.Texture },
+      uFlow: { value: new THREE.Vector2(flow[0] * 2 - 1, flow[1] * 2 - 1) },
+      uFlowNums: { value: new THREE.Vector4(f.g_flBumpStrength ?? 1, f.g_flFlowTimeScale ?? 1, f.g_flNormalFlowTimeIntervalInSeconds ?? 0.6, f.g_flNormalFlowUvScrollDistance ?? 0.18) },
+      uWaveNums: { value: new THREE.Vector4(f.g_flNoiseUvScale ?? 0.0005, f.g_flNoiseStrength ?? 2, per(f.g_flNormalUvScale, 500), f.g_flNormalFlowLerpExp ?? 1) },
     },
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,
@@ -147,6 +186,21 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
   made.set(original, m);
   waters.add(m);
   return m;
+}
+
+/** A water takes its normal and noise pictures out of the map's file (map_scene.rs water_pictures). */
+export async function wavePictures(m: THREE.ShaderMaterial, parser: GLTFParser): Promise<void> {
+  const data = m.userData as { waterNormal?: number; waterNoise?: number };
+  const load = (i: number | undefined) =>
+    i === undefined ? Promise.resolve(null) : (parser.getDependency('texture', i).catch(() => null) as Promise<THREE.Texture | null>);
+  const [normal, noise] = await Promise.all([load(data.waterNormal), load(data.waterNoise)]);
+  for (const [t, slot] of [[normal, m.uniforms.uNormal], [noise, m.uniforms.uNoise]] as const) {
+    if (!t) continue;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.colorSpace = THREE.NoColorSpace;
+    t.needsUpdate = true;
+    slot.value = t;
+  }
 }
 
 /** The map under the water, drawn into a picture with its depth before the frame. */

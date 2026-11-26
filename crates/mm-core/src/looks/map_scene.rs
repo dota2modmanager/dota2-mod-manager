@@ -23,8 +23,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// The light copy's file in the cache; its number goes up when what goes into it changes, so a
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
 /// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
-/// 7: the swaying materials' wind masks and noise).
-pub const LIGHT_FILE: &str = "world-7.glb";
+/// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise).
+pub const LIGHT_FILE: &str = "world-8.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -186,6 +186,28 @@ pub fn wind_pictures(material: &Value, textures: &[Value], images: &[Value]) -> 
     Some((of("g_tWindMask"), of("g_tWindNoise")))
 }
 
+/// The game's water's pictures (water_dota.vfx): the normal its waves are drawn by (red and green
+/// the slope) and the noise (green) that sets each stretch of the river's waves apart in time.
+/// Each is the texture of the export that holds it, or None where the export left it out; None for
+/// a material that is not water. The flow picture is not wanted: the map's is one colour, which the
+/// vmat also has (TextureFlow).
+pub fn water_pictures(
+    material: &Value,
+    textures: &[Value],
+    images: &[Value],
+) -> Option<(Option<usize>, Option<usize>)> {
+    let vmat = material.pointer("/extras/vmat")?;
+    if !vmat.pointer("/ShaderName").and_then(Value::as_str).is_some_and(|s| s.starts_with("water_dota")) {
+        return None;
+    }
+    let of = |k: &str| {
+        vmat.pointer(&format!("/TextureParams/{k}"))
+            .and_then(Value::as_str)
+            .and_then(|v| texture_named(v, textures, images))
+    };
+    Some((of("g_tNormal"), of("g_tNoise")))
+}
+
 /// A span of a view's bytes one accessor reads: view, offset, length, what it holds, its stride.
 type SpanKey = (usize, usize, u64, String, usize);
 
@@ -226,10 +248,16 @@ pub fn slim_glb(
     let mut masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     // a swaying material's wind mask and noise, by the material's number
     let mut winds_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
+    // the water's normal and noise, by the material's number
+    let mut waters_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
     for (mi, m) in materials.iter_mut().enumerate() {
         if let Some((mask, noise)) = wind_pictures(m, &textures, &images) {
             used_tex.extend(mask.iter().chain(noise.iter()));
             winds_of.insert(mi, (mask, noise));
+        }
+        if let Some((normal, noise)) = water_pictures(m, &textures, &images) {
+            used_tex.extend(normal.iter().chain(noise.iter()));
+            waters_of.insert(mi, (normal, noise));
         }
         let layers = blend_layers(m, &textures, &images);
         if !layers.is_empty() {
@@ -448,6 +476,16 @@ pub fn slim_glb(
             }
             if let Some(n) = noise.and_then(|t| tex_map.get(&t)) {
                 e.insert("windNoise".into(), json!(n));
+            }
+        }
+    }
+    for (mi, (normal, noise)) in &waters_of {
+        if let Some(e) = materials[*mi].get_mut("extras").and_then(Value::as_object_mut) {
+            if let Some(n) = normal.and_then(|t| tex_map.get(&t)) {
+                e.insert("waterNormal".into(), json!(n));
+            }
+            if let Some(n) = noise.and_then(|t| tex_map.get(&t)) {
+                e.insert("waterNoise".into(), json!(n));
             }
         }
     }
@@ -781,6 +819,22 @@ mod tests {
             Some((Some(0), None)),
             "a picture the export left out is none"
         );
+    }
+
+    #[test]
+    fn the_water_names_its_normal_and_noise() {
+        let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
+        let images = vec![
+            json!({ "name": "water_river_normal_sharp_temp_normal_tga_4ab60bd5.vtex" }),
+            json!({ "name": "water_noise_000_tga_d68b7ee6.vtex" }),
+        ];
+        let m = |shader: &str| {
+            json!({ "extras": { "vmat": { "ShaderName": shader, "TextureParams": {
+                "g_tNormal": "materials/water/water_river_normal_sharp_temp_normal_tga_4ab60bd5.vtex",
+                "g_tNoise": "materials/water/water_noise_000_tga_d68b7ee6.vtex" } } } })
+        };
+        assert_eq!(water_pictures(&m("water_dota.vfx"), &textures, &images), Some((Some(0), Some(1))));
+        assert_eq!(water_pictures(&m("global_lit_simple.vfx"), &textures, &images), None, "only the water");
     }
 
     #[test]

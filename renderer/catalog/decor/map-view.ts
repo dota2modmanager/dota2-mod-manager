@@ -18,7 +18,7 @@ import { forgetGrounds, groundLight, isGround, paintGround, setGround } from './
 import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
-import { isWater, waterBed, waterOf, waterTime } from './map-water.ts';
+import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
 import { isWindy, windPictures, windShader, windTime } from './map-wind.ts';
 import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts';
 
@@ -230,8 +230,11 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       if ([mesh.material].flat().every(isHidden)) { gone.push(mesh); return; }
       // the game's water flows and shines: a material of its own instead of the export's flat one
       if (!Array.isArray(mesh.material) && isWater(mesh.material)) {
-        mesh.material = waterOf(mesh.material);
+        const w = waterOf(mesh.material);
+        mesh.material = w;
         mesh.castShadow = false;
+        // its waves' normal and noise the light copy carries (map_scene.rs)
+        void wavePictures(w, gltf!.parser).then(() => { dirty = true; });
         water = true;
       }
       // a part whose material the toolchain could not read comes with none, and three draws it white
