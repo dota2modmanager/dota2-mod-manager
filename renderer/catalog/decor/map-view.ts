@@ -20,6 +20,7 @@ import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
 import { isShiny, specPictures, specShader } from './map-spec.ts';
+import { glowKey, glowPictures, glowShader, isGlow, prepareGlow } from './map-glow.ts';
 import { isMaskTinted, tintPictures, tintShader } from './map-tint.ts';
 import { isWindy, windPictures, windShader, windTime } from './map-wind.ts';
 import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts';
@@ -76,6 +77,8 @@ function prepare(mat: THREE.Material): void {
     m.blendSrcAlpha = THREE.OneFactor; m.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
     m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -4;
   }
+  // a glow (the light in the Dire's lava pit) adds its light over what is behind it (map-glow.ts)
+  else if (isGlow(m)) prepareGlow(m);
   // leaves and grass are cards with holes: cut where the picture is clear, so they sort right
   else if (m.map && m.transparent) { m.transparent = false; m.alphaTest = 0.4; }
   // lit as the game lights its world (map-light.ts); a leaf seen from its back takes the shadows'
@@ -83,9 +86,9 @@ function prepare(mat: THREE.Material): void {
   // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
   // tint to where the game lays it (map-tint.ts); a prop with a specular picture shines (map-spec.ts)
   if (!('emissive' in m)) return;
-  const windy = isWindy(m), masked = isMaskTinted(m), shiny = isShiny(m), overlay = isOverlay(m);
-  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh, overlay); };
-  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}-${overlay ? 'overlay' : ''}`;
+  const windy = isWindy(m), masked = isMaskTinted(m), shiny = isShiny(m), overlay = isOverlay(m), glow = isGlow(m);
+  m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh, overlay); if (glow) glowShader(sh, m); };
+  m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}-${overlay ? 'overlay' : ''}-${glow ? glowKey(m) : ''}`;
 }
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
@@ -288,6 +291,9 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     // the props' specular pictures (map-spec.ts)
     const shiny = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isShiny));
     void Promise.all([...shiny].map((m) => specPictures(m, gltf!.parser))).then(() => { dirty = true; });
+    // the glows' colour pictures (map-glow.ts)
+    const glows = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isGlow));
+    void Promise.all([...glows].map((m) => glowPictures(m, gltf!.parser))).then(() => { dirty = true; });
     // the map's box before its meshes leave the tree the toolchain gave them
     box = new THREE.Box3().setFromObject(world);
     // everything else as one mesh per material and per group a slider takes away
@@ -322,6 +328,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       const mats = [mesh.material].flat();
       if (mats.some(isGround)) mesh.renderOrder = -2;
       else if (mats.some(isOverlay)) { mesh.renderOrder = -1; mesh.castShadow = false; }
+      else if (mats.some(isGlow)) mesh.castShadow = false;
     });
     // the ground's heights for the weather (no trees: the rain falls through them)
     weather?.ground((heights = mapHeights(renderer, scene, [...merged.values()].flat(), box)));

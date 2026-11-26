@@ -245,3 +245,20 @@ fn a_shiny_prop_names_its_specular_picture() {
     assert_eq!(prop_specular(&m("multiblend.vfx", 1), &textures, &images), None, "the ground shines its own way");
     assert_eq!(prop_specular(&m("global_lit_simple.vfx", 1), &[], &images), None, "a picture the export left out");
 }
+
+#[test]
+fn a_glow_names_its_colour_beside_the_scroll_picture_the_export_gives_it() {
+    let textures = vec![json!({ "source": 0 }), json!({ "source": 1 })];
+    let images = vec![
+        json!({ "name": "glow_00_trans_tga_9465ced8.vtex" }),
+        json!({ "name": "glow_00_color_psd_fe064f15.vtex" }),
+    ];
+    let m = |overlay: i64| {
+        json!({ "extras": { "vmat": {
+            "IntParams": { "F_TRANSLUCENT": 1, "F_ADDITIVE_BLEND": 1, "F_OVERLAY": overlay },
+            "TextureParams": { "g_tColor": "materials/models/effects/glow_00_color_psd_fe064f15.vtex",
+                "g_tScrollSpeed": "materials/models/effects/glow_00_trans_tga_9465ced8.vtex" } } } })
+    };
+    assert_eq!(glow_colour(&m(0), &textures, &images), Some(1));
+    assert_eq!(glow_colour(&m(1), &textures, &images), None, "an overlay's glow keeps its own colour");
+}
