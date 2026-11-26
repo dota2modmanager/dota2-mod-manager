@@ -120,11 +120,12 @@ fn a_prop_names_its_tint_mask_and_drops_the_exports_colour() {
     };
     let json = json!({
         "scene": 0, "scenes": [{ "nodes": [0] }], "nodes": [{ "mesh": 0 }],
-        "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0 }, "material": 0 }, { "attributes": { "POSITION": 0 }, "material": 1 }, { "attributes": { "POSITION": 0 }, "material": 2 }] }],
+        "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0 }, "material": 0 }, { "attributes": { "POSITION": 0 }, "material": 1 }, { "attributes": { "POSITION": 0 }, "material": 2 }, { "attributes": { "POSITION": 0 }, "material": 3 }] }],
         "materials": [
             { "extras": { "vmat": vmat(true) }, "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "baseColorFactor": [0.03, 0.05, 0.03, 1] } },
             { "extras": { "vmat": vmat(false) }, "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "baseColorFactor": [0.03, 0.05, 0.03, 1] } },
-            { "extras": { "vmat": { "ShaderName": "global_lit_simple.vfx" } }, "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "baseColorFactor": [0.27, 0.3, 0.19, 1] } }],
+            { "extras": { "vmat": { "ShaderName": "global_lit_simple.vfx" } }, "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "baseColorFactor": [0.27, 0.3, 0.19, 1] } },
+            { "extras": { "vmat": { "ShaderName": "global_lit_simple.vfx", "IntParams": { "F_OVERLAY": 1 } } }, "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 }, "baseColorFactor": [0.0032, 0.0049, 0.0032, 1] } }],
         "textures": [{ "source": 0, "sampler": 0 }, { "source": 1, "sampler": 0 }],
         "images": [{ "uri": "color.png", "name": "color.vtex" }, { "uri": "mask.png", "name": "mask.vtex" }],
         "accessors": [{ "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" }],
@@ -145,6 +146,9 @@ fn a_prop_names_its_tint_mask_and_drops_the_exports_colour() {
     let copy = &j["materials"][2];
     assert_eq!(copy["extras"]["copyTint"], json!([0.27, 0.3, 0.19]), "the export's colour is its copy's tint");
     assert!(copy["pbrMetallicRoughness"].get("baseColorFactor").is_none(), "not a colour as well");
+    // an overlay's tint is its draw call's, linear already: the export's second linearisation undone
+    let overlay = j["materials"][3]["extras"]["copyTint"].as_array().expect("the overlay's tint");
+    assert!((overlay[0].as_f64().unwrap() - 0.0415).abs() < 0.002, "{overlay:?}");
 }
 
 #[test]
