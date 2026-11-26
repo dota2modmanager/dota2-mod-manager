@@ -549,13 +549,54 @@ pub fn weather_lights(default_entities: &[Vec<u8>], keys: &[&str]) -> serde_json
             let mut plain = cut(&v["plain"]);
             plain["local_lights"] = serde_json::json!(local_lights(default_entities));
             plain["world_effects"] = serde_json::json!(world_effects(default_entities));
+            plain["zones"] = serde_json::json!(zone_places(default_entities, None));
             out.insert("plain".into(), plain);
         }
         if v["weather"].is_object() {
-            out.insert((*key).to_string(), cut(&v["weather"]));
+            let mut weather = cut(&v["weather"]);
+            weather["zones"] = serde_json::json!(zone_places(default_entities, Some(i as i64 + 1)));
+            out.insert((*key).to_string(), weather);
         }
     }
     serde_json::Value::Object(out)
+}
+
+/// Every zone of one weather (None: the everyday ones, weather_type 0 or -1) with where it stands
+/// and how far it reaches, its light cut to what the window reads: the game lights the view by the
+/// zones around the camera's point, each in full within its inner radius and gone past its outer
+/// one, so the Dire's woods take their bluer sun and purple shadows (map-light.ts blends them).
+pub fn zone_places(default_entities: &[Vec<u8>], want: Option<i64>) -> Vec<serde_json::Value> {
+    let mut out: Vec<serde_json::Value> = Vec::new();
+    for file in default_entities {
+        let Ok(data) = crate::resource::data(file, "DATA", 0) else { continue };
+        let Ok(mut kv) = kv3::read(data) else { continue };
+        let kv_ref = kv.clone();
+        for v in lightinfos(&mut kv) {
+            let t = weather_type(&kv_ref, v);
+            let fits = match want {
+                None => t == 0 || t == -1,
+                Some(w) => t == w,
+            };
+            let name = zone(v);
+            if !fits || out.iter().any(|z| z["zone"] == name.as_str()) {
+                continue;
+            }
+            let num = |k: &str| v.get(k).and_then(|n| kv_ref.number_of(n));
+            let at: Vec<f64> = v
+                .get("origin")
+                .map(|n| n.items().iter().filter_map(|i| kv_ref.number_of(i)).collect())
+                .unwrap_or_default();
+            let (Some(inner), Some(outer)) = (num("inner_radius"), num("outer_radius")) else { continue };
+            if at.len() < 2 {
+                continue;
+            }
+            let look = look_json(&kv_ref, v);
+            let light: serde_json::Map<String, serde_json::Value> =
+                LIGHT_KEYS.iter().filter_map(|k| look.get(*k).map(|x| ((*k).to_string(), x.clone()))).collect();
+            out.push(serde_json::json!({ "zone": name, "at": [at[0], at[1]], "inner": inner, "outer": outer, "light": light }));
+        }
+    }
+    out
 }
 
 /// What a map is built with.
@@ -693,6 +734,17 @@ mod tests {
             v["plain"]["color_night"], v["plain"]["light_scale_night"], v["plain"]["ambient_color_night"]
         );
         assert!(v["plain"]["color_night"].as_array().is_some_and(|a| a.len() == 3));
+        // the four everyday zones, each with its place and reach: the Dire's sun is bluer than the Radiant's
+        let zones = v["plain"]["zones"].as_array().unwrap();
+        let names: Vec<&str> = zones.iter().filter_map(|z| z["zone"].as_str()).collect();
+        assert_eq!(names.len(), 4, "{names:?}");
+        assert!(["RF", "RB", "DF", "DT"].iter().all(|n| names.contains(n)), "{names:?}");
+        let of = |n: &str| zones.iter().find(|z| z["zone"] == n).unwrap();
+        assert_eq!(of("RF")["inner"], 7000.0);
+        assert_eq!(of("DT")["outer"], 4500.0);
+        assert!(of("DF")["at"][1].as_f64().unwrap() > 5000.0);
+        assert_ne!(of("DF")["light"]["color_day"], of("RF")["light"]["color_day"]);
+        assert_eq!(v["snow"]["zones"].as_array().map(Vec::len), Some(4));
         // and its standing effects: the river's flow among them, each with a place
         let fx = world_effects(&lumps);
         assert!(fx.len() > 800, "{}", fx.len());

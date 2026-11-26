@@ -29,7 +29,8 @@
  * its own zone's numbers, the dark and the dusk the same light turned down. Without the shadows
  * the trees float and the river has no banks: they are what makes the map read. */
 import * as THREE from 'three';
-import type { ZoneLight } from '../../api/decor.ts';
+import type { ZoneLight, ZonePlace } from '../../api/decor.ts';
+import { blendZones, shares } from './map-zones.ts';
 
 export interface MapLight {
   /** sun and shadows set over the map's box */
@@ -238,6 +239,18 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
   let k = 1;
   let reach = 1;
   let zone: ZoneLight = RADIANT;
+  // the look's own light and its zones (map-zones.ts), each zone's share where the view looked last
+  let base: ZoneLight = RADIANT, places: ZonePlace[] = [], weights: number[] = [];
+  const looked = new THREE.Vector3(Infinity, 0, 0);
+  const lookAt = (target: THREE.Vector3): boolean => {
+    looked.copy(target);
+    // the window's x, z are Source's y, x (map-light.ts pointing)
+    const w = shares(places, target.z / INCH, target.x / INCH);
+    if (w.length === weights.length && w.every((v, i) => Math.abs(v - weights[i]) < 0.01)) return false;
+    weights = w;
+    zone = blendZones(base, places, w);
+    return true;
+  };
   let fog = { color: new THREE.Color(1, 1, 1), k: 1 };
   let flash = 0;
   let nextFlash = 0;
@@ -310,7 +323,10 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
   return {
     dim(next) { k = next; apply(); },
     weather(look, plain) {
-      zone = look ?? plain ?? RADIANT;
+      base = zone = look ?? plain ?? RADIANT;
+      places = base.zones ?? [];
+      weights = [];
+      if (Number.isFinite(looked.x)) lookAt(looked);
       locals = (plain?.local_lights ?? []).filter((l) => l.length >= 8).map((l) => ({
         at: new THREE.Vector4(l[1] * INCH, l[2] * INCH, l[0] * INCH, l[7] * INCH),
         colour: linear(l.slice(3, 6), l[6]),
@@ -346,6 +362,9 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       lit.uFogFrom.value = Math.max(0, camera.position.distanceTo(target) - GAME_CAMERA);
       // the small lights nearest the view's middle, chosen again once it moved a few metres
       if (picked.distanceTo(target) > 4) pick(target);
+      // the zones' light where the view looks, blended again once it moved a few metres
+      let moved = false;
+      if (places.length && looked.distanceTo(target) > 2 && lookAt(target)) { apply(); moved = true; }
       // each layer of clouds drifts its own way at its own speed, in pictures a second
       const drift = (dir: number[] | undefined, speed: number | undefined): [number, number] => {
         const yaw = THREE.MathUtils.degToRad(dir?.[1] ?? 0), d = -((speed ?? 0) * time) / (zone.cloud_scale ?? 6500);
@@ -354,14 +373,14 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       lit.uCloudOffset.value.set(...drift(zone.cloud1_direction, zone.cloud1_speed), ...drift(zone.cloud2_direction, zone.cloud2_speed));
       const clouds = lit.uCloudOn.value > 0;
       const strength = zone.lightning_intensity_max ?? 0;
-      if (strength <= 0 || (zone.lightning_period_max ?? 0) <= 0) return clouds || turned;
+      if (strength <= 0 || (zone.lightning_period_max ?? 0) <= 0) return clouds || turned || moved;
       if (!nextFlash) nextFlash = later(time);
       const was = flash;
       // a flash: up at once, down over a few frames
       if (time >= nextFlash) { flash = Math.min(2, strength); nextFlash = later(time); }
       else flash = Math.max(0, flash - 0.05);
       if (flash !== was) apply();
-      return clouds || turned || flash !== was;
+      return clouds || turned || moved || flash !== was;
     },
     fit(box) {
       box.getCenter(centre);
