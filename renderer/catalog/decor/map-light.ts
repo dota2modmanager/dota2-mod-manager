@@ -95,6 +95,9 @@ export const lit = {
   /** the zone's specular colour (linear) and how little of it the sun's colour takes (0: all) */
   uSpecColor: { value: new THREE.Color() },
   uSpecIndependence: { value: 0 },
+  /** where the zone's shine comes from (the window's axes) and how tight it is */
+  uSpecDir: { value: pointing([64, 283, 0]) },
+  uSpecPow: { value: 28 },
   uClouds: { value: null as THREE.Texture | null },
   uCloudOn: { value: 0 },
   /** 1 while the bed under the water is drawn: the game's refraction pass lights it without shadows, clouds, small lights or fog */
@@ -137,7 +140,8 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
     }`);
   sh.fragmentShader = sh.fragmentShader
     .replace('#include <common>', `#include <common>
-    uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor;
+    uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor, uSpecColor, uSpecDir;
+    uniform float uSpecIndependence, uSpecPow;
     uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain;
     uniform vec4 uLocalAt[ ${LOCAL} ];
     uniform vec3 uLocalColour[ ${LOCAL} ];
@@ -168,7 +172,20 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
         float far = length( to ), reach = saturate( ( uLocalAt[ i ].w - far ) / uLocalAt[ i ].w );
         light += saturate( dot( n, to / max( far, 1e-4 ) ) ) * reach * reach * ( 3.0 - 2.0 * reach ) * uLocalColour[ i ];
       }
-      outgoingLight = diffuseColor.rgb * light + totalEmissiveRadiance;
+      // the shine of a prop with a specular picture (map-spec.ts), as global_lit_simple.vfx lays it:
+      // light × (albedo + (1 - independence) × shine) + independence × shine
+      vec3 shine = vec3( 0.0 );
+      #if defined( MM_SPECULAR ) && defined( USE_MAP )
+      {
+        // the game's constant is the zone's direction turned around: read as it stands, every flat
+        // stair and banner at mid shone cyan where the game's own frame (dota-bench, 2026-11-26) is dark
+        vec3 e = normalize( cameraPosition - vLitWorld );
+        shine = pow( saturate( dot( -uSpecDir, reflect( e, n ) ) ), uSpecPow ) * texture2D( uSpecMap, vMapUv ).r * uSpecIntensity
+          * uSpecColor * ( 1.0 - uPlain );
+      }
+      #endif
+      float alone = saturate( uSpecIndependence );
+      outgoingLight = ( diffuseColor.rgb + ( 1.0 - alone ) * shine ) * light + alone * shine + totalEmissiveRadiance;
       float far = max( distance( vLitWorld, cameraPosition ) - uFogFrom, 0.0 );
       float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
       outgoingLight = mix( outgoingLight, uFogColor, fog * ( 1.0 - uPlain ) );
@@ -254,6 +271,8 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       fog_start_day: blend(at.fog_start_day, at.fog_start_night, f), fog_end_day: blend(at.fog_end_day, at.fog_end_night, f),
       specular_color_day: blend(at.specular_color_day, at.specular_color_night, f),
       specular_independence_day: blend(at.specular_independence_day, at.specular_independence_night, f),
+      specular_direction_day: blend(at.specular_direction_day, at.specular_direction_night, f),
+      specular_power_day: blend(at.specular_power_day, at.specular_power_night, f),
     };
     const bright = k * (1 + flash);
     // the dark map: the sun falls and the light left turns bluer, as the game's night
@@ -266,6 +285,10 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
     lit.uAmbientShadow.value = z.ambient_shadow_amount ?? 0;
     lit.uSpecColor.value.copy(linear(z.specular_color_day ?? [81, 196, 232]));
     lit.uSpecIndependence.value = z.specular_independence_day ?? 0;
+    lit.uSpecDir.value.copy(pointing(z.specular_direction_day ?? [64, 283, 0]));
+    // a zone's power of -1 is the map's (env_global_light specularpower)
+    const power = z.specular_power_day ?? -1;
+    lit.uSpecPow.value = power > 0 ? power : (z.global_specular_power ?? 28);
     lit.uFogColor.value.copy(linear(z.fog_color_day ?? RADIANT.fog_color_day)).multiplyScalar(0.4 + 0.6 * k);
     lit.uFog.value.set((z.fog_start_day ?? 1250) * INCH, (z.fog_end_day ?? 4500) * INCH, z.fog_exponent ?? 2, z.fog_max_density ?? 1);
     lit.uCloudScale.value = (z.cloud_scale ?? 6500) * INCH;

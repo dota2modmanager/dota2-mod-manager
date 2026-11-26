@@ -29,7 +29,7 @@ export interface ZoneLight {
   light_direction_night?: number[]; ambient_direction_night?: number[];
   shadow_color_night?: number[]; shadow_secondary_color_night?: number[]; shadow_scale_night?: number; shadow_ground_scale_night?: number;
   fog_color_night?: number[]; fog_start_night?: number; fog_end_night?: number; fog_height_night?: number; fog_hight_color_night?: number[];
-  specular_color_night?: number[]; specular_independence_night?: number;
+  specular_color_night?: number[]; specular_independence_night?: number; specular_direction_night?: number[]; specular_power_night?: number;
   color_day?: number[]; light_scale_day?: number; ambient_color_day?: number[]; ambient_scale_day?: number;
   /** pitch, yaw, roll in degrees: where the sun shines to, and the light around comes from */
   light_direction_day?: number[]; ambient_direction_day?: number[];
@@ -41,6 +41,8 @@ export interface ZoneLight {
   ambient_shadow_amount?: number;
   /** the shine's colour, and how little of it the sun's colour takes (0: all) */
   specular_color_day?: number[]; specular_independence_day?: number;
+  /** where the shine comes from (pitch, yaw, roll in degrees) and how tight it is (-1: the map's global_specular_power) */
+  specular_direction_day?: number[]; specular_power_day?: number;
   /** what the whole map shares (map_build.rs global_light): the clouds (their picture's path, size in
    * inches, each layer's pitch-yaw-roll and inches a second), the specular power, the fog's shape */
   cloud_texture?: string; cloud_scale?: number; cloud1_direction?: number[]; cloud1_speed?: number; cloud2_direction?: number[]; cloud2_speed?: number;

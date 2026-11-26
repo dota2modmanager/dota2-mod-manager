@@ -24,8 +24,9 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// copy made the old way is made again (2: tints, water, EXT_meshopt_compression; 3: terrain layers;
 /// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
-/// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks).
-pub const LIGHT_FILE: &str = "world-10.glb";
+/// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
+/// 11: the props' specular pictures).
+pub const LIGHT_FILE: &str = "world-11.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -169,6 +170,21 @@ pub fn prop_tint_mask(material: &Value, textures: &[Value], images: &[Value]) ->
     texture_named(vtex, textures, images)
 }
 
+/// A prop's specular picture (global_lit_simple.vfx under F_SPECULAR, g_tSpecular): its red is how
+/// much of the zone's specular a pixel takes, a wet stone's edge against its dry face. None for a
+/// material without one, a terrain blend, the water, or one the export left out.
+pub fn prop_specular(material: &Value, textures: &[Value], images: &[Value]) -> Option<usize> {
+    let vmat = material.pointer("/extras/vmat")?;
+    if vmat.pointer("/IntParams/F_SPECULAR").and_then(Value::as_i64) != Some(1) {
+        return None;
+    }
+    if !vmat.get("ShaderName").and_then(Value::as_str).is_some_and(|s| s.starts_with("global_lit_simple")) {
+        return None;
+    }
+    let vtex = vmat.pointer("/TextureParams/g_tSpecular").and_then(Value::as_str)?;
+    texture_named(vtex, textures, images)
+}
+
 /// A material's int param from its vmat (F_NORMAL_MAP and the like), if it has it.
 fn vmat_int(material: &Value, key: &str) -> Option<i64> {
     material.pointer(&format!("/extras/vmat/IntParams/{key}")).and_then(Value::as_i64)
@@ -267,6 +283,8 @@ pub fn slim_glb(
     let mut masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     // a swaying material's wind mask and noise, by the material's number
     let mut winds_of: BTreeMap<usize, (Option<usize>, Option<usize>)> = BTreeMap::new();
+    // a prop's specular picture, by the material's number
+    let mut speculars_of: BTreeMap<usize, usize> = BTreeMap::new();
     // a prop's tint mask, by the material's number
     let mut prop_masks_of: BTreeMap<usize, usize> = BTreeMap::new();
     // the water's normal and noise, by the material's number
@@ -285,6 +303,10 @@ pub fn slim_glb(
         if let Some(t) = prop_mask {
             used_tex.insert(t);
             prop_masks_of.insert(mi, t);
+        }
+        if let Some(t) = prop_specular(m, &textures, &images) {
+            used_tex.insert(t);
+            speculars_of.insert(mi, t);
         }
         if !layers.is_empty() {
             used_tex.extend(layers.iter().map(|l| l.0));
@@ -530,6 +552,11 @@ pub fn slim_glb(
             if let Some(n) = noise.and_then(|t| tex_map.get(&t)) {
                 e.insert("windNoise".into(), json!(n));
             }
+        }
+    }
+    for (mi, t) in &speculars_of {
+        if let (Some(e), Some(n)) = (materials[*mi].get_mut("extras").and_then(Value::as_object_mut), tex_map.get(t)) {
+            e.insert("specular".into(), json!(n));
         }
     }
     for (mi, t) in &prop_masks_of {

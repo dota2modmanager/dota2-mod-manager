@@ -227,3 +227,17 @@ fn the_light_copy_keeps_shapes_and_colour_and_drops_the_rest() {
         [j["accessors"][prim["indices"].as_u64().unwrap() as usize]["bufferView"].as_u64().unwrap() as usize];
     assert_eq!(iv["extensions"]["EXT_meshopt_compression"]["mode"], "TRIANGLES");
 }
+
+#[test]
+fn a_shiny_prop_names_its_specular_picture() {
+    let textures = vec![json!({ "source": 0 })];
+    let images = vec![json!({ "name": "rock_refl_psd_1.vtex" })];
+    let m = |shader: &str, spec: i64| {
+        json!({ "extras": { "vmat": { "ShaderName": shader, "IntParams": { "F_SPECULAR": spec },
+            "TextureParams": { "g_tSpecular": "materials/rock_refl_psd_1.vtex" } } } })
+    };
+    assert_eq!(prop_specular(&m("global_lit_simple.vfx", 1), &textures, &images), Some(0));
+    assert_eq!(prop_specular(&m("global_lit_simple.vfx", 0), &textures, &images), None, "no F_SPECULAR, no shine");
+    assert_eq!(prop_specular(&m("multiblend.vfx", 1), &textures, &images), None, "the ground shines its own way");
+    assert_eq!(prop_specular(&m("global_lit_simple.vfx", 1), &[], &images), None, "a picture the export left out");
+}
