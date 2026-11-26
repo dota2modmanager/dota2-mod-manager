@@ -97,6 +97,8 @@ export const lit = {
   uSpecIndependence: { value: 0 },
   uClouds: { value: null as THREE.Texture | null },
   uCloudOn: { value: 0 },
+  /** 1 while the bed under the water is drawn: the game's refraction pass lights it without shadows, clouds, small lights or fog */
+  uPlain: { value: 0 },
   uCloudScale: { value: 1 },
   uCloudOffset: { value: new THREE.Vector4() },
   uFogColor: { value: new THREE.Color() },
@@ -136,7 +138,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
   sh.fragmentShader = sh.fragmentShader
     .replace('#include <common>', `#include <common>
     uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor;
-    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom;
+    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain;
     uniform vec4 uLocalAt[ ${LOCAL} ];
     uniform vec3 uLocalColour[ ${LOCAL} ];
     uniform int uLocalCount;
@@ -150,7 +152,8 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
         directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;
       #endif
       // the clouds, in the game's axes (the export turned Source's x, y, z into z, x, y), cast down the sun's way
-      if ( uCloudOn > 0.5 ) {
+      if ( uPlain > 0.5 ) shade = 1.0;
+      if ( uCloudOn > 0.5 && uPlain < 0.5 ) {
         vec3 p = vLitWorld.zxy, l = uSunDir.zxy;
         vec4 uv = ( p.xy + l.xy * p.z ).xyxy / uCloudScale + uCloudOffset;
         shade *= saturate( min( texture2D( uClouds, uv.xy ).r, texture2D( uClouds, uv.zw ).g ) );
@@ -160,7 +163,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
       vec3 light = sun * uSun + saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
         + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 );
       for ( int i = 0; i < ${LOCAL}; i++ ) {
-        if ( i >= uLocalCount ) break;
+        if ( i >= uLocalCount || uPlain > 0.5 ) break;
         vec3 to = uLocalAt[ i ].xyz - vLitWorld;
         float far = length( to ), reach = saturate( ( uLocalAt[ i ].w - far ) / uLocalAt[ i ].w );
         light += saturate( dot( n, to / max( far, 1e-4 ) ) ) * reach * reach * ( 3.0 - 2.0 * reach ) * uLocalColour[ i ];
@@ -168,7 +171,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms): void {
       outgoingLight = diffuseColor.rgb * light + totalEmissiveRadiance;
       float far = max( distance( vLitWorld, cameraPosition ) - uFogFrom, 0.0 );
       float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
-      outgoingLight = mix( outgoingLight, uFogColor, fog );
+      outgoingLight = mix( outgoingLight, uFogColor, fog * ( 1.0 - uPlain ) );
     }
     #include <opaque_fragment>`)
     // the fog is the game's, above, laid before the tonemap as the game lays it
