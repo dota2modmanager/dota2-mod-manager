@@ -6,7 +6,7 @@
  *   light = sun × colour × light_scale
  *         + saturate(N · ambientDir) × ambient_colour × ambient_scale × mix(1, shadow × clouds, ambient_shadow_amount)
  *         + (1 - sun) × mix(shadow_secondary_colour, shadow_colour, N.up × 0.5 + 0.5) × shadow_scale
- *         + Σ small lights: saturate(N · toward it) × smoothstep(saturate(1 - distance / radius)) × colour × intensity
+ *         + Σ small lights: saturate(N · toward it) × smoothstep(saturate((1 - distance / radius) / (1 - start_falloff))) × colour × intensity
  *   pixel = mix(albedo × light, fog colour, min(pow(saturate((distance - start) / (end - start)), exponent), max))
  *
  * as the game's deferred passes do it (deferred_global_light.vfx, deferred_post_process.vfx, read
@@ -16,8 +16,9 @@
  * not lost in it. Then the game's tonemap. The small lights are the map's lamps and braziers
  * (env_deferred_light_client_only, deferred_local_light.vfx read the same day): the window takes
  * the LOCAL nearest the middle of the view. Their reach is short (a lamp's 128 inches from 270 up
- * barely touches the ground): the light's colour and intensity are taken as the shader's colour
- * and scale, and its falloff share as 1, which the entity does not set.
+ * barely touches the ground). client.dll packs each for deferred_local_light_cs (0x1817ec240, from
+ * the entity's keys at 0x18180bff0): its colour as the bytes / 255, not linearised, times its
+ * intensity; start_falloff, which no light on the map sets, is 0.5.
  *
  * Day turns to night as the game's clock does (client.dll's light manager, read 2026-11-25): five
  * minutes of each, the game starting by day, and each pair of a zone's numbers blended as
@@ -148,6 +149,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
     uniform vec4 uLocalAt[ ${LOCAL} ];
     uniform vec3 uLocalColour[ ${LOCAL} ];
     uniform int uLocalCount;
+    #define START_FALLOFF 0.5
     uniform vec4 uCloudOffset, uFog;
     uniform sampler2D uClouds;
     varying vec3 vLitWorld;`)
@@ -171,7 +173,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       for ( int i = 0; i < ${LOCAL}; i++ ) {
         if ( i >= uLocalCount || uPlain > 0.5 ) break;
         vec3 to = uLocalAt[ i ].xyz - vLitWorld;
-        float far = length( to ), reach = saturate( ( uLocalAt[ i ].w - far ) / uLocalAt[ i ].w );
+        float far = length( to ), reach = saturate( ( uLocalAt[ i ].w - far ) / uLocalAt[ i ].w / ( 1.0 - START_FALLOFF ) );
         light += saturate( dot( n, to / max( far, 1e-4 ) ) ) * reach * reach * ( 3.0 - 2.0 * reach ) * uLocalColour[ i ];
       }
       // the shine of a prop with a specular picture (map-spec.ts), as global_lit_simple.vfx lays it:
@@ -338,7 +340,7 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): Map
       if (Number.isFinite(looked.x)) lookAt(looked);
       locals = (plain?.local_lights ?? []).filter((l) => l.length >= 8).map((l) => ({
         at: new THREE.Vector4(l[1] * INCH, l[2] * INCH, l[0] * INCH, l[7] * INCH),
-        colour: linear(l.slice(3, 6), l[6]),
+        colour: new THREE.Color(l[3] / 255, l[4] / 255, l[5] / 255).multiplyScalar(l[6]),
       }));
       picked.set(Infinity, 0, 0);
       fog = look && plain
