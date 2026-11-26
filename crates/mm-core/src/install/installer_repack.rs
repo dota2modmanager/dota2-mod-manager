@@ -27,7 +27,7 @@ fn global_table() -> &'static Regex {
             "^(?:{})",
             [
                 r#"scripts/items/items_game(?:\.txt)?"?$"#,
-                "resource/localization/",
+                LOCALIZATION,
                 r#"panorama/styles/(?:hero_slot_item_picker_loadout|ui_econ_item)\.vcss_c"?$"#,
                 "panorama/images/(?:ds|tg|tt|wb|yu|remove|header_credits|footer_credits)[^/]*$",
                 r#"(?:models/heroes|panorama)/\d{8,}\.vxml_c"?$"#,
@@ -45,6 +45,20 @@ fn items_game_re() -> &'static Regex {
 
 /// Above this a localization file is the game's whole table, not a mod's own few lines.
 const LOC_COPY_MIN: usize = 256 * 1024;
+
+const LOCALIZATION: &str = "resource/localization/";
+
+/// Whether a mod's file is a whole-game table to take out of it. A localization file the size of the
+/// game's own is one a packaging tool baked into a skin, and goes; but a pack of nothing but
+/// localization is a localization mod (a hero's name changed, a localization editor's export), its
+/// table is all it does, and it stays: taken out, the pack was left empty and worked only when
+/// copied into dota_russian by hand (Discord, 2026-11-23..24).
+fn dropped(path: &str, size: usize, text_only: bool) -> bool {
+    if path.starts_with(LOCALIZATION) {
+        return !text_only && size >= LOC_COPY_MIN;
+    }
+    global_table().is_match(path)
+}
 
 fn is_dir_vpk(rel: &str) -> bool {
     rel.to_lowercase().ends_with("_dir.vpk")
@@ -189,11 +203,9 @@ impl Installer {
                     }
                 }
             }
-            let drop = |e: &Entry| {
-                let p = e.path();
-                global_table().is_match(&p) && !(p.starts_with("resource/localization/") && e.data.len() < LOC_COPY_MIN)
-            };
-            let keep: Vec<Entry> = entries.iter().filter(|e| !drop(e)).cloned().collect();
+            let text_only = entries.iter().all(|e| e.path().starts_with(LOCALIZATION));
+            let keep: Vec<Entry> =
+                entries.iter().filter(|e| !dropped(&e.path(), e.data.len(), text_only)).cloned().collect();
             if keep.len() == entries.len() {
                 continue;
             }
@@ -486,4 +498,60 @@ pub fn split_by_hero(dir_path: &Path) -> Result<Vec<HeroPart>, String> {
             (h.name.clone(), vpk::build(&all), own_paths)
         })
         .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A game whose language folder holds these packs, each a mod record.
+    fn game_with(name: &str, packs: &[(&str, Vec<Entry>)]) -> (PathBuf, Installer, Vec<LibFile>) {
+        let root = std::env::temp_dir().join(format!("mm-repack-{name}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let lang = root.join("dota_russian");
+        fs::create_dir_all(&lang).unwrap();
+        let mut records = Vec::new();
+        for (rel, entries) in packs {
+            fs::write(lang.join(rel), vpk::build(entries)).unwrap();
+            records.push(LibFile::new("lang", rel));
+        }
+        (root.clone(), Installer::new(Some(root), "russian"), records)
+    }
+
+    fn paths_in(file: &Path) -> Vec<String> {
+        let mut paths = vpk::list_paths(&vpk::read_index_file(file).unwrap()).unwrap();
+        paths.sort();
+        paths
+    }
+
+    #[test]
+    fn a_pack_of_localization_alone_keeps_its_tables_and_a_skin_loses_the_ones_baked_in() {
+        let whole = vec![b'x'; LOC_COPY_MIN + 1];
+        let names = vpk::entry_at("resource/localization/dota_russian.txt", whole.clone().into());
+        let abilities = vpk::entry_at("resource/localization/abilities_russian.txt", whole.clone().into());
+        let model = vpk::entry_at("models/heroes/juggernaut/juggernaut.vmdl_c", b"a model".to_vec().into());
+        let (root, inst, mut records) = game_with(
+            "loc",
+            &[("pak43_dir.vpk", vec![names.clone(), abilities]), ("pak44_dir.vpk", vec![model, names])],
+        );
+        let (_, stripped) = inst.harvest_schema(&mut records, None).unwrap();
+        let lang = root.join("dota_russian");
+        assert_eq!(
+            paths_in(&lang.join("pak43_dir.vpk")),
+            ["resource/localization/abilities_russian.txt", "resource/localization/dota_russian.txt"],
+            "a localization mod is its tables"
+        );
+        assert_eq!(paths_in(&lang.join("pak44_dir.vpk")), ["models/heroes/juggernaut/juggernaut.vmdl_c"]);
+        assert_eq!(stripped, ["pak44_dir.vpk"]);
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn a_small_localization_file_stays_in_any_mod() {
+        assert!(!dropped("resource/localization/dota_russian.txt", 10, false));
+        assert!(dropped("resource/localization/dota_russian.txt", LOC_COPY_MIN, false));
+        assert!(!dropped("resource/localization/dota_russian.txt", LOC_COPY_MIN, true));
+        assert!(dropped("scripts/items/items_game.txt", 10, false));
+        assert!(!dropped("models/heroes/juggernaut/juggernaut.vmdl_c", LOC_COPY_MIN, false));
+    }
 }
