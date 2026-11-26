@@ -1,33 +1,26 @@
 /* The river of the Optimization window's map, drawn by the game's water shader (water_dota.vfx,
- * its forward pass read from the shader's bytecode 2026-11-25):
+ * read from its bytecode 2026-11-25 and checked pixel by pixel against a RenderDoc frame of the game
+ * 2026-11-26):
  *
- *   d      = how deep the water is under this pixel, a share of the fog range (FOG_RANGE, 16 inches)
+ *   d      = saturate(how deep the bed lies under the water / FOG_RANGE), in inches
  *   bed    = the map under the water, looked up a little off where the waves bend it
  *   colour = bed × mix(1, refraction tint, saturate(3.5 d))
- *   colour = mix(colour, water fog colour × the light it takes, d) + reflection (below)
- *   colour = saturate(colour + reflection colour × specular colour × sun × pow(saturate(R · reflection dir), power))
- *   pixel  = colour × the world's light on the waves' normal (map-light.ts, without shadows)
+ *   colour = mix(colour, water fog colour × the zone's shadow colour, d)
+ *   pixel  = saturate(colour + reflection colour × specular colour × sun × pow(saturate(R · reflection dir), power))
+ *
+ * The game draws the water into its deferred pass but leaves it out of the light that pass lays on the
+ * rest of the map: the bed is lit already, so the colour above is the pixel, and only the view's fog and
+ * the tonemap come after it. The bed is a pass of its own: the map drawn without its water into a
+ * picture with its depth (the game's refraction map), lit by the sun with its shadows and the clouds',
+ * but without the occlusion, small lights, shine or fog (map-light.ts uPlain), done again only when
+ * the view moved or every few frames for the clouds' shadows.
  *
  * d is what the map under the water writes into its alpha (multiblend's
- * D_WRITE_WATER_FOG_TO_DEST_ALPHA: saturate(dot(g_vClipPlane0, P) × g_flInvFogRange)), how far
- * below the water's plane it lies over the view's fog range (FOG_RANGE). The bed
- * is a pass of its own: the map drawn without its water into a picture with its depth (the game's
- * refraction map), done again only when the view moved or every few frames for the clouds' shadows.
- * The game lights that pass more plainly than the frame: the sun, the light around and the shadows'
- * colour, but no shadows, clouds, small lights or fog (map-light.ts uPlain).
- *
- * Then the reflection: the reflection map × g_vReflectionTint × the zone's fog colour × g_flReflectance,
- * where the water is deep (saturate(2d) × saturate(20(d - 0.05))); the picture is one grey here
- * (REFLECTION_GREY). With the zones blended (map-zones.ts) the Radiant's cyan fog and the Dire's red
- * one mix at mid into the game's grey-teal river.
- *
- * Not yet as the game: the fog's light is g_vWaterFogColor × mix(sun, AmbientColor2,
- * g_flWaterFogShadowFactor), AmbientColor2 being the zone light's m_AmbientColor2 (client.dll), the
- * shadows' colour; with the zone's pink shadow colour the river turns red, which the game's is not
- * (tried 2026-11-26 at three depths: off by 18 to 35 of 255), so something the game adds is missing,
- * likely the reflection map's picture; the zone's ambient colour without its scale is taken instead,
- * the closest of the tries to a frame of the game. Against a frame of the game the river's colour is
- * off by 5 of 255 (the turquoise sheet before: 25).
+ * D_WRITE_WATER_FOG_TO_DEST_ALPHA: saturate(dot(plane, P) × g_flInvFogRange)), the plane the water's
+ * own, (0, 0, -1, height), and the range 35 inches; the frame's river floor under the rune is 10 inches
+ * deep, 0.29. Props under the water write 8/35 whatever their depth, which is left out here. The fog's light is mix(sun, AmbientColor2, g_flWaterFogShadowFactor) with
+ * the factor 1, the zone light's m_AmbientColor2 as it stands. The reflection map holds nothing of the
+ * map (black over the whole frame), so the reflection term is left out.
  *
  * The waves are the game's normal picture flowing (F_FLOW_NORMALS, read the same way 2026-11-26),
  * P the pixel's place in inches, (x, -y), and the flow one colour over the whole river (TextureFlow):
@@ -87,30 +80,27 @@ const pixel = (r: number, g: number, b: number) => {
   t.needsUpdate = true;
   return t;
 };
-/** How deep the water turns fully to its fog colour, in inches: g_flInvFogRange is the view's, not the
- * material's g_flWaterDepth (35), and with 35 the river bed showed through as a turquoise sheet. 16 is
- * what matches a frame of the game at mid, where the river is 16 inches deep (the bed at 0, the water
- * at 16): there the bed is lost, as in the game, and shows only at the banks. */
-const FOG_RANGE = 16;
-/** The reflection map's picture, which the window has no copy of, as one grey: fitted to the same
- * frame (the river's colour off by 5 of 255; with no reflection the deep river was black). */
-const REFLECTION_GREY = 0.08;
+/** How deep under the water the fog turns to its full colour, in inches (g_flInvFogRange = 1/35 in a
+ * frame of the game). */
+const FOG_RANGE = 35;
 
 const FLAT = pixel(128, 128, 255);
 const CALM = pixel(0, 0, 0);
 
 const FRAGMENT = `
-#define AMBIENT_SCALE 5.0
+// saturate and the rest: without it the water does not build where three draws it into a picture of its own (map-ao.ts)
+#include <common>
 uniform sampler2D uNormal, uNoise;
 uniform vec2 uFlow;
 uniform vec4 uFlowNums, uWaveNums;
-uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uSpecColor;
-uniform float uSpecIndependence;
+uniform vec3 uSun, uShade, uSpecColor, uFogColor;
+uniform float uSpecIndependence, uFogFrom;
+uniform vec4 uFog;
 uniform sampler2D uBed, uBedDepth;
 uniform vec2 uPixel;
 uniform float uNear, uFar, uTime;
-uniform vec3 uRefractionTint, uWaterFog, uReflectionColor, uReflectionDir, uReflectionTint, uFogColor;
-uniform float uRefractionAmount, uReflectionPower, uBaseBloom, uDepth, uForceFog, uReflectance, uReflectionGrey;
+uniform vec3 uRefractionTint, uWaterFog, uReflectionColor, uReflectionDir;
+uniform float uRefractionAmount, uReflectionPower, uForceFog;
 uniform vec2 uForceFogRange;
 varying vec3 vWorld;
 
@@ -133,13 +123,13 @@ void main() {
   if ( dot( bend, bend ) > 1.0 ) bend = normalize( bend );
   vec3 n = vec3( bend, sqrt( max( 1.0 - dot( bend, bend ), 0.0 ) ) );
 
-  // how deep: where the bed lies below the water's plane, a share of the material's depth
+  // how deep: where the bed lies below the water's plane, in inches
   vec2 uv = gl_FragCoord.xy * uPixel;
   float surface = eyeDepth( gl_FragCoord.z ), under = eyeDepth( texture2D( uBedDepth, uv ).x );
   vec3 ray = p - eye;
   float dist = length( ray );
   vec3 below = eye + ray * ( under / max( surface, 1e-3 ) );
-  float d = saturate( ( p.z - below.z ) / uDepth );
+  float d = saturate( ( p.z - below.z ) / ${INCH} / ${FOG_RANGE}.0 );
   if ( uForceFog > 0.5 ) d = mix( uForceFogRange.x, uForceFogRange.y, d );
 
   // the bed, bent by the waves as far as the water is deep and the camera near (1120: the game's number)
@@ -150,10 +140,7 @@ void main() {
   // covers: the game's overlays blend into the alpha its bed writes the fog in
   d = max( d, under4.a );
   c = mix( c, c * uRefractionTint, saturate( 3.5 * d ) );
-  c = mix( c, uWaterFog * uAmbient / AMBIENT_SCALE, d );
-  // the reflection map × g_vReflectionTint × the zone's fog colour × g_flReflectance, where the water
-  // is deep enough; the map's picture is taken as one grey (uReflectionGrey)
-  c += saturate( 2.0 * d ) * saturate( ( d - 0.05 ) * 20.0 ) * uReflectance * uReflectionGrey * uReflectionTint * uFogColor;
+  c = mix( c, uWaterFog * uShade, d );
 
   // the sun's shine on the waves, as the game's water takes it
   vec3 v = normalize( ray );
@@ -164,11 +151,10 @@ void main() {
   vec3 shineColour = mix( uReflectionColor * uSpecColor * uSun, uReflectionColor * uSpecColor, saturate( uSpecIndependence ) );
   c = saturate( c + shineColour * shine );
 
-  // the world's light on the waves (map-light.ts), without the shadows
-  vec3 sunDir = uSunDir.zxy, ambientDir = uAmbientDir.zxy;
-  float sun = saturate( dot( -sunDir, n ) );
-  vec3 light = sun * uSun + saturate( dot( ambientDir, n ) ) * uAmbient + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.z * 0.5 + 0.5 );
-  gl_FragColor = vec4( mix( c * light, c, saturate( uBaseBloom ) ), 1.0 );
+  // the view's fog, as on the rest of the map (map-light.ts); the game's light pass leaves the water out
+  float far = max( dist - uFogFrom, 0.0 );
+  float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
+  gl_FragColor = vec4( mix( c, uFogColor, fog ), 1.0 );
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }`;
@@ -192,13 +178,8 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
       uWaterFog: { value: colour(vec.g_vWaterFogColor, [0.259, 0.137, 0.051]) },
       uReflectionColor: { value: colour(vec.g_vReflectionColor, [0.231, 0.231, 0.231]) },
       uReflectionDir: { value: new THREE.Vector3(dir[0], dir[1], dir[2]) },
-      uReflectionTint: { value: colour(vec.g_vReflectionTint, [1, 1, 1]) },
-      uReflectance: { value: f.g_flReflectance ?? 0.33 },
-      uReflectionGrey: { value: REFLECTION_GREY },
       uRefractionAmount: { value: f.g_flRefractionAmount ?? 0.06 },
       uReflectionPower: { value: f.g_flReflectionPower ?? 2.4 },
-      uBaseBloom: { value: f.g_flBaseBloom ?? 0.01 },
-      uDepth: { value: FOG_RANGE * INCH },
       uForceFog: { value: v.IntParams?.F_FORCE_FOG_OVERRIDE ? 1 : 0 },
       uForceFogRange: { value: new THREE.Vector2(f.g_flForceFogOverrideMin ?? 0, f.g_flForceFogOverrideMax ?? 0) },
       uNormal: { value: FLAT as THREE.Texture },
@@ -261,7 +242,8 @@ export function waterBed(): WaterBed {
       for (const w of waters) w.visible = false;
       const was = renderer.getRenderTarget();
       renderer.setRenderTarget(target);
-      // as the game's refraction pass draws it (multiblend's water-fog variant): no shadows, clouds, small lights or fog
+      // as the game's refraction pass draws it (multiblend's water-fog variant): the sun with its shadows and
+      // the clouds', no occlusion, small lights, shine or fog
       lit.uPlain.value = 1;
       const clearAlpha = renderer.getClearAlpha();
       renderer.setClearAlpha(0);
