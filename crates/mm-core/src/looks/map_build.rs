@@ -14,6 +14,8 @@
 //! default map's zone made for that weather (the default map carries a zone per weather and side:
 //! RF, RB, DF, DT at the end of its name). The dark look lowers every zone's light (map_light.rs).
 
+use std::collections::BTreeSet;
+
 use indexmap::IndexMap;
 
 use crate::kv3;
@@ -429,6 +431,33 @@ pub fn global_light(default_entities: &[Vec<u8>]) -> serde_json::Map<String, ser
     }
     if light.get("dota_no_clouds").and_then(serde_json::Value::as_bool) == Some(true) {
         out.remove("cloud_texture");
+    }
+    out
+}
+
+/// The world layers the map starts with switched off: each `info_world_layer` without the
+/// "visible at spawn" flag (spawnflags 1). On the default map these are the two bases' destruction
+/// layers (`world_layer_dire_destruction`, `world_layer_radiant_destruction`): cracked paths and the
+/// Dire's lava, which the game shows only once a base falls.
+pub fn hidden_layers(default_entities: &[Vec<u8>]) -> BTreeSet<String> {
+    let mut out = BTreeSet::new();
+    for file in default_entities {
+        let Ok(data) = crate::resource::data(file, "DATA", 0) else { continue };
+        let Ok(kv) = kv3::read(data) else { continue };
+        for e in kv.root.get("m_entityKeyValues").map(|n| n.items()).unwrap_or(&[]) {
+            let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
+            if values.get("classname").and_then(kv3::Node::as_str) != Some("info_world_layer") {
+                continue;
+            }
+            let Some(name) = values.get("layerName").and_then(kv3::Node::as_str) else { continue };
+            let flags = values.get("spawnflags").and_then(|n| match &n.value {
+                kv3::Value::Str(s) => s.trim().parse::<f64>().ok(),
+                _ => kv.number_of(n),
+            });
+            if (flags.unwrap_or(0.0) as i64) & 1 == 0 {
+                out.insert(name.to_string());
+            }
+        }
     }
     out
 }

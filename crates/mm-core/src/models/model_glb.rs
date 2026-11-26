@@ -421,7 +421,18 @@ impl ModelGlb {
                     self.error("map 3d: the clouds", &e);
                     None
                 });
-                let bytes = crate::map_scene::slim(&world, node.as_deref(), clouds.as_deref(), 256)?;
+                // and the world layers the map starts with off, from its entity lumps
+                let hidden = crate::vpk::Index::open(&map)
+                    .map(|ix| {
+                        let lumps: Vec<Vec<u8>> = ix
+                            .paths()
+                            .filter(|p| p.ends_with(".vents_c"))
+                            .filter_map(|p| ix.read(p).ok().flatten())
+                            .collect();
+                        crate::map_build::hidden_layers(&lumps)
+                    })
+                    .unwrap_or_default();
+                let bytes = crate::map_scene::slim(&world, node.as_deref(), &hidden, clouds.as_deref(), 256)?;
                 let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
                 std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
                 std::fs::rename(&part, &light).map_err(|e| e.to_string())

@@ -262,3 +262,23 @@ fn a_glow_names_its_colour_beside_the_scroll_picture_the_export_gives_it() {
     assert_eq!(glow_colour(&m(0), &textures, &images), Some(1));
     assert_eq!(glow_colour(&m(1), &textures, &images), None, "an overlay's glow keeps its own colour");
 }
+
+#[test]
+fn a_layer_the_map_starts_with_off_draws_nothing() {
+    let mut j = json!({ "nodes": [
+        { "name": "n0_lr1_agg_merge_dire_lava_0", "mesh": 0 },
+        { "name": "n0_lr4_agg_merge_mod_dire_path_000_2", "mesh": 1 },
+        { "name": "n0_lr0_agg_prop_cliff_wall001_0", "mesh": 2 },
+        { "name": "n0_lr1_agg_merge_dire_lava_0.meshset_0", "mesh": 3 },
+    ] });
+    let layers = BTreeMap::from([
+        ("n0_lr1_agg_merge_dire_lava_0".to_string(), "world_layer_dire_destruction".to_string()),
+        ("n0_lr4_agg_merge_mod_dire_path_000_2".to_string(), "world_layer_dire_base".to_string()),
+    ]);
+    let hidden = BTreeSet::from(["world_layer_dire_destruction".to_string()]);
+    hide_layers(&mut j, &layers, &hidden);
+    assert!(j["nodes"][0].get("mesh").is_none(), "the destruction layer is off");
+    assert_eq!(j["nodes"][1]["mesh"], json!(1), "the base layer stays");
+    assert_eq!(j["nodes"][2]["mesh"], json!(2), "a model on no layer stays");
+    assert!(j["nodes"][3].get("mesh").is_none(), "a mesh set goes with its object");
+}
