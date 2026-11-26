@@ -19,6 +19,7 @@ import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
+import { mapAO } from './map-ao.ts';
 import { isShiny, specPictures, specShader } from './map-spec.ts';
 import { glowKey, glowPictures, glowShader, isGlow, prepareGlow } from './map-glow.ts';
 import { isMaskTinted, tintPictures, tintShader } from './map-tint.ts';
@@ -152,6 +153,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   let windy = false;
   // the map under the water (the game's refraction map), drawn again when the view moved
   const bedPass = waterBed();
+  // the game's ambient occlusion, drawn again with every frame (map-ao.ts)
+  const ao = mapAO();
   // the weather, made once the map's size is known; the ground's heights, the map's width
   let weather: MapWeather | null = null, weatherWanted: string | null = null, heights: Heights | null = null, mapReach = 1;
   // the map's standing effects (map-effects.ts), once the map is in and the core listed them
@@ -169,6 +172,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (!dirty) return;
     dirty = false;
     if (water) { bedPass.draw(renderer, scene, camera, moved); moved = false; }
+    ao.draw(renderer, scene, camera);
     renderer.render(scene, camera);
   });
 
@@ -362,6 +366,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       forgetGrounds();
       renderer.setAnimationLoop(null);
       bedPass.dispose();
+      ao.dispose();
       resize.disconnect();
       controls.dispose();
       scene.traverse((o) => {

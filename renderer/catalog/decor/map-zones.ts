@@ -1,4 +1,4 @@
-/* The map's light where the view looks, as the game picks it: the default map has four lighting
+/* The map's light where the camera stands, as the game picks it: the default map has four lighting
  * zones a look (ent_dota_lightinfo: the Radiant's forest and bottom, the Dire's forest and top,
  * map_build.rs zone_places), each standing somewhere with an inner and an outer radius. The game
  * (client.dll 0x181e3aae0, read 2026-11-26) takes the zones that reach the view (within their
@@ -7,8 +7,10 @@
  * product of (1 - r_j) over the others and divides by the sum; every number of the light is then
  * the sum of the zones' by those shares (inside one zone's inner radius a neighbour's goes below 0),
  * and what is not a number comes from the zone with the largest share. Where none reaches, the
- * nearest lights the view. So the Dire's woods take their bluer sun, purple shadows and red fog,
- * and mid a mix leaning to the Radiant (0.55 to 0.45). */
+ * nearest lights the view. The point is where the game's camera stands, 567 inches south of what it
+ * looks at (map-light.ts CAMERA_BACK): with it a frame of the game read in RenderDoc comes out to the
+ * digit, the forests at mid 22/31 and 9/31. So the Dire's woods take their bluer sun, purple shadows
+ * and red fog, and mid a mix leaning to the Radiant. */
 import type { ZoneLight, ZonePlace } from '../../api/decor.ts';
 
 /** A zone's own weight at this distance from it, as the game counts it: 1 at its inner radius, 0 at its outer. */

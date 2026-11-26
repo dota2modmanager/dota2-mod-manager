@@ -27,6 +27,12 @@ test('between the sides, the zones mix by the shares the game gives them, the fa
   assert.ok(Math.abs(z.light_scale_day! - (5 * w[0] + 7 * w[3])) < 1e-9, String(z.light_scale_day));
 });
 
+test('at mid the camera of the game, 567 south of the middle, takes the forests by 22/31 and 9/31', () => {
+  // read from a frame of the game: the shadow scale of the zones (1 and 2) came out 40/31 there
+  const w = shares(zones, 0, -567);
+  assert.ok(Math.abs(w[0] - 22 / 31) < 1e-4 && Math.abs(w[3] - 9 / 31) < 1e-4, String(w));
+});
+
 test('inside one zone and in reach of another, the other goes below 0', () => {
   // 1000 from the Dire top, within its inner radius; the Radiant forest reaches there too
   const w = shares(zones, -5904, 4904);
