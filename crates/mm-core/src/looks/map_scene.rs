@@ -25,8 +25,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// 4: the layers' blend softness and tint masks; 5: each copy's tint; 6: the clouds' picture;
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
-/// 11: the props' specular pictures).
-pub const LIGHT_FILE: &str = "world-11.glb";
+/// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep).
+pub const LIGHT_FILE: &str = "world-12.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -190,6 +190,12 @@ fn vmat_int(material: &Value, key: &str) -> Option<i64> {
     material.pointer(&format!("/extras/vmat/IntParams/{key}")).and_then(Value::as_i64)
 }
 
+/// A linear colour channel back in sRGB (the inverse of the export's linearisation).
+fn linear_to_srgb(c: f64) -> f64 {
+    let c = c.clamp(0.0, 1.0);
+    if c <= 0.003_130_8 { c * 12.92 } else { 1.055 * c.powf(1.0 / 2.4) - 0.055 }
+}
+
 /// The export's texture whose picture is this vtex (matched by file name), if the export kept it.
 fn texture_named(vtex: &str, textures: &[Value], images: &[Value]) -> Option<usize> {
     let stem = |p: &str| p.rsplit('/').next().unwrap_or(p).to_lowercase();
@@ -335,8 +341,11 @@ pub fn slim_glb(
         if let Some(a) = factor.get(3).filter(|a| **a < 1.0) {
             pbr.insert("baseColorFactor".into(), json!([1, 1, 1, a]));
         }
+        // an overlay's tint is its draw call's, which the map keeps linear already; the export took it
+        // for a copy's (sRGB, 253/255) and linearised it again, so the Dire's stones went black
+        let overlay = vmat_int(m, "F_OVERLAY") == Some(1);
         let copy_tint = (factor.len() >= 3 && factor[..3].iter().any(|c| (c - 1.0).abs() > 1e-3))
-            .then(|| [factor[0], factor[1], factor[2]]);
+            .then(|| [factor[0], factor[1], factor[2]].map(|c| if overlay { linear_to_srgb(c) } else { c }));
         let base = m.pointer("/pbrMetallicRoughness/baseColorTexture/index").and_then(idx);
         let image = base
             .and_then(|t| textures.get(t))

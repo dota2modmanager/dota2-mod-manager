@@ -57,11 +57,26 @@ async function loadGlb(map: string | null): Promise<GLTF> {
   return new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).parseAsync(own as ArrayBuffer, '');
 }
 
+const vmatInt = (m: THREE.Material, key: string): number | undefined =>
+  (m.userData as { vmat?: { IntParams?: Record<string, number> } }).vmat?.IntParams?.[key];
+const isOverlay = (m: THREE.Material): boolean => vmatInt(m, 'F_OVERLAY') === 1;
+
 function prepare(mat: THREE.Material): void {
   mat.side = THREE.DoubleSide;
   const m = mat as THREE.MeshStandardMaterial;
+  // an overlay (F_OVERLAY: the Dire's lava cracks, blood, the paths' edges) is painted over the ground
+  // it lies on, blended and writing no depth, between the ground and the props (renderOrder below);
+  // F_ADDITIVE_BLEND (the cracks' glow) adds its light instead
+  if (isOverlay(m)) {
+    m.transparent = false; m.depthWrite = false;
+    m.blending = THREE.CustomBlending; m.blendSrc = THREE.SrcAlphaFactor;
+    m.blendDst = vmatInt(m, 'F_ADDITIVE_BLEND') === 1 ? THREE.OneFactor : THREE.OneMinusSrcAlphaFactor;
+    // the alpha under it stays: the river's bed keeps its depth there for the water's fog (map-water.ts)
+    m.blendSrcAlpha = THREE.ZeroFactor; m.blendDstAlpha = THREE.OneFactor;
+    m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -4;
+  }
   // leaves and grass are cards with holes: cut where the picture is clear, so they sort right
-  if (m.map && m.transparent) { m.transparent = false; m.alphaTest = 0.4; }
+  else if (m.map && m.transparent) { m.transparent = false; m.alphaTest = 0.4; }
   // lit as the game lights its world (map-light.ts); a leaf seen from its back takes the shadows'
   // light on that side, as the game's shader turns the normal to the viewer; a tree's leaves sway
   // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
@@ -298,6 +313,15 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       mapTrees(scene, treeMeshes, kind, samples.trees?.after, centre, prepare, changed),
     ]);
     if (disposed) return;
+    // the game draws the ground, then the overlays over it, then the props: a prop lying under an
+    // overlay's plane stays over it (the Dire's logo, 15" below the stones painted round it)
+    scene.traverse((o) => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const mats = [mesh.material].flat();
+      if (mats.some(isGround)) mesh.renderOrder = -2;
+      else if (mats.some(isOverlay)) { mesh.renderOrder = -1; mesh.castShadow = false; }
+    });
     // the ground's heights for the weather (no trees: the rain falls through them)
     weather?.ground((heights = mapHeights(renderer, scene, [...merged.values()].flat(), box)));
     byGroup = merged;
