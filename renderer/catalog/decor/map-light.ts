@@ -190,7 +190,12 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       outgoingLight = ( diffuseColor.rgb + ( 1.0 - alone ) * shine ) * light + alone * shine + totalEmissiveRadiance;
       float far = max( distance( vLitWorld, cameraPosition ) - uFogFrom, 0.0 );
       float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
+      #ifdef MM_GLOW
+      // a glow adds its light: the fog takes it away rather than painting it (gls_glow.asm)
+      diffuseColor.a *= 1.0 - fog * ( 1.0 - uPlain );
+      #else
       outgoingLight = mix( outgoingLight, uFogColor, fog * ( 1.0 - uPlain ) );
+      #endif
     }
     #include <opaque_fragment>
     // in the river's bed pass the alpha is the water fog only overlays add to (map-water.ts):

@@ -4,7 +4,7 @@
  *
  *   speed  = scroll picture (g_tScrollSpeed).g
  *   colour = g_tColor(uv + scroll direction × speed × g_flScrollUvSpeed × time) × tint × vertex colour, lit
- *   alpha  = scroll picture.a × vertex alpha × g_flOpacityScale × |N · camera forward|^g_flAlphaAnglePower
+ *   alpha  = scroll picture.a × vertex alpha × g_flOpacityScale × |N · camera forward|^g_flAlphaAnglePower × (1 - fog)
  *
  * added over what is behind it (alpha × colour + behind), writing no depth. The export hands such a
  * material its scroll picture as its colour; the light copy keeps the colour beside it
@@ -57,7 +57,7 @@ export function prepareGlow(m: THREE.Material): void {
 /** The glow's colour, scroll and fade in its shader, the world's light (map-light.ts) after. */
 export function glowShader(sh: THREE.WebGLProgramParametersWithUniforms, m: THREE.Material): void {
   Object.assign(sh.uniforms, uniformsOf(m));
-  sh.fragmentShader = sh.fragmentShader
+  sh.fragmentShader = `#define MM_GLOW\n${sh.fragmentShader}`
     .replace('#include <common>', '#include <common>\nuniform sampler2D uGlowColour;\nuniform vec2 uGlowScroll;\nuniform float uGlowOpacity, uGlowTime;')
     .replace('#include <map_fragment>', `#ifdef USE_MAP
     {
