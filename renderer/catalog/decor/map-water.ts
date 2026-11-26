@@ -144,7 +144,11 @@ void main() {
 
   // the bed, bent by the waves as far as the water is deep and the camera near (1120: the game's number)
   vec2 off = n.xy * d * uRefractionAmount * 1120.0 / ( dist / ${INCH} );
-  vec3 c = texture2D( uBed, clamp( uv - off * vec2( 1.0, -1.0 ), 0.0, 1.0 ) ).rgb;
+  vec4 under4 = texture2D( uBed, clamp( uv - off * vec2( 1.0, -1.0 ), 0.0, 1.0 ) );
+  vec3 c = under4.rgb;
+  // an overlay on the bed (the Dire camp's marking) lays its own alpha over the bed's fog, as deep as it
+  // covers: the game's overlays blend into the alpha its bed writes the fog in
+  d = max( d, under4.a );
   c = mix( c, c * uRefractionTint, saturate( 3.5 * d ) );
   c = mix( c, uWaterFog * uAmbient / AMBIENT_SCALE, d );
   // the reflection map × g_vReflectionTint × the zone's fog colour × g_flReflectance, where the water
@@ -259,7 +263,10 @@ export function waterBed(): WaterBed {
       renderer.setRenderTarget(target);
       // as the game's refraction pass draws it (multiblend's water-fog variant): no shadows, clouds, small lights or fog
       lit.uPlain.value = 1;
+      const clearAlpha = renderer.getClearAlpha();
+      renderer.setClearAlpha(0);
       renderer.render(scene, camera);
+      renderer.setClearAlpha(clearAlpha);
       lit.uPlain.value = 0;
       renderer.setRenderTarget(was);
       for (const w of waters) w.visible = true;
