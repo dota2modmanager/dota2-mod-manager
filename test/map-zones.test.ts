@@ -12,24 +12,29 @@ const zones: ZonePlace[] = [
   { zone: 'DF', at: [6416, 5904], inner: 7000, outer: 11000, light: { color_day: [200, 194, 251], light_scale_day: 7 } },
 ];
 
-test('inside one zone alone, the view takes that zone', () => {
+test('in the Dire base, the view takes the Dire forest', () => {
   const w = shares(zones, 7020, 6146);
-  assert.deepEqual(w.map((v) => Math.round(v * 100)), [0, 0, 0, 100]);
+  assert.deepEqual(w, [0, 0, 0, 1]);
   assert.deepEqual(blendZones({}, zones, w).color_day, [200, 194, 251]);
 });
 
-test('between the sides, the light is a mix by how far each zone reaches', () => {
+test('between the sides, the zones mix by the shares the game gives them, the far ones taken away', () => {
   const w = shares(zones, 0, 0);
   assert.ok(Math.abs(w.reduce((a, b) => a + b, 0) - 1) < 1e-9);
-  assert.ok(w[0] > 0.3 && w[3] > 0.3, String(w));
+  // the two forests reach mid, the bottom and the top do not
+  assert.deepEqual(w.map((v) => Math.round(v * 100)), [55, 0, 0, 45]);
   const z = blendZones({}, zones, w);
-  assert.ok(z.light_scale_day! > 5 && z.light_scale_day! < 7);
-  assert.ok(z.color_day![2] > 207 && z.color_day![2] < 251);
+  assert.ok(Math.abs(z.light_scale_day! - (5 * w[0] + 7 * w[3])) < 1e-9, String(z.light_scale_day));
+});
+
+test('inside one zone and in reach of another, the other goes below 0', () => {
+  // 1000 from the Dire top, within its inner radius; the Radiant forest reaches there too
+  const w = shares(zones, -5904, 4904);
+  assert.ok(w[2] > 1 && w[0] < 0, String(w));
 });
 
 test('where no zone reaches, the nearest lights the view', () => {
-  const w = shares(zones.slice(1, 3), 20000, -20000);
-  assert.deepEqual(w, [1, 0]);
+  assert.deepEqual(shares(zones.slice(1, 3), 20000, -20000), [1, 0]);
 });
 
 test('the look keeps what the zones do not carry', () => {
