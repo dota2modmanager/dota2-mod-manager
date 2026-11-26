@@ -13,10 +13,14 @@
  * below the water's plane it lies; Dota's river is a few inches deep, so d stays near 0.1. The bed
  * is a pass of its own: the map drawn without its water into a picture with its depth (the game's
  * refraction map), done again only when the view moved or every few frames for the clouds' shadows.
+ * The game lights that pass more plainly than the frame: the sun, the light around and the shadows'
+ * colour, but no shadows, clouds, small lights or fog (map-light.ts uPlain).
  *
  * Not yet as the game: the fog's light is g_vWaterFogColor × mix(sun, AmbientColor2,
- * g_flWaterFogShadowFactor), and with the zone's pink shadow colour as AmbientColor2 the river
- * turns red, which the game's is not; the zone's ambient colour without its scale is taken instead,
+ * g_flWaterFogShadowFactor), AmbientColor2 being the zone light's m_AmbientColor2 (client.dll), the
+ * shadows' colour; with the zone's pink shadow colour the river turns red, which the game's is not
+ * (tried 2026-11-26 at three depths: off by 18 to 35 of 255), so something the game adds is missing,
+ * likely the reflection map's picture; the zone's ambient colour without its scale is taken instead,
  * the closest of the tries to a frame of the game. The reflection map's picture (× g_vFogColor ×
  * Reflectance) is unknown and left out. Against a frame of the game the river's colour is off by 6
  * of 255 (the turquoise sheet before: 20).
@@ -232,7 +236,10 @@ export function waterBed(): WaterBed {
       for (const w of waters) w.visible = false;
       const was = renderer.getRenderTarget();
       renderer.setRenderTarget(target);
+      // as the game's refraction pass draws it (multiblend's water-fog variant): no shadows, clouds, small lights or fog
+      lit.uPlain.value = 1;
       renderer.render(scene, camera);
+      lit.uPlain.value = 0;
       renderer.setRenderTarget(was);
       for (const w of waters) w.visible = true;
     },
