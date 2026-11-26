@@ -1,29 +1,33 @@
 /* The river of the Optimization window's map, drawn by the game's water shader (water_dota.vfx,
  * its forward pass read from the shader's bytecode 2026-11-25):
  *
- *   d      = how deep the water is under this pixel, a share of g_flWaterDepth (35 inches)
+ *   d      = how deep the water is under this pixel, a share of the fog range (FOG_RANGE, 16 inches)
  *   bed    = the map under the water, looked up a little off where the waves bend it
  *   colour = bed × mix(1, refraction tint, saturate(3.5 d))
- *   colour = mix(colour, water fog colour × the light it takes, d)
+ *   colour = mix(colour, water fog colour × the light it takes, d) + reflection (below)
  *   colour = saturate(colour + reflection colour × specular colour × sun × pow(saturate(R · reflection dir), power))
  *   pixel  = colour × the world's light on the waves' normal (map-light.ts, without shadows)
  *
  * d is what the map under the water writes into its alpha (multiblend's
  * D_WRITE_WATER_FOG_TO_DEST_ALPHA: saturate(dot(g_vClipPlane0, P) × g_flInvFogRange)), how far
- * below the water's plane it lies; Dota's river is a few inches deep, so d stays near 0.1. The bed
+ * below the water's plane it lies over the view's fog range (FOG_RANGE). The bed
  * is a pass of its own: the map drawn without its water into a picture with its depth (the game's
  * refraction map), done again only when the view moved or every few frames for the clouds' shadows.
  * The game lights that pass more plainly than the frame: the sun, the light around and the shadows'
  * colour, but no shadows, clouds, small lights or fog (map-light.ts uPlain).
+ *
+ * Then the reflection: the reflection map × g_vReflectionTint × the zone's fog colour × g_flReflectance,
+ * where the water is deep (saturate(2d) × saturate(20(d - 0.05))); the picture is one grey here
+ * (REFLECTION_GREY). With the zones blended (map-zones.ts) the Radiant's cyan fog and the Dire's red
+ * one mix at mid into the game's grey-teal river.
  *
  * Not yet as the game: the fog's light is g_vWaterFogColor × mix(sun, AmbientColor2,
  * g_flWaterFogShadowFactor), AmbientColor2 being the zone light's m_AmbientColor2 (client.dll), the
  * shadows' colour; with the zone's pink shadow colour the river turns red, which the game's is not
  * (tried 2026-11-26 at three depths: off by 18 to 35 of 255), so something the game adds is missing,
  * likely the reflection map's picture; the zone's ambient colour without its scale is taken instead,
- * the closest of the tries to a frame of the game. The reflection map's picture (× g_vFogColor ×
- * Reflectance) is unknown and left out. Against a frame of the game the river's colour is off by 6
- * of 255 (the turquoise sheet before: 20).
+ * the closest of the tries to a frame of the game. Against a frame of the game the river's colour is
+ * off by 5 of 255 (the turquoise sheet before: 25).
  *
  * The waves are the game's normal picture flowing (F_FLOW_NORMALS, read the same way 2026-11-26),
  * P the pixel's place in inches, (x, -y), and the flow one colour over the whole river (TextureFlow):
@@ -83,6 +87,15 @@ const pixel = (r: number, g: number, b: number) => {
   t.needsUpdate = true;
   return t;
 };
+/** How deep the water turns fully to its fog colour, in inches: g_flInvFogRange is the view's, not the
+ * material's g_flWaterDepth (35), and with 35 the river bed showed through as a turquoise sheet. 16 is
+ * what matches a frame of the game at mid, where the river is 16 inches deep (the bed at 0, the water
+ * at 16): there the bed is lost, as in the game, and shows only at the banks. */
+const FOG_RANGE = 16;
+/** The reflection map's picture, which the window has no copy of, as one grey: fitted to the same
+ * frame (the river's colour off by 5 of 255; with no reflection the deep river was black). */
+const REFLECTION_GREY = 0.08;
+
 const FLAT = pixel(128, 128, 255);
 const CALM = pixel(0, 0, 0);
 
@@ -96,8 +109,8 @@ uniform float uSpecIndependence;
 uniform sampler2D uBed, uBedDepth;
 uniform vec2 uPixel;
 uniform float uNear, uFar, uTime;
-uniform vec3 uRefractionTint, uWaterFog, uReflectionColor, uReflectionDir;
-uniform float uRefractionAmount, uReflectionPower, uBaseBloom, uDepth, uForceFog;
+uniform vec3 uRefractionTint, uWaterFog, uReflectionColor, uReflectionDir, uReflectionTint, uFogColor;
+uniform float uRefractionAmount, uReflectionPower, uBaseBloom, uDepth, uForceFog, uReflectance, uReflectionGrey;
 uniform vec2 uForceFogRange;
 varying vec3 vWorld;
 
@@ -134,11 +147,16 @@ void main() {
   vec3 c = texture2D( uBed, clamp( uv - off * vec2( 1.0, -1.0 ), 0.0, 1.0 ) ).rgb;
   c = mix( c, c * uRefractionTint, saturate( 3.5 * d ) );
   c = mix( c, uWaterFog * uAmbient / AMBIENT_SCALE, d );
+  // the reflection map × g_vReflectionTint × the zone's fog colour × g_flReflectance, where the water
+  // is deep enough; the map's picture is taken as one grey (uReflectionGrey)
+  c += saturate( 2.0 * d ) * saturate( ( d - 0.05 ) * 20.0 ) * uReflectance * uReflectionGrey * uReflectionTint * uFogColor;
 
   // the sun's shine on the waves, as the game's water takes it
   vec3 v = normalize( ray );
   vec3 r = 2.0 * dot( v, n ) * n - v;
-  float shine = pow( saturate( dot( uReflectionDir, r ) ), uReflectionPower );
+  // the material's direction turned around, as the props' shine (map-light.ts): read as it stands,
+  // the waves at mid streaked bright where the game's water is smooth
+  float shine = pow( saturate( dot( -uReflectionDir, r ) ), uReflectionPower );
   vec3 shineColour = mix( uReflectionColor * uSpecColor * uSun, uReflectionColor * uSpecColor, saturate( uSpecIndependence ) );
   c = saturate( c + shineColour * shine );
 
@@ -170,10 +188,13 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
       uWaterFog: { value: colour(vec.g_vWaterFogColor, [0.259, 0.137, 0.051]) },
       uReflectionColor: { value: colour(vec.g_vReflectionColor, [0.231, 0.231, 0.231]) },
       uReflectionDir: { value: new THREE.Vector3(dir[0], dir[1], dir[2]) },
+      uReflectionTint: { value: colour(vec.g_vReflectionTint, [1, 1, 1]) },
+      uReflectance: { value: f.g_flReflectance ?? 0.33 },
+      uReflectionGrey: { value: REFLECTION_GREY },
       uRefractionAmount: { value: f.g_flRefractionAmount ?? 0.06 },
       uReflectionPower: { value: f.g_flReflectionPower ?? 2.4 },
       uBaseBloom: { value: f.g_flBaseBloom ?? 0.01 },
-      uDepth: { value: (f.g_flWaterDepth ?? 35) * INCH },
+      uDepth: { value: FOG_RANGE * INCH },
       uForceFog: { value: v.IntParams?.F_FORCE_FOG_OVERRIDE ? 1 : 0 },
       uForceFogRange: { value: new THREE.Vector2(f.g_flForceFogOverrideMin ?? 0, f.g_flForceFogOverrideMax ?? 0) },
       uNormal: { value: FLAT as THREE.Texture },
