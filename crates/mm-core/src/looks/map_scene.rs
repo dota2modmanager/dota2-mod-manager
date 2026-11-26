@@ -193,7 +193,11 @@ fn vmat_int(material: &Value, key: &str) -> Option<i64> {
 /// A linear colour channel back in sRGB (the inverse of the export's linearisation).
 fn linear_to_srgb(c: f64) -> f64 {
     let c = c.clamp(0.0, 1.0);
-    if c <= 0.003_130_8 { c * 12.92 } else { 1.055 * c.powf(1.0 / 2.4) - 0.055 }
+    if c <= 0.003_130_8 {
+        c * 12.92
+    } else {
+        1.055 * c.powf(1.0 / 2.4) - 0.055
+    }
 }
 
 /// The export's texture whose picture is this vtex (matched by file name), if the export kept it.
