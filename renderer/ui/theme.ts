@@ -18,6 +18,10 @@
  * night, its colours in themes.css and its dressing in ui/blood.ts. It is not tied to the calendar:
  * it was earned with a key, and it stays earned.
  *
+ * Six more are the app's own, not a hero's (ui/theme-list.ts): Sunset, Abyss and Neon, each
+ * with a gradient trim along the title bar, and RGB, Plasma and Toxic, which glow like a backlight. They are worn from Settings only, not
+ * in the mascot's round, and wear the mascot of the hero closest to their colours. Settings has all of them as cards (settings/ThemesBlock.tsx).
+ *
  * One more, 'custom', is the user's own, read from a JSON file (ui/custom-theme.ts, issue #432): it
  * joins the round once one is loaded, and the mascot's right-click menu loads, saves and drops it.
  */
@@ -36,11 +40,9 @@ function dressBlood(on: boolean): void {
   (blood ||= import('./blood.ts')).then((m) => m.dressBlood(on));
 }
 import { bindThemeMenu, customCss, hasCustom } from './theme-menu.ts';
+import { BLOOD, CUSTOM, HEROES as HERO_LIST, MASCOT, SECRET, themeChoices as choices, themeRound } from './theme-list.ts';
 
-const HEROES = ['ursa', 'brew', 'fura', 'storm', 'invoker', 'meepo', 'bh', 'axe'];
-const SECRET = 'secret';
-const BLOOD = 'blood';
-const CUSTOM = 'custom';
+const HEROES: string[] = [...HERO_LIST];
 /** knocks on the mascot that bring the pumpkin out */
 const KNOCKS = 20;
 /** how long the rainbow wears each hero */
@@ -50,7 +52,10 @@ const unlocked = () => state.settings?.secret === true;
 // The bloody night is Halloween's and is put away with it (ui/season.ts `off`): out of the round,
 // and a window that was wearing it starts in the first hero's. The setting itself is kept.
 const bled = () => state.settings?.blood === true && eventOn('halloween');
-const themes = () => [...HEROES, ...(hasCustom() ? [CUSTOM] : []), ...(unlocked() ? [SECRET] : []), ...(bled() ? [BLOOD] : [])];
+const has = () => ({ custom: hasCustom(), secret: unlocked(), blood: bled() });
+/** every theme there is to wear; the mascot goes round only `round()` */
+const themes = () => choices(has());
+const round = () => themeRound(has());
 /** the theme the window wears by name: the hero's, or 'secret' whatever look that has today */
 let current = HEROES[0];
 
@@ -102,11 +107,28 @@ function applyTheme(name: unknown): string {
   else {
     stopHues();
     if (look === 'halloween' || theme === BLOOD) setPumpkin(theme === BLOOD);
-    else setMascot(look ? HEROES[0] : theme);
+    else setMascot(look ? HEROES[0] : MASCOT[theme] ?? theme);
   }
   dressHalloween(look === 'halloween');
   dressBlood(theme === BLOOD);
+  // the cards in Settings follow, whichever way the theme was changed
+  document.dispatchEvent(new CustomEvent('mm-theme', { detail: theme }));
   return theme;
+}
+
+/** The theme the window wears now, by name. */
+export const currentTheme = (): string => current;
+
+/** Every theme there is to wear now, in the mascot's order. */
+export const themeChoices = (): string[] => themes();
+
+/** What the secret theme looks like today (ui/season.ts): its card is drawn in that. */
+export const secretLook = (): string => lookOn(new Date());
+
+/** Wear a theme picked in Settings: the mascot spins to it, as if it had been clicked there. */
+export function wearTheme(name: string): void {
+  if (name === current) return;
+  spin(() => window.api.settings.set('theme', applyTheme(name)));
 }
 
 /** Wear the user's own theme now, or the first hero's once it is dropped: the mascot's menu calls this. */
@@ -168,7 +190,8 @@ export function initTheme(): void {
   mascot.addEventListener('click', () => {
     if (++knocks === KNOCKS) document.dispatchEvent(new Event('mm-knocks'));
     if (mascot.classList.contains('spinning')) return;
-    const list = themes();
+    // from one of the app's own themes, which are not in the round, the next is the first hero's
+    const list = round();
     const next = list[(list.indexOf(current) + 1) % list.length];
     spin(() => {
       applyTheme(next);

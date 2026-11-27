@@ -36,7 +36,11 @@ function pickFile(): Promise<File | null> {
   });
 }
 
-async function load(wear: (on: boolean) => void): Promise<void> {
+/** The user's own theme as it is kept, or null: its card in Settings is drawn in its colours. */
+export const customTheme = (): CustomTheme | null => theme();
+
+/** Load a theme from a file the user picks and wear it: the mascot's menu and Settings both call this. */
+export async function loadTheme(wear: (on: boolean) => void): Promise<void> {
   const file = await pickFile();
   if (!file) return;
   // a theme with its picture inside is a few MB; anything far past that is not one
@@ -49,7 +53,8 @@ async function load(wear: (on: boolean) => void): Promise<void> {
   toast(L`Тема «${r.theme.name}» надета`);
 }
 
-function save(isCustom: boolean): void {
+/** Save the user's theme to a file, or with none of their own the colours worn now, to start one from. */
+export function saveTheme(isCustom: boolean): void {
   const t: CustomTheme = isCustom && theme() ? theme()! : { name: L`Моя тема`, colors: currentColors(getComputedStyle(document.documentElement)) };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([themeFile(t)], { type: 'application/json' }));
@@ -58,12 +63,19 @@ function save(isCustom: boolean): void {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/** Forget the user's theme; a window wearing it goes back to the first hero's. */
+export function dropTheme(isCustom: boolean, wear: (on: boolean) => void): void {
+  mine = null;
+  storeTheme(null);
+  if (isCustom) wear(false);
+}
+
 /** The menu on the mascot. */
 export function bindThemeMenu(mascot: HTMLElement, isCustom: () => boolean, wear: (on: boolean) => void): void {
   bindContextMenu(mascot.parentElement || document.body, '#themeMascot', () => [
-    { label: L`Загрузить тему из файла…`, icon: 'upload_file', onPick: () => void load(wear) },
-    { label: isCustom() ? L`Сохранить тему в файл…` : L`Сохранить эти цвета как тему…`, icon: 'download', onPick: () => save(isCustom()) },
+    { label: L`Загрузить тему из файла…`, icon: 'upload_file', onPick: () => void loadTheme(wear) },
+    { label: isCustom() ? L`Сохранить тему в файл…` : L`Сохранить эти цвета как тему…`, icon: 'download', onPick: () => saveTheme(isCustom()) },
     hasCustom() && { separator: true },
-    hasCustom() && { label: L`Убрать свою тему`, icon: 'delete', danger: true, onPick: () => { const was = isCustom(); mine = null; storeTheme(null); if (was) wear(false); } },
+    hasCustom() && { label: L`Убрать свою тему`, icon: 'delete', danger: true, onPick: () => dropTheme(isCustom(), wear) },
   ]);
 }

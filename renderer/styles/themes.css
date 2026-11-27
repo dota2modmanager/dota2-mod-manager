@@ -168,6 +168,194 @@
   --md-error: #ffb4ab;
 }
 
+/* The app's own (ui/theme-list.ts), after the eight heroes. The first three: not anybody's palette, so each
+   is a mood instead. Sunset is a plum dusk with a coral accent and a pink second colour; Abyss is
+   deep water with an aqua accent; Neon is a night street, hot pink on near-black with cyan.
+   Each carries a gradient trim (--theme-trim) along the title bar and on the main buttons, and a
+   faint glow of its colours behind the window, so they read as more than a recolour. */
+[data-theme='sunset'] {
+  --md-primary: #ffb59a;
+  --md-accent: #ff8a65;
+  --md-on-primary: #4a1500;
+  --md-primary-container: #7a2e1a;
+  --md-on-primary-container: #ffdbcf;
+  --md-secondary: #f5b8d0;
+  --md-surface: #160f17;
+  --md-surface-low: #1f1620;
+  --md-surface-container: #251a26;
+  --md-surface-high: #302331;
+  --md-surface-highest: #3b2d3c;
+  --md-on-surface: #f4e4ea;
+  --md-on-surface-variant: #d8c1cc;
+  --md-outline: #9c8592;
+  --md-error: #ffb4ab;
+  --theme-trim: linear-gradient(90deg, #ffc36b, #ff8a65, #ff6f91, #d77ad8, #9a7dff, #ffc36b);
+  --theme-btn: linear-gradient(135deg, #ffc9a3, #ff9e8f 55%, #f6a3c8);
+  --theme-glow: radial-gradient(ellipse 70% 55% at 100% 0%, rgb(255 122 92 / 0.13), transparent 70%), radial-gradient(ellipse 60% 50% at 0% 100%, rgb(154 125 255 / 0.10), transparent 70%);
+}
+
+[data-theme='abyss'] {
+  --md-primary: #7fe3e0;
+  --md-accent: #3fd0d4;
+  --md-on-primary: #00363a;
+  --md-primary-container: #0f4f5a;
+  --md-on-primary-container: #c4fbff;
+  --md-secondary: #9fc8ff;
+  --md-surface: #0b1218;
+  --md-surface-low: #111a22;
+  --md-surface-container: #152029;
+  --md-surface-high: #1d2a35;
+  --md-surface-highest: #273541;
+  --md-on-surface: #e1eef4;
+  --md-on-surface-variant: #bcd0da;
+  --md-outline: #7f96a3;
+  --md-error: #ffb4ab;
+  --theme-trim: linear-gradient(90deg, #5ff2d6, #3fd0d4, #4a90ff, #7c6cff, #3fd0d4, #5ff2d6);
+  --theme-btn: linear-gradient(135deg, #9ff5e6, #7fe3e0 50%, #8fc4ff);
+  --theme-glow: radial-gradient(ellipse 70% 55% at 100% 0%, rgb(63 208 212 / 0.12), transparent 70%), radial-gradient(ellipse 60% 50% at 0% 100%, rgb(74 144 255 / 0.11), transparent 70%);
+}
+
+[data-theme='neon'] {
+  --md-primary: #ff8be6;
+  --md-accent: #ff4fd8;
+  --md-on-primary: #3d0034;
+  --md-primary-container: #6b1a5c;
+  --md-on-primary-container: #ffd6f3;
+  --md-secondary: #6ef2ff;
+  --md-surface: #0d0b14;
+  --md-surface-low: #14111e;
+  --md-surface-container: #191526;
+  --md-surface-high: #221d33;
+  --md-surface-highest: #2c2640;
+  --md-on-surface: #efe8ff;
+  --md-on-surface-variant: #cbbfe6;
+  --md-outline: #8a7fa8;
+  --md-error: #ffb4ab;
+  --theme-trim: linear-gradient(90deg, #ff4fd8, #b45cff, #3fe8ff, #b45cff, #ff4fd8);
+  --theme-btn: linear-gradient(135deg, #ffa6ee, #e5a2ff 50%, #9ff4ff);
+  --theme-glow: radial-gradient(ellipse 70% 55% at 100% 0%, rgb(255 79 216 / 0.12), transparent 70%), radial-gradient(ellipse 60% 50% at 0% 100%, rgb(63 232 255 / 0.10), transparent 70%);
+}
+
+:is([data-theme='sunset'], [data-theme='abyss'], [data-theme='neon'], [data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) body {
+  background: var(--theme-glow), linear-gradient(155deg, var(--bg-base) 0%, var(--bg-deep) 100%);
+}
+:is([data-theme='sunset'], [data-theme='abyss'], [data-theme='neon'], [data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) #titlebar::after {
+  content: '';
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--theme-trim);
+  background-size: 200% 100%;
+  animation: rainbowPan 14s linear infinite;
+  pointer-events: none;
+}
+:is([data-theme='sunset'], [data-theme='abyss'], [data-theme='neon'], [data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) .btn-primary { background-image: var(--theme-btn); }
+[data-theme='neon'] .btn-primary { box-shadow: 0 0 14px rgb(255 79 216 / 0.35); }
+[data-theme='neon'] .btn-primary:hover { box-shadow: 0 0 20px rgb(255 79 216 / 0.5), 0 0 6px rgb(63 232 255 / 0.4); }
+
+/* the backlight: the main buttons, a card under the pointer, the line under the title bar and the
+   section being read in Settings. A theme card in Settings lights its own little button the same way. */
+/* Two traps, both hit: a transition on box-shadow restarts on every frame the glow's colour moves,
+   which reads as stutter, so lit things leave box-shadow out of their transitions; and a card
+   has its own entrance animation, so its glow is added to that list, paused, and only set
+   running under the pointer. Changing the list or the play state does not replay the entrance,
+   swapping the animation for the glow did, every time the pointer left. The card fades its
+   glow in and out with --glow-on, a number that does transition. */
+@property --glow-on { syntax: '<number>'; inherits: false; initial-value: 0; }
+:is([data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) .btn-primary {
+  animation: var(--glow-anim);
+  box-shadow: 0 0 16px var(--glow), 0 0 3px var(--glow);
+  transition-property: background, background-color, color, border-color, translate, scale, transform, opacity;
+}
+:is([data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) .card {
+  animation: cardIn 0.4s var(--ease) backwards, var(--glow-anim);
+  animation-delay: calc(var(--i) * 22ms), 0s;
+  animation-play-state: running, paused;
+  box-shadow: 0 14px 40px rgb(5 3 12 / calc(var(--glow-on) * 0.55)), 0 0 0 1px color-mix(in srgb, var(--glow) calc(var(--glow-on) * 100%), transparent), 0 0 26px -4px color-mix(in srgb, var(--glow) calc(var(--glow-on) * 100%), transparent);
+  transition: translate 0.25s var(--ease), scale 0.25s var(--ease), border-color 0.25s, background 0.25s, --glow-on 0.3s var(--ease);
+}
+:is([data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) .card:hover { --glow-on: 1; animation-play-state: running, running; box-shadow: 0 14px 40px rgb(5 3 12 / calc(var(--glow-on) * 0.55)), 0 0 0 1px color-mix(in srgb, var(--glow) calc(var(--glow-on) * 100%), transparent), 0 0 26px -4px color-mix(in srgb, var(--glow) calc(var(--glow-on) * 100%), transparent); }
+:is([data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) #titlebar::after { height: 2px; animation: var(--glow-anim), rainbowPan 14s linear infinite; box-shadow: 0 0 10px 1px var(--glow); }
+:is([data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) .set-nav-item.active { animation: var(--glow-anim); box-shadow: inset 2px 0 0 var(--glow), 0 0 14px -6px var(--glow); }
+.theme-card:is([data-theme='rgb'], [data-theme='plasma'], [data-theme='toxic']) :is(.tl-btn, .tl-bar) { animation: var(--glow-anim); box-shadow: 0 0 8px var(--glow); }
+
+/* Three with a backlight, like a keyboard's: RGB runs the glow round the whole spectrum, Plasma
+   pulses between violet and electric blue, Toxic pulses acid green. The colours under the text are
+   still steady palettes (the contrast test reads them like any other); what moves is --glow, a
+   registered colour each lit element animates for itself, so a frame repaints the few glowing
+   things and never restyles the whole window. --glow-anim names the animation per theme. */
+@property --glow { syntax: '<color>'; inherits: false; initial-value: transparent; }
+@keyframes glowRgb {
+  0% { --glow: #ff3b5c; } 16% { --glow: #ffb13b; } 33% { --glow: #3bff7a; }
+  50% { --glow: #3be8ff; } 66% { --glow: #5b6bff; } 83% { --glow: #e23bff; } 100% { --glow: #ff3b5c; }
+}
+@keyframes glowPlasma { 0%, 100% { --glow: rgb(143 107 255 / 0.7); } 50% { --glow: rgb(79 195 255 / 0.85); } }
+@keyframes glowToxic { 0%, 100% { --glow: rgb(140 255 46 / 0.4); } 50% { --glow: rgb(140 255 46 / 0.85); } }
+
+[data-theme='rgb'] {
+  --md-primary: #9ee7ff;
+  --md-accent: #5fd8ff;
+  --md-on-primary: #002b36;
+  --md-primary-container: #0f3a4a;
+  --md-on-primary-container: #d4f6ff;
+  --md-secondary: #ff9ef0;
+  --md-surface: #0b0b10;
+  --md-surface-low: #121218;
+  --md-surface-container: #17171f;
+  --md-surface-high: #20202a;
+  --md-surface-highest: #2a2a36;
+  --md-on-surface: #ecebf5;
+  --md-on-surface-variant: #c6c4d6;
+  --md-outline: #85839a;
+  --md-error: #ffb4ab;
+  --theme-trim: linear-gradient(90deg, #ff3b5c, #ffb13b, #3bff7a, #3be8ff, #5b6bff, #e23bff, #ff3b5c);
+  --theme-btn: linear-gradient(135deg, #b8eeff, #9ee7ff 50%, #ffc4f6);
+  --theme-glow: radial-gradient(ellipse 70% 55% at 100% 0%, rgb(91 107 255 / 0.10), transparent 70%), radial-gradient(ellipse 60% 50% at 0% 100%, rgb(226 59 255 / 0.08), transparent 70%);
+  --glow-anim: glowRgb 6s linear infinite;
+}
+
+[data-theme='plasma'] {
+  --md-primary: #b9a4ff;
+  --md-accent: #8f6bff;
+  --md-on-primary: #1f0a4a;
+  --md-primary-container: #3d2a80;
+  --md-on-primary-container: #e6deff;
+  --md-secondary: #7fd4ff;
+  --md-surface: #0c0a16;
+  --md-surface-low: #13101f;
+  --md-surface-container: #181427;
+  --md-surface-high: #211c34;
+  --md-surface-highest: #2b2541;
+  --md-on-surface: #ece8ff;
+  --md-on-surface-variant: #c9c2e6;
+  --md-outline: #8a83a8;
+  --md-error: #ffb4ab;
+  --theme-trim: linear-gradient(90deg, #8f6bff, #4fc3ff, #c86bff, #4fc3ff, #8f6bff);
+  --theme-btn: linear-gradient(135deg, #cdbcff, #b9a4ff 50%, #9fdcff);
+  --theme-glow: radial-gradient(ellipse 70% 55% at 100% 0%, rgb(143 107 255 / 0.14), transparent 70%), radial-gradient(ellipse 60% 50% at 0% 100%, rgb(79 195 255 / 0.10), transparent 70%);
+  --glow-anim: glowPlasma 3.2s ease-in-out infinite;
+}
+
+[data-theme='toxic'] {
+  --md-primary: #b8ff6b;
+  --md-accent: #8cff2e;
+  --md-on-primary: #1c3300;
+  --md-primary-container: #2f4d0a;
+  --md-on-primary-container: #dcffc0;
+  --md-secondary: #5effc8;
+  --md-surface: #0a0d08;
+  --md-surface-low: #10140d;
+  --md-surface-container: #151a12;
+  --md-surface-high: #1d2419;
+  --md-surface-highest: #262e21;
+  --md-on-surface: #e8f2e0;
+  --md-on-surface-variant: #c4d2ba;
+  --md-outline: #87977c;
+  --md-error: #ffb4ab;
+  --theme-trim: linear-gradient(90deg, #8cff2e, #5effc8, #d4ff3b, #5effc8, #8cff2e);
+  --theme-btn: linear-gradient(135deg, #d0ff96, #b8ff6b 50%, #8fffd9);
+  --theme-glow: radial-gradient(ellipse 70% 55% at 100% 0%, rgb(140 255 46 / 0.09), transparent 70%), radial-gradient(ellipse 60% 50% at 0% 100%, rgb(94 255 200 / 0.07), transparent 70%);
+  --glow-anim: glowToxic 2.6s ease-in-out infinite;
+}
+
 /* The ninth, 'rainbow' (ui/theme.ts, opened by ui/rainbow-lock.ts). The floor is the first
    hero's; the accent is whichever of the eight the window is wearing this moment, which the
    theme script moves round every few seconds behind a spin of the mascot. The trim along the
