@@ -435,6 +435,26 @@ pub fn global_light(default_entities: &[Vec<u8>]) -> serde_json::Map<String, ser
     out
 }
 
+/// The picture of the way the map's water runs: the first light zone's `water_flow_map_texture`
+/// (every zone of the default map names the same one), a field of the zone itself that a look
+/// leaves alone (OWN).
+pub fn water_flow_map(default_entities: &[Vec<u8>]) -> Option<String> {
+    for file in default_entities {
+        let Ok(data) = crate::resource::data(file, "DATA", 0) else { continue };
+        let Ok(kv) = kv3::read(data) else { continue };
+        for e in kv.root.get("m_entityKeyValues").map(|n| n.items()).unwrap_or(&[]) {
+            let Some(values) = e.get("keyValues3Data").and_then(|d| d.get("values")) else { continue };
+            if values.get("classname").and_then(kv3::Node::as_str) != Some("ent_dota_lightinfo") {
+                continue;
+            }
+            if let Some(t) = values.get("water_flow_map_texture").and_then(kv3::Node::as_str).filter(|t| !t.is_empty()) {
+                return Some(t.to_string());
+            }
+        }
+    }
+    None
+}
+
 /// The world layers the map starts with switched off: each `info_world_layer` without the
 /// "visible at spawn" flag (spawnflags 1). On the default map these are the two bases' destruction
 /// layers (`world_layer_dire_destruction`, `world_layer_radiant_destruction`): cracked paths and the
@@ -775,6 +795,8 @@ mod tests {
         assert_ne!(of("DF")["light"]["color_day"], of("RF")["light"]["color_day"]);
         assert_eq!(v["snow"]["zones"].as_array().map(Vec::len), Some(4));
         // and its standing effects: the river's flow among them, each with a place
+        // the picture the water runs by, a field of the zones a look leaves alone
+        assert_eq!(water_flow_map(&lumps).map(|t| t.replace('\\', "/")).as_deref(), Some("maps/dota/water_flow_map.vtex"));
         let fx = world_effects(&lumps);
         assert!(fx.len() > 800, "{}", fx.len());
         assert!(fx.iter().any(|f| f["fx"] == "particles/world_environmental_fx/map_riverflow_edges.vpcf"));
