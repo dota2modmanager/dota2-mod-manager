@@ -2,7 +2,10 @@
  * pictures over each other, sand path, grass, more grass, rock, by weights painted per vertex,
  * each picture in a tint of its own, and the whole under a painted vertex colour. The light copy
  * (crates/mm-core/src/looks/map_scene.rs) keeps the weights (_TEXCOORD_1), the softness of each
- * layer's edge (_TEXCOORD_2), the paint (_TEXCOORD_3), all three stored blue-green-red, and each
+ * layer's edge (_TEXCOORD_2), the paint (_TEXCOORD_3), all three in the game's own channel order
+ * (its vertex shader reads them as they are: at the Dire rune pond's floor the game's weights and
+ * ours are both 0, 0, 0.95, RenderDoc 2026-11-27; read as blue-green-red, the first and third
+ * layers traded places and cobbles covered the floors the game draws as smooth rock), and each
  * layer's picture, tint and scale and the tint mask in the material's extras; here the material's shader is
  * taught to blend them. Drawn with its first picture alone, as before, the map lost its paths.
  *
@@ -107,7 +110,7 @@ export async function paintGround(mat: THREE.MeshStandardMaterial, parser: GLTFP
     sh.uniforms.uMask = { value: mask };
     sh.vertexShader = sh.vertexShader
       .replace('#include <common>', '#include <common>\nattribute vec4 _texcoord_1;\nattribute vec4 _texcoord_2;\nattribute vec4 _texcoord_3;\nvarying vec4 vBlend;\nvarying vec3 vSoft;\nvarying vec4 vPaint;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvBlend = _texcoord_1.zyxw;\nvSoft = max(_texcoord_2.zyx * 0.5, vec3(0.0001));\nvPaint = _texcoord_3.zyxw;');
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvBlend = _texcoord_1;\nvSoft = max(_texcoord_2.xyz * 0.5, vec3(0.0001));\nvPaint = _texcoord_3;');
     const decl = layers.map((_, k) => `uniform sampler2D uLayer${k}; uniform vec3 uTint${k}, uTintB${k}; uniform float uScale${k};`).join('\n');
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', `#include <common>\n${decl}\nuniform sampler2D uMask;\nuniform float uGround;\nvarying vec4 vBlend;\nvarying vec3 vSoft;\nvarying vec4 vPaint;\n${EDGE}`)
