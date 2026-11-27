@@ -416,23 +416,33 @@ impl ModelGlb {
                 // each copy's tint, from the map's world node beside the world
                 let node =
                     crate::vpk::read_entry_file(&map, crate::map_scene::WORLD_NODE).ok().flatten().map(|(b, _)| b);
-                // and the picture of the clouds the map's global light casts, from the game's files
-                let clouds = cloud_picture(&self.run, &exe, &game, &map, &raw.join("clouds")).unwrap_or_else(|e| {
-                    self.error("map 3d: the clouds", &e);
-                    None
-                });
-                // and the world layers the map starts with off, from its entity lumps
-                let hidden = crate::vpk::Index::open(&map)
+                // the map's entity lumps
+                let lumps: Vec<Vec<u8>> = crate::vpk::Index::open(&map)
                     .map(|ix| {
-                        let lumps: Vec<Vec<u8>> = ix
-                            .paths()
+                        ix.paths()
                             .filter(|p| p.ends_with(".vents_c"))
                             .filter_map(|p| ix.read(p).ok().flatten())
-                            .collect();
-                        crate::map_build::hidden_layers(&lumps)
+                            .collect()
                     })
                     .unwrap_or_default();
-                let bytes = crate::map_scene::slim(&world, node.as_deref(), &hidden, clouds.as_deref(), 256)?;
+                // and the pictures of the map's light, from the game's files: the clouds the global
+                // light casts, the way the water runs
+                let mut own: Vec<(&str, Vec<u8>)> = Vec::new();
+                let clouds = crate::map_build::global_light(&lumps)
+                    .get("cloud_texture")
+                    .and_then(serde_json::Value::as_str)
+                    .map(String::from);
+                for (texture, name) in [(clouds, "clouds"), (crate::map_build::water_flow_map(&lumps), "waterFlow")] {
+                    let Some(texture) = texture else { continue };
+                    match light_picture(&self.run, &exe, &game, &map, &texture, &raw.join(name)) {
+                        Ok(png) => own.push((name, png)),
+                        Err(e) => self.error(&format!("map 3d: the {name} picture"), &e),
+                    }
+                }
+                let own: Vec<(&str, &[u8])> = own.iter().map(|(n, b)| (*n, b.as_slice())).collect();
+                // and the world layers the map starts with off
+                let hidden = crate::map_build::hidden_layers(&lumps);
+                let bytes = crate::map_scene::slim(&world, node.as_deref(), &hidden, &own, 256)?;
                 let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
                 std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
                 std::fs::rename(&part, &light).map_err(|e| e.to_string())
@@ -765,23 +775,24 @@ impl ModelGlb {
     }
 }
 
-/// The picture of the clouds a map's global light casts (map_build.rs global_light), as a PNG:
-/// the toolchain writes it out of the game's files into `dir` (the texture has mips and a format
-/// of its own the core does not read). Ok(None) where the map has no clouds.
-fn cloud_picture(run: &Run, exe: &Path, game: &Path, map: &Path, dir: &Path) -> Result<Option<Vec<u8>>, String> {
+/// A picture of the map's light, the `name` an entity gives it (the clouds the global light casts,
+/// the water's flow map), as a PNG: the toolchain writes it out of the game's files into `dir` (the
+/// texture has mips and a format of its own the core does not read), from the map's own file when
+/// it is there (the flow map), else from pak01 (the clouds).
+fn light_picture(run: &Run, exe: &Path, game: &Path, map: &Path, name: &str, dir: &Path) -> Result<Vec<u8>, String> {
     let ix = crate::vpk::Index::open(map).map_err(|e| e.to_string())?;
-    let lumps: Vec<Vec<u8>> =
-        ix.paths().filter(|p| p.ends_with(".vents_c")).filter_map(|p| ix.read(p).ok().flatten()).collect();
-    let global = crate::map_build::global_light(&lumps);
-    let Some(name) = global.get("cloud_texture").and_then(serde_json::Value::as_str) else { return Ok(None) };
     let name = name.replace('\\', "/").to_lowercase();
     let stem = name.strip_suffix("_c").unwrap_or(&name);
     let stem = stem.strip_suffix(".vtex").ok_or_else(|| format!("not a texture: {name}"))?;
     if stem.contains("..") || stem.contains(':') {
         return Err(format!("not a texture: {name}"));
     }
-    let pak = game.join("dota").join("pak01_dir.vpk");
     let file = format!("{stem}.vtex_c");
+    let pak = if ix.paths().any(|p| p.eq_ignore_ascii_case(&file)) {
+        map.to_path_buf()
+    } else {
+        game.join("dota").join("pak01_dir.vpk")
+    };
     let args: Vec<String> = ["-i", &pak.to_string_lossy(), "-f", &file, "-o", &dir.to_string_lossy(), "-d"]
         .iter()
         .map(|s| s.to_string())
@@ -791,7 +802,7 @@ fn cloud_picture(run: &Run, exe: &Path, game: &Path, map: &Path, dir: &Path) -> 
     run(exe, &args)?;
     let png = dir.join(format!("{stem}.png"));
     let bytes = std::fs::read(&png).map_err(|e| format!("{}: {e}", png.display()))?;
-    crate::map_scene::cloud_png(&bytes).map(Some).ok_or_else(|| format!("{} will not read", png.display()))
+    crate::map_scene::cloud_png(&bytes).ok_or_else(|| format!("{} will not read", png.display()))
 }
 
 #[cfg(test)]

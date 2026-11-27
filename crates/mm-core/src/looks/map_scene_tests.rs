@@ -97,7 +97,7 @@ fn a_bumpy_prop_keeps_its_normal_picture() {
         "buffers": [{ "byteLength": 36 }],
     });
     let png = encode_rgba(&[128u8; 4 * 4 * 4], 4, 4).unwrap();
-    let out = slim_glb(&json, &bin, &|_: &str| Some(png.clone()), 2, None).unwrap();
+    let out = slim_glb(&json, &bin, &|_: &str| Some(png.clone()), 2, &[]).unwrap();
     let (j, _) = read_glb(&out).unwrap();
     let n = j["materials"][0]["normalTexture"]["index"].as_u64().expect("the normal picture is kept");
     assert_ne!(Some(n), j["materials"][0]["pbrMetallicRoughness"]["baseColorTexture"]["index"].as_u64());
@@ -133,7 +133,7 @@ fn a_prop_names_its_tint_mask_and_drops_the_exports_colour() {
         "buffers": [{ "byteLength": 36 }],
     });
     let png = encode_rgba(&[128u8; 4 * 4 * 4], 4, 4).unwrap();
-    let out = slim_glb(&json, &bin, &|_: &str| Some(png.clone()), 2, None).unwrap();
+    let out = slim_glb(&json, &bin, &|_: &str| Some(png.clone()), 2, &[]).unwrap();
     let (j, _) = read_glb(&out).unwrap();
     let masked = &j["materials"][0];
     assert!(masked["extras"]["propTintMask"].as_u64().is_some(), "the mask is kept and named");
@@ -206,7 +206,7 @@ fn the_light_copy_keeps_shapes_and_colour_and_drops_the_rest() {
         asked.borrow_mut().push(u.to_string());
         (u == "color.png").then(|| color.clone())
     };
-    let out = slim_glb(&json, &bin, &picture, 2, None).unwrap();
+    let out = slim_glb(&json, &bin, &picture, 2, &[]).unwrap();
     let (j, b) = read_glb(&out).unwrap();
     let prim = &j["meshes"][0]["primitives"][0];
     assert_eq!(prim["attributes"].as_object().unwrap().keys().collect::<Vec<_>>(), vec!["POSITION"]);

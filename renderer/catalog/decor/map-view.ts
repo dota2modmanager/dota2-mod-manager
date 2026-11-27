@@ -18,7 +18,7 @@ import { forgetGrounds, groundLight, isGround, paintGround, setGround } from './
 import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
-import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
+import { isWater, waterBed, waterFlow, waterOf, waterTime, wavePictures } from './map-water.ts';
 import { mapAO } from './map-ao.ts';
 import { mapOutput } from './map-output.ts';
 import { isShiny, specPictures, specShader } from './map-spec.ts';
@@ -239,6 +239,11 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     const cloudsAt = (gltf!.parser.json as { extras?: { clouds?: number } }).extras?.clouds;
     if (typeof cloudsAt === 'number') {
       void gltf!.parser.getDependency('texture', cloudsAt).then((t: THREE.Texture) => { if (!disposed) { light.clouds(t); dirty = true; } }, () => {});
+    }
+    // and the way its water runs (map-water.ts)
+    const flowAt = (gltf!.parser.json as { extras?: { waterFlow?: number } }).extras?.waterFlow;
+    if (typeof flowAt === 'number') {
+      void gltf!.parser.getDependency('texture', flowAt).then((t: THREE.Texture) => { if (!disposed) { waterFlow(t); dirty = true; } }, () => {});
     }
     const owner = new Map<string, DecorGroup>();
     for (const [g, s] of Object.entries(samples) as [DecorGroup, DecorSample][]) for (const m of s.materials ?? []) owner.set(m.toLowerCase(), g);

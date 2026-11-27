@@ -26,8 +26,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
 /// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep;
-/// 13: the glows' colour pictures; 14: no world layer the map starts with off).
-pub const LIGHT_FILE: &str = "world-14.glb";
+/// 13: the glows' colour pictures; 14: no world layer the map starts with off; 15: the water's flow).
+pub const LIGHT_FILE: &str = "world-15.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -281,15 +281,15 @@ fn idx(v: &Value) -> Option<usize> {
 }
 
 /// The light copy of an exported world: `json` and `bin` of the toolchain's GLB, `picture` reading
-/// an image's file by its uri (beside the GLB). The picture of the map's clouds (a PNG), if given,
-/// goes inside as a texture of its own, named in the file's extras (`clouds`): map-light.ts casts
-/// their shadows over the ground with it.
+/// an image's file by its uri (beside the GLB). The map's own pictures (PNGs) go inside as textures
+/// of their own, each named in the file's extras: `clouds`, whose shadows map-light.ts casts over
+/// the ground, and `waterFlow`, the way the water runs (map-water.ts).
 pub fn slim_glb(
     json: &Value,
     bin: &[u8],
     picture: &dyn Fn(&str) -> Option<Vec<u8>>,
     max_px: u32,
-    clouds: Option<&[u8]>,
+    own: &[(&str, &[u8])],
 ) -> Result<Vec<u8>, String> {
     const KEEP: [&str; 3] = ["POSITION", "NORMAL", "TEXCOORD_0"];
     // a terrain blend's layer weights, how soft each layer's edge is and its painted tint:
@@ -643,11 +643,11 @@ pub fn slim_glb(
         }
     }
     let mut extras = Map::new();
-    if let Some(png) = clouds {
+    for (name, png) in own {
         let v = push_view(png, None, None);
         out_img.push(json!({ "bufferView": v, "mimeType": "image/png" }));
         out_tex.push(json!({ "source": out_img.len() - 1, "sampler": 0 }));
-        extras.insert("clouds".into(), json!(out_tex.len() - 1));
+        extras.insert((*name).into(), json!(out_tex.len() - 1));
     }
     let mut out = json!({
         "asset": { "version": "2.0", "generator": "dota2-mod-manager map_scene" },
@@ -889,12 +889,12 @@ pub fn hide_layers(json: &mut Value, layers: &BTreeMap<String, String>, hidden: 
 
 /// The light copy of the toolchain's GLB at `world`, its pictures read beside it, each copy of a
 /// model in the tint `vwnod` (the map's world node) gives it, and nothing of the world layers in
-/// `hidden` (the ones the map starts with off).
+/// `hidden` (the ones the map starts with off), the map's `own` pictures inside (slim_glb).
 pub fn slim(
     world: &Path,
     vwnod: Option<&[u8]>,
     hidden: &BTreeSet<String>,
-    clouds: Option<&[u8]>,
+    own: &[(&str, &[u8])],
     max_px: u32,
 ) -> Result<Vec<u8>, String> {
     let buf = std::fs::read(world).map_err(|e| e.to_string())?;
@@ -911,10 +911,11 @@ pub fn slim(
         }
         std::fs::read(dir.join(plain)).ok()
     };
-    slim_glb(&json, &bin, &picture, max_px, clouds)
+    slim_glb(&json, &bin, &picture, max_px, own)
 }
 
-/// The clouds' picture (a PNG the toolchain wrote) at most 512 pixels across.
+/// One of the map's own pictures (a PNG the toolchain wrote: the clouds, the water's flow) at most
+/// 512 pixels across.
 pub fn cloud_png(png: &[u8]) -> Option<Vec<u8>> {
     let (rgba, w, h) = decode_rgba(png).ok()?;
     let (rgba, w, h) = shrink(rgba, w, h, 512);
@@ -932,7 +933,7 @@ mod real {
     fn the_real_world_comes_out_light() {
         let Ok(p) = std::env::var("MM_TEST_WORLD") else { return };
         let t = std::time::Instant::now();
-        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), None, 256).expect("slim");
+        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), &[], 256).expect("slim");
         eprintln!("light copy: {:.1} MB in {:?}", out.len() as f64 / 1e6, t.elapsed());
         if let Ok(to) = std::env::var("MM_TEST_WORLD_OUT") {
             std::fs::write(to, &out).unwrap();

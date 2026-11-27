@@ -23,7 +23,11 @@
  * map (black over the whole frame), so the reflection term is left out.
  *
  * The waves are the game's normal picture flowing (F_FLOW_NORMALS, read the same way 2026-11-26),
- * P the pixel's place in inches, (x, -y), and the flow one colour over the whole river (TextureFlow):
+ * P the pixel's place in inches, (x, -y), and the flow the map's flow picture where the water lies
+ * (ent_dota_lightinfo's water_flow_map_texture at 0.5 + (x, y) / 18944, a frame's cb3[7..8]; the
+ * material's TextureFlow without one). Without it the river took the material's flat 0.5, a flow of
+ * nothing, and its waves ran sixteen times as weak as the game's (|flow|² + 0.1: 0.1 against 1.65 at
+ * the Dire rune):
  *
  *   t        = time × flow time scale / (2 × interval) + noise(P × noise scale).g × noise strength
  *   phase k  = fract(t + ½ or t), its turn floor(...): picture at P / normal scale + turn × 0.311 (+ ½) + phase × flow × scroll
@@ -56,6 +60,24 @@ const bed = {
   uNear: { value: 1 },
   uFar: { value: 5000 },
 };
+
+/** The way the water runs over the whole map (the light copy's waterFlow, map_scene.rs), once in. */
+const flowMap = {
+  uFlowMap: { value: null as THREE.Texture | null },
+  uHasFlowMap: { value: 0 },
+};
+
+/** The map's flow picture, as the light copy carries it. */
+export function waterFlow(t: THREE.Texture): void {
+  t.colorSpace = THREE.NoColorSpace;
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  t.needsUpdate = true;
+  flowMap.uFlowMap.value = t;
+  flowMap.uHasFlowMap.value = 1;
+}
+
+/** Inches across the map's flow picture (1184 pixels of 16). */
+const FLOW_SPAN = 18944;
 
 const made = new WeakMap<THREE.Material, THREE.ShaderMaterial>();
 /** every water material made, to hide while the bed is drawn */
@@ -90,8 +112,9 @@ const CALM = pixel(0, 0, 0);
 const FRAGMENT = `
 // saturate and the rest: without it the water does not build where three draws it into a picture of its own (map-ao.ts)
 #include <common>
-uniform sampler2D uNormal, uNoise;
+uniform sampler2D uNormal, uNoise, uFlowMap;
 uniform vec2 uFlow;
+uniform float uHasFlowMap;
 uniform vec4 uFlowNums, uWaveNums;
 uniform vec3 uSun, uShade, uSpecColor, uFogColor;
 uniform float uSpecIndependence, uFogFrom;
@@ -112,14 +135,15 @@ void main() {
   // the waves: the normal picture flowing (uFlowNums: bump, time scale, interval, scroll;
   // uWaveNums: noise scale, noise strength, normal scale, the fade's power)
   vec2 at = vec2( p.x, -p.y ) / ${INCH};
-  vec2 scroll = uFlow * uFlowNums.w;
+  vec2 flow = uHasFlowMap > 0.5 ? texture2D( uFlowMap, 0.5 + p.xy / ${INCH} / ${FLOW_SPAN}.0 ).xy * 2.0 - 1.0 : uFlow;
+  vec2 scroll = flow * uFlowNums.w;
   float t = uFlowNums.y * uTime / ( 2.0 * uFlowNums.z ) + texture2D( uNoise, at * uWaveNums.x ).y * uWaveNums.y;
   vec2 base = at * uWaveNums.z;
   float a = t + 0.5, fa = fract( a ), fb = fract( t );
   vec2 pa = texture2D( uNormal, base + floor( a ) * 0.311 + 0.5 + fa * scroll ).xy;
   vec2 pb = texture2D( uNormal, base + floor( t ) * 0.311 + fb * scroll ).xy;
   vec2 bend = ( pb * pow( abs( 2.0 * fa - 1.0 ), uWaveNums.w ) + pa * pow( abs( 2.0 * fb - 1.0 ), uWaveNums.w ) ) * 2.0 - 1.0;
-  bend *= ( dot( uFlow, uFlow ) + 0.1 ) * uFlowNums.x;
+  bend *= ( dot( flow, flow ) + 0.1 ) * uFlowNums.x;
   if ( dot( bend, bend ) > 1.0 ) bend = normalize( bend );
   vec3 n = vec3( bend, sqrt( max( 1.0 - dot( bend, bend ), 0.0 ) ) );
 
@@ -173,6 +197,7 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
     uniforms: {
       ...lit,
       ...bed,
+      ...flowMap,
       uTime: waterTime,
       uRefractionTint: { value: colour(vec.g_vRefractionTint, [0.349, 0.663, 0.78]) },
       uWaterFog: { value: colour(vec.g_vWaterFogColor, [0.259, 0.137, 0.051]) },
