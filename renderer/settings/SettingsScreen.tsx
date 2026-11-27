@@ -3,7 +3,7 @@
  * because a setting is a thing the whole window obeys, not a thing this screen owns.
  *
  * Somebody comes here to change one thing and leave, so the page is laid out for finding it:
- * seven sections, listed down the left and lit as they scroll past, and one row per setting with
+ * eight sections, listed down the left and lit as they scroll past, and one row per setting with
  * its switch or button in the same right-hand column (parts.tsx). Until 2026-11-14 it was fourteen
  * blocks in one column 3484 px tall, with switches wherever their label ended and twenty-two
  * paragraphs of explanation open at once; the explanations are all still here, folded. */
@@ -23,6 +23,7 @@ import { PreviewCacheRow } from './PreviewCacheBlock.tsx';
 import { GridRows } from './GridBlock.tsx';
 import { GameFilesRows, type EveryoneModel } from './GameFilesBlock.tsx';
 import { BackgroundRow } from './BackgroundBlock.tsx';
+import { ThemesRows } from './ThemesBlock.tsx';
 import { Toggle } from './Toggle.tsx';
 import { Row, Section, SectionNav, type SectionDef } from './parts.tsx';
 import type { CompilerState } from '../api/content.ts';
@@ -124,6 +125,7 @@ function Scale({ pct, actions }: { pct: number; actions: SettingsActions }) {
 
 const SECTIONS = (): SectionDef[] => [
   { id: 'general', icon: 'tune', title: L`Основное` },
+  { id: 'themes', icon: 'palette', title: L`Темы` },
   { id: 'game', icon: 'sports_esports', title: L`Игра` },
   { id: 'catalog', icon: 'grid_view', title: L`Каталог` },
   { id: 'downloads', icon: 'download', title: L`Загрузки` },
@@ -135,7 +137,7 @@ const SECTIONS = (): SectionDef[] => [
 function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsActions }) {
   const busy = useRef(false);
   const sections = useMemo(SECTIONS, []);
-  const [general, game, catalog, downloads, tools, diagnostics, about] = sections;
+  const [general, themes, game, catalog, downloads, tools, diagnostics, about] = sections;
   const presenceLabel = L`Показывать в Discord, что ты в Mod Manager`;
   return (
     <>
@@ -173,7 +175,11 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
             </Reveal>
           </Section>
 
-          <Section def={game} i={1}>
+          <Section def={themes} i={1}>
+            <ThemesRows />
+          </Section>
+
+          <Section def={game} i={2}>
             <Row wide label={L`Путь к Dota 2`}>
               <div className="settings-row">
                 <Swap className="mono grow" value={m.dotaPath || L`не найден`} />
@@ -192,7 +198,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
             <GridRows />
           </Section>
 
-          <Section def={catalog} i={2}>
+          <Section def={catalog} i={3}>
             <Row label={L`Обновлён`} hint={<Swap value={m.catalogUpdated} />}>
               <button className="btn btn-sm" id="refreshCatBtn2" onClick={actions.refreshCatalog}>{L`Обновить сейчас`}</button>
             </Row>
@@ -208,7 +214,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
             </Row>
           </Section>
 
-          <Section def={downloads} i={3}>
+          <Section def={downloads} i={4}>
             <Row label={L`Кэш загрузок`}
               hint={<><Swap className="num" value={m.cache} />{' · '}{L`Скачанные архивы, чтобы не качать повторно. Удаление ничего не сломает.`}</>}>
               <button className="btn btn-sm" id="openCacheBtn" onClick={actions.openCache}>{L`Показать в папке`}</button>
@@ -231,7 +237,7 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
             </Row>
           </Section>
 
-          <Section def={tools} i={4}>
+          <Section def={tools} i={5}>
             {m.vrf && (
               <Row label={L`Картинки из игры и модов`}
                 hint={<><Swap value={m.vrf.ready}>{m.vrf.ready ? L`Инструмент установлен` : L`Инструмент не скачан`}</Swap>{' · '}<Swap className="num" value={m.vrf.size} /></>}
@@ -255,14 +261,14 @@ function SettingsScreen({ m, actions }: { m: SettingsModel; actions: SettingsAct
             {m.compiler && <CompilerRows c={m.compiler} actions={actions} />}
           </Section>
 
-          <Section def={diagnostics} i={5}>
+          <Section def={diagnostics} i={6}>
             <Diagnostics repair={m.repair} actions={actions} />
           </Section>
 
           {/* Four kinds of thing, in the order somebody looks for them: what they can do for the
               project, which build this is, who made it, and the licence. The support strip is the one
               tinted thing on the page, because it is the only row here that asks something. */}
-          <Section def={about} i={6}>
+          <Section def={about} i={7}>
             <div className="about-support">
               <span className="ms">favorite</span>
               <div className="about-support-text">

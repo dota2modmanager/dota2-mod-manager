@@ -505,6 +505,11 @@ const EN = {
   "без имени": "no name",
   "обновляется…": "updating…",
   "твой": "yours",
-  "ты": "you"
+  "ты": "you",
+  "Темы": "Themes", "Тема окна": "Window theme", "Закат": "Sunset", "Бездна": "Abyss", "Неон": "Neon", "Плазма": "Plasma", "Токсик": "Toxic", "Секретная": "Secret", "Кровавая ночь": "Bloody night",
+  "Цвета всего приложения. Маскот в заголовке тоже переключает их по кругу.": "The colours of the whole app. The mascot in the title bar goes round them too.",
+  "Своя тема из файла": "Your own theme from a file", "Загружена «{0}».": "“{0}” is loaded.", "JSON с цветами и, если хочешь, картинкой фона.": "A JSON file with colours and, if you like, a background picture.",
+  "Начать проще всего с готовой: надень похожую тему, нажми «Сохранить в файл», поменяй цвета в JSON и загрузи обратно. Тема с нечитаемым текстом не загрузится, приложение скажет почему.": "The easiest start is a theme that is already there: put on one close to what you want, press “Save to a file”, change the colours in the JSON and load it back. A theme whose text would not read is refused, and the app says why.",
+  "Загрузить…": "Load…", "Сохранить в файл": "Save to a file"
 };
 window.EN_MORE = EN;
