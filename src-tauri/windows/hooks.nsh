@@ -76,7 +76,64 @@ Var d2mmWipeData
 !define D2MM_ELECTRON_UNINSTALL "Software\Microsoft\Windows\CurrentVersion\Uninstall\c6184bef-ce59-56eb-9f33-76c285700bc8"
 !define D2MM_ELECTRON_UNINSTALLER "Uninstall Dota 2 Mod Manager.exe"
 
+; ---------- WebView2 that is really there ----------
+;
+; The window is a WebView2 page, and without the runtime the app stops at its first line with
+; "Could not find the webview runtime". The template's Section WebView2 runs before this hook and
+; takes EdgeUpdate's "pv" value as the runtime being installed. That value outlives the runtime:
+; "debloat" scripts and Edge removers delete the files and leave the key, Microsoft writes
+; 0.0.0.0 into it after an uninstall, and an update (/UPDATE) skips the section altogether. So
+; here the runtime's own exe is looked for, at the version pv names, machine-wide and per user.
+; Where it is missing, the bootstrapper the installer carries (tauri.conf.json webviewInstallMode
+; embedBootstrapper: Microsoft's own signed exe, no download inside the installer) puts it in. A
+; failure warns and carries on: the app is still installed, and its start says where to get it.
+!macro D2MM_WEBVIEW2_AT ROOT KEY
+  ReadRegStr $R5 ${ROOT} "${KEY}\${WEBVIEW2APPGUID}" "pv"
+  ${If} $R5 != ""
+  ${AndIf} $R5 != "0.0.0.0"
+    ${If} ${FileExists} "$PROGRAMFILES32\Microsoft\EdgeWebView\Application\$R5\msedgewebview2.exe"
+    ${OrIf} ${FileExists} "$LOCALAPPDATA\Microsoft\EdgeWebView\Application\$R5\msedgewebview2.exe"
+      StrCpy $R4 "1"
+    ${EndIf}
+  ${EndIf}
+!macroend
+
+!macro D2MM_ENSURE_WEBVIEW2
+  StrCpy $R4 "0"
+  ${If} ${RunningX64}
+    !insertmacro D2MM_WEBVIEW2_AT HKLM "SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients"
+  ${Else}
+    !insertmacro D2MM_WEBVIEW2_AT HKLM "SOFTWARE\Microsoft\EdgeUpdate\Clients"
+  ${EndIf}
+  ${If} $R4 != "1"
+    !insertmacro D2MM_WEBVIEW2_AT HKCU "SOFTWARE\Microsoft\EdgeUpdate\Clients"
+  ${EndIf}
+  ${If} $R4 != "1"
+    !if "${INSTALLWEBVIEW2MODE}" == "embedBootstrapper"
+      DetailPrint "$(installingWebview2)"
+      Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+      File "/oname=$TEMP\MicrosoftEdgeWebview2Setup.exe" "${WEBVIEW2BOOTSTRAPPERPATH}"
+      ClearErrors
+      ExecWait '"$TEMP\MicrosoftEdgeWebview2Setup.exe" ${WEBVIEW2INSTALLERARGS} /install' $R6
+      ${If} ${Errors}
+        StrCpy $R6 "-1"
+      ${EndIf}
+      Delete "$TEMP\MicrosoftEdgeWebview2Setup.exe"
+      ${If} $R6 = 0
+        DetailPrint "$(webview2InstallSuccess)"
+      ${Else}
+        DetailPrint "$(webview2InstallError) ($R6)"
+        MessageBox MB_ICONEXCLAMATION|MB_OK "Microsoft Edge WebView2 could not be installed (code $R6). Dota 2 Mod Manager needs it to open; install it from here:$\r$\n$\r$\nhttps://go.microsoft.com/fwlink/p/?LinkId=2124703" /SD IDOK
+      ${EndIf}
+    !else
+      !error "hooks.nsh installs WebView2 from the embedded bootstrapper: set webviewInstallMode to embedBootstrapper"
+    !endif
+  ${EndIf}
+!macroend
+
 !macro NSIS_HOOK_PREINSTALL
+  !insertmacro D2MM_ENSURE_WEBVIEW2
+
   ReadRegStr $R0 HKCU "${D2MM_ELECTRON_KEY}" "InstallLocation"
   ${If} $R0 != ""
   ${AndIf} ${FileExists} "$R0\*.*"
