@@ -178,10 +178,13 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       shade = receiveShadow ? getShadow( directionalShadowMap[ 0 ], directionalLightShadows[ 0 ].shadowMapSize, directionalLightShadows[ 0 ].shadowIntensity,
         directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;
       #endif
-      // the clouds, in the game's axes (the export turned Source's x, y, z into z, x, y), cast down the sun's way
+      // the clouds, in the game's axes (the export turned Source's x, y, z into z, x, y). The game
+      // shifts them along the sun by the point's y, not its height (multiblend and props alike,
+      // RenderDoc 2026-11-27: mad cb2[0].xyxy, v0.yyyy, v0.xyxy), which shears each cloud into
+      // the long diagonal streaks its ground shows
       if ( uCloudOn > 0.5 ) {
         vec3 p = vLitWorld.zxy, l = uSunDir.zxy;
-        vec4 uv = ( p.xy + l.xy * p.z ).xyxy / uCloudScale + uCloudOffset;
+        vec4 uv = ( p.xy + l.xy * p.y ).xyxy / uCloudScale + uCloudOffset;
         shade *= saturate( min( texture2D( uClouds, uv.xy ).r, texture2D( uClouds, uv.zw ).g ) );
       }
       vec3 n = inverseTransformDirection( normal, viewMatrix );
