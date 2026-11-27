@@ -245,6 +245,13 @@ fn main() {
     // before anything else: the second start is the one that runs
     #[cfg(target_os = "linux")]
     host_libs_once();
+    // The window's class (X11 WM_CLASS, Wayland app id) comes from GLib's program name, which is
+    // otherwise the binary's: dota-2-mod-manager in the AppImage and the packages. The menu
+    // entries say StartupWMClass=dota2-mod-manager (linux/main.desktop, deep_links.rs), so the
+    // taskbar could not tie the window to its entry and showed it without the icon. Before GTK
+    // starts, which reads it once.
+    #[cfg(target_os = "linux")]
+    webkit2gtk::glib::set_prgname(Some("dota2-mod-manager"));
     if !cfg!(debug_assertions) {
         // before any thread starts, so nothing reads the environment while it changes
         let switches: Vec<_> = std::env::vars_os().map(|(k, _)| k).filter(|k| webview_switch(k)).collect();
