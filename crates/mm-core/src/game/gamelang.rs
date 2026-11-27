@@ -268,15 +268,15 @@ fn up(p: &Path, n: usize) -> PathBuf {
 }
 
 /// The 32-bit account id of whoever Steam has signed in: MostRecent where loginusers.vdf has it,
-/// the newest Timestamp where it does not.
+/// the newest Timestamp where it does not. Steam writes the keys in either case (lower since 2026).
 fn current_steam_user(root: &Path) -> Option<String> {
     let text = read_text(&root.join("config").join("loginusers.vdf"))?;
     static USER: OnceLock<Regex> = OnceLock::new();
     static RECENT: OnceLock<Regex> = OnceLock::new();
     static STAMP: OnceLock<Regex> = OnceLock::new();
     let user = USER.get_or_init(|| Regex::new(&format!(r#""([0-9]{{17}})"{}*\{{((?s:.)*?)\n\t\}}"#, ws())).unwrap());
-    let recent = RECENT.get_or_init(|| Regex::new(&format!(r#""MostRecent"{}*"([0-9])""#, ws())).unwrap());
-    let stamp = STAMP.get_or_init(|| Regex::new(&format!(r#""Timestamp"{}*"([0-9]+)""#, ws())).unwrap());
+    let recent = RECENT.get_or_init(|| Regex::new(&format!(r#"(?i)"MostRecent"{}*"([0-9])""#, ws())).unwrap());
+    let stamp = STAMP.get_or_init(|| Regex::new(&format!(r#"(?i)"Timestamp"{}*"([0-9]+)""#, ws())).unwrap());
     let mut best: Option<(String, f64)> = None;
     for m in user.captures_iter(&text) {
         let body = &m[2];
