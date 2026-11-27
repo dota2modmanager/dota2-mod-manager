@@ -89,13 +89,29 @@ function prepare(mat: THREE.Material): void {
   // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
   // tint to where the game lays it (map-tint.ts); a prop with a specular picture shines (map-spec.ts)
   if (!('emissive' in m)) return;
-  const windy = isWindy(m), masked = isMaskTinted(m), shiny = specular && isShiny(m), overlay = isOverlay(m), glow = isGlow(m);
+  const windy = isWindy(m) && !isStill(m), masked = isMaskTinted(m), shiny = specular && isShiny(m), overlay = isOverlay(m), glow = isGlow(m);
   m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh, overlay); if (glow) glowShader(sh, m); };
   m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}-${overlay ? 'overlay' : ''}-${glow ? glowKey(m) : ''}`;
 }
 
 /** Whether the props shine, as the player's game has it (video.txt r_deferred_specular). */
 let specular = true;
+
+/** Whether the trees a player can cut sway, as the player's game has it (video.txt
+ * r_dota_allow_wind_on_trees). The game checks it as it makes a tree (client.dll) and leaves out
+ * the wind's constants for one made without: in its frames with it off those trees stand still,
+ * while the leaves of the map's own props, the bushes, flowers, banners and lily pads sway on. */
+let treeWind = true;
+
+/** A swaying material taken out of the wind (a copy of it, for the trees that stand still). */
+const isStill = (m: THREE.Material): boolean => (m.userData as { still?: boolean }).still === true;
+const stills = new Map<THREE.Material, THREE.Material>();
+function stillOf(m: THREE.Material): THREE.Material {
+  if (!isWindy(m)) return m;
+  let s = stills.get(m);
+  if (!s) { s = m.clone(); s.userData.still = true; stills.set(m, s); }
+  return s;
+}
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one.
  * `video`: the player's Dota video settings (video.txt), so the map leaves out what their game leaves out. */
@@ -105,6 +121,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const look = mapVideo(video);
   cheapWater(look.cheapWater);
   specular = look.specular;
+  treeWind = look.treeWind;
+  stills.clear();
   const ssao = look.ssao;
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -290,6 +308,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       if (!Array.isArray(mesh.material) && !vmatOf(mesh.material)) {
         mesh.material = isTree ? plain.tree : plain.rest;
       }
+      // a tree a player can cut stands still when the player's game keeps the wind off the trees
+      if (isTree && !treeWind) mesh.material = Array.isArray(mesh.material) ? mesh.material.map(stillOf) : stillOf(mesh.material);
       const mats = [mesh.material].flat();
       mats.forEach(prepare);
       // the water keeps the window's own (map-water.ts): a pak's flat picture of it would be a grey sheet
@@ -304,7 +324,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     // once every ground is painted, another map's ground (if one is picked) goes over them all
     void Promise.all([...grounds].map((g) => paintGround(g, gltf!.parser, changed))).then(() => { groundShown = null; apply(); });
     // the swaying materials' wind masks and noise the light copy carries (map_scene.rs)
-    const swaying = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter(isWindy));
+    const swaying = new Set([...treeMeshes, ...rest].flatMap((m) => [m.material].flat()).filter((m) => isWindy(m) && !isStill(m)));
     windy = swaying.size > 0;
     void Promise.all([...swaying].map((m) => windPictures(m, gltf!.parser))).then(() => { dirty = true; });
     // the tint masks (map-tint.ts)
@@ -339,7 +359,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     onProgress(L`Собираю карту`);
     const [merged, t] = await Promise.all([
       mergeMeshesAsync(rest, groupOf, scene),
-      mapTrees(scene, treeMeshes, kind, samples.trees?.after, centre, prepare, changed),
+      mapTrees(scene, treeMeshes, kind, samples.trees?.after, centre, treeWind ? prepare : (m) => { if (isWindy(m)) m.userData.still = true; prepare(m); }, changed),
     ]);
     if (disposed) return;
     // the game draws the ground, then the overlays over it, then the props: a prop lying under an

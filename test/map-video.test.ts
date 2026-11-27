@@ -16,13 +16,13 @@ const good = preset(1, 1, 2, 1, 1, 1, 1);
 const best = preset(0, 1, 2, 1, 1, 1, 1);
 
 test('the slider at its fastest draws the cheap map', () => {
-  assert.deepEqual(mapVideo(fastest), { cheapWater: true, shadows: false, ssao: false, specular: false, smallLights: false, cheapShaders: true });
+  assert.deepEqual(mapVideo(fastest), { cheapWater: true, shadows: false, ssao: false, specular: false, smallLights: false, cheapShaders: true, treeWind: true });
 });
 
 test('each step of the slider turns on what its preset turns on', () => {
-  assert.deepEqual(mapVideo(medium), { cheapWater: true, shadows: true, ssao: false, specular: false, smallLights: true, cheapShaders: false });
-  assert.deepEqual(mapVideo(good), { cheapWater: true, shadows: true, ssao: true, specular: true, smallLights: true, cheapShaders: false });
-  assert.deepEqual(mapVideo(best), { cheapWater: false, shadows: true, ssao: true, specular: true, smallLights: true, cheapShaders: false });
+  assert.deepEqual(mapVideo(medium), { cheapWater: true, shadows: true, ssao: false, specular: false, smallLights: true, cheapShaders: false, treeWind: true });
+  assert.deepEqual(mapVideo(good), { cheapWater: true, shadows: true, ssao: true, specular: true, smallLights: true, cheapShaders: false, treeWind: true });
+  assert.deepEqual(mapVideo(best), { cheapWater: false, shadows: true, ssao: true, specular: true, smallLights: true, cheapShaders: false, treeWind: true });
 });
 
 test('the options screen writes its checkboxes as true and false, which mean the same', () => {
@@ -54,4 +54,11 @@ test('shaderquality 0 takes the cheaper shaders, wherever the slider stands', ()
   assert.equal(mapVideo({ ...best, shaderquality: 0 }).cheapShaders, true);
   assert.equal(mapVideo({ ...best, shaderquality: '0' }).cheapShaders, true);
   assert.equal(mapVideo({ ...fastest, shaderquality: 1 }).cheapShaders, false);
+});
+
+test('the wind on the trees is its own checkbox, on unless the player turned it off', () => {
+  assert.equal(mapVideo({ ...fastest, r_dota_allow_wind_on_trees: false }).treeWind, false);
+  assert.equal(mapVideo({ ...best, r_dota_allow_wind_on_trees: 'false' }).treeWind, false);
+  assert.equal(mapVideo({ ...fastest, r_dota_allow_wind_on_trees: true }).treeWind, true);
+  assert.equal(mapVideo(fastest).treeWind, true);
 });

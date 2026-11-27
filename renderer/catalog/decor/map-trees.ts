@@ -20,8 +20,9 @@ export function treeModelOf(name: string): string | null {
   const n = name.toLowerCase();
   if (n.includes('.')) return n.slice(0, n.indexOf('.'));
   // three takes the dot out of a node's name as it loads the map ("dire_tree004dire_tree004_model"),
-  // and numbers a name it has seen; the tree's own part is its model's name twice
-  return /^(.+?)\1_model(?:_\d+)?$/.exec(n)?.[1] ?? null;
+  // and numbers a name it has seen; the tree's own part is its model's name twice, and a part of
+  // another material keeps its number ("tree_oak_01b.tree_oak_01b_model.12", the blossom)
+  return /^(.+?)\1_model\d*(?:_\d+)?$/.exec(n)?.[1] ?? null;
 }
 
 /** A stump or the inspector's close-up copy: parts of a tree node the map does not show. */
