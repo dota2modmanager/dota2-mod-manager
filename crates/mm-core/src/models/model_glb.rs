@@ -442,7 +442,9 @@ impl ModelGlb {
                 let own: Vec<(&str, &[u8])> = own.iter().map(|(n, b)| (*n, b.as_slice())).collect();
                 // and the world layers the map starts with off
                 let hidden = crate::map_build::hidden_layers(&lumps);
-                let bytes = crate::map_scene::slim(&world, node.as_deref(), &hidden, &own, 256)?;
+                // and the materials its world node swaps in, their pictures beside the export
+                let swaps = node.as_deref().map(|v| swap_materials(&self.run, &exe, &game, &map, v, &raw)).unwrap_or_default();
+                let bytes = crate::map_scene::slim(&world, node.as_deref(), &hidden, &swaps, &own, 256)?;
                 let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
                 std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
                 std::fs::rename(&part, &light).map_err(|e| e.to_string())
@@ -780,6 +782,39 @@ impl ModelGlb {
 /// texture has mips and a format of its own the core does not read), from the map's own file when
 /// it is there (the flow map), else from pak01 (the clouds).
 fn light_picture(run: &Run, exe: &Path, game: &Path, map: &Path, name: &str, dir: &Path) -> Result<Vec<u8>, String> {
+    let png = dir.join(texture_png(run, exe, game, map, name, dir)?);
+    let bytes = std::fs::read(&png).map_err(|e| format!("{}: {e}", png.display()))?;
+    crate::map_scene::cloud_png(&bytes).ok_or_else(|| format!("{} will not read", png.display()))
+}
+
+/// The materials the map's world node swaps in (map_scene.rs material_swaps), each by its vmat
+/// path: its vmat as the export carries it and the uri of its colour picture, which the toolchain
+/// writes into `dir` (the export's folder) out of pak01. One that will not read is left out.
+fn swap_materials(run: &Run, exe: &Path, game: &Path, map: &Path, vwnod: &[u8], dir: &Path) -> MaterialsByPath {
+    let pak = game.join("dota").join("pak01_dir.vpk");
+    let mut out = MaterialsByPath::new();
+    for s in crate::map_scene::material_swaps(vwnod) {
+        if out.contains_key(&s.material) {
+            continue;
+        }
+        let file = format!("{}_c", s.material.to_lowercase());
+        let read = crate::vpk::read_entry_file(map, &file)
+            .ok()
+            .flatten()
+            .or_else(|| crate::vpk::read_entry_file(&pak, &file).ok().flatten());
+        let Some(m) = read.and_then(|(b, _)| crate::loadout_material::read_loadout_material(Some(&b))) else { continue };
+        let Some(colour) = m.textures.get("g_tColor") else { continue };
+        let Ok(png) = texture_png(run, exe, game, map, colour, dir) else { continue };
+        out.insert(s.material.clone(), (crate::map_scene::vmat_json(&s.material, &m), png));
+    }
+    out
+}
+
+type MaterialsByPath = std::collections::BTreeMap<String, (serde_json::Value, String)>;
+
+/// The game's texture `name` written as a PNG into `dir` by the toolchain, from the map's own file
+/// when it is there, else from pak01; the PNG's path inside `dir`.
+fn texture_png(run: &Run, exe: &Path, game: &Path, map: &Path, name: &str, dir: &Path) -> Result<String, String> {
     let ix = crate::vpk::Index::open(map).map_err(|e| e.to_string())?;
     let name = name.replace('\\', "/").to_lowercase();
     let stem = name.strip_suffix("_c").unwrap_or(&name);
@@ -800,9 +835,7 @@ fn light_picture(run: &Run, exe: &Path, game: &Path, map: &Path, name: &str, dir
     // the toolchain writes into a folder that is there, not one it would have to make
     std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
     run(exe, &args)?;
-    let png = dir.join(format!("{stem}.png"));
-    let bytes = std::fs::read(&png).map_err(|e| format!("{}: {e}", png.display()))?;
-    crate::map_scene::cloud_png(&bytes).ok_or_else(|| format!("{} will not read", png.display()))
+    Ok(format!("{stem}.png"))
 }
 
 #[cfg(test)]

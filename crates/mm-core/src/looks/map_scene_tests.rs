@@ -282,3 +282,52 @@ fn a_layer_the_map_starts_with_off_draws_nothing() {
     assert_eq!(j["nodes"][2]["mesh"], json!(2), "a model on no layer stays");
     assert!(j["nodes"][3].get("mesh").is_none(), "a mesh set goes with its object");
 }
+
+#[test]
+fn a_swapped_draw_takes_its_material_and_the_other_copies_keep_theirs() {
+    let vmat = |colour: &str| json!({ "IntParams": { "F_TRANSLUCENT": 1, "F_ADDITIVE_BLEND": 1 },
+        "FloatParams": { "g_flScrollUvSpeed": 1.25 },
+        "TextureParams": { "g_tColor": colour, "g_tScrollSpeed": "materials/models/effects/fountain_radiant_00_scroll_tga_2aa7d8c.vtex" } });
+    let mut j = json!({
+        "nodes": [{ "name": "fountain_dire_00.meshset_0", "mesh": 0 }, { "name": "fountain_dire_00.meshset_0", "mesh": 0 }],
+        "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0 }, "material": 0 }] }],
+        "materials": [{ "name": "fountain_dire_00", "extras": { "vmat": vmat("materials/models/effects/fountain_dire_00_color_psd_df815c13.vtex") } }],
+        "textures": [{ "source": 0 }],
+        "images": [{ "uri": "scroll.png", "name": "fountain_radiant_00_scroll_tga_2aa7d8c.vtex" }],
+    });
+    let mut dire01 = vmat("materials/models/effects/fountain_dire_01_color_psd_a0bbbb6c.vtex");
+    dire01["FloatParams"]["g_flScrollUvSpeed"] = json!(0.66);
+    let materials = BTreeMap::from([(
+        "materials/models/effects/fountain_dire_01.vmat".to_string(),
+        (dire01, "materials/models/effects/fountain_dire_01_color_psd_a0bbbb6c.png".to_string()),
+    )]);
+    let swap = |copy, draw| MaterialSwap {
+        model: "fountain_dire_00".into(),
+        copy,
+        draw,
+        material: "materials/models/effects/fountain_dire_01.vmat".into(),
+    };
+    swap_materials(&mut j, &[swap(1, 0), swap(0, 3)], &materials);
+    assert_eq!(j["nodes"][0]["mesh"], json!(0), "the first copy and a draw it does not have stay");
+    assert_eq!(j["nodes"][1]["mesh"], json!(1), "the second copy draws a mesh of its own");
+    assert_eq!(j["meshes"][0]["primitives"][0]["material"], json!(0));
+    assert_eq!(j["meshes"][1]["primitives"][0]["material"], json!(1));
+    let m = &j["materials"][1];
+    assert_eq!(m["name"], json!("fountain_dire_01"));
+    assert_eq!(m["extras"]["vmat"]["FloatParams"]["g_flScrollUvSpeed"], json!(0.66));
+    let (textures, images) = (arr(&j, "textures"), arr(&j, "images"));
+    assert_eq!(images[1]["uri"], json!("materials/models/effects/fountain_dire_01_color_psd_a0bbbb6c.png"));
+    assert_eq!(glow_colour(m, &textures, &images), Some(1), "the swap's colour picture is the glow's");
+}
+
+#[test]
+fn the_dire_pit_haze_is_the_world_nodes_swap() {
+    let Ok(p) = std::env::var("MM_TEST_VWNOD") else { return };
+    let swaps = material_swaps(&std::fs::read(p).unwrap());
+    assert!(swaps.contains(&MaterialSwap {
+        model: "fountain_dire_00".into(),
+        copy: 0,
+        draw: 0,
+        material: "materials/models/effects/fountain_dire_01.vmat".into(),
+    }), "{swaps:?}");
+}

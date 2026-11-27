@@ -26,8 +26,9 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
 /// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep;
-/// 13: the glows' colour pictures; 14: no world layer the map starts with off; 15: the water's flow).
-pub const LIGHT_FILE: &str = "world-15.glb";
+/// 13: the glows' colour pictures; 14: no world layer the map starts with off; 15: the water's flow;
+/// 16: the world node's material swaps, the Dire pit's haze).
+pub const LIGHT_FILE: &str = "world-16.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -871,6 +872,109 @@ pub fn model_layers(vwnod: &[u8]) -> BTreeMap<String, String> {
     out
 }
 
+/// One draw of one copy that the world node paints with a material of its own instead of its
+/// model's (`m_materialOverrides`): the export draws the model's. The Dire's pit haze is one, its
+/// model's fountain_dire_00 (an orange picture) swapped for fountain_dire_01 (a grey one with
+/// bright streaks, scrolling at 0.66 not 1.25) under the copy's orange tint, so the game's haze is
+/// bright orange where the model's own stood dim red. `copy` counts the copies of `model` before
+/// this one, as [`instance_tints`] does.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MaterialSwap {
+    pub model: String,
+    pub copy: usize,
+    pub draw: usize,
+    pub material: String,
+}
+
+/// The world node's material swaps (`m_materialOverrides[]`: the scene object's index, the draw
+/// call and the material); a swap on a sub-object (an aggregate's fragment) is left out.
+pub fn material_swaps(vwnod: &[u8]) -> Vec<MaterialSwap> {
+    let Ok(data) = crate::resource::data(vwnod, "DATA", 0) else { return Vec::new() };
+    let Ok(kv) = crate::kv3::read(data) else { return Vec::new() };
+    let objects = kv.root.get("m_sceneObjects").map(|n| n.items()).unwrap_or(&[]);
+    let stem = |o: &crate::kv3::Node| -> Option<String> {
+        let path = o.get("m_renderableModel")?.as_str()?;
+        let file = path.rsplit('/').next()?;
+        Some(file.strip_suffix(".vmdl").unwrap_or(file).to_string())
+    };
+    let mut out = Vec::new();
+    for s in kv.root.get("m_materialOverrides").map(|n| n.items()).unwrap_or(&[]) {
+        let num = |k: &str| s.get(k).and_then(|n| kv.number_of(n));
+        let (Some(at), Some(draw)) = (num("m_nSceneObjectIndex"), num("m_nDrawCallIndex")) else { continue };
+        if num("m_nSubSceneObject").unwrap_or(0.0) != 0.0 || at < 0.0 || draw < 0.0 {
+            continue;
+        }
+        let Some(material) = s.get("m_pMaterial").and_then(|n| n.as_str()) else { continue };
+        let Some(model) = objects.get(at as usize).and_then(stem) else { continue };
+        let copy = objects[..at as usize].iter().filter(|o| stem(o).as_deref() == Some(model.as_str())).count();
+        out.push(MaterialSwap { model, copy, draw: draw as usize, material: material.to_string() });
+    }
+    out
+}
+
+/// The material at `path` as the toolchain's export carries it (`extras.vmat`): its name (the window
+/// draws a part whose material has none as plain grey), its shader and its params by kind, the
+/// switches as whole numbers and the textures by file name.
+pub fn vmat_json(path: &str, m: &crate::loadout_material::NativeMaterial) -> Value {
+    let file = |p: &String| p.rsplit('/').next().unwrap_or(p).to_string();
+    json!({
+        "Name": path,
+        "ShaderName": m.shader,
+        "IntParams": m.ints.iter().map(|(k, v)| (k.clone(), json!(*v as i64))).collect::<Map<_, _>>(),
+        "FloatParams": m.floats,
+        "VectorParams": m.vectors,
+        "TextureParams": m.textures.iter().map(|(k, v)| (k.clone(), json!(file(v)))).collect::<Map<_, _>>(),
+    })
+}
+
+/// The swaps laid on the export: the copy's draw takes a material of its own, the model's with
+/// `extras.vmat` the swap's (`materials`: the swap's vmat path to its vmat and the uri of its
+/// colour picture, written beside the GLB). The copy's mesh is copied first, so the model's other
+/// copies keep theirs. A swap whose material, node or draw is not there is left out.
+pub fn swap_materials(json: &mut Value, swaps: &[MaterialSwap], materials: &BTreeMap<String, (Value, String)>) {
+    for s in swaps {
+        let Some((vmat, uri)) = materials.get(&s.material) else { continue };
+        // the copy's node: the k-th of its name, as tint_nodes counts
+        let mut seen: BTreeMap<String, usize> = BTreeMap::new();
+        let mut found = Vec::new();
+        for (i, n) in arr(json, "nodes").iter().enumerate() {
+            let Some(name) = n.get("name").and_then(Value::as_str) else { continue };
+            let k = seen.entry(name.to_string()).or_default();
+            if name.split('.').next() == Some(s.model.as_str()) && *k == s.copy {
+                found.push(i);
+            }
+            *k += 1;
+        }
+        for node in found {
+            let Some(mesh) = json["nodes"][node].get("mesh").and_then(idx) else { continue };
+            let mut copy = json["meshes"][mesh].clone();
+            let Some(old) = copy.pointer(&format!("/primitives/{}/material", s.draw)).and_then(idx) else { continue };
+            let Some(mut material) = json.pointer(&format!("/materials/{old}")).cloned() else { continue };
+            let colour = vmat.pointer("/TextureParams/g_tColor").and_then(Value::as_str).unwrap_or("");
+            let name = colour.rsplit('/').next().unwrap_or(colour);
+            let push = |json: &mut Value, key: &str, v: Value| -> usize {
+                let list = json.as_object_mut().map(|o| o.entry(key).or_insert_with(|| json!([])));
+                match list.and_then(Value::as_array_mut) {
+                    Some(l) => {
+                        l.push(v);
+                        l.len() - 1
+                    }
+                    None => 0,
+                }
+            };
+            let image = push(json, "images", json!({ "uri": uri, "name": name }));
+            push(json, "textures", json!({ "source": image }));
+            let label = s.material.rsplit('/').next().unwrap_or(&s.material);
+            material["name"] = json!(label.strip_suffix(".vmat").unwrap_or(label));
+            material["extras"]["vmat"] = vmat.clone();
+            let swapped = push(json, "materials", material);
+            copy["primitives"][s.draw]["material"] = json!(swapped);
+            let at = push(json, "meshes", copy);
+            json["nodes"][node]["mesh"] = json!(at);
+        }
+    }
+}
+
 /// The export's nodes whose model sits on a world layer in `hidden` left without their mesh, so
 /// the window draws nothing for them: the game keeps those layers off until something switches
 /// them on (map_build.rs hidden_layers).
@@ -889,11 +993,13 @@ pub fn hide_layers(json: &mut Value, layers: &BTreeMap<String, String>, hidden: 
 
 /// The light copy of the toolchain's GLB at `world`, its pictures read beside it, each copy of a
 /// model in the tint `vwnod` (the map's world node) gives it, and nothing of the world layers in
-/// `hidden` (the ones the map starts with off), the map's `own` pictures inside (slim_glb).
+/// `hidden` (the ones the map starts with off), its material swaps with the `materials` read for
+/// them (swap_materials), the map's `own` pictures inside (slim_glb).
 pub fn slim(
     world: &Path,
     vwnod: Option<&[u8]>,
     hidden: &BTreeSet<String>,
+    materials: &BTreeMap<String, (Value, String)>,
     own: &[(&str, &[u8])],
     max_px: u32,
 ) -> Result<Vec<u8>, String> {
@@ -902,6 +1008,7 @@ pub fn slim(
     if let Some(v) = vwnod {
         tint_nodes(&mut json, &instance_tints(v));
         hide_layers(&mut json, &model_layers(v), hidden);
+        swap_materials(&mut json, &material_swaps(v), materials);
     }
     let dir = world.parent().map(Path::to_path_buf).unwrap_or_default();
     let picture = |uri: &str| -> Option<Vec<u8>> {
@@ -933,7 +1040,8 @@ mod real {
     fn the_real_world_comes_out_light() {
         let Ok(p) = std::env::var("MM_TEST_WORLD") else { return };
         let t = std::time::Instant::now();
-        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), &[], 256).expect("slim");
+        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), &Default::default(), &[], 256)
+            .expect("slim");
         eprintln!("light copy: {:.1} MB in {:?}", out.len() as f64 / 1e6, t.elapsed());
         if let Ok(to) = std::env::var("MM_TEST_WORLD_OUT") {
             std::fs::write(to, &out).unwrap();
