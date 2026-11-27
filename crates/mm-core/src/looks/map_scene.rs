@@ -26,8 +26,9 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// 7: the swaying materials' wind masks and noise; 8: the water's normal and noise; 9: the props'
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
 /// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep;
-/// 13: the glows' colour pictures; 14: no world layer the map starts with off; 15: the water's flow).
-pub const LIGHT_FILE: &str = "world-15.glb";
+/// 13: the glows' colour pictures; 14: no world layer the map starts with off; 15: the water's flow;
+/// 16: the world node's material swaps, the Dire pit's haze).
+pub const LIGHT_FILE: &str = "world-16.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -889,11 +890,13 @@ pub fn hide_layers(json: &mut Value, layers: &BTreeMap<String, String>, hidden: 
 
 /// The light copy of the toolchain's GLB at `world`, its pictures read beside it, each copy of a
 /// model in the tint `vwnod` (the map's world node) gives it, and nothing of the world layers in
-/// `hidden` (the ones the map starts with off), the map's `own` pictures inside (slim_glb).
+/// `hidden` (the ones the map starts with off), its material swaps with the `materials` read for
+/// them (map_swaps.rs), the map's `own` pictures inside (slim_glb).
 pub fn slim(
     world: &Path,
     vwnod: Option<&[u8]>,
     hidden: &BTreeSet<String>,
+    materials: &BTreeMap<String, (Value, String)>,
     own: &[(&str, &[u8])],
     max_px: u32,
 ) -> Result<Vec<u8>, String> {
@@ -902,6 +905,7 @@ pub fn slim(
     if let Some(v) = vwnod {
         tint_nodes(&mut json, &instance_tints(v));
         hide_layers(&mut json, &model_layers(v), hidden);
+        crate::map_swaps::swap_materials(&mut json, &crate::map_swaps::material_swaps(v), materials);
     }
     let dir = world.parent().map(Path::to_path_buf).unwrap_or_default();
     let picture = |uri: &str| -> Option<Vec<u8>> {
@@ -933,7 +937,8 @@ mod real {
     fn the_real_world_comes_out_light() {
         let Ok(p) = std::env::var("MM_TEST_WORLD") else { return };
         let t = std::time::Instant::now();
-        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), &[], 256).expect("slim");
+        let out = super::slim(std::path::Path::new(&p), None, &Default::default(), &Default::default(), &[], 256)
+            .expect("slim");
         eprintln!("light copy: {:.1} MB in {:?}", out.len() as f64 / 1e6, t.elapsed());
         if let Ok(to) = std::env::var("MM_TEST_WORLD_OUT") {
             std::fs::write(to, &out).unwrap();

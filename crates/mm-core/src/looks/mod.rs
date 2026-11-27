@@ -26,6 +26,7 @@ pub mod map_mod_trees;
 pub mod map_optimize;
 pub mod map_paint;
 pub mod map_scene;
+pub mod map_swaps;
 pub mod menu_background;
 pub mod menu_background_service;
 pub mod own_music;
