@@ -18,7 +18,7 @@ import { screen } from './state.ts';
 let open = false;
 let m: DecorModalModel = { kind: 'optimize', groups: groupsOf('medium'), installed: null, counts: null, samples: null, looks: null, installedDark: [], installedAny: false,
   groundFacets: null, installedGroundFacets: null, terrains: [], catalogTerrains: [], terrainLook: null, terrain: null, installedTerrain: null, weathers: [], weather: null, installedWeather: null,
-  catalogTrees: [], modTree: null, installedModTree: null, modTreeModels: null, modTreeNote: null, weatherLight: null, mapName: null, busy: false };
+  catalogTrees: [], modTree: null, installedModTree: null, modTreeModels: null, modTreeNote: null, weatherLight: null, video: null, mapName: null, busy: false };
 
 /** The catalog's mods of a category with a file of their own, grouped or not. */
 function catalogMods(category: 'trees' | 'terrains'): (Mod & { file: string })[] {
@@ -111,7 +111,7 @@ export async function openDecor(from: Element | null, kind: 'map' | 'optimize' =
     terrain: base, installedTerrain: base, weathers: r.weathers ?? [], weather, installedWeather: weather,
     catalogTrees: kind === 'map' ? catalogMods('trees').map((x) => ({ name: x.name, file: x.file, preview: x.preview })) : [],
     modTree: modTreeRecord()?.fileRef ?? null, installedModTree: modTreeRecord()?.fileRef ?? null, modTreeModels: null, modTreeNote: null,
-    weatherLight: r.weatherLight ?? null, mapName: baseName ?? (mapOn ? L`своя карта` : null), busy: false };
+    weatherLight: r.weatherLight ?? null, video: r.video ?? null, mapName: baseName ?? (mapOn ? L`своя карта` : null), busy: false };
   takeOverlay();
   open = true;
   openOverlay(draw, from);

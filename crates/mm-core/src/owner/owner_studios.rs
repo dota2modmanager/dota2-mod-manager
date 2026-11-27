@@ -88,12 +88,15 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 None => (vec![], vec![], Value::Null),
             };
             let map = crate::map_make::MapMake::state(&c.library);
+            // the player's video settings, for the 3D map to draw what their Dota draws
+            let video = crate::video_settings::video_settings(c.game().as_deref()).map_or(Value::Null, Value::Object);
             ok_with(crate::map_decor::MapDecor::new(c.game()).state(&c.installer, &c.library).map(|mut v| {
                 v["map"] = map;
                 v["weatherLight"] = lights;
                 v["terrains"] = Value::Array(terrains);
                 v["weathers"] = Value::Array(weathers);
                 v["defaultWeather"] = plain;
+                v["video"] = video;
                 v
             }))
         }

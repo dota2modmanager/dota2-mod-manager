@@ -17,8 +17,8 @@ import { keepOnGround, mapHeights, type Heights } from './map-heights.ts';
 import { forgetGrounds, groundLight, isGround, paintGround, setGround } from './map-ground.ts';
 import { mapKeys } from './map-keys.ts';
 import { painter } from './map-paint.ts';
-import type { TerrainPaint } from '../../api/decor.ts';
-import { isWater, waterBed, waterFlow, waterOf, waterTime, wavePictures } from './map-water.ts';
+import type { TerrainPaint, VideoSettings } from '../../api/decor.ts';
+import { cheapWater, isWater, waterBed, waterFlow, waterOf, waterTime, wavePictures } from './map-water.ts';
 import { mapAO } from './map-ao.ts';
 import { mapOutput } from './map-output.ts';
 import { isShiny, specPictures, specShader } from './map-spec.ts';
@@ -93,9 +93,12 @@ function prepare(mat: THREE.Material): void {
   m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}-${overlay ? 'overlay' : ''}-${glow ? glowKey(m) : ''}`;
 }
 
-/** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one. */
+/** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one.
+ * `video`: the player's Dota video settings (video.txt), so the map leaves out what their game leaves out. */
 export async function mountMapView(host: HTMLElement, samples: Partial<Record<DecorGroup, DecorSample>>, map: string | null,
-  onProgress: (text: string | null, failed?: boolean) => void): Promise<MapView> {
+  onProgress: (text: string | null, failed?: boolean) => void, video: VideoSettings | null = null): Promise<MapView> {
+  // what the player's own game leaves out or draws cheaper (video.txt)
+  cheapWater(video?.dota_cheap_water === true);
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // a map of five million triangles at twice the pixels is a slideshow: one and a half is enough
