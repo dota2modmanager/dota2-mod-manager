@@ -251,18 +251,20 @@ function ratio(a: number[] | undefined, b: number[] | undefined): THREE.Color {
 }
 const share = (a: number | undefined, b: number | undefined) => (a === undefined || b === undefined || b <= 0 ? 1 : a / b);
 
-export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene): MapLight {
+/** `shadows`: whether the sun casts shadows; without them (the player's cl_globallight_shadow_mode 0)
+ * the game lights every point as if in the open sun. */
+export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shadows = true): MapLight {
   // the game's own tonemap over its light
   renderer.toneMapping = THREE.CustomToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = shadows;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   // three's own lights stay for the shadows (the sun) and for what draws outside the game's shader
   const skyColor = new THREE.Color(0xa9c1e0);
   const sky = new THREE.HemisphereLight(skyColor, 0x3a3128, 1.25);
   scene.add(sky);
   const sun = new THREE.DirectionalLight(0xfff0d2, 3.4);
-  sun.castShadow = true;
+  sun.castShadow = shadows;
   sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.0004;
   sun.shadow.normalBias = 0.04;

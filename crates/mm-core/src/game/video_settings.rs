@@ -5,7 +5,7 @@
 //! (r_deferred_specular), wind on trees (r_dota_allow_wind_on_trees), grass (r_grass_quality),
 //! cheap water (dota_cheap_water) and the rest of the options screen. Read only, never written.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use serde_json::{Map, Value};
 
@@ -13,9 +13,29 @@ use serde_json::{Map, Value};
 /// booleans, numbers as numbers); None when there is no account or no file.
 pub fn video_settings(game: Option<&Path>) -> Option<Map<String, Value>> {
     let account = crate::gamelang::steam_account_dir(game)?;
-    let bytes = std::fs::read(account.join("570").join("local").join("cfg").join("video.txt")).ok()?;
+    let bytes = std::fs::read(video_file(&account)?).ok()?;
     let parsed = parse(&String::from_utf8_lossy(&bytes));
     (!parsed.is_empty()).then_some(parsed)
+}
+
+fn video_txt(account: &Path) -> PathBuf {
+    account.join("570").join("local").join("cfg").join("video.txt")
+}
+
+/// The account's video.txt; when that account never ran Dota (a second Steam login on the same
+/// computer), the one Dota wrote last among the computer's accounts.
+fn video_file(account: &Path) -> Option<PathBuf> {
+    let own = video_txt(account);
+    if own.is_file() {
+        return Some(own);
+    }
+    std::fs::read_dir(account.parent()?)
+        .ok()?
+        .flatten()
+        .map(|e| video_txt(&e.path()))
+        .filter_map(|f| Some((f.metadata().ok()?.modified().ok()?, f)))
+        .max_by_key(|(at, _)| *at)
+        .map(|(_, f)| f)
 }
 
 /// The `"setting.<name>" "<value>"` pairs of a video.txt, by name.
@@ -42,6 +62,22 @@ pub fn parse(text: &str) -> Map<String, Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_account_without_dota_takes_the_newest_video_txt() {
+        let dir = std::env::temp_dir().join(format!("mm-video-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        for (id, text) in [("1", "old"), ("2", "new")] {
+            let f = video_txt(&dir.join(id));
+            std::fs::create_dir_all(f.parent().unwrap()).unwrap();
+            std::fs::write(&f, text).unwrap();
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        std::fs::create_dir_all(dir.join("3")).unwrap();
+        assert_eq!(video_file(&dir.join("1")), Some(video_txt(&dir.join("1"))));
+        assert_eq!(video_file(&dir.join("3")), Some(video_txt(&dir.join("2"))));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 
     #[test]
     fn a_video_txt_reads_as_its_convars() {

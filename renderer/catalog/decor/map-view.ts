@@ -88,10 +88,13 @@ function prepare(mat: THREE.Material): void {
   // in the wind as the game's vertex shader sways them (map-wind.ts); a tint mask keeps the copy's
   // tint to where the game lays it (map-tint.ts); a prop with a specular picture shines (map-spec.ts)
   if (!('emissive' in m)) return;
-  const windy = isWindy(m), masked = isMaskTinted(m), shiny = isShiny(m), overlay = isOverlay(m), glow = isGlow(m);
+  const windy = isWindy(m), masked = isMaskTinted(m), shiny = specular && isShiny(m), overlay = isOverlay(m), glow = isGlow(m);
   m.onBeforeCompile = (sh) => { if (windy) windShader(sh, m); if (masked) tintShader(sh, m); if (shiny) specShader(sh, m); litShader(sh, overlay); if (glow) glowShader(sh, m); };
   m.customProgramCacheKey = () => `map-${windy ? 'wind' : ''}-${masked ? 'tint' : ''}-${shiny ? 'spec' : ''}-${overlay ? 'overlay' : ''}-${glow ? glowKey(m) : ''}`;
 }
+
+/** Whether the props shine, as the player's game has it (video.txt r_deferred_specular). */
+let specular = true;
 
 /** `map`: another of the game's maps to draw (a terrain's: "winter"), or null for the default one.
  * `video`: the player's Dota video settings (video.txt), so the map leaves out what their game leaves out. */
@@ -99,6 +102,9 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   onProgress: (text: string | null, failed?: boolean) => void, video: VideoSettings | null = null): Promise<MapView> {
   // what the player's own game leaves out or draws cheaper (video.txt)
   cheapWater(video?.dota_cheap_water === true);
+  specular = video?.r_deferred_specular !== false;
+  // the game's ambient occlusion (map-ao.ts) only with the player's r_ssao
+  const ssao = video?.r_ssao !== false;
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // a map of five million triangles at twice the pixels is a slideshow: one and a half is enough
@@ -106,7 +112,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   renderer.setClearColor(0x1b222b);
   host.append(renderer.domElement);
   const scene = new THREE.Scene();
-  const light = lightMap(renderer, scene);
+  const light = lightMap(renderer, scene, video?.cl_globallight_shadow_mode !== 0);
+  const additive = video?.r_deferred_additive_pass !== false;
   const paints = painter(isGround);
   // the pak picked, put on once the map has loaded; the ground's layers it brought
   let paintWanted: TerrainPaint | null = null;
@@ -178,7 +185,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (!dirty) return;
     dirty = false;
     if (water) { bedPass.draw(renderer, scene, camera, moved); moved = false; }
-    ao.draw(renderer, scene, camera);
+    if (ssao) ao.draw(renderer, scene, camera);
     output.draw(renderer, scene, camera);
   });
 
@@ -344,6 +351,9 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       if (mats.some(isGround)) mesh.renderOrder = -2;
       else if (mats.some(isOverlay)) { mesh.renderOrder = -1; mesh.castShadow = false; }
       else if (mats.some(isGlow)) mesh.castShadow = false;
+      // the glows are drawn in the game's additive pass: without it (r_deferred_additive_pass off)
+      // the Dire's lava pit stands without its haze (RenderDoc, the game's low settings 2026-11-27)
+      if (!additive) for (const m of mats) if (isGlow(m)) m.visible = false;
     });
     // the ground's heights for the weather (no trees: the rain falls through them)
     weather?.ground((heights = mapHeights(renderer, scene, [...merged.values()].flat(), box)));
