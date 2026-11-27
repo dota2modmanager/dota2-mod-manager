@@ -46,6 +46,7 @@ pub use formats::{kv, kv3, pak_stamp, resource, safe_zip, vpk, vpk_analyze, vpk_
 pub use game::game_icons::looks_without_pictures;
 pub(crate) use game::{
     game_icons, game_repair, game_upkeep, hero_grid, minify, patch_watch, steam_appstate, terrain_age, update_impact,
+    video_settings,
 };
 pub use game::{game_watch, gamelang, hero_names, patcher, patcher_gameinfo, patcher_signatures, steam};
 pub(crate) use install::{

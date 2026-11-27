@@ -35,7 +35,19 @@
  *
  * so each picture fades out as it is about to jump back, and the noise keeps the stretches of the
  * river from pulsing together. The material's scales are the shader's divisors (its 500 is a
- * picture 500 inches wide). */
+ * picture 500 inches wide).
+ *
+ * With the player's cheap water (video.txt dota_cheap_water, water_dota's D_CHEAP_WATER, read from a
+ * RenderDoc frame at the game's low settings 2026-11-27) the same waves, bent by the low end's bump
+ * (g_flLowEndBumpStrength in place of the bump), light a flat colour laid over the bed by its alpha:
+ *
+ *   light    = sun × saturate(N · -L) + ambient × saturate(N · ambient dir) + (1 - N · -L) × shadow colours
+ *   fresnel  = saturate((1 - N.z)^g_flLowEndSurfaceFactor + g_flLowEndSurfaceMinimumColor)
+ *   s        = saturate(g_vLowEndReflectionDir · R), shine = low end reflection colour × fog colour × s^power
+ *   surface  = saturate(g_vLowEndSurfaceColor × fresnel + shine), alpha = saturate(s^power + g_flLowEndSurfaceOpacity)
+ *   pixel    = mix(surface × light, surface, saturate(2 s + g_flLowEndBaseBloom)) over the bed
+ *
+ * no depth, no refraction, no water fog: the river reads as one teal sheet. */
 import * as THREE from 'three';
 import type { GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { INCH, lit } from './map-light.ts';
@@ -66,6 +78,14 @@ const flowMap = {
   uFlowMap: { value: null as THREE.Texture | null },
   uHasFlowMap: { value: 0 },
 };
+
+/** Whether the water is the game's cheap one (the player's dota_cheap_water), shared by every water. */
+const cheap = { uCheap: { value: 0 } };
+
+/** Draw the cheap water, as the player's game does with dota_cheap_water. */
+export function cheapWater(on: boolean): void {
+  cheap.uCheap.value = on ? 1 : 0;
+}
 
 /** The map's flow picture, as the light copy carries it. */
 export function waterFlow(t: THREE.Texture): void {
@@ -125,6 +145,9 @@ uniform float uNear, uFar, uTime;
 uniform vec3 uRefractionTint, uWaterFog, uReflectionColor, uReflectionDir;
 uniform float uRefractionAmount, uReflectionPower, uForceFog;
 uniform vec2 uForceFogRange;
+uniform float uCheap, uLowBump, uLowPower, uLowBloom;
+uniform vec3 uLowSurface, uLowFresnel, uLowReflColor, uLowReflDir;
+uniform vec3 uSunDir, uAmbient, uAmbientDir, uShadeUp, uShadeDown;
 varying vec3 vWorld;
 
 float eyeDepth( float z ) { return uNear * uFar / ( uFar - z * ( uFar - uNear ) ); }
@@ -143,15 +166,35 @@ void main() {
   vec2 pa = texture2D( uNormal, base + floor( a ) * 0.311 + 0.5 + fa * scroll ).xy;
   vec2 pb = texture2D( uNormal, base + floor( t ) * 0.311 + fb * scroll ).xy;
   vec2 bend = ( pb * pow( abs( 2.0 * fa - 1.0 ), uWaveNums.w ) + pa * pow( abs( 2.0 * fb - 1.0 ), uWaveNums.w ) ) * 2.0 - 1.0;
-  bend *= ( dot( flow, flow ) + 0.1 ) * uFlowNums.x;
+  bend *= ( dot( flow, flow ) + 0.1 ) * uFlowNums.x * ( uCheap > 0.5 ? uLowBump : 1.0 );
   if ( dot( bend, bend ) > 1.0 ) bend = normalize( bend );
   vec3 n = vec3( bend, sqrt( max( 1.0 - dot( bend, bend ), 0.0 ) ) );
 
-  // how deep: where the bed lies below the water's plane, in inches
   vec2 uv = gl_FragCoord.xy * uPixel;
-  float surface = eyeDepth( gl_FragCoord.z ), under = eyeDepth( texture2D( uBedDepth, uv ).x );
   vec3 ray = p - eye;
   float dist = length( ray );
+  if ( uCheap > 0.5 ) {
+    // the cheap water: a flat colour, lit as the props are without their shadows, over the bed
+    vec3 n3 = n.yzx;
+    float sun = saturate( dot( n3, -uSunDir ) );
+    vec3 light = sun * uSun + saturate( dot( n3, uAmbientDir ) ) * uAmbient + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.z * 0.5 + 0.5 );
+    vec3 v = normalize( ray );
+    vec3 r = 2.0 * dot( v, n ) * n - v;
+    float s = saturate( dot( uLowReflDir, r ) ), glint = pow( s, uLowPower );
+    float fresnel = saturate( pow( 1.0 - n.z, uLowFresnel.x ) + uLowFresnel.y );
+    vec3 surface = saturate( uLowSurface * fresnel + uLowReflColor * uFogColor * glint );
+    vec3 c = mix( surface * light, surface, saturate( 2.0 * s + uLowBloom ) );
+    c = mix( texture2D( uBed, uv ).rgb, c, saturate( glint + uLowFresnel.z ) );
+    float far = max( dist - uFogFrom, 0.0 );
+    float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
+    gl_FragColor = vec4( mix( c, uFogColor, fog ), 1.0 );
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+    return;
+  }
+
+  // how deep: where the bed lies below the water's plane, in inches
+  float surface = eyeDepth( gl_FragCoord.z ), under = eyeDepth( texture2D( uBedDepth, uv ).x );
   vec3 below = eye + ray * ( under / max( surface, 1e-3 ) );
   float d = saturate( ( p.z - below.z ) / ${INCH} / ${FOG_RANGE}.0 );
   if ( uForceFog > 0.5 ) d = mix( uForceFogRange.x, uForceFogRange.y, d );
@@ -198,7 +241,15 @@ export function waterOf(original: THREE.Material): THREE.ShaderMaterial {
       ...lit,
       ...bed,
       ...flowMap,
+      ...cheap,
       uTime: waterTime,
+      uLowBump: { value: f.g_flLowEndBumpStrength ?? 0.15 },
+      uLowPower: { value: f.g_flLowEndReflectionPower ?? 2.247 },
+      uLowBloom: { value: f.g_flLowEndBaseBloom ?? 0.01 },
+      uLowSurface: { value: colour(vec.g_vLowEndSurfaceColor, [0.184, 0.275, 0.243]) },
+      uLowFresnel: { value: new THREE.Vector3(f.g_flLowEndSurfaceFactor ?? 0.224, f.g_flLowEndSurfaceMinimumColor ?? 0.104, f.g_flLowEndSurfaceOpacity ?? 0.875) },
+      uLowReflColor: { value: colour(vec.g_vLowEndReflectionColor, [0.729, 0.729, 0.729]) },
+      uLowReflDir: { value: new THREE.Vector3(...((vec.g_vLowEndReflectionDir ?? [-0.03, -1, 0.273]).slice(0, 3) as [number, number, number])) },
       uRefractionTint: { value: colour(vec.g_vRefractionTint, [0.349, 0.663, 0.78]) },
       uWaterFog: { value: colour(vec.g_vWaterFogColor, [0.259, 0.137, 0.051]) },
       uReflectionColor: { value: colour(vec.g_vReflectionColor, [0.231, 0.231, 0.231]) },

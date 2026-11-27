@@ -6,7 +6,7 @@
  * detail and sliders (crates/mm-core/src/looks/map_decor.rs, map_optimize.rs). Each is a record of its own. */
 import { useEffect, useRef, useState } from 'react';
 import type { DecorGroup, DecorSample, MapKind, MapOption } from '../../api/content.ts';
-import type { TerrainPaint, ZoneLight } from '../../api/decor.ts';
+import type { TerrainPaint, VideoSettings, ZoneLight } from '../../api/decor.ts';
 import type { GroundLook, MapLooks } from './map-view.ts';
 import { mapOf } from './pickers.tsx';
 import { stemOf } from './map-names.ts';
@@ -55,6 +55,8 @@ export interface DecorModalModel {
   modTreeNote: string | null;
   /** the light of the everyday zone and of each weather, as the game's zones have it */
   weatherLight: Record<string, ZoneLight> | null;
+  /** the player's Dota video settings, for the 3D map to draw what their game draws */
+  video: VideoSettings | null;
   /** the map that is on, for Optimization to say what it builds on: its name, null for the default one */
   mapName: string | null;
   busy: boolean;
@@ -75,7 +77,7 @@ export interface DecorModalActions {
   install: () => void;
 }
 
-function MapStage({ samples, groups, looks, ground, map, paint, weather, lights }: { samples: Partial<Record<DecorGroup, DecorSample>>; groups: DecorGroup[]; looks: MapLooks; ground: GroundLook; map: string | null; paint: TerrainPaint | null; weather: string | null; lights: Record<string, ZoneLight> | null }) {
+function MapStage({ samples, groups, looks, ground, map, paint, weather, lights, video }: { samples: Partial<Record<DecorGroup, DecorSample>>; groups: DecorGroup[]; looks: MapLooks; ground: GroundLook; map: string | null; paint: TerrainPaint | null; weather: string | null; lights: Record<string, ZoneLight> | null; video: VideoSettings | null }) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<import('./map-view.ts').MapView | null>(null);
   // a failure is not still working: it shows without the spinner
@@ -84,7 +86,7 @@ function MapStage({ samples, groups, looks, ground, map, paint, weather, lights 
     let gone = false;
     void import('./map-view.ts').then(async ({ mountMapView }) => {
       if (gone || !host.current) return;
-      const v = await mountMapView(host.current, samples, map, (t, failed) => { if (!gone) setNote(t ? { text: t, failed: !!failed } : null); });
+      const v = await mountMapView(host.current, samples, map, (t, failed) => { if (!gone) setNote(t ? { text: t, failed: !!failed } : null); }, video);
       if (gone) { v.dispose(); return; }
       view.current = v;
       v.show(new Set(groups), looks, ground);
@@ -146,7 +148,7 @@ export function DecorModal({ m, actions }: { m: DecorModalModel; actions: DecorM
         <button className="modal-close" id="modalCloseBtn" aria-label={L`Закрыть`} onClick={actions.close}><span className="ms">close</span></button>
       </div>
       <div className="opt-body">
-        {m.samples ? <MapStage key={map ?? 'dota'} samples={m.samples} groups={shown} looks={looksOf(m)} ground={{ map: null, facets: m.groundFacets }} map={map} paint={paint} weather={weather} lights={m.weatherLight} /> : <div className="opt-map" />}
+        {m.samples ? <MapStage key={map ?? 'dota'} samples={m.samples} groups={shown} looks={looksOf(m)} ground={{ map: null, facets: m.groundFacets }} map={map} paint={paint} weather={weather} lights={m.weatherLight} video={m.video} /> : <div className="opt-map" />}
         <aside className="opt-side">
           {isMap ? <MapSide m={m} actions={actions} /> : <OptSide m={m} actions={actions} />}
           <div className="opt-actions">

@@ -16,3 +16,4 @@ pub mod steam;
 pub mod steam_appstate;
 pub mod terrain_age;
 pub mod update_impact;
+pub mod video_settings;

@@ -57,6 +57,9 @@ export interface ZoneLight {
   zones?: ZonePlace[];
 }
 
+/** Dota's video settings, convar to value (crates/mm-core/src/game/video_settings.rs). */
+export type VideoSettings = Record<string, boolean | number | string>;
+
 /** One lighting zone of the map: RF, RB, DF or DT (map_build.rs zone_places). */
 export interface ZonePlace { zone: string; at: number[]; inner: number; outer: number; light: ZoneLight }
 
@@ -74,7 +77,10 @@ export interface DecorApi {
     /** the game's terrain items, each with the map it puts in place of the default one ("winter") */
     terrains?: { id: string; name: string; map: string }[];
     /** the game's weather items, and the default one that puts the game's own back */
-    weathers?: { id: string; name: string; key: string }[]; defaultWeather?: { id: string; name: string } | null }>>;
+    weathers?: { id: string; name: string; key: string }[]; defaultWeather?: { id: string; name: string } | null;
+    /** the player's Dota video settings by convar (video.txt: r_deferred_specular, cl_globallight_shadow_mode,
+     * r_dota_allow_wind_on_trees, r_grass_quality, dota_cheap_water...), null with no Steam account or file */
+    video?: VideoSettings | null }>>;
   /** Optimization's groups; with kind "map" the map of one's own instead: its names, the ground's tint ("rrggbb") and facets */
   install: (groups: string[], tint?: string, facets?: string, kind?: '' | 'map') => Promise<Reply<{ record: LibRecord }>>;
   /** the game's whole map made ready for the window (minutes the first time), then served on mm-map; tool: whether the Source 2 toolchain is there */
