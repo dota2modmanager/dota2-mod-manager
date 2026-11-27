@@ -252,8 +252,10 @@ function ratio(a: number[] | undefined, b: number[] | undefined): THREE.Color {
 const share = (a: number | undefined, b: number | undefined) => (a === undefined || b === undefined || b <= 0 ? 1 : a / b);
 
 /** `shadows`: whether the sun casts shadows; without them (the player's cl_globallight_shadow_mode 0)
- * the game lights every point as if in the open sun. */
-export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shadows = true): MapLight {
+ * the game lights every point as if in the open sun. `smallLights`: whether the map's lamps and
+ * braziers light what is around them; the game draws them only with both r_deferred_additive_pass
+ * and r_deferred_simple_light (RenderDoc frames at low settings with either or both, 2026-11-27). */
+export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shadows = true, smallLights = true): MapLight {
   // the game's own tonemap over its light
   renderer.toneMapping = THREE.CustomToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -303,7 +305,7 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shad
       .map((l) => ({ l, d: Math.hypot(l.at.x - target.x, l.at.z - target.z) - l.at.w }))
       .sort((a, b) => a.d - b.d).slice(0, LOCAL);
     near.forEach(({ l }, i) => { lit.uLocalAt.value[i].copy(l.at); lit.uLocalColour.value[i].copy(l.colour); });
-    lit.uLocalCount.value = near.length;
+    lit.uLocalCount.value = smallLights ? near.length : 0;
   };
   const apply = () => {
     const at = zone;

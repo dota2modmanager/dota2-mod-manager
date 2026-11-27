@@ -112,7 +112,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   renderer.setClearColor(0x1b222b);
   host.append(renderer.domElement);
   const scene = new THREE.Scene();
-  const light = lightMap(renderer, scene, video?.cl_globallight_shadow_mode !== 0);
+  const light = lightMap(renderer, scene, video?.cl_globallight_shadow_mode !== 0,
+    video?.r_deferred_additive_pass !== false && video?.r_deferred_simple_light !== 0);
   const additive = video?.r_deferred_additive_pass !== false;
   const paints = painter(isGround);
   // the pak picked, put on once the map has loaded; the ground's layers it brought
