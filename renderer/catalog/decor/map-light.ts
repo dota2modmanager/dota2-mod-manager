@@ -125,6 +125,8 @@ export const lit = {
   uAOPixel: { value: new THREE.Vector2(1, 1) },
   /** 1 while map-ao.ts draws the map's depth: a material stops once its pixel is known to be there */
   uAOPass: { value: 0 },
+  /** 1 for shaderquality 0: the occlusion as deferred_global_light's cheaper variant takes it */
+  uAOCheap: { value: 0 },
 };
 /** How many of the map's small lights the shader takes at once. */
 const LOCAL = 48;
@@ -161,7 +163,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
     .replace('#include <common>', `#include <common>
     uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor, uSpecColor, uSpecDir;
     uniform float uSpecIndependence, uSpecPow;
-    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain, uAOOn, uAOPass;
+    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain, uAOOn, uAOPass, uAOCheap;
     uniform sampler2D uAO;
     uniform vec2 uAOPixel;
     uniform vec4 uLocalAt[ ${LOCAL} ];
@@ -191,7 +193,10 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       float sun = saturate( dot( n, -uSunDir ) ) * shade;
       // the occlusion takes the sky's and the shadow's light and part of the sun's (deferred_global_light.vfx)
       float open = 1.0 - ( uAOOn > 0.5 && uPlain < 0.5 ? texture2D( uAO, gl_FragCoord.xy * uAOPixel ).r : 0.0 );
-      vec3 light = sun * uSun * ( 0.45 + 0.55 * pow( open, 1.85 ) ) + pow( open, 2.1 ) * ( saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
+      // (shaderquality 0: the sun 1 - 0.35 × occlusion, the rest open², S_SHADER_QUALITY 0 of the same pass)
+      float sunOpen = uAOCheap > 0.5 ? 1.0 - 0.35 * ( 1.0 - open ) : 0.45 + 0.55 * pow( open, 1.85 );
+      float skyOpen = uAOCheap > 0.5 ? open * open : pow( open, 2.1 );
+      vec3 light = sun * uSun * sunOpen + skyOpen * ( saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
         + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 ) );
       for ( int i = 0; i < ${LOCAL}; i++ ) {
         if ( i >= uLocalCount || uPlain > 0.5 ) break;
@@ -254,8 +259,10 @@ const share = (a: number | undefined, b: number | undefined) => (a === undefined
 /** `shadows`: whether the sun casts shadows; without them (the player's cl_globallight_shadow_mode 0)
  * the game lights every point as if in the open sun. `smallLights`: whether the map's lamps and
  * braziers light what is around them; the game draws them only with both r_deferred_additive_pass
- * and r_deferred_simple_light (RenderDoc frames at low settings with either or both, 2026-11-27). */
-export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shadows = true, smallLights = true): MapLight {
+ * and r_deferred_simple_light (RenderDoc frames at low settings with either or both, 2026-11-27).
+ * `cheapShaders` (shaderquality 0) takes the game's cheaper occlusion (map-video.ts). */
+export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shadows = true, smallLights = true, cheapShaders = false): MapLight {
+  lit.uAOCheap.value = cheapShaders ? 1 : 0;
   // the game's own tonemap over its light
   renderer.toneMapping = THREE.CustomToneMapping;
   renderer.toneMappingExposure = 1.0;

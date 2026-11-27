@@ -5,8 +5,12 @@
  *
  * Read from RenderDoc frames of the game, 2026-11-27:
  *   dota_cheap_water                 the water as one flat lit sheet (map-water.ts)
- *   cl_globallight_shadow_mode 0     no sun shadows at all (1-3 are their sizes)
+ *   cl_globallight_shadow_mode 0     no sun shadows at all (1-3 are their sizes); the clouds'
+ *                                    shadows stay (the ground's shader samples them on low too)
  *   r_ssao                           the ambient occlusion pass (map-ao.ts)
+ *   shaderquality 0                  the cheaper occlusion: the sun keeps 1 - 0.35 × occlusion, the
+ *                                    sky and the shadow (1 - occlusion)² (deferred_global_light with
+ *                                    S_SHADER_QUALITY 0; at 1 it is the powers in map-light.ts)
  *   r_deferred_specular              the props' shine (map-spec.ts)
  *   r_deferred_additive_pass and     the lamps and braziers light what is around them: the game
  *   r_deferred_simple_light          draws them only with both on
@@ -19,6 +23,7 @@ export interface MapVideo {
   ssao: boolean;
   specular: boolean;
   smallLights: boolean;
+  cheapShaders: boolean;
 }
 
 /** A setting as a switch: true, a number above 0 or a string of one; unknown is `fallback`. */
@@ -43,5 +48,6 @@ export function mapVideo(video: VideoSettings | null): MapVideo {
     ssao: on(video, 'r_ssao', true),
     specular: on(video, 'r_deferred_specular', true),
     smallLights: on(video, 'r_deferred_additive_pass', true) && on(video, 'r_deferred_simple_light', true),
+    cheapShaders: !on(video, 'shaderquality', true),
   };
 }
