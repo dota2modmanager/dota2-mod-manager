@@ -68,8 +68,8 @@ pub(crate) use looks::{
     cursor_maker, cursors, effect_edit, effect_edit_service, effect_finder, fx_in_use, ground_build, ground_facets,
     hero_paint_parts, hero_paint_service, hero_portrait_service, hud_repatch, hud_scale, hud_scale_service, icon_paint,
     map_base, map_build, map_decor, map_ground, map_light, map_looks_service, map_make, map_mod_trees, map_optimize,
-    map_paint, map_scene, menu_background, menu_background_service, own_music, own_music_service, paint_recipe,
-    pumpkin, recolor_layers, recolor_modes,
+    map_paint, map_scene, map_swaps, menu_background, menu_background_service, own_music, own_music_service,
+    paint_recipe, pumpkin, recolor_layers, recolor_modes,
 };
 pub use looks::{recolor, tower_looks, tree_sets};
 pub(crate) use models::{

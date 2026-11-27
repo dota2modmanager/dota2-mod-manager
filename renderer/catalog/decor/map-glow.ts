@@ -21,6 +21,12 @@ const on = (m: THREE.Material, key: string) => dataOf(m).vmat?.IntParams?.[key] 
 /** Whether a material is a glow. */
 export const isGlow = (m: THREE.Material): boolean => !on(m, 'F_OVERLAY') && on(m, 'F_TRANSLUCENT') && on(m, 'F_ADDITIVE_BLEND');
 
+/** Whether the world's light falls on the glow: only with F_ALLOW_LIGHTING_ON_TRANSLUCENT. Without
+ * it the game's variant reads no light at all (global_lit_simple, S_ALLOW_LIGHTING_ON_TRANSLUCENT 0:
+ * colour = picture × tint × vertex colour, plus shine): the Dire's pit haze (fountain_dire_01) is
+ * its copy's orange as it stands, where the zone's blue light would make it a dim red. */
+const lit = (m: THREE.Material): boolean => on(m, 'F_ALLOW_LIGHTING_ON_TRANSLUCENT');
+
 /** The power the glow fades by as it turns from the camera (0: it does not). */
 const anglePower = (m: THREE.Material): number =>
   (on(m, 'F_ALPHA_ANGLE_POWER') ? (dataOf(m).vmat?.FloatParams?.g_flAlphaAnglePower ?? 1) : 0);
@@ -57,7 +63,7 @@ export function prepareGlow(m: THREE.Material): void {
 /** The glow's colour, scroll and fade in its shader, the world's light (map-light.ts) after. */
 export function glowShader(sh: THREE.WebGLProgramParametersWithUniforms, m: THREE.Material): void {
   Object.assign(sh.uniforms, uniformsOf(m));
-  sh.fragmentShader = `#define MM_GLOW\n${sh.fragmentShader}`
+  sh.fragmentShader = `#define MM_GLOW\n${lit(m) ? '' : '#define MM_GLOW_UNLIT\n'}${sh.fragmentShader}`
     .replace('#include <common>', '#include <common>\nuniform sampler2D uGlowColour;\nuniform vec2 uGlowScroll;\nuniform float uGlowOpacity, uGlowTime;')
     .replace('#include <map_fragment>', `#ifdef USE_MAP
     {
@@ -74,7 +80,7 @@ export function glowShader(sh: THREE.WebGLProgramParametersWithUniforms, m: THRE
 }
 
 /** The program's key: the fade's power is written into it. */
-export const glowKey = (m: THREE.Material): string => `glow${anglePower(m)}`;
+export const glowKey = (m: THREE.Material): string => `glow${anglePower(m)}${lit(m) ? 'lit' : ''}`;
 
 /** A glow takes its colour picture out of the map's file. */
 export async function glowPictures(m: THREE.Material, parser: GLTFParser): Promise<void> {

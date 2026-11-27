@@ -176,7 +176,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
     .replace('#include <opaque_fragment>', `{
       if ( uAOPass > 0.5 ) { gl_FragColor = vec4( 0.0 ); return; }
       float shade = 1.0;
-      #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0
+      #if defined( USE_SHADOWMAP ) && NUM_DIR_LIGHT_SHADOWS > 0 && !defined( MM_GLOW )
       shade = receiveShadow ? getShadow( directionalShadowMap[ 0 ], directionalLightShadows[ 0 ].shadowMapSize, directionalLightShadows[ 0 ].shadowIntensity,
         directionalLightShadows[ 0 ].shadowBias, directionalLightShadows[ 0 ].shadowRadius, vDirectionalShadowCoord[ 0 ] ) : 1.0;
       #endif
@@ -184,11 +184,13 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       // shifts them along the sun by the point's y, not its height (multiblend and props alike,
       // RenderDoc 2026-11-27: mad cb2[0].xyxy, v0.yyyy, v0.xyxy), which shears each cloud across
       // the map by the sun's slant
+      #ifndef MM_GLOW
       if ( uCloudOn > 0.5 ) {
         vec3 p = vLitWorld.zxy, l = uSunDir.zxy;
         vec4 uv = ( p.xy + l.xy * p.y ).xyxy / uCloudScale + uCloudOffset;
         shade *= saturate( min( texture2D( uClouds, uv.xy ).r, texture2D( uClouds, uv.zw ).g ) );
       }
+      #endif
       vec3 n = inverseTransformDirection( normal, viewMatrix );
       float sun = saturate( dot( n, -uSunDir ) ) * shade;
       // the occlusion takes the sky's and the shadow's light and part of the sun's (deferred_global_light.vfx)
@@ -196,6 +198,19 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       // (shaderquality 0: the sun 1 - 0.35 × occlusion, the rest open², S_SHADER_QUALITY 0 of the same pass)
       float sunOpen = uAOCheap > 0.5 ? 1.0 - 0.35 * ( 1.0 - open ) : 0.45 + 0.55 * pow( open, 1.85 );
       float skyOpen = uAOCheap > 0.5 ? open * open : pow( open, 2.1 );
+      #ifdef MM_GLOW
+      // a glow is drawn forward after the deferred light (gls_glow.asm, the same lines in every
+      // forward global_lit_simple of a RenderDoc frame): no shadow, clouds, occlusion or small
+      // lights, and its sun is the sun's hue, not its strength, half and half with the fog's colour
+      // (0.5 × (normalize(cb2[1]) + cb1[31]); cb1[31] is the zone's fog colour, (0.61, 0.24, 0.18)
+      // in the Dire's). A glow without F_ALLOW_LIGHTING_ON_TRANSLUCENT takes no light (map-glow.ts).
+      #ifdef MM_GLOW_UNLIT
+      vec3 light = vec3( 1.0 );
+      #else
+      vec3 light = sun * 0.5 * ( normalize( uSun + 1e-6 ) + uFogColor ) + saturate( dot( n, uAmbientDir ) ) * uAmbient
+        + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 );
+      #endif
+      #else
       vec3 light = sun * uSun * sunOpen + skyOpen * ( saturate( dot( n, uAmbientDir ) ) * uAmbient * ( 1.0 + uAmbientShadow * ( shade - 1.0 ) )
         + ( 1.0 - sun ) * mix( uShadeDown, uShadeUp, n.y * 0.5 + 0.5 ) );
       for ( int i = 0; i < ${LOCAL}; i++ ) {
@@ -204,6 +219,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
         float far = length( to ), reach = saturate( ( uLocalAt[ i ].w - far ) / uLocalAt[ i ].w / ( 1.0 - START_FALLOFF ) );
         light += saturate( dot( n, to / max( far, 1e-4 ) ) ) * reach * reach * ( 3.0 - 2.0 * reach ) * uLocalColour[ i ];
       }
+      #endif
       // the shine of a prop with a specular picture (map-spec.ts), as global_lit_simple.vfx lays it:
       // light × (albedo + (1 - independence) × shine) + independence × shine
       vec3 shine = vec3( 0.0 );

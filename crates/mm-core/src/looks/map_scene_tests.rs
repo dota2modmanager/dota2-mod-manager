@@ -1,6 +1,7 @@
 //! The light copy of the map (map_scene.rs): its tints, pictures and materials, on small made-up exports.
 
 use super::*;
+use crate::map_swaps::{material_swaps, swap_materials, MaterialSwap};
 
 #[test]
 fn each_copy_of_a_model_takes_its_own_tint() {
@@ -285,9 +286,11 @@ fn a_layer_the_map_starts_with_off_draws_nothing() {
 
 #[test]
 fn a_swapped_draw_takes_its_material_and_the_other_copies_keep_theirs() {
-    let vmat = |colour: &str| json!({ "IntParams": { "F_TRANSLUCENT": 1, "F_ADDITIVE_BLEND": 1 },
+    let vmat = |colour: &str| {
+        json!({ "IntParams": { "F_TRANSLUCENT": 1, "F_ADDITIVE_BLEND": 1 },
         "FloatParams": { "g_flScrollUvSpeed": 1.25 },
-        "TextureParams": { "g_tColor": colour, "g_tScrollSpeed": "materials/models/effects/fountain_radiant_00_scroll_tga_2aa7d8c.vtex" } });
+        "TextureParams": { "g_tColor": colour, "g_tScrollSpeed": "materials/models/effects/fountain_radiant_00_scroll_tga_2aa7d8c.vtex" } })
+    };
     let mut j = json!({
         "nodes": [{ "name": "fountain_dire_00.meshset_0", "mesh": 0 }, { "name": "fountain_dire_00.meshset_0", "mesh": 0 }],
         "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0 }, "material": 0 }] }],
@@ -324,10 +327,13 @@ fn a_swapped_draw_takes_its_material_and_the_other_copies_keep_theirs() {
 fn the_dire_pit_haze_is_the_world_nodes_swap() {
     let Ok(p) = std::env::var("MM_TEST_VWNOD") else { return };
     let swaps = material_swaps(&std::fs::read(p).unwrap());
-    assert!(swaps.contains(&MaterialSwap {
-        model: "fountain_dire_00".into(),
-        copy: 0,
-        draw: 0,
-        material: "materials/models/effects/fountain_dire_01.vmat".into(),
-    }), "{swaps:?}");
+    assert!(
+        swaps.contains(&MaterialSwap {
+            model: "fountain_dire_00".into(),
+            copy: 0,
+            draw: 0,
+            material: "materials/models/effects/fountain_dire_01.vmat".into(),
+        }),
+        "{swaps:?}"
+    );
 }

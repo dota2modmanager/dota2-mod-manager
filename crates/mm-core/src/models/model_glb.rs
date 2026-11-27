@@ -443,7 +443,8 @@ impl ModelGlb {
                 // and the world layers the map starts with off
                 let hidden = crate::map_build::hidden_layers(&lumps);
                 // and the materials its world node swaps in, their pictures beside the export
-                let swaps = node.as_deref().map(|v| swap_materials(&self.run, &exe, &game, &map, v, &raw)).unwrap_or_default();
+                let swaps =
+                    node.as_deref().map(|v| swap_materials(&self.run, &exe, &game, &map, v, &raw)).unwrap_or_default();
                 let bytes = crate::map_scene::slim(&world, node.as_deref(), &hidden, &swaps, &own, 256)?;
                 let part = root.join(format!("{}.part", crate::map_scene::LIGHT_FILE));
                 std::fs::write(&part, &bytes).map_err(|e| e.to_string())?;
@@ -787,13 +788,13 @@ fn light_picture(run: &Run, exe: &Path, game: &Path, map: &Path, name: &str, dir
     crate::map_scene::cloud_png(&bytes).ok_or_else(|| format!("{} will not read", png.display()))
 }
 
-/// The materials the map's world node swaps in (map_scene.rs material_swaps), each by its vmat
+/// The materials the map's world node swaps in (map_swaps.rs), each by its vmat
 /// path: its vmat as the export carries it and the uri of its colour picture, which the toolchain
 /// writes into `dir` (the export's folder) out of pak01. One that will not read is left out.
 fn swap_materials(run: &Run, exe: &Path, game: &Path, map: &Path, vwnod: &[u8], dir: &Path) -> MaterialsByPath {
     let pak = game.join("dota").join("pak01_dir.vpk");
     let mut out = MaterialsByPath::new();
-    for s in crate::map_scene::material_swaps(vwnod) {
+    for s in crate::map_swaps::material_swaps(vwnod) {
         if out.contains_key(&s.material) {
             continue;
         }
@@ -802,10 +803,12 @@ fn swap_materials(run: &Run, exe: &Path, game: &Path, map: &Path, vwnod: &[u8], 
             .ok()
             .flatten()
             .or_else(|| crate::vpk::read_entry_file(&pak, &file).ok().flatten());
-        let Some(m) = read.and_then(|(b, _)| crate::loadout_material::read_loadout_material(Some(&b))) else { continue };
+        let Some(m) = read.and_then(|(b, _)| crate::loadout_material::read_loadout_material(Some(&b))) else {
+            continue;
+        };
         let Some(colour) = m.textures.get("g_tColor") else { continue };
         let Ok(png) = texture_png(run, exe, game, map, colour, dir) else { continue };
-        out.insert(s.material.clone(), (crate::map_scene::vmat_json(&s.material, &m), png));
+        out.insert(s.material.clone(), (crate::map_swaps::vmat_json(&s.material, &m), png));
     }
     out
 }
