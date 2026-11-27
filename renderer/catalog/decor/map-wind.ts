@@ -7,11 +7,14 @@
  *   a      = (2 p × frequency + offset.xy, offset.z), offset = (0.25, 0.3, 0.2) × seconds
  *   w      = smooth triangle waves of speed × (0.125, 0.25, 1, 1.5) × (a, a.x + a.y + a.z)
  *   w     *= mask.xxyy × saturate(noise(p / 8192 + 0.007 offset.x).x) × flexibility × (low, low, high, high)
+ *            (low and high are the material's, × 0.5 and × 0.05: SLOW_SCALE, QUICK_SCALE)
  *   move   = (w.x + w.y) × strength × wind × h + (w.z + w.w) × strength × max(h, 128) × normalize(wind + gust)
  *
  * where gust = (noise(p / 256).xy × 2 - 1) × 2, wind is r_world_wind_dir (45°), strength is
  * r_world_wind_strength / 100 (0.4; the quick sway's is the same, at least
  * r_dota_wind_min_high_freq_strength / 100) and frequency r_world_wind_frequency_trees (0.003).
+ * In the game's own frames the strength and the wind's turn move with time (0.23 at 37°, 0.36 at
+ * 31°), the quick sway's staying at least 0.25; the window keeps the convars' still wind.
  * The slow sway bends a tree by its height, the quick one shakes its leaves. The move is in the
  * world; a copy placed by a matrix takes it back through the matrix's turn.
  *
@@ -50,6 +53,14 @@ const wind = {
   uWindTime: windTime,
 };
 
+/** What the game makes of a material's g_flWindLowFrequencyEffects and g_flWindHighFrequencyEffects
+ * before its shader sees them: read from the shader's constants in two of the game's frames
+ * (RenderDoc, 2026-11-27), every swaying material of the map there: a tree's 1 and 1 come as 0.5
+ * and 0.05, the lily pads' 2 and 2.5 as 1 and 0.125, a banner's 0 and 2 as 0 and 0.1. Taken as
+ * they stand, the lily pads shook into blades and the leaves shivered twenty times too far. */
+const SLOW_SCALE = 0.5;
+const QUICK_SCALE = 0.05;
+
 const own = new WeakMap<THREE.Material, { uWindMask: { value: THREE.Texture }; uWindNoise: { value: THREE.Texture }; uWindMaterial: { value: THREE.Vector4 }; uWindUv: { value: THREE.Vector4 } }>();
 
 /** A swaying material's own numbers: its pictures (flat until loaded) and its vmat's wind. */
@@ -61,8 +72,10 @@ function uniformsOf(m: THREE.Material) {
   u = {
     uWindMask: { value: ALL },
     uWindNoise: { value: CALM },
-    // flexibility, slow, quick, speed: the shader's defaults where the material says nothing
-    uWindMaterial: { value: new THREE.Vector4(f.g_flWindFlexibility ?? 0.3, f.g_flWindLowFrequencyEffects ?? 1, f.g_flWindHighFrequencyEffects ?? 1, f.g_flWindSpeedMultiplier ?? 1) },
+    // flexibility, slow, quick, speed: the shader's defaults where the material says nothing, the
+    // slow and quick as the game hands them to the shader (SLOW_SCALE, QUICK_SCALE)
+    uWindMaterial: { value: new THREE.Vector4(f.g_flWindFlexibility ?? 0.3, (f.g_flWindLowFrequencyEffects ?? 1) * SLOW_SCALE,
+      (f.g_flWindHighFrequencyEffects ?? 1) * QUICK_SCALE, f.g_flWindSpeedMultiplier ?? 1) },
     uWindUv: { value: new THREE.Vector4(scale[0] ?? 1, scale[1] ?? 1, offset[0] ?? 0, offset[1] ?? 0) },
   };
   own.set(m, u);
