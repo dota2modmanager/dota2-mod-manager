@@ -5,7 +5,7 @@
  * and uploads their geometry; the first real frame then has nothing left to do. */
 import * as THREE from 'three';
 
-export async function compileInSteps(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, perStep = 10): Promise<void> {
+export async function compileInSteps(renderer: THREE.WebGLRenderer, scene: THREE.Scene, camera: THREE.Camera, target: THREE.WebGLRenderTarget | null = null, perStep = 10): Promise<void> {
   const meshes: THREE.Object3D[] = [];
   scene.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshes.push(o); });
   const was = new Map(meshes.map((o) => [o, o.visible]));
@@ -17,6 +17,9 @@ export async function compileInSteps(renderer: THREE.WebGLRenderer, scene: THREE
     byMaterial.set(key, [...(byMaterial.get(key) ?? []), o]);
   }
   const groups = [...byMaterial.values()];
+  // into the picture the frame draws into: a program for the canvas is another program
+  const drewInto = renderer.getRenderTarget();
+  renderer.setRenderTarget(target);
   for (const o of meshes) o.visible = false;
   try {
     for (let i = 0; i < groups.length; i += perStep) {
@@ -28,6 +31,7 @@ export async function compileInSteps(renderer: THREE.WebGLRenderer, scene: THREE
       await new Promise((r) => setTimeout(r, 0));
     }
   } finally {
+    renderer.setRenderTarget(drewInto);
     for (const [o, v] of was) o.visible = v;
     // the shadows of the whole map, once, with everything on the card already
     renderer.shadowMap.needsUpdate = true;

@@ -20,6 +20,7 @@ import { painter } from './map-paint.ts';
 import type { TerrainPaint } from '../../api/decor.ts';
 import { isWater, waterBed, waterOf, waterTime, wavePictures } from './map-water.ts';
 import { mapAO } from './map-ao.ts';
+import { mapOutput } from './map-output.ts';
 import { isShiny, specPictures, specShader } from './map-spec.ts';
 import { glowKey, glowPictures, glowShader, isGlow, prepareGlow } from './map-glow.ts';
 import { isMaskTinted, tintPictures, tintShader } from './map-tint.ts';
@@ -155,6 +156,8 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const bedPass = waterBed();
   // the game's ambient occlusion, drawn again with every frame (map-ao.ts)
   const ao = mapAO();
+  // the frame drawn as light and tonemapped at the end, as the game draws it (map-output.ts)
+  const output = mapOutput();
   // the weather, made once the map's size is known; the ground's heights, the map's width
   let weather: MapWeather | null = null, weatherWanted: string | null = null, heights: Heights | null = null, mapReach = 1;
   // the map's standing effects (map-effects.ts), once the map is in and the core listed them
@@ -173,7 +176,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     dirty = false;
     if (water) { bedPass.draw(renderer, scene, camera, moved); moved = false; }
     ao.draw(renderer, scene, camera);
-    renderer.render(scene, camera);
+    output.draw(renderer, scene, camera);
   });
 
   let disposed = false;
@@ -342,7 +345,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     // what is left of the toolchain's node tree holds no mesh now
     world.removeFromParent();
     // the shaders compiled a few at a time before the first frame, which held the window a second
-    await compileInSteps(renderer, scene, camera).catch(() => undefined);
+    await compileInSteps(renderer, scene, camera, output.target(renderer)).catch(() => undefined);
     if (disposed) return;
     onProgress(null);
     loaded = true;
@@ -367,6 +370,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       renderer.setAnimationLoop(null);
       bedPass.dispose();
       ao.dispose();
+      output.dispose();
       resize.disconnect();
       controls.dispose();
       scene.traverse((o) => {
