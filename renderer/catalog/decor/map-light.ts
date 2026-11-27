@@ -180,8 +180,8 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       #endif
       // the clouds, in the game's axes (the export turned Source's x, y, z into z, x, y). The game
       // shifts them along the sun by the point's y, not its height (multiblend and props alike,
-      // RenderDoc 2026-11-27: mad cb2[0].xyxy, v0.yyyy, v0.xyxy), which shears each cloud into
-      // the long diagonal streaks its ground shows
+      // RenderDoc 2026-11-27: mad cb2[0].xyxy, v0.yyyy, v0.xyxy), which shears each cloud across
+      // the map by the sun's slant
       if ( uCloudOn > 0.5 ) {
         vec3 p = vLitWorld.zxy, l = uSunDir.zxy;
         vec4 uv = ( p.xy + l.xy * p.y ).xyxy / uCloudScale + uCloudOffset;
