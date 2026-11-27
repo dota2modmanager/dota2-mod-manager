@@ -502,6 +502,27 @@ fn most_recent_wins_over_the_newest_timestamp_when_steam_writes_it() {
 }
 
 #[test]
+fn steam_writing_its_login_keys_in_lower_case_still_names_the_newest_login() {
+    // Steam 2026 writes "timestamp" and "mostrecent": read case-sensitively, every login ranked
+    // the same and the first account in the file won
+    let _env = no_steam();
+    let g = fake_game(Setup { boot: Some(&boot_file("russian", "russian")), ..Default::default() });
+    fake_steam(&g.root, &[user(111, "-language dutch", 100), user(222, "-language koreana", 900)]);
+    let file = g.root.join("config").join("loginusers.vdf");
+    let text = fs::read_to_string(&file).unwrap().replace("\"Timestamp\"", "\"timestamp\"");
+    fs::write(&file, text).unwrap();
+    assert_eq!(gamelang::launch_language(Some(&g.game)), some("koreana"));
+
+    let g2 = fake_game(Setup { boot: Some(&boot_file("russian", "russian")), ..Default::default() });
+    let recent = User { most_recent: true, ..user(222, "-language schinese", 1) };
+    fake_steam(&g2.root, &[user(111, "-language koreana", 900), recent]);
+    let file = g2.root.join("config").join("loginusers.vdf");
+    let text = fs::read_to_string(&file).unwrap().replace("\"MostRecent\"", "\"mostrecent\"");
+    fs::write(&file, text).unwrap();
+    assert_eq!(gamelang::launch_language(Some(&g2.game)), some("schinese"));
+}
+
+#[test]
 fn with_nobody_identifiable_one_shared_answer_is_used_and_a_disagreement_is_not() {
     let _env = no_steam();
     let g = fake_game(Setup { boot: Some(&boot_file("russian", "russian")), ..Default::default() });
