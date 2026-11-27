@@ -20,6 +20,7 @@ import { painter } from './map-paint.ts';
 import type { TerrainPaint, VideoSettings } from '../../api/decor.ts';
 import { cheapWater, isWater, waterBed, waterFlow, waterOf, waterTime, wavePictures } from './map-water.ts';
 import { mapAO } from './map-ao.ts';
+import { mapVideo } from './map-video.ts';
 import { mapOutput } from './map-output.ts';
 import { isShiny, specPictures, specShader } from './map-spec.ts';
 import { glowKey, glowPictures, glowShader, isGlow, prepareGlow } from './map-glow.ts';
@@ -100,11 +101,11 @@ let specular = true;
  * `video`: the player's Dota video settings (video.txt), so the map leaves out what their game leaves out. */
 export async function mountMapView(host: HTMLElement, samples: Partial<Record<DecorGroup, DecorSample>>, map: string | null,
   onProgress: (text: string | null, failed?: boolean) => void, video: VideoSettings | null = null): Promise<MapView> {
-  // what the player's own game leaves out or draws cheaper (video.txt)
-  cheapWater(video?.dota_cheap_water === true);
-  specular = video?.r_deferred_specular !== false;
-  // the game's ambient occlusion (map-ao.ts) only with the player's r_ssao
-  const ssao = video?.r_ssao !== false;
+  // what the player's own game leaves out or draws cheaper (video.txt, map-video.ts)
+  const look = mapVideo(video);
+  cheapWater(look.cheapWater);
+  specular = look.specular;
+  const ssao = look.ssao;
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // a map of five million triangles at twice the pixels is a slideshow: one and a half is enough
@@ -112,9 +113,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   renderer.setClearColor(0x1b222b);
   host.append(renderer.domElement);
   const scene = new THREE.Scene();
-  const light = lightMap(renderer, scene, video?.cl_globallight_shadow_mode !== 0,
-    video?.r_deferred_additive_pass !== false && video?.r_deferred_simple_light !== 0);
-  const additive = video?.r_deferred_additive_pass !== false;
+  const light = lightMap(renderer, scene, look.shadows, look.smallLights);
   const paints = painter(isGround);
   // the pak picked, put on once the map has loaded; the ground's layers it brought
   let paintWanted: TerrainPaint | null = null;
@@ -352,9 +351,6 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       if (mats.some(isGround)) mesh.renderOrder = -2;
       else if (mats.some(isOverlay)) { mesh.renderOrder = -1; mesh.castShadow = false; }
       else if (mats.some(isGlow)) mesh.castShadow = false;
-      // the glows are drawn in the game's additive pass: without it (r_deferred_additive_pass off)
-      // the Dire's lava pit stands without its haze (RenderDoc, the game's low settings 2026-11-27)
-      if (!additive) for (const m of mats) if (isGlow(m)) m.visible = false;
     });
     // the ground's heights for the weather (no trees: the rain falls through them)
     weather?.ground((heights = mapHeights(renderer, scene, [...merged.values()].flat(), box)));
