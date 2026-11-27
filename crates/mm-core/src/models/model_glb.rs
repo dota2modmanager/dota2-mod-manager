@@ -418,7 +418,12 @@ impl ModelGlb {
                     crate::vpk::read_entry_file(&map, crate::map_scene::WORLD_NODE).ok().flatten().map(|(b, _)| b);
                 // the map's entity lumps
                 let lumps: Vec<Vec<u8>> = crate::vpk::Index::open(&map)
-                    .map(|ix| ix.paths().filter(|p| p.ends_with(".vents_c")).filter_map(|p| ix.read(p).ok().flatten()).collect())
+                    .map(|ix| {
+                        ix.paths()
+                            .filter(|p| p.ends_with(".vents_c"))
+                            .filter_map(|p| ix.read(p).ok().flatten())
+                            .collect()
+                    })
                     .unwrap_or_default();
                 // and the pictures of the map's light, from the game's files: the clouds the global
                 // light casts, the way the water runs
@@ -783,7 +788,11 @@ fn light_picture(run: &Run, exe: &Path, game: &Path, map: &Path, name: &str, dir
         return Err(format!("not a texture: {name}"));
     }
     let file = format!("{stem}.vtex_c");
-    let pak = if ix.paths().any(|p| p.eq_ignore_ascii_case(&file)) { map.to_path_buf() } else { game.join("dota").join("pak01_dir.vpk") };
+    let pak = if ix.paths().any(|p| p.eq_ignore_ascii_case(&file)) {
+        map.to_path_buf()
+    } else {
+        game.join("dota").join("pak01_dir.vpk")
+    };
     let args: Vec<String> = ["-i", &pak.to_string_lossy(), "-f", &file, "-o", &dir.to_string_lossy(), "-d"]
         .iter()
         .map(|s| s.to_string())

@@ -447,7 +447,8 @@ pub fn water_flow_map(default_entities: &[Vec<u8>]) -> Option<String> {
             if values.get("classname").and_then(kv3::Node::as_str) != Some("ent_dota_lightinfo") {
                 continue;
             }
-            if let Some(t) = values.get("water_flow_map_texture").and_then(kv3::Node::as_str).filter(|t| !t.is_empty()) {
+            if let Some(t) = values.get("water_flow_map_texture").and_then(kv3::Node::as_str).filter(|t| !t.is_empty())
+            {
                 return Some(t.to_string());
             }
         }
@@ -796,7 +797,10 @@ mod tests {
         assert_eq!(v["snow"]["zones"].as_array().map(Vec::len), Some(4));
         // and its standing effects: the river's flow among them, each with a place
         // the picture the water runs by, a field of the zones a look leaves alone
-        assert_eq!(water_flow_map(&lumps).map(|t| t.replace('\\', "/")).as_deref(), Some("maps/dota/water_flow_map.vtex"));
+        assert_eq!(
+            water_flow_map(&lumps).map(|t| t.replace('\\', "/")).as_deref(),
+            Some("maps/dota/water_flow_map.vtex")
+        );
         let fx = world_effects(&lumps);
         assert!(fx.len() > 800, "{}", fx.len());
         assert!(fx.iter().any(|f| f["fx"] == "particles/world_environmental_fx/map_riverflow_edges.vpcf"));
