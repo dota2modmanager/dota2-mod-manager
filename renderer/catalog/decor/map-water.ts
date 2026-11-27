@@ -169,9 +169,9 @@ void main() {
   // the sun's shine on the waves, as the game's water takes it
   vec3 v = normalize( ray );
   vec3 r = 2.0 * dot( v, n ) * n - v;
-  // the material's direction turned around, as the props' shine (map-light.ts): read as it stands,
-  // the waves at mid streaked bright where the game's water is smooth
-  float shine = pow( saturate( dot( -uReflectionDir, r ) ), uReflectionPower );
+  // the material's direction as it stands (dp3_sat cb0[16].yzw, R in water_dota; the far river at the
+  // Dire rune takes 0.63 of its shine from it, RenderDoc 2026-11-27)
+  float shine = pow( saturate( dot( uReflectionDir, r ) ), uReflectionPower );
   vec3 shineColour = mix( uReflectionColor * uSpecColor * uSun, uReflectionColor * uSpecColor, saturate( uSpecIndependence ) );
   c = saturate( c + shineColour * shine );
 
