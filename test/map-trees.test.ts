@@ -9,6 +9,9 @@ test('a tree node names its model, with or without the dot three takes out', () 
   assert.equal(treeModelOf('tree_oak_01btree_oak_01b_model'), 'tree_oak_01b');
   assert.equal(treeModelOf('tree_pine_01tree_pine_01_model_3'), 'tree_pine_01');
   assert.equal(treeModelOf('Tree_Pine_01Tree_Pine_01_model'), 'tree_pine_01');
+  // a part of another material keeps its number when three takes the dot out
+  assert.equal(treeModelOf('tree_oak_01btree_oak_01b_model12'), 'tree_oak_01b');
+  assert.equal(treeModelOf('tree_oak_01btree_oak_01b_model12_4'), 'tree_oak_01b');
 });
 
 test('the merged trees and other nodes name none', () => {

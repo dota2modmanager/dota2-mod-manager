@@ -14,6 +14,8 @@
  *   r_deferred_specular              the props' shine (map-spec.ts)
  *   r_deferred_additive_pass and     the lamps and braziers light what is around them: the game
  *   r_deferred_simple_light          draws them only with both on
+ *   r_dota_allow_wind_on_trees       the trees a player can cut sway (0: they stand still, while the
+ *                                    props' leaves, bushes, flowers, banners and lily pads sway on)
  * The glows (the haze over the Dire's lava pit) the game draws at every setting, after its post pass. */
 import type { VideoSettings } from '../../api/decor.ts';
 
@@ -24,6 +26,7 @@ export interface MapVideo {
   specular: boolean;
   smallLights: boolean;
   cheapShaders: boolean;
+  treeWind: boolean;
 }
 
 /** A setting as a switch: true, a number above 0 or a string of one; unknown is `fallback`. */
@@ -49,5 +52,6 @@ export function mapVideo(video: VideoSettings | null): MapVideo {
     specular: on(video, 'r_deferred_specular', true),
     smallLights: on(video, 'r_deferred_additive_pass', true) && on(video, 'r_deferred_simple_light', true),
     cheapShaders: !on(video, 'shaderquality', true),
+    treeWind: on(video, 'r_dota_allow_wind_on_trees', true),
   };
 }
