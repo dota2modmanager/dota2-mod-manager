@@ -29,7 +29,7 @@ export const SOURCE_TO_GLTF: THREE.Matrix4;
 export interface ControlPoint { pos: THREE.Vector3; quat: THREE.Quaternion; matrix(): THREE.Matrix4 }
 /** The systems, textures and snapshots a simulation reads, and the group its meshes are drawn in. */
 export class Library {
- constructor(options:{systems:Record<string,unknown>;textures:Record<string,unknown>;snapshots:Record<string,unknown>;url:(file:string)=>string;models?:unknown;options?:{onTexture?:(t:THREE.Texture)=>void;refract?:boolean;distanceFade?:boolean}});
+ constructor(options:{systems:Record<string,unknown>;textures:Record<string,unknown>;snapshots:Record<string,unknown>;url:(file:string)=>string;models?:unknown;options?:{onTexture?:(t:THREE.Texture)=>void;refract?:boolean;distanceFade?:boolean;globalLight?:(n:THREE.Vector3)=>THREE.Vector3}});
  group:THREE.Group; unsupported:Set<string>;
  system(path:string):Record<string,unknown>|null;
  dispose():void;
