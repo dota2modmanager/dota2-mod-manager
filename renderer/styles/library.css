@@ -96,8 +96,9 @@
   background: rgba(251, 191, 36, 0.12);
   border-color: rgba(251, 191, 36, 0.4);
 }
-/* the pill opens the list of who covers the row (renderer/views/library/covers.ts) */
-button.lib-tag.opens { font: inherit; cursor: pointer; }
+/* the pill opens the list of who covers the row (renderer/views/library/covers.ts); a button takes
+   the font's family and line from the row but keeps .lib-tag's small size, as the other pills do */
+button.lib-tag.opens { font-family: inherit; line-height: inherit; cursor: pointer; }
 button.lib-tag.opens:hover { border-color: var(--warning); }
 .cover-box { width: min(520px, calc(90vw / var(--content-zoom))); }
 .cover-list { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
