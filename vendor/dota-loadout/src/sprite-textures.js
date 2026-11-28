@@ -20,9 +20,42 @@ function gradientLayer(inputs) {
   };
 }
 
+// A control of a layer as a value and a rate: a literal, or the effect's age times a factor (the river's
+// noise scrolls by 0.3 a second).
+function control(x) {
+  if (x?.m_nType === 'PF_TYPE_COLLECTION_AGE' && x.m_nMapType === 'PF_MAP_TYPE_MULT') return { at: 0, rate: x.m_flMultFactor ?? 0 };
+  return { at: literal(x, 0), rate: 0 };
+}
+const PER_PARTICLE = { SPRITECARD_TEXTURE_PP_SCALE_SHADER_EXTRA_DATA1: 39, SPRITECARD_TEXTURE_PP_SCALE_SHADER_EXTRA_DATA2: 40 };
+
+// A later layer the card is multiplied by, part way (m_flTextureBlend): the river's waves take a
+// turbulent noise at 0.6, which breaks their rings into patches. The game's spritecard (RenderDoc, the
+// river's waves): colour and alpha become mix(card, card × layer, blend). The layer's UV is the card's
+// divided by its scale times the particle's scale field (SHADER_EXTRA_DATA1 is field 39: 1.604, 1.661,
+// 1.311 gave spans of 1.038, 1.004, 1.272 at a scale of 0.6), then moved by its offset, a random one per
+// particle (m_bRandomizeOffsets) and the effect's age times its rate. Other blend modes are left out.
+function multiplyLayer(usable, taken) {
+  const found = usable.find(({ input, index }) => !taken.has(index) && input.m_flTextureBlend !== undefined);
+  if (!found) return null;
+  const { input } = found, c = input.m_TextureControls || {};
+  if (input.m_nTextureBlendMode && input.m_nTextureBlendMode !== 'SPRITECARD_TEXTURE_BLEND_MULTIPLY') return null;
+  const u = control(c.m_flFinalTextureOffsetU), v = control(c.m_flFinalTextureOffsetV);
+  return {
+    path: input.m_hTexture,
+    blend: literal(input.m_flTextureBlend, 1),
+    scale: [literal(c.m_flFinalTextureScaleU, 1), literal(c.m_flFinalTextureScaleV, 1)],
+    offset: [u.at, v.at],
+    rate: [u.rate, v.rate],
+    random: c.m_bRandomizeOffsets === true,
+    field: PER_PARTICLE[c.m_nPerParticleScale] ?? null,
+  };
+}
+
 export function resolveSpriteTextures(renderer = {}) {
   const inputs = Array.isArray(renderer.m_vecTexturesInput) ? renderer.m_vecTexturesInput : [];
+  // a layer switched off is not drawn (the river's plasma noise)
   const usable = inputs.map((input, index) => ({ input: input || {}, index }))
+    .filter(({ input }) => input.m_bEnabled !== false)
     .filter(({ input }) => typeof input.m_hTexture === 'string' && input.m_hTexture.length > 0)
     .filter(({ input }) => input.m_nTextureType !== 'SPRITECARD_TEXTURE_UVDISTORTION');
   const first = usable[0];
@@ -37,6 +70,7 @@ export function resolveSpriteTextures(renderer = {}) {
   return {
     path,
     gradient: gradientLayer(inputs),
+    multiply: multiplyLayer(usable, new Set([first?.index, mask?.index])),
     channel: first?.input.m_nTextureChannels || null,
     maskPath: mask?.input.m_hTexture || null,
     // Standalone alpha-cloud textures use RGB as coverage (their PNG alpha
