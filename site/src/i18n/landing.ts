@@ -142,7 +142,7 @@ export interface Landing {
 
 export const landing: Record<'en' | 'ru', Landing> = {
   en: {
-    heroKicker: 'Free · open source · Windows and Linux',
+    heroKicker: 'Free · open source · Windows, Linux and macOS',
     heroTitle: 'Dota 2',
     heroTitleAccent: 'Mod Manager',
     heroLead: 'The mod manager and modding toolkit for Dota 2. Install {mods} {word} from the D2PFX catalog in one click, put any item from the game on any hero with a live 3D preview, and edit effects, the HUD and the map in the Workshop.',
@@ -156,7 +156,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     dlAll: 'All files, checksums and release notes on GitHub',
     dlMirror: 'GitHub down? Our mirror:',
     source: 'Source code',
-    heroMeta: 'Windows 10/11 and Linux · no account · updates itself',
+    heroMeta: 'Windows 10/11, Linux and macOS · no account · open source',
     statLabels: ['{word} in the catalog', '{word}', '{word}', 'free'],
     statWords: [
       ['mod', 'mods', 'mods'],
@@ -164,7 +164,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['release', 'releases', 'releases'],
     ],
     latest: 'latest',
-    heroTicks: ['Windows 10/11 and Linux', 'No account', 'Updates itself'],
+    heroTicks: ['Windows 10/11, Linux and macOS', 'No account', 'Updates itself on Windows and Linux'],
     browse: 'Browse the catalog',
     statHeroes: '{word} with sets of their own',
     statHeroWords: ['hero', 'heroes', 'heroes'],
@@ -195,7 +195,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Taking it all off', 'Delete the right files and restore the fonts and cursors you backed up, if you did.', 'Remove in My mods. The game is back to how Valve shipped it.'],
     ],
 
-    phoneNote: 'The app is for Windows and Linux. Open this page on your computer, or send yourself the link.',
+    phoneNote: 'The app is for Windows, Linux and macOS; on a Mac you install the .dmg. Open this page on your computer, or send yourself the link.',
     phoneShare: 'Send the link',
     phoneShared: 'Link copied',
 
@@ -294,14 +294,14 @@ export const landing: Record<'en' | 'ru', Landing> = {
     ],
 
     ctaTitle: 'Get it',
-    ctaLead: 'Windows 10, 11 or Linux. No account. It updates itself from here on.',
+    ctaLead: 'Windows 10, 11, Linux or macOS. No account. It updates itself from here on, or opens the release page on a Mac.',
     ctaMeta: 'Free forever. GPL-3.0. Built in the open.',
     linkGithub: ['Read the source', 'Every line, every release, every build log.'],
     linkDiscord: ['Come to Discord', 'Ask, report a bug, show the setup you made.'],
   },
 
   ru: {
-    heroKicker: 'Бесплатно · открытый код · Windows и Linux',
+    heroKicker: 'Бесплатно · открытый код · Windows, Linux и macOS',
     heroTitle: 'Dota 2',
     heroTitleAccent: 'Mod Manager',
     heroLead: 'Мод-менеджер и инструмент для моддинга Доты 2. Ставь {mods} {word} из каталога D2PFX в один клик, надевай любой предмет из игры на любого героя с живым 3D-просмотром и правь эффекты, HUD и карту в Мастерской.',
@@ -315,7 +315,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     dlAll: 'Все файлы, хеши и список изменений на GitHub',
     dlMirror: 'GitHub лежит? Наше зеркало:',
     source: 'Исходный код',
-    heroMeta: 'Windows 10/11 и Linux · без аккаунта · обновляется само',
+    heroMeta: 'Windows 10/11, Linux и macOS · без аккаунта · открытый код',
     statLabels: ['{word} в каталоге', '{word}', '{word}', 'бесплатно'],
     statWords: [
       ['мод', 'мода', 'модов'],
@@ -323,7 +323,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['релиз', 'релиза', 'релизов'],
     ],
     latest: 'последняя',
-    heroTicks: ['Windows 10/11 и Linux', 'Без аккаунта', 'Обновляется само'],
+    heroTicks: ['Windows 10/11, Linux и macOS', 'Без аккаунта', 'Обновляется само на Windows и Linux'],
     browse: 'Открыть каталог',
     statHeroes: '{word} со своими сетами',
     statHeroWords: ['герой', 'героя', 'героев'],
@@ -354,7 +354,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
       ['Убрать всё', 'Удалить нужные файлы и вернуть шрифты и курсоры из копии, если ты её сделал.', '«Удалить» в «Моих модах». Игра снова такая, какой её выпустила Valve.'],
     ],
 
-    phoneNote: 'Приложение для Windows и Linux. Открой сайт на компьютере или скинь себе ссылку.',
+    phoneNote: 'Приложение для Windows, Linux и macOS; на Mac ставится .dmg. Открой сайт на компьютере или скинь себе ссылку.',
     phoneShare: 'Скинуть ссылку',
     phoneShared: 'Ссылка скопирована',
 
@@ -453,7 +453,7 @@ export const landing: Record<'en' | 'ru', Landing> = {
     ],
 
     ctaTitle: 'Скачать мод-менеджер для Доты 2',
-    ctaLead: 'Windows 10, 11 или Linux. Без аккаунта. Дальше обновляется само.',
+    ctaLead: 'Windows 10, 11, Linux или macOS. Без аккаунта. Дальше обновляется само, а на Mac открывает страницу релиза.',
     ctaMeta: 'Бесплатно навсегда. GPL-3.0. Собирается на виду.',
     linkGithub: ['Читать исходники', 'Каждая строчка, каждый релиз, каждый лог сборки.'],
     linkDiscord: ['Зайти в Discord', 'Спросить, сообщить о баге, показать свою сборку.'],

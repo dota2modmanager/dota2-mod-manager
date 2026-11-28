@@ -36,6 +36,11 @@
 }
 #titlebar button, #titlebar input, #titlebar .tb-search { -webkit-app-region: no-drag; --drag: 0; }
 
+/* macOS draws the traffic lights itself (src-tauri/src/window.rs asks for the overlay title bar),
+ * so the app's own buttons go and the bar keeps that corner free for them. */
+html[data-platform="macos"] #titlebar { padding-left: 84px; padding-right: 14px; }
+html[data-platform="macos"] .tb-controls { display: none; }
+
 .tb-brand {
   display: flex;
   align-items: center;

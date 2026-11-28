@@ -47,6 +47,10 @@ pub struct Paths {
 }
 
 pub fn paths(game: &Path) -> Paths {
+    // The executable folder is this platform's: win64 on Windows, linuxsteamrt64 on Linux, osx64 on
+    // macOS. The signature list is the exception on a Mac: the mac depot ships none under osx64 and
+    // does ship bin/win64/dota.signatures, so that is the only list to keep in step, and the macOS
+    // patch writes its line into the same file the Windows one does.
     let bin = if cfg!(target_os = "linux") { ["bin", "linuxsteamrt64"] } else { ["bin", "win64"] };
     Paths {
         gameinfo: game.join("dota").join("gameinfo.gi"),

@@ -26,6 +26,7 @@
     "aur": "node tools/release/gen-aur.js",
     "modkit": "node tools/mods/modkit.mjs",
     "dist": "tauri build",
+    "dist:mac": "tauri build --bundles app,dmg",
     "start:sandbox": "node tools/dev/sandbox.js pin && npm run build:app && cargo run -p dota2-mod-manager -- --user-data-dir=sandbox/userdata --write-jail=sandbox",
     "e2e": "npm run build:app && node tools/dev/e2e.mjs"
   },

@@ -18,6 +18,17 @@ turning the first application down for public visibility. The Windows build alre
 SignPath (`code-signing.yml`, `.github/actions/signpath-windows`); releases start being signed
 once SignPath has reviewed that setup and issued the release certificate.
 
+**A signed and notarized macOS build.** The .dmg ships unsigned, which costs two things: the first
+launch needs Open from the context menu, and the app cannot install its own update, so it offers
+the release page instead. Both go away with an Apple Developer ID certificate, a hardened-runtime
+build and a notarization step in `release.yml`, and the certificate belongs to a person rather
+than to the project, the same problem the Windows signature goes through SignPath to solve.
+
+What stays missing on macOS whatever happens here is Valve's own part: the Workshop Tools that
+compile a model, a custom sound or a texture pack are Windows only, so on a Mac a mod built from
+the game's files still installs, while a mod that needs compiling is finished somewhere else.
+That is Valve's toolchain, not this project's.
+
 **A download route that does not depend on GitHub.** When GitHub was down for three hours in
 August 2026, no mod could be installed at all: every fallback in the app was GitHub wearing a
 different hostname. There is a mirror of the catalog now, and the app can be told about further
@@ -58,9 +69,6 @@ will ever need it.
 
 **Paid features.** The app is GPL-3.0 and stays whole. There is no plan for a paid tier, a
 donation wall in front of a feature, or a sponsor build.
-
-**A macOS build.** Dota's layout there has never been tested here and there is no machine to test
-it on. Saying "not supported" is more honest than shipping something nobody has run.
 
 **Hosting mods as if they were ours.** The mods and the catalog belong to
 [h6rd/Dota2PornFxWeb](https://github.com/h6rd/Dota2PornFxWeb) and to the people who made them.

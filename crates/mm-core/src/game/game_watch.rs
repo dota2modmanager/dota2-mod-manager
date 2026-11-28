@@ -30,11 +30,18 @@ pub fn dota_is_running() -> bool {
             .output();
         (out, |s: &str| s.to_lowercase().contains("dota2.exe"))
     };
+    // macOS answers with the same call: the client is game/bin/osx64/dota2.app, whose process is
+    // named dota2, so one -x match serves both platforms.
     #[cfg(not(windows))]
-    let (out, hit) =
-        (Command::new("pgrep").args(["-x", "dota2"]).output(), |s: &str| s.bytes().any(|b| b.is_ascii_digit()));
-    match out {
-        Ok(o) if o.status.success() => hit(&String::from_utf8_lossy(&o.stdout)),
+    return process_named("dota2");
+}
+
+/// Whether a process with exactly this name runs. `-x` and never `-f`: the latter would also
+/// match the Steam command line that mentions the game.
+#[cfg(not(windows))]
+fn process_named(name: &str) -> bool {
+    match Command::new("pgrep").args(["-x", name]).output() {
+        Ok(o) if o.status.success() => o.stdout.iter().any(u8::is_ascii_digit),
         _ => false,
     }
 }
@@ -221,5 +228,25 @@ mod process_table {
             std::process::Command::new("tasklist").args(["/FI", "IMAGENAME eq explorer.exe", "/NH"]).output().unwrap();
         let listed = String::from_utf8_lossy(&out.stdout).to_lowercase().contains("explorer.exe");
         assert_eq!(windows_process_named("explorer.exe"), Some(listed));
+    }
+}
+
+#[cfg(all(test, unix))]
+mod process_table_unix {
+    use super::process_named;
+
+    /// A copy of a system binary renamed to dota2 is killed on a Mac before it can be looked for,
+    /// so the name under test is a program that is really running: what is proved is that the
+    /// lookup finds a live process by the exact name both unix clients run under.
+    #[test]
+    fn a_running_program_is_found_by_its_name_and_a_made_up_one_is_not() {
+        let mut child = std::process::Command::new("sleep").arg("30").spawn().unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(300));
+        let found = process_named("sleep");
+        let absent = process_named("no-such-process-mm");
+        let _ = child.kill();
+        let _ = child.wait();
+        assert!(found, "pgrep -x finds a running process by its name");
+        assert!(!absent, "and answers no for one that is not there");
     }
 }

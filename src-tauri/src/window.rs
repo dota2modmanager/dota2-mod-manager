@@ -235,11 +235,21 @@ pub fn open(app: &tauri::App, owner: Arc<Backend>, o: Open) -> tauri::Result<Web
     if let Some(dir) = &o.webview_data {
         builder = builder.data_directory(dir.clone());
     }
+    // Frameless everywhere, because the title bar is the page's own. macOS is the exception: its
+    // traffic lights are the window's, drawn over the page with the title hidden, and the page is
+    // told which chrome it has so it drops its own buttons and leaves that corner free
+    // (renderer/styles/shell.css).
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true)
+        .initialization_script("document.documentElement.dataset.platform = 'macos';");
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.decorations(false);
     let win = builder
         .title("Dota 2 Mod Manager")
         .inner_size(fit.width, fit.height)
         .min_inner_size(fit.min_width, fit.min_height)
-        .decorations(false)
         .visible(!o.quiet)
         .background_color(tauri::window::Color(5, 5, 6, 255))
         .initialization_script(&o.init_script)

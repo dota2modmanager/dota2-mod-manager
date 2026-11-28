@@ -1011,7 +1011,7 @@ const en: Record<Slug, Doc> = {
         ["Mods","{mods} from the D2PFX catalog, read live","19,000+ by its own count","3,400+ by its own count","The D2PFX catalog, 737 hero mods when we looked"],
         ["Builds mods from your game files","Item builder with a 3D preview, effect, HUD and map editors, your own sounds","Not on its page","A texture and particle editor","No"],
         ["Load order and collisions","Shown, and you change the order","Not on its page","No","No"],
-        ["Systems","Windows, Linux","Windows, macOS, Linux","Windows","Windows"],
+        ["Systems","Windows, Linux, macOS","Windows, macOS, Linux","Windows","Windows"],
         ["Risk for your account","Cosmetic files only","Cosmetic packs","Cosmetic packs","Its own FAQ says it breaks Valve's rules. <a href=\"~/docs/ulibka-launcher/\">What it does</a>"]] },
       { k: 'note', t: "Their columns say what their own sites say, checked on 7 November 2026. Where a site says nothing, the cell says so." },
 
@@ -1079,7 +1079,7 @@ const en: Record<Slug, Doc> = {
       {
         k: 'list',
         items: [
-          'No Mac build. Windows and Linux are both supported and both shipped with every release; macOS is not, and Dota runs there through a translation layer that this has never been tested against.',
+          'No signed Mac build yet. The .dmg works on Apple Silicon and needs macOS 12, but it is unsigned: the first launch needs Open from the context menu, and the app cannot install its own update there, so it opens the release page instead.',
           'The catalog is smaller than the largest one out there. It is curated, previewed and open, which is a different trade.',
           'The installer is unsigned, so Windows warns about it on first run. <a href="~/docs/safe/#smartscreen">Why, and what to do</a>.',
           'It does not edit textures. Recolouring a mod is a job for the catalog\'s tools. <a href="~/docs/own-mods/#tools">Those</a>.',
@@ -2065,7 +2065,7 @@ const ru: Record<Slug, Doc> = {
         ["Моды","{mods} из каталога D2PFX, читаются вживую","19 000+ по их счёту","3 400+ по их счёту","Каталог D2PFX, 737 модов героев, когда мы смотрели"],
         ["Собирает моды из файлов твоей игры","Конструктор предметов с 3D, редакторы эффектов, HUD и карты, свои звуки","На их странице нет","Редактор текстур и частиц","Нет"],
         ["Порядок загрузки и конфликты","Показывает, порядок меняешь ты","На их странице нет","Нет","Нет"],
-        ["Системы","Windows, Linux","Windows, macOS, Linux","Windows","Windows"],
+        ["Системы","Windows, Linux, macOS","Windows, macOS, Linux","Windows","Windows"],
         ["Риск для аккаунта","Только косметические файлы","Косметические паки","Косметические паки","В своём FAQ сами пишут, что нарушают правила Valve. <a href=\"~/docs/ulibka-launcher/\">Что он делает</a>"]] },
       { k: 'note', t: "Колонки других программ написаны по их собственным сайтам на 7 ноября 2026 года. Если сайт молчит, в клетке так и написано." },
 
@@ -2133,7 +2133,7 @@ const ru: Record<Slug, Doc> = {
       {
         k: 'list',
         items: [
-          'Нет сборки под Mac. Windows и Linux поддерживаются оба и выходят в каждом релизе, а macOS нет: Дота там работает через слой совместимости, и с ним ничего не проверялось.',
+          'Подписанной сборки под Mac пока нет. .dmg работает на Apple Silicon и требует macOS 12, но он не подписан: при первом запуске нужно «Открыть» через контекстное меню, и обновление приложение само там поставить не может, поэтому открывает страницу релиза.',
           'Каталог меньше самого крупного из существующих. Он отобранный, с превью и открытый - это другой обмен.',
           'Установщик не подписан, поэтому Windows ругается при первом запуске. <a href="~/docs/safe/#smartscreen">Почему и что делать</a>.',
           'Она не редактирует текстуры. Перекрасить мод - работа для инструментов каталога. <a href="~/docs/own-mods/#tools">Вот они</a>.',

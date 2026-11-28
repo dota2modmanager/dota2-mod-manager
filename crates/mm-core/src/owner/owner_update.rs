@@ -30,6 +30,8 @@ pub fn start(o: &Arc<Owner>, inner: Box<dyn UpdaterLike + Send>) {
         inner,
         // a portable copy is told a version exists and fetches it beside itself on a click
         crate::portable_update::portable_dir().is_some(),
+        // a mac bundle cannot install an update over itself: the window offers the release page
+        cfg!(target_os = "macos"),
         Box::new(move || ch.upgrade().map(|o| channel(&o)).unwrap_or_else(|| "latest".into())),
         Box::new(move |news| {
             if let Some(o) = tell.upgrade() {
@@ -160,15 +162,15 @@ mod tests {
         assert!(report(&o).is_none(), "no updater until the shell starts one");
         let seen = Arc::new(Mutex::new(Vec::new()));
         start(&o, Box::new(Seen(seen.clone())));
-        assert_eq!(*seen.lock().unwrap(), ["auto true", "channel latest", "github true", "check"]);
+        // a build that cannot install an update over itself fetches nothing either
+        let auto = if cfg!(target_os = "macos") { "auto false" } else { "auto true" };
+        assert_eq!(*seen.lock().unwrap(), [auto, "channel latest", "github true", "check"]);
         available(&o, "9.9.10");
         downloaded(&o, "9.9.10");
+        let found = if cfg!(target_os = "macos") { "download" } else { "available" };
         assert_eq!(
             *told.0.lock().unwrap(),
-            [
-                json!([{ "type": "available", "version": "9.9.10" }]),
-                json!([{ "type": "downloaded", "version": "9.9.10" }])
-            ]
+            [json!([{ "type": found, "version": "9.9.10" }]), json!([{ "type": "downloaded", "version": "9.9.10" }])]
         );
         // GitHub failed: remembered for the report, and the same look goes to the mirror
         error(&o, "offline");

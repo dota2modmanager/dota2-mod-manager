@@ -11,7 +11,7 @@
   <a href="https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager-Setup.exe">
     <img src="https://img.shields.io/github/v/release/dota2modmanager/dota2-mod-manager?style=for-the-badge&color=8b6ff0&label=Download&logo=github&logoColor=white" alt="Download the latest release"></a>
   <img src="https://img.shields.io/github/downloads/dota2modmanager/dota2-mod-manager/Dota-2-Mod-Manager-Setup.exe?style=for-the-badge&color=4f378b&label=Installs" alt="Installer downloads">
-  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux-211f26?style=for-the-badge&logo=windows&logoColor=d0bcff" alt="Windows and Linux">
+  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux%20%7C%20macOS-211f26?style=for-the-badge&logo=windows&logoColor=d0bcff" alt="Windows, Linux and macOS">
 </p>
 
 <p>
@@ -98,8 +98,8 @@ The mod manager and modding toolkit for Dota 2: install mods from the community 
 <tr><td><b>Fonts and cursors</b></td><td>Installed into the game files with a backup of the originals; removing them restores vanilla</td></tr>
 <tr><td><b>Combined packs</b></td><td>Merge several mods into one pak slot, and take them apart again</td></tr>
 <tr><td><b>Your own files</b></td><td>Import a <code>.vpk</code>, or adopt what somebody else's tool left in the folder. The app fingerprints it against the catalog and tells you what it is</td></tr>
-<tr><td><b>Auto-updates</b></td><td>The app checks GitHub Releases and installs new versions itself</td></tr>
-<tr><td><b>Windows and Linux</b></td><td>Both ship with every release: an installer and a portable build for Windows; a .deb, an .rpm and an AppImage for Linux. Steam is found wherever your distribution keeps it, flatpak included</td></tr>
+<tr><td><b>Auto-updates</b></td><td>The app checks GitHub Releases and installs new versions itself. On macOS, where an unsigned bundle cannot install its own update, it opens the release page</td></tr>
+<tr><td><b>Windows, Linux and macOS</b></td><td>All three ship with every release: an installer and a portable build for Windows; a .deb, an .rpm and an AppImage for Linux; a .dmg for Apple Silicon on macOS 12 or newer. Steam is found wherever your system keeps it, flatpak included</td></tr>
 <tr><td><b>No account, nothing about you</b></td><td>Nothing about you is collected or sent. Installing a catalog mod adds one to its download count, and that can be switched off. Signing in with Discord is optional and only puts your name on a setup you share</td></tr>
 </table>
 </details>
@@ -158,9 +158,14 @@ and update through your package manager:
   `git clone https://github.com/dota2modmanager/dota2-mod-manager && cd dota2-mod-manager/packaging/aur && makepkg -si`
 - [AppImage](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager.AppImage) for anything else: `chmod +x` it and run it.
 
+**On macOS** download the .dmg from the
+[latest release](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest), open it and
+drag the app into Applications. It runs on Apple Silicon and needs macOS 12 or newer.
+
 > [!IMPORTANT]
 > Windows will call the publisher unknown, because the installer carries no paid signature.
-> Click **More info**, then **Run anyway**. Every release is built from this source by a
+> Click **More info**, then **Run anyway**. macOS says the same about the .dmg: the first launch
+> needs a right-click on the app, then **Open**. Every release is built from this source by a
 > [public workflow](https://github.com/dota2modmanager/dota2-mod-manager/actions/workflows/release.yml)
 > rather than uploaded from anybody's desktop, and the build log for the exact file you
 > downloaded is open to read.
@@ -179,8 +184,8 @@ sha256sum --check --ignore-missing SHA256SUMS
 ```
 
 On Windows without the GitHub CLI, `Get-FileHash Dota-2-Mod-Manager-Setup.exe` in PowerShell prints
-the hash to compare with its line in `SHA256SUMS`. Releases published before this check existed
-have no `SHA256SUMS`.
+the hash to compare with its line in `SHA256SUMS`; on macOS, `shasum -a 256` does the same for the
+.dmg. Releases published before this check existed have no `SHA256SUMS`.
 
 <br>
 

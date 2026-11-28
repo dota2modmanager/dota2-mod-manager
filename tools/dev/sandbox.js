@@ -293,21 +293,32 @@ const FALLBACK_SCHEMA = `"items_game"
 
 // ---------- seed ----------
 
+// The folder next to the game's executable is named for the platform. This machine's own macOS
+// install (2026-11-28) has game/bin/osx64 holding dota2.app, and game/bin/win64 holding nothing
+// but dota.signatures and system.signatures - the Mac depot ships the Windows folder with no
+// executable in it, so the seeded tree keeps that one too.
+const PLATFORM_BIN = ({ win32: 'win64', linux: 'linuxsteamrt64', darwin: 'osx64' })[process.platform] || 'win64';
+
 function buildGameTree() {
   log('game tree ->', GAME);
+  const darwin = process.platform === 'darwin';
   for (const p of [
     path.join(GAME, 'dota', 'cfg'),
     path.join(GAME, 'dota', 'panorama', 'fonts'),
     path.join(GAME, 'dota', 'resource', 'cursor'),
     path.join(GAME, 'dota_russian'),
     path.join(GAME, 'core'),
-    path.join(GAME, 'bin', 'win64'),
-    // The signature file the patcher reads lives next to the game's executable, and that
-    // folder has a different name on Linux. Both are made here so the same seeded tree works
-    // whichever platform the app is run against it from.
-    path.join(GAME, 'bin', 'linuxsteamrt64'),
+    path.join(GAME, 'bin', PLATFORM_BIN),
+    ...(darwin ? [
+      // where the signature list lives on a Mac (patcher::paths reads win64 on every platform
+      // but Linux), and the bundle the app takes a Mac install by
+      path.join(GAME, 'bin', 'win64'),
+      path.join(GAME, 'bin', 'osx64', 'dota2.app', 'Contents', 'MacOS'),
+    ] : []),
     LIB,
   ]) mkdir(p);
+  // validate_game_path takes a Mac install by this bundle; nothing in the sandbox ever starts it
+  if (darwin) fs.writeFileSync(path.join(GAME, 'bin', 'osx64', 'dota2.app', 'Contents', 'MacOS', 'dota2'), '');
 
   const real = findDotaGamePathSync();
   const copied = [];
@@ -342,6 +353,11 @@ function buildGameTree() {
    * noticed that Valve's Linux build ships no dota.signatures at all: the sandbox was the only
    * Linux install in the world that had one. A user's photograph of that folder settled it on
    * 2026-09-11, after the app had spent every release refusing to patch a Linux game.
+   *
+   * macOS keeps the list in the Windows folder: the install this was written against (2026-11-28)
+   * has game/bin/osx64 with dota2.app and no list of its own, and game/bin/win64 holding
+   * dota.signatures and system.signatures, which is where patcher::paths reads it on every
+   * platform but Linux.
    *
    * So the tree matches the platform it is standing in for. A Linux developer now gets the
    * install their users have. */
@@ -395,18 +411,20 @@ function buildGameTree() {
 }
 
 function findDotaGamePathSync() {
-  // findDotaGamePath is async; the registry lookup it does is optional here, so try the
-  // well-known location first and fall back to null rather than making seed() await it.
-  for (const drive of 'CDEFGH') {
-    for (const lib of [
+  // findDotaGamePath is async; the registry and libraryfolder walks it does are optional here, so
+  // the standard Steam folder of each platform is tried and nothing else, falling back to null
+  // rather than making seed() await it.
+  const roots = process.platform === 'darwin'
+    ? [path.join(os.homedir(), 'Library', 'Application Support', 'Steam')]
+    : 'CDEFGH'.split('').flatMap((drive) => [
       `${drive}:\\Program Files (x86)\\Steam`,
       `${drive}:\\Program Files\\Steam`,
       `${drive}:\\Steam`,
       `${drive}:\\SteamLibrary`,
-    ]) {
-      const game = path.join(lib, 'steamapps', 'common', 'dota 2 beta', 'game');
-      if (fs.existsSync(path.join(game, 'dota', 'pak01_dir.vpk'))) return game;
-    }
+    ]);
+  for (const lib of roots) {
+    const game = path.join(lib, 'steamapps', 'common', 'dota 2 beta', 'game');
+    if (fs.existsSync(path.join(game, 'dota', 'pak01_dir.vpk'))) return game;
   }
   return null;
 }

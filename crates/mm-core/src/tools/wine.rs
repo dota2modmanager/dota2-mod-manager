@@ -1,4 +1,4 @@
-//! Running a Windows program on Linux, for the one that has no Linux build: resourcecompiler.exe,
+//! Running a Windows program off Windows, for the one that has no native build: resourcecompiler.exe,
 //! Valve's compiler from the Workshop Tools (resource_compiler.rs).
 //!
 //! The app keeps a Wine prefix of its own in userData/wine rather than borrowing ~/.wine: a prefix
@@ -6,8 +6,9 @@
 //! compile or ahead of it from Settings, with Wine told not to offer Mono and Gecko.
 //!
 //! Which Wine: the system's, on PATH, and when there is none the one inside a Proton Steam
-//! installed (files/bin/wine; older Protons kept it under dist/). A path goes to a Windows program
-//! as Windows spells it, through the Z: drive every new prefix maps to the root.
+//! installed (files/bin/wine; older Protons kept it under dist/). macOS has no Proton, so there it
+//! is the Wine inside CrossOver or Whisky, where those two install themselves. A path goes to a
+//! Windows program as Windows spells it, through the Z: drive every new prefix maps to the root.
 
 use std::path::{Path, PathBuf};
 
@@ -79,12 +80,31 @@ pub fn path_wines(path_var: &str) -> Vec<PathBuf> {
         .collect()
 }
 
-/// The Wine to run with: the system's first, then a Proton's; None when there is neither.
+/// The Wine macOS can have, in the order it is worth trying: CrossOver installs one inside its app,
+/// system-wide and for one user; Whisky keeps one library for every bottle rather than one per
+/// bottle, and its bottles under Library/Containers hold none of their own.
+pub fn mac_wines(home: &str) -> Vec<PathBuf> {
+    let crossover = Path::new("CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine");
+    let home = Path::new(home);
+    vec![
+        Path::new("/Applications").join(crossover),
+        home.join(crossover),
+        home.join("Library/Application Support/com.isaacmarovitz.Whisky/Libraries/Wine/bin/wine64"),
+    ]
+}
+
+fn first_existing(paths: impl IntoIterator<Item = PathBuf>) -> Option<PathBuf> {
+    paths.into_iter().find(|p| p.exists())
+}
+
+/// The Wine to run with: the system's first, then a Proton's on Linux or CrossOver's and Whisky's on
+/// macOS; None when there is none.
 pub fn find_wine(path_var: &str, home: &str, xdg_data_home: Option<&str>) -> Option<PathBuf> {
-    path_wines(path_var)
-        .into_iter()
-        .next()
-        .or_else(|| proton_wines(&crate::steam::linux_steam_roots(home, xdg_data_home)).into_iter().next())
+    let on_path = path_wines(path_var).into_iter().next();
+    if cfg!(target_os = "macos") {
+        return on_path.or_else(|| first_existing(mac_wines(home)));
+    }
+    on_path.or_else(|| proton_wines(&crate::steam::linux_steam_roots(home, xdg_data_home)).into_iter().next())
 }
 
 /// What a prefix leaves on disk once wineboot has made it; the marker is ours, written after.
@@ -118,4 +138,41 @@ pub fn ensure_prefix(prefix: &Path, wine: &str, run: RunProcess, log: &mut dyn F
     }
     let marker = json!({ "wine": wine, "at": crate::js::json_number(crate::library::now()) });
     std::fs::write(prefix.join(READY), serde_json::to_string(&marker).unwrap_or_default()).map_err(|e| e.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn macos_wine_is_crossover_then_whisky_where_they_install_themselves() {
+        let found = mac_wines("/Users/someone");
+        assert_eq!(found[0], Path::new("/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine"));
+        assert_eq!(found[1], Path::new("/Users/someone/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine"));
+        assert_eq!(
+            found[2],
+            Path::new("/Users/someone/Library/Application Support/com.isaacmarovitz.Whisky/Libraries/Wine/bin/wine64")
+        );
+        // a bottle holds no Wine of its own, so nothing under Containers is offered
+        assert_eq!(found.len(), 3);
+    }
+
+    #[test]
+    fn the_first_wine_that_is_there_is_the_one_taken() {
+        let dir = std::env::temp_dir().join(format!("mm-wine-find-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let absent = dir.join("absent").join("wine");
+        let early = dir.join("early").join("wine");
+        let late = dir.join("late").join("wine");
+        // the earlier of the two that exist wins, whether or not a later one does too
+        assert_eq!(first_existing([absent.clone(), early.clone(), late.clone()]), None);
+        std::fs::create_dir_all(late.parent().unwrap()).unwrap();
+        std::fs::write(&late, "").unwrap();
+        assert_eq!(first_existing([absent.clone(), early.clone(), late.clone()]), Some(late.clone()));
+        std::fs::create_dir_all(early.parent().unwrap()).unwrap();
+        std::fs::write(&early, "").unwrap();
+        assert_eq!(first_existing([absent, early.clone(), late]), Some(early));
+        std::fs::remove_dir_all(&dir).unwrap();
+    }
 }

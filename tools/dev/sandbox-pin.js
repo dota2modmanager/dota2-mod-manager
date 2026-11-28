@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 // a game folder by the files the app takes as one (validate_game_path, crates/mm-core/src/install/installer.rs)
-const isGame = (p) => ['dota/pak01_dir.vpk', 'bin/win64/dota2.exe', 'bin/linuxsteamrt64/dota2'].some((f) => fs.existsSync(path.join(p, ...f.split('/'))));
+const isGame = (p) => ['dota/pak01_dir.vpk', 'bin/win64/dota2.exe', 'bin/linuxsteamrt64/dota2', 'bin/osx64/dota2.app'].some((f) => fs.existsSync(path.join(p, ...f.split('/'))));
 
 /**
  * @param {string} userData the sandbox's --user-data-dir

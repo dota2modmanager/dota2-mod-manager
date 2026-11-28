@@ -1,8 +1,9 @@
 //! Finding Steam, and then Dota inside it.
 //!
 //! Only the first step differs by platform: Windows keeps the answer in the registry, Linux in
-//! one of four folders depending on how Steam was installed. After that it is Steam's own
-//! layout: libraryfolders.vdf lists the other drives and the game sits under steamapps/common.
+//! one of four folders depending on how Steam was installed, macOS in the one folder under
+//! Application Support. After that it is Steam's own layout: libraryfolders.vdf lists the other
+//! drives and the game sits under steamapps/common.
 
 use std::path::Path;
 
@@ -102,6 +103,11 @@ pub fn linux_steam_roots(home: &str, xdg_data_home: Option<&str>) -> Vec<String>
     ]
 }
 
+/// Where Steam keeps its files on macOS: one folder, whoever installed it.
+pub fn macos_steam_roots(home: &str) -> Vec<String> {
+    vec![join(false, &[home, "Library", "Application Support", "Steam"])]
+}
+
 /// steamapps, or SteamApps where the disk spells it so (Linux cares, Windows does not).
 pub fn steamapps_dir(windows: bool, lib: &str) -> String {
     for name in ["steamapps", "SteamApps"] {
@@ -123,11 +129,12 @@ pub fn pick_steam_root(candidates: &[Option<String>], windows: bool) -> Option<S
 }
 
 /// Libraries to look through when Steam did not say: on Windows the usual folders on every drive
-/// letter, on Linux the roots above and the one folder a second library usually ends up in.
+/// letter, elsewhere this platform's roots and the one folder a second library usually ends up in.
 pub fn fallback_libraries(windows: bool, home: &str, xdg_data_home: Option<&str>) -> Vec<String> {
     if !windows {
-        let mut v = linux_steam_roots(home, xdg_data_home);
-        v.push(join(cfg!(windows), &[home, "Games", "SteamLibrary"]));
+        let mut v =
+            if cfg!(target_os = "macos") { macos_steam_roots(home) } else { linux_steam_roots(home, xdg_data_home) };
+        v.push(join(false, &[home, "Games", "SteamLibrary"]));
         return v;
     }
     "CDEFGH"
@@ -202,8 +209,51 @@ pub fn find_dota_game_path() -> Option<String> {
         ],
         true,
     );
-    #[cfg(not(windows))]
+    #[cfg(all(not(windows), not(target_os = "macos")))]
     let root =
         pick_steam_root(&linux_steam_roots(&home, xdg.as_deref()).into_iter().map(Some).collect::<Vec<_>>(), false);
+    #[cfg(target_os = "macos")]
+    let root = pick_steam_root(&macos_steam_roots(&home).into_iter().map(Some).collect::<Vec<_>>(), false);
     find_dota_in(cfg!(windows), root.as_deref(), &fallback_libraries(cfg!(windows), &home, xdg.as_deref()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn macos_keeps_steam_in_one_folder_under_application_support() {
+        assert_eq!(macos_steam_roots("/Users/mac"), vec!["/Users/mac/Library/Application Support/Steam".to_string()]);
+    }
+
+    #[test]
+    fn a_dota_under_application_support_is_found_through_the_library_steam_names() {
+        let root = std::env::temp_dir().join(format!("mm-steam-{}", std::process::id()));
+        let lib = root.join("Steam");
+        let game = lib.join("steamapps").join("common").join("dota 2 beta").join("game");
+        std::fs::create_dir_all(game.join("dota")).unwrap();
+        std::fs::write(game.join("dota").join("pak01_dir.vpk"), b"").unwrap();
+        std::fs::create_dir_all(lib.join("steamapps")).unwrap();
+        std::fs::write(
+            lib.join("steamapps").join("libraryfolders.vdf"),
+            format!("\"libraryfolders\"\n{{\n\t\"0\"\n\t{{\n\t\t\"path\"\t\t\"{}\"\n\t}}\n}}\n", lib.display()),
+        )
+        .unwrap();
+
+        let found = find_dota_in(false, Some(&lib.to_string_lossy()), &[]);
+        assert_eq!(
+            found,
+            Some(game.to_string_lossy().into_owned()),
+            "the mac library layout resolves as it does on Linux"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn the_mac_fallback_is_the_application_support_folder_before_anything_else() {
+        let libs = fallback_libraries(false, "/Users/mac", None);
+        assert_eq!(libs[0], "/Users/mac/Library/Application Support/Steam");
+        assert!(libs.iter().all(|l| !l.contains(".local")), "no Linux roots leak in on a Mac");
+    }
 }

@@ -1,0 +1,168 @@
+# Does this thing work on Apple Silicon at all?
+#
+# Dota has a native macOS build (game/bin/osx64), the mods are the same files in the same folders,
+# and the parts of the app that were Windows-shaped - finding Steam, the frameless window, a link
+# handed over by the browser - now have a macOS branch. A branch nobody runs is a branch that rots,
+# so this builds the .app and the .dmg (the Tauri shell, src-tauri/) on every merge to main.
+#
+# Nothing here is published. There is no release step: the release still ships Windows and Linux,
+# and no macOS build is signed yet, so a release would offer a download that macOS refuses to
+# replace with its own update and that Gatekeeper will question on the first start. The artifact
+# below is how that person gets a build to try without installing a toolchain. It is not a
+# required check either, and .github/required-checks.json is deliberately left alone, because a
+# check nothing waits for is a check nobody reads as a promise.
+name: macOS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+
+permissions:
+  contents: read
+
+
+jobs:
+  build:
+    name: Build the .dmg
+    # Not macos-latest: this port is the arm64 build, and an image that moved back to Intel would
+    # still look green here while shipping a binary that is not the one being worked on.
+    runs-on: macos-14
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # the runner image carries rustup; stable is whatever it names today
+      - name: Rust toolchain
+        run: rustup toolchain install stable --profile minimal && rustup default stable
+
+      # Not published: this proves the build works. release.yml builds the one people download.
+      # its own release build, saved on main for the next merge
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          # one key per runner: a macOS target folder is not a Linux or a Windows one, and a
+          # shared key would have each of them restoring a cache it then throws away
+          shared-key: release-macos-14
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      # the tests that hold the app's answers to the Rust core run mm-cli, and fail under CI when
+      # it is missing instead of skipping (test/helpers/mm-cli.ts)
+      - name: Build mm-cli
+        run: cargo build -p mm-cli
+
+      # tauri-build only needs the page's folder to exist, not the page: an empty one stands in
+      # for the UI build, as on the Windows job in test.yml
+      - name: An empty page folder for the shell
+        run: mkdir -p out/renderer-tauri
+
+      - name: Tests
+        run: npm test
+
+      - name: Crate tests
+        run: cargo test --workspace
+
+      # tauri.conf.json names nsis, the Windows installer, as its only bundle target, so the two
+      # macOS bundles have to be asked for by name.
+      - name: Build
+        run: npx tauri build --bundles app,dmg
+
+      # A dmg is a disk image holding an .app, and neither the bundler's exit code nor a file on
+      # disk says the image mounts or that what is inside is what was just built.
+      - name: The dmg mounts, and holds this run's arm64 app
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=(target/release/bundle/dmg/*.dmg)
+          if [ "${#dmgs[@]}" -ne 1 ]; then
+            echo "::error::expected one .dmg in target/release/bundle/dmg, found ${#dmgs[@]}"
+            exit 1
+          fi
+          dmg="${dmgs[0]}"
+          ls -l "$dmg"
+          mnt="$RUNNER_TEMP/dmg"
+          mkdir -p "$mnt"
+          # a check that fails below still unmounts, so the image is never left holding the runner
+          trap 'hdiutil detach "$mnt" > /dev/null 2>&1 || true' EXIT
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "$dmg"
+
+          apps=("$mnt"/*.app)
+          if [ "${#apps[@]}" -ne 1 ]; then
+            ls -la "$mnt"
+            echo "::error::the dmg holds ${#apps[@]} .app bundles, not one"
+            exit 1
+          fi
+          app="${apps[0]}"
+          plist="$app/Contents/Info.plist"
+          echo "mounted: $app"
+
+          # the package's own version, which tauri.conf.json takes the bundle's from
+          want=$(node -p "require('./package.json').version")
+          got=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$plist")
+          echo "version: $got (package.json $want)"
+          [ "$got" = "$want" ] || { echo "::error::the dmg holds version $got, not $want"; exit 1; }
+
+          exe=$(/usr/libexec/PlistBuddy -c "Print :CFBundleExecutable" "$plist")
+          bin="$app/Contents/MacOS/$exe"
+          lipo -archs "$bin"
+          # one architecture on purpose: a universal binary here would mean the runner also built
+          # the Intel half, which nothing in this port has been run as
+          [ "$(lipo -archs "$bin")" = "arm64" ] || { echo "::error::$exe is not an arm64-only binary"; exit 1; }
+
+          # the bundle in the image is the one this run left behind, byte for byte, not one an
+          # earlier build put on the disk
+          built="target/release/bundle/macos/$(basename "$app")"
+          [ -d "$built" ] || { echo "::error::the dmg holds an app this build did not make: $built is missing"; exit 1; }
+          shasum -a 256 "$bin" "$built/Contents/MacOS/$exe"
+          [ "$(shasum -a 256 "$bin" | cut -d' ' -f1)" = "$(shasum -a 256 "$built/Contents/MacOS/$exe" | cut -d' ' -f1)" ] \
+            || { echo "::error::the dmg's binary is not the one this run built"; exit 1; }
+
+      # The scheme and the file type are what a browser and Finder hand a .d2mm link to, and both
+      # are read out of the bundle's Info.plist rather than set by the app at run time.
+      - name: The bundle claims d2mm links, .d2mm files and macOS 12
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=(target/release/bundle/dmg/*.dmg)
+          if [ "${#dmgs[@]}" -ne 1 ]; then
+            echo "::error::expected one .dmg in target/release/bundle/dmg, found ${#dmgs[@]}"
+            exit 1
+          fi
+          mnt="$RUNNER_TEMP/dmg-info"
+          mkdir -p "$mnt"
+          trap 'hdiutil detach "$mnt" > /dev/null 2>&1 || true' EXIT
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "${dmgs[0]}"
+          apps=("$mnt"/*.app)
+          if [ "${#apps[@]}" -ne 1 ]; then
+            echo "::error::the dmg holds ${#apps[@]} .app bundles, not one"
+            exit 1
+          fi
+          app="${apps[0]}"
+          plist="$app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Print" "$plist"
+
+          urls="$RUNNER_TEMP/CFBundleURLTypes.txt"
+          docs="$RUNNER_TEMP/CFBundleDocumentTypes.txt"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$plist" > "$urls" \
+            || { echo "::error::the bundle's Info.plist has no CFBundleURLTypes"; exit 1; }
+          /usr/libexec/PlistBuddy -c "Print :CFBundleDocumentTypes" "$plist" > "$docs" \
+            || { echo "::error::the bundle's Info.plist has no CFBundleDocumentTypes"; exit 1; }
+          cat "$urls" "$docs"
+          grep -qw d2mm "$urls" || { echo "::error::no CFBundleURLTypes entry claims the d2mm scheme"; exit 1; }
+          grep -qw d2mm "$docs" || { echo "::error::no CFBundleDocumentTypes entry claims .d2mm files"; exit 1; }
+
+          min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" "$plist")
+          echo "LSMinimumSystemVersion: $min"
+          [ "$min" = "12.0" ] || { echo "::error::the bundle asks for macOS $min, not 12.0"; exit 1; }
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dmg
+          path: target/release/bundle/dmg/*.dmg
+          if-no-files-found: error

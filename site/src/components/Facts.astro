@@ -40,8 +40,8 @@ const nouns: Record<'en' | 'ru', { mods: [string, string, string]; cats: [string
 /* Platform names, in the language of the page. The list itself is read off the newest
    release's assets (src/lib/stats.ts) so nobody has to remember to update it. */
 const platformNames: Record<'en' | 'ru', Record<string, string>> = {
-  en: { windows: 'Windows 10 and 11', linux: 'Linux', macos: 'macOS' },
-  ru: { windows: 'Windows 10 и 11', linux: 'Linux', macos: 'macOS' },
+  en: { windows: 'Windows 10 and 11', linux: 'Linux', macos: 'macOS 12 on Apple Silicon' },
+  ru: { windows: 'Windows 10 и 11', linux: 'Linux', macos: 'macOS 12 на Apple Silicon' },
 };
 // comma-joined rather than "and"-joined: the Windows label already carries an "and 11",
 // and two of them in one line reads like a mistake
