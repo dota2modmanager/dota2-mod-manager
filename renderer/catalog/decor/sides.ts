@@ -7,9 +7,6 @@ export type Side = 'radiant' | 'dire';
 export type Which = 'both' | Side;
 export interface Sides { radiant: string | null; dire: string | null }
 
-/** The tree "set" of blocks, the square a tree blocks (crates/mm-core/src/looks/tree_blocks.rs BLOCKS_ID). */
-export const BLOCKS = 'blocks';
-
 /** What a pick does to each side: a set goes on every side it has, of those being picked for. */
 export function sidesFor(set: MapOption | undefined, which: Which, was: Sides): Sides {
   const want = (side: Side) => (set && set.sides.includes(side) && set.models[side] ? set.id : null);

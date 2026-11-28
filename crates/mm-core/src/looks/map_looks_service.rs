@@ -3,10 +3,6 @@
 //! the player's pak01 (tower_looks.rs, tree_sets.rs) and goes into My mods as one record per kind,
 //! marked `generated` with what it was built from. Choosing again builds it again in its slot, and
 //! a Dota update that reached it builds it again from the new files.
-//!
-//! Beside the game's tree sets a side can take blocks (tree_blocks.rs, `BLOCKS_ID`): compiled by
-//! Valve's compiler when picked, and taken over from the pak before when the trees are built
-//! again after an update, since nothing in them is the game's.
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -19,14 +15,8 @@ use crate::generated_pak::{files_json, swap_pak, write_pak};
 use crate::i18n::t;
 use crate::installer::Installer;
 use crate::library::Library;
-use crate::resource_compiler::CompileJob;
 use crate::tower_looks::{build_towers, default_tower, tower_looks};
-use crate::tree_blocks::BLOCKS_ID;
-use crate::tree_sets::{default_trees, tree_entries, tree_sets};
-use crate::vpk::Entry;
-
-/// Valve's compiler, as the owner hands it over: a job's compiled files.
-pub type Compile<'a> = &'a mut dyn FnMut(&CompileJob) -> Result<Vec<Entry>, String>;
+use crate::tree_sets::{build_trees, default_trees, tree_sets};
 
 const KINDS: [&str; 2] = ["towers", "trees"];
 
@@ -34,43 +24,15 @@ fn io(e: std::io::Error) -> String {
     e.to_string()
 }
 
-/// The tree sets the window offers: the tinted ones come out washed white on the default map;
-/// last the blocks, whose "models" the window draws itself (map-blocks.ts).
+/// The tree sets the window offers: the tinted ones come out washed white on the default map.
 pub fn offered_trees() -> Vec<Value> {
-    let mut out: Vec<Value> = tree_sets()
+    tree_sets()
         .into_iter()
         .filter(|s| !s.tinted)
         .map(|s| {
             json!({ "id": s.id, "name": s.name, "sides": ["radiant", "dire"], "models": { "radiant": s.models[0], "dire": s.models[0] } })
         })
-        .collect();
-    out.push(json!({
-        "id": BLOCKS_ID, "name": "Blocks", "sides": ["radiant", "dire"],
-        "models": { "radiant": crate::tree_blocks::RADIANT_MODEL, "dire": crate::tree_blocks::DIRE_MODEL },
-    }));
-    out
-}
-
-/// The sides of a pick that take blocks.
-fn block_sides(radiant: &Option<String>, dire: &Option<String>) -> Vec<&'static str> {
-    [("radiant", radiant), ("dire", dire)]
-        .into_iter()
-        .filter(|(_, id)| id.as_deref() == Some(BLOCKS_ID))
-        .map(|(s, _)| s)
         .collect()
-}
-
-/// The blocks a record's pak holds for these sides (tree_blocks.rs kept).
-fn kept_blocks(inst: &Installer, rec: &Value, sides: &[&str]) -> Vec<Entry> {
-    let mut out = Vec::new();
-    for f in crate::overlays::files_of(rec) {
-        let Ok(root) = inst.root_abs(&f.root) else { continue };
-        let at = root.join(&f.rel_path);
-        let found = [at.clone(), crate::installer::with_suffix(&at, ".off")];
-        let Some(ix) = found.iter().find_map(|p| crate::vpk::Index::open(p).ok()) else { continue };
-        out.extend(crate::tree_blocks::kept(&ix, sides));
-    }
-    out
 }
 
 struct Table {
@@ -133,9 +95,8 @@ impl MapLooks {
         }
     }
 
-    /// The pak for `g` and the name its record goes by; `blocks`: the compiled blocks of the sides
-    /// that take them (tree_blocks.rs placed).
-    fn build(&self, g: &Value, blocks: Vec<Entry>, log: &mut dyn FnMut(String)) -> Result<(Vec<u8>, String), String> {
+    /// The pak for `g` and the name its record goes by.
+    fn build(&self, g: &Value, log: &mut dyn FnMut(String)) -> Result<(Vec<u8>, String), String> {
         let pak = self.pak01().ok_or_else(|| t("Не указана папка игры", &[]))?;
         let kind = g["map"].as_str().unwrap_or("");
         let side = |k: &str| g.get(k).and_then(Value::as_str).filter(|s| !s.is_empty()).map(str::to_string);
@@ -162,22 +123,11 @@ impl MapLooks {
             if kind == "trees" { "Деревья: Radiant {0}, Dire {1}" } else { "Башни: Radiant {0}, Dire {1}" };
         let name = t(template, &[json!(label(&radiant)), json!(label(&dire))]);
         if kind == "trees" {
-            fn game(id: &Option<String>) -> Option<&str> {
-                id.as_deref().filter(|i| *i != BLOCKS_ID)
-            }
-            let (mut entries, missing) = if game(&radiant).is_some() || game(&dire).is_some() {
-                tree_entries(&pak, game(&radiant), game(&dire))?
-            } else {
-                (vec![], vec![])
-            };
+            let (vpk, _, missing) = build_trees(&pak, radiant.as_deref(), dire.as_deref())?;
             if let Some(first) = missing.first() {
                 log(format!("map looks: {} tree models are not in the game, first {first}", missing.len()));
             }
-            if !block_sides(&radiant, &dire).is_empty() && blocks.is_empty() {
-                return Err(t("Квадраты собирает компилятор Valve: нужны Workshop Tools", &[]));
-            }
-            entries.extend(blocks);
-            return Ok((crate::vpk::build(&entries), name));
+            return Ok((vpk, name));
         }
         let text = self.read(log).map(|t| t.text.clone()).unwrap_or_default();
         let r = build_towers(&pak, &text, radiant.as_deref(), dire.as_deref())?;
@@ -202,9 +152,7 @@ impl MapLooks {
         }
     }
 
-    /// A record built again from `g`, in the slot it had, off if it was off and `keep_off`;
-    /// `blocks` None takes over the blocks the record had.
-    #[allow(clippy::too_many_arguments)]
+    /// A record built again from `g`, in the slot it had, off if it was off and `keep_off`.
     fn replace(
         &self,
         inst: &Installer,
@@ -212,13 +160,9 @@ impl MapLooks {
         rec: &Value,
         g: &Value,
         keep_off: bool,
-        blocks: Option<Vec<Entry>>,
         log: &mut dyn FnMut(String),
     ) -> Result<Value, String> {
-        let side = |k: &str| g.get(k).and_then(Value::as_str).map(str::to_string);
-        let sides = block_sides(&side("radiant"), &side("dire"));
-        let blocks = blocks.unwrap_or_else(|| kept_blocks(inst, rec, &sides));
-        let (vpk, name) = self.build(g, blocks, log)?;
+        let (vpk, name) = self.build(g, log)?;
         let off = keep_off && rec.get("enabled") == Some(&Value::Bool(false));
         let files = swap_pak(inst, rec, &vpk, off)?;
         let fields = json!({
@@ -249,14 +193,12 @@ impl MapLooks {
         json!({ "towers": self.options("towers", log), "trees": self.options("trees", log), "installed": installed, "own": own })
     }
 
-    /// Build a kind with a look per side and install it, in place of the one built before; the
-    /// blocks a side picks are compiled with `compile`.
+    /// Build a kind with a look per side and install it, in place of the one built before.
     pub fn install(
         &self,
         inst: &Installer,
         lib: &mut Library,
         (kind, radiant, dire): (&Value, &Value, &Value),
-        compile: Option<Compile<'_>>,
         log: &mut dyn FnMut(String),
     ) -> Result<Value, String> {
         let kind = match kind.as_str() {
@@ -269,24 +211,12 @@ impl MapLooks {
         }
         let said = |s: &Option<String>| s.clone().unwrap_or_else(|| "as is".into());
         let g = json!({ "map": kind, "radiant": r, "dire": d });
-        let sides = if kind == "trees" { block_sides(&r, &d) } else { vec![] };
-        // the blocks the record has for these sides already are not compiled again
-        let had = mine(lib, kind).map(|old| kept_blocks(inst, old, &sides)).unwrap_or_default();
-        let blocks = match (crate::tree_blocks::job(&sides)?, compile) {
-            _ if crate::tree_blocks::complete(&had, &sides) => had,
-            (Some(job), Some(compile)) => {
-                let made = crate::tree_blocks::placed(&compile(&job)?, &sides);
-                log(format!("map looks: {} files of blocks for {}", made.len(), sides.join(", ")));
-                made
-            }
-            _ => vec![],
-        };
         if let Some(old) = mine(lib, kind).cloned() {
-            let rec = self.replace(inst, lib, &old, &g, false, Some(blocks), log)?;
+            let rec = self.replace(inst, lib, &old, &g, false, log)?;
             log(format!("map looks: {kind} built again, Radiant {}, Dire {}", said(&r), said(&d)));
             return Ok(rec);
         }
-        let (vpk, name) = self.build(&g, blocks, log)?;
+        let (vpk, name) = self.build(&g, log)?;
         let files = write_pak(inst, &vpk)?;
         let new = json!({ "name": name, "categoryId": kind, "styleLabel": null, "fileRef": null, "preview": null, "files": files_json(&files) });
         let made = lib.add(&new, None).map_err(io)?;
@@ -309,7 +239,7 @@ impl MapLooks {
             if !g.get("map").is_some_and(crate::js::truthy) || !ids.contains(&id) {
                 continue;
             }
-            match self.replace(inst, lib, &rec, &g, true, None, log) {
+            match self.replace(inst, lib, &rec, &g, true, log) {
                 Ok(_) => done.push(id),
                 Err(e) => log(format!("map looks: could not build again after the update: {e}")),
             }

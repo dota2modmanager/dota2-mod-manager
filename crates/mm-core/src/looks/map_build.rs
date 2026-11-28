@@ -651,7 +651,7 @@ pub fn zone_places(default_entities: &[Vec<u8>], want: Option<i64>) -> Vec<serde
 
 /// An entity lump with every tree at its model's own size (scales 1) and straight (angles 0): the
 /// map draws some of its trees smaller (one in five, down to 0.57) and turns each its own way, so
-/// a tree mod of one model, the catalog's Logs Trees or the blocks (tree_blocks.rs), comes out of
+/// a tree mod of one model, the catalog's Logs Trees or blocks say, comes out of
 /// one size, square on the grid, and the forest reads as the cells the trees block. Only how
 /// the trees look here: where they stand and what they block is the server's. The lump, and how
 /// many trees it changed.

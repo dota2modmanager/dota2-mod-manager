@@ -38,5 +38,4 @@ pub mod recolor;
 pub mod recolor_layers;
 pub mod recolor_modes;
 pub mod tower_looks;
-pub mod tree_blocks;
 pub mod tree_sets;

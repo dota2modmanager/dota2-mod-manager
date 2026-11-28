@@ -376,6 +376,5 @@
 ["Слишком много оценок с одного аккаунта", "Too many votes from one account"],
 ["В пресете нет модов, которые донесёт ссылка", "The preset has no mods a link can carry"],
 ["Пресеты сообщества пока выключены", "Community presets are off for now"],
-["Сервис каталога не ответил", "The catalog service did not answer"],
-["Квадраты собирает компилятор Valve: нужны Workshop Tools", "Valve's compiler builds the blocks: the Workshop Tools are needed"]
+["Сервис каталога не ответил", "The catalog service did not answer"]
 ]
