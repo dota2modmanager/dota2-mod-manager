@@ -6,6 +6,7 @@
  *   send(channel, ...args)    the same, when nothing waits for an answer
  *   on(channel, cb)           what the shell sends, the Tauri event "mm", by channel
  *   pathOf(file)              the full path of a file dropped on the window
+ *   on('win:fileDrag', cb)    files dragged onto the window from outside, by their paths
  *
  * Bytes travel as {$b64} both ways and come out as Uint8Array here; an answer that is only bytes
  * arrives raw, as an ArrayBuffer (answerOf). The rest of this file is what a webview does not do
@@ -91,10 +92,23 @@
   };
   const start = () => {
     const events = listen('mm', (p) => deliver(p.channel, p.args));
-    listen('tauri://drag-drop', (p) => {
-      dropped.clear();
-      for (const full of (p && p.paths) || []) dropped.set(full.split(/[\\/]/).pop(), full);
-    });
+    /* Files dragged in from outside never reach the DOM: Tauri's own drop handler takes them, and
+       wry switches WebView2's external drop off for it, so no dragenter or drop fires. The page
+       hears Tauri's events instead, as win:fileDrag, with the files' full paths and where the
+       cursor is in CSS pixels (renderer/shell/drop.ts). */
+    const fileDrag = (type) => (p) => {
+      const paths = (p && p.paths) || [];
+      if (type === 'drop') {
+        dropped.clear();
+        for (const full of paths) dropped.set(full.split(/[\\/]/).pop(), full);
+      }
+      const scale = window.devicePixelRatio || 1;
+      const at = (p && p.position) || { x: 0, y: 0 };
+      deliver('win:fileDrag', [{ type, paths, x: at.x / scale, y: at.y / scale }]);
+    };
+    listen('tauri://drag-enter', fileDrag('enter'));
+    listen('tauri://drag-leave', fileDrag('leave'));
+    listen('tauri://drag-drop', fileDrag('drop'));
     /* "loaded" means the page's scripts have run and subscribed,
        so what the shell says next (a d2mm:// link the app was started by, whether Dota is open)
        has someone to hear it. Told any earlier, it went nowhere. */

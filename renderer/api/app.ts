@@ -135,7 +135,12 @@ interface WinApi {
   close: () => Promise<void>;
   isMaximized: () => Promise<boolean>;
   onMaximized: (cb: (maximized: boolean) => void) => void;
+  /** Files dragged onto the window from outside: their full paths, and where the cursor is in CSS
+   *  pixels. The DOM hears no drop of these (src-tauri/src/page/bridge.js says why). */
+  onFileDrag: (cb: (drag: FileDrag) => void) => void;
 }
+
+export interface FileDrag { type: 'enter' | 'leave' | 'drop'; paths: string[]; x: number; y: number }
 
 interface SettingsApi {
   get: () => Promise<AppSettings>;
