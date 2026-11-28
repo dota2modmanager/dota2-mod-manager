@@ -8,7 +8,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeMeshesAsync } from './map-merge.ts';
-import { BLOCK_TREES, blockParts, blockPlace, isBlockModel, onePerTree } from './map-blocks.ts';
 
 export type TreeMode = 'own' | 'kind' | 'map';
 export type Side = 'radiant' | 'dire';
@@ -42,7 +41,6 @@ const leaf = new THREE.MeshStandardMaterial({ color: 0x2c4a1e, roughness: 1, met
 /** A model of the game, or of a catalog mod ("mod:<file>|<model>"), as meshes ready to instance,
  * its stump and close-up copy left out. */
 export async function modelParts(path: string, prepare: (m: THREE.Material) => void): Promise<THREE.Mesh[]> {
-  if (isBlockModel(path)) return blockParts(prepare);
   const mod = /^mod:([^|]+)\|(.+)$/.exec(path);
   const bytes = await (mod ? window.api.decor.modModel(mod[1], mod[2]) : window.api.preview3d.model(path)).catch(() => null);
   if (!bytes) return [];
@@ -111,13 +109,8 @@ export async function mapTrees(scene: THREE.Scene, trees: THREE.Mesh[], kind: Ma
   let mod: Record<string, string> = {};
 
   /** what the tree at a place becomes now, or null for itself */
-  // the blocks take only the trees the build turns into them
-  const ofSet = (p: { model: string | null; side: Side }) => {
-    const s = set[p.side];
-    return s && isBlockModel(s) && !(p.model && BLOCK_TREES.has(p.model)) ? undefined : s;
-  };
   const targetOf = (p: { model: string | null; side: Side }): string | null =>
-    (p.model ? mod[p.model] : undefined) ?? ofSet(p) ?? (mode === 'map' ? everyTo ?? null : mode === 'kind' && p.model ? kind.get(p.model) ?? null : null);
+    (p.model ? mod[p.model] : undefined) ?? set[p.side] ?? (mode === 'map' ? everyTo ?? null : mode === 'kind' && p.model ? kind.get(p.model) ?? null : null);
 
   let oneSize = false;
   // a tree's place scales its model by the map's unit and the tree's own size, 1 for six trees in
@@ -125,9 +118,15 @@ export async function mapTrees(scene: THREE.Scene, trees: THREE.Mesh[], kind: Ma
   const scaleOf = (m: THREE.Matrix4) => new THREE.Vector3(m.elements[0], m.elements[1], m.elements[2]).length();
   const sizes = [...places.values()].map((p) => scaleOf(p.at)).sort((a, b) => a - b);
   const unit = sizes[Math.floor(sizes.length / 2)] ?? 0;
+  // and straight: its turn about the up axis taken off, as the map built with the switch has it
   const fullSize = (m: THREE.Matrix4) => {
-    const k = scaleOf(m);
-    return k > 0 && unit > 0 ? m.clone().multiply(new THREE.Matrix4().makeScale(unit / k, unit / k, unit / k)) : m;
+    if (!(scaleOf(m) > 0 && unit > 0)) return m;
+    const at = new THREE.Vector3(), turn = new THREE.Quaternion(), size = new THREE.Vector3();
+    m.decompose(at, turn, size);
+    const e = new THREE.Euler().setFromQuaternion(turn, 'YXZ');
+    e.y = 0;
+    const k = unit / scaleOf(m);
+    return new THREE.Matrix4().compose(at, new THREE.Quaternion().setFromEuler(e), size.multiplyScalar(k));
   };
 
   const apply = () => {
@@ -143,9 +142,8 @@ export async function mapTrees(scene: THREE.Scene, trees: THREE.Mesh[], kind: Ma
     for (const [key, to] of wanted) {
       if (built.has(key)) continue;
       built.set(key, null);
-      // a block at each tree, one a tree, straight (the map stands them so); the rest at their own size
-      const placesOf = by.get(to) ?? [];
-      const at = isBlockModel(to) ? onePerTree(placesOf.map(blockPlace)) : oneSize ? placesOf.map(fullSize) : placesOf;
+      // every tree at its model's own size, as the map built with it (map_build.rs one_size_trees)
+      const at = oneSize ? (by.get(to) ?? []).map(fullSize) : by.get(to) ?? [];
       void modelParts(to, prepare).then((parts) => {
         if (!parts.length) return;
         const g = instanced(parts, at, true);

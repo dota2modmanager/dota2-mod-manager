@@ -629,18 +629,8 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
                 let mut core = o.core();
                 let c = &mut *core;
                 let svc = crate::map_looks_service::MapLooks::new(c.game());
-                // a side's blocks are compiled (tree_blocks.rs)
-                let (rc, k) = (crate::owner_compiler::compiler(c), crate::owner_compiler::keeper(c));
-                let mut compile = |job: &crate::resource_compiler::CompileJob| {
-                    rc.compile(job, k.as_ref(), &mut crate::run_process::run, &mut |_| {})
-                };
-                let r = svc.install(
-                    &c.installer,
-                    &mut c.library,
-                    (&a0, &arg(args, 1), &arg(args, 2)),
-                    Some(&mut compile),
-                    &mut |m| lines.push(m),
-                );
+                let r = svc
+                    .install(&c.installer, &mut c.library, (&a0, &arg(args, 1), &arg(args, 2)), &mut |m| lines.push(m));
                 if r.is_ok() {
                     crate::owner_packs::after_deploy_master(c);
                 }
