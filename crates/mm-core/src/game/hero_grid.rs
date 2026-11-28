@@ -278,6 +278,8 @@ pub struct HeroGrids {
     pub data_dir: PathBuf,
     /// the logged-in account's userdata folder, or None when Steam has none
     pub account_dir: Box<dyn Fn() -> Option<PathBuf> + Send + Sync>,
+    /// every account on this machine that has played Dota, for "write into all accounts"
+    pub all_accounts: Box<dyn Fn() -> Vec<PathBuf> + Send + Sync>,
     pub net: Arc<Net>,
     pub api: String,
     /// asked when `api` does not answer
@@ -335,23 +337,63 @@ impl HeroGrids {
         Ok((field(&got, "at").clone(), field(&got, "stats").clone()))
     }
 
-    /// What the settings row shows: whose file, which of our grids it has, how old the numbers are.
-    pub fn state(&self) -> Value {
-        let dir = (self.account_dir)();
-        let names = dir.as_ref().map(|d| grids_in(read_or_none(&grid_file(d)).as_deref())).unwrap_or_default();
-        let kinds: Vec<&str> = GRID_KINDS.iter().copied().filter(|k| names.contains(&grid_name(k))).collect();
-        let at = self.cached().and_then(|c| c.get("at").cloned()).unwrap_or(Value::Null);
-        json!({ "account": dir.is_some(), "kinds": kinds, "statsAt": at })
+    fn prefs_file(&self) -> PathBuf {
+        self.data_dir.join("prefs.json")
     }
 
-    /// Write the grids of these kinds into the account's file, in place of the app's old ones.
+    /// Whether the grids go into every account that has played Dota, not only the signed-in one.
+    pub fn all(&self) -> bool {
+        read_or_none(&self.prefs_file())
+            .and_then(|t| serde_json::from_str::<Value>(&t).ok())
+            .is_some_and(|p| p.get("all").and_then(Value::as_bool) == Some(true))
+    }
+
+    /// The accounts a write goes to: all of them with the switch on, else the signed-in one.
+    fn targets(&self) -> Vec<PathBuf> {
+        if self.all() {
+            (self.all_accounts)()
+        } else {
+            (self.account_dir)().into_iter().collect()
+        }
+    }
+
+    /// Our grids in one account's file, by kind.
+    fn kinds_in(dir: &Path) -> Vec<&'static str> {
+        let names = grids_in(read_or_none(&grid_file(dir)).as_deref());
+        GRID_KINDS.iter().copied().filter(|k| names.contains(&grid_name(k))).collect()
+    }
+
+    /// What the settings row shows: whose file, which of our grids it has, how old the numbers are.
+    /// The switches follow the signed-in account; with no one signed in, the first of all accounts.
+    pub fn state(&self) -> Value {
+        let all = self.all();
+        let accounts = (self.all_accounts)();
+        let dir = (self.account_dir)().or_else(|| if all { accounts.first().cloned() } else { None });
+        let kinds = dir.as_deref().map(Self::kinds_in).unwrap_or_default();
+        let at = self.cached().and_then(|c| c.get("at").cloned()).unwrap_or(Value::Null);
+        json!({ "account": dir.is_some(), "kinds": kinds, "statsAt": at, "all": all, "accounts": accounts.len() })
+    }
+
+    /// Write the grids of these kinds into the account's file (or every account's), in place of
+    /// the app's old ones.
     pub fn apply(&self, kinds: &[String]) -> Result<Value, String> {
-        let Some(dir) = (self.account_dir)() else {
+        let targets = self.targets();
+        if targets.is_empty() {
             return Err(t("Не нашёл аккаунт Steam, в который заходила Dota 2", &[]));
-        };
+        }
         let (at, stats) = self.fresh_stats()?;
         let Some(stats) = stats.as_array() else { return Err("stats.filter is not a function".into()) };
-        let file = grid_file(&dir);
+        let wanted: Vec<&str> = GRID_KINDS.iter().copied().filter(|k| kinds.iter().any(|x| x == k)).collect();
+        let grids: Vec<Value> = wanted.iter().map(|k| build_grid(stats, k)).collect();
+        for dir in &targets {
+            self.write_into(dir, grids.clone())?;
+        }
+        Ok(json!({ "kinds": wanted, "statsAt": at }))
+    }
+
+    /// One account's file with the app's grids swapped for these, backed up the first time.
+    fn write_into(&self, dir: &Path, grids: Vec<Value>) -> Result<(), String> {
+        let file = grid_file(dir);
         let before = read_or_none(&file);
         let account = dir.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
         let backup = self.data_dir.join(format!("hero_grid_config.{account}.backup.json"));
@@ -364,26 +406,65 @@ impl HeroGrids {
                 Err(e) => return Err(e.to_string()),
             }
         }
-        let wanted: Vec<&str> = GRID_KINDS.iter().copied().filter(|k| kinds.iter().any(|x| x == k)).collect();
         if let Some(parent) = file.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        let text = merge_grids(before.as_deref(), wanted.iter().map(|k| build_grid(stats, k)).collect())?;
-        crate::atomic_file::write_file_atomic(&file, text.as_bytes()).map_err(|e| e.to_string())?;
-        Ok(json!({ "kinds": wanted, "statsAt": at }))
+        let text = merge_grids(before.as_deref(), grids)?;
+        crate::atomic_file::write_file_atomic(&file, text.as_bytes()).map_err(|e| e.to_string())
     }
 
-    /// Take the app's grids out and leave the user's.
+    /// The app's grids out of one account's file; the user's stay. A file without ours is left be.
+    fn clear(dir: &Path) -> Result<(), String> {
+        let file = grid_file(dir);
+        if let Some(b) = read_or_none(&file).filter(|b| !grids_in(Some(b)).is_empty()) {
+            let text = merge_grids(Some(&b), vec![])?;
+            crate::atomic_file::write_file_atomic(&file, text.as_bytes()).map_err(|e| e.to_string())?;
+        }
+        Ok(())
+    }
+
+    /// Take the app's grids out and leave the user's (out of every account with the switch on).
     pub fn remove(&self) -> Result<Value, String> {
-        if let Some(dir) = (self.account_dir)() {
-            let file = grid_file(&dir);
-            let before = read_or_none(&file);
-            if let Some(b) = before.filter(|b| !grids_in(Some(b)).is_empty()) {
-                let text = merge_grids(Some(&b), vec![])?;
-                crate::atomic_file::write_file_atomic(&file, text.as_bytes()).map_err(|e| e.to_string())?;
-            }
+        for dir in self.targets() {
+            Self::clear(&dir)?;
         }
         Ok(json!({ "kinds": [] }))
+    }
+
+    /// The "all accounts" switch. On: the grids the signed-in account has go into every account.
+    /// Off: they stay only in the signed-in one, and the others lose the app's grids.
+    pub fn set_all(&self, on: bool) -> Result<Value, String> {
+        let current = (self.account_dir)();
+        let kinds: Vec<String> = current
+            .as_deref()
+            .map(Self::kinds_in)
+            .or_else(|| (self.all_accounts)().first().map(|d| Self::kinds_in(d)))
+            .unwrap_or_default()
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let save = |all: bool| {
+            std::fs::create_dir_all(&self.data_dir).map_err(|e| e.to_string())?;
+            crate::atomic_file::write_file_atomic(&self.prefs_file(), json!({ "all": all }).to_string().as_bytes())
+                .map_err(|e| e.to_string())
+        };
+        save(on)?;
+        if on {
+            if !kinds.is_empty() {
+                // a switch that could not write stays off, so it never shows what the files are not
+                if let Err(why) = self.apply(&kinds) {
+                    let _ = save(false);
+                    return Err(why);
+                }
+            }
+        } else {
+            for dir in (self.all_accounts)() {
+                if current.as_ref() != Some(&dir) {
+                    Self::clear(&dir)?;
+                }
+            }
+        }
+        Ok(json!({ "all": on }))
     }
 }
 
@@ -424,6 +505,52 @@ Connection: close
     }
 
     #[test]
+    fn the_all_accounts_switch_copies_the_grids_into_every_account_and_takes_them_back() {
+        let dir = std::env::temp_dir().join(format!("mm-hero-grid-{}", uuid::Uuid::new_v4().simple()));
+        let (me, alt) = (dir.join("userdata").join("111"), dir.join("userdata").join("222"));
+        let data = dir.join("hero-grid");
+        std::fs::create_dir_all(&data).unwrap();
+        // cached numbers, so the dead API below costs nothing
+        let heroes: Vec<Value> =
+            (1..=120).map(|id| json!({ "id": id, "primary_attr": "str", "pub_pick": 10, "pub_win": 5 })).collect();
+        std::fs::write(data.join("hero-stats.json"), json!({ "at": 1, "stats": heroes }).to_string()).unwrap();
+        let theirs = r#"{"version":3,"configs":[{"config_name":"Mine","categories":[]}]}"#;
+        std::fs::create_dir_all(grid_file(&alt).parent().unwrap()).unwrap();
+        std::fs::write(grid_file(&alt), theirs).unwrap();
+        let dead = {
+            let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+            format!("http://{}/api/heroStats", l.local_addr().unwrap())
+        };
+        let (m, a) = (me.clone(), vec![me.clone(), alt.clone()]);
+        let grids = HeroGrids {
+            data_dir: data,
+            account_dir: Box::new(move || Some(m.clone())),
+            all_accounts: Box::new(move || a.clone()),
+            net: Arc::new(Net::new(|| 0.0)),
+            api: dead,
+            copy: None,
+            now: Box::new(|| 2.0),
+        };
+        let ours = |d: &Path| grids_in(read_or_none(&grid_file(d)).as_deref());
+        let check = || -> Result<(), String> {
+            grids.apply(&["winrate".into()])?;
+            assert_eq!(ours(&me).len(), 1);
+            assert!(ours(&alt).is_empty(), "the switch is off: only the signed-in account");
+            grids.set_all(true)?;
+            assert_eq!(ours(&alt), vec![grid_name("winrate")], "switched on: the other account gets the same grids");
+            assert!(read_or_none(&grid_file(&alt)).unwrap().contains("\"Mine\""), "and keeps its own");
+            assert_eq!(grids.state()["all"], json!(true));
+            grids.set_all(false)?;
+            assert!(ours(&alt).is_empty(), "switched off: the other account loses ours");
+            assert_eq!(ours(&me).len(), 1, "the signed-in one keeps them");
+            Ok(())
+        };
+        let got = check();
+        let _ = std::fs::remove_dir_all(&dir);
+        got.unwrap();
+    }
+
+    #[test]
     fn an_unreachable_opendota_falls_back_to_the_sites_copy() {
         let heroes: Vec<Value> =
             (1..=120).map(|id| json!({ "id": id, "primary_attr": "str", "pub_pick": 10, "pub_win": 5 })).collect();
@@ -437,6 +564,7 @@ Connection: close
         let grids = HeroGrids {
             data_dir: dir.clone(),
             account_dir: Box::new(|| None),
+            all_accounts: Box::new(Vec::new),
             net: Arc::new(Net::new(|| 0.0)),
             api: dead,
             copy: Some(copy),

@@ -32,6 +32,18 @@ export function GridRows() {
     }
   };
 
+  const flipAll = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const r = await window.api.grids.setAll(!st.all);
+      if (r.error) toast(r.error, 'error', 7000);
+      setSt(await window.api.grids.state());
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const date = st.statsAt ? new Date(st.statsAt).toLocaleDateString(window.i18nLocale()) : null;
   return (
     <>
@@ -47,6 +59,10 @@ export function GridRows() {
           <Toggle id={`grid-${kind}`} on={st.kinds.includes(kind)} label={label()} disabled={busy || !st.account} onClick={() => { void flip(kind); }} />
         </Row>
       ))}
+      <Row sub label={L`Записать во все аккаунты`}
+        hint={L`Для тех, кто переключает аккаунты Steam: сетки попадут в каждый аккаунт на этом компьютере, где запускали Dota 2 (сейчас таких ${st.accounts}). Выключишь — останутся только в текущем.`}>
+        <Toggle id="grid-all" on={st.all} label={L`Записать во все аккаунты`} disabled={busy || st.accounts === 0} onClick={() => { void flipAll(); }} />
+      </Row>
     </>
   );
 }

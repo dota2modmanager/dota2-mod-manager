@@ -18,6 +18,7 @@ pub const CHANNELS: &[&str] = &[
     "grid:state",
     "grid:apply",
     "grid:remove",
+    "grid:all",
     "cosmetics:wearLook",
 ];
 
@@ -135,19 +136,21 @@ fn answer(o: &Owner, channel: &str, args: &[Value]) -> Value {
         }
         "pumpkin:redeem" => pumpkin(o, &a0),
         "grid:state" => grids(o).state(),
-        "grid:apply" | "grid:remove" => {
+        "grid:apply" | "grid:remove" | "grid:all" => {
             if (o.opts.dota_running)() {
                 return json!({ "error": t("Закрой Dota 2: при выходе она перепишет файл сеток", &[]) });
             }
             let g = grids(o);
-            ok_with(if channel == "grid:apply" {
-                let kinds: Vec<String> = a0
-                    .as_array()
-                    .map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect())
-                    .unwrap_or_default();
-                g.apply(&kinds)
-            } else {
-                g.remove()
+            ok_with(match channel {
+                "grid:apply" => {
+                    let kinds: Vec<String> = a0
+                        .as_array()
+                        .map(|a| a.iter().filter_map(Value::as_str).map(String::from).collect())
+                        .unwrap_or_default();
+                    g.apply(&kinds)
+                }
+                "grid:all" => g.set_all(a0.as_bool() == Some(true)),
+                _ => g.remove(),
             })
         }
         "cosmetics:wearLook" => {
@@ -187,7 +190,11 @@ fn grids(o: &Owner) -> crate::hero_grid::HeroGrids {
     let now = o.opts.now;
     crate::hero_grid::HeroGrids {
         data_dir: c.user_data.join("hero-grid"),
-        account_dir: Box::new(move || crate::gamelang::steam_account_dir(game.as_deref())),
+        account_dir: {
+            let game = game.clone();
+            Box::new(move || crate::gamelang::steam_account_dir(game.as_deref()))
+        },
+        all_accounts: Box::new(move || crate::gamelang::steam_account_dirs(game.as_deref())),
         net: c.net.clone(),
         api: crate::hero_grid::HERO_STATS_API.into(),
         copy: Some(crate::hero_grid::HERO_STATS_COPY.into()),

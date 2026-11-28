@@ -397,6 +397,26 @@ pub fn steam_account_dir(game: Option<&Path>) -> Option<PathBuf> {
     None
 }
 
+/// Every userdata/<account> folder that has played Dota on this machine (it has a 570 folder),
+/// and the signed-in account even when it has not yet: for someone who swaps accounts.
+pub fn steam_account_dirs(game: Option<&Path>) -> Vec<PathBuf> {
+    for root in steam_roots(game) {
+        let userdata = root.join("userdata");
+        let Some(mut ids) = account_ids(&userdata, true) else { continue };
+        if ids.is_empty() {
+            continue;
+        }
+        ids.sort();
+        let current = current_steam_user(&root).filter(|c| ids.contains(c));
+        return ids
+            .into_iter()
+            .filter(|id| current.as_deref() == Some(id.as_str()) || userdata.join(id).join("570").exists())
+            .map(|id| userdata.join(id))
+            .collect();
+    }
+    Vec::new()
+}
+
 /// The `-language X` Steam will start the game with, lowercased, or None.
 pub fn launch_language(game: Option<&Path>) -> Option<String> {
     static LANG: OnceLock<Regex> = OnceLock::new();
