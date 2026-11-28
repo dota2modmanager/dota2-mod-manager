@@ -90,7 +90,7 @@
           "group": "invoker",
           "image": {"src":"/mods/invoker-esl-relics-forge.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -99,7 +99,7 @@
           "group": "invoker",
           "image": {"src":"/mods/invoker-kid-forge.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -2710,7 +2710,7 @@
           "group": null,
           "image": {"src":"/mods/arc-warden-dota-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1795162294
         },
         {
@@ -2719,7 +2719,7 @@
           "group": null,
           "image": {"src":"/mods/arc-wardenv2-dota-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1795162294
         },
         {
@@ -2737,7 +2737,7 @@
           "group": null,
           "image": {"src":"/mods/dark-willow-dota-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1795162294
         },
         {
@@ -2746,19 +2746,27 @@
           "group": null,
           "image": {"src":"/mods/drow-ranger-arcana-dota-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1795162294
         },
         {"name":"Lily Grace Sunlit","styleLabel":null,"group":null,"image":{"src":"/mods/lily-grace-sunlit.webp","width":854,"height":480},"author":"qoofix","authorUrl":"https://qoofix.ru","date":1795162294},
-        {"name":"Invoker","styleLabel":null,"group":null,"image":{"src":"/mods/invoker.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1795161448},
-        {"name":"Morphling","styleLabel":null,"group":null,"image":{"src":"/mods/morphling.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1795161448},
+        {"name":"Invoker","styleLabel":null,"group":null,"image":{"src":"/mods/invoker.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsibladeXIII","date":1795161448},
+        {
+          "name": "Morphling",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/morphling.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1795161448
+        },
         {
           "name": "Phantom Lancer",
           "styleLabel": null,
           "group": null,
           "image": {"src":"/mods/phantom-lancer.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1795161448
         },
         {
@@ -2767,7 +2775,7 @@
           "group": null,
           "image": {"src":"/mods/shadow-fiend-arcana-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1795161448
         },
         {
@@ -3462,7 +3470,7 @@
           "group": null,
           "image": {"src":"/mods/japanese-background.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792894433
         },
         {
@@ -3556,7 +3564,15 @@
           "authorUrl": "https://discord.com/users/1292235606184689735",
           "date": 1792609094
         },
-        {"name":"Tcoaal V5","styleLabel":null,"group":null,"image":{"src":"/mods/tcoaal-v5.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792591892},
+        {
+          "name": "Tcoaal V5",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/tcoaal-v5.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792591892
+        },
         {
           "name": "Girl In The Bus",
           "styleLabel": null,
@@ -3608,7 +3624,7 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-wallpaper-v2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792286060
         },
         {
@@ -3617,7 +3633,7 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-wallpaper-v3.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792286060
         },
         {
@@ -3626,7 +3642,7 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-wallpaper-v1.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792275718
         },
         {"name":"Pug","styleLabel":null,"group":null,"image":{"src":"/mods/pug.webp","width":854,"height":480},"author":"Swin-РукаBlood","authorUrl":"https://discord.gg/SCnUSB4j6S","date":1792151800},
@@ -3639,9 +3655,17 @@
           "authorUrl": "https://t.me/loveculted",
           "date": 1792060612
         },
-        {"name":"Anime","styleLabel":null,"group":null,"image":{"src":"/mods/anime.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Dark Tree","styleLabel":null,"group":null,"image":{"src":"/mods/dark-tree.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
-        {"name":"Sematary","styleLabel":null,"group":null,"image":{"src":"/mods/sematary.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {"name":"Anime","styleLabel":null,"group":null,"image":{"src":"/mods/anime.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsibladeXIII","date":1791908483},
+        {
+          "name": "Dark Tree",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/dark-tree.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1791908483
+        },
+        {"name":"Sematary","styleLabel":null,"group":null,"image":{"src":"/mods/sematary.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsibladeXIII","date":1791908483},
         {
           "name": "Gwardjan Tad Dawl Perfezzjoni",
           "styleLabel": null,
@@ -3677,6 +3701,26 @@
     {
       "id": "hero-sounds",
       "mods": [
+        {
+          "name": "Bankay Kez",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/bankay-kez.webp","width":854,"height":480},
+          "author": "stay_bottom#2016",
+          "authorUrl": "https://t.me/staybottom_2o16",
+          "date": 1795821008
+        },
+        {"name":"Chaos Knight Without Steps","styleLabel":null,"group":null,"image":{"src":"/mods/chaos-knight-without-steps.webp","width":854,"height":480},"author":"Gr0m","authorUrl":null,"date":1795821008},
+        {
+          "name": "Shadow Fiend Ultimate 2021",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/shadow-fiend-ultimate-2021.webp","width":854,"height":480},
+          "author": "simonchmel",
+          "authorUrl": "https://steamcommunity.com/id/simon_say",
+          "date": 1795821008
+        },
+        {"name":"Sniper Assasinate Dravaya","styleLabel":null,"group":null,"image":{"src":"/mods/sniper-assasinate-dravaya.webp","width":854,"height":480},"author":"Meq","authorUrl":null,"date":1795821008},
         {
           "name": "Earthshaker Ukrainian Voice",
           "styleLabel": null,
@@ -3795,7 +3839,7 @@
           "group": null,
           "image": {"src":"/mods/wraith-king-i-live-forever.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792868093
         },
         {
@@ -3860,7 +3904,7 @@
           "group": null,
           "image": {"src":"/mods/techies-chance-allahu-akbar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792151800
         },
         {
@@ -3878,7 +3922,7 @@
           "group": null,
           "image": {"src":"/mods/doom-sematary-sound.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -3887,7 +3931,7 @@
           "group": null,
           "image": {"src":"/mods/wraith-king-papich-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -3896,7 +3940,7 @@
           "group": null,
           "image": {"src":"/mods/wraith-king-papich-pamparam.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -4384,7 +4428,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/black-top-bar-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4393,7 +4437,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/blue-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4402,7 +4446,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/green-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4411,7 +4455,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/light-blue-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4420,7 +4464,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/orange-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4429,7 +4473,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/purple-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4438,7 +4482,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/white-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4447,7 +4491,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/yellow-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -4474,7 +4518,7 @@
           "group": "netgraph",
           "image": {"src":"/mods/netgraph-black.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792946553
         },
         {
@@ -4483,7 +4527,7 @@
           "group": "netgraph",
           "image": {"src":"/mods/netgraph-red.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792946553
         },
         {
@@ -4492,7 +4536,7 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-style-black.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792946553
         },
         {
@@ -4501,10 +4545,10 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-style-white.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792946553
         },
-        {"name":"Kda Red","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792894433},
+        {"name":"Kda Red","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-red.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsibladeXIII","date":1792894433},
         {
           "name": "TikTok Overlay",
           "styleLabel": null,
@@ -4523,24 +4567,40 @@
           "authorUrl": "https://t.me/xviivpk",
           "date": 1792764215
         },
-        {"name":"Kda Black","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-black.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792668576},
+        {
+          "name": "Kda Black",
+          "styleLabel": null,
+          "group": "kda",
+          "image": {"src":"/mods/kda-black.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792668576
+        },
         {
           "name": "Play Red",
           "styleLabel": null,
           "group": "play-button",
           "image": {"src":"/mods/play-red.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792591892
         },
-        {"name":"Kda Purple","styleLabel":null,"group":"kda","image":{"src":"/mods/kda-purple.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792583758},
+        {
+          "name": "Kda Purple",
+          "styleLabel": null,
+          "group": "kda",
+          "image": {"src":"/mods/kda-purple.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792583758
+        },
         {
           "name": "Netgraph Purple",
           "styleLabel": null,
           "group": "netgraph",
           "image": {"src":"/mods/netgraph-purple.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4549,7 +4609,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/red-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4558,7 +4618,7 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-i.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4567,7 +4627,7 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-ii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4576,7 +4636,7 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-lycoris-colors-v1-style-iii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4585,7 +4645,7 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-i.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4594,7 +4654,7 @@
           "group": "vs",
           "image": {"src":"/mods/vs-creen-lycoris-colors-v2-style-ii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792583758
         },
         {
@@ -4612,7 +4672,7 @@
           "group": "game-mode",
           "image": {"src":"/mods/tcoaal-mach-v1.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792448425,
           "adult": true
         },
@@ -4622,7 +4682,7 @@
           "group": "game-mode",
           "image": {"src":"/mods/tcoaal-mach-v2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792448425,
           "adult": true
         },
@@ -4651,7 +4711,7 @@
           "group": "play-button",
           "image": {"src":"/mods/play-black.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792412054
         },
         {
@@ -4660,7 +4720,7 @@
           "group": "play-button",
           "image": {"src":"/mods/play-white.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792412054
         },
         {
@@ -4669,7 +4729,7 @@
           "group": "play-button",
           "image": {"src":"/mods/play-pinkv2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792330154
         },
         {
@@ -4678,7 +4738,7 @@
           "group": "top-bar",
           "image": {"src":"/mods/top-bar-pink.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792330154
         },
         {
@@ -4724,17 +4784,25 @@
           "group": "top-bar",
           "image": {"src":"/mods/black-top-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
-        {"name":"Gotic","styleLabel":null,"group":"search-bar","image":{"src":"/mods/gotic.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
+          "name": "Gotic",
+          "styleLabel": null,
+          "group": "search-bar",
+          "image": {"src":"/mods/gotic.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1791908483
+        },
         {
           "name": "Kaneki Mach",
           "styleLabel": null,
           "group": "game-mode",
           "image": {"src":"/mods/kaneki-mach.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -4743,7 +4811,7 @@
           "group": "game-mode",
           "image": {"src":"/mods/kaneki-mach-v1-2.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -4752,7 +4820,7 @@
           "group": "search-bar",
           "image": {"src":"/mods/kaneki-search-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -4761,7 +4829,7 @@
           "group": "search-bar",
           "image": {"src":"/mods/scolopendra-search-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -4770,7 +4838,7 @@
           "group": "search-bar",
           "image": {"src":"/mods/sematary-search-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {
@@ -4779,7 +4847,7 @@
           "group": "search-bar",
           "image": {"src":"/mods/tcoaal-search-bar.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {"name":"Larger Minimap","styleLabel":null,"group":"minimap","image":{"src":"/mods/larger-minimap.webp","width":854,"height":480},"author":"YZT","authorUrl":"https://t.me/YZTdota","date":1791607322},
@@ -5144,7 +5212,7 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-rampage.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792718488
         },
         {
@@ -5588,7 +5656,7 @@
           "image": {"src":"/mods/tink-brood-kotl-true-laugh.webp","width":854,"height":480},
           "author": "samoredoto",
           "authorUrl": "https://t.me/samoredoto",
-          "date": 1795692079
+          "date": 1795821008
         },
         {"name":"Vasilisa Dark Carnival","styleLabel":null,"group":null,"image":{"src":"/mods/vasilisa-dark-carnival.webp","width":854,"height":480},"author":"Blessed","authorUrl":null,"date":1795332201},
         {
@@ -5689,7 +5757,7 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-dagon.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793139107
         },
         {
@@ -5707,7 +5775,7 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-blink-dagger.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792591892
         },
         {
@@ -5716,7 +5784,7 @@
           "group": null,
           "image": {"src":"/mods/ech-cat-sound-game-startup.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792330154
         },
         {"name":"Marsarenasematary","styleLabel":null,"group":null,"image":{"src":"/mods/marsarenasematary.webp","width":854,"height":480},"author":"xvii","authorUrl":"https://t.me/xviivpk","date":1792235759},
@@ -5726,7 +5794,7 @@
           "group": null,
           "image": {"src":"/mods/sound-to-battle-from-wot.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792055497
         },
         {
@@ -6325,7 +6393,7 @@
           "group": null,
           "image": {"src":"/mods/all-grandmasters.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792947904
         },
         {
@@ -6361,7 +6429,7 @@
           "group": null,
           "image": {"src":"/mods/old-shadow-fiend-secret-shop.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792050673
         },
         {"name":"Objective Timers","styleLabel":null,"group":null,"image":{"src":"/mods/objective-timers.webp","width":854,"height":480},"author":"rizeru","authorUrl":"https://t.me/rizeru","date":1792011470},
@@ -6702,7 +6770,7 @@
           "group": null,
           "image": {"src":"/mods/ghoulsss-full-red-hud.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1794043573
         },
         {"name":"Lain Hud","styleLabel":null,"group":null,"image":{"src":"/mods/lain-hud.webp","width":854,"height":480},"author":"драг","authorUrl":"https://t.me/dragvpk","date":1793178545},
@@ -6714,7 +6782,7 @@
           "group": null,
           "image": {"src":"/mods/gotick-full-black-hud.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792860890
         },
         {
@@ -6733,7 +6801,7 @@
           "group": null,
           "image": {"src":"/mods/horror-black-hud.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {"name":"Fluttershy Hud","styleLabel":null,"group":null,"image":{"src":"/mods/fluttershy-hud.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
@@ -7909,6 +7977,173 @@
       ]
     },
     {
+      "id": "hero-icons",
+      "mods": [
+        {
+          "name": "Tinker True Spellstechies",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/tinker-true-spellstechies.webp","width":854,"height":480},
+          "author": "кирпич фиолетовый",
+          "authorUrl": null,
+          "date": 1795821008
+        },
+        {
+          "name": "Shadow Fiend Arcana Fixv1",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/shadow-fiend-arcana-fixv1.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1795161448
+        },
+        {
+          "name": "Shadow Fiend Arcana Fixv2",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/shadow-fiend-arcana-fixv2.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1795161448
+        },
+        {
+          "name": "Phantom Assasssin Mogg",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/phantom-assasssin-mogg.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792235759
+        },
+        {
+          "name": "Shadow Fiend Zxcursed Icon",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/shadow-fiend-zxcursed-icon.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792151800
+        },
+        {
+          "name": "Invoker Mogg",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/invoker-mogg.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792060612
+        },
+        {
+          "name": "Marci Mogg",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/marci-mogg.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792060612
+        },
+        {
+          "name": "Ogre Magi Mogg",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/ogre-magi-mogg.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792060612
+        },
+        {
+          "name": "Naga Siren Cute Icon",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/naga-siren-cute-icon.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Snapfire Blue Icon",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/snapfire-blue-icon.webp","width":1280,"height":960},
+          "author": "Tom4ik",
+          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Black Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Blue Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Green Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-green-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Orange Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Pink Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Purple Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade White Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-white-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        },
+        {
+          "name": "Terrorblade Yellow Spell",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1792055497
+        }
+      ]
+    },
+    {
       "id": "emblems",
       "mods": [
         {
@@ -8067,156 +8302,6 @@
       ]
     },
     {
-      "id": "hero-icons",
-      "mods": [
-        {
-          "name": "Shadow Fiend Arcana Fixv1",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/shadow-fiend-arcana-fixv1.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1795161448
-        },
-        {
-          "name": "Shadow Fiend Arcana Fixv2",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/shadow-fiend-arcana-fixv2.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1795161448
-        },
-        {
-          "name": "Phantom Assasssin Mogg",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/phantom-assasssin-mogg.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792235759
-        },
-        {
-          "name": "Shadow Fiend Zxcursed Icon",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/shadow-fiend-zxcursed-icon.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792151800
-        },
-        {
-          "name": "Invoker Mogg",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/invoker-mogg.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792060612
-        },
-        {"name":"Marci Mogg","styleLabel":null,"group":null,"image":{"src":"/mods/marci-mogg.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1792060612},
-        {
-          "name": "Ogre Magi Mogg",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/ogre-magi-mogg.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792060612
-        },
-        {
-          "name": "Naga Siren Cute Icon",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/naga-siren-cute-icon.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Snapfire Blue Icon",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/snapfire-blue-icon.webp","width":1280,"height":960},
-          "author": "Tom4ik",
-          "authorUrl": "https://steamcommunity.com/profiles/76561199427406113/",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Black Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-black-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Blue Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-blue-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Green Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-green-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Orange Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-orange-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Pink Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-pink-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Purple Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-purple-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade White Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-white-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        },
-        {
-          "name": "Terrorblade Yellow Spell",
-          "styleLabel": null,
-          "group": null,
-          "image": {"src":"/mods/terrorblade-yellow-spell.webp","width":854,"height":480},
-          "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
-          "date": 1792055497
-        }
-      ]
-    },
-    {
       "id": "pedestal",
       "mods": [
         {
@@ -8225,7 +8310,7 @@
           "group": null,
           "image": {"src":"/mods/queen-of-pain-arcane-pedestal.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792050673
         },
         {
@@ -8234,7 +8319,7 @@
           "group": null,
           "image": {"src":"/mods/arcana-vengeful-spirit-pedest.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791964895
         },
         {
@@ -8243,7 +8328,7 @@
           "group": null,
           "image": {"src":"/mods/pedestal-v1.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791964895
         },
         {
@@ -8884,7 +8969,7 @@
           "group": null,
           "image": {"src":"/mods/immortal-ranks-ii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1793701131
         },
         {"name":"Rose Chinese Medals","styleLabel":null,"group":null,"image":{"src":"/mods/rose-chinese-medals.webp","width":854,"height":480},"author":"chineseg0d","authorUrl":null,"date":1791974606},
@@ -8894,7 +8979,7 @@
           "group": null,
           "image": {"src":"/mods/immortal-ranks.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         },
         {"name":"Chess Ranks","styleLabel":null,"group":null,"image":{"src":"/mods/chess-ranks.webp","width":854,"height":480},"author":"raddan","authorUrl":"https://t.me/munet_kynu","date":1791877099},
@@ -9428,17 +9513,25 @@
           "group": null,
           "image": {"src":"/mods/tcoaal-heart-ping-love-3.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1792894433
         },
-        {"name":"Love Ping","styleLabel":null,"group":null,"image":{"src":"/mods/love-ping.webp","width":854,"height":480},"author":"XIIIpsiblade","authorUrl":"https://t.me/XIIIpsiblade","date":1791908483},
+        {
+          "name": "Love Ping",
+          "styleLabel": null,
+          "group": null,
+          "image": {"src":"/mods/love-ping.webp","width":854,"height":480},
+          "author": "XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
+          "date": 1791908483
+        },
         {
           "name": "Love Ping II",
           "styleLabel": null,
           "group": null,
           "image": {"src":"/mods/love-ping-ii.webp","width":854,"height":480},
           "author": "XIIIpsiblade",
-          "authorUrl": "https://t.me/XIIIpsiblade",
+          "authorUrl": "https://t.me/XIIIpsibladeXIII",
           "date": 1791908483
         }
       ]
