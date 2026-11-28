@@ -41,9 +41,11 @@ pub fn compiler(c: &Core) -> ResourceCompiler {
     rc
 }
 
-/// Windows keeps its tools; elsewhere a copy is kept once they have been seen.
+/// Linux keeps its tools, because Steam takes them away when the game goes back to the native build.
+/// Windows has them in its game already; macOS has no Workshop Tools at all, so there is nothing to
+/// keep and nothing to offer to pick.
 pub fn keeper(c: &Core) -> Option<ToolsKeeper> {
-    (!cfg!(windows)).then(|| ToolsKeeper::new(&c.user_data.join("workshop-tools"), c.game()))
+    cfg!(target_os = "linux").then(|| ToolsKeeper::new(&c.user_data.join("workshop-tools"), c.game()))
 }
 
 fn state(o: &Owner) -> Value {

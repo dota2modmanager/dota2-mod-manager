@@ -736,13 +736,32 @@ on it.
 
 *Check:* `refresh_schema_in_background` in `crates/mm-core/src/owner/mod.rs`.
 
-### No macOS build, and the Linux one is young
+### A macOS build, for Apple Silicon only
 
-Windows has a year behind it. Linux has shipped an AppImage since 2.4.0 and is started against a
-game tree by CI, but it has a fraction of the running time. macOS is not built at all, and Dota's
-own layout there has never been tested here.
+The Mac client was read before anything was built for it. Dota's folder there is the same one the
+rest of this file talks about: `game/dota`, pak files, one mounted folder named after the voice
+language. The game binary sits at `game/bin/osx64/dota2.app`, and there is no signature list under
+`bin/osx64`, so the check that finds the game's signed files on Windows has nothing to compare
+there and does not run. Steam keeps its data at `~/Library/Application Support/Steam`, with the
+`libraryfolders.vdf` and `localconfig.vdf` the code already read on other systems, so the library
+lookup and the user data are found without a new rule.
 
-*Check:* the assets on any release, and `.github/workflows/linux.yml`.
+The window is frameless on Windows and Linux. On macOS it is an overlay title bar with the native
+traffic lights, and the page is told `macos` so the title bar leaves room for them instead of
+drawing its own controls under the green button. An unsigned bundle cannot install its own update
+there: replacing a running app in place needs a signature macOS trusts, and the app has none, so
+the update check says a new version exists and opens the release page.
+
+One build ships, arm64 and macOS 12 or newer. An x86_64 build would have to be built and run on a
+machine nobody here owns, and Rosetta does not run an arm64 bundle on an Intel Mac, so an Intel
+Mac gets the release page and no install rather than a build nobody has started.
+
+The honest half stays. Windows has a year of people using it. Linux has shipped an AppImage since
+2.4.0 and CI starts the app against a game tree, but a fraction of that running time. macOS has
+neither yet: the port is tested on the machine it was written on, not by a year of reports.
+
+*Check:* the assets on any release, `.github/workflows/linux.yml`, the macOS roots in
+`crates/mm-core/src/game/steam.rs`, and `src-tauri/src/window.rs` for the title bar.
 
 ---
 
@@ -774,7 +793,7 @@ Each of these has arrived in a review. Each is answered by one command.
 | "`main.js` is a 3,100 line monolith" | It is gone. Since 4.0 the app starts from `src-tauri/src/main.rs`, about 350 lines; since 2026-09-06 the IPC handlers went to `crates/mm-core/src/owner/owner_*.rs` and every other job to a module of its own, each with tests | `wc -l crates/mm-cli/src/main.rs` |
 | "The catalog counts on the site disagree between pages" | They are counted when each page is built. Two pages built an hour apart show two numbers, and both were right when they were made | `site/src/lib/stats.ts` |
 | "The state files in the root are why the repository is 61 MB" | The generated JSON at the root is 1.3 MB of the pack. The preview images are 47.3 MB of 57.2 MB | the command under the open question above |
-| "It is a Windows-only app" | Every release since 2.4.0 also carries a Linux AppImage | `gh release view --json assets` |
+| "It is a Windows-only app" | Every release since 2.4.0 also carries a Linux AppImage, and releases now carry a .dmg for Apple Silicon | `gh release view --json assets` |
 | "`main` is unprotected" | It is guarded by a ruleset, which the branch-protection endpoint does not report | `gh api repos/dota2modmanager/dota2-mod-manager/rulesets` |
 | "There are 25 test files" | More than 100 of them, run on Linux and on Windows on every push, and the Rust tests beside the code | `ls test/*.test.* \| wc -l` then `npm test` |
 | "An open issue asks for tests that already exist" | Issue #4 was closed on 2026-09-08 when that was pointed out, and `#5` on 2026-09-09 when Windows CI landed. `#6`, `#7` and `#9` were closed when the work landed; what is open is open | `gh issue list --state open` |

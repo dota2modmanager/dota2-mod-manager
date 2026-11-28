@@ -86,7 +86,7 @@ type ProgressEvent =
   | { type: 'error'; label: string; message: string };
 
 /** A new version of the app (crates/mm-core/src/app/updater.rs): found, to fetch beside a portable copy, or ready. */
-type UpdateEvent = { type: 'available' | 'portable' | 'downloaded'; version: string };
+type UpdateEvent = { type: 'available' | 'portable' | 'download' | 'downloaded'; version: string };
 
 /** What the window calls settings: the stored values plus a few facts only main can answer (crates/mm-core/src/app/settings_view.rs). */
 export interface AppSettings extends StoredSettings {

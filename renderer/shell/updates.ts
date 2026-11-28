@@ -42,6 +42,16 @@ window.api.update.onUpdate((evt) => {
       on(bar, 'portableShowBtn', () => window.api.update.revealPortable(r.path));
       on(bar, 'portableCloseBtn', () => bar.remove());
     });
+  } else if (evt.type === 'download') {
+    // macOS: an unsigned bundle cannot install over itself, so the news is the release page and
+    // the person downloads the dmg there (crates/mm-core/src/app/updater.rs, "manual").
+    const bar = updateBar(`
+      <span class="ms">system_update_alt</span>
+      <span>${L`Вышла версия v${esc(evt.version)}`}${L`. Скачай её со страницы релиза: эта сборка не обновляет себя сама.`}</span>
+      <button class="btn btn-sm btn-primary" id="downloadPageBtn">${L`Скачать`}</button>
+      <button class="btn btn-sm btn-ghost" id="downloadLaterBtn">${L`Позже`}</button>`);
+    on(bar, 'downloadPageBtn', () => { void window.api.misc.openExternal('https://github.com/dota2modmanager/dota2-mod-manager/releases/latest'); });
+    on(bar, 'downloadLaterBtn', () => bar.remove());
   } else if (evt.type === 'downloaded') {
     const bar = updateBar(`
       <span class="ms">system_update_alt</span>

@@ -131,6 +131,7 @@ pub fn validate_game_path(p: &Path) -> bool {
     p.join("dota").join("pak01_dir.vpk").exists()
         || p.join("bin").join("win64").join("dota2.exe").exists()
         || p.join("bin").join("linuxsteamrt64").join("dota2").exists()
+        || p.join("bin").join("osx64").join("dota2.app").exists()
 }
 
 /// A path with a suffix added to its file name.

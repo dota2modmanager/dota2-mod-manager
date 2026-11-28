@@ -11,7 +11,7 @@
   <a href="https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager-Setup.exe">
     <img src="https://img.shields.io/github/v/release/dota2modmanager/dota2-mod-manager?style=for-the-badge&color=8b6ff0&label=%D0%A1%D0%BA%D0%B0%D1%87%D0%B0%D1%82%D1%8C&logo=github&logoColor=white" alt="Скачать последнюю версию"></a>
   <img src="https://img.shields.io/github/downloads/dota2modmanager/dota2-mod-manager/Dota-2-Mod-Manager-Setup.exe?style=for-the-badge&color=4f378b&label=%D0%A3%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BE%D0%BA" alt="Загрузок установщика">
-  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux-211f26?style=for-the-badge&logo=windows&logoColor=d0bcff" alt="Windows и Linux">
+  <img src="https://img.shields.io/badge/Windows%20%7C%20Linux%20%7C%20macOS-211f26?style=for-the-badge&logo=windows&logoColor=d0bcff" alt="Windows, Linux и macOS">
 </p>
 
 <p>
@@ -97,8 +97,8 @@
 <tr><td><b>Шрифты и курсоры</b></td><td>Ставятся в файлы игры с бэкапом оригиналов; удаление возвращает ваниль</td></tr>
 <tr><td><b>Объединённые паки</b></td><td>Слепи несколько модов в один слот и разбери обратно</td></tr>
 <tr><td><b>Свои файлы</b></td><td>Импортируй <code>.vpk</code> или подхвати то, что оставила в папке чужая программа. Приложение сверит отпечаток с каталогом и скажет, что это</td></tr>
-<tr><td><b>Автообновление</b></td><td>Приложение само смотрит GitHub Releases и ставит новые версии</td></tr>
-<tr><td><b>Windows и Linux</b></td><td>Оба в каждом релизе: установщик и портативная сборка под Windows; .deb, .rpm и AppImage под Linux. Steam находится сам, включая flatpak</td></tr>
+<tr><td><b>Автообновление</b></td><td>Приложение само смотрит GitHub Releases и ставит новые версии. На macOS, где неподписанная сборка не может поставить себе обновление, оно открывает страницу релиза</td></tr>
+<tr><td><b>Windows, Linux и macOS</b></td><td>Все три в каждом релизе: установщик и портативная сборка под Windows; .deb, .rpm и AppImage под Linux; .dmg под Apple Silicon на macOS 12 или новее. Steam находится сам, включая flatpak</td></tr>
 <tr><td><b>Без аккаунта и слежки</b></td><td>Ничего о тебе не собирается и никуда не уходит. Установка мода из каталога прибавляет единицу к его счётчику скачиваний, и это можно выключить. Вход через Discord необязателен и нужен только чтобы подписать сборку, которой делишься</td></tr>
 </table>
 </details>
@@ -157,9 +157,14 @@ Valve, проверит результат доктором модов и отд
   `git clone https://github.com/dota2modmanager/dota2-mod-manager && cd dota2-mod-manager/packaging/aur && makepkg -si`
 - [AppImage](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest/download/Dota-2-Mod-Manager.AppImage) для всего остального: `chmod +x` и запускай.
 
+**На macOS** скачай .dmg из
+[последнего релиза](https://github.com/dota2modmanager/dota2-mod-manager/releases/latest), открой
+его и перетащи приложение в «Программы». Работает на Apple Silicon и требует macOS 12 или новее.
+
 > [!IMPORTANT]
 > Windows скажет, что издатель неизвестен: у установщика нет платной подписи. Жми **Подробнее**,
-> потом **Выполнить в любом случае**. Каждый релиз собирается из этих исходников
+> потом **Выполнить в любом случае**. macOS скажет то же про .dmg: при первом запуске нужен
+> правый клик по приложению, потом **Открыть**. Каждый релиз собирается из этих исходников
 > [публичным воркфлоу](https://github.com/dota2modmanager/dota2-mod-manager/actions/workflows/release.yml),
 > а не заливается с чьего-то компьютера, и лог сборки ровно того файла, что ты скачал, открыт.
 
@@ -178,8 +183,8 @@ sha256sum --check --ignore-missing SHA256SUMS
 ```
 
 На Windows без GitHub CLI команда `Get-FileHash Dota-2-Mod-Manager-Setup.exe` в PowerShell покажет
-хеш, его сравниваешь со строкой в `SHA256SUMS`. У релизов, вышедших до появления этой проверки,
-`SHA256SUMS` нет.
+хеш, его сравниваешь со строкой в `SHA256SUMS`; на macOS то же для .dmg делает `shasum -a 256`.
+У релизов, вышедших до появления этой проверки, `SHA256SUMS` нет.
 
 <br>
 

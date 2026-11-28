@@ -40,9 +40,9 @@
  * nor a write the sandbox jail stopped: every launch is held to sandbox/ (crates/mm-core/src/app/write_jail.rs).
  *
  * Usage:
- *   node tools/dev/e2e.mjs            # under `xvfb-run -a` on Linux
+ *   node tools/dev/e2e.mjs            # under `xvfb-run -a` on Linux, as is on macOS
  *   node tools/dev/e2e.mjs --keep     # leave the sandbox as the run left it
- *   node tools/dev/e2e.mjs --app <p>  # a packaged build: the installed exe, or an unpacked AppImage's AppRun
+ *   node tools/dev/e2e.mjs --app <p>  # a packaged build: the installed exe, an unpacked AppImage's AppRun, or a Mac's .app
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -74,7 +74,18 @@ const OWNERSHIP = 'dota2modmanager.json';
 // dota2-mod-manager). release.yml passes the installed exe and the unpacked AppImage from the
 // draft release, so what gets clicked is what goes out.
 const appAt = process.argv.indexOf('--app');
-const APP = appAt > 0 && process.argv[appAt + 1] ? path.resolve(process.argv[appAt + 1]) : null;
+/** A macOS build is a folder: what runs, what a kill can name and what a single-instance socket
+ * belongs to is the binary inside the bundle, so --app may name the .app itself. */
+function bundleBinary(at) {
+  if (process.platform !== 'darwin' || !at.endsWith('.app')) return at;
+  try {
+    const [name] = fs.readdirSync(path.join(at, 'Contents', 'MacOS'));
+    return name ? path.join(at, 'Contents', 'MacOS', name) : at;
+  } catch { return at; }
+}
+const APP = appAt > 0 && process.argv[appAt + 1] ? bundleBinary(path.resolve(process.argv[appAt + 1])) : null;
+// the [[bin]] name in src-tauri/Cargo.toml, which a cargo build writes as is: the bundle's
+// mainBinaryName ("Dota 2 Mod Manager") renames the copy inside the .app and nothing else
 const DEBUG_APP = path.join(root, 'target', 'debug', `dota2-mod-manager${process.platform === 'win32' ? '.exe' : ''}`);
 const BIN = APP || DEBUG_APP;
 // --upgrade <setup.exe>: --app is the release before this one, and this installer replaces it
@@ -404,13 +415,36 @@ export const EVAL_NOT_THE_REMOVAL_WINDOW = `
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/* The app's own process, and whatever is left of it.
+ *
+ * A Mac app can outlive the pid a launch hands back, and one copy left running is what
+ * tauri-plugin-single-instance catches the next launch with: the second app passes its command
+ * line to the first and exits 0 before it draws anything (src-tauri/src/command_line.rs), which
+ * this script would read as a launch that finished. So on macOS the binary is also swept by
+ * name, held to the user data this run gave it so an app somebody else started is left alone. */
 function stop(child) {
-  if (child.exitCode !== null) return;
-  try {
-    if (process.platform === 'win32') execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' });
-    else process.kill(-child.pid, 'SIGKILL');
-  } catch {
-    try { child.kill('SIGKILL'); } catch { /* already gone */ }
+  if (process.platform === 'win32') {
+    if (child.exitCode === null) {
+      try { execFileSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore' }); } catch { /* already gone */ }
+    }
+    return;
+  }
+  try { process.kill(-child.pid, 'SIGKILL'); } catch { try { child.kill('SIGKILL'); } catch { /* already gone */ } }
+  if (process.platform === 'darwin') {
+    const quoted = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    try {
+      spawnSync('pkill', ['-f', `^${quoted(BIN)} .*--user-data-dir=${quoted(USERDATA)}( |$)`], { stdio: 'ignore' });
+    } catch { /* no pkill on this machine */ }
+  }
+}
+
+/** Waits until a pid is gone, so the next launch cannot meet the copy this one killed. */
+async function gone(pid, ms) {
+  const end = Date.now() + ms;
+  for (;;) {
+    try { process.kill(pid, 0); } catch { return; }
+    if (Date.now() > end) return;
+    await sleep(200);
   }
 }
 
@@ -440,7 +474,10 @@ async function launch(label, env, timeoutMs = 180000, extraArgs = []) {
   while (Date.now() < deadline && !startError && exitCode === null && !answered()) await sleep(1000);
   await sleep(1500);
   stop(child);
-  await sleep(2500); // let Windows release the files before the disk is read
+  // Windows lets go of the files a moment after taskkill returns; elsewhere the pid is watched,
+  // because a process that still holds the app's data is what the next launch would trip over
+  if (process.platform === 'win32') await sleep(2500);
+  else await gone(child.pid, 10000);
   fs.closeSync(log);
   const evaluated = readIfThere(`${shot}.eval.json`);
   return {

@@ -439,12 +439,37 @@ fn main() {
         })
         .build(context)
         .expect("the Tauri shell failed to build")
-        .run(|app, event| {
-            if let tauri::RunEvent::Exit = event {
+        .run(|app, event| match event {
+            tauri::RunEvent::Exit => {
                 if let Some(owner) = app.try_state::<Owner>() {
                     owner.0.stop();
                 }
             }
+            // macOS hands a d2mm:// link or an opened preset to the running copy as an event, never
+            // as a command line, so it takes the road a second start's arguments take
+            // (src/command_line.rs's lock and the single-instance plugin cannot see it at all).
+            #[cfg(target_os = "macos")]
+            tauri::RunEvent::Opened { urls } => {
+                let args: Vec<String> = urls
+                    .iter()
+                    .filter_map(|url| match url.scheme() {
+                        "d2mm" => Some(url.to_string()),
+                        "file" => url.to_file_path().ok().map(|p| p.to_string_lossy().into_owned()),
+                        _ => None,
+                    })
+                    .collect();
+                if !args.is_empty() {
+                    if let Some(w) = app.get_webview_window("main") {
+                        let _ = w.unminimize();
+                        let _ = w.show();
+                        let _ = w.set_focus();
+                    }
+                    if let Some(owner) = app.try_state::<Owner>() {
+                        owner.0.second(args);
+                    }
+                }
+            }
+            _ => {}
         });
 }
 

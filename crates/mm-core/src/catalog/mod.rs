@@ -74,8 +74,15 @@ fn platform_file(m: &mut serde_json::Map<String, Value>) {
     if m.get("file").is_some_and(crate::js::truthy) {
         return;
     }
-    // only this system's build: the other one would download and then not start
-    let own = if cfg!(target_os = "linux") { "fileLinux" } else { "fileWin" };
+    // only this system's build: the other one would download and then not start. macOS keeps none
+    // where the catalog has no build for it, so the window never offers a program that cannot run.
+    let own = if cfg!(target_os = "linux") {
+        "fileLinux"
+    } else if cfg!(target_os = "macos") {
+        "fileMac"
+    } else {
+        "fileWin"
+    };
     if let Some(file) = m.get(own).filter(|v| v.as_str().is_some_and(|s| !s.is_empty())).cloned() {
         m.insert("file".into(), file);
     }
@@ -290,7 +297,7 @@ impl Catalog {
 #[cfg(test)]
 mod normalize {
     use super::normalize_catalog;
-    use serde_json::json;
+    use serde_json::{json, Value};
 
     #[test]
     fn a_tool_for_both_systems_gets_the_file_for_this_one() {
@@ -298,16 +305,24 @@ mod normalize {
             { "name": "VPKTool", "multiPlatform": true, "fileWin": "https://x/VPKTool-Win.zip", "fileLinux": "https://x/VPKTool-Linux.zip" },
             { "name": "Windows only", "fileWin": "https://x/only-Win.zip" },
             { "name": "Own file", "file": "own.zip", "fileWin": "https://x/other.zip" },
+            { "name": "Mac build", "fileWin": "https://x/Shared-Win.zip", "fileMac": "https://x/Shared-Mac.zip" },
         ] } });
         normalize_catalog(&mut mods);
         let tools = &mods["modsData"]["tools"];
-        let own = if cfg!(target_os = "linux") { "https://x/VPKTool-Linux.zip" } else { "https://x/VPKTool-Win.zip" };
+        let (own, only_win, mac_build) = if cfg!(target_os = "linux") {
+            // the Mac build has no Linux file either: nothing to download rather than a Windows one
+            (json!("https://x/VPKTool-Linux.zip"), Value::Null, Value::Null)
+        } else if cfg!(target_os = "macos") {
+            // no macOS build: nothing to download rather than a Windows program that will not start
+            (Value::Null, Value::Null, json!("https://x/Shared-Mac.zip"))
+        } else {
+            (json!("https://x/VPKTool-Win.zip"), json!("https://x/only-Win.zip"), json!("https://x/Shared-Win.zip"))
+        };
         assert_eq!(tools[0]["file"], own);
         // no build for this system: nothing to download rather than a program that will not start
-        let only_win =
-            if cfg!(target_os = "linux") { serde_json::Value::Null } else { json!("https://x/only-Win.zip") };
         assert_eq!(tools[1]["file"], only_win);
         assert_eq!(tools[2]["file"], "own.zip");
+        assert_eq!(tools[3]["file"], mac_build);
     }
 }
 

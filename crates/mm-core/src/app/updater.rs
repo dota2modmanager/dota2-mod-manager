@@ -75,6 +75,9 @@ pub struct UpdateNews {
 pub struct Updater<U: UpdaterLike> {
     pub inner: U,
     is_portable: bool,
+    /// The build cannot replace itself (a macOS bundle without a signature): a version found is
+    /// offered as a download from its release page instead of being fetched and installed here.
+    manual: bool,
     channel: Box<dyn Fn() -> String + Send>,
     send: Box<dyn FnMut(UpdateNews) + Send>,
     log: Box<dyn FnMut(&str) + Send>,
@@ -88,6 +91,7 @@ impl<U: UpdaterLike> Updater<U> {
     pub fn new(
         inner: U,
         is_portable: bool,
+        manual: bool,
         channel: Box<dyn Fn() -> String + Send>,
         send: Box<dyn FnMut(UpdateNews) + Send>,
         log: Box<dyn FnMut(&str) + Send>,
@@ -95,6 +99,7 @@ impl<U: UpdaterLike> Updater<U> {
         Updater {
             inner,
             is_portable,
+            manual,
             channel,
             send,
             log,
@@ -127,7 +132,8 @@ impl<U: UpdaterLike> Updater<U> {
 
     /// The first look; the shell then calls [`Updater::round`] every [`EVERY`] ms.
     pub fn start(&mut self) {
-        self.inner.set_auto_download(!self.is_portable);
+        // a build that cannot install in place must not fetch either: the page offers the download
+        self.inner.set_auto_download(!self.is_portable && !self.manual);
         self.started = true;
         self.check();
     }
@@ -154,7 +160,13 @@ impl<U: UpdaterLike> Updater<U> {
             self.portable_version = Some(version.to_string());
         }
         (self.send)(UpdateNews {
-            kind: if self.is_portable { "portable" } else { "available" },
+            kind: if self.is_portable {
+                "portable"
+            } else if self.manual {
+                "download"
+            } else {
+                "available"
+            },
             version: version.to_string(),
         });
     }

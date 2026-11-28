@@ -12,6 +12,8 @@ use std::sync::{Mutex, Weak};
 use mm_core::owner::Owner;
 use mm_core::updater::{Feed, UpdaterLike, MIRROR};
 use tauri::{AppHandle, Manager};
+// the plugin's own look is the manifest one; macOS asks the release page instead (check_release_page)
+#[cfg(not(target_os = "macos"))]
 use tauri_plugin_updater::UpdaterExt;
 
 /// The version fetched and waiting for the restart that installs it.
@@ -60,6 +62,21 @@ impl UpdaterLike for TauriUpdater {
     }
 
     fn check(&mut self) {
+        #[cfg(target_os = "macos")]
+        {
+            self.check_release_page();
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            self.check_manifest();
+        }
+    }
+}
+
+#[cfg(not(target_os = "macos"))]
+impl TauriUpdater {
+    /// The feed's manifest, which names that platform's own archive.
+    fn check_manifest(&mut self) {
         let (app, owner, url, fetch) = (self.app.clone(), self.owner.clone(), self.url.clone(), self.auto_download);
         tauri::async_runtime::spawn(async move {
             let found = async {
@@ -89,6 +106,47 @@ impl UpdaterLike for TauriUpdater {
                     mm_core::owner_update::downloaded(&o, &version);
                 }
                 Err(e) => mm_core::owner_update::error(&o, &e.to_string()),
+            }
+        });
+    }
+}
+
+/// The newest release on the project's page, as the API's tag answers it.
+const RELEASE_API: &str = "https://api.github.com/repos/dota2modmanager/dota2-mod-manager/releases/latest";
+
+/// The version of the newest stable release, or None when GitHub does not answer.
+#[cfg(target_os = "macos")]
+fn latest_release(o: &mm_core::owner::Owner) -> Option<String> {
+    let (status, body) =
+        o.core().net.direct("GET", RELEASE_API, &[("accept", "application/vnd.github+json")], None, 8000).ok()?;
+    if !(200..300).contains(&status) {
+        return None;
+    }
+    let released = serde_json::from_slice::<serde_json::Value>(&body).ok()?;
+    let tag = released.get("tag_name")?.as_str()?.trim().trim_start_matches('v').to_string();
+    (!tag.is_empty()).then_some(tag)
+}
+
+/// The macOS look, kept apart from the manifest one on purpose.
+///
+/// The plugin's manifest names an archive per platform and the plugin then verifies its minisign
+/// signature before installing. This build publishes neither (createUpdaterArtifacts is off), and
+/// an unsigned bundle would invalidate itself by swapping its own app, so there is nothing to
+/// fetch: the look asks for the newest release's version and the window offers its page. The beta
+/// channel is not offered here either, because GitHub's "latest release" is never a prerelease.
+#[cfg(target_os = "macos")]
+impl TauriUpdater {
+    fn check_release_page(&mut self) {
+        let (app, owner) = (self.app.clone(), self.owner.clone());
+        tauri::async_runtime::spawn(async move {
+            let inner = owner.clone();
+            let found = tauri::async_runtime::spawn_blocking(move || inner.upgrade().and_then(|o| latest_release(&o)))
+                .await
+                .ok()
+                .flatten();
+            let (Some(version), Some(o)) = (found, owner.upgrade()) else { return };
+            if mm_core::remote_config::cmp_version(&version, &app.package_info().version.to_string()) > 0 {
+                mm_core::owner_update::available(&o, &version);
             }
         });
     }
