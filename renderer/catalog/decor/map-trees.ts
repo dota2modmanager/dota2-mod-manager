@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeMeshesAsync } from './map-merge.ts';
+import { BLOCK_TREES, blockParts, blockPlace, isBlockModel, onePerTree } from './map-blocks.ts';
 
 export type TreeMode = 'own' | 'kind' | 'map';
 export type Side = 'radiant' | 'dire';
@@ -41,6 +42,7 @@ const leaf = new THREE.MeshStandardMaterial({ color: 0x2c4a1e, roughness: 1, met
 /** A model of the game, or of a catalog mod ("mod:<file>|<model>"), as meshes ready to instance,
  * its stump and close-up copy left out. */
 export async function modelParts(path: string, prepare: (m: THREE.Material) => void): Promise<THREE.Mesh[]> {
+  if (isBlockModel(path)) return blockParts(prepare);
   const mod = /^mod:([^|]+)\|(.+)$/.exec(path);
   const bytes = await (mod ? window.api.decor.modModel(mod[1], mod[2]) : window.api.preview3d.model(path)).catch(() => null);
   if (!bytes) return [];
@@ -109,8 +111,13 @@ export async function mapTrees(scene: THREE.Scene, trees: THREE.Mesh[], kind: Ma
   let mod: Record<string, string> = {};
 
   /** what the tree at a place becomes now, or null for itself */
+  // the blocks take only the trees the build turns into them
+  const ofSet = (p: { model: string | null; side: Side }) => {
+    const s = set[p.side];
+    return s && isBlockModel(s) && !(p.model && BLOCK_TREES.has(p.model)) ? undefined : s;
+  };
   const targetOf = (p: { model: string | null; side: Side }): string | null =>
-    (p.model ? mod[p.model] : undefined) ?? set[p.side] ?? (mode === 'map' ? everyTo ?? null : mode === 'kind' && p.model ? kind.get(p.model) ?? null : null);
+    (p.model ? mod[p.model] : undefined) ?? ofSet(p) ?? (mode === 'map' ? everyTo ?? null : mode === 'kind' && p.model ? kind.get(p.model) ?? null : null);
 
   let oneSize = false;
   // a tree's place scales its model by the map's unit and the tree's own size, 1 for six trees in
@@ -136,8 +143,9 @@ export async function mapTrees(scene: THREE.Scene, trees: THREE.Mesh[], kind: Ma
     for (const [key, to] of wanted) {
       if (built.has(key)) continue;
       built.set(key, null);
-      // every tree at its model's own size, as the map built with it (map_build.rs one_size_trees)
-      const at = oneSize ? (by.get(to) ?? []).map(fullSize) : by.get(to) ?? [];
+      // a block at each tree, one a tree, straight (the map stands them so); the rest at their own size
+      const placesOf = by.get(to) ?? [];
+      const at = isBlockModel(to) ? onePerTree(placesOf.map(blockPlace)) : oneSize ? placesOf.map(fullSize) : placesOf;
       void modelParts(to, prepare).then((parts) => {
         if (!parts.length) return;
         const g = instanced(parts, at, true);

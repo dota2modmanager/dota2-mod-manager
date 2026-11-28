@@ -649,9 +649,10 @@ pub fn zone_places(default_entities: &[Vec<u8>], want: Option<i64>) -> Vec<serde
     out
 }
 
-/// An entity lump with every tree at its model's own size (scales 1): the map draws some of its
-/// trees smaller (one in seven, down to 0.57), so a tree mod of one model, the catalog's stumps
-/// say, comes out of one size and the forest reads as the square cells the trees block. Only how
+/// An entity lump with every tree at its model's own size (scales 1) and straight (angles 0): the
+/// map draws some of its trees smaller (one in five, down to 0.57) and turns each its own way, so
+/// a tree mod of one model, the catalog's Logs Trees or the blocks (tree_blocks.rs), comes out of
+/// one size, square on the grid, and the forest reads as the cells the trees block. Only how
 /// the trees look here: where they stand and what they block is the server's. The lump, and how
 /// many trees it changed.
 pub fn one_size_trees(file: &[u8]) -> Result<(Vec<u8>, usize), String> {
@@ -666,10 +667,13 @@ pub fn one_size_trees(file: &[u8]) -> Result<(Vec<u8>, usize), String> {
                 continue;
             }
             let mut any = false;
-            if let Some(kv3::Value::Array { items, .. }) = values.get_mut("scales").map(|n| &mut n.value) {
-                for x in items.iter_mut() {
-                    if kv.number_of(x).is_some_and(|v| (v - 1.0).abs() > 1e-6) {
-                        any |= kv.set_number(x, 1.0).map_err(|e| e.to_string())?;
+            // at its own size, and straight: no turn, no lean, so it sits square on the grid
+            for (key, to) in [("scales", 1.0), ("angles", 0.0)] {
+                if let Some(kv3::Value::Array { items, .. }) = values.get_mut(key).map(|n| &mut n.value) {
+                    for x in items.iter_mut() {
+                        if kv.number_of(x).is_some_and(|v| (v - to).abs() > 1e-6) {
+                            any |= kv.set_number(x, to).map_err(|e| e.to_string())?;
+                        }
                     }
                 }
             }
@@ -855,15 +859,15 @@ mod tests {
         assert!(fx.iter().all(|f| f["at"].as_array().is_some_and(|a| a.len() == 3)));
     }
 
-    /// The real map's trees at one size (MM_TEST_MAP is maps/dota.vpk): the ones it scaled down,
-    /// about one in seven, at 1 after, and none left to change.
+    /// The real map's trees at one size and straight (MM_TEST_MAP is maps/dota.vpk): nearly every
+    /// tree changes (each is turned its own way), and none is left to change after.
     #[test]
     fn the_maps_trees_come_to_one_size() {
         let Ok(map) = std::env::var("MM_TEST_MAP") else { return };
         let ix = Index::open(std::path::Path::new(&map)).unwrap();
         let lump = ix.read("maps/dota/entities/default_ents.vents_c").unwrap().unwrap();
         let (out, n) = one_size_trees(&lump).unwrap();
-        assert!(n > 200 && n < 600, "{n}");
+        assert!(n > 2000, "{n}");
         assert_eq!(one_size_trees(&out).unwrap().1, 0);
     }
 

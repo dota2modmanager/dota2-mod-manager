@@ -103,6 +103,17 @@ pub fn build_trees(
     radiant: Option<&str>,
     dire: Option<&str>,
 ) -> Result<(Vec<u8>, usize, Vec<String>), String> {
+    let (entries, missing) = tree_entries(pak01, radiant, dire)?;
+    let n = entries.len();
+    Ok((crate::vpk::build(&entries), n, missing))
+}
+
+/// The files of [`build_trees`]' pak, and the game's files that were not there.
+pub fn tree_entries(
+    pak01: &Path,
+    radiant: Option<&str>,
+    dire: Option<&str>,
+) -> Result<(Vec<crate::vpk::Entry>, Vec<String>), String> {
     let sets = tree_sets();
     let mut plan = Vec::new();
     for (side, id) in [("radiant", radiant), ("dire", dire)] {
@@ -124,6 +135,5 @@ pub fn build_trees(
             None => missing.push(f.from),
         }
     }
-    let n = entries.len();
-    Ok((crate::vpk::build(&entries), n, missing))
+    Ok((entries, missing))
 }
