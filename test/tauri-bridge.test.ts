@@ -122,3 +122,38 @@ test('window.api calls a channel through Rust and hears what the shell sends', a
   handlers[0]({ payload: { channel: 'win:maximized', args: [true] } });
   assert.deepEqual(heard, [true]);
 });
+
+// A file dragged in from outside never reaches the DOM (Tauri's drop handler takes it, and wry turns
+// WebView2's external drop off), so the page hears Tauri's drag events as win:fileDrag, with the
+// files' paths and the cursor in CSS pixels; pathOf still knows the dropped files by name.
+test('files dragged onto the window reach the page as win:fileDrag, by their paths', () => {
+  const listeners: Record<string, (e: { payload: unknown }) => void> = {};
+  const fns: ((e: { payload: unknown }) => void)[] = [];
+  const window: Record<string, unknown> = {
+    devicePixelRatio: 2,
+    __TAURI_INTERNALS__: {
+      transformCallback: (fn: (e: { payload: unknown }) => void) => fns.push(fn) - 1,
+      invoke: (cmd: string, args: { event?: string; handler?: number }) => {
+        if (cmd === 'plugin:event|listen' && args.event && args.handler !== undefined) listeners[args.event] = fns[args.handler];
+        return Promise.resolve();
+      },
+    },
+    addEventListener: () => {},
+  };
+  const document = { readyState: 'complete', addEventListener: () => {} };
+  vm.runInNewContext(`${SOURCE}
+;${API}`, { window, document, navigator: { userAgent: 'test' }, btoa, atob, console });
+  const api = window.api as { win: { onFileDrag(cb: (d: unknown) => void): void }; mods: { pathForFile(f: unknown): string } };
+  const heard: unknown[] = [];
+  api.win.onFileDrag((d) => heard.push(d));
+  const full = 'C:/mods/pak01_dir.vpk';
+  listeners['tauri://drag-enter']({ payload: { paths: [full], position: { x: 200, y: 100 } } });
+  listeners['tauri://drag-leave']({ payload: null });
+  listeners['tauri://drag-drop']({ payload: { paths: [full], position: { x: 300, y: 50 } } });
+  assert.equal(JSON.stringify(heard), JSON.stringify([
+    { type: 'enter', paths: [full], x: 100, y: 50 },
+    { type: 'leave', paths: [], x: 0, y: 0 },
+    { type: 'drop', paths: [full], x: 150, y: 25 },
+  ]));
+  assert.equal(api.mods.pathForFile({ name: 'pak01_dir.vpk' }), full);
+});

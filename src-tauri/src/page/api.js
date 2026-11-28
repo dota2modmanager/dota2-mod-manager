@@ -29,6 +29,7 @@
       close: () => mm.invoke('win:close'),
       isMaximized: () => mm.invoke('win:isMaximized'),
       onMaximized: (cb) => mm.on('win:maximized', cb),
+      onFileDrag: (cb) => mm.on('win:fileDrag', cb),
     },
     settings: {
       get: () => mm.invoke('settings:get'),
