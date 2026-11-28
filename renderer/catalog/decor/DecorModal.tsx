@@ -50,6 +50,9 @@ export interface DecorModalModel {
   catalogTrees: { name: string; file: string; preview?: string }[];
   modTree: string | null;
   installedModTree: string | null;
+  /** every tree at its model's own size (the map's name trees:one-size) */
+  oneSize: boolean;
+  installedOneSize: boolean;
   /** the tree models the picked mod brings, null until they are read; a note while they are fetched */
   modTreeModels: string[] | null;
   modTreeNote: string | null;
@@ -74,6 +77,7 @@ export interface DecorModalActions {
   terrain: (id: string | null) => void;
   weather: (id: string | null) => void;
   modTree: (file: string | null) => void;
+  oneSize: (on: boolean) => void;
   install: () => void;
 }
 
@@ -122,13 +126,14 @@ function looksOf(m: DecorModalModel): MapLooks {
   // a catalog mod's trees stand where the game's tree of the same name stood
   const mod: Record<string, string> = {};
   if (m.modTree) for (const model of m.modTreeModels ?? []) mod[stemOf(model)] = `mod:${m.modTree}|${model}`;
-  return { trees: pick('trees'), mod };
+  return { trees: pick('trees'), mod, oneSize: m.oneSize };
 }
 
 export function DecorModal({ m, actions }: { m: DecorModalModel; actions: DecorModalActions }) {
   const same = m.installed !== null && m.installed.length === m.groups.length && m.groups.every((g) => m.installed?.includes(g));
   // the sets picked are mods of their own: a changed one is something to put on as well
-  const groundSame = m.terrain === m.installedTerrain && m.weather === m.installedWeather && m.groundFacets === m.installedGroundFacets;
+  const groundSame = m.terrain === m.installedTerrain && m.weather === m.installedWeather && m.groundFacets === m.installedGroundFacets
+    && m.oneSize === m.installedOneSize;
   const setsSame = groundSame && m.modTree === m.installedModTree
     && (!m.looks || (['trees', 'towers'] as MapKind[]).every((k) => m.looks!.chosen[k].radiant === m.looks!.installed[k].radiant && m.looks!.chosen[k].dire === m.looks!.installed[k].dire));
   const isMap = m.kind === 'map';
@@ -138,7 +143,7 @@ export function DecorModal({ m, actions }: { m: DecorModalModel; actions: DecorM
   const weather = isMap ? m.weather : (m.groups.includes('weather') ? null : m.installedWeather);
   // the dark look is the map's: Optimization draws the one on, beside the groups it takes out
   const shown = isMap ? m.groups : [...m.groups.filter((g) => !LOOK_GROUPS.includes(g)), ...m.installedDark];
-  const nothing = isMap ? !m.groups.length && !m.terrain && !m.weather && !m.groundFacets : !m.groups.length;
+  const nothing = isMap ? !m.groups.length && !m.terrain && !m.weather && !m.groundFacets && !m.oneSize && !m.installedOneSize : !m.groups.length;
   const unchanged = isMap ? same && setsSame : same;
   return (
     <div className="modal-body wardrobe opt">

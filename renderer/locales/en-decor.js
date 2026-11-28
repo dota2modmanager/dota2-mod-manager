@@ -114,5 +114,7 @@ const EN = {
   "Карта собирается из файлов игры и ставится одним модом в «Моих модах». Оптимизация, если стоит, пересобирается на новой карте.": "The map is built from the game’s files and goes into My mods as one mod. Optimization, if it is on, is built again on the new map.",
   "Список берётся из карты, которая стоит, и файлов игры при каждой сборке, а после обновления Доты приложение соберёт его заново. Чтобы всё вернуть, выключи или удали мод в «Моих модах».": "The list is read from the map you have on and the game’s files at every build, and after a Dota update the app builds it again. To put everything back, switch the mod off or remove it in My mods.",
   "В 3D погода показана примерно. Как она выглядит на самом деле, смотрите в игре.": "The weather in 3D is a rough look. To see how it really looks, check it in the game.",
+  "Все деревья одного размера": "Every tree the same size",
+  "Карта рисует часть деревьев меньше, до половины. С этим все деревья в свой полный размер: пеньки и другие моды из одной модели выходят одинаковыми и встают по квадратам карты. Где деревья стоят и что загораживают, не меняется": "The map draws some trees smaller, down to half. With this every tree is at its full size: stumps and other one-model mods come out alike and sit on the map's squares. Where trees stand and what they block does not change",
 };
 window.EN_MORE = Object.assign(window.EN_MORE || {}, EN);

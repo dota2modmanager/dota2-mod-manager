@@ -69,6 +69,11 @@ export function TreesPicker({ m, actions }: { m: DecorModalModel; actions: Decor
       <SideSwitch which={which} onWhich={setWhich} label={L`Деревья`} />
       <LookTiles label={L`Деревья`} value={value} onPick={pick} wide tiles={tiles} />
       <SidesLine m={m} kind="trees" chosen={chosen} mod={m.modTree} />
+      <label className="opt-check">
+        <input type="checkbox" checked={m.oneSize} onChange={(e) => actions.oneSize(e.currentTarget.checked)} />
+        <span>{L`Все деревья одного размера`}</span>
+      </label>
+      {m.oneSize && <span className="opt-slider-step">{L`Карта рисует часть деревьев меньше, до половины. С этим все деревья в свой полный размер: пеньки и другие моды из одной модели выходят одинаковыми и встают по квадратам карты. Где деревья стоят и что загораживают, не меняется`}</span>}
       <span className="opt-slider-step">
         {m.modTreeNote ?? (none ? L`В этом моде нет деревьев, которые видно на карте` : L`Наборы деревьев из игры, свои на каждой стороне, и моды из каталога. Мод скачивается, как при установке`)}
       </span>

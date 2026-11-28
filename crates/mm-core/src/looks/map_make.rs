@@ -6,7 +6,8 @@
 //! (map_decor.rs), which reads whatever map is on and takes things off it.
 //!
 //! The record keeps what it was made of as names, `generated.map`: "base:game:winter",
-//! "weather:snow", "dusk" or "dark", "facets:small", "tint:rrggbb".
+//! "weather:snow", "dusk" or "dark", "facets:small", "tint:rrggbb", "trees:one-size" (every tree
+//! at its model's own size, map_build.rs one_size_trees).
 
 use std::path::{Path, PathBuf};
 
@@ -22,6 +23,9 @@ use crate::vpk::Index;
 
 pub const MAP_REL: &str = "maps/dota.vpk";
 
+/// The name of every tree at one size.
+pub const ONE_SIZE: &str = "trees:one-size";
+
 /// The names a map is made of that are not the map's base or weather: the dark look.
 pub const LOOKS: [&str; 2] = ["dusk", "dark"];
 
@@ -36,7 +40,8 @@ pub fn mine(lib: &Library) -> Option<Value> {
 
 /// A name a map record keeps, as against one of Optimization's groups.
 pub fn is_map_name(n: &str) -> bool {
-    LOOKS.contains(&n) || ["base:", "weather:", "facets:", "tint:", "ground:"].iter().any(|p| n.starts_with(p))
+    LOOKS.contains(&n)
+        || ["base:", "weather:", "facets:", "tint:", "ground:", "trees:"].iter().any(|p| n.starts_with(p))
 }
 
 fn names_of(raw: &Value) -> Vec<String> {
@@ -207,7 +212,8 @@ impl MapMake {
         } else {
             None
         };
-        if choice.is_plain() && style.is_plain() && light.is_none() {
+        let one_size = names.iter().any(|n| n == ONE_SIZE);
+        if choice.is_plain() && style.is_plain() && light.is_none() && !one_size {
             return Err(t("Выбери ландшафт, погоду или вид карты", &[]));
         }
         let old = mine(lib);
@@ -215,6 +221,7 @@ impl MapMake {
             terrain: choice.base.as_ref().and_then(|b| b.word().map(str::to_string)),
             weather: choice.weather.map(|w| crate::map_build::WEATHERS[w].to_string()),
             light,
+            one_size,
         };
         // a catalog terrain that is a pak of materials needs no map of its own: it goes into the pak
         let under = crate::map_base::catalog_entries(&self.user_data, choice.base.as_ref());
@@ -270,6 +277,9 @@ impl MapMake {
         }
         if let Some(w) = choice.weather {
             kept.push(format!("weather:{}", WEATHER_KEYS[w]));
+        }
+        if one_size {
+            kept.push(ONE_SIZE.to_string());
         }
         let g = json!({ "map": kept });
         let name = t("Своя карта", &[]);
@@ -368,7 +378,7 @@ mod tests {
 
     #[test]
     fn the_map_names_are_told_from_the_groups() {
-        for n in ["dusk", "dark", "base:game:winter", "weather:snow", "facets:small", "tint:ff0000"] {
+        for n in ["dusk", "dark", "base:game:winter", "weather:snow", "facets:small", "tint:ff0000", "trees:one-size"] {
             assert!(super::is_map_name(n), "{n}");
         }
         for n in ["grass", "rocks", "weather", "mapFx"] {

@@ -18,7 +18,7 @@ import { screen } from './state.ts';
 let open = false;
 let m: DecorModalModel = { kind: 'optimize', groups: groupsOf('medium'), installed: null, counts: null, samples: null, looks: null, installedDark: [], installedAny: false,
   groundFacets: null, installedGroundFacets: null, terrains: [], catalogTerrains: [], terrainLook: null, terrain: null, installedTerrain: null, weathers: [], weather: null, installedWeather: null,
-  catalogTrees: [], modTree: null, installedModTree: null, modTreeModels: null, modTreeNote: null, weatherLight: null, video: null, mapName: null, busy: false };
+  catalogTrees: [], modTree: null, installedModTree: null, oneSize: false, installedOneSize: false, modTreeModels: null, modTreeNote: null, weatherLight: null, video: null, mapName: null, busy: false };
 
 /** The catalog's mods of a category with a file of their own, grouped or not. */
 function catalogMods(category: 'trees' | 'terrains'): (Mod & { file: string })[] {
@@ -101,7 +101,9 @@ export async function openDecor(from: Element | null, kind: 'map' | 'optimize' =
   const loose = catalogTerrainRecord();
   const base = kind === 'map' ? named(mapNames, 'base') : (mapOn ? named(mapNames, 'base') : (loose?.fileRef ? `catalog:${loose.fileRef}` : null));
   const weather = kind === 'map' || mapOn ? named(mapNames, 'weather') : null;
-  const facets = named(mapNames, 'facets') as 'small' | 'large' | null;
+  // a look of the ground this app does not know (a record another build made) counts as the game's
+  const facetsName = named(mapNames, 'facets');
+  const facets = facetsName === 'small' || facetsName === 'large' ? facetsName : null;
   const optWas = r.installed ? fromRecord(r.installed.groups).filter((g) => !LOOK_GROUPS.includes(g)) : null;
   const mapGroups: DecorGroup[] = darkOf(mapNames);
   const baseName = base?.startsWith('catalog:') ? terrains.find((t) => `catalog:${t.file}` === base)?.name ?? null : null;
@@ -110,7 +112,8 @@ export async function openDecor(from: Element | null, kind: 'map' | 'optimize' =
     groundFacets: facets, installedGroundFacets: facets, terrains: r.terrains ?? [], catalogTerrains: terrains, terrainLook: null,
     terrain: base, installedTerrain: base, weathers: r.weathers ?? [], weather, installedWeather: weather,
     catalogTrees: kind === 'map' ? catalogMods('trees').map((x) => ({ name: x.name, file: x.file, preview: x.preview })) : [],
-    modTree: modTreeRecord()?.fileRef ?? null, installedModTree: modTreeRecord()?.fileRef ?? null, modTreeModels: null, modTreeNote: null,
+    modTree: modTreeRecord()?.fileRef ?? null, installedModTree: modTreeRecord()?.fileRef ?? null,
+    oneSize: mapNames.includes(ONE_SIZE), installedOneSize: mapNames.includes(ONE_SIZE), modTreeModels: null, modTreeNote: null,
     weatherLight: r.weatherLight ?? null, video: r.video ?? null, mapName: baseName ?? (mapOn ? L`своя карта` : null), busy: false };
   takeOverlay();
   open = true;
@@ -135,22 +138,26 @@ function draw(): void {
     terrain: (id) => void pickTerrain(id),
     weather: (id) => { m = { ...m, weather: id }; draw(); },
     modTree: (file) => void pickModTree(file),
+    oneSize: (on) => { m = { ...m, oneSize: on }; draw(); },
     install: () => void install(),
   });
 }
 
+/** The map's name for every tree at its model's own size (crates/mm-core/src/looks/map_make.rs ONE_SIZE). */
+const ONE_SIZE = 'trees:one-size';
 const sameSides = (a: Sides, b: Sides) => a.radiant === b.radiant && a.dire === b.dire;
 const fail = (err: unknown) => ({ error: String((err as Error)?.message || err) });
 const sameGroups = () => m.installed !== null && m.installed.length === m.groups.length && m.groups.every((g) => m.installed?.includes(g));
 
 /** The map's own: its file and pak, then the trees and towers that changed, each a mod of its own. */
 async function installMap(): Promise<string | null> {
-  const changed = !sameGroups() || m.groundFacets !== m.installedGroundFacets || m.terrain !== m.installedTerrain || m.weather !== m.installedWeather;
-  const names = [...m.groups, ...(m.terrain ? [`base:${m.terrain}`] : []), ...(m.weather ? [`weather:${m.weather}`] : [])];
+  const changed = !sameGroups() || m.groundFacets !== m.installedGroundFacets || m.terrain !== m.installedTerrain || m.weather !== m.installedWeather
+    || m.oneSize !== m.installedOneSize;
+  const names = [...m.groups, ...(m.terrain ? [`base:${m.terrain}`] : []), ...(m.weather ? [`weather:${m.weather}`] : []), ...(m.oneSize ? [ONE_SIZE] : [])];
   if (changed && (names.length || m.groundFacets)) {
     const r = await window.api.decor.install(names, '', m.groundFacets ?? '', 'map').catch(fail);
     if (r.error) return r.error;
-    m = { ...m, installed: m.groups, installedAny: true, installedGroundFacets: m.groundFacets, installedTerrain: m.terrain, installedWeather: m.weather };
+    m = { ...m, installed: m.groups, installedAny: true, installedGroundFacets: m.groundFacets, installedTerrain: m.terrain, installedWeather: m.weather, installedOneSize: m.oneSize };
     for (const p of slotPicks()) await window.api.mods.setEnabled(p.id, false).catch(fail);
   }
   // a catalog Trees mod: put on as from the catalog, the one it replaces switched off
