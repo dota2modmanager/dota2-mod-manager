@@ -45,7 +45,7 @@
     "adm-zip": "^0.6.1",
     "dota-loadout": "file:vendor/dota-loadout",
     "eslint": "^10.15.0",
-    "fast-check": "^4.10.3",
+    "fast-check": "^4.11.0",
     "meshoptimizer": "^1.3.0",
     "motion": "^14.14.0",
     "qrcode-generator": "^2.0.4",
