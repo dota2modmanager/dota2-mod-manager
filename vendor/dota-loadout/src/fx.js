@@ -1537,7 +1537,7 @@ void main() { vCard = uv; vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB =
 const fragmentShader = `
 uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool studioRefract; uniform float refractShade; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform float studioGemMix; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
 uniform sampler2D tSceneDepth; uniform vec2 uSceneSize; uniform float uNear, uFar, uFeather; uniform bool uSoft;
-uniform bool useGradient; uniform sampler2D gradientMap; uniform int gradientTurns; uniform vec2 gradientOffset;
+uniform bool useGradient; uniform sampler2D gradientMap; uniform int gradientTurns; uniform vec2 gradientOffset; uniform vec3 globalTint;
 varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend; varying vec2 vCard;
 // m_nTextureChannels: which of the texture's channels give the alpha (the game's spritecard; as
 // ValveResourceFormat masks a first layer). A glow on black with a solid alpha, read as RGBA_RGBALPHA,
@@ -1570,7 +1570,7 @@ void main() {
   }
   vec4 t = texture2D(map, vUvA); if (blendFrames) t = mix(t, texture2D(map, vUvB), vBlend); if (studioRecolor) t.rgb = vec3(max(t.r, max(t.g, t.b))); t = channelMix(t);
   t.rgb = mix(t.rgb, vec3(max(t.r, max(t.g, t.b))), studioGemMix);
-  vec3 c = vColor.rgb * t.rgb; float a = t.a * vColor.a;
+  vec3 c = vColor.rgb * t.rgb * globalTint; float a = t.a * vColor.a;
   // A gradient layer (sprite-textures.js gradientLayer): the card times the gradient at its UV turned
   // and moved as the layer says. A card blended by its alpha loses its alpha where the gradient is dark.
   if (useGradient) {
@@ -1630,7 +1630,8 @@ function material(texInfo, r) {
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false }, ...SOFT, uFeather: { value: feather },
       channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') },
       useGradient: { value: !!texInfo.gradient }, gradientMap: { value: texInfo.gradient ? gradientTexture(texInfo.gradient.stops) : null },
-      gradientTurns: { value: texInfo.gradient?.turns ?? 0 }, gradientOffset: { value: new THREE.Vector2(...(texInfo.gradient?.offset ?? [0, 0])) } },
+      gradientTurns: { value: texInfo.gradient?.turns ?? 0 }, gradientOffset: { value: new THREE.Vector2(...(texInfo.gradient?.offset ?? [0, 0])) },
+      globalTint: { value: new THREE.Vector3(1, 1, 1) } },
   });
   // Mod2x: colour = 2 × source × destination, so 50 % grey changes nothing. The canvas's alpha must
   // stay as it is: blended like the colour, it fell to 2 × a × alpha, and the sprite's whole square
@@ -1717,6 +1718,16 @@ function visibility(r) {
   const d0 = v.m_flDistanceInputMin ?? 0, d1 = v.m_flDistanceInputMax ?? 0, a0 = v.m_flAlphaScaleMin ?? 0, a1 = v.m_flAlphaScaleMax ?? 1;
   return d1 > d0 ? (dist) => remapClamped(dist, d0, d1, a0, a1) : null;
 }
+// m_bTintByGlobalLight: the card's colour times the scene's light on a surface facing the eye (the game's
+// spritecard vertex shader, RenderDoc 2026-11-28: sun × sat(-L · n) + ambient × sat(A · n) + the sky's
+// two colours by n.z × (1 - sun), n from the particle to the camera). The scene gives that light as
+// options.globalLight(n), n in the effect's own (the game's) space; without it, nothing is tinted.
+const lightOf = (r, lib) => (r.m_bTintByGlobalLight && typeof lib.options.globalLight === 'function' ? lib.options.globalLight : null);
+function tintByLight(light, batch, ps, eye) {
+  if (!light || !ps.length) return;
+  const n = eye.clone().sub(ps[0].pos); if (n.lengthSq() < 1e-8) return;
+  batch.mesh.material.uniforms.globalTint.value.copy(light(n.normalize()));
+}
 class SpriteRenderer {
   dispose() { this.batch.dispose(); }
   constructor(r, lib, sim) {
@@ -1726,9 +1737,10 @@ class SpriteRenderer {
     // Cards lying in a plane fade as they turn edge-on to the eye: full where the dot of their normal
     // and the way to the eye is the start one, gone at the end one (the defaults, 1 and 2, never fade).
     this.dotStart = r.m_flStartFadeDot ?? 1; this.dotEnd = r.m_flEndFadeDot ?? 2; this.seen = lib.options.distanceFade ? visibility(r) : null;
+    this.light = lightOf(r, lib);
   }
   update(ps, s, camera, gi) {
-    const b = this.batch, { right, up, eye } = billboard(camera, gi); b.begin();
+    const b = this.batch, { right, up, eye } = billboard(camera, gi); b.begin(); tintByLight(this.light, b, ps, eye);
     for (const p of ps) {
       // Screen-size limits: a card that grows too large on screen fades, and its size is clamped.
       const dist = eye.distanceTo(p.pos); let r = p.radius * this.radiusScale(p, s), fade = 1;
@@ -1766,12 +1778,12 @@ class TrailRenderer {
     this.radiusScale = number(r.m_flRadiusScale, 1); this.tail = number(r.m_flTailAlphaScale, 1); this.head = number(r.m_flHeadAlphaScale, 1); this.ignoreDT = r.m_bIgnoreDT;
     this.lengthScale = r.m_flLengthScale ?? 1; this.fadeIn = r.m_flLengthFadeInTime ?? 0; this.ratio = r.m_flConstrainRadiusToLengthRatio ?? 1; this.shift = r.m_flForwardShift ?? 0;
     const tc = r.m_vecTexturesInput?.[0]?.m_TextureControls; this.flipV = tc && number(tc.m_flFinalTextureScaleV, 1)() < 0; this.rate = r.m_flAnimationRate ?? 0.1; this.type = r.m_nAnimationType;
-    this.seen = lib.options.distanceFade ? visibility(r) : null;
+    this.seen = lib.options.distanceFade ? visibility(r) : null; this.light = lightOf(r, lib);
   }
   // RenderTrails: a card from the particle back toward its previous position, as long as the
   // movement times m_flTrailLength (per second unless m_bIgnoreDT), no wider than it is long.
   update(ps, s, camera, gi) {
-    const b = this.batch, { eye } = billboard(camera, gi); b.begin(); const oneOverDt = this.ignoreDT || !s.sim.dt ? 1 : 1 / s.sim.dt;
+    const b = this.batch, { eye } = billboard(camera, gi); b.begin(); tintByLight(this.light, b, ps, eye); const oneOverDt = this.ignoreDT || !s.sim.dt ? 1 : 1 / s.sim.dt;
     for (const p of ps) {
       const diff = p.prev.clone().sub(p.pos), dl = diff.length(); if (dl < 1e-6) continue; const dir = diff.divideScalar(dl);
       let len = this.lengthScale * p.trail * dl * oneOverDt; if (this.fadeIn > 0) len *= Math.min(1, p.age / this.fadeIn); len = Math.min(this.max, Math.max(this.min, len)); if (len <= 0) continue;

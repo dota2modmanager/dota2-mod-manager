@@ -133,6 +133,19 @@ export const lit = {
 /** How many of the map's small lights the shader takes at once. */
 const LOCAL = 48;
 
+/** The map's light on a card facing `n` (the game's axes, from the particle to the eye), for the effects the
+ * game tints by it (m_bTintByGlobalLight, the rune's steam). The game's spritecard vertex shader takes
+ * sun × sat(-L · n) + ambient × sat(A · n) + the sky's two colours by n's height × (1 - that sun), from the
+ * same constants the map's materials read (a RenderDoc frame, 2026-11-28); no shadows. */
+const SCENE_N = new THREE.Vector3(), SKY = new THREE.Color(), LIGHT = new THREE.Vector3();
+export function particleLight(n: THREE.Vector3): THREE.Vector3 {
+  const s = SCENE_N.set(n.y, n.z, n.x);
+  const sun = THREE.MathUtils.clamp(-s.dot(lit.uSunDir.value), 0, 1), ambient = THREE.MathUtils.clamp(s.dot(lit.uAmbientDir.value), 0, 1);
+  SKY.copy(lit.uShadeDown.value).lerp(lit.uShadeUp.value, s.y * 0.5 + 0.5).multiplyScalar(1 - sun);
+  const { r, g, b } = lit.uSun.value, a = lit.uAmbient.value;
+  return LIGHT.set(r * sun + a.r * ambient + SKY.r, g * sun + a.g * ambient + SKY.g, b * sun + a.b * ambient + SKY.b);
+}
+
 /** A Source inch in the window's metres (the map's export). */
 export const INCH = 0.0254;
 /** How far south of the point it looks at the game's camera stands, in inches: its distance (dota_camera_distance 1134) × cos 60°. */
