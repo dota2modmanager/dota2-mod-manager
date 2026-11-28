@@ -28,15 +28,17 @@ pub fn dota_is_running() -> bool {
             .args(["/FI", "IMAGENAME eq dota2.exe", "/NH"])
             .creation_flags(CREATE_NO_WINDOW)
             .output();
-        return match out {
+        match out {
             Ok(o) => o.status.success() && String::from_utf8_lossy(&o.stdout).to_lowercase().contains("dota2.exe"),
             Err(_) => false,
-        };
+        }
     }
     // macOS answers with the same call: the client is game/bin/osx64/dota2.app, whose process is
     // named dota2, so one -x match serves both platforms.
     #[cfg(not(windows))]
-    return process_named("dota2");
+    {
+        process_named("dota2")
+    }
 }
 
 /// Whether a process with exactly this name runs. `-x` and never `-f`: the latter would also
