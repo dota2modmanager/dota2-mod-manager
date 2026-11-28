@@ -325,12 +325,17 @@ fn read_launch_options(file: &Path) -> Option<String> {
     Some(out)
 }
 
-/// The Steam roots to look in: the library the game sits in, then where Steam installs by default.
+/// The Steam roots to look in: the library the game sits in, then where Steam itself is installed
+/// (a second library such as D:\SteamLibrary has no userdata: it lives only beside Steam), then
+/// where Steam installs by default.
 fn steam_roots(game: Option<&Path>) -> Vec<PathBuf> {
     let mut roots = Vec::new();
     if let Some(g) = game {
         // <lib>/steamapps/common/dota 2 beta/game -> <lib>
         roots.push(up(g, 4));
+    }
+    if let Some(root) = crate::steam::steam_install_root() {
+        roots.push(PathBuf::from(root));
     }
     if cfg!(windows) {
         for base in ["ProgramFiles(x86)", "ProgramFiles"] {
