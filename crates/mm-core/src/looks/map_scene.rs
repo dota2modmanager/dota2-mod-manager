@@ -27,8 +27,8 @@ use crate::png_paint::{decode_rgba, encode_rgba};
 /// normal pictures; 10: the copies' tints whole and the export's as `copyTint`, the props' tint masks;
 /// 11: the props' specular pictures; 12: the overlays' tints in the space their draw calls keep;
 /// 13: the glows' colour pictures; 14: no world layer the map starts with off; 15: the water's flow;
-/// 16: the world node's material swaps, the Dire pit's haze).
-pub const LIGHT_FILE: &str = "world-16.glb";
+/// 16: the world node's material swaps, the Dire pit's haze; 17: the overlays back on what they lie on).
+pub const LIGHT_FILE: &str = "world-17.glb";
 
 /// The toolchain's arguments for the world of `map_vpk` into `out` (a .glb), with its materials.
 pub fn export_args(map_vpk: &str, out: &str) -> Vec<String> {
@@ -460,6 +460,7 @@ pub fn slim_glb(
     // The toolchain writes a mesh's vertices interleaved (position, normal, tangent, four UVs) in
     // one view many accessors point into. Each accessor kept is taken out on its own and packed
     // tight, once per span of the same data, so the tangents and the other UVs stay behind.
+    let moved = crate::map_overlays::overlay_positions(json, bin);
     let mut span_map: BTreeMap<SpanKey, (usize, bool)> = BTreeMap::new();
     let mut acc_map: BTreeMap<usize, usize> = BTreeMap::new();
     let mut out_acc: Vec<Value> = Vec::new();
@@ -495,11 +496,17 @@ pub fn slim_glb(
                 let view = views.get(v).ok_or_else(|| format!("map: no buffer view {v}"))?;
                 let off = view.get("byteOffset").and_then(idx).unwrap_or(0);
                 let stride = view.get("byteStride").and_then(idx).filter(|s| *s > 0).unwrap_or(elem);
-                let mut data = Vec::with_capacity(count * elem);
-                for i in 0..count {
-                    let s = off + at + i * stride;
-                    data.extend_from_slice(bin.get(s..s + elem).ok_or("map: an accessor past the end")?);
-                }
+                let mut data = match moved.get(a) {
+                    Some(d) => d.clone(),
+                    None => {
+                        let mut data = Vec::with_capacity(count * elem);
+                        for i in 0..count {
+                            let s = off + at + i * stride;
+                            data.extend_from_slice(bin.get(s..s + elem).ok_or("map: an accessor past the end")?);
+                        }
+                        data
+                    }
+                };
                 // 32-bit indices that all fit in 16 bits take half the room
                 let narrow = comp == 5125
                     && index_acc.contains(a)
@@ -515,6 +522,11 @@ pub fn slim_glb(
         let (n, narrow) = n;
         let mut acc = acc.clone();
         acc["bufferView"] = json!(n);
+        // an overlay put back keeps its bounds true: the window frames and culls by them
+        if let Some((lo, hi)) = moved.get(a).and_then(|d| crate::map_overlays::bounds(d)) {
+            acc["min"] = json!(lo);
+            acc["max"] = json!(hi);
+        }
         if narrow {
             acc["componentType"] = json!(5123);
         }
