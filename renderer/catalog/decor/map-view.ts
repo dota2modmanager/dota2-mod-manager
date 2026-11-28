@@ -70,7 +70,7 @@ function prepare(mat: THREE.Material): void {
   mat.side = THREE.DoubleSide;
   const m = mat as THREE.MeshStandardMaterial;
   // an overlay (F_OVERLAY: the Dire's lava cracks, blood, the paths' edges) is painted over the ground
-  // it lies on, blended and writing no depth, between the ground and the props (renderOrder below);
+  // it lies on, blended and writing no depth, after the props and before the water (renderOrder below);
   // F_ADDITIVE_BLEND (the cracks' glow) adds its light instead
   if (isOverlay(m)) {
     m.transparent = false; m.depthWrite = false;
@@ -369,14 +369,16 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       mapTrees(scene, treeMeshes, kind, samples.trees?.after, centre, treeWind ? prepare : (m) => { if (isWindy(m)) m.userData.still = true; prepare(m); }, changed),
     ]);
     if (disposed) return;
-    // the game draws the ground, then the overlays over it, then the props: a prop lying under an
-    // overlay's plane stays over it (the Dire's logo, 15" below the stones painted round it)
+    // the game draws the props and the ground, then the overlays over what they lie on (depth tested,
+    // not written), then the water: the rune's cracks lie on its pad, the Dire's logo stands over the
+    // stones painted round it, and a drawing on the river's bed stays under the water (RenderDoc 2026-11-28)
     scene.traverse((o) => {
       const mesh = o as THREE.Mesh;
       if (!mesh.isMesh) return;
       const mats = [mesh.material].flat();
       if (mats.some(isGround)) mesh.renderOrder = -2;
-      else if (mats.some(isOverlay)) { mesh.renderOrder = -1; mesh.castShadow = false; }
+      else if (mats.some(isOverlay)) { mesh.renderOrder = 1; mesh.castShadow = false; }
+      else if (mats.some(isWater)) mesh.renderOrder = 2;
       else if (mats.some(isGlow)) mesh.castShadow = false;
     });
     // the ground's heights for the weather (no trees: the rain falls through them)

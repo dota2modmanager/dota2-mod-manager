@@ -234,6 +234,48 @@ fn the_light_copy_keeps_shapes_and_colour_and_drops_the_rest() {
 }
 
 #[test]
+fn an_overlay_comes_back_down_onto_what_it_lies_on() {
+    // one triangle, interleaved as the toolchain writes it: position then normal, the normal straight up
+    // (the export's y); its material an overlay, the export's lift of 1/2.54 m along that normal in it
+    let lift = 1.0f32 / 2.54;
+    let mut bin = Vec::new();
+    for [x, z] in [[0f32, 0.], [1., 0.], [0., 1.]] {
+        for f in [x, 2.0 + lift, z, 0., 1., 0.] {
+            bin.extend_from_slice(&f.to_le_bytes());
+        }
+    }
+    for i in [0u16, 1, 2, 0] {
+        bin.extend_from_slice(&i.to_le_bytes());
+    }
+    let json = json!({
+        "scene": 0, "scenes": [{ "nodes": [0] }], "nodes": [{ "mesh": 0 }],
+        "meshes": [{ "primitives": [{ "attributes": { "POSITION": 0, "NORMAL": 1 }, "indices": 2, "material": 0 }] }],
+        "materials": [{ "name": "cracks_glow_000", "extras": { "vmat": { "Name": "materials/overlays/cracks_glow_000.vmat",
+            "ShaderName": "global_lit_simple.vfx", "IntParams": { "F_OVERLAY": 1, "F_ADDITIVE_BLEND": 1 } } } }],
+        "accessors": [
+            { "bufferView": 0, "byteOffset": 0, "componentType": 5126, "count": 3, "type": "VEC3", "min": [0, 2.39, 0], "max": [1, 2.4, 1] },
+            { "bufferView": 0, "byteOffset": 12, "componentType": 5126, "count": 3, "type": "VEC3" },
+            { "bufferView": 1, "componentType": 5123, "count": 3, "type": "SCALAR" },
+        ],
+        "bufferViews": [
+            { "buffer": 0, "byteOffset": 0, "byteLength": 72, "byteStride": 24 },
+            { "buffer": 0, "byteOffset": 72, "byteLength": 8 },
+        ],
+        "buffers": [{ "byteLength": 80 }],
+    });
+    let out = slim_glb(&json, &bin, &|_| None, 2, &[]).unwrap();
+    let (j, b) = read_glb(&out).unwrap();
+    let pa = j["meshes"][0]["primitives"][0]["attributes"]["POSITION"].as_u64().unwrap() as usize;
+    let m = &j["bufferViews"][j["accessors"][pa]["bufferView"].as_u64().unwrap() as usize]["extensions"]
+        ["EXT_meshopt_compression"];
+    let (off, len) = (m["byteOffset"].as_u64().unwrap() as usize, m["byteLength"].as_u64().unwrap() as usize);
+    let back = crate::meshopt::decode_vertex_buffer(3, 12, &b[off..off + len]).unwrap();
+    let ys: Vec<f32> = back.as_chunks::<12>().0.iter().map(|c| f32::from_le_bytes([c[4], c[5], c[6], c[7]])).collect();
+    assert!(ys.iter().all(|y| (y - 2.0).abs() < 1e-5), "on the plane it was cut from: {ys:?}");
+    assert!((j["accessors"][pa]["max"][1].as_f64().unwrap() - 2.0).abs() < 1e-5, "its bounds came down with it");
+}
+
+#[test]
 fn a_shiny_prop_names_its_specular_picture() {
     let textures = vec![json!({ "source": 0 })];
     let images = vec![json!({ "name": "rock_refl_psd_1.vtex" })];

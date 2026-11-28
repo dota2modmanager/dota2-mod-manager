@@ -40,10 +40,12 @@ impl Drop for Temp {
 struct NoSteam {
     _lock: MutexGuard<'static, ()>,
     empty: Temp,
-    real: [Option<std::ffi::OsString>; 2],
+    real: [Option<std::ffi::OsString>; 3],
 }
 
-const PF: [&str; 2] = ["ProgramFiles(x86)", "ProgramFiles"];
+/// The places a real Steam is found by: Program Files, and MM_STEAM_ROOT standing in for the
+/// registry (steam::steam_install_root), all pointed at an empty folder.
+const PF: [&str; 3] = ["ProgramFiles(x86)", "ProgramFiles", "MM_STEAM_ROOT"];
 
 fn no_steam() -> NoSteam {
     let lock = ENV.lock().unwrap_or_else(|e| e.into_inner());
@@ -732,4 +734,15 @@ fn all_accounts_are_the_ones_that_played_dota_and_the_signed_in_one() {
     fs::create_dir_all(ud.join("0")).unwrap();
     // 111 is signed in without a 570 folder yet, 333 never played Dota, 0 is Steam signed out
     assert_eq!(gamelang::steam_account_dirs(Some(&g.game)), vec![ud.join("111"), ud.join("222")]);
+}
+
+#[test]
+fn the_account_folder_is_found_beside_steam_when_the_game_is_in_another_library() {
+    // Steam on E:\Program Files (x86)\Steam, Dota in D:\SteamLibrary: that library has no userdata
+    let _env = no_steam();
+    let g = fake_game(Setup { boot: Some(&boot_file("russian", "russian")), ..Default::default() });
+    let steam = Temp::new("steamroot");
+    fake_steam(&steam.0, &[user(111, "", 900), user(222, "", 100)]);
+    std::env::set_var("MM_STEAM_ROOT", &steam.0);
+    assert_eq!(gamelang::steam_account_dir(Some(&g.game)), Some(steam.0.join("userdata").join("111")));
 }
