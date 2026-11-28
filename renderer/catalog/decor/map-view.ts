@@ -16,6 +16,7 @@ import { mapWeather, type MapWeather } from './map-weather.ts';
 import { keepOnGround, mapHeights, type Heights } from './map-heights.ts';
 import { forgetGrounds, groundLight, isGround, paintGround, setGround } from './map-ground.ts';
 import { mapKeys } from './map-keys.ts';
+import { dotaCamera } from './map-camera.ts';
 import { painter } from './map-paint.ts';
 import type { TerrainPaint, VideoSettings } from '../../api/decor.ts';
 import { cheapWater, isWater, waterBed, waterFlow, waterOf, waterTime, wavePictures } from './map-water.ts';
@@ -150,10 +151,14 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const camera = new THREE.PerspectiveCamera(45, 1, 1, 5000);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
-  controls.maxPolarAngle = Math.PI * 0.49;
   controls.screenSpacePanning = false;
-  // the wheel goes to what is under the mouse: down onto a tavern's stair, not the air over the middle
-  controls.zoomToCursor = true;
+  // the game's camera does not turn and its wheel is its own (map-camera.ts): any button drags the map
+  controls.enableRotate = false;
+  controls.enableZoom = false;
+  controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };
+  const dota = dotaCamera(camera, controls.target, (z) => light.zoom(z));
+  const wheel = (e: WheelEvent) => { e.preventDefault(); if (e.deltaY) dota.wheel(Math.sign(e.deltaY)); };
+  renderer.domElement.addEventListener('wheel', wheel, { passive: false });
 
   // The map stands still: a frame is drawn only when the camera moved or something switched, and
   // the shadows (a second pass over the whole map) are drawn again only when something switched.
@@ -199,6 +204,12 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     if (windy) { windTime.value = clock.elapsedTime; dirty = true; }
     if (weather?.tick(clock.elapsedTime, controls.target, renderer.domElement.height, camera)) dirty = true;
     if (light.tick(clock.elapsedTime, camera, controls.target) || keepOnGround(heights, camera, controls.target, mapReach)) dirty = true;
+    // the target kept over the map, the camera stood where the game's stands over it
+    if (box) {
+      controls.target.x = THREE.MathUtils.clamp(controls.target.x, box.min.x, box.max.x);
+      controls.target.z = THREE.MathUtils.clamp(controls.target.z, box.min.z, box.max.z);
+    }
+    if (dota.step(dt)) dirty = true;
     if (light.sunMoved()) renderer.shadowMap.needsUpdate = true;
     if (!dirty) return;
     dirty = false;
@@ -341,19 +352,15 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
     // everything else as one mesh per material and per group a slider takes away
     const groupOf = (m: THREE.Mesh) => [m.material].flat().map((x) => owner.get(vmatOf(x))).find(Boolean) ?? '';
     light.fit(box);
-    // the camera over the map, from the south and above, as a player sees it
     const centre = box.getCenter(new THREE.Vector3());
     const span = box.getSize(new THREE.Vector3());
     const reach = (mapReach = Math.max(span.x, span.z));
     weather = mapWeather(scene, reach);
     weather.set(weatherWanted);
-    controls.target.copy(centre);
-    camera.position.set(centre.x, centre.y + reach * 0.75, centre.z + reach * 0.55);
+    // the camera on the middle of the map, the mid lane's river (the game's 0, 0), as the game's
+    // stands over it (map-camera.ts); the ground's height comes in with the heights
+    controls.target.set(0, 0, 0);
     camera.near = reach / 40000; // close enough to read a tavern's steps
-    camera.far = reach * 6;
-    camera.updateProjectionMatrix();
-    controls.maxDistance = reach * 2;
-    controls.minDistance = reach / 20000;
     const kind = new Map((samples.treesSimple?.swaps ?? []).map(([from, to]) => [stemOf(from), to]));
     // the rest and the trees merged side by side, in workers, the window free meanwhile
     onProgress(L`Собираю карту`);
@@ -408,6 +415,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
       output.dispose();
       resize.disconnect();
       controls.dispose();
+      renderer.domElement.removeEventListener('wheel', wheel);
       scene.traverse((o) => {
         const mesh = o as THREE.Mesh;
         if (!mesh.isMesh) return;

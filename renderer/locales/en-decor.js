@@ -49,7 +49,7 @@ const EN = {
   "Для 3D-карты нужны инструменты Source 2: их можно скачать в настройках": "The 3D map needs the Source 2 tools: you can download them in Settings",
   "Загружаю карту": "Loading the map",
   "Минимум": "Minimum",
-  "Мышью: крутить, приближать, двигать (правая кнопка)": "Mouse: turn, zoom, move (right button)",
+  "Колесо приближает и отдаляет, мышь или WASD двигают": "Wheel zooms in and out, drag or WASD to move",
   "Не удалось выгрузить карту": "Couldn’t export the map",
   "Не удалось загрузить карту": "Couldn’t load the map",
   "Низкая": "Low",

@@ -137,7 +137,7 @@ uniform vec2 uFlow;
 uniform float uHasFlowMap;
 uniform vec4 uFlowNums, uWaveNums;
 uniform vec3 uSun, uShade, uSpecColor, uFogColor;
-uniform float uSpecIndependence, uFogFrom;
+uniform float uSpecIndependence;
 uniform vec4 uFog;
 uniform sampler2D uBed, uBedDepth;
 uniform vec2 uPixel;
@@ -185,7 +185,7 @@ void main() {
     vec3 surface = saturate( uLowSurface * fresnel + uLowReflColor * uFogColor * glint );
     vec3 c = mix( surface * light, surface, saturate( 2.0 * s + uLowBloom ) );
     c = mix( texture2D( uBed, uv ).rgb, c, saturate( glint + uLowFresnel.z ) );
-    float far = max( dist - uFogFrom, 0.0 );
+    float far = dist;
     float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
     gl_FragColor = vec4( mix( c, uFogColor, fog ), 1.0 );
     #include <tonemapping_fragment>
@@ -219,7 +219,7 @@ void main() {
   c = saturate( c + shineColour * shine );
 
   // the view's fog, as on the rest of the map (map-light.ts); the game's light pass leaves the water out
-  float far = max( dist - uFogFrom, 0.0 );
+  float far = dist;
   float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
   gl_FragColor = vec4( mix( c, uFogColor, fog ), 1.0 );
   #include <tonemapping_fragment>

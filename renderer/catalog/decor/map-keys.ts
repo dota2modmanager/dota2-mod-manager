@@ -44,7 +44,8 @@ export function mapKeys(camera: THREE.PerspectiveCamera, controls: OrbitControls
       if (forward.lengthSq() < 1e-6) forward.set(0, 0, -1);
       forward.normalize();
       right.crossVectors(forward, camera.up).normalize();
-      const speed = camera.position.distanceTo(controls.target) * (fast ? 2.4 : 0.9);
+      // the game's camera pans 3000 units a second (dota_camera_speed), Shift twice that
+      const speed = 3000 * 0.0254 * (fast ? 2 : 1);
       move.copy(forward).multiplyScalar(y).addScaledVector(right, x).normalize().multiplyScalar(speed * Math.min(dt, 0.05));
       // the camera stays over the map
       const box = bounds();
