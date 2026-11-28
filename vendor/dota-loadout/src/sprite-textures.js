@@ -1,6 +1,25 @@
 // Source 2 sprite cards may leave slot 0 blank (UV transforms) and use later
 // slots for the visible texture and/or alpha masks. Never render a distortion
 // texture as the sprite's colour: its opaque channels are visible as squares.
+const literal = (x, fallback) => (typeof x === 'number' ? x : x?.m_nType === 'PF_TYPE_LITERAL' ? x.m_flLiteralValue ?? fallback : fallback);
+
+// A layer with m_bReplaceTextureWithGradient: its picture is the gradient laid across the card, and the
+// card is multiplied by it. The game's vertex shader hands the layer the card's UV turned by the layer's
+// rotation and moved by its offset (RenderDoc, the river's waves, map_riverflow_waves.vpcf: 90° and
+// V + 0.3 gave (1 - v, u + 0.3)); a 64 × 1 picture, only its U counts. The river's rings are lit on
+// one side only this way (grey at the edge, white at 0.16, black past 0.45): drawn whole, every wave
+// was a bright full ring.
+function gradientLayer(inputs) {
+  const layer = inputs.find((input) => input?.m_bReplaceTextureWithGradient && input.m_Gradient?.m_Stops?.length);
+  if (!layer) return null;
+  const c = layer.m_TextureControls || {};
+  return {
+    stops: layer.m_Gradient.m_Stops.map((s) => ({ at: s.m_flPosition ?? 0, color: (s.m_Color || [255, 255, 255, 255]).slice(0, 4) })).sort((a, b) => a.at - b.at),
+    turns: ((Math.round(literal(c.m_flFinalTextureUVRotation, 0) / 90) % 4) + 4) % 4,
+    offset: [literal(c.m_flFinalTextureOffsetU, 0), literal(c.m_flFinalTextureOffsetV, 0)],
+  };
+}
+
 export function resolveSpriteTextures(renderer = {}) {
   const inputs = Array.isArray(renderer.m_vecTexturesInput) ? renderer.m_vecTexturesInput : [];
   const usable = inputs.map((input, index) => ({ input: input || {}, index }))
@@ -17,6 +36,7 @@ export function resolveSpriteTextures(renderer = {}) {
   ));
   return {
     path,
+    gradient: gradientLayer(inputs),
     channel: first?.input.m_nTextureChannels || null,
     maskPath: mask?.input.m_hTexture || null,
     // Standalone alpha-cloud textures use RGB as coverage (their PNG alpha
