@@ -308,6 +308,7 @@
       state: () => mm.invoke('grid:state'),
       apply: (kinds) => mm.invoke('grid:apply', kinds),
       remove: () => mm.invoke('grid:remove'),
+      setAll: (on) => mm.invoke('grid:all', on),
     },
     diag: {
       export: () => mm.invoke('diag:export'),
