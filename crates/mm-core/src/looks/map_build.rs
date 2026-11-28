@@ -649,6 +649,45 @@ pub fn zone_places(default_entities: &[Vec<u8>], want: Option<i64>) -> Vec<serde
     out
 }
 
+/// An entity lump with every tree at its model's own size (scales 1) and straight (angles 0): the
+/// map draws some of its trees smaller (one in five, down to 0.57) and turns each its own way, so
+/// a tree mod of one model, the catalog's Logs Trees or the blocks (tree_blocks.rs), comes out of
+/// one size, square on the grid, and the forest reads as the cells the trees block. Only how
+/// the trees look here: where they stand and what they block is the server's. The lump, and how
+/// many trees it changed.
+pub fn one_size_trees(file: &[u8]) -> Result<(Vec<u8>, usize), String> {
+    let mut kv =
+        kv3::read(crate::resource::data(file, "DATA", 0).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
+    let mut root = std::mem::replace(&mut kv.root, kv3::Node::new(kv3::Value::Other { ty: 1, value: None }));
+    let mut n = 0;
+    if let Some(kv3::Value::Array { items, .. }) = root.get_mut("m_entityKeyValues").map(|n| &mut n.value) {
+        for e in items.iter_mut() {
+            let Some(values) = e.get_mut("keyValues3Data").and_then(|d| d.get_mut("values")) else { continue };
+            if values.get("classname").and_then(kv3::Node::as_str) != Some("ent_dota_tree") {
+                continue;
+            }
+            let mut any = false;
+            // at its own size, and straight: no turn, no lean, so it sits square on the grid
+            for (key, to) in [("scales", 1.0), ("angles", 0.0)] {
+                if let Some(kv3::Value::Array { items, .. }) = values.get_mut(key).map(|n| &mut n.value) {
+                    for x in items.iter_mut() {
+                        if kv.number_of(x).is_some_and(|v| (v - to).abs() > 1e-6) {
+                            any |= kv.set_number(x, to).map_err(|e| e.to_string())?;
+                        }
+                    }
+                }
+            }
+            n += usize::from(any);
+        }
+    }
+    kv.root = root;
+    if n == 0 {
+        return Ok((file.to_vec(), 0));
+    }
+    let data = kv3::write(&kv).map_err(|e| e.to_string())?;
+    Ok((crate::resource::replace(file, "DATA", 0, &data).map_err(|e| e.to_string())?, n))
+}
+
 /// What a map is built with.
 #[derive(Debug, Clone, Default)]
 pub struct MapLook {
@@ -658,11 +697,16 @@ pub struct MapLook {
     pub weather: Option<String>,
     /// how much of its light the map keeps (1: all of it)
     pub light: Option<f64>,
+    /// every tree at its model's own size: the map scales some of them down (one_size_trees)
+    pub one_size: bool,
 }
 
 impl MapLook {
     pub fn is_plain(&self) -> bool {
-        self.terrain.is_none() && self.weather.is_none() && self.light.is_none_or(|k| (k - 1.0).abs() < 1e-9)
+        self.terrain.is_none()
+            && self.weather.is_none()
+            && self.light.is_none_or(|k| (k - 1.0).abs() < 1e-9)
+            && !self.one_size
     }
 }
 
@@ -682,7 +726,7 @@ pub fn build_map(base: &Index, default_map: &Index, look: &MapLook) -> Result<(V
         None => IndexMap::new(),
     };
     let mut entries: Vec<Entry> = Vec::new();
-    let (mut zones, mut lit) = (0, 0);
+    let (mut zones, mut lit, mut sized) = (0, 0, 0);
     let paths: Vec<String> = base.paths().map(str::to_string).collect();
     // a map with no everyday zone anywhere takes the weather in copies of its own first weather's
     let fallback = if look.weather.is_some() {
@@ -724,13 +768,21 @@ pub fn build_map(base: &Index, default_map: &Index, look: &MapLook) -> Result<(V
                     lit += n;
                 }
             }
+            if look.one_size {
+                let (d, n) = one_size_trees(&data)?;
+                data = d;
+                sized += n;
+            }
         }
         entries.push(crate::vpk::entry_at(&name, data.into()));
     }
     if look.weather.is_some() && zones == 0 {
         return Err("no lighting zone of this map takes a weather".into());
     }
-    let said = format!("map: terrain {}, weather in {zones} zones, light in {lit} zones", word.unwrap_or("default"));
+    let said = format!(
+        "map: terrain {}, weather in {zones} zones, light in {lit} zones, {sized} trees to their own size",
+        word.unwrap_or("default")
+    );
     Ok((crate::vpk::build(&entries), said))
 }
 
@@ -807,6 +859,18 @@ mod tests {
         assert!(fx.iter().all(|f| f["at"].as_array().is_some_and(|a| a.len() == 3)));
     }
 
+    /// The real map's trees at one size and straight (MM_TEST_MAP is maps/dota.vpk): nearly every
+    /// tree changes (each is turned its own way), and none is left to change after.
+    #[test]
+    fn the_maps_trees_come_to_one_size() {
+        let Ok(map) = std::env::var("MM_TEST_MAP") else { return };
+        let ix = Index::open(std::path::Path::new(&map)).unwrap();
+        let lump = ix.read("maps/dota/entities/default_ents.vents_c").unwrap().unwrap();
+        let (out, n) = one_size_trees(&lump).unwrap();
+        assert!(n > 2000, "{n}");
+        assert_eq!(one_size_trees(&out).unwrap().1, 0);
+    }
+
     /// The winter map built on the real game (MM_TEST_MAP is maps/dota.vpk): every file at the
     /// default map's name, no path of the winter map left in the world, snow in its zones.
     #[test]
@@ -815,7 +879,12 @@ mod tests {
         let maps = std::path::Path::new(&map).parent().unwrap();
         let default_map = Index::open(std::path::Path::new(&map)).unwrap();
         let winter = Index::open(&maps.join("dota_winter.vpk")).unwrap();
-        let look = MapLook { terrain: Some("winter".into()), weather: Some(WEATHERS[0].into()), light: Some(0.5) };
+        let look = MapLook {
+            terrain: Some("winter".into()),
+            weather: Some(WEATHERS[0].into()),
+            light: Some(0.5),
+            one_size: false,
+        };
         let (bytes, said) = build_map(&winter, &default_map, &look).unwrap();
         eprintln!("{said}");
         let tmp = std::env::temp_dir().join("mm-map-build-test.vpk");

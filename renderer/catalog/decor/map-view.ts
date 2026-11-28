@@ -31,7 +31,7 @@ import { mapEffects, type MapEffects, type WorldEffect } from './map-effects.ts'
 
 /** The game's own tree sets picked per side, and a catalog Trees mod. */
 /** `mod`: a catalog Trees mod's models by the game tree each stands in for (map-trees.ts) */
-export interface MapLooks { trees: SideModels; mod?: Record<string, string> }
+export interface MapLooks { trees: SideModels; mod?: Record<string, string>; oneSize?: boolean }
 
 /** The ground's look: another map's ground (its word) or null, and its polygons. */
 export interface GroundLook { map: string | null; facets: 'small' | 'large' | null }
@@ -255,7 +255,7 @@ export async function mountMapView(host: HTMLElement, samples: Partial<Record<De
   const apply = () => {
     for (const [g, list] of byGroup) for (const m of list) m.visible = !removed.has(g as DecorGroup);
     effects?.hide(removed);
-    trees?.show('own', looks.trees, looks.mod);
+    trees?.show('own', looks.trees, looks.mod, looks.oneSize);
     if (trees) showGround();
     // the ground in the dusk or the dark, by the factor the build writes into the game (map_optimize.rs)
     groundLight.value = removed.has('dark') ? 0.4 : removed.has('dusk') ? 0.65 : 1;

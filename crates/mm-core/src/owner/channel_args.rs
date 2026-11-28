@@ -479,6 +479,7 @@ pub fn channel_args() -> &'static HashMap<&'static str, Vec<Check>> {
             ("update:revealPortable", vec![PATH()]),
             ("beta:set", vec![bool_()]),
             ("grid:apply", vec![list(one_of(&[Some("winrate"), Some("attribute"), Some("popular")]), 3)]),
+            ("grid:all", vec![bool_()]),
             ("ui:setZoom", vec![num(0.25, 5.0)]),
             ("settings:set", vec![custom(settings_key), Box::new(|_| None)]),
             ("settings:testProxy", vec![custom(download_proxy)]),

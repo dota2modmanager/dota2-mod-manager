@@ -126,7 +126,8 @@ export interface SocialState {
 
 /** Which hero grids the app made: the kinds it can make, and what the account's file holds now. */
 export type GridKind = 'winrate' | 'attribute' | 'popular';
-export interface GridState { account: boolean; kinds: GridKind[]; statsAt: number | null }
+/** `all`: the grids go into every account that has played Dota; `accounts`: how many there are. */
+export interface GridState { account: boolean; kinds: GridKind[]; statsAt: number | null; all: boolean; accounts: number }
 
 interface WinApi {
   minimize: () => Promise<void>;
@@ -216,6 +217,7 @@ export interface AppApi {
     state: () => Promise<GridState>;
     apply: (kinds: GridKind[]) => Promise<Reply<{ kinds: GridKind[]; statsAt: number }>>;
     remove: () => Promise<Reply<{ kinds: GridKind[] }>>;
+    setAll: (on: boolean) => Promise<Reply<{ all: boolean }>>;
   };
   diag: { export: () => Promise<Dialog<{ path: string }>>; reportError: (msg: string) => void };
   onProgress: (cb: (evt: ProgressEvent) => void) => void;
