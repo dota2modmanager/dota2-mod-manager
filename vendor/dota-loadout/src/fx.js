@@ -1532,12 +1532,13 @@ export class Simulation {
 // ---------------------------------------------------------------- rendering
 const vertexShader = `
 attribute vec4 color; attribute vec4 uvA; attribute vec4 uvB; attribute float blend;
-varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
-void main() { vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB = mix(uvB.xy, uvB.zw, uv); vBlend = blend; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend; varying vec2 vCard;
+void main() { vCard = uv; vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB = mix(uvB.xy, uvB.zw, uv); vBlend = blend; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const fragmentShader = `
 uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool studioRefract; uniform float refractShade; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform float studioGemMix; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
 uniform sampler2D tSceneDepth; uniform vec2 uSceneSize; uniform float uNear, uFar, uFeather; uniform bool uSoft;
-varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
+uniform bool useGradient; uniform sampler2D gradientMap; uniform int gradientTurns; uniform vec2 gradientOffset;
+varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend; varying vec2 vCard;
 // m_nTextureChannels: which of the texture's channels give the alpha (the game's spritecard; as
 // ValveResourceFormat masks a first layer). A glow on black with a solid alpha, read as RGBA_RGBALPHA,
 // has its alpha in its brightness: read as RGBA, it drew a square (Primeval Abomination's dark halo,
@@ -1570,6 +1571,13 @@ void main() {
   vec4 t = texture2D(map, vUvA); if (blendFrames) t = mix(t, texture2D(map, vUvB), vBlend); if (studioRecolor) t.rgb = vec3(max(t.r, max(t.g, t.b))); t = channelMix(t);
   t.rgb = mix(t.rgb, vec3(max(t.r, max(t.g, t.b))), studioGemMix);
   vec3 c = vColor.rgb * t.rgb; float a = t.a * vColor.a;
+  // A gradient layer (sprite-textures.js gradientLayer): the card times the gradient at its UV turned
+  // and moved as the layer says. A card blended by its alpha loses its alpha where the gradient is dark.
+  if (useGradient) {
+    vec2 q = gradientTurns == 1 ? vec2(1.0 - vCard.y, vCard.x) : gradientTurns == 2 ? 1.0 - vCard : gradientTurns == 3 ? vec2(vCard.y, 1.0 - vCard.x) : vCard;
+    vec4 g = texture2D(gradientMap, vec2(clamp(q.x + gradientOffset.x, 0.0, 1.0), 0.5));
+    c *= g.rgb; if (mode == 0) a *= max(g.r, max(g.g, g.b));
+  }
   // The alpha-cloud resources use grayscale coverage even with opaque PNG alpha.
   // Explicit mask layers must be combined with the colour layer, not displayed
   // as their own opaque sprite quads.
@@ -1597,6 +1605,21 @@ export const SOFT = { tSceneDepth: { value: null }, uSceneSize: { value: new THR
 // How near (game units) a feathered card fades out where nothing is set (the usual authored distance).
 const FEATHER = 6;
 const CHANNELS = ['RGB', 'RGBA', 'A', 'RGB_A', 'RGB_ALPHAMASK', 'RGB_RGBMASK', 'RGBA_RGBALPHA', 'A_RGBALPHA', 'RGB_A_RGBALPHA', 'R', 'G', 'B', 'RALPHA', 'GALPHA', 'BALPHA'].map((c) => `SPRITECARD_TEXTURE_CHANNEL_MIX_${c}`);
+// A gradient layer's picture: 64 × 1, as the game builds it (__procedural_colorgradient.vtex), the stops'
+// colours mixed between them and read as sRGB.
+function gradientTexture(stops) {
+  const px = new Uint8Array(64 * 4);
+  for (let i = 0; i < 64; i++) {
+    const x = i / 63, j = stops.findIndex((s) => s.at >= x);
+    // before the first stop its colour, past the last the last's, between two mixed
+    const a = j < 0 ? stops[stops.length - 1] : stops[Math.max(j - 1, 0)], b = j < 0 ? a : stops[j];
+    const k = b.at > a.at ? (x - a.at) / (b.at - a.at) : 0;
+    for (let ch = 0; ch < 4; ch++) px[i * 4 + ch] = Math.round((a.color[ch] ?? 255) * (1 - k) + (b.color[ch] ?? 255) * k);
+  }
+  const t = new THREE.DataTexture(px, 64, 1, THREE.RGBAFormat);
+  t.colorSpace = THREE.SRGBColorSpace; t.minFilter = t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.needsUpdate = true;
+  return t;
+}
 function material(texInfo, r) {
   const tex = texInfo.texture;
   const mode = r.m_nOutputBlendMode === 'PARTICLE_OUTPUT_BLEND_MODE_ADD' ? 1 : r.m_nOutputBlendMode === 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X' ? 5 : 0;
@@ -1605,7 +1628,9 @@ function material(texInfo, r) {
     vertexShader, fragmentShader, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     uniforms: { studioRefract: { value: r.studioRefract === true }, refractShade: { value: 0.6 * Math.min(1, Math.abs(r.m_flRefractAmount ?? 0.1)) }, studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true || !!texInfo.tiled }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false }, ...SOFT, uFeather: { value: feather },
-      channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') } },
+      channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') },
+      useGradient: { value: !!texInfo.gradient }, gradientMap: { value: texInfo.gradient ? gradientTexture(texInfo.gradient.stops) : null },
+      gradientTurns: { value: texInfo.gradient?.turns ?? 0 }, gradientOffset: { value: new THREE.Vector2(...(texInfo.gradient?.offset ?? [0, 0])) } },
   });
   // Mod2x: colour = 2 × source × destination, so 50 % grey changes nothing. The canvas's alpha must
   // stay as it is: blended like the colour, it fell to 2 × a × alpha, and the sprite's whole square
@@ -1863,7 +1888,7 @@ export class Library {
     const result = this.cache.get(key);
     const mask = spec.maskPath && spec.maskPath !== path && this.textures[spec.maskPath]
       ? this.texture({ m_hTexture: spec.maskPath }) : null;
-    return { ...result, channel: spec.channel, tiled: spec.tiled, alphaFromLuma: spec.alphaFromLuma, alphaChannelFromLuma: spec.alphaChannelFromLuma, maskTexture: mask?.texture || null };
+    return { ...result, gradient: spec.gradient, channel: spec.channel, tiled: spec.tiled, alphaFromLuma: spec.alphaFromLuma, alphaChannelFromLuma: spec.alphaChannelFromLuma, maskTexture: mask?.texture || null };
   }
   renderer(original, sim) {
     const r = calibrateCosmicFxRenderer(original, sim?.def?._path);
