@@ -33,6 +33,7 @@
 import * as THREE from 'three';
 import type { ZoneLight, ZonePlace } from '../../api/decor.ts';
 import { blendZones, shares } from './map-zones.ts';
+import { fogAt, START_ZOOM } from './map-camera.ts';
 
 export interface MapLight {
   /** sun and shadows set over the map's box */
@@ -47,6 +48,8 @@ export interface MapLight {
   tick(time: number, camera: THREE.Camera, target: THREE.Vector3): boolean;
   /** whether the sun moved since last asked (day turning to night): the shadows are drawn again */
   sunMoved(): boolean;
+  /** the camera's zoom (map-camera.ts), which moves the fog */
+  zoom(z: number): void;
 }
 
 /** The Radiant forest's everyday zone, for a game whose map could not be read. */
@@ -114,7 +117,6 @@ export const lit = {
   /** start, end, exponent, the most it covers; in metres */
   uFog: { value: new THREE.Vector4(1e9, 2e9, 1, 0) },
   /** how much farther than the game's the camera stands, taken off the fog's distance */
-  uFogFrom: { value: 0 },
   /** the small lights near the view: where (metres) and how far each reaches, its colour × intensity (linear) */
   uLocalAt: { value: Array.from({ length: 48 }, () => new THREE.Vector4()) },
   uLocalColour: { value: Array.from({ length: 48 }, () => new THREE.Color()) },
@@ -131,6 +133,19 @@ export const lit = {
 /** How many of the map's small lights the shader takes at once. */
 const LOCAL = 48;
 
+/** The map's light on a card facing `n` (the game's axes, from the particle to the eye), for the effects the
+ * game tints by it (m_bTintByGlobalLight, the rune's steam). The game's spritecard vertex shader takes
+ * sun × sat(-L · n) + ambient × sat(A · n) + the sky's two colours by n's height × (1 - that sun), from the
+ * same constants the map's materials read (a RenderDoc frame, 2026-11-28); no shadows. */
+const SCENE_N = new THREE.Vector3(), SKY = new THREE.Color(), LIGHT = new THREE.Vector3();
+export function particleLight(n: THREE.Vector3): THREE.Vector3 {
+  const s = SCENE_N.set(n.y, n.z, n.x);
+  const sun = THREE.MathUtils.clamp(-s.dot(lit.uSunDir.value), 0, 1), ambient = THREE.MathUtils.clamp(s.dot(lit.uAmbientDir.value), 0, 1);
+  SKY.copy(lit.uShadeDown.value).lerp(lit.uShadeUp.value, s.y * 0.5 + 0.5).multiplyScalar(1 - sun);
+  const { r, g, b } = lit.uSun.value, a = lit.uAmbient.value;
+  return LIGHT.set(r * sun + a.r * ambient + SKY.r, g * sun + a.g * ambient + SKY.g, b * sun + a.b * ambient + SKY.b);
+}
+
 /** A Source inch in the window's metres (the map's export). */
 export const INCH = 0.0254;
 /** How far south of the point it looks at the game's camera stands, in inches: its distance (dota_camera_distance 1134) × cos 60°. */
@@ -139,8 +154,6 @@ const CAMERA_BACK = 567;
  * buffer in four frames read in RenderDoc: an ambient scale of 5 came out 7.5 everywhere, the Dire's
  * shadow scale of 2 came out 3; the heroes' own copy of the shadow's keeps the zone's number). */
 const WORLD_SHADE = 1.5;
-/** How far the game's camera stands from what it looks at, in metres. */
-const GAME_CAMERA = 1200 * INCH;
 
 /** The game's world light in a standard material's shader, in place of three's: its shadows kept.
  * `overlay`: an overlay's (map-view.ts), which keeps its alpha in the river's bed pass. */
@@ -163,7 +176,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
     .replace('#include <common>', `#include <common>
     uniform vec3 uSunDir, uSun, uAmbientDir, uAmbient, uShadeUp, uShadeDown, uFogColor, uSpecColor, uSpecDir;
     uniform float uSpecIndependence, uSpecPow;
-    uniform float uAmbientShadow, uCloudOn, uCloudScale, uFogFrom, uPlain, uAOOn, uAOPass, uAOCheap;
+    uniform float uAmbientShadow, uCloudOn, uCloudScale, uPlain, uAOOn, uAOPass, uAOCheap;
     uniform sampler2D uAO;
     uniform vec2 uAOPixel;
     uniform vec4 uLocalAt[ ${LOCAL} ];
@@ -234,7 +247,7 @@ export function litShader(sh: THREE.WebGLProgramParametersWithUniforms, overlay 
       #endif
       float alone = saturate( uSpecIndependence );
       outgoingLight = ( diffuseColor.rgb + ( 1.0 - alone ) * shine ) * light + alone * shine + totalEmissiveRadiance;
-      float far = max( distance( vLitWorld, cameraPosition ) - uFogFrom, 0.0 );
+      float far = distance( vLitWorld, cameraPosition );
       float fog = min( pow( saturate( ( far - uFog.x ) / max( uFog.y - uFog.x, 1e-3 ) ), uFog.z ), uFog.w );
       #ifdef MM_GLOW
       // a glow adds its light: the fog takes it away rather than painting it (gls_glow.asm)
@@ -299,6 +312,8 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shad
   const centre = new THREE.Vector3();
   let k = 1;
   let reach = 1;
+  // the camera's zoom: the game's fog starts nearer zoomed in and farther zoomed out (map-camera.ts)
+  let zoomed = START_ZOOM;
   let zone: ZoneLight = RADIANT;
   // the look's own light and its zones (map-zones.ts), each zone's share where the view looked last
   let base: ZoneLight = RADIANT, places: ZonePlace[] = [], weights: number[] = [];
@@ -366,7 +381,8 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shad
     const power = z.specular_power_day ?? -1;
     lit.uSpecPow.value = power > 0 ? power : (z.global_specular_power ?? 28);
     lit.uFogColor.value.copy(linear(z.fog_color_day ?? RADIANT.fog_color_day)).multiplyScalar(0.4 + 0.6 * k);
-    lit.uFog.value.set((z.fog_start_day ?? 1250) * INCH, (z.fog_end_day ?? 4500) * INCH, z.fog_exponent ?? 2, z.fog_max_density ?? 1);
+    const [fogStart, fogEnd] = fogAt(zoomed, z.fog_start_day ?? 1250, z.fog_end_day ?? 4500);
+    lit.uFog.value.set(fogStart * INCH, fogEnd * INCH, z.fog_exponent ?? 2, z.fog_max_density ?? 1);
     lit.uCloudScale.value = (z.cloud_scale ?? 6500) * INCH;
     sun.intensity = 3.4 * bright;
     sky.intensity = 1.25 * (0.4 + 0.6 * k);
@@ -385,6 +401,7 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shad
   };
   return {
     dim(next) { k = next; apply(); },
+    zoom(z) { if (z !== zoomed) { zoomed = z; apply(); } },
     weather(look, plain) {
       base = zone = look ?? plain ?? RADIANT;
       places = base.zones ?? [];
@@ -422,7 +439,6 @@ export function lightMap(renderer: THREE.WebGLRenderer, scene: THREE.Scene, shad
         sunMoved = turned = true;
         apply();
       }
-      lit.uFogFrom.value = Math.max(0, camera.position.distanceTo(target) - GAME_CAMERA);
       // the small lights nearest the view's middle, chosen again once it moved a few metres
       if (picked.distanceTo(target) > 4) pick(target);
       // the zones' light where the view looks, blended again once it moved a few metres

@@ -196,24 +196,44 @@ fn home_dir() -> String {
     std::env::var(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).unwrap_or_default()
 }
 
+/// Where Steam itself is installed (the folder with userdata/ and config/), as the registry or the
+/// usual Linux places say. MM_STEAM_ROOT stands in for that answer (empty: no Steam), so tests and
+/// the sandbox never reach the developer's own install.
+pub fn steam_install_root() -> Option<String> {
+    if let Ok(over) = std::env::var("MM_STEAM_ROOT") {
+        return (!over.is_empty() && Path::new(&over).exists()).then_some(over);
+    }
+    #[cfg(windows)]
+    {
+        pick_steam_root(
+            &[
+                reg_query("HKCU", "SOFTWARE\\Valve\\Steam", "SteamPath"),
+                reg_query("HKLM", "SOFTWARE\\WOW6432Node\\Valve\\Steam", "InstallPath"),
+                reg_query("HKLM", "SOFTWARE\\Valve\\Steam", "InstallPath"),
+            ],
+            true,
+        )
+    }
+    // macOS keeps Steam in one folder, however it was installed; Linux in one of four.
+    #[cfg(target_os = "macos")]
+    {
+        pick_steam_root(&macos_steam_roots(&home_dir()).into_iter().map(Some).collect::<Vec<_>>(), false)
+    }
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let xdg = std::env::var("XDG_DATA_HOME").ok();
+        pick_steam_root(
+            &linux_steam_roots(&home_dir(), xdg.as_deref()).into_iter().map(Some).collect::<Vec<_>>(),
+            false,
+        )
+    }
+}
+
 /// Where Dota is on this computer: the libraries Steam names first, then the usual places.
 pub fn find_dota_game_path() -> Option<String> {
     let home = home_dir();
     let xdg = std::env::var("XDG_DATA_HOME").ok();
-    #[cfg(windows)]
-    let root = pick_steam_root(
-        &[
-            reg_query("HKCU", "SOFTWARE\\Valve\\Steam", "SteamPath"),
-            reg_query("HKLM", "SOFTWARE\\WOW6432Node\\Valve\\Steam", "InstallPath"),
-            reg_query("HKLM", "SOFTWARE\\Valve\\Steam", "InstallPath"),
-        ],
-        true,
-    );
-    #[cfg(all(not(windows), not(target_os = "macos")))]
-    let root =
-        pick_steam_root(&linux_steam_roots(&home, xdg.as_deref()).into_iter().map(Some).collect::<Vec<_>>(), false);
-    #[cfg(target_os = "macos")]
-    let root = pick_steam_root(&macos_steam_roots(&home).into_iter().map(Some).collect::<Vec<_>>(), false);
+    let root = steam_install_root();
     find_dota_in(cfg!(windows), root.as_deref(), &fallback_libraries(cfg!(windows), &home, xdg.as_deref()))
 }
 

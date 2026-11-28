@@ -21,15 +21,18 @@ pub fn dota_is_running() -> bool {
         return open;
     }
     #[cfg(windows)]
-    let (out, hit) = {
+    {
         use std::os::windows::process::CommandExt;
         const CREATE_NO_WINDOW: u32 = 0x0800_0000;
         let out = Command::new("tasklist")
             .args(["/FI", "IMAGENAME eq dota2.exe", "/NH"])
             .creation_flags(CREATE_NO_WINDOW)
             .output();
-        (out, |s: &str| s.to_lowercase().contains("dota2.exe"))
-    };
+        return match out {
+            Ok(o) => o.status.success() && String::from_utf8_lossy(&o.stdout).to_lowercase().contains("dota2.exe"),
+            Err(_) => false,
+        };
+    }
     // macOS answers with the same call: the client is game/bin/osx64/dota2.app, whose process is
     // named dota2, so one -x match serves both platforms.
     #[cfg(not(windows))]

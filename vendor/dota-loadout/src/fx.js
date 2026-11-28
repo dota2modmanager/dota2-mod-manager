@@ -13,7 +13,7 @@ import {MarchingCubes} from 'three/addons/objects/MarchingCubes.js';
 const F = { Position: 0, LifeDuration: 1, PositionPrevious: 2, Radius: 3, Roll: 4, RollSpeed: 5, Color: 6, Alpha: 7, CreationTime: 8,
   SequenceNumber: 9, TrailLength: 10, ParticleId: 11, Yaw: 12, SecondSequenceNumber: 13, HitboxIndex: 14, HitboxOffsetPosition: 15,
   AlphaAlternate: 16, ScratchVector: 17, ScratchFloat: 18, NoneDisabled: 19, Pitch: 20, Normal: 21, GlowRgb: 22, GlowAlpha: 23,
-  ScratchFloat1: 26, ScratchFloat2: 27, ScratchVector2: 30, ForceScale: 34, ManualAnimationFrame: 38 };
+  ScratchFloat1: 26, ScratchFloat2: 27, ScratchVector2: 30, ForceScale: 34, ManualAnimationFrame: 38, ShaderExtraData1: 39, ShaderExtraData2: 40 };
 const ANGLE = new Set([F.Roll, F.RollSpeed, F.Yaw, F.Pitch]);
 const field = (v, d) => (v === undefined ? d : typeof v === 'number' ? v : F[String(v).replace(/^PARTICLE_ATTRIBUTE_/, '')] ?? d);
 
@@ -103,7 +103,7 @@ class Particle {
     this.pos = new THREE.Vector3(); this.prev = new THREE.Vector3(); this.vel = new THREE.Vector3(); this.force = new THREE.Vector3();
     this.age = 0; this.life = c.life; this.alpha = c.alpha; this.alpha2 = 1; this.color = c.color.clone(); this.radius = c.radius; this.trail = 0.1;
     this.rot = new THREE.Vector3(0, 0, c.roll); this.rotSpeed = new THREE.Vector3(0, 0, c.rollSpeed); this.normal = new THREE.Vector3(0, 0, 1);
-    this.seq = c.seq; this.seq2 = 0; this.created = 0; this.forceScale = 1; this.s = [0, 0, 0]; this.sv = new THREE.Vector3(); this.sv2 = new THREE.Vector3(); this.hbo = new THREE.Vector3();
+    this.seq = c.seq; this.seq2 = 0; this.created = 0; this.forceScale = 1; this.extra1 = 0; this.extra2 = 0; this.s = [0, 0, 0]; this.sv = new THREE.Vector3(); this.sv2 = new THREE.Vector3(); this.hbo = new THREE.Vector3();
     this.id = 0; this.uid = 0; this.index = 0; this.dead = false; this.initial = null; this.bone = null; this.surface = null; this.snap = -1; this.snapFrom = null; this.orient = null;
   }
   get nage() { return this.age / Math.max(1e-4, this.life); }
@@ -113,7 +113,7 @@ class Particle {
       case F.Alpha: return this.alpha; case F.CreationTime: return this.created; case F.SequenceNumber: return this.seq; case F.TrailLength: return this.trail;
       case F.ParticleId: return this.id; case F.Yaw: return this.rot.x; case F.SecondSequenceNumber: return this.seq2; case F.AlphaAlternate: return this.alpha2;
       case F.ScratchFloat: return this.s[0]; case F.ScratchFloat1: return this.s[1]; case F.ScratchFloat2: return this.s[2]; case F.Pitch: return this.rot.y;
-      case F.ForceScale: return this.forceScale; default: return 0;
+      case F.ForceScale: return this.forceScale; case F.ShaderExtraData1: return this.extra1; case F.ShaderExtraData2: return this.extra2; default: return 0;
     }
   }
   setS(f, v) {
@@ -122,7 +122,7 @@ class Particle {
       case F.Alpha: this.alpha = v; break; case F.CreationTime: this.created = v; break; case F.SequenceNumber: this.seq = Math.round(v); break; case F.TrailLength: this.trail = v; break;
       case F.Yaw: this.rot.x = v; break; case F.SecondSequenceNumber: this.seq2 = Math.round(v); break; case F.AlphaAlternate: this.alpha2 = v; break;
       case F.ScratchFloat: this.s[0] = v; break; case F.ScratchFloat1: this.s[1] = v; break; case F.ScratchFloat2: this.s[2] = v; break; case F.Pitch: this.rot.y = v; break;
-      case F.ForceScale: this.forceScale = v; break;
+      case F.ForceScale: this.forceScale = v; break; case F.ShaderExtraData1: this.extra1 = v; break; case F.ShaderExtraData2: this.extra2 = v; break;
     }
   }
   getV(f) { switch (f) { case F.Position: return this.pos; case F.PositionPrevious: return this.prev; case F.Color: return this.color; case F.Normal: return this.normal; case F.ScratchVector: return this.sv; case F.ScratchVector2: return this.sv2; case F.HitboxOffsetPosition: return this.hbo; default: return new THREE.Vector3(); } }
@@ -1531,13 +1531,15 @@ export class Simulation {
 
 // ---------------------------------------------------------------- rendering
 const vertexShader = `
-attribute vec4 color; attribute vec4 uvA; attribute vec4 uvB; attribute float blend;
-varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
-void main() { vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB = mix(uvB.xy, uvB.zw, uv); vBlend = blend; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+attribute vec4 color; attribute vec4 uvA; attribute vec4 uvB; attribute float blend; attribute vec4 layer;
+varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend; varying vec2 vCard; varying vec2 vLayer;
+void main() { vCard = uv; vColor = color; vUvA = mix(uvA.xy, uvA.zw, uv); vUvB = mix(uvB.xy, uvB.zw, uv); vBlend = blend; vLayer = uv * layer.zw + layer.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 const fragmentShader = `
 uniform sampler2D map; uniform sampler2D alphaMask; uniform bool useAlphaMask; uniform bool studioRefract; uniform float refractShade; uniform bool alphaFromLuma; uniform bool alphaChannelFromLuma; uniform bool studioSoftDisc; uniform float overbright; uniform float addSelf; uniform bool studioRecolor; uniform float studioGemMix; uniform bool saturateColor; uniform int mode; uniform bool blendFrames; uniform int channels;
 uniform sampler2D tSceneDepth; uniform vec2 uSceneSize; uniform float uNear, uFar, uFeather; uniform bool uSoft;
-varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend;
+uniform bool useGradient; uniform sampler2D gradientMap; uniform int gradientTurns; uniform vec2 gradientOffset; uniform vec3 globalTint;
+uniform bool useLayer; uniform sampler2D layerMap; uniform float layerBlend;
+varying vec4 vColor; varying vec2 vUvA; varying vec2 vUvB; varying float vBlend; varying vec2 vCard; varying vec2 vLayer;
 // m_nTextureChannels: which of the texture's channels give the alpha (the game's spritecard; as
 // ValveResourceFormat masks a first layer). A glow on black with a solid alpha, read as RGBA_RGBALPHA,
 // has its alpha in its brightness: read as RGBA, it drew a square (Primeval Abomination's dark halo,
@@ -1569,7 +1571,16 @@ void main() {
   }
   vec4 t = texture2D(map, vUvA); if (blendFrames) t = mix(t, texture2D(map, vUvB), vBlend); if (studioRecolor) t.rgb = vec3(max(t.r, max(t.g, t.b))); t = channelMix(t);
   t.rgb = mix(t.rgb, vec3(max(t.r, max(t.g, t.b))), studioGemMix);
-  vec3 c = vColor.rgb * t.rgb; float a = t.a * vColor.a;
+  vec3 c = vColor.rgb * t.rgb * globalTint; float a = t.a * vColor.a;
+  // A gradient layer (sprite-textures.js gradientLayer): the card times the gradient at its UV turned
+  // and moved as the layer says. A card blended by its alpha loses its alpha where the gradient is dark.
+  if (useGradient) {
+    vec2 q = gradientTurns == 1 ? vec2(1.0 - vCard.y, vCard.x) : gradientTurns == 2 ? 1.0 - vCard : gradientTurns == 3 ? vec2(vCard.y, 1.0 - vCard.x) : vCard;
+    vec4 g = texture2D(gradientMap, vec2(clamp(q.x + gradientOffset.x, 0.0, 1.0), 0.5));
+    c *= g.rgb; if (mode == 0) a *= max(g.r, max(g.g, g.b));
+  }
+  // A layer multiplied in part way (sprite-textures.js multiplyLayer), colour and alpha alike.
+  if (useLayer) { vec4 l = texture2D(layerMap, vLayer); c *= mix(vec3(1.0), l.rgb, layerBlend); a *= mix(1.0, l.a, layerBlend); }
   // The alpha-cloud resources use grayscale coverage even with opaque PNG alpha.
   // Explicit mask layers must be combined with the colour layer, not displayed
   // as their own opaque sprite quads.
@@ -1597,6 +1608,21 @@ export const SOFT = { tSceneDepth: { value: null }, uSceneSize: { value: new THR
 // How near (game units) a feathered card fades out where nothing is set (the usual authored distance).
 const FEATHER = 6;
 const CHANNELS = ['RGB', 'RGBA', 'A', 'RGB_A', 'RGB_ALPHAMASK', 'RGB_RGBMASK', 'RGBA_RGBALPHA', 'A_RGBALPHA', 'RGB_A_RGBALPHA', 'R', 'G', 'B', 'RALPHA', 'GALPHA', 'BALPHA'].map((c) => `SPRITECARD_TEXTURE_CHANNEL_MIX_${c}`);
+// A gradient layer's picture: 64 × 1, as the game builds it (__procedural_colorgradient.vtex), the stops'
+// colours mixed between them and read as sRGB.
+function gradientTexture(stops) {
+  const px = new Uint8Array(64 * 4);
+  for (let i = 0; i < 64; i++) {
+    const x = i / 63, j = stops.findIndex((s) => s.at >= x);
+    // before the first stop its colour, past the last the last's, between two mixed
+    const a = j < 0 ? stops[stops.length - 1] : stops[Math.max(j - 1, 0)], b = j < 0 ? a : stops[j];
+    const k = b.at > a.at ? (x - a.at) / (b.at - a.at) : 0;
+    for (let ch = 0; ch < 4; ch++) px[i * 4 + ch] = Math.round((a.color[ch] ?? 255) * (1 - k) + (b.color[ch] ?? 255) * k);
+  }
+  const t = new THREE.DataTexture(px, 64, 1, THREE.RGBAFormat);
+  t.colorSpace = THREE.SRGBColorSpace; t.minFilter = t.magFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.needsUpdate = true;
+  return t;
+}
 function material(texInfo, r) {
   const tex = texInfo.texture;
   const mode = r.m_nOutputBlendMode === 'PARTICLE_OUTPUT_BLEND_MODE_ADD' ? 1 : r.m_nOutputBlendMode === 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X' ? 5 : 0;
@@ -1605,7 +1631,11 @@ function material(texInfo, r) {
     vertexShader, fragmentShader, transparent: true, depthWrite: false, side: THREE.DoubleSide,
     uniforms: { studioRefract: { value: r.studioRefract === true }, refractShade: { value: 0.6 * Math.min(1, Math.abs(r.m_flRefractAmount ?? 0.1)) }, studioGemMix: { value: 0 }, studioRecolor: { value: r.m_bStudioRecolor === true }, map: { value: tex }, alphaMask: { value: texInfo.maskTexture || tex }, useAlphaMask: { value: !!texInfo.maskTexture }, alphaFromLuma: { value: !!texInfo.alphaFromLuma }, alphaChannelFromLuma: { value: !!texInfo.alphaChannelFromLuma }, studioSoftDisc: { value: r.studioSoftDisc === true || !!texInfo.tiled }, overbright: { value: number(r.m_flOverbrightFactor, 1)(null, null) }, addSelf: { value: 1 + number(r.m_flAddSelfAmount, 0)(null, null) },
       saturateColor: { value: r.m_bSaturateColorPreAlphaBlend !== false }, mode: { value: mode }, blendFrames: { value: r.m_bBlendFramesSeq0 !== false }, ...SOFT, uFeather: { value: feather },
-      channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') } },
+      channels: { value: CHANNELS.indexOf(texInfo.channel ?? 'SPRITECARD_TEXTURE_CHANNEL_MIX_RGBA') },
+      useGradient: { value: !!texInfo.gradient }, gradientMap: { value: texInfo.gradient ? gradientTexture(texInfo.gradient.stops) : null },
+      gradientTurns: { value: texInfo.gradient?.turns ?? 0 }, gradientOffset: { value: new THREE.Vector2(...(texInfo.gradient?.offset ?? [0, 0])) },
+      globalTint: { value: new THREE.Vector3(1, 1, 1) },
+      useLayer: { value: !!texInfo.multiply }, layerMap: { value: texInfo.multiply?.texture ?? null }, layerBlend: { value: texInfo.multiply?.blend ?? 0 } },
   });
   // Mod2x: colour = 2 × source × destination, so 50 % grey changes nothing. The canvas's alpha must
   // stay as it is: blended like the colour, it fell to 2 × a × alpha, and the sprite's whole square
@@ -1616,30 +1646,39 @@ function material(texInfo, r) {
   return m;
 }
 const lin = (x) => (x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+const NO_LAYER = [0, 0, 1, 1];
+// A particle's UV for its renderer's multiplied layer (sprite-textures.js multiplyLayer).
+function layerUv(m, p, s) {
+  if (!m) return NO_LAYER;
+  const e = m.field === null ? 1 : p.getS(m.field) || 1, seed = p.uid + p.sys.seed, age = s?.age ?? 0;
+  return [m.offset[0] + m.rate[0] * age + (m.random ? hash(seed, 91) : 0), m.offset[1] + m.rate[1] * age + (m.random ? hash(seed, 92) : 0),
+    1 / ((m.scale[0] || 1) * e), 1 / ((m.scale[1] || 1) * e)];
+}
 class QuadBatch {
   constructor(group, texInfo, r, capacity) {
     // Colours are authored in gamma space and made linear unless the renderer says otherwise; mod2x
     // keeps them as they are, since its neutral is 0.5 (see texture()).
     this.linear = r.m_bGammaCorrectVertexColors !== false && r.m_nOutputBlendMode !== 'PARTICLE_OUTPUT_BLEND_MODE_MOD2X';
     this.capacity = capacity; const g = new THREE.BufferGeometry();
-    this.pos = new Float32Array(capacity * 12); this.uv = new Float32Array(capacity * 8); this.col = new Float32Array(capacity * 16); this.ua = new Float32Array(capacity * 16); this.ub = new Float32Array(capacity * 16); this.bl = new Float32Array(capacity * 4);
+    this.pos = new Float32Array(capacity * 12); this.uv = new Float32Array(capacity * 8); this.col = new Float32Array(capacity * 16); this.ua = new Float32Array(capacity * 16); this.ub = new Float32Array(capacity * 16); this.bl = new Float32Array(capacity * 4); this.ly = new Float32Array(capacity * 16);
     const idx = new Uint32Array(capacity * 6); for (let i = 0; i < capacity; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
     g.setIndex(new THREE.BufferAttribute(idx, 1));
-    for (const [n, a, k] of [['position', this.pos, 3], ['uv', this.uv, 2], ['color', this.col, 4], ['uvA', this.ua, 4], ['uvB', this.ub, 4], ['blend', this.bl, 1]]) g.setAttribute(n, new THREE.BufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage));
+    for (const [n, a, k] of [['position', this.pos, 3], ['uv', this.uv, 2], ['color', this.col, 4], ['uvA', this.ua, 4], ['uvB', this.ub, 4], ['blend', this.bl, 1], ['layer', this.ly, 4]]) g.setAttribute(n, new THREE.BufferAttribute(a, k).setUsage(THREE.DynamicDrawUsage));
     for (let i = 0; i < capacity; i++) this.uv.set([0, 1, 0, 0, 1, 0, 1, 1], i * 8);
     g.setDrawRange(0, 0); // nothing until the first frame fills it (not the whole empty buffer)
     this.mesh = new THREE.Mesh(g, material(texInfo, r)); this.mesh.frustumCulled = false; this.mesh.renderOrder = 10; group.add(this.mesh); this.n = 0;
   }
   begin() { this.n = 0; }
-  quad(corners, color, uvA, uvB, blend) {
+  // layer: the card's UV to its multiplied layer's, as offset U, V and scale U, V
+  quad(corners, color, uvA, uvB, blend, layer = NO_LAYER) {
     if (this.n >= this.capacity) return;
     // A card with any value that is not a number would be drawn as a solid square (or not at all,
     // depending on the GPU): it is skipped.
     if (!Number.isFinite(blend) || !corners.every((c) => Number.isFinite(c.x + c.y + c.z)) || !(Array.isArray(color[0]) ? color.flat() : color).every(Number.isFinite) || !uvA.every(Number.isFinite) || !uvB.every(Number.isFinite)) return;
     const i = this.n++;
-    for (let k = 0; k < 4; k++) { this.pos.set([corners[k].x, corners[k].y, corners[k].z], i * 12 + k * 3); const c = Array.isArray(color[0]) ? color[k] : color; this.col.set(this.linear ? [lin(c[0]), lin(c[1]), lin(c[2]), c[3]] : c, i * 16 + k * 4); this.ua.set(uvA, i * 16 + k * 4); this.ub.set(uvB, i * 16 + k * 4); this.bl[i * 4 + k] = blend; }
+    for (let k = 0; k < 4; k++) { this.pos.set([corners[k].x, corners[k].y, corners[k].z], i * 12 + k * 3); const c = Array.isArray(color[0]) ? color[k] : color; this.col.set(this.linear ? [lin(c[0]), lin(c[1]), lin(c[2]), c[3]] : c, i * 16 + k * 4); this.ua.set(uvA, i * 16 + k * 4); this.ub.set(uvB, i * 16 + k * 4); this.bl[i * 4 + k] = blend; this.ly.set(layer, i * 16 + k * 4); }
   }
-  end() { const g = this.mesh.geometry; g.setDrawRange(0, this.n * 6); for (const k of ['position', 'color', 'uvA', 'uvB', 'blend']) g.attributes[k].needsUpdate = true; }
+  end() { const g = this.mesh.geometry; g.setDrawRange(0, this.n * 6); for (const k of ['position', 'color', 'uvA', 'uvB', 'blend', 'layer']) g.attributes[k].needsUpdate = true; }
   dispose() { this.mesh.removeFromParent(); this.mesh.geometry.dispose(); this.mesh.material.dispose(); }
 }
 function sheetFrame(info, p, rate, type) {
@@ -1692,18 +1731,30 @@ function visibility(r) {
   const d0 = v.m_flDistanceInputMin ?? 0, d1 = v.m_flDistanceInputMax ?? 0, a0 = v.m_flAlphaScaleMin ?? 0, a1 = v.m_flAlphaScaleMax ?? 1;
   return d1 > d0 ? (dist) => remapClamped(dist, d0, d1, a0, a1) : null;
 }
+// m_bTintByGlobalLight: the card's colour times the scene's light on a surface facing the eye (the game's
+// spritecard vertex shader, RenderDoc 2026-11-28: sun × sat(-L · n) + ambient × sat(A · n) + the sky's
+// two colours by n.z × (1 - sun), n from the particle to the camera). The scene gives that light as
+// options.globalLight(n), n in the effect's own (the game's) space; without it, nothing is tinted.
+const lightOf = (r, lib) => (r.m_bTintByGlobalLight && typeof lib.options.globalLight === 'function' ? lib.options.globalLight : null);
+function tintByLight(light, batch, ps, eye) {
+  if (!light || !ps.length) return;
+  const n = eye.clone().sub(ps[0].pos); if (n.lengthSq() < 1e-8) return;
+  batch.mesh.material.uniforms.globalTint.value.copy(light(n.normalize()));
+}
 class SpriteRenderer {
   dispose() { this.batch.dispose(); }
   constructor(r, lib, sim) {
     const t = lib.texture(r); this.info = t.info; this.batch = new QuadBatch(lib.group, t, r, sim.maxParticles); this.rate = r.m_flAnimationRate ?? 0.1; this.type = r.m_nAnimationType;
+    this.layer = t.multiply ?? null;
     this.orient = r.m_nOrientationType; this.radiusScale = number(r.m_flRadiusScale, 1); this.alphaScale = number(r.m_flAlphaScale, 1);
     this.minSize = number(r.m_flMinSize, 0)(); this.maxSize = number(r.m_flMaxSize, 5000)(); this.fadeStart = number(r.m_flStartFadeSize, 1e8)(); this.fadeEnd = number(r.m_flEndFadeSize, 2e8)();
     // Cards lying in a plane fade as they turn edge-on to the eye: full where the dot of their normal
     // and the way to the eye is the start one, gone at the end one (the defaults, 1 and 2, never fade).
     this.dotStart = r.m_flStartFadeDot ?? 1; this.dotEnd = r.m_flEndFadeDot ?? 2; this.seen = lib.options.distanceFade ? visibility(r) : null;
+    this.light = lightOf(r, lib);
   }
   update(ps, s, camera, gi) {
-    const b = this.batch, { right, up, eye } = billboard(camera, gi); b.begin();
+    const b = this.batch, { right, up, eye } = billboard(camera, gi); b.begin(); tintByLight(this.light, b, ps, eye);
     for (const p of ps) {
       // Screen-size limits: a card that grows too large on screen fades, and its size is clamped.
       const dist = eye.distanceTo(p.pos); let r = p.radius * this.radiusScale(p, s), fade = 1;
@@ -1729,7 +1780,7 @@ class SpriteRenderer {
         uvA = rect(f.fa); uvB = rect(f.fb);
       }
       const [cr, cg, cb] = scaled(this.colorScale, p, s);
-      b.quad([o.clone().sub(rr).sub(uu), o.clone().sub(rr).add(uu), o.clone().add(rr).add(uu), o.clone().add(rr).sub(uu)], [cr * fade, cg * fade, cb * fade, a], uvA, uvB, f ? f.t : 0);
+      b.quad([o.clone().sub(rr).sub(uu), o.clone().sub(rr).add(uu), o.clone().add(rr).add(uu), o.clone().add(rr).sub(uu)], [cr * fade, cg * fade, cb * fade, a], uvA, uvB, f ? f.t : 0, layerUv(this.layer, p, s));
     }
     b.end();
   }
@@ -1741,12 +1792,12 @@ class TrailRenderer {
     this.radiusScale = number(r.m_flRadiusScale, 1); this.tail = number(r.m_flTailAlphaScale, 1); this.head = number(r.m_flHeadAlphaScale, 1); this.ignoreDT = r.m_bIgnoreDT;
     this.lengthScale = r.m_flLengthScale ?? 1; this.fadeIn = r.m_flLengthFadeInTime ?? 0; this.ratio = r.m_flConstrainRadiusToLengthRatio ?? 1; this.shift = r.m_flForwardShift ?? 0;
     const tc = r.m_vecTexturesInput?.[0]?.m_TextureControls; this.flipV = tc && number(tc.m_flFinalTextureScaleV, 1)() < 0; this.rate = r.m_flAnimationRate ?? 0.1; this.type = r.m_nAnimationType;
-    this.seen = lib.options.distanceFade ? visibility(r) : null;
+    this.seen = lib.options.distanceFade ? visibility(r) : null; this.light = lightOf(r, lib);
   }
   // RenderTrails: a card from the particle back toward its previous position, as long as the
   // movement times m_flTrailLength (per second unless m_bIgnoreDT), no wider than it is long.
   update(ps, s, camera, gi) {
-    const b = this.batch, { eye } = billboard(camera, gi); b.begin(); const oneOverDt = this.ignoreDT || !s.sim.dt ? 1 : 1 / s.sim.dt;
+    const b = this.batch, { eye } = billboard(camera, gi); b.begin(); tintByLight(this.light, b, ps, eye); const oneOverDt = this.ignoreDT || !s.sim.dt ? 1 : 1 / s.sim.dt;
     for (const p of ps) {
       const diff = p.prev.clone().sub(p.pos), dl = diff.length(); if (dl < 1e-6) continue; const dir = diff.divideScalar(dl);
       let len = this.lengthScale * p.trail * dl * oneOverDt; if (this.fadeIn > 0) len *= Math.min(1, p.age / this.fadeIn); len = Math.min(this.max, Math.max(this.min, len)); if (len <= 0) continue;
@@ -1863,7 +1914,9 @@ export class Library {
     const result = this.cache.get(key);
     const mask = spec.maskPath && spec.maskPath !== path && this.textures[spec.maskPath]
       ? this.texture({ m_hTexture: spec.maskPath }) : null;
-    return { ...result, channel: spec.channel, tiled: spec.tiled, alphaFromLuma: spec.alphaFromLuma, alphaChannelFromLuma: spec.alphaChannelFromLuma, maskTexture: mask?.texture || null };
+    const multiply = spec.multiply && spec.multiply.path !== path && this.textures[spec.multiply.path]
+      ? { ...spec.multiply, texture: this.texture({ m_hTexture: spec.multiply.path }).texture } : null;
+    return { ...result, multiply, gradient: spec.gradient, channel: spec.channel, tiled: spec.tiled, alphaFromLuma: spec.alphaFromLuma, alphaChannelFromLuma: spec.alphaChannelFromLuma, maskTexture: mask?.texture || null };
   }
   renderer(original, sim) {
     const r = calibrateCosmicFxRenderer(original, sim?.def?._path);

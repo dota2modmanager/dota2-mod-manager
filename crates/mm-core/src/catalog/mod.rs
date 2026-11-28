@@ -310,7 +310,8 @@ mod normalize {
         normalize_catalog(&mut mods);
         let tools = &mods["modsData"]["tools"];
         let (own, only_win, mac_build) = if cfg!(target_os = "linux") {
-            (json!("https://x/VPKTool-Linux.zip"), Value::Null, json!("https://x/Shared-Win.zip"))
+            // the Mac build has no Linux file either: nothing to download rather than a Windows one
+            (json!("https://x/VPKTool-Linux.zip"), Value::Null, Value::Null)
         } else if cfg!(target_os = "macos") {
             // no macOS build: nothing to download rather than a Windows program that will not start
             (Value::Null, Value::Null, json!("https://x/Shared-Mac.zip"))

@@ -11,6 +11,7 @@ import { SceneSource } from 'dota-loadout/studio';
 import type { DecorGroup } from '../../api/decor.ts';
 import { loadoutTextures } from '../preview3d/loadout-textures.ts';
 import { loadoutEffects } from '../preview3d/loadout-source.ts';
+import { particleLight } from './map-light.ts';
 
 /** One of the map's effects as the core lists it (map_build.rs world_effects): inches and degrees. */
 export interface WorldEffect { fx: string; at: number[]; turn: number[]; group?: string }
@@ -64,7 +65,7 @@ export function mapEffects(scene: THREE.Scene, list: WorldEffect[]): MapEffects 
       const lib = new Library({
         systems: patch.systems ?? {}, textures: patch.textures ?? {}, snapshots: patch.snapshots ?? {},
         url: (file: string) => (/^[a-z]+:/.test(file) ? file : source.url(`fx/${file}`)),
-        options: { refract: true, distanceFade: true },
+        options: { refract: true, distanceFade: true, globalLight: particleLight },
       });
       (lib as unknown as { materials: unknown }).materials = patch.materials ?? {};
       const root = patch.effects?.[0]?.system;

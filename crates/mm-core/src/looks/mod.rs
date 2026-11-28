@@ -24,6 +24,7 @@ pub mod map_looks_service;
 pub mod map_make;
 pub mod map_mod_trees;
 pub mod map_optimize;
+pub mod map_overlays;
 pub mod map_paint;
 pub mod map_scene;
 pub mod map_swaps;
