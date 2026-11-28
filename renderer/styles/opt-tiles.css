@@ -18,4 +18,5 @@
 
 /* trees and towers in "Своя карта": which side a pick goes on, and what each side has now */
 .opt-sides { margin-bottom: var(--space-2); }
+.opt-check { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); font-size: var(--text-sm); cursor: pointer; }
 .opt-sides-line { display: block; margin-top: var(--space-1); font-size: var(--text-xs); color: var(--text-muted); }
