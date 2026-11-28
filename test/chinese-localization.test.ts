@@ -37,13 +37,33 @@ test('Chinese covers both renderer dictionaries and the Rust pair-list dictionar
 test('pedestal and HUD migration strings display Chinese through the real renderer entry points', () => {
   const context = renderer('zh-CN');
   assert.equal(context.window.tr('Пьедестал'), '展示台');
+  assert.equal(context.window.tr('Персона'), '身心');
   assert.equal(context.window.tr('Высота пьедестала'), '展示台高度');
   assert.equal(context.window.tr('3D-превью в окне мода'), '在模组窗口显示 3D 预览');
   assert.equal(vm.runInContext('L`Dota обновилась. HUD перенесён на новый интерфейс игры: ${"Blue HUD"}`', context),
     'Dota 2 已更新，界面皮肤已适配游戏的新界面：Blue HUD');
   assert.equal(renderer('en').window.tr('Пьедестал'), 'Pedestal');
+  assert.equal(renderer('en').window.tr('Персона'), 'Persona');
   assert.equal(renderer('ru').window.tr('Пьедестал'), 'Пьедестал');
+  assert.equal(renderer('ru').window.tr('Персона'), 'Персона');
   assert.equal(context.window.tr('An unknown creator name'), 'An unknown creator name');
+});
+
+test('new official cosmetic and item titles use Valve labels while retaining source identities', () => {
+  const labels = {
+    'Anti Mage Custom Wei': '敌法师 自定义芛',
+    'Naga Siren All ItemRecolored': '娜迦海妖 全饰品改色',
+    'Armlet Fix': '莫尔迪基安的臂章 修复',
+    'Specialists Array Model': '行家阵列模型',
+    'Ingame Hud Purple And Black': '游戏内界面皮肤 紫色 与 黑色',
+  };
+  for (const [source, expected] of Object.entries(labels)) {
+    assert.equal(catalogName(source, 'zh-CN'), expected, source);
+    for (const lang of ['en', 'ru']) assert.equal(catalogName(source, lang), source);
+  }
+  assert.equal(catalogLabel('ArmletAuthor', 'zh-CN'), 'ArmletAuthor');
+  assert.equal(catalogLabel('Unseen Wei', 'zh-CN'), 'Unseen Wei');
+  assert.equal(catalogName('My ItemRecolored', 'zh-CN'), 'My ItemRecolored');
 });
 
 test('interface phrases precede ambiguous individual words and keep technical engine names', () => {
