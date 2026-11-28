@@ -103,7 +103,7 @@ function MapStage({ samples, groups, looks, ground, map, paint, weather, lights,
   return (
     <div className="opt-map" ref={host}>
       {note && <div className="opt-map-note"><span className="ms">{note.failed ? 'error' : 'progress_activity'}</span>{note.text}</div>}
-      <span className="opt-map-hint">{L`Мышью: крутить, приближать, двигать (правая кнопка)`}</span>
+      <span className="opt-map-hint">{L`Колесо приближает и отдаляет, мышь или WASD двигают`}</span>
     </div>
   );
 }
